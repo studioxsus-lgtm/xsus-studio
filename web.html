@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="sq" class="dark">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,50 +58,135 @@
 
             <!-- Desktop Menu -->
             <div class="hidden md:flex items-center gap-8 font-medium text-sm text-slate-300">
-                <a href="index.html" class="hover:text-cyber-blue transition">Kreu</a>
-                <a href="web.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Web Dev</a>
-                <a href="app.html" class="hover:text-cyber-blue transition">App Dev</a>
-                <a href="ai.html" class="hover:text-cyber-blue transition">AI Solutions</a>
-                <a href="logo.html" class="hover:text-cyber-blue transition">Branding</a>
-                <a href="domain.html" class="hover:text-cyber-blue transition">Domain & Host</a>
+                <a href="index.html" data-i18n="nav-home" class="hover:text-cyber-blue transition">Home</a>
+                <a href="web.html" data-i18n="nav-web" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Web Dev</a>
+                <a href="app.html" data-i18n="nav-app" class="hover:text-cyber-blue transition">App Dev</a>
+                <a href="ai.html" data-i18n="nav-ai" class="hover:text-cyber-blue transition">AI Solutions</a>
+                <a href="logo.html" data-i18n="nav-branding" class="hover:text-cyber-blue transition">Branding</a>
+                <a href="domain.html" data-i18n="nav-domain" class="hover:text-cyber-blue transition">Domain & Host</a>
             </div>
 
-            <a href="#contact-section" class="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-sm hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
-                <i data-lucide="code-2" class="w-4 h-4"></i>
-                Nisi Projektin
-            </a>
+            <div class="flex items-center gap-4">
+                <!-- LANGUAGE SELECTOR -->
+                <select id="language-select" class="bg-black/50 border border-white/20 text-xs font-semibold text-white px-3 py-1.5 rounded-lg focus:border-cyber-blue outline-none cursor-pointer">
+                    <option value="en" selected>EN 🇬🇧</option>
+                    <option value="sq">SQ 🇦🇱</option>
+                    <option value="fr">FR 🇫🇷</option>
+                </select>
+
+                <a href="#contact-section" data-i18n="nav-start" class="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-sm hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
+                    <i data-lucide="code-2" class="w-4 h-4"></i>
+                    Start Project
+                </a>
+            </div>
         </div>
     </nav>
 
     <!-- HERO SECTION -->
-    <header class="pt-36 pb-20 px-6 relative overflow-hidden">
+    <header class="pt-36 pb-16 px-6 relative overflow-hidden">
         <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyber-blue/10 rounded-full blur-[120px] pointer-events-none"></div>
         
         <div class="max-w-4xl mx-auto text-center relative z-10">
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-blue/30 text-cyber-blue text-xs font-semibold uppercase tracking-widest mb-6">
-                <i data-lucide="globe" class="w-4 h-4"></i> High-End Web Architecture
+                <i data-lucide="globe" class="w-4 h-4"></i> <span data-i18n="hero-badge">High-End Web Architecture</span>
             </div>
             <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
-                Uebsajte Moderne me <br><span class="text-gradient">Performance & Dizajn Cyber</span>
+                <span data-i18n="hero-title1">Modern Websites with</span> <br><span class="text-gradient" data-i18n="hero-title2">Cyber Performance & Design</span>
             </h1>
-            <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-                Nga Landing Pages ultra të shpejta deri te platformat komplekse web. Ne ndërtojmë përvojë dixhitale interaktive me teknologjitë më të fundit.
+            <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed" data-i18n="hero-desc">
+                From ultra-fast Landing Pages to complex web platforms. We craft interactive digital experiences built with cutting-edge technologies.
             </p>
             <div class="flex flex-wrap items-center justify-center gap-4">
-                <a href="#packages" class="px-8 py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold hover:shadow-[0_0_30px_rgba(0,240,255,0.4)] transition">
-                    Shiko Paketat
+                <a href="#builder" class="px-8 py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold hover:shadow-[0_0_30px_rgba(0,240,255,0.4)] transition" data-i18n="hero-btn-builder">
+                    Test Web Builder
                 </a>
-                <a href="#calculator" class="px-8 py-4 rounded-xl glass-panel text-white font-semibold hover:bg-white/10 transition border border-white/10">
-                    Kalkulo Çmimin
+                <a href="#portfolio" class="px-8 py-4 rounded-xl glass-panel text-white font-semibold hover:bg-white/10 transition border border-white/10" data-i18n="hero-btn-portfolio">
+                    View Portfolio
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- TEKNOLOGJITË (TECH STACK) -->
+    <!-- LIVE VISUAL WEB BUILDER & PREVIEW (INTERACTIVE STUDIO) -->
+    <section id="builder" class="py-16 px-6 max-w-7xl mx-auto w-full">
+        <div class="glass-panel p-6 md:p-10 rounded-3xl border border-cyber-blue/30 shadow-[0_0_40px_rgba(0,240,255,0.1)]">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyber-blue/10 text-cyber-blue text-xs font-bold uppercase tracking-widest mb-3">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Interactive Studio
+                </div>
+                <h2 class="text-2xl md:text-4xl font-extrabold" data-i18n="builder-title">Live Web Visualizer</h2>
+                <p class="text-slate-400 text-sm mt-2" data-i18n="builder-subtitle">Describe your business or project idea to see a live visual mockup generated instantly.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-8 items-start">
+                <!-- Controls Panel -->
+                <div class="lg:col-span-5 space-y-5 glass-panel p-6 rounded-2xl border border-white/10">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2" data-i18n="builder-label-idea">Your Project / Business Idea</label>
+                        <input type="text" id="builder-idea" placeholder="e.g. Luxury Restaurant with Interactive Menu" value="Cyberpunk Tech SaaS Startup" class="w-full p-3 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2" data-i18n="builder-label-theme">Visual Theme</label>
+                            <select id="builder-theme" class="w-full p-3 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                                <option value="cyber">Cyber Neon</option>
+                                <option value="corporate">Corporate Dark</option>
+                                <option value="minimal">Minimal White</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2" data-i18n="builder-label-layout">Layout Style</label>
+                            <select id="builder-layout" class="w-full p-3 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                                <option value="landing">Landing Page</option>
+                                <option value="portal">Portal / Portal</option>
+                                <option value="store">E-Commerce Store</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="generate-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center justify-center gap-2">
+                        <i data-lucide="play" class="w-4 h-4 fill-black"></i> <span data-i18n="builder-btn-generate">Generate Live Preview</span>
+                    </button>
+
+                    <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                        <span data-i18n="builder-device-view">Device View:</span>
+                        <div class="flex gap-2">
+                            <button id="view-desktop" class="px-3 py-1 rounded bg-cyber-blue/20 text-cyber-blue font-semibold border border-cyber-blue/40">Desktop</button>
+                            <button id="view-mobile" class="px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10">Mobile</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Preview Window Frame -->
+                <div class="lg:col-span-7">
+                    <div id="preview-wrapper" class="w-full transition-all duration-300 mx-auto">
+                        <!-- Browser Header Bar -->
+                        <div class="bg-slate-900 rounded-t-2xl px-4 py-3 border border-white/10 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+                                <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
+                                <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+                            </div>
+                            <div class="bg-black/60 px-4 py-1 rounded-lg text-slate-400 text-xs font-mono border border-white/5 truncate max-w-[220px]">
+                                preview.xsusstudio.com
+                            </div>
+                            <span class="text-xs text-cyber-blue font-bold">LIVE</span>
+                        </div>
+                        <!-- Preview Display Container -->
+                        <div id="preview-container" class="bg-[#0b0c10] border-x border-b border-white/10 rounded-b-2xl p-6 min-h-[380px] flex flex-col justify-between relative overflow-hidden transition-all">
+                            <!-- Live Rendered Content goes here via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TECH STACK -->
     <section class="py-12 px-6 border-y border-white/5 bg-white/[0.01]">
         <div class="max-w-7xl mx-auto">
-            <p class="text-center text-xs font-bold uppercase tracking-widest text-slate-500 mb-8">Teknologjitë që përdorim</p>
+            <p class="text-center text-xs font-bold uppercase tracking-widest text-slate-500 mb-8" data-i18n="tech-title">Technologies We Master</p>
             <div class="grid grid-cols-2 md:grid-cols-6 gap-6 text-center">
                 <div class="glass-panel p-4 rounded-xl flex items-center justify-center gap-2 text-slate-300 font-semibold text-sm">
                     <i data-lucide="code" class="text-cyber-blue"></i> HTML5 / CSS3
@@ -125,67 +210,141 @@
         </div>
     </section>
 
-    <!-- PAKETAT E SHËRBIMEVE -->
+    <!-- SERVICE PACKAGES -->
     <section id="packages" class="py-24 px-6 max-w-7xl mx-auto w-full">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Paketat e <span class="text-gradient">Zhbvillimit Web</span></h2>
-            <p class="text-slate-400">Zgjidhni paketën që i përshtatet më së miri biznesit tuaj.</p>
+            <h2 class="text-3xl md:text-5xl font-extrabold mb-4"><span data-i18n="pkg-title1">Web Development</span> <span class="text-gradient" data-i18n="pkg-title2">Packages</span></h2>
+            <p class="text-slate-400" data-i18n="pkg-subtitle">Choose the ideal tier that best fits your business goals.</p>
         </div>
 
         <div class="grid md:grid-cols-3 gap-8">
-            <!-- Paketë Basic -->
+            <!-- Basic Package -->
             <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition flex flex-col justify-between">
                 <div>
                     <div class="text-cyber-blue font-bold text-sm tracking-widest uppercase mb-2">Landing Page</div>
-                    <h3 class="text-2xl font-bold mb-4">Start-Up / Biznes Lokal</h3>
-                    <p class="text-slate-400 text-sm mb-6">Ideal për prezantimin e një produkti, shërbimi apo biznesi me faqe te vetme ultra-stilizuar.</p>
+                    <h3 class="text-2xl font-bold mb-4" data-i18n="pkg1-name">Start-Up / Local Business</h3>
+                    <p class="text-slate-400 text-sm mb-6" data-i18n="pkg1-desc">Perfect for showcasing a single product, service, or business with a highly polished single-page site.</p>
                     <ul class="space-y-3 text-sm text-slate-300 mb-8">
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> 1 Faqe Teknike Interaktive</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Dizajn Responsiv (Mobile/Tablet)</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Integrim Formular Kontakti</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Optimizim Bazë SEO</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Lidhje me Rrjetet Sociale</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg1-feat1">1 Interactive Technical Page</span></li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg1-feat2">Fully Responsive (Mobile/Tablet)</span></li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg1-feat3">Contact Form Integration</span></li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg1-feat4">Essential SEO Optimization</span></li>
                     </ul>
                 </div>
-                <a href="#contact-section" class="w-full py-3 rounded-xl border border-cyber-blue/40 text-cyber-blue font-semibold text-center hover:bg-cyber-blue/10 transition">Porosit Tani</a>
+                <a href="#contact-section" class="w-full py-3 rounded-xl border border-cyber-blue/40 text-cyber-blue font-semibold text-center hover:bg-cyber-blue/10 transition" data-i18n="btn-order">Order Now</a>
             </div>
 
-            <!-- Paketë Corporate (Featured) -->
+            <!-- Corporate Package (Featured) -->
             <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition flex flex-col justify-between relative border-cyber-blue/50 bg-cyber-blue/[0.03]">
-                <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black text-xs font-black uppercase tracking-wider">
-                    Më e Populluara
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black text-xs font-black uppercase tracking-wider" data-i18n="pkg-featured">
+                    Most Popular
                 </div>
                 <div>
                     <div class="text-cyber-blue font-bold text-sm tracking-widest uppercase mb-2">Multi-Page Architecture</div>
-                    <h3 class="text-2xl font-bold mb-4">Corporate & Agency</h3>
-                    <p class="text-slate-400 text-sm mb-6">Për kompani që kërkojnë strukturë të plotë me disa faqe me menaxhim të lehtë.</p>
+                    <h3 class="text-2xl font-bold mb-4" data-i18n="pkg2-name">Corporate & Agency</h3>
+                    <p class="text-slate-400 text-sm mb-6" data-i18n="pkg2-desc">Designed for established businesses requiring a complete multi-page structure with seamless management.</p>
                     <ul class="space-y-3 text-sm text-slate-300 mb-8">
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Deri në 6-10 Faqe Individuale</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Suport Multigjuhësh (Albanian/English)</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Animacione Cyber Glassmorphism</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Optimizim i Lartë i Shpejtësisë</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Lidhje me Custom Domain & Hosting</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg2-feat1">Up to 6-10 Custom Pages</span></li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg2-feat2">Multi-language Support (EN / SQ / FR)</span></li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg2-feat3">Cyber Glassmorphism Animations</span></li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg2-feat4">Custom Domain & SSL Setup</span></li>
                     </ul>
                 </div>
-                <a href="#contact-section" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-center shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition">Porosit Tani</a>
+                <a href="#contact-section" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-center shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition" data-i18n="btn-order">Order Now</a>
             </div>
 
-            <!-- Paketë Custom Web App -->
+            <!-- Custom Web App Package -->
             <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition flex flex-col justify-between">
                 <div>
                     <div class="text-cyber-blue font-bold text-sm tracking-widest uppercase mb-2">Custom Software</div>
-                    <h3 class="text-2xl font-bold mb-4">Web App & E-Commerce</h3>
-                    <p class="text-slate-400 text-sm mb-6">Zgjidhje me masë për dyqane online, platforma me kyçje përdoruesish apo API integrations.</p>
+                    <h3 class="text-2xl font-bold mb-4" data-i18n="pkg3-name">Web App & E-Commerce</h3>
+                    <p class="text-slate-400 text-sm mb-6" data-i18n="pkg3-desc">Tailor-made solutions for online stores, user-authenticated platforms, or API-driven applications.</p>
                     <ul class="space-y-3 text-sm text-slate-300 mb-8">
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Integrim Sektori e-Commerce / Pagesa</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Dashboard / Panel Administrimi</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Baza e të Dhënave & API Support</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Siguri e Lartë (SSL/Database Encryption)</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Mirëmbajtje Teknike 24/7</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg3-feat1">E-Commerce & Payment Integration</span></li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg3-feat2">Admin Dashboard Panel</span></li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg3-feat3">Database & API Support</span></li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> <span data-i18n="pkg3-feat4">24/7 Technical Maintenance</span></li>
                     </ul>
                 </div>
-                <a href="#contact-section" class="w-full py-3 rounded-xl border border-cyber-blue/40 text-cyber-blue font-semibold text-center hover:bg-cyber-blue/10 transition">Kërko Kuotim</a>
+                <a href="#contact-section" class="w-full py-3 rounded-xl border border-cyber-blue/40 text-cyber-blue font-semibold text-center hover:bg-cyber-blue/10 transition" data-i18n="btn-quote">Request Quote</a>
             </div>
+        </div>
+    </section>
+
+    <!-- PORTFOLIO SHOWCASE -->
+    <section id="portfolio" class="py-20 px-6 max-w-7xl mx-auto w-full">
+        <div class="text-center mb-16">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-blue/30 text-cyber-blue text-xs font-semibold uppercase tracking-widest mb-4">
+                <i data-lucide="briefcase" class="w-4 h-4"></i> <span data-i18n="port-badge">Featured Showcase</span>
+            </div>
+            <h2 class="text-3xl md:text-5xl font-extrabold mb-4"><span data-i18n="port-title1">Web Project</span> <span class="text-gradient" data-i18n="port-title2">Portfolio</span></h2>
+            <p class="text-slate-400 max-w-xl mx-auto" data-i18n="port-subtitle">Explore selected web applications engineered for speed, aesthetics, and high conversion.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- PROJECT 1 -->
+            <div class="glass-panel rounded-2xl overflow-hidden glass-panel-hover transition flex flex-col group border border-white/10">
+                <div class="relative h-52 bg-gradient-to-br from-cyber-purple/20 via-slate-900 to-cyber-dark overflow-hidden flex items-center justify-center p-6">
+                    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyber-blue/20 via-transparent to-transparent"></div>
+                    <div class="text-center relative z-10">
+                        <span class="text-xs font-bold text-cyber-blue tracking-widest uppercase mb-1 block">Enterprise Platform</span>
+                        <h4 class="text-2xl font-black text-white group-hover:scale-105 transition">Nexus Corp Portal</h4>
+                        <p class="text-xs text-slate-400 mt-1">Multi-Page Corporate Architecture</p>
+                    </div>
+                </div>
+                <div class="p-6 flex flex-col justify-between flex-1">
+                    <div>
+                        <h3 class="text-xl font-bold mb-2 text-white">Nexus Global Web Solution</h3>
+                        <p class="text-slate-400 text-sm mb-4" data-i18n="port1-desc">Complete multi-page corporate website with high-speed delivery, interactive analytics UI, and multi-language support.</p>
+                    </div>
+                    <a href="#contact-section" class="inline-flex items-center justify-between w-full pt-4 border-t border-white/10 text-xs font-bold text-cyber-blue hover:text-white transition">
+                        <span data-i18n="port-btn">Request Similar Project</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- PROJECT 2 -->
+            <div class="glass-panel rounded-2xl overflow-hidden glass-panel-hover transition flex flex-col group border border-white/10">
+                <div class="relative h-52 bg-gradient-to-br from-blue-950 via-slate-900 to-cyber-dark overflow-hidden flex items-center justify-center p-6">
+                    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyber-blue/20 via-transparent to-transparent"></div>
+                    <div class="text-center relative z-10">
+                        <span class="text-xs font-bold text-cyber-blue tracking-widest uppercase mb-1 block">E-Commerce & Store</span>
+                        <h4 class="text-2xl font-black text-white group-hover:scale-105 transition">Vortex Store</h4>
+                        <p class="text-xs text-slate-400 mt-1">High-Conversion Online Shop</p>
+                    </div>
+                </div>
+                <div class="p-6 flex flex-col justify-between flex-1">
+                    <div>
+                        <h3 class="text-xl font-bold mb-2 text-white">Vortex E-Commerce Engine</h3>
+                        <p class="text-slate-400 text-sm mb-4" data-i18n="port2-desc">Advanced online retail platform equipped with secure payment integration, catalog filtering, and lightning-fast checkout.</p>
+                    </div>
+                    <a href="#contact-section" class="inline-flex items-center justify-between w-full pt-4 border-t border-white/10 text-xs font-bold text-cyber-blue hover:text-white transition">
+                        <span data-i18n="port-btn">Request Similar Project</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- PROJECT 3 -->
+            <div class="glass-panel rounded-2xl overflow-hidden glass-panel-hover transition flex flex-col group border border-white/10">
+                <div class="relative h-52 bg-gradient-to-br from-purple-950 via-slate-900 to-cyber-dark overflow-hidden flex items-center justify-center p-6">
+                    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyber-purple/30 via-transparent to-transparent"></div>
+                    <div class="text-center relative z-10">
+                        <span class="text-xs font-bold text-cyber-purple tracking-widest uppercase mb-1 block">AI & SaaS App</span>
+                        <h4 class="text-2xl font-black text-white group-hover:scale-105 transition">Xsus SaaS Dashboard</h4>
+                        <p class="text-xs text-slate-400 mt-1">Cyber Glassmorphism Web App</p>
+                    </div>
+                </div>
+                <div class="p-6 flex flex-col justify-between flex-1">
+                    <div>
+                        <h3 class="text-xl font-bold mb-2 text-white">Xsus Cyber AI Dashboard</h3>
+                        <p class="text-slate-400 text-sm mb-4" data-i18n="port3-desc">Web application featuring futuristic Glassmorphism UI, interactive pricing tools, and real-time responsive rendering.</p>
+                    </div>
+                    <a href="#calculator" class="inline-flex items-center justify-between w-full pt-4 border-t border-white/10 text-xs font-bold text-cyber-blue hover:text-white transition">
+                        <span data-i18n="port-btn-calc">Test Calculator</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+
         </div>
     </section>
 
@@ -193,65 +352,65 @@
     <section id="calculator" class="py-20 px-6 max-w-4xl mx-auto w-full">
         <div class="glass-panel p-8 md:p-12 rounded-3xl border border-cyber-blue/20">
             <div class="text-center mb-8">
-                <h3 class="text-2xl md:text-3xl font-bold mb-2">Kalkulator i Përafërt i Projektit</h3>
-                <p class="text-slate-400 text-sm">Zgjidhni opsionet tuaja për të marrë një vlerësim me afërsi.</p>
+                <h3 class="text-2xl md:text-3xl font-bold mb-2" data-i18n="calc-title">Project Estimator Calculator</h3>
+                <p class="text-slate-400 text-sm" data-i18n="calc-subtitle">Select options to generate an instant estimate for your project.</p>
             </div>
 
             <form id="calc-form" class="space-y-6">
                 <div>
-                    <label class="block text-sm font-semibold mb-2">Lloji i Uebsajtit:</label>
-                    <select id="calc-type" class="w-full p-3 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none">
-                        <option value="150">Landing Page (1 Faqe)</option>
-                        <option value="300">Multi-Page Corporate (Deri 5-8 faqe)</option>
-                        <option value="600">E-Commerce / Web Application</option>
+                    <label class="block text-sm font-semibold mb-2" data-i18n="calc-label-type">Website Type:</label>
+                    <select id="calc-type" class="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none">
+                        <option value="150" data-i18n="calc-opt1">Single Page Landing Site ($150)</option>
+                        <option value="300" data-i18n="calc-opt2">Multi-Page Corporate ($300)</option>
+                        <option value="600" data-i18n="calc-opt3">E-Commerce / Custom Web Application ($600)</option>
                     </select>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <label class="flex items-center gap-3 p-4 rounded-xl bg-black/30 border border-white/5 cursor-pointer hover:border-cyber-blue/30">
                         <input type="checkbox" id="calc-lang" value="50" class="w-4 h-4 accent-cyber-blue">
-                        <span class="text-sm">Multigjuhësh (+Shqip / Eng)</span>
+                        <span class="text-sm" data-i18n="calc-check-lang">Multi-Language Support (+EN / AL / FR)</span>
                     </label>
                     <label class="flex items-center gap-3 p-4 rounded-xl bg-black/30 border border-white/5 cursor-pointer hover:border-cyber-blue/30">
                         <input type="checkbox" id="calc-seo" value="40" class="w-4 h-4 accent-cyber-blue">
-                        <span class="text-sm">Optimizim Avancuar SEO</span>
+                        <span class="text-sm" data-i18n="calc-check-seo">Advanced SEO Optimization</span>
                     </label>
                 </div>
 
                 <div class="p-6 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between">
                     <div>
-                        <span class="text-slate-400 text-xs uppercase font-bold tracking-wider">Vlerësimi i Përafërt:</span>
+                        <span class="text-slate-400 text-xs uppercase font-bold tracking-wider" data-i18n="calc-total-label">Estimated Investment:</span>
                         <div id="total-price" class="text-3xl font-black text-cyber-blue">$150</div>
                     </div>
-                    <a href="#contact-section" class="px-6 py-2.5 rounded-xl bg-cyber-blue text-black font-bold text-sm hover:opacity-90 transition">
-                        Aplikoni Tani
+                    <a href="#contact-section" class="px-6 py-2.5 rounded-xl bg-cyber-blue text-black font-bold text-sm hover:opacity-90 transition" data-i18n="calc-btn-apply">
+                        Apply Now
                     </a>
                 </div>
             </form>
         </div>
     </section>
 
-    <!-- FORMULARI I KONTAKTIT -->
+    <!-- CONTACT FORM SECTION -->
     <section id="contact-section" class="py-20 px-6 max-w-3xl mx-auto w-full">
         <div class="glass-panel p-8 md:p-12 rounded-3xl text-center">
-            <h3 class="text-3xl font-extrabold mb-4">Gati për të nisur <span class="text-gradient">Uebsajtin Tënd?</span></h3>
-            <p class="text-slate-400 text-sm mb-8">Na dërgoni detajet e projektit tuaj dhe do t'ju kontaktojmë brenda pak orësh.</p>
+            <h3 class="text-3xl font-extrabold mb-4"><span data-i18n="contact-title1">Ready to Build Your</span> <span class="text-gradient" data-i18n="contact-title2">Digital Presence?</span></h3>
+            <p class="text-slate-400 text-sm mb-8" data-i18n="contact-subtitle">Send us your project specifications and our engineering team will get back to you within hours.</p>
 
             <form id="web-project-form" class="space-y-4 text-left">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Emri Juaj</label>
-                    <input type="text" required placeholder="p.sh. Filan Fisteku" class="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none text-sm">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2" data-i18n="form-label-name">Your Name</label>
+                    <input type="text" required placeholder="e.g. John Doe" class="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Email / WhatsApp</label>
-                    <input type="text" required placeholder="Email ose Numër Telefoni" class="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none text-sm">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2" data-i18n="form-label-contact">Email / WhatsApp Contact</label>
+                    <input type="text" required placeholder="Email Address or Phone Number" class="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Përshkrimi i Projektit</label>
-                    <textarea rows="4" placeholder="Tregoni shkurtimisht se çfarë uebsajti kërkoni..." class="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none text-sm"></textarea>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2" data-i18n="form-label-brief">Project Brief & Details</label>
+                    <textarea rows="4" placeholder="Describe the website or features you want to build..." class="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none text-sm"></textarea>
                 </div>
-                <button type="submit" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-base shadow-[0_0_25px_rgba(0,240,255,0.3)] hover:opacity-90 transition">
-                    Dërgo Kërkesën
+                <button type="submit" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-base shadow-[0_0_25px_rgba(0,240,255,0.3)] hover:opacity-90 transition" data-i18n="form-btn-submit">
+                    Submit Request
                 </button>
             </form>
         </div>
@@ -259,14 +418,348 @@
 
     <!-- FOOTER -->
     <footer class="mt-auto py-8 border-t border-white/10 glass-panel text-center text-xs text-slate-500">
-        <p>&copy; 2026 XSUS STUDIO. Të gjitha të drejtat e rezervuara. | xsusstudio.com</p>
+        <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT FOR LUCIDE ICONS & CALCULATOR -->
+    <!-- SCRIPT FOR TRANSLATIONS, BUILDER & CALCULATOR -->
     <script>
         lucide.createIcons();
 
-        // Simple Price Calculator JS Logic
+        // 1. TRANSLATION DICTIONARY
+        const i18nData = {
+            en: {
+                "nav-home": "Home",
+                "nav-web": "Web Dev",
+                "nav-app": "App Dev",
+                "nav-ai": "AI Solutions",
+                "nav-branding": "Branding",
+                "nav-domain": "Domain & Host",
+                "nav-start": "Start Project",
+                "hero-badge": "High-End Web Architecture",
+                "hero-title1": "Modern Websites with",
+                "hero-title2": "Cyber Performance & Design",
+                "hero-desc": "From ultra-fast Landing Pages to complex web platforms. We craft interactive digital experiences built with cutting-edge technologies.",
+                "hero-btn-builder": "Test Web Builder",
+                "hero-btn-portfolio": "View Portfolio",
+                "builder-title": "Live Web Visualizer",
+                "builder-subtitle": "Describe your business or project idea to see a live visual mockup generated instantly.",
+                "builder-label-idea": "Your Project / Business Idea",
+                "builder-label-theme": "Visual Theme",
+                "builder-label-layout": "Layout Style",
+                "builder-btn-generate": "Generate Live Preview",
+                "builder-device-view": "Device View:",
+                "tech-title": "Technologies We Master",
+                "pkg-title1": "Web Development",
+                "pkg-title2": "Packages",
+                "pkg-subtitle": "Choose the ideal tier that best fits your business goals.",
+                "pkg-featured": "Most Popular",
+                "pkg1-name": "Start-Up / Local Business",
+                "pkg1-desc": "Perfect for showcasing a single product, service, or business with a highly polished single-page site.",
+                "pkg1-feat1": "1 Interactive Technical Page",
+                "pkg1-feat2": "Fully Responsive (Mobile/Tablet)",
+                "pkg1-feat3": "Contact Form Integration",
+                "pkg1-feat4": "Essential SEO Optimization",
+                "pkg2-name": "Corporate & Agency",
+                "pkg2-desc": "Designed for established businesses requiring a complete multi-page structure with seamless management.",
+                "pkg2-feat1": "Up to 6-10 Custom Pages",
+                "pkg2-feat2": "Multi-language Support (EN / SQ / FR)",
+                "pkg2-feat3": "Cyber Glassmorphism Animations",
+                "pkg2-feat4": "Custom Domain & SSL Setup",
+                "pkg3-name": "Web App & E-Commerce",
+                "pkg3-desc": "Tailor-made solutions for online stores, user-authenticated platforms, or API-driven applications.",
+                "pkg3-feat1": "E-Commerce & Payment Integration",
+                "pkg3-feat2": "Admin Dashboard Panel",
+                "pkg3-feat3": "Database & API Support",
+                "pkg3-feat4": "24/7 Technical Maintenance",
+                "btn-order": "Order Now",
+                "btn-quote": "Request Quote",
+                "port-badge": "Featured Showcase",
+                "port-title1": "Web Project",
+                "port-title2": "Portfolio",
+                "port-subtitle": "Explore selected web applications engineered for speed, aesthetics, and high conversion.",
+                "port1-desc": "Complete multi-page corporate website with high-speed delivery, interactive analytics UI, and multi-language support.",
+                "port2-desc": "Advanced online retail platform equipped with secure payment integration, catalog filtering, and lightning-fast checkout.",
+                "port3-desc": "Web application featuring futuristic Glassmorphism UI, interactive pricing tools, and real-time responsive rendering.",
+                "port-btn": "Request Similar Project",
+                "port-btn-calc": "Test Calculator",
+                "calc-title": "Project Estimator Calculator",
+                "calc-subtitle": "Select options to generate an instant estimate for your project.",
+                "calc-label-type": "Website Type:",
+                "calc-opt1": "Single Page Landing Site ($150)",
+                "calc-opt2": "Multi-Page Corporate ($300)",
+                "calc-opt3": "E-Commerce / Custom Web Application ($600)",
+                "calc-check-lang": "Multi-Language Support (+EN / AL / FR)",
+                "calc-check-seo": "Advanced SEO Optimization",
+                "calc-total-label": "Estimated Investment:",
+                "calc-btn-apply": "Apply Now",
+                "contact-title1": "Ready to Build Your",
+                "contact-title2": "Digital Presence?",
+                "contact-subtitle": "Send us your project specifications and our engineering team will get back to you within hours.",
+                "form-label-name": "Your Name",
+                "form-label-contact": "Email / WhatsApp Contact",
+                "form-label-brief": "Project Brief & Details",
+                "form-btn-submit": "Submit Request"
+            },
+            sq: {
+                "nav-home": "Kreu",
+                "nav-web": "Web Dev",
+                "nav-app": "App Dev",
+                "nav-ai": "Zgjidhje AI",
+                "nav-branding": "Branding",
+                "nav-domain": "Domain & Host",
+                "nav-start": "Nisi Projektin",
+                "hero-badge": "Arkitekturë Web e Nivelit të Lartë",
+                "hero-title1": "Uebsajte Moderne me",
+                "hero-title2": "Performance & Dizajn Cyber",
+                "hero-desc": "Nga Landing Pages ultra të shpejta deri te platformat komplekse web. Ne ndërtojmë përvojë dixhitale interaktive me teknologjitë më të fundit.",
+                "hero-btn-builder": "Provo Web Builder",
+                "hero-btn-portfolio": "Shiko Portofolin",
+                "builder-title": "Vizualizues Web Live",
+                "builder-subtitle": "Përshkruaj idenë e biznesit tuaj për të parë menjëherë një pamje demonstruese live.",
+                "builder-label-idea": "Idea e Projektit ose Biznesit",
+                "builder-label-theme": "Tema Vizuale",
+                "builder-label-layout": "Stili i Strukturës",
+                "builder-btn-generate": "Gjenero Pamjen Live",
+                "builder-device-view": "Pamja e Pajisjes:",
+                "tech-title": "Teknologjitë që Përdorim",
+                "pkg-title1": "Paketat e",
+                "pkg-title2": "Zhvillimit Web",
+                "pkg-subtitle": "Zgjidhni paketën ideale që i përshtatet më së miri biznesit tuaj.",
+                "pkg-featured": "Më e Populluara",
+                "pkg1-name": "Start-Up / Biznes Lokal",
+                "pkg1-desc": "Ideal për prezantimin e një produkti, shërbimi apo biznesi me faqe te vetme ultra-stilizuar.",
+                "pkg1-feat1": "1 Faqe Teknike Interaktive",
+                "pkg1-feat2": "Dizajn Responsiv (Mobile/Tablet)",
+                "pkg1-feat3": "Integrim Formular Kontakti",
+                "pkg1-feat4": "Optimizim Bazë SEO",
+                "pkg2-name": "Corporate & Agency",
+                "pkg2-desc": "Për kompani që kërkojnë strukturë të plotë me disa faqe me menaxhim të lehtë.",
+                "pkg2-feat1": "Deri në 6-10 Faqe Individuale",
+                "pkg2-feat2": "Suport Multigjuhësh (EN / SQ / FR)",
+                "pkg2-feat3": "Animacione Cyber Glassmorphism",
+                "pkg2-feat4": "Konfigurim Custom Domain & SSL",
+                "pkg3-name": "Web App & E-Commerce",
+                "pkg3-desc": "Zgjidhje me masë për dyqane online, platforma me kyçje përdoruesish apo API integrations.",
+                "pkg3-feat1": "Integrim e-Commerce & Pagesa",
+                "pkg3-feat2": "Panel Administrimi (Dashboard)",
+                "pkg3-feat3": "Baza e të Dhënave & API Support",
+                "pkg3-feat4": "Mirëmbajtje Teknike 24/7",
+                "btn-order": "Porosit Tani",
+                "btn-quote": "Kërko Kuotim",
+                "port-badge": "Punët Tona të Fundit",
+                "port-title1": "Portofoli i",
+                "port-title2": "Projekteve Web",
+                "port-subtitle": "Eksploro uebsajtet e ndërtuara me arkitekturë moderne, shpejtësi maksimale dhe dizajn interaktiv.",
+                "port1-desc": "Uebsajt korporativ me disa faqe, shpejtësi të lartë, panel analitik dhe mbështetje multigjuhëshe.",
+                "port2-desc": "Platformë dyqani online e pajisur me pagesa të sigurta, filtrim produktesh dhe arkëtim ultra të shpejtë.",
+                "port3-desc": "Aplikacion web me dizajn futuristik Glassmorphism, kalkulator interaktiv dhe rendering në kohë reale.",
+                "port-btn": "Kërko Projekt të Ngjashëm",
+                "port-btn-calc": "Testo Kalkulatorin",
+                "calc-title": "Kalkulator i Përafërt i Projektit",
+                "calc-subtitle": "Zgjidhni opsionet tuaja për të marrë një vlerësim me afërsi.",
+                "calc-label-type": "Lloji i Uebsajtit:",
+                "calc-opt1": "Landing Page 1 Faqe ($150)",
+                "calc-opt2": "Multi-Page Corporate ($300)",
+                "calc-opt3": "E-Commerce / Web Application ($600)",
+                "calc-check-lang": "Suport Multigjuhësh (+EN / SQ / FR)",
+                "calc-check-seo": "Optimizim Avancuar SEO",
+                "calc-total-label": "Vlerësimi i Përafërt:",
+                "calc-btn-apply": "Aplikoni Tani",
+                "contact-title1": "Gati për të nisur",
+                "contact-title2": "Uebsajtin Tënd?",
+                "contact-subtitle": "Na dërgoni detajet e projektit tuaj dhe do t'ju kontaktojmë brenda pak orësh.",
+                "form-label-name": "Emri Juaj",
+                "form-label-contact": "Email / WhatsApp Kontakti",
+                "form-label-brief": "Përshkrimi i Projektit",
+                "form-btn-submit": "Dërgo Kërkesën"
+            },
+            fr: {
+                "nav-home": "Accueil",
+                "nav-web": "Dév Web",
+                "nav-app": "Dév App",
+                "nav-ai": "Solutions IA",
+                "nav-branding": "Branding",
+                "nav-domain": "Domaine & Hôte",
+                "nav-start": "Lancer Projet",
+                "hero-badge": "Architecture Web Haut de Gamme",
+                "hero-title1": "Sites Web Modernes avec",
+                "hero-title2": "Performance & Design Cyber",
+                "hero-desc": "Des Landing Pages ultra-rapides aux plateformes web complexes. Nous créons des expériences numériques interactives.",
+                "hero-btn-builder": "Tester le Constructeur",
+                "hero-btn-portfolio": "Voir le Portfolio",
+                "builder-title": "Visualiseur Web en Direct",
+                "builder-subtitle": "Décrivez votre idée pour voir instantanément une maquette visuelle en direct.",
+                "builder-label-idea": "Votre Idée de Projet",
+                "builder-label-theme": "Thème Visuel",
+                "builder-label-layout": "Style de Disposition",
+                "builder-btn-generate": "Générer Aperçu Direct",
+                "builder-device-view": "Vue de l'appareil:",
+                "tech-title": "Technologies Maîtrisées",
+                "pkg-title1": "Offres de",
+                "pkg-title2": "Développement Web",
+                "pkg-subtitle": "Choisissez la formule idéale qui correspond le mieux à vos objectifs.",
+                "pkg-featured": "Le Plus Populaire",
+                "pkg1-name": "Start-Up / Entreprise Locale",
+                "pkg1-desc": "Parfait pour présenter un produit, service ou entreprise avec un site d'une page très soigné.",
+                "pkg1-feat1": "1 Page Technique Interactive",
+                "pkg1-feat2": "Entièrement Responsive (Mobile/Tablette)",
+                "pkg1-feat3": "Intégration Formulaire de Contact",
+                "pkg1-feat4": "Optimisation SEO Essentielle",
+                "pkg2-name": "Corporate & Agence",
+                "pkg2-desc": "Conçu pour les entreprises établies nécessitant une structure multi-pages complète.",
+                "pkg2-feat1": "Jusqu'à 6-10 Pages Personnalisées",
+                "pkg2-feat2": "Support Multi-langues (EN / SQ / FR)",
+                "pkg2-feat3": "Animations Cyber Glassmorphism",
+                "pkg2-feat4": "Configuration Domaine & SSL",
+                "pkg3-name": "Web App & E-Commerce",
+                "pkg3-desc": "Solutions sur mesure pour boutiques en ligne, plateformes utilisateur ou applications API.",
+                "pkg3-feat1": "Intégration E-Commerce & Paiement",
+                "pkg3-feat2": "Tableau de Bord Administrateur",
+                "pkg3-feat3": "Base de Données & Support API",
+                "pkg3-feat4": "Maintenance Technique 24/7",
+                "btn-order": "Commander",
+                "btn-quote": "Demander Devis",
+                "port-badge": "Projets En Vedette",
+                "port-title1": "Portfolio de",
+                "port-title2": "Projets Web",
+                "port-subtitle": "Explorez des applications web conçues pour la vitesse, l'esthétique et la conversion.",
+                "port1-desc": "Site d'entreprise complet multi-pages à grande vitesse avec interface analytique et support multilingue.",
+                "port2-desc": "Plateforme de vente en ligne avancée équipée d'un paiement sécurisé et d'une commande ultra-rapide.",
+                "port3-desc": "Application web avec interface Glassmorphism futuriste, calculatrice de prix et rendu en temps réel.",
+                "port-btn": "Demander Projet Similaire",
+                "port-btn-calc": "Tester Calculatrice",
+                "calc-title": "Calculateur d'Estimation",
+                "calc-subtitle": "Sélectionnez des options pour générer une estimation instantanée.",
+                "calc-label-type": "Type de Site Web:",
+                "calc-opt1": "Landing Page Unique ($150)",
+                "calc-opt2": "Site Corporate Multi-Pages ($300)",
+                "calc-opt3": "E-Commerce / Application Web ($600)",
+                "calc-check-lang": "Support Multi-Langues (+EN / SQ / FR)",
+                "calc-check-seo": "Optimisation SEO Avancée",
+                "calc-total-label": "Investissement Estimé:",
+                "calc-btn-apply": "Postuler Maintenant",
+                "contact-title1": "Prêt à Créer Votre",
+                "contact-title2": "Présence Numérique?",
+                "contact-subtitle": "Envoyez-nous vos spécifications et notre équipe vous recontactera rapidement.",
+                "form-label-name": "Votre Nom",
+                "form-label-contact": "Contact Email / WhatsApp",
+                "form-label-brief": "Détails du Projet",
+                "form-btn-submit": "Envoyer la Demande"
+            }
+        };
+
+        const langSelect = document.getElementById('language-select');
+        function setLanguage(lang) {
+            const dictionary = i18nData[lang] || i18nData['en'];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dictionary[key]) {
+                    el.textContent = dictionary[key];
+                }
+            });
+            document.documentElement.lang = lang;
+        }
+
+        langSelect?.addEventListener('change', (e) => {
+            setLanguage(e.target.value);
+        });
+
+        // 2. LIVE WEB BUILDER PREVIEW LOGIC
+        const builderIdea = document.getElementById('builder-idea');
+        const builderTheme = document.getElementById('builder-theme');
+        const builderLayout = document.getElementById('builder-layout');
+        const generateBtn = document.getElementById('generate-btn');
+        const previewContainer = document.getElementById('preview-container');
+        const previewWrapper = document.getElementById('preview-wrapper');
+        const viewDesktop = document.getElementById('view-desktop');
+        const viewMobile = document.getElementById('view-mobile');
+
+        function renderPreview() {
+            const idea = builderIdea.value || 'Digital Web Project';
+            const theme = builderTheme.value;
+            const layout = builderLayout.value;
+
+            let themeClasses = "bg-[#0b0c10] text-slate-100";
+            let accentColor = "text-[#00f0ff]";
+            let btnGradient = "from-[#00f0ff] to-[#7000ff]";
+
+            if(theme === 'corporate') {
+                themeClasses = "bg-[#0f172a] text-slate-200";
+                accentColor = "text-blue-400";
+                btnGradient = "from-blue-600 to-indigo-600";
+            } else if(theme === 'minimal') {
+                themeClasses = "bg-slate-900 text-slate-100 border-white/20";
+                accentColor = "text-emerald-400";
+                btnGradient = "from-emerald-400 to-teal-500";
+            }
+
+            previewContainer.className = `${themeClasses} border-x border-b border-white/10 rounded-b-2xl p-6 min-h-[380px] flex flex-col justify-between transition-all`;
+
+            previewContainer.innerHTML = `
+                <div>
+                    <!-- Mini Nav -->
+                    <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+                        <div class="font-extrabold text-sm tracking-wider ${accentColor}">${idea.toUpperCase()}</div>
+                        <div class="flex gap-3 text-[11px] opacity-70">
+                            <span>Services</span>
+                            <span>About</span>
+                            <span>Contact</span>
+                        </div>
+                    </div>
+
+                    <!-- Mini Hero -->
+                    <div class="text-center py-6">
+                        <span class="inline-block text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 mb-3 ${accentColor}">
+                            ${layout.toUpperCase()} MODE
+                        </span>
+                        <h3 class="text-2xl font-black mb-2">${idea}</h3>
+                        <p class="text-xs text-slate-400 max-w-sm mx-auto mb-5">Professional high-performance experience engineered by Xsus Studio.</p>
+                        <button class="px-5 py-2 rounded-lg bg-gradient-to-r ${btnGradient} text-black font-bold text-xs shadow-lg">
+                            Get Started
+                        </button>
+                    </div>
+
+                    <!-- Mini Feature Cards -->
+                    <div class="grid grid-cols-3 gap-3 pt-4">
+                        <div class="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
+                            <div class="text-xs font-bold ${accentColor}">Fast</div>
+                            <div class="text-[10px] text-slate-400">99+ Speed</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
+                            <div class="text-xs font-bold ${accentColor}">Secure</div>
+                            <div class="text-[10px] text-slate-400">SSL Active</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
+                            <div class="text-xs font-bold ${accentColor}">Responsive</div>
+                            <div class="text-[10px] text-slate-400">Mobile Ready</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-500">
+                    <span>Generated Live Demo</span>
+                    <span>XSUS STUDIO ENGINE</span>
+                </div>
+            `;
+        }
+
+        generateBtn?.addEventListener('click', renderPreview);
+        renderPreview(); // Initial Render
+
+        // Device Switcher
+        viewDesktop?.addEventListener('click', () => {
+            previewWrapper.style.maxWidth = '100%';
+            viewDesktop.className = "px-3 py-1 rounded bg-cyber-blue/20 text-cyber-blue font-semibold border border-cyber-blue/40";
+            viewMobile.className = "px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10";
+        });
+
+        viewMobile?.addEventListener('click', () => {
+            previewWrapper.style.maxWidth = '340px';
+            viewMobile.className = "px-3 py-1 rounded bg-cyber-blue/20 text-cyber-blue font-semibold border border-cyber-blue/40";
+            viewDesktop.className = "px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10";
+        });
+
+        // 3. PRICE CALCULATOR LOGIC
         const calcType = document.getElementById('calc-type');
         const calcLang = document.getElementById('calc-lang');
         const calcSeo = document.getElementById('calc-seo');
@@ -274,9 +767,9 @@
 
         function updatePrice() {
             let base = parseInt(calcType.value) || 0;
-            if(calcLang.checked) base += parseInt(calcLang.value);
-            if(calcSeo.checked) base += parseInt(calcSeo.value);
-            totalPrice.textContent = '$' + base;
+            if(calcLang && calcLang.checked) base += parseInt(calcLang.value);
+            if(calcSeo && calcSeo.checked) base += parseInt(calcSeo.value);
+            if(totalPrice) totalPrice.textContent = '$' + base;
         }
 
         calcType?.addEventListener('change', updatePrice);
