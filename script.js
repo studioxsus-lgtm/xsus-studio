@@ -1,14 +1,20 @@
 const translations = {
     en: {
+        navAi: "Xsus AI",
+        navEcosystem: "Ecosystem",
+        navApps: "Apps",
         heroBadge: "Official Hybrid Intelligence Platform",
+        heroTitle: 'Most powerful digital tools in a <span class="gradient-text">Single Studio</span>',
         heroSub: "Integrated platform combining artificial intelligence, app development, web, games, and graphic design.",
         btnExplore: "Try Xsus AI",
         btnTools: "View All Tools",
         aiDesc: "Smart hybrid assistant for questions, video scripts, content creation, and code.",
+        aiConsoleTitle: "Xsus AI Interactive Console",
         clearChat: "Clear chat",
         welcomeMsg: "Hello! I am Xsus AI. Ask me for a video script, creative text, or technical question!",
         placeholder: "Ask Xsus AI anything...",
         send: "Send",
+        toolsTitle: "Xsus Studio Ecosystem",
         toolsSub: "All our integrated tools in one single platform.",
         cardAi: "Smart assistant for text generation, video scripts, analysis, and coding.",
         cardApp: "High performance mobile and web applications for daily use.",
@@ -16,19 +22,25 @@ const translations = {
         cardGame: "Interactive gaming experiences and browser games built on WebGL.",
         cardLogo: "Brand identity, vector graphics, and logo design services.",
         cardDomain: "Domain management, DNS routing, and web presence configuration.",
-        appTitle: "App tona në Play Store ose App Store",
+        appTitle: "Our apps on Play Store or App Store",
         appSub: "Download our official mobile applications for the best experience."
     },
     fr: {
+        navAi: "Xsus AI",
+        navEcosystem: "Écosystème",
+        navApps: "Applications",
         heroBadge: "Plateforme d'intelligence hybride officielle",
+        heroTitle: 'Les outils numériques les plus puissants dans un <span class="gradient-text">Seul Studio</span>',
         heroSub: "Plateforme intégrée combinant intelligence artificielle, développement d'applications, web, jeux et design.",
         btnExplore: "Essayer Xsus AI",
         btnTools: "Voir tous les outils",
         aiDesc: "Assistant hybride intelligent pour questions, scripts vidéo, création de contenu et code.",
+        aiConsoleTitle: "Console Interactive Xsus AI",
         clearChat: "Effacer la discussion",
         welcomeMsg: "Bonjour! Je suis Xsus AI. Demandez-moi un script vidéo, du texte ou une question!",
         placeholder: "Posez votre question à Xsus AI...",
         send: "Envoyer",
+        toolsTitle: "Écosystème Xsus Studio",
         toolsSub: "Tous nos outils intégrés sur une seule plateforme.",
         cardAi: "Assistant intelligent pour la génération de texte, scripts vidéo et code.",
         cardApp: "Applications mobiles et web haute performance à usage quotidien.",
@@ -40,15 +52,21 @@ const translations = {
         appSub: "Téléchargez nos applications mobiles officielles pour une meilleure expérience."
     },
     sq: {
+        navAi: "Xsus AI",
+        navEcosystem: "Ekosistemi",
+        navApps: "Aplikacionet",
         heroBadge: "Platforma Zyrtare e Inteligjencës Hibride",
+        heroTitle: 'Veglat më të fuqishme digjitale në një <span class="gradient-text">Studio të Vetme</span>',
         heroSub: "Platformë e integruar që ndërthur inteligjencën artificiale, zhvillimin e aplikacioneve, uebit, lojërave dhe dizajnit grafik.",
         btnExplore: "Provo Xsus AI",
         btnTools: "Shiko të Gjitha Veglat",
         aiDesc: "Asistent hibrid inteligjent për pyetje, skenarë videosh, krijim përmbajtjeje dhe kodim.",
+        aiConsoleTitle: "Xsus AI Interactive Console",
         clearChat: "Pastro bisedën",
         welcomeMsg: "Përshëndetje! Unë jam Xsus AI. Më kërkoni një skenar videoje, një tekst apo pyetje profesionale!",
         placeholder: "Pyet Xsus AI për çfarëdo që dëshiron...",
         send: "Dërgo",
+        toolsTitle: "Ekosistemi Xsus Studio",
         toolsSub: "Të gjitha mjetet tona të integruara në një platformë të vetme.",
         cardAi: "Asistent inteligjent për gjenerim teksti, skenarë videosh, analiza dhe kodim.",
         cardApp: "Aplikacione celulare dhe ueb me performancë të lartë për përdorim të përditshëm.",
@@ -75,14 +93,21 @@ function setLanguage(lang) {
     });
 
     const t = translations[lang];
+    document.getElementById('nav-ai-link').innerText = t.navAi;
+    document.getElementById('nav-ecosystem-link').innerText = t.navEcosystem;
+    document.getElementById('nav-apps-link').innerText = t.navApps;
     document.getElementById('hero-badge').innerText = t.heroBadge;
+    document.getElementById('hero-title').innerHTML = t.heroTitle;
     document.getElementById('hero-subtitle').innerText = t.heroSub;
     document.getElementById('btn-explore').innerText = t.btnExplore;
     document.getElementById('btn-tools').innerText = t.btnTools;
     document.getElementById('ai-desc').innerText = t.aiDesc;
+    document.getElementById('ai-console-title').innerText = t.aiConsoleTitle;
     document.getElementById('txt-clear').innerText = t.clearChat;
+    document.getElementById('welcome-msg').innerText = t.welcomeMsg;
     document.getElementById('userInput').placeholder = t.placeholder;
     document.getElementById('txt-send').innerText = t.send;
+    document.getElementById('tools-title').innerText = t.toolsTitle;
     document.getElementById('tools-sub').innerText = t.toolsSub;
     document.getElementById('card-ai-desc').innerText = t.cardAi;
     document.getElementById('card-app-desc').innerText = t.cardApp;
@@ -232,5 +257,4 @@ function animateParticles() {
 }
 animateParticles();
 
-// Init Lucide Icons
 lucide.createIcons();
