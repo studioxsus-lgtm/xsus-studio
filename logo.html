@@ -308,7 +308,6 @@
         const userBrowserLang = navigator.language.slice(0, 2);
         if (['sq', 'fr', 'en'].includes(userBrowserLang)) setLanguage(userBrowserLang);
 
-        // HELPER TO CONVERT MARKDOWN TO CLEAN HTML
         function formatMarkdownToHTML(text) {
             return text
                 .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
@@ -369,7 +368,7 @@
             else if (type === 'neon') bg.className = "absolute inset-0 bg-gradient-to-br from-[#0a0a12] via-[#120a22] to-[#1f002b] transition-all duration-500";
         }
 
-        // 3. AI BRAND IDENTITY ASSISTANT
+        // 3. AI BRAND IDENTITY ASSISTANT (MULTI-LANGUAGE ADAPTED)
         const aiIdeasBtn = document.getElementById('ai-generate-ideas-btn');
         const aiIdeasOutput = document.getElementById('ai-ideas-output');
 
@@ -379,14 +378,17 @@
             aiIdeasOutput.classList.remove('hidden');
             aiIdeasOutput.innerHTML = `<div class="animate-pulse text-cyber-blue">${currentLang === 'sq' ? 'Duke analizuar brandin...' : currentLang === 'fr' ? 'Analyse de la marque...' : 'Analyzing brand concepts...'}</div>`;
 
+            // Detect current language for AI prompt
+            const targetLanguageName = currentLang === 'sq' ? 'Albanian' : currentLang === 'fr' ? 'French' : 'English';
+
             try {
                 const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         messages: [
-                            { role: 'system', content: 'You are a professional brand identity strategist. Give 3 short, brilliant creative logo concept ideas (colors, psychology, shape) for a brand name.' },
-                            { role: 'user', content: `Give me 3 short logo identity concepts for the brand name: "${name}" in ${currentLang === 'sq' ? 'Albanian' : currentLang === 'fr' ? 'French' : 'English'}.` }
+                            { role: 'system', content: `You are a professional brand identity strategist. Give 3 short, brilliant creative logo concept ideas in ${targetLanguageName}.` },
+                            { role: 'user', content: `Give me 3 short logo identity concepts for the brand name: "${name}" written entirely in ${targetLanguageName}.` }
                         ],
                         model: 'openai'
                     })
