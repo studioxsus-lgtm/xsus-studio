@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="sq" class="dark">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xsus Studio - Multi-Tool Portal</title>
     
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -30,18 +31,23 @@
         }
     </script>
     
+    <!-- Google Fonts & Lucide Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Stilet tona të jashtme -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="min-h-screen relative flex flex-col justify-between">
 
+    <!-- Canvas Background -->
     <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
 
     <!-- Header / Nav -->
     <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             
+            <!-- Logo -->
             <div class="flex items-center gap-3 cursor-pointer" onclick="scrollToSection('hero')">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-600 to-purple-600 p-[2px] shadow-lg shadow-cyan-500/20">
                     <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
@@ -56,62 +62,64 @@
                 </div>
             </div>
 
-            <!-- Navigation Links -->
+            <!-- Menu Links -->
             <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
                 <a href="#ai-section" id="nav-ai-link" class="hover:text-cyan-400 transition-colors">Xsus AI</a>
-                <a href="#tools-section" id="nav-ecosystem-link" class="hover:text-cyan-400 transition-colors">Ekosistemi</a>
-                <a href="#apps-section" id="nav-apps-link" class="hover:text-cyan-400 transition-colors">Aplikacionet</a>
+                <a href="#tools-section" id="nav-ecosystem-link" class="hover:text-cyan-400 transition-colors">Ecosystem</a>
+                <a href="#apps-section" id="nav-apps-link" class="hover:text-cyan-400 transition-colors">Apps</a>
             </nav>
 
             <!-- Language Switcher (EN | FR | SQ) -->
             <div class="flex items-center gap-1 bg-slate-900/80 p-1 rounded-lg border border-slate-800 text-xs font-semibold">
-                <button onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white">EN</button>
+                <button onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">EN</button>
                 <span class="text-slate-600">|</span>
                 <button onclick="setLanguage('fr')" id="lang-fr" class="px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white">FR</button>
                 <span class="text-slate-600">|</span>
-                <button onclick="setLanguage('sq')" id="lang-sq" class="px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">SQ</button>
+                <button onclick="setLanguage('sq')" id="lang-sq" class="px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white">SQ</button>
             </div>
         </div>
     </header>
 
+    <!-- Content -->
     <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-20 flex-1 w-full">
 
         <!-- Hero Section -->
         <section id="hero" class="text-center space-y-6 max-w-4xl mx-auto pt-6">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold tracking-wide uppercase">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                <span id="hero-badge">Platforma Zyrtare e Inteligjencës Hibride</span>
+                <span id="hero-badge">Official Hybrid Intelligence Platform</span>
             </div>
             
             <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight" id="hero-title">
-                Veglat më të fuqishme digjitale në një <span class="gradient-text">Studio të Vetme</span>
+                Most powerful digital tools in a <span class="gradient-text">Single Studio</span>
             </h1>
             
             <p id="hero-subtitle" class="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-                Platformë e integruar që ndërthur inteligjencën artificiale, zhvillimin e aplikacioneve, uebit, lojërave dhe dizajnit grafik.
+                Integrated platform combining artificial intelligence, app development, web, games, and graphic design.
             </p>
 
             <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
                 <a href="#ai-section" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-cyan-500/25 flex items-center gap-2">
-                    <span id="btn-explore">Provo Xsus AI</span>
+                    <span id="btn-explore">Try Xsus AI</span>
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </a>
                 <a href="#tools-section" class="glass-panel hover:bg-slate-900 text-white font-semibold px-8 py-3.5 rounded-xl border border-slate-700 transition-all">
-                    <span id="btn-tools">Shiko të Gjitha Veglat</span>
+                    <span id="btn-tools">View All Tools</span>
                 </a>
             </div>
         </section>
 
-        <!-- Xsus AI Console Section -->
+        <!-- Xsus AI Chat Module -->
         <section id="ai-section" class="space-y-6 pt-10">
             <div class="text-center space-y-2">
                 <h2 class="text-3xl font-bold text-white flex items-center justify-center gap-3">
                     <i data-lucide="bot" class="w-8 h-8 text-cyan-400"></i>
                     <span>Xsus AI Engine</span>
                 </h2>
-                <p id="ai-desc" class="text-slate-400 text-sm">Asistent hibrid inteligjent për pyetje, skenarë videosh, krijim përmbajtjeje dhe kodim.</p>
+                <p id="ai-desc" class="text-slate-400 text-sm">Smart hybrid assistant for questions, video scripts, content creation, and code.</p>
             </div>
 
+            <!-- Chat Panel -->
             <div class="glass-panel-glow rounded-2xl border border-slate-800 overflow-hidden shadow-2xl max-w-4xl mx-auto h-[520px] flex flex-col">
                 <div class="px-6 py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -120,7 +128,7 @@
                     </div>
                     <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-cyan-400 flex items-center gap-1.5 transition-colors">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        <span id="txt-clear">Pastro bisedën</span>
+                        <span id="txt-clear">Clear chat</span>
                     </button>
                 </div>
 
@@ -130,16 +138,16 @@
                             <i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i>
                         </div>
                         <div class="glass-panel p-4 rounded-2xl rounded-tl-none border-slate-800 text-sm text-slate-200">
-                            <p id="welcome-msg">Përshëndetje! Unë jam Xsus AI. Më kërkoni një skenar videoje, një tekst apo pyetje profesionale!</p>
+                            <p id="welcome-msg">Hello! I am Xsus AI. Ask me for a video script, creative text, or technical question!</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="p-4 bg-slate-900/90 border-t border-slate-800">
                     <form id="chatForm" onsubmit="handleChatSubmit(event)" class="flex gap-2 items-center">
-                        <input type="text" id="userInput" placeholder="Pyet Xsus AI për çfarëdo që dëshiron..." class="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all">
+                        <input type="text" id="userInput" placeholder="Ask Xsus AI anything..." class="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all">
                         <button type="submit" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 text-slate-950 font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shrink-0">
-                            <span id="txt-send">Dërgo</span>
+                            <span id="txt-send">Send</span>
                             <i data-lucide="send" class="w-4 h-4"></i>
                         </button>
                     </form>
@@ -147,75 +155,84 @@
             </div>
         </section>
 
-        <!-- Ecosystem Section -->
+        <!-- Ecosystem Grid (The 6 Tools) -->
         <section id="tools-section" class="space-y-8 pt-10">
             <div class="text-center space-y-2">
-                <h2 class="text-3xl font-bold text-white" id="tools-title">Ekosistemi Xsus Studio</h2>
-                <p id="tools-sub" class="text-slate-400 text-sm">Të gjitha mjetet tona të integruara në një platformë të vetme.</p>
+                <h2 class="text-3xl font-bold text-white" id="tools-title">Xsus Studio Ecosystem</h2>
+                <p id="tools-sub" class="text-slate-400 text-sm">All our integrated tools in one single platform.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Xsus AI Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="cpu" class="w-6 h-6"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white">Xsus AI</h3>
-                    <p id="card-ai-desc" class="text-slate-400 text-sm leading-relaxed">Asistent inteligjent për gjenerim teksti, skenarë videosh, analiza dhe kodim.</p>
+                    <p id="card-ai-desc" class="text-slate-400 text-sm leading-relaxed">Smart assistant for text generation, video scripts, analysis, and coding.</p>
                 </div>
 
+                <!-- Xsus App Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="smartphone" class="w-6 h-6"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white">Xsus App</h3>
-                    <p id="card-app-desc" class="text-slate-400 text-sm leading-relaxed">Aplikacione celulare dhe ueb me performancë të lartë për përdorim të përditshëm.</p>
+                    <p id="card-app-desc" class="text-slate-400 text-sm leading-relaxed">High performance mobile and web applications for daily use.</p>
                 </div>
 
+                <!-- Xsus Web Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="globe" class="w-6 h-6"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white">Xsus Web</h3>
-                    <p id="card-web-desc" class="text-slate-400 text-sm leading-relaxed">Zgjidhje moderne për dizajn uebi, zhvillim dhe arkitektura gostitjeje (hosting).</p>
+                    <p id="card-web-desc" class="text-slate-400 text-sm leading-relaxed">Modern web design, development, and hosting architectures.</p>
                 </div>
 
+                <!-- Xsus Game Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="gamepad-2" class="w-6 h-6"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white">Xsus Game</h3>
-                    <p id="card-game-desc" class="text-slate-400 text-sm leading-relaxed">Përvoja lojërash interaktive dhe lojëra direkte në shfletues të ndërtuara mbi WebGL.</p>
+                    <p id="card-game-desc" class="text-slate-400 text-sm leading-relaxed">Interactive gaming experiences and browser games built on WebGL.</p>
                 </div>
 
+                <!-- Xsus Logo Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="palette" class="w-6 h-6"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white">Xsus Logo</h3>
-                    <p id="card-logo-desc" class="text-slate-400 text-sm leading-relaxed">Identitet brandi, grafika vektoriale dhe konceptim profesional logosh.</p>
+                    <p id="card-logo-desc" class="text-slate-400 text-sm leading-relaxed">Brand identity, vector graphics, and logo design services.</p>
                 </div>
 
+                <!-- Xsus Domain Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="server" class="w-6 h-6"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white">Xsus Domain</h3>
-                    <p id="card-domain-desc" class="text-slate-400 text-sm leading-relaxed">Menaxhim domenesht, rutim DNS dhe konfigurim i pranisë në ueb.</p>
+                    <p id="card-domain-desc" class="text-slate-400 text-sm leading-relaxed">Domain management, DNS routing, and web presence configuration.</p>
                 </div>
+
             </div>
         </section>
 
     </main>
 
-    <!-- Footer Mobile App Section -->
+    <!-- Footer Mobile App Download Section -->
     <footer id="apps-section" class="relative z-10 glass-panel border-t border-slate-800/80 mt-16 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
             
             <div class="space-y-2">
-                <h3 id="app-section-title" class="text-2xl font-bold text-white">App tona në Play Store ose App Store</h3>
-                <p id="app-section-subtitle" class="text-sm text-slate-400">Shkarkoni aplikacionet tona zyrtare për përvojën më të mirë në celular.</p>
+                <h3 id="app-section-title" class="text-2xl font-bold text-white">Our apps on Play Store or App Store</h3>
+                <p id="app-section-subtitle" class="text-sm text-slate-400">Download our official mobile applications for the best experience.</p>
             </div>
 
+            <!-- Download Buttons -->
             <div class="flex flex-wrap items-center justify-center gap-4">
                 <a href="#" class="glass-panel hover:glass-panel-glow px-6 py-3.5 rounded-xl border border-slate-700 flex items-center gap-3 transition-all hover:-translate-y-0.5">
                     <i data-lucide="play" class="w-7 h-7 text-cyan-400 fill-cyan-400/20"></i>
@@ -241,6 +258,7 @@
         </div>
     </footer>
 
+    <!-- Skedari i jashtëm JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>
