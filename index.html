@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xsus Studio - Multi-Tool Portal</title>
     
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -31,23 +30,18 @@
         }
     </script>
     
-    <!-- Google Fonts & Lucide Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Stilet tona të jashtme -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="min-h-screen relative flex flex-col justify-between">
 
-    <!-- Canvas Background -->
     <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
 
     <!-- Header / Nav -->
     <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             
-            <!-- Logo -->
             <div class="flex items-center gap-3 cursor-pointer" onclick="scrollToSection('hero')">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-600 to-purple-600 p-[2px] shadow-lg shadow-cyan-500/20">
                     <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
@@ -62,11 +56,11 @@
                 </div>
             </div>
 
-            <!-- Menu Links -->
+            <!-- Navigation Links -->
             <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
-                <a href="#ai-section" class="hover:text-cyan-400 transition-colors">Xsus AI</a>
-                <a href="#tools-section" class="hover:text-cyan-400 transition-colors">Ekosistemi</a>
-                <a href="#apps-section" class="hover:text-cyan-400 transition-colors">Aplikacionet</a>
+                <a href="#ai-section" id="nav-ai-link" class="hover:text-cyan-400 transition-colors">Xsus AI</a>
+                <a href="#tools-section" id="nav-ecosystem-link" class="hover:text-cyan-400 transition-colors">Ekosistemi</a>
+                <a href="#apps-section" id="nav-apps-link" class="hover:text-cyan-400 transition-colors">Aplikacionet</a>
             </nav>
 
             <!-- Language Switcher (EN | FR | SQ) -->
@@ -80,7 +74,6 @@
         </div>
     </header>
 
-    <!-- Content -->
     <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-20 flex-1 w-full">
 
         <!-- Hero Section -->
@@ -90,7 +83,7 @@
                 <span id="hero-badge">Platforma Zyrtare e Inteligjencës Hibride</span>
             </div>
             
-            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight" id="hero-title">
                 Veglat më të fuqishme digjitale në një <span class="gradient-text">Studio të Vetme</span>
             </h1>
             
@@ -109,7 +102,7 @@
             </div>
         </section>
 
-        <!-- Xsus AI Chat Module -->
+        <!-- Xsus AI Console Section -->
         <section id="ai-section" class="space-y-6 pt-10">
             <div class="text-center space-y-2">
                 <h2 class="text-3xl font-bold text-white flex items-center justify-center gap-3">
@@ -119,12 +112,11 @@
                 <p id="ai-desc" class="text-slate-400 text-sm">Asistent hibrid inteligjent për pyetje, skenarë videosh, krijim përmbajtjeje dhe kodim.</p>
             </div>
 
-            <!-- Chat Panel -->
             <div class="glass-panel-glow rounded-2xl border border-slate-800 overflow-hidden shadow-2xl max-w-4xl mx-auto h-[520px] flex flex-col">
                 <div class="px-6 py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
-                        <span class="font-semibold text-white text-sm">Xsus AI Interactive Console</span>
+                        <span class="font-semibold text-white text-sm" id="ai-console-title">Xsus AI Interactive Console</span>
                     </div>
                     <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-cyan-400 flex items-center gap-1.5 transition-colors">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -155,16 +147,14 @@
             </div>
         </section>
 
-        <!-- Ecosystem Grid (The 6 Tools) -->
+        <!-- Ecosystem Section -->
         <section id="tools-section" class="space-y-8 pt-10">
             <div class="text-center space-y-2">
-                <h2 class="text-3xl font-bold text-white">Ekosistemi Xsus Studio</h2>
+                <h2 class="text-3xl font-bold text-white" id="tools-title">Ekosistemi Xsus Studio</h2>
                 <p id="tools-sub" class="text-slate-400 text-sm">Të gjitha mjetet tona të integruara në një platformë të vetme.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
-                <!-- Xsus AI Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="cpu" class="w-6 h-6"></i>
@@ -173,7 +163,6 @@
                     <p id="card-ai-desc" class="text-slate-400 text-sm leading-relaxed">Asistent inteligjent për gjenerim teksti, skenarë videosh, analiza dhe kodim.</p>
                 </div>
 
-                <!-- Xsus App Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="smartphone" class="w-6 h-6"></i>
@@ -182,7 +171,6 @@
                     <p id="card-app-desc" class="text-slate-400 text-sm leading-relaxed">Aplikacione celulare dhe ueb me performancë të lartë për përdorim të përditshëm.</p>
                 </div>
 
-                <!-- Xsus Web Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="globe" class="w-6 h-6"></i>
@@ -191,7 +179,6 @@
                     <p id="card-web-desc" class="text-slate-400 text-sm leading-relaxed">Zgjidhje moderne për dizajn uebi, zhvillim dhe arkitektura gostitjeje (hosting).</p>
                 </div>
 
-                <!-- Xsus Game Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="gamepad-2" class="w-6 h-6"></i>
@@ -200,7 +187,6 @@
                     <p id="card-game-desc" class="text-slate-400 text-sm leading-relaxed">Përvoja lojërash interaktive dhe lojëra direkte në shfletues të ndërtuara mbi WebGL.</p>
                 </div>
 
-                <!-- Xsus Logo Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="palette" class="w-6 h-6"></i>
@@ -209,7 +195,6 @@
                     <p id="card-logo-desc" class="text-slate-400 text-sm leading-relaxed">Identitet brandi, grafika vektoriale dhe konceptim profesional logosh.</p>
                 </div>
 
-                <!-- Xsus Domain Card -->
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group">
                     <div class="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
                         <i data-lucide="server" class="w-6 h-6"></i>
@@ -217,13 +202,12 @@
                     <h3 class="text-xl font-bold text-white">Xsus Domain</h3>
                     <p id="card-domain-desc" class="text-slate-400 text-sm leading-relaxed">Menaxhim domenesht, rutim DNS dhe konfigurim i pranisë në ueb.</p>
                 </div>
-
             </div>
         </section>
 
     </main>
 
-    <!-- Footer Mobile App Download Section -->
+    <!-- Footer Mobile App Section -->
     <footer id="apps-section" class="relative z-10 glass-panel border-t border-slate-800/80 mt-16 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
             
@@ -232,7 +216,6 @@
                 <p id="app-section-subtitle" class="text-sm text-slate-400">Shkarkoni aplikacionet tona zyrtare për përvojën më të mirë në celular.</p>
             </div>
 
-            <!-- Download Buttons -->
             <div class="flex flex-wrap items-center justify-center gap-4">
                 <a href="#" class="glass-panel hover:glass-panel-glow px-6 py-3.5 rounded-xl border border-slate-700 flex items-center gap-3 transition-all hover:-translate-y-0.5">
                     <i data-lucide="play" class="w-7 h-7 text-cyan-400 fill-cyan-400/20"></i>
@@ -258,7 +241,6 @@
         </div>
     </footer>
 
-    <!-- Skedari i jashtëm JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>
