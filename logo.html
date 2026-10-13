@@ -361,14 +361,16 @@
         updateBtn?.addEventListener('click', updateLogo);
         [logoName, logoTagline, logoIcon, logoStyle].forEach(el => el?.addEventListener('input', updateLogo));
 
+        let currentBgType = 'dark';
         function setPreviewBg(type) {
+            currentBgType = type;
             const bg = document.getElementById('canvas-bg');
             if (type === 'dark') bg.className = "absolute inset-0 bg-[#0a0a12] transition-all duration-500";
             else if (type === 'light') bg.className = "absolute inset-0 bg-slate-100 transition-all duration-500";
             else if (type === 'neon') bg.className = "absolute inset-0 bg-gradient-to-br from-[#0a0a12] via-[#120a22] to-[#1f002b] transition-all duration-500";
         }
 
-        // 3. AI BRAND IDENTITY ASSISTANT (MULTI-LANGUAGE ADAPTED)
+        // 3. AI BRAND IDENTITY ASSISTANT
         const aiIdeasBtn = document.getElementById('ai-generate-ideas-btn');
         const aiIdeasOutput = document.getElementById('ai-ideas-output');
 
@@ -378,7 +380,6 @@
             aiIdeasOutput.classList.remove('hidden');
             aiIdeasOutput.innerHTML = `<div class="animate-pulse text-cyber-blue">${currentLang === 'sq' ? 'Duke analizuar brandin...' : currentLang === 'fr' ? 'Analyse de la marque...' : 'Analyzing brand concepts...'}</div>`;
 
-            // Detect current language for AI prompt
             const targetLanguageName = currentLang === 'sq' ? 'Albanian' : currentLang === 'fr' ? 'French' : 'English';
 
             try {
@@ -406,9 +407,50 @@
             }
         });
 
+        // 4. REAL LOGO DOWNLOAD (PNG EXPORT)
         document.getElementById('download-svg-btn')?.addEventListener('click', () => {
-            const name = logoName.value.trim() || 'Xsus-Studio';
-            alert(`Logo concept for "${name}" is ready for download!`);
+            const name = (logoName.value.trim() || 'Xsus-Studio').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const container = document.getElementById('canvas-container');
+
+            // Use HTML2Canvas or dynamic SVG/Canvas drawing to export
+            import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js').then(() => {}).catch(()=>{});
+
+            // Fallback direct canvas render using SVG data URI
+            const canvas = document.createElement('canvas');
+            canvas.width = 1200;
+            canvas.height = 800;
+            const ctx = canvas.getContext('2d');
+
+            // Draw background
+            if (currentBgType === 'light') {
+                ctx.fillStyle = '#f8fafc';
+            } else if (currentBgType === 'neon') {
+                const gradient = ctx.createLinearGradient(0, 0, 1200, 800);
+                gradient.addColorStop(0, '#0a0a12');
+                gradient.addColorStop(0.5, '#120a22');
+                gradient.addColorStop(1, '#1f002b');
+                ctx.fillStyle = gradient;
+            } else {
+                ctx.fillStyle = '#0a0a12';
+            }
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Brand Name Text
+            ctx.fillStyle = currentBgType === 'light' ? '#0f172a' : '#ffffff';
+            ctx.font = '900 72px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(logoName.value.trim() || 'Xsus Studio', canvas.width / 2, canvas.height / 2 + 50);
+
+            // Draw Tagline Text
+            ctx.fillStyle = '#00f0ff';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.fillText((logoTagline.value.trim() || 'FUTURE OF AI').toUpperCase(), canvas.width / 2, canvas.height / 2 + 110);
+
+            // Trigger download
+            const link = document.createElement('a');
+            link.download = `${name}-logo.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
         });
     </script>
     <script src="script.js"></script>
