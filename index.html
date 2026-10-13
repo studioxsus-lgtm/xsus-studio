@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xsus Studio | Platformë AI High-End</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyberCyan: '#00f3ff',
+                        cyberPurple: '#bc13fe',
+                        cyberDark: '#0a0d14',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(16, 22, 36, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 243, 255, 0.15);
+        }
+        .neon-glow:hover {
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-cyberDark text-gray-100 font-sans min-h-screen flex flex-col justify-between">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="sticky top-0 z-50 glass border-b border-cyan-500/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-cyan-500/30">
+                    X
+                </div>
+                <span class="text-2xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-teal-200 to-purple-500">
+                    XSUS STUDIO
+                </span>
+            </div>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium">
+                <a href="#ai-assistant" class="hover:text-cyberCyan transition-colors">AI Assistant</a>
+                <a href="#app-builder" class="hover:text-cyberCyan transition-colors">App Builder</a>
+                <a href="#web-builder" class="hover:text-cyberCyan transition-colors">Web Builder</a>
+                <a href="#logo-studio" class="hover:text-cyberCyan transition-colors">Logo Studio</a>
+                <a href="#domains" class="hover:text-cyberCyan transition-colors">Domains</a>
+                <a href="#games" class="hover:text-cyberCyan transition-colors">Lojërat & Apps</a>
+            </nav>
+
+            <div class="hidden md:block">
+                <button class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold text-sm hover:opacity-90 transition-all neon-glow">
+                    Fillo Tani
+                </button>
+            </div>
+
+            <!-- Mobile Hamburger Button -->
+            <button id="menu-btn" class="md:hidden text-cyan-400 focus:outline-none p-2">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden glass border-b border-cyan-500/20 px-6 py-4 space-y-4">
+            <a href="#ai-assistant" class="block hover:text-cyberCyan">AI Assistant</a>
+            <a href="#app-builder" class="block hover:text-cyberCyan">App Builder</a>
+            <a href="#web-builder" class="block hover:text-cyberCyan">Web Builder</a>
+            <a href="#logo-studio" class="block hover:text-cyberCyan">Logo Studio</a>
+            <a href="#domains" class="block hover:text-cyberCyan">Domains</a>
+            <a href="#games" class="block hover:text-cyberCyan">Lojërat & Apps</a>
+            <button class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold text-sm">
+                Fillo Tani
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-20 flex-grow">
+
+        <!-- HERO SECTION -->
+        <section class="text-center space-y-6 pt-8">
+            <span class="px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-cyan-500/10 text-cyberCyan border border-cyan-500/30">
+                E ardhmja e AI është Këtu
+            </span>
+            <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight">
+                Krijo Uebsajte, Aplikacione & Logo me <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500">Xsus Studio AI</span>
+            </h1>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                Platforma jonë e fuqizuar me Inteligjencë Artificiale të lejon të ndërtosh zgjidhje dixhitale në pak sekonda.
+            </p>
+        </section>
+
+        <!-- MODULE 1: AI ASSISTANT -->
+        <section id="ai-assistant" class="glass rounded-3xl p-8 border border-cyan-500/20">
+            <h2 class="text-2xl font-bold text-cyberCyan mb-4">🤖 Xsus AI Assistant</h2>
+            <p class="text-gray-400 mb-6">Asistenti juaj personal për çdo pyetje apo gjenerim kodi.</p>
+            <div class="flex gap-4">
+                <input type="text" placeholder="Shkruaj kërkesën tënde këtu..." class="flex-grow bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400">
+                <button class="px-6 py-3 rounded-xl bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition">Dërgo</button>
+            </div>
+        </section>
+
+        <!-- MODULE 2: APP BUILDER -->
+        <section id="app-builder" class="glass rounded-3xl p-8 border border-purple-500/20">
+            <h2 class="text-2xl font-bold text-purple-400 mb-4">📱 Xsus App Builder</h2>
+            <p class="text-gray-400 mb-6">Krijo aplikacione celulari për iOS & Android në mënyrë vizuale.</p>
+            <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 text-center text-gray-500">
+                [Moduli i Gjenerimit të Aplikacioneve - Prezantim Vizual]
+            </div>
+        </section>
+
+        <!-- MODULE 3: WEB BUILDER -->
+        <section id="web-builder" class="glass rounded-3xl p-8 border border-cyan-500/20">
+            <h2 class="text-2xl font-bold text-cyberCyan mb-4">🌐 Xsus Web Builder</h2>
+            <p class="text-gray-400 mb-6">Zgjidh stilit tuaj dhe shiko faqen tënde në kohë reale.</p>
+            <div class="flex flex-wrap gap-3 mb-6">
+                <button class="px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-sm">Dark Cyber</button>
+                <button class="px-4 py-2 rounded-lg bg-slate-800 text-gray-400 text-sm">Modern Clean</button>
+                <button class="px-4 py-2 rounded-lg bg-slate-800 text-gray-400 text-sm">Luxury Minimal</button>
+                <button class="px-4 py-2 rounded-lg bg-slate-800 text-gray-400 text-sm">E-Commerce</button>
+            </div>
+            <div class="h-64 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-center text-gray-500">
+                Dritarja e Parashikimit të Uebsajtit (Live Canvas)
+            </div>
+        </section>
+
+        <!-- MODULE 4: LOGO STUDIO -->
+        <section id="logo-studio" class="glass rounded-3xl p-8 border border-purple-500/20">
+            <h2 class="text-2xl font-bold text-purple-400 mb-4">🎨 Xsus Logo Studio</h2>
+            <p class="text-gray-400 mb-6">Gjenero logo vektoriale SVG me inteligjencë artificiale.</p>
+            <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 text-center text-gray-500">
+                [Moduli i Logos - SVG Showcase]
+            </div>
+        </section>
+
+        <!-- MODULE 5: DOMAINS -->
+        <section id="domains" class="glass rounded-3xl p-8 border border-cyan-500/20">
+            <h2 class="text-2xl font-bold text-cyberCyan mb-4">🔍 Xsus Domains</h2>
+            <p class="text-gray-400 mb-6">Kërko dhe kontrollo disponueshmërinë e domeneve tuaja.</p>
+            <div class="flex gap-4">
+                <input type="text" placeholder="Kërko domenin tuaj (p.sh. emriyt.com)..." class="flex-grow bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400">
+                <button class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-bold hover:opacity-90">Kërko</button>
+            </div>
+        </section>
+
+        <!-- BOTTOM SHOWCASE: OFFICIAL GAMES & APPS -->
+        <section id="games" class="space-y-6 pt-6">
+            <div class="text-center space-y-2">
+                <h2 class="text-3xl font-extrabold text-white">Lojërat & Aplikacionet Zyrtare</h2>
+                <p class="text-gray-400 text-sm">Eksploro produktet tona zyrtare të publikuara në dyqane</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Card 1 -->
+                <div class="glass p-6 rounded-2xl border border-cyan-500/20 hover:border-cyan-400 transition-all neon-glow flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/30">Loje 3D</span>
+                            <span class="text-yellow-400 text-sm font-semibold">⭐ 4.9 (12k+)</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Cyber Quest 2077</h3>
+                        <p class="text-gray-400 text-sm mb-6">Aventurë sci-fi me grafikë të lartë dhe inteligjencë artificiale të integruar.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-white">Google Play</button>
+                        <button class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-white">App Store</button>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="glass p-6 rounded-2xl border border-purple-500/20 hover:border-purple-400 transition-all neon-glow flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/30">Produktivitet</span>
+                            <span class="text-yellow-400 text-sm font-semibold">⭐ 4.8 (8k+)</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Xsus Smart Cam</h3>
+                        <p class="text-gray-400 text-sm mb-6">Aplikacion për kamerë me efekte AI dhe kontroll profesional në kohë reale.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-white">Google Play</button>
+                        <button class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-white">App Store</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="glass border-t border-cyan-500/20 py-8 text-center text-gray-500 text-sm mt-12">
+        <p>&copy; 2026 Xsus Studio (xsusstudio.com). Të gjitha të drejtat të rezervuara.</p>
+    </footer>
+
+    <!-- JAVASCRIPT FOR MOBILE MENU -->
+    <script>
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
