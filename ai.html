@@ -33,10 +33,6 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .glass-panel-hover:hover {
-            border-color: rgba(0, 240, 255, 0.4);
-            box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
-        }
         .text-gradient {
             background: linear-gradient(135deg, #00f0ff 0%, #7000ff 50%, #ff007f 100%);
             -webkit-background-clip: text;
@@ -91,13 +87,13 @@
         
         <div class="max-w-4xl mx-auto text-center relative z-10">
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-purple/30 text-cyber-purple text-xs font-semibold uppercase tracking-widest mb-6">
-                <i data-lucide="sparkles" class="w-4 h-4"></i> <span data-i18n="hero-badge">Universal Neural Assistant</span>
+                <i data-lucide="sparkles" class="w-4 h-4"></i> <span data-i18n="hero-badge">Real-Time Gemini Neural Engine</span>
             </div>
             <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
                 <span data-i18n="hero-title1">Ask Anything. Create Everything.</span> <br><span class="text-gradient" data-i18n="hero-title2">Powered by Xsus AI</span>
             </h1>
             <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mb-6 leading-relaxed" data-i18n="hero-desc">
-                Your universal AI companion for answers, writing, programming, and brainstorming in any language.
+                Your live AI companion connected directly to advanced neural models for accurate answers in any language.
             </p>
         </div>
     </header>
@@ -110,7 +106,7 @@
             <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
                 <div class="flex items-center gap-2">
                     <div class="w-3 h-3 rounded-full bg-cyber-blue animate-pulse"></div>
-                    <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Intelligent Assistant</span>
+                    <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Live Neural Assistant</span>
                 </div>
                 <button id="clear-chat" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10">
                     <i data-lucide="trash-2" class="w-3 h-3"></i> <span data-i18n="clear-btn">Clear Chat</span>
@@ -124,7 +120,7 @@
                         AI
                     </div>
                     <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-slate-200 max-w-[85%] leading-relaxed">
-                        <p data-i18n="ai-welcome">Hello! I am your universal AI assistant. Ask me anything, request information, code, or creative text in any language!</p>
+                        <p data-i18n="ai-welcome">Hello! I am connected to live AI models. Ask me anything, request information, or chat in Albanian, English, or French!</p>
                     </div>
                 </div>
             </div>
@@ -145,45 +141,45 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT FOR TRANSLATIONS & SMART REAL-TIME AI REPLIES -->
+    <!-- SCRIPT FOR REAL GEMINI API INTEGRATION -->
     <script>
         lucide.createIcons();
 
-        // 1. MULTI-LANGUAGE DICTIONARY WITH DATA-I18N MAPPINGS
+        // 1. MULTI-LANGUAGE DICTIONARY
         const i18nData = {
             en: {
                 "nav-start": "Launch AI",
-                "hero-badge": "Universal Neural Assistant",
+                "hero-badge": "Real-Time Gemini Neural Engine",
                 "hero-title1": "Ask Anything. Create Everything.",
                 "hero-title2": "Powered by Xsus AI",
-                "hero-desc": "Your universal AI companion for answers, writing, programming, and brainstorming in any language.",
-                "chat-header": "Xsus Intelligent Assistant",
+                "hero-desc": "Your live AI companion connected directly to advanced neural models for accurate answers in any language.",
+                "chat-header": "Xsus Live Neural Assistant",
                 "clear-btn": "Clear Chat",
-                "ai-welcome": "Hello! I am your universal AI assistant. Ask me anything, request information, code, or creative text in any language!",
+                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, request information, or chat in Albanian, English, or French!",
                 "input-placeholder": "Ask Xsus AI anything...",
                 "btn-send": "Send"
             },
             sq: {
                 "nav-start": "Nis AI",
-                "hero-badge": "Asistent Neural Universal",
+                "hero-badge": "Motor Neural Gemini në Kohë Reale",
                 "hero-title1": "Pyet Çdo Gjë. Krijo Çdo Gjë.",
                 "hero-title2": "Mbështetur nga Xsus AI",
-                "hero-desc": "Asistenti yt universal për përgjigje, shkrim, programim dhe ide në çdo gjuhë.",
-                "chat-header": "Asistenti Inteligjent Xsus",
+                "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
+                "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
                 "clear-btn": "Pastro Bisedën",
-                "ai-welcome": "Përshëndetje! Unë jam asistenti yt universal AI. Më pyet çfarë të duash, kërko informacione, kod apo tekste kreative në çdo gjuhë!",
+                "ai-welcome": "Përshëndetje! Jam i lidhur me modelet e vërteta AI. Më pyet çfarë të duash në Shqip, Anglisht apo Frëngjisht!",
                 "input-placeholder": "Pyet Xsus AI për çdo gjë...",
                 "btn-send": "Dërgo"
             },
             fr: {
                 "nav-start": "Lancer IA",
-                "hero-badge": "Assistant Neural Universel",
+                "hero-badge": "Moteur Neural Gemini en Direct",
                 "hero-title1": "Demandez Tout. Créez Tout.",
                 "hero-title2": "Propulsé par Xsus AI",
-                "hero-desc": "Votre compagnon IA universel pour les réponses, la rédaction, la programmation et les idées.",
-                "chat-header": "Assistant Intelligent Xsus",
+                "hero-desc": "Votre compagnon IA en direct connecté aux modèles neuronaux avancés pour des réponses précises.",
+                "chat-header": "Assistant en Direct Xsus",
                 "clear-btn": "Effacer",
-                "ai-welcome": "Bonjour ! Je suis votre assistant IA universel. Posez-moi vos questions ou demandez du code et des textes en toute langue !",
+                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez vos questions en français, anglais ou albanais !",
                 "input-placeholder": "Posez une question à Xsus AI...",
                 "btn-send": "Envoyer"
             }
@@ -194,34 +190,53 @@
             const dictionary = i18nData[lang] || i18nData['en'];
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (dictionary[key]) {
-                    el.textContent = dictionary[key];
-                }
+                if (dictionary[key]) el.textContent = dictionary[key];
             });
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
-                if (dictionary[key]) {
-                    el.placeholder = dictionary[key];
-                }
+                if (dictionary[key]) el.placeholder = dictionary[key];
             });
             document.documentElement.lang = lang;
         }
 
-        langSelect?.addEventListener('change', (e) => {
-            setLanguage(e.target.value);
-        });
+        langSelect?.addEventListener('change', (e) => setLanguage(e.target.value));
 
-        // 2. INTELLIGENT AI ENGINE LOGIC
+        // 2. REAL API CONNECTION TO GOOGLE GEMINI
+        const API_KEY = 'AQ.Ab8RN6KOEvFhpxrIWNbqw3KTuYNMd8ty5ovaEZxpSu974LEW6A';
+
         const aiInput = document.getElementById('ai-input');
         const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
         const clearChatBtn = document.getElementById('clear-chat');
 
-        function handleAIResponse() {
+        async function callGeminiAPI(promptText) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptText }] }]
+                    })
+                });
+
+                const data = await response.json();
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    return data.candidates[0].content.parts[0].text;
+                } else {
+                    return "Ndodhi një gabim gjatë procesimit nga serveri i AI.";
+                }
+            } catch (error) {
+                return "Gabim në lidhje me internetin ose çelësin API.";
+            }
+        }
+
+        async function handleAIResponse() {
             const text = aiInput.value.trim();
             if(!text) return;
 
-            // User Message Bubble
+            // User Message
             const userMsg = document.createElement('div');
             userMsg.className = "flex items-start gap-3 justify-end";
             userMsg.innerHTML = `
@@ -236,31 +251,39 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Simulated Advanced AI Response Engine (Analyzes user query and responds contextually)
-            setTimeout(() => {
-                let currentLang = langSelect.value;
-                let reply = `Based on your query regarding "${text}", Xsus AI has processed the parameters. Here is the analytical breakdown: This topic encompasses technical and structural elements which can be optimized using modern frameworks and digital methodologies.`;
+            // Loading state
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = "flex items-start gap-3";
+            loadingMsg.id = "loading-bubble";
+            loadingMsg.innerHTML = `
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xs shrink-0">
+                    AI
+                </div>
+                <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-400 max-w-[85%] animate-pulse">
+                    Duke menduar... / Thinking...
+                </div>
+            `;
+            aiOutputBox.appendChild(loadingMsg);
+            aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-                if (currentLang === 'sq') {
-                    reply = `Në lidhje me pyetjen tuaj "${text}", Xsus AI ka analizuar të dhënat. Ky është një subjekte interesant që mund të trajtohet përmes qasjeve moderne, strukturave teknike dhe zgjidhjeve digjitale të ofruara nga Xsus Studio. A dëshironi që ta detajojmë më tej?`;
-                } else if (currentLang === 'fr') {
-                    reply = `Concernant votre demande "${text}", Xsus AI a analysé les paramètres. Ce sujet peut être développé efficacement grâce aux outils numériques et méthodologies modernes.`;
-                }
+            // Fetch Real AI Response
+            const reply = await callGeminiAPI(text);
 
-                // AI Message Bubble
-                const aiMsg = document.createElement('div');
-                aiMsg.className = "flex items-start gap-3";
-                aiMsg.innerHTML = `
-                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xs shrink-0">
-                        AI
-                    </div>
-                    <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed whitespace-pre-line">
-                        <p>${reply}</p>
-                    </div>
-                `;
-                aiOutputBox.appendChild(aiMsg);
-                aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
-            }, 800);
+            // Remove loading and show response
+            document.getElementById('loading-bubble')?.remove();
+
+            const aiMsg = document.createElement('div');
+            aiMsg.className = "flex items-start gap-3";
+            aiMsg.innerHTML = `
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xs shrink-0">
+                    AI
+                </div>
+                <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed whitespace-pre-line">
+                    <p>${reply}</p>
+                </div>
+            `;
+            aiOutputBox.appendChild(aiMsg);
+            aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
         }
 
         aiSendBtn?.addEventListener('click', handleAIResponse);
