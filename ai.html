@@ -47,36 +47,39 @@
 <body class="bg-[#06060c] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-cyber-blue selection:text-black">
 
     <!-- NAVIGATION BAR -->
-    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-6 py-4">
+    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-4 md:px-6 py-4">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xl shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+            <a href="index.html" class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-lg shadow-[0_0_15px_rgba(0,240,255,0.4)]">
                     X
                 </div>
-                <span class="text-xl font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">STUDIO</span></span>
+                <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">AI</span></span>
             </a>
 
-            <!-- Desktop Menu -->
-            <div class="hidden md:flex items-center gap-8 font-medium text-sm text-slate-300">
-                <a href="index.html" data-i18n="nav-home" class="hover:text-cyber-blue transition">Home</a>
-                <a href="web.html" data-i18n="nav-web" class="hover:text-cyber-blue transition">Web Dev</a>
-                <a href="app.html" data-i18n="nav-app" class="hover:text-cyber-blue transition">App Dev</a>
-                <a href="ai.html" data-i18n="nav-ai" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">AI Solutions</a>
-                <a href="logo.html" data-i18n="nav-branding" class="hover:text-cyber-blue transition">Branding</a>
-                <a href="domain.html" data-i18n="nav-domain" class="hover:text-cyber-blue transition">Domain & Host</a>
+            <!-- Desktop Menu (Renditja e kërkuar) -->
+            <div class="hidden lg:flex items-center gap-6 font-medium text-xs text-slate-300">
+                <a href="ai.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Xsus AI</a>
+                <a href="app.html" class="hover:text-cyber-blue transition">Xsus App</a>
+                <a href="web.html" class="hover:text-cyber-blue transition">Xsus Web</a>
+                <a href="game.html" class="hover:text-cyber-blue transition">Xsus Game</a>
+                <a href="logo.html" class="hover:text-cyber-blue transition">Xsus Logo</a>
+                <a href="domain.html" class="hover:text-cyber-blue transition">Xsus Domain</a>
             </div>
 
-            <div class="flex items-center gap-4">
-                <!-- LANGUAGE SELECTOR -->
-                <select id="language-select" class="bg-black/50 border border-white/20 text-xs font-semibold text-white px-3 py-1.5 rounded-lg focus:border-cyber-blue outline-none cursor-pointer">
-                    <option value="en" selected>EN 🇬🇧</option>
-                    <option value="sq">SQ 🇦🇱</option>
-                    <option value="fr">FR 🇫🇷</option>
-                </select>
+            <!-- Language Selector & CTA -->
+            <div class="flex items-center gap-3">
+                <div class="glass-panel px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-300">
+                    <i data-lucide="globe" class="w-3.5 h-3.5 text-cyber-blue"></i>
+                    <select id="language-select" class="bg-transparent text-white outline-none cursor-pointer">
+                        <option value="en" class="bg-[#0a0a12] text-white" selected>EN</option>
+                        <option value="sq" class="bg-[#0a0a12] text-white">SQ</option>
+                        <option value="fr" class="bg-[#0a0a12] text-white">FR</option>
+                    </select>
+                </div>
 
-                <a href="#ai-console" data-i18n="nav-start" class="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-sm hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
-                    <i data-lucide="cpu" class="w-4 h-4"></i>
-                    Launch AI
+                <a href="#ai-console" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-xs hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                    <span data-i18n="nav-start">Launch AI</span>
                 </a>
             </div>
         </div>
@@ -112,7 +115,7 @@
                 
                 <!-- AI Module Selectors -->
                 <div class="flex items-center gap-2 w-full md:w-auto">
-                    <select id="ai-mode" class="bg-black/60 border border-white/15 text-xs font-semibold text-white px-4 py-2 rounded-xl focus:border-cyber-blue outline-none cursor-pointer w-full md:w-auto">
+                    <select id="ai-mode" class="bg-black/60 border border-white/15 text-xs font-semibold text-white px-4 py-2.5 rounded-xl focus:border-cyber-blue outline-none cursor-pointer w-full md:w-auto">
                         <option value="script" data-i18n="mode-script">🎬 Video Script Generator</option>
                         <option value="code" data-i18n="mode-code">💻 Code & Web Assistant</option>
                         <option value="copy" data-i18n="mode-copy">✍️ Marketing Copywriter</option>
@@ -134,7 +137,7 @@
 
             <!-- Input Bar -->
             <div class="flex items-center gap-3">
-                <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Type your topic or prompt here (e.g., Video script about renewable energy)..." class="flex-1 p-4 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Type your topic or prompt here..." class="flex-1 p-4 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
                 <button id="ai-send-btn" class="px-6 py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0">
                     <i data-lucide="send" class="w-4 h-4"></i> <span data-i18n="btn-generate">Generate</span>
                 </button>
@@ -206,48 +209,78 @@
         // 1. TRANSLATION DICTIONARY
         const i18nData = {
             en: {
-                "nav-home": "Home", "nav-web": "Web Dev", "nav-app": "App Dev", "nav-ai": "AI Solutions", "nav-branding": "Branding", "nav-domain": "Domain & Host", "nav-start": "Launch AI",
-                "hero-badge": "Next-Gen AI Intelligence", "hero-title1": "Empower Your Workflow with", "hero-title2": "Xsus AI Solutions",
+                "nav-start": "Launch AI",
+                "hero-badge": "Next-Gen AI Intelligence",
+                "hero-title1": "Empower Your Workflow with",
+                "hero-title2": "Xsus AI Solutions",
                 "hero-desc": "From automated video script writing to custom enterprise code generation. Leverage intelligent neural tools built for peak productivity.",
-                "console-title": "Xsus Neural Console", "console-subtitle": "Select an AI module, enter your topic, and generate professional outputs instantly.",
-                "mode-script": "🎬 Video Script Generator", "mode-code": "💻 Code & Web Assistant", "mode-copy": "✍️ Marketing Copywriter",
+                "console-title": "Xsus Neural Console",
+                "console-subtitle": "Select an AI module, enter your topic, and generate professional outputs instantly.",
+                "mode-script": "🎬 Video Script Generator",
+                "mode-code": "💻 Code & Web Assistant",
+                "mode-copy": "✍️ Marketing Copywriter",
                 "ai-welcome": "Hello! I am Xsus AI Engine. Choose your module above, type your topic below, and let's create something extraordinary together!",
-                "input-placeholder": "Type your topic or prompt here (e.g., Video script about renewable energy)...",
+                "input-placeholder": "Type your topic or prompt here...",
                 "btn-generate": "Generate",
-                "serv-title1": "Enterprise AI", "serv-title2": "Capabilities", "serv-subtitle": "Advanced artificial intelligence services tailored for scaling modern businesses.",
-                "s1-title": "AI Video Production Scripts", "s1-desc": "Create high-retention multi-part video scripts for YouTube Shorts, TikTok, and promotional brand campaigns.",
-                "s2-title": "Custom Code & UI Automation", "s2-desc": "Generate production-ready Tailwind CSS layouts, JavaScript logic, and automated workflows instantly.",
-                "s3-title": "Multilingual Chat Assistants", "s3-desc": "Deploy intelligent customer support bots fluent in English, Albanian, and French for your web platform.",
+                "serv-title1": "Enterprise AI",
+                "serv-title2": "Capabilities",
+                "serv-subtitle": "Advanced artificial intelligence services tailored for scaling modern businesses.",
+                "s1-title": "AI Video Production Scripts",
+                "s1-desc": "Create high-retention multi-part video scripts for YouTube Shorts, TikTok, and promotional brand campaigns.",
+                "s2-title": "Custom Code & UI Automation",
+                "s2-desc": "Generate production-ready Tailwind CSS layouts, JavaScript logic, and automated workflows instantly.",
+                "s3-title": "Multilingual Chat Assistants",
+                "s3-desc": "Deploy intelligent customer support bots fluent in English, Albanian, and French for your web platform.",
                 "try-module": "Try Module"
             },
             sq: {
-                "nav-home": "Kreu", "nav-web": "Web Dev", "nav-app": "App Dev", "nav-ai": "Zgjidhje AI", "nav-branding": "Branding", "nav-domain": "Domain & Host", "nav-start": "Nis AI",
-                "hero-badge": "Inteligjencë AI e Brezit të Ri", "hero-title1": "Fuqizoni Punën tuaj me", "hero-title2": "Zgjidhjet Xsus AI",
+                "nav-start": "Nis AI",
+                "hero-badge": "Inteligjencë AI e Brezit të Ri",
+                "hero-title1": "Fuqizoni Punën tuaj me",
+                "hero-title2": "Zgjidhjet Xsus AI",
                 "hero-desc": "Nga skriptet e automatizuara të video-ve deri te gjenerimi i kodit profesional. Përdorni mjete neurale për produktivitet maksimal.",
-                "console-title": "Konsola Neurale Xsus", "console-subtitle": "Zgjidhni një modul AI, shkruani temën tuaj dhe gjeneroni rezultate profesionale në sekondë.",
-                "mode-script": "🎬 Gjenerues Skriptesh Video", "mode-code": "💻 Asistent Kodi & Web", "mode-copy": "✍️ Kopjues Marketingu",
+                "console-title": "Konsola Neurale Xsus",
+                "console-subtitle": "Zgjidhni një modul AI, shkruani temën tuaj dhe gjeneroni rezultate profesionale në sekondë.",
+                "mode-script": "🎬 Gjenerues Skriptesh Video",
+                "mode-code": "💻 Asistent Kodi & Web",
+                "mode-copy": "✍️ Kopjues Marketingu",
                 "ai-welcome": "Përshëndetje! Unë jam Xsus AI Engine. Zgjidhni modulin sipër, shkruani temën tuaj dhe le të krijojmë diçka unike së bashku!",
-                "input-placeholder": "Shkruani temën ose kërkesën tuaj këtu (p.sh., Skript video për energjinë e gjelbër)...",
+                "input-placeholder": "Shkruani temën ose kërkesën tuaj këtu...",
                 "btn-generate": "Gjenero",
-                "serv-title1": "Aftësitë AI për", "serv-title2": "Biznesin", "serv-subtitle": "Shërbime të avancuara të inteligjencës artificiale të përshtatura për rritjen e biznesit tuaj.",
-                "s1-title": "Skripte Video për Prodhim AI", "s1-desc": "Krijoni skripte video me mbajtje të lartë interesi për YouTube Shorts, TikTok dhe fushata promovuese.",
-                "s2-title": "Automatizim Kodi & UI", "s2-desc": "Gjeneroni struktura Tailwind CSS gati për prodhim, logjikë JavaScript dhe rrjedha të automatizuara.",
-                "s3-title": "Asistentë Chat Shumëgjinorë", "s3-desc": "Vendosni botë inteligjente mbështetjeje në Anglisht, Shqip dhe Frëngjisht për platformën tuaj web.",
+                "serv-title1": "Aftësitë AI për",
+                "serv-title2": "Biznesin",
+                "serv-subtitle": "Shërbime të avancuara të inteligjencës artificiale të përshtatura për rritjen e biznesit tuaj.",
+                "s1-title": "Skripte Video për Prodhim AI",
+                "s1-desc": "Krijoni skripte video me mbajtje të lartë interesi për YouTube Shorts, TikTok dhe fushata promovuese.",
+                "s2-title": "Automatizim Kodi & UI",
+                "s2-desc": "Gjeneroni struktura Tailwind CSS gati për prodhim, logjikë JavaScript dhe rrjedha të automatizuara.",
+                "s3-title": "Asistentë Chat Shumëgjinorë",
+                "s3-desc": "Vendosni botë inteligjente mbështetjeje në Anglisht, Shqip dhe Frëngjisht për platformën tuaj web.",
                 "try-module": "Provo Modulin"
             },
             fr: {
-                "nav-home": "Accueil", "nav-web": "Dév Web", "nav-app": "Dév App", "nav-ai": "Solutions IA", "nav-branding": "Branding", "nav-domain": "Domaine & Hôte", "nav-start": "Lancer IA",
-                "hero-badge": "Intelligence IA de Nouvelle Génération", "hero-title1": "Optimisez Votre Flux avec", "hero-title2": "les Solutions Xsus IA",
+                "nav-start": "Lancer IA",
+                "hero-badge": "Intelligence IA de Nouvelle Génération",
+                "hero-title1": "Optimisez Votre Flux avec",
+                "hero-title2": "les Solutions Xsus IA",
                 "hero-desc": "De la rédaction de scripts vidéo automatisés à la génération de code sur mesure. Utilisez des outils neuronaux intelligents.",
-                "console-title": "Console Neurale Xsus", "console-subtitle": "Sélectionnez un module IA, entrez votre sujet et générez des résultats instantanément.",
-                "mode-script": "🎬 Générateur de Scripts Vidéo", "mode-code": "💻 Assistant Code & Web", "mode-copy": "✍️ Concepteur Marketing",
+                "console-title": "Console Neurale Xsus",
+                "console-subtitle": "Sélectionnez un module IA, entrez votre sujet et générez des résultats instantanément.",
+                "mode-script": "🎬 Générateur de Scripts Vidéo",
+                "mode-code": "💻 Assistant Code & Web",
+                "mode-copy": "✍️ Concepteur Marketing",
                 "ai-welcome": "Bonjour ! Je suis Xsus AI Engine. Choisissez votre module ci-dessus, tapez votre sujet et créons ensemble !",
-                "input-placeholder": "Tapez votre sujet ou invite ici (ex: Script vidéo sur l'énergie solaire)...",
+                "input-placeholder": "Tapez votre sujet ou invite ici...",
                 "btn-generate": "Générer",
-                "serv-title1": "Capacités IA", "serv-title2": "d'Entreprise", "serv-subtitle": "Services d'intelligence artificielle avancés conçus pour faire évoluer vos projets.",
-                "s1-title": "Scripts de Production Vidéo", "s1-desc": "Créez des scripts vidéo engageants pour YouTube Shorts, TikTok et vos campagnes marketing.",
-                "s2-title": "Automatisation Code & UI", "s2-desc": "Générez des maquettes Tailwind CSS et une logique JavaScript prêtes pour la production.",
-                "s3-title": "Assistants de Chat Multilingues", "s3-desc": "Déployez des bots de support intelligents parlant anglais, albanais et français.",
+                "serv-title1": "Capacités IA",
+                "serv-title2": "d'Entreprise",
+                "serv-subtitle": "Services d'intelligence artificielle avancés conçus pour faire évoluer vos projets.",
+                "s1-title": "Scripts de Production Vidéo",
+                "s1-desc": "Créez des scripts vidéo engageants pour YouTube Shorts, TikTok et vos campagnes marketing.",
+                "s2-title": "Automatisation Code & UI",
+                "s2-desc": "Générez des maquettes Tailwind CSS et une logique JavaScript prêtes pour la production.",
+                "s3-title": "Assistants de Chat Multilingues",
+                "s3-desc": "Déployez des bots de support intelligents parlant anglais, albanais et français.",
                 "try-module": "Essayer le Module"
             }
         };
