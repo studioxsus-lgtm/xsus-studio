@@ -1,10 +1,19 @@
+/* ==========================================================
+   Xsus Studio - Complete Cyber Glassmorphism Stylesheet
+   ========================================================== */
+
+/* Global Styles */
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-color: #050811;
     color: #f8fafc;
     overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
 }
 
+/* Glassmorphism Panel Core */
 .glass-panel {
     background: rgba(13, 19, 34, 0.7);
     backdrop-filter: blur(16px);
@@ -12,19 +21,23 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Glassmorphism Panel with Glowing Neon Accent */
 .glass-panel-glow {
     background: rgba(13, 19, 34, 0.85);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(0, 242, 254, 0.3);
     box-shadow: 0 0 25px rgba(0, 242, 254, 0.15);
 }
 
+/* Gradient Text for Headings and Highlights */
 .gradient-text {
     background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #00ffcc 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
+/* Custom Scrollbar Styling */
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
 }
@@ -40,4 +53,12 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 242, 254, 0.5);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .glass-panel {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
 }
