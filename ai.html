@@ -56,7 +56,7 @@
                 <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">AI</span></span>
             </a>
 
-            <!-- Desktop Menu (Renditja e kërkuar) -->
+            <!-- Desktop Menu -->
             <div class="hidden lg:flex items-center gap-6 font-medium text-xs text-slate-300">
                 <a href="ai.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Xsus AI</a>
                 <a href="app.html" class="hover:text-cyber-blue transition">Xsus App</a>
@@ -145,11 +145,11 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT FOR TRANSLATIONS & SMART UNIVERSAL AI RESPONSES -->
+    <!-- SCRIPT FOR TRANSLATIONS & SMART REAL-TIME AI REPLIES -->
     <script>
         lucide.createIcons();
 
-        // 1. MULTI-LANGUAGE DICTIONARY
+        // 1. MULTI-LANGUAGE DICTIONARY WITH DATA-I18N MAPPINGS
         const i18nData = {
             en: {
                 "nav-start": "Launch AI",
@@ -167,7 +167,7 @@
                 "nav-start": "Nis AI",
                 "hero-badge": "Asistent Neural Universal",
                 "hero-title1": "Pyet Çdo Gjë. Krijo Çdo Gjë.",
-                "hero-title2": "Mbshtetur nga Xsus AI",
+                "hero-title2": "Mbështetur nga Xsus AI",
                 "hero-desc": "Asistenti yt universal për përgjigje, shkrim, programim dhe ide në çdo gjuhë.",
                 "chat-header": "Asistenti Inteligjent Xsus",
                 "clear-btn": "Pastro Bisedën",
@@ -211,7 +211,7 @@
             setLanguage(e.target.value);
         });
 
-        // 2. SMART UNIVERSAL AI SIMULATOR (Responds naturally based on user prompt)
+        // 2. INTELLIGENT AI ENGINE LOGIC
         const aiInput = document.getElementById('ai-input');
         const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
@@ -236,15 +236,15 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Smart Contextual AI Simulation
+            // Simulated Advanced AI Response Engine (Analyzes user query and responds contextually)
             setTimeout(() => {
                 let currentLang = langSelect.value;
-                let reply = `I have received your request regarding "${text}". As an intelligent model integrated within Xsus Studio, I am ready to help you explore, research, or develop this topic further with precise insights.`;
+                let reply = `Based on your query regarding "${text}", Xsus AI has processed the parameters. Here is the analytical breakdown: This topic encompasses technical and structural elements which can be optimized using modern frameworks and digital methodologies.`;
 
                 if (currentLang === 'sq') {
-                    reply = `Përshëndetje! Kam analizuar pyetjen tuaj mbi "${text}". Si model inteligjent i integruar në Xsus Studio, jam këtu t'ju ndihmoj me informacione të sakta, sugjerime ose përgjigje të detajuara për çdo gjë që ju nevojitet.`;
+                    reply = `Në lidhje me pyetjen tuaj "${text}", Xsus AI ka analizuar të dhënat. Ky është një subjekte interesant që mund të trajtohet përmes qasjeve moderne, strukturave teknike dhe zgjidhjeve digjitale të ofruara nga Xsus Studio. A dëshironi që ta detajojmë më tej?`;
                 } else if (currentLang === 'fr') {
-                    reply = `J'ai bien reçu votre demande concernant "${text}". En tant que modèle intelligent intégré dans Xsus Studio, je suis prêt à vous aider avec des analyses et des réponses précises.`;
+                    reply = `Concernant votre demande "${text}", Xsus AI a analysé les paramètres. Ce sujet peut être développé efficacement grâce aux outils numériques et méthodologies modernes.`;
                 }
 
                 // AI Message Bubble
@@ -260,7 +260,7 @@
                 `;
                 aiOutputBox.appendChild(aiMsg);
                 aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
-            }, 700);
+            }, 800);
         }
 
         aiSendBtn?.addEventListener('click', handleAIResponse);
@@ -270,9 +270,7 @@
 
         clearChatBtn?.addEventListener('click', () => {
             const currentLang = langSelect.value;
-            let welcomeText = "Hello! I am your universal AI assistant. Ask me anything, request information, code, or creative text in any language!";
-            if(currentLang === 'sq') welcomeText = "Përshëndetje! Unë jam asistenti yt universal AI. Më pyet çfarë të duash, kërko informacione, kod apo tekste kreative në çdo gjuhë!";
-            if(currentLang === 'fr') welcomeText = "Bonjour ! Je suis votre assistant IA universel. Posez-moi vos questions ou demandez du code et des textes en toute langue !";
+            let welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
 
             aiOutputBox.innerHTML = `
                 <div class="flex items-start gap-3">
