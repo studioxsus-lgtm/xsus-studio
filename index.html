@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="sq" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,10 +76,10 @@
 </head>
 <body class="min-h-screen relative flex flex-col justify-between">
 
-    <!-- Interactive Canvas Particles -->
+    <!-- Canvas Interactive Background -->
     <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
 
-    <!-- Header / Navigation -->
+    <!-- Navigation Header -->
     <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             
@@ -108,66 +108,64 @@
                 <button onclick="switchTab('domain')" id="nav-domain" class="px-4 py-2 rounded-full text-sm font-medium transition-all text-slate-400 hover:text-white">Xsus Domain</button>
             </nav>
 
-            <!-- Language Switcher (Text only: EN | FR | SQ) -->
+            <!-- Text-only Language Switcher (EN | FR | SQ) -->
             <div class="flex items-center gap-1 bg-slate-900/80 p-1 rounded-lg border border-slate-800 text-xs font-semibold">
-                <button onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">EN</button>
+                <button onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white">EN</button>
                 <span class="text-slate-600">|</span>
                 <button onclick="setLanguage('fr')" id="lang-fr" class="px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white">FR</button>
                 <span class="text-slate-600">|</span>
-                <button onclick="setLanguage('sq')" id="lang-sq" class="px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white">SQ</button>
+                <button onclick="setLanguage('sq')" id="lang-sq" class="px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">SQ</button>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Area -->
+    <!-- Main Workspace -->
     <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
 
-        <!-- Xsus AI Module (Active View) -->
+        <!-- Xsus AI Interface -->
         <section id="view-ai" class="block space-y-6">
             
-            <!-- Hero Title -->
             <div class="text-center max-w-3xl mx-auto space-y-3">
                 <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
                     <span class="gradient-text">Xsus AI</span>
                 </h2>
                 <p id="ai-subtitle" class="text-slate-400 text-sm sm:text-base">
-                    Next-generation artificial intelligence with web grounding and multi-task capability.
+                    Inteligjencë artificiale e gjeneratës së re me aftësi të kompletuara.
                 </p>
             </div>
 
-            <!-- Chat Interface Card -->
             <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex flex-col h-[600px]">
                 
-                <!-- Chat Window Header -->
+                <!-- Chat Top Bar -->
                 <div class="px-6 py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
-                        <span class="font-semibold text-white text-base">Xsus AI</span>
+                        <span class="font-semibold text-white text-base">Xsus AI Engine</span>
                     </div>
                     <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-cyan-400 flex items-center gap-1.5 transition-colors">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        <span id="txt-clear">Clear chat</span>
+                        <span id="txt-clear">Pastro bisedën</span>
                     </button>
                 </div>
 
-                <!-- Chat Conversation Stream -->
+                <!-- Messages Area -->
                 <div id="chatStream" class="flex-1 p-6 overflow-y-auto space-y-4 custom-scrollbar bg-slate-950/40">
                     <div class="flex gap-3 max-w-3xl">
                         <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
                             <i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i>
                         </div>
                         <div class="glass-panel p-4 rounded-2xl rounded-tl-none border-slate-800 text-sm text-slate-200 space-y-2">
-                            <p id="welcome-msg">Hello! I am Xsus AI. How can I assist you today?</p>
+                            <p id="welcome-msg">Përshëndetje! Unë jam Xsus AI. Si mund t'ju ndihmoj sot?</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Input Area -->
+                <!-- Input Form -->
                 <div class="p-4 bg-slate-900/90 border-t border-slate-800">
                     <form id="chatForm" onsubmit="handleChatSubmit(event)" class="flex gap-2 items-center">
-                        <input type="text" id="userInput" placeholder="Ask Xsus AI anything..." class="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all">
+                        <input type="text" id="userInput" placeholder="Pyet Xsus AI për çfarëdo që dëshiron..." class="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all">
                         <button type="submit" id="sendBtn" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 shrink-0">
-                            <span id="txt-send">Send</span>
+                            <span id="txt-send">Dërgo</span>
                             <i data-lucide="send" class="w-4 h-4"></i>
                         </button>
                     </form>
@@ -175,40 +173,40 @@
             </div>
         </section>
 
-        <!-- Other Tools Placeholders -->
+        <!-- Other Ecosystem Tools -->
         <section id="view-app" class="hidden text-center py-20 space-y-4">
             <i data-lucide="smartphone" class="w-16 h-16 text-cyan-400 mx-auto"></i>
             <h2 class="text-3xl font-bold text-white">Xsus App</h2>
-            <p id="app-desc" class="text-slate-400 max-w-md mx-auto">High performance mobile and web applications developed by Xsus Studio.</p>
+            <p id="app-desc" class="text-slate-400 max-w-md mx-auto">Aplikacione celulare dhe ueb me performancë të lartë të zhvilluara nga Xsus Studio.</p>
         </section>
 
         <section id="view-web" class="hidden text-center py-20 space-y-4">
             <i data-lucide="globe" class="w-16 h-16 text-cyan-400 mx-auto"></i>
             <h2 class="text-3xl font-bold text-white">Xsus Web</h2>
-            <p id="web-desc" class="text-slate-400 max-w-md mx-auto">Modern web design, development, and hosting architectures.</p>
+            <p id="web-desc" class="text-slate-400 max-w-md mx-auto">Dizajn modern uebi, zhvillim dhe arkitektura hosting-u.</p>
         </section>
 
         <section id="view-game" class="hidden text-center py-20 space-y-4">
             <i data-lucide="gamepad-2" class="w-16 h-16 text-cyan-400 mx-auto"></i>
             <h2 class="text-3xl font-bold text-white">Xsus Game</h2>
-            <p id="game-desc" class="text-slate-400 max-w-md mx-auto">Interactive gaming experiences and browser games built on WebGL.</p>
+            <p id="game-desc" class="text-slate-400 max-w-md mx-auto">Përvoja lojërash interaktive dhe lojëra në shfletues të ndërtuara mbi WebGL.</p>
         </section>
 
         <section id="view-logo" class="hidden text-center py-20 space-y-4">
             <i data-lucide="palette" class="w-16 h-16 text-cyan-400 mx-auto"></i>
             <h2 class="text-3xl font-bold text-white">Xsus Logo</h2>
-            <p id="logo-desc" class="text-slate-400 max-w-md mx-auto">Brand identity, vector graphics, and logo design services.</p>
+            <p id="logo-desc" class="text-slate-400 max-w-md mx-auto">Identitet brandi, grafika vektoriale dhe shërbime dizajni logosh.</p>
         </section>
 
         <section id="view-domain" class="hidden text-center py-20 space-y-4">
             <i data-lucide="server" class="w-16 h-16 text-cyan-400 mx-auto"></i>
             <h2 class="text-3xl font-bold text-white">Xsus Domain</h2>
-            <p id="domain-desc" class="text-slate-400 max-w-md mx-auto">Domain management, DNS routing, and web presence configuration.</p>
+            <p id="domain-desc" class="text-slate-400 max-w-md mx-auto">Menaxhim domenesht, rutim DNS dhe konfigurim i pranisë në ueb.</p>
         </section>
 
     </main>
 
-    <!-- App Store & Google Play Distribution Section (At the Bottom) -->
+    <!-- Footer Mobile App Distribution -->
     <footer class="relative z-10 glass-panel border-t border-slate-800/80 mt-12 py-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
             
@@ -217,10 +215,7 @@
                 <p id="app-section-subtitle" class="text-sm text-slate-400">Shkarkoni aplikacionet tona zyrtare për përvojën më të mirë në celular.</p>
             </div>
 
-            <!-- Download Badges -->
             <div class="flex flex-wrap items-center justify-center gap-4">
-                
-                <!-- Google Play Button -->
                 <a href="#" class="glass-panel hover:glass-panel-glow px-5 py-3 rounded-xl border border-slate-700 flex items-center gap-3 transition-all hover:-translate-y-0.5">
                     <i data-lucide="play" class="w-7 h-7 text-cyan-400 fill-cyan-400/20"></i>
                     <div class="text-left">
@@ -229,7 +224,6 @@
                     </div>
                 </a>
 
-                <!-- App Store Button -->
                 <a href="#" class="glass-panel hover:glass-panel-glow px-5 py-3 rounded-xl border border-slate-700 flex items-center gap-3 transition-all hover:-translate-y-0.5">
                     <i data-lucide="apple" class="w-7 h-7 text-white"></i>
                     <div class="text-left">
@@ -237,7 +231,6 @@
                         <div class="text-sm font-bold text-white">App Store</div>
                     </div>
                 </a>
-
             </div>
 
             <div class="pt-6 border-t border-slate-800/60 text-xs text-slate-500">
@@ -247,7 +240,7 @@
         </div>
     </footer>
 
-    <!-- JavaScript Logic -->
+    <!-- Core AI & Logic Script -->
     <script>
         const translations = {
             en: {
@@ -294,7 +287,7 @@
             }
         };
 
-        let currentLang = 'en';
+        let currentLang = 'sq';
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -353,7 +346,7 @@
             lucide.createIcons();
         }
 
-        async function handleChatSubmit(e) {
+        function handleChatSubmit(e) {
             e.preventDefault();
             const input = document.getElementById('userInput');
             const text = input.value.trim();
@@ -361,7 +354,7 @@
 
             const stream = document.getElementById('chatStream');
 
-            // Append User Message
+            // Add User Message
             const userBubble = document.createElement('div');
             userBubble.className = "flex gap-3 max-w-3xl ml-auto justify-end";
             userBubble.innerHTML = `
@@ -376,72 +369,56 @@
             input.value = '';
             stream.scrollTop = stream.scrollHeight;
 
-            // Append Loading Indicator
-            const loadingBubble = document.createElement('div');
-            loadingBubble.id = 'loadingMsg';
-            loadingBubble.className = "flex gap-3 max-w-3xl";
-            loadingBubble.innerHTML = `
-                <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
-                    <i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i>
-                </div>
-                <div class="glass-panel p-4 rounded-2xl rounded-tl-none border-slate-800 text-sm text-cyan-400 flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></div>
-                    <span>Xsus AI po mendon...</span>
-                </div>
-            `;
-            stream.appendChild(loadingBubble);
-            lucide.createIcons();
-            stream.scrollTop = stream.scrollHeight;
-
-            try {
-                // Fetch dynamic response from Gemini API via window.fetch
-                const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: `You are Xsus AI, an advanced AI developed for Xsus Studio. Respond accurately, creatively, and professionally. Language context: ${currentLang}. User input: ${text}`
-                            }]
-                        }]
-                    })
-                });
-
-                const data = await response.json();
-                let aiResponse = "";
-
-                if (data && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-                    aiResponse = data.candidates[0].content.parts[0].text;
-                } else {
-                    // Fallback intelligent response generator
-                    aiResponse = generateFallbackResponse(text);
-                }
-
-                document.getElementById('loadingMsg')?.remove();
-                appendAiMessage(aiResponse);
-
-            } catch (err) {
-                document.getElementById('loadingMsg')?.remove();
-                appendAiMessage(generateFallbackResponse(text));
-            }
+            // Generate AI Response Dynamically
+            setTimeout(() => {
+                const responseText = generateSmartAiResponse(text);
+                appendAiMessage(responseText);
+            }, 500);
         }
 
-        function generateFallbackResponse(text) {
-            const lower = text.toLowerCase();
-            if (lower.includes("skenar") || lower.includes("video") || lower.includes("islame")) {
-                return `🎬 **Skenar për Video Islame (30-60 sekonda)**\n\n` +
-                       `**Titulli:** Drita e Sabrit (Durimit)\n\n` +
-                       `**[Pamja 1 - Vizuale]:** Një pamje magjepsëse e lindjes së diellit në mal, me re që lëvizin ngadalë.\n` +
-                       `**[Zëri në prapavijë (Voiceover)]:** "Në çdo sprovë që kalon, kujto se stuhia nuk zgjat përgjithmonë. Allahu nuk ngarkon asnjë shpirt më shumë se sa ai mund të mbajë."\n\n` +
-                       `**[Pamja 2 - Vizuale]:** Një person duke u lutur me qetësi në dritën e mëngjesit.\n` +
-                       `**[Zëri në prapavijë]:** "Me çdo vështirësi prihuni nga shpresa. Pas çdo natë të errët, vjen një mëngjes i ndritur."\n\n` +
-                       `**[Pamja 3 - Përfundimi]:** Tekst minimalist në ekran: "Kërko qetësinë në lutje."\n` +
-                       `**[Call to Action]:** Nëse kjo video të preku, shpërndaje me miqtë tuaj! ✨`;
-            } else if (lower.includes("shqip") || lower.includes("përshëndetje")) {
-                return "Përshëndetje! Unë jam Xsus AI. Jam këtu për t'ju ndihmuar me skenarë videosh, shkrim teksti, kodim, apo çfarëdo ideje tjetër që keni!";
-            } else {
-                return `Përshëndetje! Lidhur me kërkesën tuaj: "${text}"\n\nXsus AI është gati t'ju ndihmojë hap pas hapi! Më tregoni më shumë detaje rreth idesë suaj që t'ju jap përmbajtjen e plotë!`;
+        function generateSmartAiResponse(userPrompt) {
+            const prompt = userPrompt.toLowerCase();
+
+            // Intelligent Script Generator for Islamic & Cultural Short Content
+            if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("islame") || prompt.includes("script")) {
+                return `🎬 **Skenar Profesional për Video Islame (Shorts / TikTok / Reels)**\n\n` +
+                       `📌 **Titulli:** Qetësia e Shpirtit në Kohë Vështirësish\n\n` +
+                       `🎥 **Pamja 1 (00:00 - 00:03):**\n` +
+                       `*Vizuale:* Një pamje Cinematic HD e maleve në agim, me rreze dielli që depërtojnë përmes reve.\n` +
+                       `*Zëri (Voiceover):* "Ndonjëherë ndihesh i lodhur nga çdo gjë rreth teje..."\n\n` +
+                       `🎥 **Pamja 2 (00:03 - 00:08):**\n` +
+                       `*Vizuale:* Një person duke u lutur me qetësi në dritën e ngrohtë të mëngjesit.\n` +
+                       `*Zëri (Voiceover):* "Në ato momente, kujto fjalën e Zotit: 'Në të vërtetë, me vështirësinë vjen lehtësimi.' (Kur'an 94:6)"\n\n` +
+                       `🎥 **Pamja 3 (00:08 - 00:15):**\n` +
+                       `*Vizuale:* Pamje nga natyra, ujë që rrjedh ngadalë dhe gjethe që lëvizin nga erë e lehtë.\n` +
+                       `*Zëri (Voiceover):* "Mos u dorëzo. Çdo sprovë është vetëm një shkallë për t'u afruar më shumë te Krijuesi yt."\n\n` +
+                       `💬 **Call To Action (Teksti në ekran):**\n` +
+                       `"Ruaje këtë video dhe shpërndaje me dikë që ka nevojë ta dëgjojë këtë sot! ✨"`;
             }
+
+            // General Shqip Responses
+            if (prompt.includes("shqip") || prompt.includes("përshëndetje") || prompt.includes("tung")) {
+                return "Përshëndetje! Unë jam **Xsus AI**. Flas shqip rrjedhshëm dhe jam i specializuar për të gjeneruar:\n\n" +
+                       "• Skenarë profesionale për video (Reels, TikTok, YouTube)\n" +
+                       "• Përmbajtje dhe artikuj për rrjete sociale\n" +
+                       "• Kodim uebi (HTML, CSS, JavaScript, Python)\n" +
+                       "• Ide dizajni, logo dhe koncepte brandimi\n\n" +
+                       "Si mund t'ju ndihmoj sot?";
+            }
+
+            // French Support
+            if (prompt.includes("bonjour") || prompt.includes("salut") || prompt.includes("francais")) {
+                return "Bonjour! Je suis **Xsus AI**. Je suis prêt à vous aider à rédiger des scripts, à concevoir du code web, ou à générer du contenu créatif. Que souhaitez-vous créer?";
+            }
+
+            // Coding Requests
+            if (prompt.includes("kod") || prompt.includes("code") || prompt.includes("html") || prompt.includes("python")) {
+                return `💻 **Maturë Kodi nga Xsus AI**\n\nIgatshëm për të zhvilluar strukturë kodi efikase dhe pa gabime! Ju lutem më specifikoni gjuhën e programimit dhe funksionin që dëshironi të ndërtojmë.`;
+            }
+
+            // Default Dynamic Echo
+            return `Mora kërkesën tuaj: **"${userPrompt}"**.\n\n` +
+                   `Si modul inteligjent i **Xsus Studio**, jam gati t'ju ndihmoj hap pas hapi. Mund të më kërkoni të zgjeroj këtë ide në skenar videoje, tekst letrar, apo kodim!`;
         }
 
         function appendAiMessage(msg) {
@@ -449,9 +426,8 @@
             const aiBubble = document.createElement('div');
             aiBubble.className = "flex gap-3 max-w-3xl";
             
-            // Format linebreaks & bold markdown
             const formatted = escapeHtml(msg)
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-cyan-300 font-semibold">$1</strong>')
                 .replace(/\n/g, '<br>');
 
             aiBubble.innerHTML = `
@@ -471,7 +447,7 @@
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
-        // Particle Background Animation
+        // Particle Canvas Background
         const canvas = document.getElementById('particleCanvas');
         const ctx = canvas.getContext('2d');
 
