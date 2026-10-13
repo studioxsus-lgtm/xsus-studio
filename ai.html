@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xsus AI | Advanced Neural Intelligence Studio</title>
+    <title>Xsus AI | Neural Intelligence Studio</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -62,7 +62,7 @@
                 <a href="domain.html" class="hover:text-cyber-blue transition">Xsus Domain</a>
             </div>
 
-            <!-- Language Selector & Status -->
+            <!-- Language Selector -->
             <div class="flex items-center gap-3">
                 <div class="glass-panel px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-300">
                     <i data-lucide="globe" class="w-3.5 h-3.5 text-cyber-blue"></i>
@@ -71,11 +71,6 @@
                         <option value="sq" class="bg-[#0a0a12] text-white">SQ</option>
                         <option value="fr" class="bg-[#0a0a12] text-white">FR</option>
                     </select>
-                </div>
-
-                <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl glass-panel border border-cyber-blue/30 text-[11px] text-cyber-blue font-semibold">
-                    <span class="w-2 h-2 rounded-full bg-cyber-blue animate-ping"></span>
-                    <span id="engine-status-text">Multi-AI Engine Active</span>
                 </div>
             </div>
         </div>
@@ -87,10 +82,10 @@
         
         <div class="max-w-4xl mx-auto text-center relative z-10">
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-blue/30 text-cyber-blue text-xs font-semibold uppercase tracking-widest mb-4">
-                <i data-lucide="cpu" class="w-4 h-4"></i> <span data-i18n="hero-badge">Advanced Neural Intelligence</span>
+                <i data-lucide="cpu" class="w-4 h-4"></i> <span data-i18n="hero-badge">Neural Intelligence Studio</span>
             </div>
             <h1 class="text-3xl md:text-5xl font-black tracking-tight mb-4 leading-tight">
-                <span data-i18n="hero-title1">Chat with Xsus AI.</span> <br><span class="text-gradient" data-i18n="hero-title2">Powered by Multi-Free AI Engines.</span>
+                <span data-i18n="hero-title1">Chat with Xsus AI.</span> <br><span class="text-gradient" data-i18n="hero-title2">Powered by Pollinations AI.</span>
             </h1>
         </div>
     </header>
@@ -107,7 +102,7 @@
                     </div>
                     <div>
                         <h2 class="font-bold text-white text-sm" data-i18n="chat-title">Xsus Neural Assistant</h2>
-                        <p class="text-[10px] text-slate-400" data-i18n="chat-subtitle">Zero configuration, unlimited free intelligence</p>
+                        <p class="text-[10px] text-slate-400" data-i18n="chat-subtitle">Direct AI Studio chat</p>
                     </div>
                 </div>
 
@@ -125,7 +120,7 @@
                         <i data-lucide="bot" class="w-4 h-4"></i>
                     </div>
                     <div class="glass-panel p-4 rounded-2xl border border-white/10 text-xs md:text-sm text-slate-200 max-w-[85%] leading-relaxed">
-                        <p data-i18n="welcome-msg">Hello! I am Xsus AI, your multi-engine neural assistant. How can I assist you with your projects, coding, or content creation today?</p>
+                        <p data-i18n="welcome-msg">Hello! I am Xsus AI. How can I assist you with your projects, coding, or content creation today?</p>
                     </div>
                 </div>
             </div>
@@ -149,42 +144,42 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- INTERACTIVE JAVASCRIPT LOGIC WITH MULTI-ENGINE FALLBACK -->
+    <!-- INTERACTIVE JAVASCRIPT LOGIC -->
     <script>
         lucide.createIcons();
 
         // 1. MULTI-LANGUAGE DICTIONARY (EN, SQ, FR)
         const i18nData = {
             en: {
-                "hero-badge": "Advanced Neural Intelligence",
+                "hero-badge": "Neural Intelligence Studio",
                 "hero-title1": "Chat with Xsus AI.",
-                "hero-title2": "Powered by Multi-Free AI Engines.",
+                "hero-title2": "Powered by Pollinations AI.",
                 "chat-title": "Xsus Neural Assistant",
-                "chat-subtitle": "Zero configuration, unlimited free intelligence",
+                "chat-subtitle": "Direct AI Studio chat",
                 "btn-clear": "Clear Chat",
-                "welcome-msg": "Hello! I am Xsus AI, your multi-engine neural assistant. How can I assist you with your projects, coding, or content creation today?",
+                "welcome-msg": "Hello! I am Xsus AI. How can I assist you with your projects, coding, or content creation today?",
                 "place-input": "Type your message here...",
                 "btn-send": "Send"
             },
             sq: {
-                "hero-badge": "Inteligjencë e Avancuar Neurale",
+                "hero-badge": "Studio e Inteligjencës Neurale",
                 "hero-title1": "Bisedo me Xsus AI.",
-                "hero-title2": "Fuqizuar nga Motorë Falas AI.",
+                "hero-title2": "Fuqizuar nga Pollinations AI.",
                 "chat-title": "Asistenti Neural Xsus",
-                "chat-subtitle": "Pa konfigurime, inteligjencë pa pagesë",
+                "chat-subtitle": "Bisedë e drejtpërdrejtë me AI",
                 "btn-clear": "Pastro Bisedën",
-                "welcome-msg": "Përshëndetje! Unë jam Xsus AI, asistenti juaj neural. Si mund t'ju ndihmoj sot me projektet, kodimin apo krijimin e përmbajtjes?",
+                "welcome-msg": "Përshëndetje! Unë jam Xsus AI. Si mund t'ju ndihmoj sot me projektet, kodimin apo krijimin e përmbajtjes?",
                 "place-input": "Shkruaj mesazhin tuaj këtu...",
                 "btn-send": "Dërgo"
             },
             fr: {
-                "hero-badge": "Intelligence Neuronale Avancée",
+                "hero-badge": "Studio d'Intelligence Neuronale",
                 "hero-title1": "Discutez avec Xsus AI.",
-                "hero-title2": "Propulsé par plusieurs moteurs IA.",
+                "hero-title2": "Propulsé par Pollinations AI.",
                 "chat-title": "Assistant Neural Xsus",
-                "chat-subtitle": "Sans configuration, intelligence gratuite",
+                "chat-subtitle": "Chat direct avec l'IA",
                 "btn-clear": "Effacer",
-                "welcome-msg": "Bonjour ! Je suis Xsus AI, votre assistant neural. Comment puis-je vous aider dans vos projets aujourd'hui ?",
+                "welcome-msg": "Bonjour ! Je suis Xsus AI. Comment puis-je vous aider dans vos projets aujourd'hui ?",
                 "place-input": "Tapez votre message ici...",
                 "btn-send": "Envoyer"
             }
@@ -225,7 +220,7 @@
                 .replace(/\n/g, '<br>');
         }
 
-        // 2. MULTI-ENGINE AI CHAT LOGIC (PRIMARY + FALLBACK)
+        // 2. CHAT LOGIC
         const chatForm = document.getElementById('chat-form');
         const chatInput = document.getElementById('chat-input');
         const chatMessages = document.getElementById('chat-messages');
@@ -265,7 +260,6 @@
                 ...messages
             ];
 
-            // Engine 1: Pollinations AI (Primary Free Engine)
             try {
                 const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
@@ -277,27 +271,12 @@
                     if (text && text.trim().length > 0) return text;
                 }
             } catch (e) {
-                console.warn('Engine 1 failed, trying fallback...');
-            }
-
-            // Engine 2: DuckDuckGo AI / Alternative Endpoint (Fallback Free Engine)
-            try {
-                const response = await fetch('https://r.jina.ai/https://text.pollinations.ai/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: enhancedMessages, model: 'llama' })
-                });
-                if (response.ok) {
-                    const text = await response.text();
-                    if (text && text.trim().length > 0) return text;
-                }
-            } catch (e) {
-                console.warn('Engine 2 failed as well.');
+                console.warn('AI request failed');
             }
 
             return currentLang === 'sq' 
-                ? "Na ndjeni, ka një mbingarkesë të përkohshme në serverët e AI. Ju lutem provoni përsëri pas pak sekondash." 
-                : "Sorry, temporary AI server congestion. Please try again in a few moments.";
+                ? "Na ndjeni, pati një problem në lidhje. Ju lutem provoni përsëri." 
+                : "Sorry, there was a connection error. Please try again.";
         }
 
         chatForm?.addEventListener('submit', async (e) => {
@@ -309,7 +288,6 @@
             appendMessage('user', text);
             messageHistory.push({ role: 'user', content: text });
 
-            // Typing Indicator
             const typingId = 'typing-' + Date.now();
             const typingDiv = document.createElement('div');
             typingDiv.id = typingId;
