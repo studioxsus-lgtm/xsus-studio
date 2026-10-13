@@ -65,8 +65,8 @@
             <!-- Menu Links -->
             <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
                 <a href="#ai-section" id="nav-ai-link" class="hover:text-cyan-400 transition-colors">Xsus AI</a>
+                <a href="#app-studio-section" id="nav-apps-link" class="hover:text-cyan-400 transition-colors">Xsus App</a>
                 <a href="#tools-section" id="nav-ecosystem-link" class="hover:text-cyan-400 transition-colors">Ecosystem</a>
-                <a href="#apps-section" id="nav-apps-link" class="hover:text-cyan-400 transition-colors">Apps</a>
             </nav>
 
             <!-- Language Switcher (EN | FR | SQ) -->
@@ -152,6 +152,127 @@
                         </button>
                     </form>
                 </div>
+            </div>
+        </section>
+
+        <!-- Xsus App Studio Section -->
+        <section id="app-studio-section" class="space-y-8 pt-10 border-t border-slate-800/80">
+            <div class="text-center space-y-2">
+                <h2 class="text-3xl font-bold text-white flex items-center justify-center gap-3">
+                    <i data-lucide="smartphone" class="w-8 h-8 text-cyan-400"></i>
+                    <span>Xsus App Studio</span>
+                </h2>
+                <p id="app-studio-desc" class="text-slate-400 text-sm">Design, customize, and preview your hybrid ecosystem mobile application in real-time.</p>
+            </div>
+
+            <!-- Grid: Control Panel + Live Phone Mockup -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- App Configuration Panel (Left) -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Color Theme Selector -->
+                    <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2" id="app-theme-title">
+                            <i data-lucide="palette" class="w-5 h-5 text-cyan-400"></i>
+                            <span>App Color Aesthetics</span>
+                        </h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <button onclick="setAppTheme('cyan')" class="p-3 rounded-xl border border-cyan-500/40 bg-cyan-950/30 text-cyan-400 font-medium text-xs flex items-center justify-center gap-2 hover:border-cyan-400 transition-all">
+                                <span class="w-3 h-3 rounded-full bg-cyan-400"></span> Cyber Cyan
+                            </button>
+                            <button onclick="setAppTheme('purple')" class="p-3 rounded-xl border border-purple-500/40 bg-purple-950/30 text-purple-400 font-medium text-xs flex items-center justify-center gap-2 hover:border-purple-400 transition-all">
+                                <span class="w-3 h-3 rounded-full bg-purple-400"></span> Neon Purple
+                            </button>
+                            <button onclick="setAppTheme('emerald')" class="p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 font-medium text-xs flex items-center justify-center gap-2 hover:border-emerald-400 transition-all">
+                                <span class="w-3 h-3 rounded-full bg-emerald-400"></span> Emerald Bio
+                            </button>
+                            <button onclick="setAppTheme('gold')" class="p-3 rounded-xl border border-amber-500/40 bg-amber-950/30 text-amber-400 font-medium text-xs flex items-center justify-center gap-2 hover:border-amber-400 transition-all">
+                                <span class="w-3 h-3 rounded-full bg-amber-400"></span> Solar Gold
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Features & Capabilities Picker -->
+                    <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2" id="app-tools-title">
+                            <i data-lucide="layers" class="w-5 h-5 text-cyan-400"></i>
+                            <span>Included Tools & Features</span>
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700">
+                                <input type="checkbox" id="chk-ai" checked onchange="updateMockup()" class="w-4 h-4 accent-cyan-400 rounded">
+                                <span class="text-slate-200">Xsus AI Chat Assistant</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700">
+                                <input type="checkbox" id="chk-scripts" checked onchange="updateMockup()" class="w-4 h-4 accent-cyan-400 rounded">
+                                <span class="text-slate-200">Video Script Generator</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700">
+                                <input type="checkbox" id="chk-logo" checked onchange="updateMockup()" class="w-4 h-4 accent-cyan-400 rounded">
+                                <span class="text-slate-200">Logo & Brand Studio</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700">
+                                <input type="checkbox" id="chk-games" checked onchange="updateMockup()" class="w-4 h-4 accent-cyan-400 rounded">
+                                <span class="text-slate-200">WebGL Browser Games</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Languages Supported inside App -->
+                    <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-3">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2" id="app-lang-title">
+                            <i data-lucide="languages" class="w-5 h-5 text-cyan-400"></i>
+                            <span>App Tri-Lingual Support</span>
+                        </h3>
+                        <p class="text-xs text-slate-400" id="app-lang-sub">Native dynamic switching between English, French, and Albanian (EN | FR | SQ) built directly into the mobile binary.</p>
+                    </div>
+
+                </div>
+
+                <!-- Phone Live Mockup (Right) -->
+                <div class="lg:col-span-5 flex justify-center">
+                    <div class="relative w-[300px] h-[580px] bg-slate-950 rounded-[45px] p-4 border-[6px] border-slate-800 shadow-2xl shadow-cyan-500/10 flex flex-col justify-between overflow-hidden">
+                        <!-- Speaker Notch -->
+                        <div class="w-28 h-4 bg-slate-900 rounded-full mx-auto mb-3 flex items-center justify-center">
+                            <div class="w-3 h-3 bg-slate-800 rounded-full"></div>
+                        </div>
+
+                        <!-- Phone App Screen -->
+                        <div id="phoneScreen" class="flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border border-cyan-500/50 shadow-lg shadow-cyan-500/20">
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                    <span class="font-bold text-xs text-white">Xsus Mobile</span>
+                                    <span class="text-[10px] text-cyan-400 font-mono">v2.4 Live</span>
+                                </div>
+                                <div id="mockupContent" class="space-y-2 text-xs">
+                                    <div id="m-ai" class="p-2.5 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-cyan-200">
+                                        🤖 Xsus AI Assistant
+                                    </div>
+                                    <div id="m-scripts" class="p-2.5 rounded-lg bg-slate-800/60 text-slate-300">
+                                        🎬 Video Script Engine
+                                    </div>
+                                    <div id="m-logo" class="p-2.5 rounded-lg bg-slate-800/60 text-slate-300">
+                                        🎨 Vector Logo Studio
+                                    </div>
+                                    <div id="m-games" class="p-2.5 rounded-lg bg-slate-800/60 text-slate-300">
+                                        🎮 WebGL Gaming Center
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-t border-slate-800 text-center">
+                                <button class="w-full bg-cyan-500 text-slate-950 font-bold py-2 rounded-lg text-xs shadow-lg shadow-cyan-500/20" id="btn-phone-launch">
+                                    Open App Console
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Home Bar -->
+                        <div class="w-20 h-1 bg-slate-700 rounded-full mx-auto mt-3"></div>
+                    </div>
+                </div>
+
             </div>
         </section>
 
