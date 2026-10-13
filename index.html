@@ -1,245 +1,555 @@
+```html
 <!DOCTYPE html>
-<html lang="sq" class="scroll-smooth">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xsus Studio | AI & Digital Solutions</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Xsus Studio - High-Tech Software & Digital Innovations</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#eef2ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            900: '#312e81',
+                        cyber: {
+                            black: '#030712',
+                            card: '#0B0F19',
+                            cyan: '#00F0FF',
+                            purple: '#A855F7',
+                            magenta: '#FF007F',
+                            blue: '#2563EB',
+                            glowCyan: 'rgba(0, 240, 255, 0.4)',
+                            glowPurple: 'rgba(168, 85, 247, 0.4)'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2.5s infinite alternate',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 15px rgba(0,240,255,0.3), 0 0 30px rgba(168,85,247,0.2)' },
+                            '100%': { boxShadow: '0 0 30px rgba(0,240,255,0.7), 0 0 60px rgba(255,0,127,0.5)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-12px)' }
                         }
                     }
                 }
             }
         }
     </script>
-    <!-- FontAwesome për ikona -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom Neon Glow Utilities */
+        .neon-text-cyan {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.8), 0 0 25px rgba(0, 240, 255, 0.5);
+        }
+        .neon-border {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+        }
+        .neon-border:hover {
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.6), inset 0 0 20px rgba(255, 0, 127, 0.3);
+            border-color: rgba(0, 240, 255, 0.8);
+        }
+        .glow-bg {
+            background: radial-gradient(circle at 50% 20%, rgba(0, 240, 255, 0.15) 0%, rgba(168, 85, 247, 0.1) 40%, rgba(3, 7, 18, 0.95) 80%);
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white">
+<body class="bg-cyber-black text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-cyber-cyan selection:text-black">
 
-    <!-- HEADER / NAVIGATION -->
-    <header class="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-indigo-400 flex items-center justify-center shadow-lg shadow-brand-500/30">
-                    <i class="fa-solid fa-cube text-white text-lg"></i>
+    <!-- Background Matrix / Particle Canvas -->
+    <canvas id="particleCanvas"></canvas>
+
+    <header class="fixed top-0 left-0 w-full z-50 bg-cyber-black/80 backdrop-blur-md border-b border-cyber-cyan/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative z-10">
+            <!-- Brand Logo -->
+            <a href="#" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyber-cyan via-cyber-purple to-cyber-magenta p-[2px] transition-transform duration-300 group-hover:scale-110">
+                    <div class="w-full h-full bg-cyber-black rounded-[10px] flex items-center justify-center">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyber-cyan to-cyber-magenta font-extrabold text-xl">X</span>
+                    </div>
                 </div>
-                <span class="text-xl font-bold tracking-wider text-white">Xsus<span class="text-brand-500">Studio</span></span>
-            </div>
+                <span class="text-xl font-bold tracking-tight text-white group-hover:text-cyber-cyan transition-colors">Xsus <span class="text-cyber-cyan">Studio</span></span>
+            </a>
 
             <!-- Navigation Links -->
-            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
-                <a href="#services" class="hover:text-white transition" data-i18n="nav_services">Shërbimet</a>
-                <a href="#ai-solutions" class="hover:text-white transition" data-i18n="nav_ai">Zgjidhjet AI</a>
-                <a href="#about" class="hover:text-white transition" data-i18n="nav_about">Rreth Nesh</a>
-                <a href="#contact" class="hover:text-white transition" data-i18n="nav_contact">Kontakti</a>
+            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium">
+                <a href="#suite" class="hover:text-cyber-cyan transition-colors" data-i18n="navSuite">Product Suite</a>
+                <a href="#features" class="hover:text-cyber-cyan transition-colors" data-i18n="navFeatures">Features</a>
+                <a href="#about" class="hover:text-cyber-cyan transition-colors" data-i18n="navAbout">About Us</a>
+                <a href="#contact" class="hover:text-cyber-cyan transition-colors" data-i18n="navContact">Contact</a>
             </nav>
 
-            <!-- Language Switcher & Mobile Toggle -->
-            <div class="flex items-center space-x-4">
-                <select id="langSwitch" onchange="changeLanguage(this.value)" class="bg-slate-800 text-slate-200 border border-slate-700 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500">
-                    <option value="sq">SQ</option>
-                    <option value="en">EN</option>
-                    <option value="fr">FR</option>
-                </select>
-                <a href="#contact" class="hidden sm:inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-brand-600 rounded-xl hover:bg-brand-500 transition shadow-md shadow-brand-600/20" data-i18n="btn_get_started">Fillo Tani</a>
+            <!-- Language Switcher & CTA -->
+            <div class="flex items-center space-x-6">
+                <!-- Reordered Language Switcher: EN | FR | SQ (Text-only, no flags) -->
+                <div class="flex items-center space-x-2 text-xs font-semibold tracking-wider bg-slate-900/80 px-3 py-1.5 rounded-full border border-cyber-cyan/30">
+                    <button onclick="setLanguage('en')" id="btn-en" class="text-cyber-cyan font-bold transition-colors hover:text-cyber-cyan">EN</button>
+                    <span class="text-slate-600">|</span>
+                    <button onclick="setLanguage('fr')" id="btn-fr" class="text-slate-400 hover:text-cyber-cyan transition-colors">FR</button>
+                    <span class="text-slate-600">|</span>
+                    <button onclick="setLanguage('sq')" id="btn-sq" class="text-slate-400 hover:text-cyber-cyan transition-colors">SQ</button>
+                </div>
+
+                <a href="#suite" class="hidden sm:inline-flex items-center justify-center px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black bg-gradient-to-r from-cyber-cyan via-cyber-purple to-cyber-magenta rounded-lg hover:shadow-[0_0_20px_rgba(0,240,255,0.6)] transition-all duration-300 transform hover:-translate-y-0.5" data-i18n="btnExplore">Explore Suite</a>
             </div>
         </div>
     </header>
 
-    <!-- HERO SECTION -->
-    <section class="relative pt-20 pb-32 overflow-hidden">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.15),transparent_50%)]"></div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-            <span class="inline-flex items-center px-3 py-1 text-xs font-medium text-brand-400 bg-brand-950/60 border border-brand-800/50 rounded-full mb-6">
-                <i class="fa-solid fa-sparkles mr-2"></i> <span data-i18n="hero_badge">E ardhmja e Inovacionit Dixhital</span>
-            </span>
-            <h1 class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight max-w-3xl mx-auto leading-tight" data-i18n="hero_title">
-                Transformojmë idhët tuaja në <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-indigo-300">Zgjidhje Digjitale</span>
-            </h1>
-            <p class="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto" data-i18n="hero_subtitle">
-                Ndërtojmë uebsajte moderne, aplikacione të avancuara dhe automatizime me Inteligjencë Artificiale për biznesin tuaj.
-            </p>
-            <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-                <a href="#contact" class="px-8 py-3.5 text-sm font-semibold text-white bg-brand-600 rounded-xl hover:bg-brand-500 transition shadow-lg shadow-brand-600/30 text-center" data-i18n="btn_cta_primary">Na Kontaktoni</a>
-                <a href="#services" class="px-8 py-3.5 text-sm font-semibold text-slate-300 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 hover:text-white transition text-center" data-i18n="btn_cta_secondary">Eksploro Shërbimet</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- SERVICES SECTION -->
-    <section id="services" class="py-24 bg-slate-900/40 border-t border-slate-900">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl font-bold text-white" data-i18n="services_heading">Shërbimet Tona</h2>
-                <p class="mt-4 text-slate-400" data-i18n="services_subheading">Ofrojmë cilësi dhe teknologjinë më të fundit për çdo projekt.</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-brand-500/50 transition">
-                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-code"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-white mb-3" data-i18n="service_1_title">Zhvillim Uebsajtesh</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed" data-i18n="service_1_desc">Faqe interneti moderne, të shpejta dhe plotësisht të përshtatura për çdo pajisje celulare.</p>
+    <main class="relative z-10 pt-20">
+        <section class="relative min-h-[90vh] flex items-center justify-center glow-bg px-4 sm:px-6 lg:px-8 py-20">
+            <div class="max-w-5xl mx-auto text-center space-y-8 animate-float">
+                <div class="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-cyber-cyan/10 border border-cyber-cyan/40 text-cyber-cyan text-xs font-semibold tracking-wide uppercase">
+                    <span class="w-2 h-2 rounded-full bg-cyber-cyan animate-ping"></span>
+                    <span data-i18n="heroBadge">Next Generation Digital Ecosystem</span>
                 </div>
-                <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-brand-500/50 transition">
-                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center text-xl mb-6">
+                
+                <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-tight">
+                    <span data-i18n="heroTitle1">Pioneering High-Tech</span> <br/>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyber-cyan via-cyber-purple to-cyber-magenta neon-text-cyan" data-i18n="heroTitle2">Software Solutions</span>
+                </h1>
+                
+                <p class="max-w-3xl mx-auto text-base sm:text-lg text-slate-300 leading-relaxed font-normal" data-i18n="heroDescription">
+                    Xsus Studio crafts powerful, intelligent, and scalable digital products designed to power tomorrow's innovations across artificial intelligence, web, cloud, and dynamic applications.
+                </p>
+
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                    <a href="#suite" class="w-full sm:w-auto px-8 py-4 text-sm font-bold uppercase tracking-wider text-black bg-cyber-cyan rounded-xl shadow-[0_0_25px_rgba(0,240,255,0.6)] hover:bg-white hover:shadow-[0_0_35px_rgba(0,240,255,0.9)] transition-all duration-300" data-i18n="heroCta1">Discover Products</a>
+                    <a href="#contact" class="w-full sm:w-auto px-8 py-4 text-sm font-bold uppercase tracking-wider text-white bg-slate-900/80 border border-cyber-cyan/50 rounded-xl hover:border-cyber-magenta hover:shadow-[0_0_20px_rgba(255,0,127,0.4)] transition-all duration-300" data-i18n="heroCta2">Get in Touch</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="suite" class="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+                <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white" data-i18n="suiteHeading">Our Product Suite</h2>
+                <p class="text-slate-400 text-sm sm:text-base" data-i18n="suiteSubheading">An interconnected technological ecosystem tailored for modern enterprises and creative visionaries.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Xsus AI -->
+                <div class="bg-cyber-card/90 rounded-2xl p-8 neon-border transition-all duration-300 hover:-translate-y-2 group">
+                    <div class="w-14 h-14 rounded-xl bg-cyber-cyan/20 border border-cyber-cyan flex items-center justify-center text-cyber-cyan text-2xl mb-6 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-brain"></i>
                     </div>
-                    <h3 class="text-xl font-semibold text-white mb-3" data-i18n="service_2_title">Integrim AI</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed" data-i18n="service_2_desc">Përdorimi i Inteligjencës Artificiale për automatizim procesesh dhe përmirësim të eksperiencës së përdoruesit.</p>
+                    <h3 class="text-2xl font-bold text-white mb-3 group-hover:text-cyber-cyan transition-colors">Xsus AI</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6" data-i18n="descAI">Next-generation artificial intelligence models, automated workflows, and predictive analytics platforms built for scale.</p>
+                    <span class="inline-flex items-center text-xs font-semibold text-cyber-cyan group-hover:translate-x-1 transition-transform" data-i18n="learnMore">Learn More <i class="fa-solid fa-arrow-right ml-2"></i></span>
                 </div>
-                <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-brand-500/50 transition">
-                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-paintbrush"></i>
+
+                <!-- Xsus App -->
+                <div class="bg-cyber-card/90 rounded-2xl p-8 neon-border transition-all duration-300 hover:-translate-y-2 group">
+                    <div class="w-14 h-14 rounded-xl bg-cyber-purple/20 border border-cyber-purple flex items-center justify-center text-cyber-purple text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
                     </div>
-                    <h3 class="text-xl font-semibold text-white mb-3" data-i18n="service_3_title">UI/UX Design</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed" data-i18n="service_3_desc">Dizajne vizuale tërheqëse, estetike dhe të ndërtuara posaçërisht për identitetin e markës suaj.</p>
+                    <h3 class="text-2xl font-bold text-white mb-3 group-hover:text-cyber-purple transition-colors">Xsus App</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6" data-i18n="descApp">Cross-platform mobile applications delivering fluid performance, modern UI, and effortless user experiences.</p>
+                    <span class="inline-flex items-center text-xs font-semibold text-cyber-purple group-hover:translate-x-1 transition-transform" data-i18n="learnMore">Learn More <i class="fa-solid fa-arrow-right ml-2"></i></span>
+                </div>
+
+                <!-- Xsus Web -->
+                <div class="bg-cyber-card/90 rounded-2xl p-8 neon-border transition-all duration-300 hover:-translate-y-2 group">
+                    <div class="w-14 h-14 rounded-xl bg-cyber-magenta/20 border border-cyber-magenta flex items-center justify-center text-cyber-magenta text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-code"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-3 group-hover:text-cyber-magenta transition-colors">Xsus Web</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6" data-i18n="descWeb">High-speed web platforms, cloud architecture, and ultra-responsive web solutions engineered for maximum performance.</p>
+                    <span class="inline-flex items-center text-xs font-semibold text-cyber-magenta group-hover:translate-x-1 transition-transform" data-i18n="learnMore">Learn More <i class="fa-solid fa-arrow-right ml-2"></i></span>
+                </div>
+
+                <!-- Xsus Game -->
+                <div class="bg-cyber-card/90 rounded-2xl p-8 neon-border transition-all duration-300 hover:-translate-y-2 group">
+                    <div class="w-14 h-14 rounded-xl bg-cyber-cyan/20 border border-cyber-cyan flex items-center justify-center text-cyber-cyan text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-gamepad"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-3 group-hover:text-cyber-cyan transition-colors">Xsus Game</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6" data-i18n="descGame">Immersive gaming experiences, interactive real-time engines, and captivating digital entertainment environments.</p>
+                    <span class="inline-flex items-center text-xs font-semibold text-cyber-cyan group-hover:translate-x-1 transition-transform" data-i18n="learnMore">Learn More <i class="fa-solid fa-arrow-right ml-2"></i></span>
+                </div>
+
+                <!-- Xsus Logo -->
+                <div class="bg-cyber-card/90 rounded-2xl p-8 neon-border transition-all duration-300 hover:-translate-y-2 group">
+                    <div class="w-14 h-14 rounded-xl bg-cyber-purple/20 border border-cyber-purple flex items-center justify-center text-cyber-purple text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-pen-nib"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-3 group-hover:text-cyber-purple transition-colors">Xsus Logo</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6" data-i18n="descLogo">Futuristic brand design, visual identity systems, and vector graphics tailored for modern tech startups.</p>
+                    <span class="inline-flex items-center text-xs font-semibold text-cyber-purple group-hover:translate-x-1 transition-transform" data-i18n="learnMore">Learn More <i class="fa-solid fa-arrow-right ml-2"></i></span>
+                </div>
+
+                <!-- Xsus Domain -->
+                <div class="bg-cyber-card/90 rounded-2xl p-8 neon-border transition-all duration-300 hover:-translate-y-2 group">
+                    <div class="w-14 h-14 rounded-xl bg-cyber-magenta/20 border border-cyber-magenta flex items-center justify-center text-cyber-magenta text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-network-wired"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-3 group-hover:text-cyber-magenta transition-colors">Xsus Domain</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6" data-i18n="descDomain">Secure domain management, decentralized DNS services, and enterprise-grade hosting infrastructure.</p>
+                    <span class="inline-flex items-center text-xs font-semibold text-cyber-magenta group-hover:translate-x-1 transition-transform" data-i18n="learnMore">Learn More <i class="fa-solid fa-arrow-right ml-2"></i></span>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="py-24 bg-slate-950/60 border-y border-cyber-cyan/20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+                    <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white" data-i18n="featHeading">Engineered For Perfection</h2>
+                    <p class="text-slate-400 text-sm sm:text-base" data-i18n="featSubheading">Built with state-of-the-art technology stacks to ensure ultimate efficiency, security, and scalability.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="p-6 rounded-xl bg-cyber-card/50 border border-slate-800 space-y-4">
+                        <div class="text-cyber-cyan text-3xl"><i class="fa-solid fa-bolt"></i></div>
+                        <h4 class="text-xl font-bold text-white" data-i18n="feat1Title">Ultra Fast Performance</h4>
+                        <p class="text-slate-400 text-sm" data-i18n="feat1Desc">Optimized codebases and edge network deployments guarantee lightning-fast response times globally.</p>
+                    </div>
+
+                    <div class="p-6 rounded-xl bg-cyber-card/50 border border-slate-800 space-y-4">
+                        <div class="text-cyber-purple text-3xl"><i class="fa-solid fa-shield-halved"></i></div>
+                        <h4 class="text-xl font-bold text-white" data-i18n="feat2Title">Cyber Security Standard</h4>
+                        <p class="text-slate-400 text-sm" data-i18n="feat2Desc">End-to-end encryption, automated vulnerability audits, and enterprise data protection protocol.</p>
+                    </div>
+
+                    <div class="p-6 rounded-xl bg-cyber-card/50 border border-slate-800 space-y-4">
+                        <div class="text-cyber-magenta text-3xl"><i class="fa-solid fa-cubes"></i></div>
+                        <h4 class="text-xl font-bold text-white" data-i18n="feat3Title">Modular Scalability</h4>
+                        <p class="text-slate-400 text-sm" data-i18n="feat3Desc">Seamless integration across all Xsus tools allowing your digital infrastructure to scale effortlessly.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center space-y-8">
+            <div class="p-10 rounded-3xl bg-gradient-to-b from-cyber-card to-slate-950 neon-border space-y-6">
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white" data-i18n="ctaHeading">Ready To Build The Future?</h2>
+                <p class="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base" data-i18n="ctaSubheading">Connect with our engineering team to integrate Xsus products or request custom enterprise solutions.</p>
+                
+                <form onsubmit="event.preventDefault();" class="max-w-md mx-auto flex flex-col sm:flex-row gap-3 pt-4">
+                    <input type="email" placeholder="Enter your email" class="w-full px-4 py-3 rounded-lg bg-slate-900 border border-cyber-cyan/40 text-white placeholder-slate-500 focus:outline-none focus:border-cyber-cyan focus:ring-1 focus:ring-cyber-cyan" required />
+                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-cyber-cyan to-cyber-purple text-black font-bold uppercase text-xs tracking-wider rounded-lg hover:shadow-[0_0_20px_rgba(0,240,255,0.8)] transition-all" data-i18n="btnSubscribe">Subscribe</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-950 border-t border-slate-800 text-slate-400 py-16 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
+            <!-- Brand Info -->
+            <div class="space-y-4">
+                <span class="text-2xl font-bold text-white">Xsus <span class="text-cyber-cyan">Studio</span></span>
+                <p class="text-xs text-slate-400 leading-relaxed" data-i18n="footerDesc">Empowering businesses and developers with ultra-modern high-tech software applications.</p>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="space-y-3">
+                <h5 class="text-sm font-semibold text-white uppercase tracking-wider" data-i18n="footerProducts">Products</h5>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="#suite" class="hover:text-cyber-cyan transition-colors">Xsus AI</a></li>
+                    <li><a href="#suite" class="hover:text-cyber-cyan transition-colors">Xsus App</a></li>
+                    <li><a href="#suite" class="hover:text-cyber-cyan transition-colors">Xsus Web</a></li>
+                    <li><a href="#suite" class="hover:text-cyber-cyan transition-colors">Xsus Game</a></li>
+                    <li><a href="#suite" class="hover:text-cyber-cyan transition-colors">Xsus Logo</a></li>
+                    <li><a href="#suite" class="hover:text-cyber-cyan transition-colors">Xsus Domain</a></li>
+                </ul>
+            </div>
+
+            <!-- Legal / Info -->
+            <div class="space-y-3">
+                <h5 class="text-sm font-semibold text-white uppercase tracking-wider" data-i18n="footerCompany">Company</h5>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="#about" class="hover:text-cyber-cyan transition-colors" data-i18n="navAbout">About Us</a></li>
+                    <li><a href="#" class="hover:text-cyber-cyan transition-colors" data-i18n="linkPrivacy">Privacy Policy</a></li>
+                    <li><a href="#" class="hover:text-cyber-cyan transition-colors" data-i18n="linkTerms">Terms of Service</a></li>
+                </ul>
+            </div>
+
+            <!-- App Store & Google Play Distribution Links -->
+            <div class="space-y-4">
+                <h5 class="text-sm font-semibold text-white uppercase tracking-wider" data-i18n="footerApps">Mobile Apps</h5>
+                <p class="text-xs text-slate-400" data-i18n="footerAppsDesc">Download the Xsus App ecosystem on mobile platforms.</p>
+                <div class="flex flex-col space-y-3">
+                    <!-- App Store Button -->
+                    <a href="https://www.apple.com/app-store/" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-3 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-cyber-cyan hover:shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all">
+                        <i class="fa-brands fa-apple text-2xl text-white"></i>
+                        <div class="text-left">
+                            <div class="text-[10px] text-slate-400 uppercase tracking-widest" data-i18n="downloadOn">Download on the</div>
+                            <div class="text-xs font-semibold text-white">App Store</div>
+                        </div>
+                    </a>
+                    <!-- Google Play Button -->
+                    <a href="https://play.google.com/store" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-3 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-cyber-purple hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all">
+                        <i class="fa-brands fa-google-play text-2xl text-white"></i>
+                        <div class="text-left">
+                            <div class="text-[10px] text-slate-400 uppercase tracking-widest" data-i18n="getItOn">GET IT ON</div>
+                            <div class="text-xs font-semibold text-white">Google Play</div>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- CONTACT SECTION -->
-    <section id="contact" class="py-24 border-t border-slate-900">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl font-bold text-white" data-i18n="contact_heading">Na Kontaktoni</h2>
-                <p class="mt-4 text-slate-400" data-i18n="contact_subheading">Keni ndonjë pyetje apo projekt në mendje? Na shkruani tani.</p>
+        <div class="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+            <p>&copy; 2026 Xsus Studio. <span data-i18n="rights">All rights reserved.</span></p>
+            <div class="flex space-x-4 mt-4 sm:mt-0">
+                <a href="#" class="hover:text-cyber-cyan text-base"><i class="fa-brands fa-github"></i></a>
+                <a href="#" class="hover:text-cyber-cyan text-base"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="#" class="hover:text-cyber-cyan text-base"><i class="fa-brands fa-discord"></i></a>
             </div>
-            <form onsubmit="handleSubmit(event)" class="space-y-6 bg-slate-900/60 p-8 rounded-2xl border border-slate-800">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-2" data-i18n="form_name">Emri juaj</label>
-                        <input type="text" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-2" data-i18n="form_email">Email juaj</label>
-                        <input type="email" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-2" data-i18n="form_message">Mesazhi</label>
-                    <textarea rows="4" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-500"></textarea>
-                </div>
-                <button type="submit" class="w-full py-3.5 text-sm font-semibold text-white bg-brand-600 rounded-xl hover:bg-brand-500 transition shadow-lg shadow-brand-600/30" data-i18n="form_submit">Dërgo Mesazhin</button>
-            </form>
         </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="py-12 bg-slate-900 border-t border-slate-800 text-center text-sm text-slate-500">
-        <p>&copy; 2026 Xsus Studio. Të gjitha të drejtat e rezervuara.</p>
     </footer>
 
-    <!-- MULTI-LANGUAGE JAVASCRIPT SYSTEM -->
     <script>
+        // Tri-lingual dictionary (EN, FR, SQ) with standard sentence casing
         const translations = {
-            sq: {
-                nav_services: "Shërbimet",
-                nav_ai: "Zgjidhjet AI",
-                nav_about: "Rreth Nesh",
-                nav_contact: "Kontakti",
-                btn_get_started: "Fillo Tani",
-                hero_badge: "E ardhmja e Inovacionit Dixhital",
-                hero_title: "Transformojmë idhët tuaja në Zgjidhje Digjitale",
-                hero_subtitle: "Ndërtojmë uebsajte moderne, aplikacione të avancuara dhe automatizime me Inteligjencë Artificiale për biznesin tuaj.",
-                btn_cta_primary: "Na Kontaktoni",
-                btn_cta_secondary: "Eksploro Shërbimet",
-                services_heading: "Shërbimet Tona",
-                services_subheading: "Ofrojmë cilësi dhe teknologjinë më të fundit për çdo projekt.",
-                service_1_title: "Zhvillim Uebsajtesh",
-                service_1_desc: "Faqe interneti moderne, të shpejta dhe plotësisht të përshtatura për çdo pajisje celulare.",
-                service_2_title: "Integrim AI",
-                service_2_desc: "Përdorimi i Inteligjencës Artificiale për automatizim procesesh dhe përmirësim të eksperiencës së përdoruesit.",
-                service_3_title: "UI/UX Design",
-                service_3_desc: "Dizajne vizuale tërheqëse, estetike dhe të ndërtuara posaçërisht për identitetin e markës suaj.",
-                contact_heading: "Na Kontaktoni",
-                contact_subheading: "Keni ndonjë pyetje apo projekt në mendje? Na shkruani tani.",
-                form_name: "Emri juaj",
-                form_email: "Email juaj",
-                form_message: "Mesazhi",
-                form_submit: "Dërgo Mesazhin"
-            },
             en: {
-                nav_services: "Services",
-                nav_ai: "AI Solutions",
-                nav_about: "About Us",
-                nav_contact: "Contact",
-                btn_get_started: "Get Started",
-                hero_badge: "The Future of Digital Innovation",
-                hero_title: "Transforming Your Ideas into Digital Solutions",
-                hero_subtitle: "We build modern websites, advanced apps, and AI-powered automations for your business.",
-                btn_cta_primary: "Contact Us",
-                btn_cta_secondary: "Explore Services",
-                services_heading: "Our Services",
-                services_subheading: "We deliver quality and cutting-edge technology for every project.",
-                service_1_title: "Web Development",
-                service_1_desc: "Modern, fast, and fully responsive websites tailored for all mobile and desktop devices.",
-                service_2_title: "AI Integration",
-                service_2_desc: "Leveraging Artificial Intelligence to automate workflows and enhance user experience.",
-                service_3_title: "UI/UX Design",
-                service_3_desc: "Attractive, aesthetic visual designs crafted specifically for your brand identity.",
-                contact_heading: "Get in Touch",
-                contact_subheading: "Have a question or a project in mind? Drop us a message.",
-                form_name: "Your Name",
-                form_email: "Your Email",
-                form_message: "Message",
-                form_submit: "Send Message"
+                navSuite: "Product Suite",
+                navFeatures: "Features",
+                navAbout: "About Us",
+                navContact: "Contact",
+                btnExplore: "Explore Suite",
+                heroBadge: "Next Generation Digital Ecosystem",
+                heroTitle1: "Pioneering High-Tech",
+                heroTitle2: "Software Solutions",
+                heroDescription: "Xsus Studio crafts powerful, intelligent, and scalable digital products designed to power tomorrow's innovations across artificial intelligence, web, cloud, and dynamic applications.",
+                heroCta1: "Discover Products",
+                heroCta2: "Get in Touch",
+                suiteHeading: "Our Product Suite",
+                suiteSubheading: "An interconnected technological ecosystem tailored for modern enterprises and creative visionaries.",
+                descAI: "Next-generation artificial intelligence models, automated workflows, and predictive analytics platforms built for scale.",
+                descApp: "Cross-platform mobile applications delivering fluid performance, modern UI, and effortless user experiences.",
+                descWeb: "High-speed web platforms, cloud architecture, and ultra-responsive web solutions engineered for maximum performance.",
+                descGame: "Immersive gaming experiences, interactive real-time engines, and captivating digital entertainment environments.",
+                descLogo: "Futuristic brand design, visual identity systems, and vector graphics tailored for modern tech startups.",
+                descDomain: "Secure domain management, decentralized DNS services, and enterprise-grade hosting infrastructure.",
+                learnMore: "Learn More",
+                featHeading: "Engineered For Perfection",
+                featSubheading: "Built with state-of-the-art technology stacks to ensure ultimate efficiency, security, and scalability.",
+                feat1Title: "Ultra Fast Performance",
+                feat1Desc: "Optimized codebases and edge network deployments guarantee lightning-fast response times globally.",
+                feat2Title: "Cyber Security Standard",
+                feat2Desc: "End-to-end encryption, automated vulnerability audits, and enterprise data protection protocol.",
+                feat3Title: "Modular Scalability",
+                feat3Desc: "Seamless integration across all Xsus tools allowing your digital infrastructure to scale effortlessly.",
+                ctaHeading: "Ready To Build The Future?",
+                ctaSubheading: "Connect with our engineering team to integrate Xsus products or request custom enterprise solutions.",
+                btnSubscribe: "Subscribe",
+                footerDesc: "Empowering businesses and developers with ultra-modern high-tech software applications.",
+                footerProducts: "Products",
+                footerCompany: "Company",
+                footerApps: "Mobile Apps",
+                footerAppsDesc: "Download the Xsus App ecosystem on mobile platforms.",
+                downloadOn: "Download on the",
+                getItOn: "GET IT ON",
+                linkPrivacy: "Privacy Policy",
+                linkTerms: "Terms of Service",
+                rights: "All rights reserved."
             },
             fr: {
-                nav_services: "Services",
-                nav_ai: "Solutions IA",
-                nav_about: "À Propos",
-                nav_contact: "Contact",
-                btn_get_started: "Commencer",
-                hero_badge: "L'avenir de l'Innovation Numérique",
-                hero_title: "Transformez Vos Idées en Solutions Numériques",
-                hero_subtitle: "Nous concevons des sites web modernes, des applications avancées et des automatisations par IA pour votre entreprise.",
-                btn_cta_primary: "Contactez-nous",
-                btn_cta_secondary: "Explorer les Services",
-                services_heading: "Nos Services",
-                services_subheading: "Nous offrons qualité et technologie de pointe pour chaque projet.",
-                service_1_title: "Développement Web",
-                service_1_desc: "Sites web modernes, rapides et entièrement adaptés à tous les appareils mobiles.",
-                service_2_title: "Intégration IA",
-                service_2_desc: "Utilisation de l'intelligence artificielle pour automatiser les processus et améliorer l'expérience.",
-                service_3_title: "Design UI/UX",
-                service_3_desc: "Designs visuels attrayants et esthétiques conçus sur mesure pour l'identité de votre marque.",
-                contact_heading: "Contactez-nous",
-                contact_subheading: "Une question ou un projet en tête ? Envoyez-nous un message.",
-                form_name: "Votre Nom",
-                form_email: "Votre Email",
-                form_message: "Message",
-                form_submit: "Envoyer le Message"
+                navSuite: "Suite de Produits",
+                navFeatures: "Fonctionnalités",
+                navAbout: "À Propos",
+                navContact: "Contact",
+                btnExplore: "Explorer la Suite",
+                heroBadge: "Écosystème Numérique Nouvelle Génération",
+                heroTitle1: "Pionnier des Solutions",
+                heroTitle2: "Logicielles High-Tech",
+                heroDescription: "Xsus Studio conçoit des produits numériques puissants, intelligents et évolutifs pour propulser les innovations de demain à travers l'intelligence artificielle, le web, le cloud et les applications dynamiques.",
+                heroCta1: "Découvrir les Produits",
+                heroCta2: "Nous Contacter",
+                suiteHeading: "Notre Suite de Produits",
+                suiteSubheading: "Un écosystème technologique interconnecté adapté aux entreprises modernes et aux visionnaires créatifs.",
+                descAI: "Modèles d'intelligence artificielle de nouvelle génération, flux de travail automatisés et plateformes d'analyse prédictive.",
+                descApp: "Applications mobiles multiplateformes offrant des performances fluides, une interface moderne et une expérience utilisateur sans effort.",
+                descWeb: "Plateformes web ultra-rapides, architecture cloud et solutions web hautement réactives conçues pour des performances maximales.",
+                descGame: "Expériences de jeu immersives, moteurs interactifs en temps réel et environnements de divertissement numérique captivants.",
+                descLogo: "Design de marque futuriste, systèmes d'identité visuelle et graphismes vectoriels conçus pour les jeunes entreprises technologiques.",
+                descDomain: "Gestion sécurisée des domaines, services DNS décentralisés et infrastructure d'hébergement de niveau entreprise.",
+                learnMore: "En Savoir Plus",
+                featHeading: "Conçu Pour la Perfection",
+                featSubheading: "Construit avec des technologies de pointe pour garantir une efficacité, une sécurité et une évolutivité maximales.",
+                feat1Title: "Performance Ultra Rapide",
+                feat1Desc: "Bases de code optimisées et déploiements sur réseau Edge garantissant des temps de réponse ultra-rapides dans le monde entier.",
+                feat2Title: "Norme de Cybersécurité",
+                feat2Desc: "Chiffrement de bout en bout, audits de vulnérabilité automatisés et protocoles de protection des données d'entreprise.",
+                feat3Title: "Évolutivité Modulaire",
+                feat3Desc: "Intégration transparente dans tous les outils Xsus permettant à votre infrastructure numérique de se développer sans effort.",
+                ctaHeading: "Prêt à Construire l'Avenir?",
+                ctaSubheading: "Contactez notre équipe d'ingénieurs pour intégrer les produits Xsus ou demander des solutions d'entreprise personnalisées.",
+                btnSubscribe: "S'abonner",
+                footerDesc: "Autonomiser les entreprises et les développeurs avec des applications logicielles ultra-modernes.",
+                footerProducts: "Produits",
+                footerCompany: "Entreprise",
+                footerApps: "Apps Mobiles",
+                footerAppsDesc: "Téléchargez l'écosystème d'applications Xsus sur les plateformes mobiles.",
+                downloadOn: "Télécharger sur l'",
+                getItOn: "DISPONIBLE SUR",
+                linkPrivacy: "Politique de Confidentialité",
+                linkTerms: "Conditions d'Utilisation",
+                rights: "Tous droits réservés."
+            },
+            sq: {
+                navSuite: "Paketa e Produkteve",
+                navFeatures: "Veçoritë",
+                navAbout: "Rreth Nesh",
+                navContact: "Kontakt",
+                btnExplore: "Eksploro Paketën",
+                heroBadge: "Ekosistem Digjital i Së Ardhmes",
+                heroTitle1: "Pionierë në Zgjidhjet",
+                heroTitle2: "Software me Teknologji të Lartë",
+                heroDescription: "Xsus Studio krijon produkte digjitale të fuqishme, inteligjente dhe të shkallëzueshme për të fuqizuar inovacionet e së nesërmes në inteligjencën artificiale, ueb, cloud dhe aplikacione dinamike.",
+                heroCta1: "Zulo Produktet",
+                heroCta2: "Na Kontaktoni",
+                suiteHeading: "Paketa Jonë e Produkteve",
+                suiteSubheading: "Një ekosistem teknologjik i ndërlidhur i përshtatur për ndërmarrjet moderne dhe vizionarët krijues.",
+                descAI: "Modele të inteligjencës artificiale të gjeneratës së re, procese të automatizuara dhe platforma analitike parashikuese të ndërtuara për rritje.",
+                descApp: "Aplikacione celulare për shumë platforma që ofrojnë performancë fluide, pamje moderne dhe përvojë të lehtë përdorimi.",
+                descWeb: "Platforma ueb me shpejtësi të lartë, arkitekturë cloud dhe zgjidhje ueb ultra-reaguese të projektuara për performancë maksimale.",
+                descGame: "Përvoja gjithëpërfshirëse lojërash, motorë interaktivë në kohë reale dhe mjedise argëtuese digjitale mjaft tërheqëse.",
+                descLogo: "Dizajn brendi futuristik, sisteme të identitetit vizual dhe grafikë vektoriale të përshtatura për kompanitë e reja teknologjike.",
+                descDomain: "Menaxhim i sigurt i domeneve, shërbime DNS të decentralizuara dhe infrastrukturë pritëse për ndërmarrje.",
+                learnMore: "Mëso Më Shumë",
+                featHeading: "E Projektuar Për Përsosmëri",
+                featSubheading: "Ndërtuar me teknologjitë më të fundit për të garantuar efikasitet, siguri dhe shkallëzim maksimal.",
+                feat1Title: "Performancë Ultra e Shpejtë",
+                feat1Desc: "Kod i optimizuar dhe shpërndarje në rrjete globale që garantojnë kohë përgjigjeje jashtëzakonisht të shpejtë.",
+                feat2Title: "Standard i Kibersigurisë",
+                feat2Desc: "Enkriptim nga fundi në fund, auditime të automatizuara të cënueshmërisë dhe protokolle për mbrojtjen e të dhënave.",
+                feat3Title: "Shkallëzim Modular",
+                feat3Desc: "Integrim pa probleme në të gjitha mjetet Xsus duke lejuar infrastrukturën tuaj digjitale të rritet pa mundim.",
+                ctaHeading: "Gati Për Të Ndërtuar Të Ardhmen?",
+                ctaSubheading: "Lidhuni me ekipën tonë të inxhinierëve për të integruar produktet Xsus apo për të kërkuar zgjidhje të personalizuara.",
+                btnSubscribe: "Abonohu",
+                footerDesc: "Fuqizojmë bizneset dhe zhvilluesit me aplikacione softuerike ultra-moderne me teknologji të lartë.",
+                footerProducts: "Produktet",
+                footerCompany: "Kompania",
+                footerApps: "Aplikacionet Celulare",
+                footerAppsDesc: "Shkarkoni ekosistemin e aplikacioneve Xsus në platformat celulare.",
+                downloadOn: "Shkarko në",
+                getItOn: "MERR NI NË",
+                linkPrivacy: "Politika e Privatësisë",
+                linkTerms: "Kushtet e Shërbimit",
+                rights: "Të gjitha të drejtat të rezervuara."
             }
         };
 
-        function changeLanguage(lang) {
-            const elements = document.querySelectorAll('[data-i18n]');
-            elements.forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang] && translations[lang][key]) {
-                    el.textContent = translations[lang][key];
+        // Function to switch language
+        function setLanguage(lang) {
+            if (!translations[lang]) return;
+
+            // Update text elements
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    element.textContent = translations[lang][key];
                 }
+            });
+
+            // Update Language Switcher active styles
+            ['en', 'fr', 'sq'].forEach(l => {
+                const btn = document.getElementById(`btn-${l}`);
+                if (btn) {
+                    if (l === lang) {
+                        btn.className = "text-cyber-cyan font-bold transition-colors";
+                    } else {
+                        btn.className = "text-slate-400 hover:text-cyber-cyan transition-colors";
+                    }
+                }
+            });
+
+            // Store preference
+            localStorage.setItem('xsus_lang', lang);
+        }
+
+        // Initialize language
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('xsus_lang') || 'en';
+            setLanguage(savedLang);
+        });
+    </script>
+
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const particles = [];
+        const particleCount = 60;
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2 + 1,
+                color: Math.random() > 0.5 ? '#00F0FF' : '#A855F7',
+                vx: (Math.random() - 0.5) * 0.8,
+                vy: (Math.random() - 0.5) * 0.8,
             });
         }
 
-        function handleSubmit(event) {
-            event.preventDefault();
-            alert("Mesazhi u dërgua me sukses! (Demo)");
-            event.target.reset();
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = p.color;
+                ctx.fill();
+
+                for (let j = index + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(0, 240, 255, ${0.25 - dist / 480})`;
+                        ctx.lineWidth = 0.6;
+                        ctx.stroke();
+                    }
+                }
+            });
+
+            requestAnimationFrame(animateParticles);
         }
+
+        window.onload = function() {
+            animateParticles();
+        };
     </script>
 </body>
 </html>
+```
