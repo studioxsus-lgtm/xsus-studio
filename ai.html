@@ -3,54 +3,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xsus AI - Hybrid Intelligence</title>
+    <title>AI Solutions & Engine | Xsus Studio</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            blue: '#00f0ff',
+                            purple: '#7000ff',
+                            pink: '#ff007f',
+                            dark: '#0a0a12',
+                            card: 'rgba(18, 18, 35, 0.6)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(18, 18, 35, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-panel-hover:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #00f0ff 0%, #7000ff 50%, #ff007f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
 </head>
-<body class="min-h-screen relative flex flex-col justify-between">
-    <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+<body class="bg-[#06060c] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-cyber-blue selection:text-black">
 
-    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    <!-- NAVIGATION BAR -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 p-[2px]"><div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center"><span class="font-extrabold text-cyan-400">X</span></div></div>
-                <h1 class="font-bold text-xl text-white">Xsus AI</h1>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xl shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+                    X
+                </div>
+                <span class="text-xl font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">STUDIO</span></span>
             </a>
-            <a href="index.html" class="text-xs text-cyan-400 hover:underline">&larr; Back to Ecosystem</a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center gap-8 font-medium text-sm text-slate-300">
+                <a href="index.html" data-i18n="nav-home" class="hover:text-cyber-blue transition">Home</a>
+                <a href="web.html" data-i18n="nav-web" class="hover:text-cyber-blue transition">Web Dev</a>
+                <a href="app.html" data-i18n="nav-app" class="hover:text-cyber-blue transition">App Dev</a>
+                <a href="ai.html" data-i18n="nav-ai" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">AI Solutions</a>
+                <a href="logo.html" data-i18n="nav-branding" class="hover:text-cyber-blue transition">Branding</a>
+                <a href="domain.html" data-i18n="nav-domain" class="hover:text-cyber-blue transition">Domain & Host</a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- LANGUAGE SELECTOR -->
+                <select id="language-select" class="bg-black/50 border border-white/20 text-xs font-semibold text-white px-3 py-1.5 rounded-lg focus:border-cyber-blue outline-none cursor-pointer">
+                    <option value="en" selected>EN 🇬🇧</option>
+                    <option value="sq">SQ 🇦🇱</option>
+                    <option value="fr">FR 🇫🇷</option>
+                </select>
+
+                <a href="#ai-console" data-i18n="nav-start" class="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-sm hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
+                    <i data-lucide="cpu" class="w-4 h-4"></i>
+                    Launch AI
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="pt-36 pb-16 px-6 relative overflow-hidden">
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyber-purple/15 rounded-full blur-[140px] pointer-events-none"></div>
+        
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-purple/30 text-cyber-purple text-xs font-semibold uppercase tracking-widest mb-6">
+                <i data-lucide="sparkles" class="w-4 h-4"></i> <span data-i18n="hero-badge">Next-Gen AI Intelligence</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
+                <span data-i18n="hero-title1">Empower Your Workflow with</span> <br><span class="text-gradient" data-i18n="hero-title2">Xsus AI Solutions</span>
+            </h1>
+            <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed" data-i18n="hero-desc">
+                From automated video script writing to custom enterprise code generation. Leverage intelligent neural tools built for peak productivity.
+            </p>
         </div>
     </header>
 
-    <main class="relative z-10 max-w-4xl mx-auto px-4 py-12 flex-1 w-full space-y-6">
-        <div class="text-center space-y-2">
-            <h2 class="text-3xl font-bold text-white flex items-center justify-center gap-3"><i data-lucide="cpu" class="w-8 h-8 text-cyan-400"></i> Xsus AI Engine</h2>
-            <p class="text-slate-400 text-sm">Interactive console for video scripts, code generation, and intelligent assistance.</p>
-        </div>
-
-        <div class="glass-panel-glow rounded-2xl border border-slate-800 overflow-hidden shadow-2xl h-[520px] flex flex-col">
-            <div class="px-6 py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-                <span class="font-semibold text-white text-sm">Interactive AI Console</span>
-                <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-cyan-400">Clear chat</button>
+    <!-- INTERACTIVE AI CONSOLE (WORKSPACE) -->
+    <section id="ai-console" class="py-12 px-6 max-w-5xl mx-auto w-full">
+        <div class="glass-panel p-6 md:p-8 rounded-3xl border border-cyber-purple/30 shadow-[0_0_50px_rgba(112,0,255,0.15)]">
+            <div class="flex flex-col md:flex-row items-center justify-between pb-6 border-b border-white/10 gap-4 mb-6">
+                <div>
+                    <h3 class="text-xl font-bold flex items-center gap-2 text-white">
+                        <i data-lucide="terminal" class="text-cyber-blue w-5 h-5"></i> <span data-i18n="console-title">Xsus Neural Console</span>
+                    </h3>
+                    <p class="text-slate-400 text-xs mt-1" data-i18n="console-subtitle">Select an AI module, enter your topic, and generate professional outputs instantly.</p>
+                </div>
+                
+                <!-- AI Module Selectors -->
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <select id="ai-mode" class="bg-black/60 border border-white/15 text-xs font-semibold text-white px-4 py-2 rounded-xl focus:border-cyber-blue outline-none cursor-pointer w-full md:w-auto">
+                        <option value="script" data-i18n="mode-script">🎬 Video Script Generator</option>
+                        <option value="code" data-i18n="mode-code">💻 Code & Web Assistant</option>
+                        <option value="copy" data-i18n="mode-copy">✍️ Marketing Copywriter</option>
+                    </select>
+                </div>
             </div>
-            <div id="chatStream" class="flex-1 p-6 overflow-y-auto space-y-4 custom-scrollbar bg-slate-950/40">
-                <div class="flex gap-3 max-w-3xl">
-                    <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0"><i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i></div>
-                    <div class="glass-panel p-4 rounded-2xl rounded-tl-none border-slate-800 text-sm text-slate-200">
-                        <p>Hello! I am Xsus AI. Ask me for a video script, creative text, or technical question!</p>
+
+            <!-- Chat / Output Display Box -->
+            <div id="ai-output-box" class="bg-black/70 border border-white/10 rounded-2xl p-5 min-h-[280px] max-h-[400px] overflow-y-auto mb-6 space-y-4">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xs shrink-0">
+                        AI
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%]">
+                        <p data-i18n="ai-welcome">Hello! I am Xsus AI Engine. Choose your module above, type your topic below, and let's create something extraordinary together!</p>
                     </div>
                 </div>
             </div>
-            <div class="p-4 bg-slate-900/90 border-t border-slate-800">
-                <form id="chatForm" onsubmit="handleChatSubmit(event)" class="flex gap-2 items-center">
-                    <input type="text" id="userInput" placeholder="Ask Xsus AI anything..." class="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50">
-                    <button type="submit" class="bg-cyan-500 text-slate-950 font-bold px-6 py-3 rounded-xl">Send</button>
-                </form>
+
+            <!-- Input Bar -->
+            <div class="flex items-center gap-3">
+                <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Type your topic or prompt here (e.g., Video script about renewable energy)..." class="flex-1 p-4 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                <button id="ai-send-btn" class="px-6 py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0">
+                    <i data-lucide="send" class="w-4 h-4"></i> <span data-i18n="btn-generate">Generate</span>
+                </button>
             </div>
         </div>
-    </main>
+    </section>
 
-    <footer class="glass-panel border-t border-slate-800/80 mt-16 py-8 text-center text-xs text-slate-500">&copy; 2026 Xsus Studio. All rights reserved.</footer>
+    <!-- AI SERVICES GRID -->
+    <section class="py-20 px-6 max-w-7xl mx-auto w-full">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-5xl font-extrabold mb-4"><span data-i18n="serv-title1">Enterprise AI</span> <span class="text-gradient" data-i18n="serv-title2">Capabilities</span></h2>
+            <p class="text-slate-400" data-i18n="serv-subtitle">Advanced artificial intelligence services tailored for scaling modern businesses.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Service 1 -->
+            <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition flex flex-col justify-between">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-cyber-blue/10 border border-cyber-blue/30 flex items-center justify-center text-cyber-blue mb-6">
+                        <i data-lucide="video" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="s1-title">AI Video Production Scripts</h3>
+                    <p class="text-slate-400 text-sm mb-6" data-i18n="s1-desc">Create high-retention multi-part video scripts for YouTube Shorts, TikTok, and promotional brand campaigns.</p>
+                </div>
+                <a href="#ai-console" class="inline-flex items-center gap-2 text-xs font-bold text-cyber-blue hover:text-white transition">
+                    <span data-i18n="try-module">Try Module</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+
+            <!-- Service 2 -->
+            <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition flex flex-col justify-between border-cyber-purple/40 bg-cyber-purple/[0.02]">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-cyber-purple/10 border border-cyber-purple/30 flex items-center justify-center text-cyber-purple mb-6">
+                        <i data-lucide="code" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="s2-title">Custom Code & UI Automation</h3>
+                    <p class="text-slate-400 text-sm mb-6" data-i18n="s2-desc">Generate production-ready Tailwind CSS layouts, JavaScript logic, and automated workflows instantly.</p>
+                </div>
+                <a href="#ai-console" class="inline-flex items-center gap-2 text-xs font-bold text-cyber-purple hover:text-white transition">
+                    <span data-i18n="try-module">Try Module</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+
+            <!-- Service 3 -->
+            <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition flex flex-col justify-between">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-cyber-pink/10 border border-cyber-pink/30 flex items-center justify-center text-cyber-pink mb-6">
+                        <i data-lucide="bot" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="s3-title">Multilingual Chat Assistants</h3>
+                    <p class="text-slate-400 text-sm mb-6" data-i18n="s3-desc">Deploy intelligent customer support bots fluent in English, Albanian, and French for your web platform.</p>
+                </div>
+                <a href="#ai-console" class="inline-flex items-center gap-2 text-xs font-bold text-cyber-pink hover:text-white transition">
+                    <span data-i18n="try-module">Try Module</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto py-8 border-t border-white/10 glass-panel text-center text-xs text-slate-500">
+        <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
+    </footer>
+
+    <!-- SCRIPT FOR TRANSLATIONS & INTERACTIVE AI SIMULATOR -->
+    <script>
+        lucide.createIcons();
+
+        // 1. TRANSLATION DICTIONARY
+        const i18nData = {
+            en: {
+                "nav-home": "Home", "nav-web": "Web Dev", "nav-app": "App Dev", "nav-ai": "AI Solutions", "nav-branding": "Branding", "nav-domain": "Domain & Host", "nav-start": "Launch AI",
+                "hero-badge": "Next-Gen AI Intelligence", "hero-title1": "Empower Your Workflow with", "hero-title2": "Xsus AI Solutions",
+                "hero-desc": "From automated video script writing to custom enterprise code generation. Leverage intelligent neural tools built for peak productivity.",
+                "console-title": "Xsus Neural Console", "console-subtitle": "Select an AI module, enter your topic, and generate professional outputs instantly.",
+                "mode-script": "🎬 Video Script Generator", "mode-code": "💻 Code & Web Assistant", "mode-copy": "✍️ Marketing Copywriter",
+                "ai-welcome": "Hello! I am Xsus AI Engine. Choose your module above, type your topic below, and let's create something extraordinary together!",
+                "input-placeholder": "Type your topic or prompt here (e.g., Video script about renewable energy)...",
+                "btn-generate": "Generate",
+                "serv-title1": "Enterprise AI", "serv-title2": "Capabilities", "serv-subtitle": "Advanced artificial intelligence services tailored for scaling modern businesses.",
+                "s1-title": "AI Video Production Scripts", "s1-desc": "Create high-retention multi-part video scripts for YouTube Shorts, TikTok, and promotional brand campaigns.",
+                "s2-title": "Custom Code & UI Automation", "s2-desc": "Generate production-ready Tailwind CSS layouts, JavaScript logic, and automated workflows instantly.",
+                "s3-title": "Multilingual Chat Assistants", "s3-desc": "Deploy intelligent customer support bots fluent in English, Albanian, and French for your web platform.",
+                "try-module": "Try Module"
+            },
+            sq: {
+                "nav-home": "Kreu", "nav-web": "Web Dev", "nav-app": "App Dev", "nav-ai": "Zgjidhje AI", "nav-branding": "Branding", "nav-domain": "Domain & Host", "nav-start": "Nis AI",
+                "hero-badge": "Inteligjencë AI e Brezit të Ri", "hero-title1": "Fuqizoni Punën tuaj me", "hero-title2": "Zgjidhjet Xsus AI",
+                "hero-desc": "Nga skriptet e automatizuara të video-ve deri te gjenerimi i kodit profesional. Përdorni mjete neurale për produktivitet maksimal.",
+                "console-title": "Konsola Neurale Xsus", "console-subtitle": "Zgjidhni një modul AI, shkruani temën tuaj dhe gjeneroni rezultate profesionale në sekondë.",
+                "mode-script": "🎬 Gjenerues Skriptesh Video", "mode-code": "💻 Asistent Kodi & Web", "mode-copy": "✍️ Kopjues Marketingu",
+                "ai-welcome": "Përshëndetje! Unë jam Xsus AI Engine. Zgjidhni modulin sipër, shkruani temën tuaj dhe le të krijojmë diçka unike së bashku!",
+                "input-placeholder": "Shkruani temën ose kërkesën tuaj këtu (p.sh., Skript video për energjinë e gjelbër)...",
+                "btn-generate": "Gjenero",
+                "serv-title1": "Aftësitë AI për", "serv-title2": "Biznesin", "serv-subtitle": "Shërbime të avancuara të inteligjencës artificiale të përshtatura për rritjen e biznesit tuaj.",
+                "s1-title": "Skripte Video për Prodhim AI", "s1-desc": "Krijoni skripte video me mbajtje të lartë interesi për YouTube Shorts, TikTok dhe fushata promovuese.",
+                "s2-title": "Automatizim Kodi & UI", "s2-desc": "Gjeneroni struktura Tailwind CSS gati për prodhim, logjikë JavaScript dhe rrjedha të automatizuara.",
+                "s3-title": "Asistentë Chat Shumëgjinorë", "s3-desc": "Vendosni botë inteligjente mbështetjeje në Anglisht, Shqip dhe Frëngjisht për platformën tuaj web.",
+                "try-module": "Provo Modulin"
+            },
+            fr: {
+                "nav-home": "Accueil", "nav-web": "Dév Web", "nav-app": "Dév App", "nav-ai": "Solutions IA", "nav-branding": "Branding", "nav-domain": "Domaine & Hôte", "nav-start": "Lancer IA",
+                "hero-badge": "Intelligence IA de Nouvelle Génération", "hero-title1": "Optimisez Votre Flux avec", "hero-title2": "les Solutions Xsus IA",
+                "hero-desc": "De la rédaction de scripts vidéo automatisés à la génération de code sur mesure. Utilisez des outils neuronaux intelligents.",
+                "console-title": "Console Neurale Xsus", "console-subtitle": "Sélectionnez un module IA, entrez votre sujet et générez des résultats instantanément.",
+                "mode-script": "🎬 Générateur de Scripts Vidéo", "mode-code": "💻 Assistant Code & Web", "mode-copy": "✍️ Concepteur Marketing",
+                "ai-welcome": "Bonjour ! Je suis Xsus AI Engine. Choisissez votre module ci-dessus, tapez votre sujet et créons ensemble !",
+                "input-placeholder": "Tapez votre sujet ou invite ici (ex: Script vidéo sur l'énergie solaire)...",
+                "btn-generate": "Générer",
+                "serv-title1": "Capacités IA", "serv-title2": "d'Entreprise", "serv-subtitle": "Services d'intelligence artificielle avancés conçus pour faire évoluer vos projets.",
+                "s1-title": "Scripts de Production Vidéo", "s1-desc": "Créez des scripts vidéo engageants pour YouTube Shorts, TikTok et vos campagnes marketing.",
+                "s2-title": "Automatisation Code & UI", "s2-desc": "Générez des maquettes Tailwind CSS et une logique JavaScript prêtes pour la production.",
+                "s3-title": "Assistants de Chat Multilingues", "s3-desc": "Déployez des bots de support intelligents parlant anglais, albanais et français.",
+                "try-module": "Essayer le Module"
+            }
+        };
+
+        const langSelect = document.getElementById('language-select');
+        function setLanguage(lang) {
+            const dictionary = i18nData[lang] || i18nData['en'];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dictionary[key]) {
+                    el.textContent = dictionary[key];
+                }
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (dictionary[key]) {
+                    el.placeholder = dictionary[key];
+                }
+            });
+            document.documentElement.lang = lang;
+        }
+
+        langSelect?.addEventListener('change', (e) => {
+            setLanguage(e.target.value);
+        });
+
+        // 2. INTERACTIVE AI CONSOLE SIMULATOR
+        const aiInput = document.getElementById('ai-input');
+        const aiSendBtn = document.getElementById('ai-send-btn');
+        const aiOutputBox = document.getElementById('ai-output-box');
+        const aiMode = document.getElementById('ai-mode');
+
+        function handleAIGenerate() {
+            const text = aiInput.value.trim();
+            if(!text) return;
+
+            // User Message
+            const userMsg = document.createElement('div');
+            userMsg.className = "flex items-start gap-3 justify-end";
+            userMsg.innerHTML = `
+                <div class="glass-panel p-4 rounded-2xl rounded-tr-none text-sm text-slate-100 max-w-[85%] border-cyber-blue/30 bg-cyber-blue/10">
+                    <p>${text}</p>
+                </div>
+                <div class="w-8 h-8 rounded-xl bg-cyber-blue flex items-center justify-center font-bold text-black text-xs shrink-0">
+                    YOU
+                </div>
+            `;
+            aiOutputBox.appendChild(userMsg);
+            aiInput.value = '';
+            aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
+
+            // Simulated AI Response
+            setTimeout(() => {
+                const modeVal = aiMode.value;
+                let responseText = `I have successfully analyzed your prompt regarding "${text}". As an advanced module of Xsus Studio, I have structured a professional framework for your project.`;
+                if(modeVal === 'script') {
+                    responseText = `🎬 **Generated Video Script for:** "${text}"\n\n• **[0:00 - 0:05] Hook:** Grab attention immediately with a bold statement about ${text}.\n• **[0:05 - 0:25] Core Value:** Present the main problem and how Xsus Studio solves it.\n• **[0:25 - 0:30] Call to Action:** Direct viewers to visit xsusstudio.com.`;
+                } else if(modeVal === 'code') {
+                    responseText = `💻 **Generated Code Blueprint for:** "${text}"\n\n\`\`\`html\n<div class="glass-panel p-6 rounded-2xl border border-cyber-blue/40">\n  <h4 class="text-cyber-blue font-bold">${text}</h4>\n  <p class="text-xs text-slate-300">Optimized with Tailwind CSS & Glassmorphism.</p>\n</div>\n\`\`\``;
+                }
+
+                const aiMsg = document.createElement('div');
+                aiMsg.className = "flex items-start gap-3";
+                aiMsg.innerHTML = `
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xs shrink-0">
+                        AI
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] whitespace-pre-line">
+                        <p>${responseText}</p>
+                    </div>
+                `;
+                aiOutputBox.appendChild(aiMsg);
+                aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
+            }, 800);
+        }
+
+        aiSendBtn?.addEventListener('click', handleAIGenerate);
+        aiInput?.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') handleAIGenerate();
+        });
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
