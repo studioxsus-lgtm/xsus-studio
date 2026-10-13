@@ -87,7 +87,7 @@
         
         <div class="max-w-4xl mx-auto text-center relative z-10">
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-purple/30 text-cyber-purple text-xs font-semibold uppercase tracking-widest mb-6">
-                <i data-lucide="sparkles" class="w-4 h-4"></i> <span data-i18n="hero-badge">Real-Time Gemini Neural Engine</span>
+                <i data-lucide="sparkles" class="w-4 h-4"></i> <span data-i18n="hero-badge">Real-Time Open Neural Engine</span>
             </div>
             <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
                 <span data-i18n="hero-title1">Ask Anything. Create Everything.</span> <br><span class="text-gradient" data-i18n="hero-title2">Powered by Xsus AI</span>
@@ -141,7 +141,7 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT FOR REAL GEMINI API INTEGRATION -->
+    <!-- SCRIPT FOR DIRECT NO-KEY AI INTEGRATION -->
     <script>
         lucide.createIcons();
 
@@ -149,7 +149,7 @@
         const i18nData = {
             en: {
                 "nav-start": "Launch AI",
-                "hero-badge": "Real-Time Gemini Neural Engine",
+                "hero-badge": "Real-Time Open Neural Engine",
                 "hero-title1": "Ask Anything. Create Everything.",
                 "hero-title2": "Powered by Xsus AI",
                 "hero-desc": "Your live AI companion connected directly to advanced neural models for accurate answers in any language.",
@@ -161,7 +161,7 @@
             },
             sq: {
                 "nav-start": "Nis AI",
-                "hero-badge": "Motor Neural Gemini në Kohë Reale",
+                "hero-badge": "Motor Neural në Kohë Reale",
                 "hero-title1": "Pyet Çdo Gjë. Krijo Çdo Gjë.",
                 "hero-title2": "Mbështetur nga Xsus AI",
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
@@ -173,7 +173,7 @@
             },
             fr: {
                 "nav-start": "Lancer IA",
-                "hero-badge": "Moteur Neural Gemini en Direct",
+                "hero-badge": "Moteur Neural en Direct",
                 "hero-title1": "Demandez Tout. Créez Tout.",
                 "hero-title2": "Propulsé par Xsus AI",
                 "hero-desc": "Votre compagnon IA en direct connecté aux modèles neuronaux avancés pour des réponses précises.",
@@ -201,39 +201,39 @@
 
         langSelect?.addEventListener('change', (e) => setLanguage(e.target.value));
 
-        // 2. REAL API CONNECTION TO GOOGLE GEMINI (Model updated to gemini-2.5-flash)
-        const p1 = 'AQ.Ab8RN6KOEvFhpxrI';
-        const p2 = 'WNbqw3KTuYNMd8ty5';
-        const p3 = 'ovaEZxpSu974LEW6A';
-        const API_KEY = p1 + p2 + p3;
+        // 2. DIRECT AI CALL (NO API KEY REQUIRED)
+        let conversationHistory = [
+            { role: 'system', content: 'You are Xsus AI, an intelligent, helpful, and high-performance AI assistant created for Xsus Studio. Respond accurately, friendly, and in the language requested by the user.' }
+        ];
 
         const aiInput = document.getElementById('ai-input');
         const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
         const clearChatBtn = document.getElementById('clear-chat');
 
-        async function callGeminiAPI(promptText) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
-            
+        async function fetchAIResponse(userText) {
+            conversationHistory.push({ role: 'user', content: userText });
+
             try {
-                const response = await fetch(url, {
+                const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: promptText }] }]
+                        messages: conversationHistory,
+                        model: 'openai',
+                        seed: Math.floor(Math.random() * 1000)
                     })
                 });
 
-                const data = await response.json();
-                if (data.candidates && data.candidates[0].content.parts[0].text) {
-                    return data.candidates[0].content.parts[0].text;
-                } else if (data.error) {
-                    return `Gabim nga Google API: ${data.error.message}`;
+                if (response.ok) {
+                    const reply = await response.text();
+                    conversationHistory.push({ role: 'assistant', content: reply });
+                    return reply;
                 } else {
-                    return "Ndodhi një gabim gjatë procesimit nga serveri i AI.";
+                    return "Ndodhi një shkëputje e përkohshme me serverin. Ju lutem provoni përsëri.";
                 }
-            } catch (error) {
-                return "Gabim në lidhje me internetin ose çelësin API.";
+            } catch (err) {
+                return "Gabim në lidhje me rrjetin. Kontrolloni lidhjen me internetin.";
             }
         }
 
@@ -241,7 +241,7 @@
             const text = aiInput.value.trim();
             if(!text) return;
 
-            // User Message
+            // Display User Message
             const userMsg = document.createElement('div');
             userMsg.className = "flex items-start gap-3 justify-end";
             userMsg.innerHTML = `
@@ -256,7 +256,7 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Loading state
+            // Display Loading Bubble
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
             loadingMsg.id = "loading-bubble";
@@ -271,12 +271,13 @@
             aiOutputBox.appendChild(loadingMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Fetch Real AI Response
-            const reply = await callGeminiAPI(text);
+            // Fetch Response
+            const reply = await fetchAIResponse(text);
 
-            // Remove loading and show response
+            // Remove loading
             document.getElementById('loading-bubble')?.remove();
 
+            // Display AI Response
             const aiMsg = document.createElement('div');
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
@@ -297,6 +298,9 @@
         });
 
         clearChatBtn?.addEventListener('click', () => {
+            conversationHistory = [
+                { role: 'system', content: 'You are Xsus AI, an intelligent, helpful, and high-performance AI assistant created for Xsus Studio.' }
+            ];
             const currentLang = langSelect.value;
             let welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
 
