@@ -67,7 +67,7 @@
                 <div class="glass-panel px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-300">
                     <i data-lucide="globe" class="w-3.5 h-3.5 text-cyber-blue"></i>
                     <select id="language-select" class="bg-transparent text-white outline-none cursor-pointer">
-                        <option value="en" class="bg-[#0a0a12] text-white" selected>EN</option>
+                        <option value="en" class="bg-[#0a0a12] text-white">EN</option>
                         <option value="sq" class="bg-[#0a0a12] text-white">SQ</option>
                         <option value="fr" class="bg-[#0a0a12] text-white">FR</option>
                     </select>
@@ -120,7 +120,7 @@
                         AI
                     </div>
                     <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-slate-200 max-w-[85%] leading-relaxed">
-                        <p data-i18n="ai-welcome">Hello! I am connected to live AI models. Ask me anything, request information, or chat in Albanian, English, or French!</p>
+                        <p id="welcome-msg-text" data-i18n="ai-welcome">Hello! I am connected to live AI models. Ask me anything, request information, or chat in Albanian, English, or French!</p>
                     </div>
                 </div>
             </div>
@@ -141,7 +141,7 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT FOR DIRECT NO-KEY AI INTEGRATION -->
+    <!-- SCRIPT FOR DYNAMIC I18N AND CLEAN AI INTEGRATION -->
     <script>
         lucide.createIcons();
 
@@ -157,7 +157,8 @@
                 "clear-btn": "Clear Chat",
                 "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, request information, or chat in Albanian, English, or French!",
                 "input-placeholder": "Ask Xsus AI anything...",
-                "btn-send": "Send"
+                "btn-send": "Send",
+                "thinking": "Thinking..."
             },
             sq: {
                 "nav-start": "Nis AI",
@@ -167,9 +168,10 @@
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
                 "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
                 "clear-btn": "Pastro Bisedën",
-                "ai-welcome": "Përshëndetje! Jam i lidhur me modelet e vërteta AI. Më pyet çfarë të duash në Shqip, Anglisht apo Frëngjisht!",
+                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash në Shqip, Anglisht apo Frëngjisht!",
                 "input-placeholder": "Pyet Xsus AI për çdo gjë...",
-                "btn-send": "Dërgo"
+                "btn-send": "Dërgo",
+                "thinking": "Duke menduar..."
             },
             fr: {
                 "nav-start": "Lancer IA",
@@ -181,35 +183,62 @@
                 "clear-btn": "Effacer",
                 "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez vos questions en français, anglais ou albanais !",
                 "input-placeholder": "Posez une question à Xsus AI...",
-                "btn-send": "Envoyer"
+                "btn-send": "Envoyer",
+                "thinking": "En réflexion..."
             }
         };
 
         const langSelect = document.getElementById('language-select');
+        let currentLang = 'en';
+
         function setLanguage(lang) {
+            currentLang = lang;
             const dictionary = i18nData[lang] || i18nData['en'];
+
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (dictionary[key]) el.textContent = dictionary[key];
             });
+
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (dictionary[key]) el.placeholder = dictionary[key];
             });
+
             document.documentElement.lang = lang;
+            if (langSelect) langSelect.value = lang;
         }
 
         langSelect?.addEventListener('change', (e) => setLanguage(e.target.value));
 
-        // 2. DIRECT AI CALL (NO API KEY REQUIRED)
+        // Detect default browser language or default to SQ/EN
+        const userBrowserLang = navigator.language.slice(0, 2);
+        if (['sq', 'fr', 'en'].includes(userBrowserLang)) {
+            setLanguage(userBrowserLang);
+        } else {
+            setLanguage('en');
+        }
+
+        // 2. AI ENGINE LOGIC
         let conversationHistory = [
-            { role: 'system', content: 'You are Xsus AI, an intelligent, helpful, and high-performance AI assistant created for Xsus Studio. Respond accurately, friendly, and in the language requested by the user.' }
+            {
+                role: 'system',
+                content: 'You are Xsus AI, an advanced AI assistant created for Xsus Studio. Respond accurately, fluently, and eloquently in the language requested by the user (Albanian, French, or English). Do not use escaped formatting like \\n, markdown code blocks unless necessary, and keep responses natural and clean.'
+            }
         ];
 
         const aiInput = document.getElementById('ai-input');
         const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
         const clearChatBtn = document.getElementById('clear-chat');
+
+        function cleanResponseText(rawText) {
+            return rawText
+                .replace(/\\n/g, '\n')
+                .replace(/\\r/g, '')
+                .replace(/^"|"$/g, '')
+                .trim();
+        }
 
         async function fetchAIResponse(userText) {
             conversationHistory.push({ role: 'user', content: userText });
@@ -226,14 +255,19 @@
                 });
 
                 if (response.ok) {
-                    const reply = await response.text();
+                    let reply = await response.text();
+                    reply = cleanResponseText(reply);
                     conversationHistory.push({ role: 'assistant', content: reply });
                     return reply;
                 } else {
-                    return "Ndodhi një shkëputje e përkohshme me serverin. Ju lutem provoni përsëri.";
+                    return currentLang === 'sq' ? "Ndodhi një shkëputje e përkohshme me serverin. Ju lutem provoni përsëri." :
+                           currentLang === 'fr' ? "Une déconnexion temporaire est survenue. Veuillez réessayer." :
+                           "A temporary disconnection occurred. Please try again.";
                 }
             } catch (err) {
-                return "Gabim në lidhje me rrjetin. Kontrolloni lidhjen me internetin.";
+                return currentLang === 'sq' ? "Gabim në lidhje me rrjetin. Kontrolloni lidhjen me internetin." :
+                       currentLang === 'fr' ? "Erreur de connexion réseau. Vérifiez votre accès internet." :
+                       "Network connection error. Please check your internet connection.";
             }
         }
 
@@ -256,7 +290,8 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Display Loading Bubble
+            // Display Dynamic Language Loading Bubble
+            const loadingText = i18nData[currentLang]["thinking"] || i18nData["en"]["thinking"];
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
             loadingMsg.id = "loading-bubble";
@@ -265,19 +300,19 @@
                     AI
                 </div>
                 <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-400 max-w-[85%] animate-pulse">
-                    Duke menduar... / Thinking...
+                    ${loadingText}
                 </div>
             `;
             aiOutputBox.appendChild(loadingMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Fetch Response
+            // Fetch AI Response
             const reply = await fetchAIResponse(text);
 
             // Remove loading
             document.getElementById('loading-bubble')?.remove();
 
-            // Display AI Response
+            // Display Clean AI Response
             const aiMsg = document.createElement('div');
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
@@ -299,10 +334,12 @@
 
         clearChatBtn?.addEventListener('click', () => {
             conversationHistory = [
-                { role: 'system', content: 'You are Xsus AI, an intelligent, helpful, and high-performance AI assistant created for Xsus Studio.' }
+                {
+                    role: 'system',
+                    content: 'You are Xsus AI, an advanced AI assistant created for Xsus Studio. Respond accurately, fluently, and eloquently in the language requested by the user.'
+                }
             ];
-            const currentLang = langSelect.value;
-            let welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
+            const welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
 
             aiOutputBox.innerHTML = `
                 <div class="flex items-start gap-3">
@@ -310,7 +347,7 @@
                         AI
                     </div>
                     <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed">
-                        <p>${welcomeText}</p>
+                        <p id="welcome-msg-text" data-i18n="ai-welcome">${welcomeText}</p>
                     </div>
                 </div>
             `;
