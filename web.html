@@ -107,53 +107,73 @@
         </div>
     </header>
 
-    <!-- LIVE VISUAL WEB BUILDER & PREVIEW (INTERACTIVE STUDIO) -->
+    <!-- ADVANCED LIVE WEB BUILDER & PREVIEW STUDIO -->
     <section id="builder" class="py-16 px-6 max-w-7xl mx-auto w-full">
         <div class="glass-panel p-6 md:p-10 rounded-3xl border border-cyber-blue/30 shadow-[0_0_40px_rgba(0,240,255,0.1)]">
             <div class="text-center mb-8">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyber-blue/10 text-cyber-blue text-xs font-bold uppercase tracking-widest mb-3">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Interactive Studio
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Interactive Studio Pro
                 </div>
-                <h2 class="text-2xl md:text-4xl font-extrabold" data-i18n="builder-title">Live Web Visualizer</h2>
-                <p class="text-slate-400 text-sm mt-2" data-i18n="builder-subtitle">Describe your business or project idea to see a live visual mockup generated instantly.</p>
+                <h2 class="text-2xl md:text-4xl font-extrabold" data-i18n="builder-title">Live Web Visualizer Studio</h2>
+                <p class="text-slate-400 text-sm mt-2" data-i18n="builder-subtitle">Customize features, color tones, and layout styles to preview your future website instantly.</p>
             </div>
 
             <div class="grid lg:grid-cols-12 gap-8 items-start">
-                <!-- Controls Panel -->
-                <div class="lg:col-span-5 space-y-5 glass-panel p-6 rounded-2xl border border-white/10">
+                <!-- Controls & Advanced Tools Panel -->
+                <div class="lg:col-span-5 space-y-4 glass-panel p-6 rounded-2xl border border-white/10">
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2" data-i18n="builder-label-idea">Your Project / Business Idea</label>
-                        <input type="text" id="builder-idea" placeholder="e.g. Luxury Restaurant with Interactive Menu" value="Cyberpunk Tech SaaS Startup" class="w-full p-3 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5" data-i18n="builder-label-idea">Project Title / Business Name</label>
+                        <input type="text" id="builder-idea" value="CyberNexus Tech Hub" class="w-full p-3 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2" data-i18n="builder-label-theme">Visual Theme</label>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5" data-i18n="builder-label-theme">Theme Mode</label>
                             <select id="builder-theme" class="w-full p-3 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
                                 <option value="cyber">Cyber Neon</option>
                                 <option value="corporate">Corporate Dark</option>
-                                <option value="minimal">Minimal White</option>
+                                <option value="minimal">Minimal Clean</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2" data-i18n="builder-label-layout">Layout Style</label>
-                            <select id="builder-layout" class="w-full p-3 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
-                                <option value="landing">Landing Page</option>
-                                <option value="portal">Portal / Portal</option>
-                                <option value="store">E-Commerce Store</option>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5" data-i18n="builder-label-color">Accent Color</label>
+                            <select id="builder-color" class="w-full p-3 rounded-xl bg-black/60 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                                <option value="#00f0ff">Cyan Blue</option>
+                                <option value="#ff007f">Neon Pink</option>
+                                <option value="#10b981">Emerald Green</option>
+                                <option value="#a855f7">Electric Purple</option>
                             </select>
                         </div>
                     </div>
 
-                    <button id="generate-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center justify-center gap-2">
-                        <i data-lucide="play" class="w-4 h-4 fill-black"></i> <span data-i18n="builder-btn-generate">Generate Live Preview</span>
-                    </button>
+                    <!-- Extra Features Toggles -->
+                    <div class="pt-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Include UI Modules</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 p-2.5 rounded-lg bg-black/40 border border-white/10 text-xs cursor-pointer hover:border-cyber-blue/40">
+                                <input type="checkbox" id="toggle-features" checked class="accent-cyber-blue"> Features Grid
+                            </label>
+                            <label class="flex items-center gap-2 p-2.5 rounded-lg bg-black/40 border border-white/10 text-xs cursor-pointer hover:border-cyber-blue/40">
+                                <input type="checkbox" id="toggle-pricing" checked class="accent-cyber-blue"> Pricing Box
+                            </label>
+                        </div>
+                    </div>
 
-                    <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
-                        <span data-i18n="builder-device-view">Device View:</span>
-                        <div class="flex gap-2">
-                            <button id="view-desktop" class="px-3 py-1 rounded bg-cyber-blue/20 text-cyber-blue font-semibold border border-cyber-blue/40">Desktop</button>
-                            <button id="view-mobile" class="px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10">Mobile</button>
+                    <div class="flex gap-2 pt-2">
+                        <button id="generate-btn" class="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center justify-center gap-2">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i> <span data-i18n="builder-btn-generate">Update Preview</span>
+                        </button>
+                        <button id="download-code-btn" title="Download Mockup HTML" class="px-4 py-3.5 rounded-xl glass-panel text-cyber-blue font-bold hover:bg-cyber-blue/10 transition border border-cyber-blue/30">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <div class="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                        <span data-i18n="builder-device-view">Device Mode:</span>
+                        <div class="flex gap-1.5">
+                            <button id="view-desktop" class="px-3 py-1 rounded bg-cyber-blue/20 text-cyber-blue font-semibold border border-cyber-blue/40 text-xs">Desktop</button>
+                            <button id="view-tablet" class="px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10 text-xs">Tablet</button>
+                            <button id="view-mobile" class="px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10 text-xs">Mobile</button>
                         </div>
                     </div>
                 </div>
@@ -168,14 +188,16 @@
                                 <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
                                 <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
                             </div>
-                            <div class="bg-black/60 px-4 py-1 rounded-lg text-slate-400 text-xs font-mono border border-white/5 truncate max-w-[220px]">
-                                preview.xsusstudio.com
+                            <div class="bg-black/60 px-4 py-1 rounded-lg text-slate-400 text-xs font-mono border border-white/5 truncate max-w-[200px]">
+                                live-preview.xsusstudio.com
                             </div>
-                            <span class="text-xs text-cyber-blue font-bold">LIVE</span>
+                            <button id="fullscreen-btn" title="Toggle Fullscreen" class="text-slate-400 hover:text-cyber-blue transition">
+                                <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                            </button>
                         </div>
                         <!-- Preview Display Container -->
-                        <div id="preview-container" class="bg-[#0b0c10] border-x border-b border-white/10 rounded-b-2xl p-6 min-h-[380px] flex flex-col justify-between relative overflow-hidden transition-all">
-                            <!-- Live Rendered Content goes here via JS -->
+                        <div id="preview-container" class="bg-[#0b0c10] border-x border-b border-white/10 rounded-b-2xl p-6 min-h-[420px] flex flex-col justify-between relative overflow-hidden transition-all">
+                            <!-- Rendered Live Mockup -->
                         </div>
                     </div>
                 </div>
@@ -348,7 +370,7 @@
         </div>
     </section>
 
-    <!-- CALCULATOR INTERAKTIV -->
+    <!-- INTERACTIVE CALCULATOR -->
     <section id="calculator" class="py-20 px-6 max-w-4xl mx-auto w-full">
         <div class="glass-panel p-8 md:p-12 rounded-3xl border border-cyber-blue/20">
             <div class="text-center mb-8">
@@ -421,230 +443,101 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT FOR TRANSLATIONS, BUILDER & CALCULATOR -->
+    <!-- SCRIPT FOR TRANSLATIONS, ADVANCED STUDIO & CALCULATOR -->
     <script>
         lucide.createIcons();
 
         // 1. TRANSLATION DICTIONARY
         const i18nData = {
             en: {
-                "nav-home": "Home",
-                "nav-web": "Web Dev",
-                "nav-app": "App Dev",
-                "nav-ai": "AI Solutions",
-                "nav-branding": "Branding",
-                "nav-domain": "Domain & Host",
-                "nav-start": "Start Project",
-                "hero-badge": "High-End Web Architecture",
-                "hero-title1": "Modern Websites with",
-                "hero-title2": "Cyber Performance & Design",
+                "nav-home": "Home", "nav-web": "Web Dev", "nav-app": "App Dev", "nav-ai": "AI Solutions", "nav-branding": "Branding", "nav-domain": "Domain & Host", "nav-start": "Start Project",
+                "hero-badge": "High-End Web Architecture", "hero-title1": "Modern Websites with", "hero-title2": "Cyber Performance & Design",
                 "hero-desc": "From ultra-fast Landing Pages to complex web platforms. We craft interactive digital experiences built with cutting-edge technologies.",
-                "hero-btn-builder": "Test Web Builder",
-                "hero-btn-portfolio": "View Portfolio",
-                "builder-title": "Live Web Visualizer",
-                "builder-subtitle": "Describe your business or project idea to see a live visual mockup generated instantly.",
-                "builder-label-idea": "Your Project / Business Idea",
-                "builder-label-theme": "Visual Theme",
-                "builder-label-layout": "Layout Style",
-                "builder-btn-generate": "Generate Live Preview",
-                "builder-device-view": "Device View:",
-                "tech-title": "Technologies We Master",
-                "pkg-title1": "Web Development",
-                "pkg-title2": "Packages",
-                "pkg-subtitle": "Choose the ideal tier that best fits your business goals.",
-                "pkg-featured": "Most Popular",
-                "pkg1-name": "Start-Up / Local Business",
-                "pkg1-desc": "Perfect for showcasing a single product, service, or business with a highly polished single-page site.",
-                "pkg1-feat1": "1 Interactive Technical Page",
-                "pkg1-feat2": "Fully Responsive (Mobile/Tablet)",
-                "pkg1-feat3": "Contact Form Integration",
-                "pkg1-feat4": "Essential SEO Optimization",
-                "pkg2-name": "Corporate & Agency",
-                "pkg2-desc": "Designed for established businesses requiring a complete multi-page structure with seamless management.",
-                "pkg2-feat1": "Up to 6-10 Custom Pages",
-                "pkg2-feat2": "Multi-language Support (EN / SQ / FR)",
-                "pkg2-feat3": "Cyber Glassmorphism Animations",
-                "pkg2-feat4": "Custom Domain & SSL Setup",
-                "pkg3-name": "Web App & E-Commerce",
-                "pkg3-desc": "Tailor-made solutions for online stores, user-authenticated platforms, or API-driven applications.",
-                "pkg3-feat1": "E-Commerce & Payment Integration",
-                "pkg3-feat2": "Admin Dashboard Panel",
-                "pkg3-feat3": "Database & API Support",
-                "pkg3-feat4": "24/7 Technical Maintenance",
-                "btn-order": "Order Now",
-                "btn-quote": "Request Quote",
-                "port-badge": "Featured Showcase",
-                "port-title1": "Web Project",
-                "port-title2": "Portfolio",
+                "hero-btn-builder": "Test Web Builder", "hero-btn-portfolio": "View Portfolio",
+                "builder-title": "Live Web Visualizer Studio", "builder-subtitle": "Customize features, color tones, and layout styles to preview your future website instantly.",
+                "builder-label-idea": "Project Title / Business Name", "builder-label-theme": "Theme Mode", "builder-label-color": "Accent Color",
+                "builder-btn-generate": "Update Preview", "builder-device-view": "Device Mode:",
+                "tech-title": "Technologies We Master", "pkg-title1": "Web Development", "pkg-title2": "Packages",
+                "pkg-subtitle": "Choose the ideal tier that best fits your business goals.", "pkg-featured": "Most Popular",
+                "pkg1-name": "Start-Up / Local Business", "pkg1-desc": "Perfect for showcasing a single product, service, or business with a highly polished single-page site.",
+                "pkg1-feat1": "1 Interactive Technical Page", "pkg1-feat2": "Fully Responsive (Mobile/Tablet)", "pkg1-feat3": "Contact Form Integration", "pkg1-feat4": "Essential SEO Optimization",
+                "pkg2-name": "Corporate & Agency", "pkg2-desc": "Designed for established businesses requiring a complete multi-page structure with seamless management.",
+                "pkg2-feat1": "Up to 6-10 Custom Pages", "pkg2-feat2": "Multi-language Support (EN / SQ / FR)", "pkg2-feat3": "Cyber Glassmorphism Animations", "pkg2-feat4": "Custom Domain & SSL Setup",
+                "pkg3-name": "Web App & E-Commerce", "pkg3-desc": "Tailor-made solutions for online stores, user-authenticated platforms, or API-driven applications.",
+                "pkg3-feat1": "E-Commerce & Payment Integration", "pkg3-feat2": "Admin Dashboard Panel", "pkg3-feat3": "Database & API Support", "pkg3-feat4": "24/7 Technical Maintenance",
+                "btn-order": "Order Now", "btn-quote": "Request Quote",
+                "port-badge": "Featured Showcase", "port-title1": "Web Project", "port-title2": "Portfolio",
                 "port-subtitle": "Explore selected web applications engineered for speed, aesthetics, and high conversion.",
                 "port1-desc": "Complete multi-page corporate website with high-speed delivery, interactive analytics UI, and multi-language support.",
                 "port2-desc": "Advanced online retail platform equipped with secure payment integration, catalog filtering, and lightning-fast checkout.",
                 "port3-desc": "Web application featuring futuristic Glassmorphism UI, interactive pricing tools, and real-time responsive rendering.",
-                "port-btn": "Request Similar Project",
-                "port-btn-calc": "Test Calculator",
-                "calc-title": "Project Estimator Calculator",
-                "calc-subtitle": "Select options to generate an instant estimate for your project.",
-                "calc-label-type": "Website Type:",
-                "calc-opt1": "Single Page Landing Site ($150)",
-                "calc-opt2": "Multi-Page Corporate ($300)",
-                "calc-opt3": "E-Commerce / Custom Web Application ($600)",
-                "calc-check-lang": "Multi-Language Support (+EN / AL / FR)",
-                "calc-check-seo": "Advanced SEO Optimization",
-                "calc-total-label": "Estimated Investment:",
-                "calc-btn-apply": "Apply Now",
-                "contact-title1": "Ready to Build Your",
-                "contact-title2": "Digital Presence?",
+                "port-btn": "Request Similar Project", "port-btn-calc": "Test Calculator",
+                "calc-title": "Project Estimator Calculator", "calc-subtitle": "Select options to generate an instant estimate for your project.",
+                "calc-label-type": "Website Type:", "calc-opt1": "Single Page Landing Site ($150)", "calc-opt2": "Multi-Page Corporate ($300)", "calc-opt3": "E-Commerce / Custom Web Application ($600)",
+                "calc-check-lang": "Multi-Language Support (+EN / AL / FR)", "calc-check-seo": "Advanced SEO Optimization", "calc-total-label": "Estimated Investment:", "calc-btn-apply": "Apply Now",
+                "contact-title1": "Ready to Build Your", "contact-title2": "Digital Presence?",
                 "contact-subtitle": "Send us your project specifications and our engineering team will get back to you within hours.",
-                "form-label-name": "Your Name",
-                "form-label-contact": "Email / WhatsApp Contact",
-                "form-label-brief": "Project Brief & Details",
-                "form-btn-submit": "Submit Request"
+                "form-label-name": "Your Name", "form-label-contact": "Email / WhatsApp Contact", "form-label-brief": "Project Brief & Details", "form-btn-submit": "Submit Request"
             },
             sq: {
-                "nav-home": "Kreu",
-                "nav-web": "Web Dev",
-                "nav-app": "App Dev",
-                "nav-ai": "Zgjidhje AI",
-                "nav-branding": "Branding",
-                "nav-domain": "Domain & Host",
-                "nav-start": "Nisi Projektin",
-                "hero-badge": "Arkitekturë Web e Nivelit të Lartë",
-                "hero-title1": "Uebsajte Moderne me",
-                "hero-title2": "Performance & Dizajn Cyber",
+                "nav-home": "Kreu", "nav-web": "Web Dev", "nav-app": "App Dev", "nav-ai": "Zgjidhje AI", "nav-branding": "Branding", "nav-domain": "Domain & Host", "nav-start": "Nisi Projektin",
+                "hero-badge": "Arkitekturë Web e Nivelit të Lartë", "hero-title1": "Uebsajte Moderne me", "hero-title2": "Performance & Dizajn Cyber",
                 "hero-desc": "Nga Landing Pages ultra të shpejta deri te platformat komplekse web. Ne ndërtojmë përvojë dixhitale interaktive me teknologjitë më të fundit.",
-                "hero-btn-builder": "Provo Web Builder",
-                "hero-btn-portfolio": "Shiko Portofolin",
-                "builder-title": "Vizualizues Web Live",
-                "builder-subtitle": "Përshkruaj idenë e biznesit tuaj për të parë menjëherë një pamje demonstruese live.",
-                "builder-label-idea": "Idea e Projektit ose Biznesit",
-                "builder-label-theme": "Tema Vizuale",
-                "builder-label-layout": "Stili i Strukturës",
-                "builder-btn-generate": "Gjenero Pamjen Live",
-                "builder-device-view": "Pamja e Pajisjes:",
-                "tech-title": "Teknologjitë që Përdorim",
-                "pkg-title1": "Paketat e",
-                "pkg-title2": "Zhvillimit Web",
-                "pkg-subtitle": "Zgjidhni paketën ideale që i përshtatet më së miri biznesit tuaj.",
-                "pkg-featured": "Më e Populluara",
-                "pkg1-name": "Start-Up / Biznes Lokal",
-                "pkg1-desc": "Ideal për prezantimin e një produkti, shërbimi apo biznesi me faqe te vetme ultra-stilizuar.",
-                "pkg1-feat1": "1 Faqe Teknike Interaktive",
-                "pkg1-feat2": "Dizajn Responsiv (Mobile/Tablet)",
-                "pkg1-feat3": "Integrim Formular Kontakti",
-                "pkg1-feat4": "Optimizim Bazë SEO",
-                "pkg2-name": "Corporate & Agency",
-                "pkg2-desc": "Për kompani që kërkojnë strukturë të plotë me disa faqe me menaxhim të lehtë.",
-                "pkg2-feat1": "Deri në 6-10 Faqe Individuale",
-                "pkg2-feat2": "Suport Multigjuhësh (EN / SQ / FR)",
-                "pkg2-feat3": "Animacione Cyber Glassmorphism",
-                "pkg2-feat4": "Konfigurim Custom Domain & SSL",
-                "pkg3-name": "Web App & E-Commerce",
-                "pkg3-desc": "Zgjidhje me masë për dyqane online, platforma me kyçje përdoruesish apo API integrations.",
-                "pkg3-feat1": "Integrim e-Commerce & Pagesa",
-                "pkg3-feat2": "Panel Administrimi (Dashboard)",
-                "pkg3-feat3": "Baza e të Dhënave & API Support",
-                "pkg3-feat4": "Mirëmbajtje Teknike 24/7",
-                "btn-order": "Porosit Tani",
-                "btn-quote": "Kërko Kuotim",
-                "port-badge": "Punët Tona të Fundit",
-                "port-title1": "Portofoli i",
-                "port-title2": "Projekteve Web",
+                "hero-btn-builder": "Provo Web Builder", "hero-btn-portfolio": "Shiko Portofolin",
+                "builder-title": "Studio Vizualizues Web Live", "builder-subtitle": "Personalizoni veçoritë, ngjyrat dhe stilin për të parë menjëherë uebsajtin tuaj në kohë reale.",
+                "builder-label-idea": "Emri i Projektit ose Biznesit", "builder-label-theme": "Mënyra e Temës", "builder-label-color": "Ngjyra e Theksuar",
+                "builder-btn-generate": "Përditëso Pamjen", "builder-device-view": "Pamja e Pajisjes:",
+                "tech-title": "Teknologjitë që Përdorim", "pkg-title1": "Paketat e", "pkg-title2": "Zhvillimit Web",
+                "pkg-subtitle": "Zgjidhni paketën ideale që i përshtatet më së miri biznesit tuaj.", "pkg-featured": "Më e Populluara",
+                "pkg1-name": "Start-Up / Biznes Lokal", "pkg1-desc": "Ideal për prezantimin e një produkti, shërbimi apo biznesi me faqe te vetme ultra-stilizuar.",
+                "pkg1-feat1": "1 Faqe Teknike Interaktive", "pkg1-feat2": "Dizajn Responsiv (Mobile/Tablet)", "pkg1-feat3": "Integrim Formular Kontakti", "pkg1-feat4": "Optimizim Bazë SEO",
+                "pkg2-name": "Corporate & Agency", "pkg2-desc": "Për kompani që kërkojnë strukturë të plotë me disa faqe me menaxhim të lehtë.",
+                "pkg2-feat1": "Deri në 6-10 Faqe Individuale", "pkg2-feat2": "Suport Multigjuhësh (EN / SQ / FR)", "pkg2-feat3": "Animacione Cyber Glassmorphism", "pkg2-feat4": "Konfigurim Custom Domain & SSL",
+                "pkg3-name": "Web App & E-Commerce", "pkg3-desc": "Zgjidhje me masë për dyqane online, platforma me kyçje përdoruesish apo API integrations.",
+                "pkg3-feat1": "Integrim e-Commerce & Pagesa", "pkg3-feat2": "Panel Administrimi (Dashboard)", "pkg3-feat3": "Baza e të Dhënave & API Support", "pkg3-feat4": "Mirëmbajtje Teknike 24/7",
+                "btn-order": "Porosit Tani", "btn-quote": "Kërko Kuotim",
+                "port-badge": "Punët Tona të Fundit", "port-title1": "Portofoli i", "port-title2": "Projekteve Web",
                 "port-subtitle": "Eksploro uebsajtet e ndërtuara me arkitekturë moderne, shpejtësi maksimale dhe dizajn interaktiv.",
                 "port1-desc": "Uebsajt korporativ me disa faqe, shpejtësi të lartë, panel analitik dhe mbështetje multigjuhëshe.",
                 "port2-desc": "Platformë dyqani online e pajisur me pagesa të sigurta, filtrim produktesh dhe arkëtim ultra të shpejtë.",
                 "port3-desc": "Aplikacion web me dizajn futuristik Glassmorphism, kalkulator interaktiv dhe rendering në kohë reale.",
-                "port-btn": "Kërko Projekt të Ngjashëm",
-                "port-btn-calc": "Testo Kalkulatorin",
-                "calc-title": "Kalkulator i Përafërt i Projektit",
-                "calc-subtitle": "Zgjidhni opsionet tuaja për të marrë një vlerësim me afërsi.",
-                "calc-label-type": "Lloji i Uebsajtit:",
-                "calc-opt1": "Landing Page 1 Faqe ($150)",
-                "calc-opt2": "Multi-Page Corporate ($300)",
-                "calc-opt3": "E-Commerce / Web Application ($600)",
-                "calc-check-lang": "Suport Multigjuhësh (+EN / SQ / FR)",
-                "calc-check-seo": "Optimizim Avancuar SEO",
-                "calc-total-label": "Vlerësimi i Përafërt:",
-                "calc-btn-apply": "Aplikoni Tani",
-                "contact-title1": "Gati për të nisur",
-                "contact-title2": "Uebsajtin Tënd?",
+                "port-btn": "Kërko Projekt të Ngjashëm", "port-btn-calc": "Testo Kalkulatorin",
+                "calc-title": "Kalkulator i Përafërt i Projektit", "calc-subtitle": "Zgjidhni opsionet tuaja për të marrë një vlerësim me afërsi.",
+                "calc-label-type": "Lloji i Uebsajtit:", "calc-opt1": "Landing Page 1 Faqe ($150)", "calc-opt2": "Multi-Page Corporate ($300)", "calc-opt3": "E-Commerce / Web Application ($600)",
+                "calc-check-lang": "Suport Multigjuhësh (+EN / SQ / FR)", "calc-check-seo": "Optimizim Avancuar SEO", "calc-total-label": "Vlerësimi i Përafërt:", "calc-btn-apply": "Aplikoni Tani",
+                "contact-title1": "Gati për të nisur", "contact-title2": "Uebsajtin Tënd?",
                 "contact-subtitle": "Na dërgoni detajet e projektit tuaj dhe do t'ju kontaktojmë brenda pak orësh.",
-                "form-label-name": "Emri Juaj",
-                "form-label-contact": "Email / WhatsApp Kontakti",
-                "form-label-brief": "Përshkrimi i Projektit",
-                "form-btn-submit": "Dërgo Kërkesën"
+                "form-label-name": "Emri Juaj", "form-label-contact": "Email / WhatsApp Kontakti", "form-label-brief": "Përshkrimi i Projektit", "form-btn-submit": "Dërgo Kërkesën"
             },
             fr: {
-                "nav-home": "Accueil",
-                "nav-web": "Dév Web",
-                "nav-app": "Dév App",
-                "nav-ai": "Solutions IA",
-                "nav-branding": "Branding",
-                "nav-domain": "Domaine & Hôte",
-                "nav-start": "Lancer Projet",
-                "hero-badge": "Architecture Web Haut de Gamme",
-                "hero-title1": "Sites Web Modernes avec",
-                "hero-title2": "Performance & Design Cyber",
+                "nav-home": "Accueil", "nav-web": "Dév Web", "nav-app": "Dév App", "nav-ai": "Solutions IA", "nav-branding": "Branding", "nav-domain": "Domaine & Hôte", "nav-start": "Lancer Projet",
+                "hero-badge": "Architecture Web Haut de Gamme", "hero-title1": "Sites Web Modernes avec", "hero-title2": "Performance & Design Cyber",
                 "hero-desc": "Des Landing Pages ultra-rapides aux plateformes web complexes. Nous créons des expériences numériques interactives.",
-                "hero-btn-builder": "Tester le Constructeur",
-                "hero-btn-portfolio": "Voir le Portfolio",
-                "builder-title": "Visualiseur Web en Direct",
-                "builder-subtitle": "Décrivez votre idée pour voir instantanément une maquette visuelle en direct.",
-                "builder-label-idea": "Votre Idée de Projet",
-                "builder-label-theme": "Thème Visuel",
-                "builder-label-layout": "Style de Disposition",
-                "builder-btn-generate": "Générer Aperçu Direct",
-                "builder-device-view": "Vue de l'appareil:",
-                "tech-title": "Technologies Maîtrisées",
-                "pkg-title1": "Offres de",
-                "pkg-title2": "Développement Web",
-                "pkg-subtitle": "Choisissez la formule idéale qui correspond le mieux à vos objectifs.",
-                "pkg-featured": "Le Plus Populaire",
-                "pkg1-name": "Start-Up / Entreprise Locale",
-                "pkg1-desc": "Parfait pour présenter un produit, service ou entreprise avec un site d'une page très soigné.",
-                "pkg1-feat1": "1 Page Technique Interactive",
-                "pkg1-feat2": "Entièrement Responsive (Mobile/Tablette)",
-                "pkg1-feat3": "Intégration Formulaire de Contact",
-                "pkg1-feat4": "Optimisation SEO Essentielle",
-                "pkg2-name": "Corporate & Agence",
-                "pkg2-desc": "Conçu pour les entreprises établies nécessitant une structure multi-pages complète.",
-                "pkg2-feat1": "Jusqu'à 6-10 Pages Personnalisées",
-                "pkg2-feat2": "Support Multi-langues (EN / SQ / FR)",
-                "pkg2-feat3": "Animations Cyber Glassmorphism",
-                "pkg2-feat4": "Configuration Domaine & SSL",
-                "pkg3-name": "Web App & E-Commerce",
-                "pkg3-desc": "Solutions sur mesure pour boutiques en ligne, plateformes utilisateur ou applications API.",
-                "pkg3-feat1": "Intégration E-Commerce & Paiement",
-                "pkg3-feat2": "Tableau de Bord Administrateur",
-                "pkg3-feat3": "Base de Données & Support API",
-                "pkg3-feat4": "Maintenance Technique 24/7",
-                "btn-order": "Commander",
-                "btn-quote": "Demander Devis",
-                "port-badge": "Projets En Vedette",
-                "port-title1": "Portfolio de",
-                "port-title2": "Projets Web",
+                "hero-btn-builder": "Tester le Constructeur", "hero-btn-portfolio": "Voir le Portfolio",
+                "builder-title": "Studio de Visualisation Web", "builder-subtitle": "Personnalisez les fonctionnalités et les couleurs pour prévisualiser votre site instantanément.",
+                "builder-label-idea": "Nom du Projet / Entreprise", "builder-label-theme": "Mode de Thème", "builder-label-color": "Couleur d'Accent",
+                "builder-btn-generate": "Mettre à Jour", "builder-device-view": "Mode d'Appareil:",
+                "tech-title": "Technologies Maîtrisées", "pkg-title1": "Offres de", "pkg-title2": "Développement Web",
+                "pkg-subtitle": "Choisissez la formule idéale qui correspond le mieux à vos objectifs.", "pkg-featured": "Le Plus Populaire",
+                "pkg1-name": "Start-Up / Entreprise Locale", "pkg1-desc": "Parfait pour présenter un produit, service ou entreprise avec un site d'une page très soigné.",
+                "pkg1-feat1": "1 Page Technique Interactive", "pkg1-feat2": "Entièrement Responsive (Mobile/Tablette)", "pkg1-feat3": "Intégration Formulaire de Contact", "pkg1-feat4": "Optimisation SEO Essentielle",
+                "pkg2-name": "Corporate & Agence", "pkg2-desc": "Conçu pour les entreprises établies nécessitant une structure multi-pages complète.",
+                "pkg2-feat1": "Jusqu'à 6-10 Pages Personnalisées", "pkg2-feat2": "Support Multi-langues (EN / SQ / FR)", "pkg2-feat3": "Animations Cyber Glassmorphism", "pkg2-feat4": "Configuration Domaine & SSL",
+                "pkg3-name": "Web App & E-Commerce", "pkg3-desc": "Solutions sur mesure pour boutiques en ligne, plateformes utilisateur ou applications API.",
+                "pkg3-feat1": "Intégration E-Commerce & Paiement", "pkg3-feat2": "Tableau de Bord Administrateur", "pkg3-feat3": "Base de Données & Support API", "pkg3-feat4": "Maintenance Technique 24/7",
+                "btn-order": "Commander", "btn-quote": "Demander Devis",
+                "port-badge": "Projets En Vedette", "port-title1": "Portfolio de", "port-title2": "Projets Web",
                 "port-subtitle": "Explorez des applications web conçues pour la vitesse, l'esthétique et la conversion.",
                 "port1-desc": "Site d'entreprise complet multi-pages à grande vitesse avec interface analytique et support multilingue.",
                 "port2-desc": "Plateforme de vente en ligne avancée équipée d'un paiement sécurisé et d'une commande ultra-rapide.",
                 "port3-desc": "Application web avec interface Glassmorphism futuriste, calculatrice de prix et rendu en temps réel.",
-                "port-btn": "Demander Projet Similaire",
-                "port-btn-calc": "Tester Calculatrice",
-                "calc-title": "Calculateur d'Estimation",
-                "calc-subtitle": "Sélectionnez des options pour générer une estimation instantanée.",
-                "calc-label-type": "Type de Site Web:",
-                "calc-opt1": "Landing Page Unique ($150)",
-                "calc-opt2": "Site Corporate Multi-Pages ($300)",
-                "calc-opt3": "E-Commerce / Application Web ($600)",
-                "calc-check-lang": "Support Multi-Langues (+EN / SQ / FR)",
-                "calc-check-seo": "Optimisation SEO Avancée",
-                "calc-total-label": "Investissement Estimé:",
-                "calc-btn-apply": "Postuler Maintenant",
-                "contact-title1": "Prêt à Créer Votre",
-                "contact-title2": "Présence Numérique?",
+                "port-btn": "Demander Projet Similaire", "port-btn-calc": "Tester Calculatrice",
+                "calc-title": "Calculateur d'Estimation", "calc-subtitle": "Sélectionnez des options pour générer une estimation instantanée.",
+                "calc-label-type": "Type de Site Web:", "calc-opt1": "Landing Page Unique ($150)", "calc-opt2": "Site Corporate Multi-Pages ($300)", "calc-opt3": "E-Commerce / Application Web ($600)",
+                "calc-check-lang": "Support Multi-Langues (+EN / SQ / FR)", "calc-check-seo": "Optimisation SEO Avancée", "calc-total-label": "Investissement Estimé:", "calc-btn-apply": "Postuler Maintenant",
+                "contact-title1": "Prêt à Créer Votre", "contact-title2": "Présence Numérique?",
                 "contact-subtitle": "Envoyez-nous vos spécifications et notre équipe vous recontactera rapidement.",
-                "form-label-name": "Votre Nom",
-                "form-label-contact": "Contact Email / WhatsApp",
-                "form-label-brief": "Détails du Projet",
-                "form-btn-submit": "Envoyer la Demande"
+                "form-label-name": "Votre Nom", "form-label-contact": "Contact Email / WhatsApp", "form-label-brief": "Détails du Projet", "form-btn-submit": "Envoyer la Demande"
             }
         };
 
@@ -664,99 +557,150 @@
             setLanguage(e.target.value);
         });
 
-        // 2. LIVE WEB BUILDER PREVIEW LOGIC
+        // 2. ADVANCED LIVE STUDIO PREVIEW LOGIC
         const builderIdea = document.getElementById('builder-idea');
         const builderTheme = document.getElementById('builder-theme');
-        const builderLayout = document.getElementById('builder-layout');
+        const builderColor = document.getElementById('builder-color');
+        const toggleFeatures = document.getElementById('toggle-features');
+        const togglePricing = document.getElementById('toggle-pricing');
         const generateBtn = document.getElementById('generate-btn');
         const previewContainer = document.getElementById('preview-container');
         const previewWrapper = document.getElementById('preview-wrapper');
         const viewDesktop = document.getElementById('view-desktop');
+        const viewTablet = document.getElementById('view-tablet');
         const viewMobile = document.getElementById('view-mobile');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const downloadCodeBtn = document.getElementById('download-code-btn');
 
         function renderPreview() {
-            const idea = builderIdea.value || 'Digital Web Project';
+            const title = builderIdea.value || 'Xsus Web Project';
             const theme = builderTheme.value;
-            const layout = builderLayout.value;
+            const accent = builderColor.value;
+            const showFeatures = toggleFeatures.checked;
+            const showPricing = togglePricing.checked;
 
-            let themeClasses = "bg-[#0b0c10] text-slate-100";
-            let accentColor = "text-[#00f0ff]";
-            let btnGradient = "from-[#00f0ff] to-[#7000ff]";
+            let themeBg = "bg-[#0b0c10] text-slate-100";
+            if(theme === 'corporate') themeBg = "bg-[#0f172a] text-slate-200";
+            if(theme === 'minimal') themeBg = "bg-slate-900 text-slate-100 border-white/20";
 
-            if(theme === 'corporate') {
-                themeClasses = "bg-[#0f172a] text-slate-200";
-                accentColor = "text-blue-400";
-                btnGradient = "from-blue-600 to-indigo-600";
-            } else if(theme === 'minimal') {
-                themeClasses = "bg-slate-900 text-slate-100 border-white/20";
-                accentColor = "text-emerald-400";
-                btnGradient = "from-emerald-400 to-teal-500";
-            }
-
-            previewContainer.className = `${themeClasses} border-x border-b border-white/10 rounded-b-2xl p-6 min-h-[380px] flex flex-col justify-between transition-all`;
-
-            previewContainer.innerHTML = `
+            let htmlContent = `
                 <div>
-                    <!-- Mini Nav -->
-                    <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
-                        <div class="font-extrabold text-sm tracking-wider ${accentColor}">${idea.toUpperCase()}</div>
+                    <!-- Header -->
+                    <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+                        <div class="font-black text-sm tracking-wider" style="color: ${accent}">${title}</div>
                         <div class="flex gap-3 text-[11px] opacity-70">
+                            <span>Home</span>
                             <span>Services</span>
-                            <span>About</span>
                             <span>Contact</span>
                         </div>
                     </div>
 
-                    <!-- Mini Hero -->
-                    <div class="text-center py-6">
-                        <span class="inline-block text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 mb-3 ${accentColor}">
-                            ${layout.toUpperCase()} MODE
+                    <!-- Hero Banner -->
+                    <div class="text-center py-5">
+                        <span class="inline-block text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 mb-2" style="color: ${accent}">
+                            Live Studio Mockup
                         </span>
-                        <h3 class="text-2xl font-black mb-2">${idea}</h3>
-                        <p class="text-xs text-slate-400 max-w-sm mx-auto mb-5">Professional high-performance experience engineered by Xsus Studio.</p>
-                        <button class="px-5 py-2 rounded-lg bg-gradient-to-r ${btnGradient} text-black font-bold text-xs shadow-lg">
-                            Get Started
+                        <h3 class="text-xl font-black mb-1">${title}</h3>
+                        <p class="text-xs text-slate-400 max-w-sm mx-auto mb-4">High-end digital platform engineered by Xsus Studio with lightning speed and supreme aesthetics.</p>
+                        <button class="px-4 py-2 rounded-lg text-black font-bold text-xs shadow-md" style="background: ${accent}">
+                            Get Started Now
                         </button>
                     </div>
+            `;
 
-                    <!-- Mini Feature Cards -->
-                    <div class="grid grid-cols-3 gap-3 pt-4">
-                        <div class="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
-                            <div class="text-xs font-bold ${accentColor}">Fast</div>
-                            <div class="text-[10px] text-slate-400">99+ Speed</div>
+            if(showFeatures) {
+                htmlContent += `
+                    <!-- Features Grid -->
+                    <div class="grid grid-cols-3 gap-2.5 my-4">
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                            <div class="text-xs font-bold" style="color: ${accent}">Lightning</div>
+                            <div class="text-[9px] text-slate-400">99+ Performance</div>
                         </div>
-                        <div class="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
-                            <div class="text-xs font-bold ${accentColor}">Secure</div>
-                            <div class="text-[10px] text-slate-400">SSL Active</div>
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                            <div class="text-xs font-bold" style="color: ${accent}">Secure</div>
+                            <div class="text-[9px] text-slate-400">SSL Enforced</div>
                         </div>
-                        <div class="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
-                            <div class="text-xs font-bold ${accentColor}">Responsive</div>
-                            <div class="text-[10px] text-slate-400">Mobile Ready</div>
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                            <div class="text-xs font-bold" style="color: ${accent}">Responsive</div>
+                            <div class="text-[9px] text-slate-400">All Devices</div>
                         </div>
                     </div>
-                </div>
+                `;
+            }
 
-                <div class="pt-6 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-500">
-                    <span>Generated Live Demo</span>
-                    <span>XSUS STUDIO ENGINE</span>
+            if(showPricing) {
+                htmlContent += `
+                    <!-- Pricing Card Mini -->
+                    <div class="p-3 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between my-3">
+                        <div>
+                            <div class="text-[11px] font-bold text-white">Starter Package</div>
+                            <div class="text-[9px] text-slate-400">Fully customized multi-page layout</div>
+                        </div>
+                        <div class="text-sm font-black" style="color: ${accent}">$299</div>
+                    </div>
+                `;
+            }
+
+            htmlContent += `
+                </div>
+                <div class="pt-4 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-500">
+                    <span>Generated by Xsus Studio Engine</span>
+                    <span style="color: ${accent}">xsusstudio.com</span>
                 </div>
             `;
+
+            previewContainer.className = `${themeBg} border-x border-b border-white/10 rounded-b-2xl p-6 min-h-[420px] flex flex-col justify-between transition-all`;
+            previewContainer.innerHTML = htmlContent;
         }
 
         generateBtn?.addEventListener('click', renderPreview);
-        renderPreview(); // Initial Render
+        builderIdea?.addEventListener('input', renderPreview);
+        builderTheme?.addEventListener('change', renderPreview);
+        builderColor?.addEventListener('change', renderPreview);
+        toggleFeatures?.addEventListener('change', renderPreview);
+        togglePricing?.addEventListener('change', renderPreview);
+        renderPreview(); // Initial render
 
-        // Device Switcher
+        // Device Mode Switchers
         viewDesktop?.addEventListener('click', () => {
             previewWrapper.style.maxWidth = '100%';
-            viewDesktop.className = "px-3 py-1 rounded bg-cyber-blue/20 text-cyber-blue font-semibold border border-cyber-blue/40";
-            viewMobile.className = "px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10";
+            viewDesktop.className = "px-3 py-1 rounded bg-cyber-blue/20 text-cyber-blue font-semibold border border-cyber-blue/40 text-xs";
+            viewTablet.className = "px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10 text-xs";
+            viewMobile.className = "px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10 text-xs";
+        });
+
+        viewTablet?.addEventListener('click', () => {
+            previewWrapper.style.maxWidth = '580px';
+            viewTablet.className = "px-3 py-1 rounded bg-cyber-blue/20 text-cyber-blue font-semibold border border-cyber-blue/40 text-xs";
+            viewDesktop.className = "px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10 text-xs";
+            viewMobile.className = "px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10 text-xs";
         });
 
         viewMobile?.addEventListener('click', () => {
             previewWrapper.style.maxWidth = '340px';
-            viewMobile.className = "px-3 py-1 rounded bg-cyber-blue/20 text-cyber-blue font-semibold border border-cyber-blue/40";
-            viewDesktop.className = "px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10";
+            viewMobile.className = "px-3 py-1 rounded bg-cyber-blue/20 text-cyber-blue font-semibold border border-cyber-blue/40 text-xs";
+            viewDesktop.className = "px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10 text-xs";
+            viewTablet.className = "px-3 py-1 rounded bg-black/40 text-slate-400 hover:text-white border border-white/10 text-xs";
+        });
+
+        // Fullscreen toggle
+        fullscreenBtn?.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                previewWrapper.requestFullscreen().catch(err => {});
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // Download Mockup HTML
+        downloadCodeBtn?.addEventListener('click', () => {
+            const blob = new Blob([previewContainer.innerHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'xsus-mockup.html';
+            a.click();
+            URL.revokeObjectURL(url);
         });
 
         // 3. PRICE CALCULATOR LOGIC
