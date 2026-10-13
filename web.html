@@ -1,34 +1,288 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="sq" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xsus Web - Architecture & Hosting</title>
+    <title>Web Development | Xsus Studio</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            blue: '#00f0ff',
+                            purple: '#7000ff',
+                            pink: '#ff007f',
+                            dark: '#0a0a12',
+                            card: 'rgba(18, 18, 35, 0.6)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(18, 18, 35, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-panel-hover:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #00f0ff 0%, #7000ff 50%, #ff007f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
 </head>
-<body class="min-h-screen relative flex flex-col justify-between">
-    <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+<body class="bg-[#06060c] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-cyber-blue selection:text-black">
 
-    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    <!-- NAVIGATION BAR -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 p-[2px]"><div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center"><span class="font-extrabold text-cyan-400">X</span></div></div>
-                <h1 class="font-bold text-xl text-white">Xsus Web</h1>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xl shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+                    X
+                </div>
+                <span class="text-xl font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">STUDIO</span></span>
             </a>
-            <a href="index.html" class="text-xs text-cyan-400 hover:underline">&larr; Back to Ecosystem</a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center gap-8 font-medium text-sm text-slate-300">
+                <a href="index.html" class="hover:text-cyber-blue transition">Kreu</a>
+                <a href="web.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Web Dev</a>
+                <a href="app.html" class="hover:text-cyber-blue transition">App Dev</a>
+                <a href="ai.html" class="hover:text-cyber-blue transition">AI Solutions</a>
+                <a href="logo.html" class="hover:text-cyber-blue transition">Branding</a>
+                <a href="domain.html" class="hover:text-cyber-blue transition">Domain & Host</a>
+            </div>
+
+            <a href="#contact-section" class="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-sm hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
+                <i data-lucide="code-2" class="w-4 h-4"></i>
+                Nisi Projektin
+            </a>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="pt-36 pb-20 px-6 relative overflow-hidden">
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyber-blue/10 rounded-full blur-[120px] pointer-events-none"></div>
+        
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-blue/30 text-cyber-blue text-xs font-semibold uppercase tracking-widest mb-6">
+                <i data-lucide="globe" class="w-4 h-4"></i> High-End Web Architecture
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
+                Uebsajte Moderne me <br><span class="text-gradient">Performance & Dizajn Cyber</span>
+            </h1>
+            <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+                Nga Landing Pages ultra të shpejta deri te platformat komplekse web. Ne ndërtojmë përvojë dixhitale interaktive me teknologjitë më të fundit.
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <a href="#packages" class="px-8 py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold hover:shadow-[0_0_30px_rgba(0,240,255,0.4)] transition">
+                    Shiko Paketat
+                </a>
+                <a href="#calculator" class="px-8 py-4 rounded-xl glass-panel text-white font-semibold hover:bg-white/10 transition border border-white/10">
+                    Kalkulo Çmimin
+                </a>
+            </div>
         </div>
     </header>
 
-    <main class="relative z-10 max-w-4xl mx-auto px-4 py-16 flex-1 text-center space-y-6">
-        <i data-lucide="globe" class="w-16 h-16 text-cyan-400 mx-auto"></i>
-        <h2 class="text-3xl font-bold text-white">Web Design & Architecture</h2>
-        <p class="text-slate-400 max-w-lg mx-auto">Decoupled multi-file architectures (`index.html`, `style.css`, `script.js`) optimized for GitHub Pages and high-speed hosting.</p>
-    </main>
+    <!-- TEKNOLOGJITË (TECH STACK) -->
+    <section class="py-12 px-6 border-y border-white/5 bg-white/[0.01]">
+        <div class="max-w-7xl mx-auto">
+            <p class="text-center text-xs font-bold uppercase tracking-widest text-slate-500 mb-8">Teknologjitë që përdorim</p>
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-6 text-center">
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-center gap-2 text-slate-300 font-semibold text-sm">
+                    <i data-lucide="code" class="text-cyber-blue"></i> HTML5 / CSS3
+                </div>
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-center gap-2 text-slate-300 font-semibold text-sm">
+                    <i data-lucide="wind" class="text-cyber-blue"></i> Tailwind CSS
+                </div>
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-center gap-2 text-slate-300 font-semibold text-sm">
+                    <i data-lucide="file-code" class="text-cyber-blue"></i> JavaScript ES6+
+                </div>
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-center gap-2 text-slate-300 font-semibold text-sm">
+                    <i data-lucide="atom" class="text-cyber-blue"></i> React / Next.js
+                </div>
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-center gap-2 text-slate-300 font-semibold text-sm">
+                    <i data-lucide="server" class="text-cyber-blue"></i> Node.js
+                </div>
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-center gap-2 text-slate-300 font-semibold text-sm">
+                    <i data-lucide="shield-check" class="text-cyber-blue"></i> HTTPS & Cloud
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <footer class="glass-panel border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">&copy; 2026 Xsus Studio. All rights reserved.</footer>
+    <!-- PAKETAT E SHËRBIMEVE -->
+    <section id="packages" class="py-24 px-6 max-w-7xl mx-auto w-full">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Paketat e <span class="text-gradient">Zhbvillimit Web</span></h2>
+            <p class="text-slate-400">Zgjidhni paketën që i përshtatet më së miri biznesit tuaj.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Paketë Basic -->
+            <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition flex flex-col justify-between">
+                <div>
+                    <div class="text-cyber-blue font-bold text-sm tracking-widest uppercase mb-2">Landing Page</div>
+                    <h3 class="text-2xl font-bold mb-4">Start-Up / Biznes Lokal</h3>
+                    <p class="text-slate-400 text-sm mb-6">Ideal për prezantimin e një produkti, shërbimi apo biznesi me faqe te vetme ultra-stilizuar.</p>
+                    <ul class="space-y-3 text-sm text-slate-300 mb-8">
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> 1 Faqe Teknike Interaktive</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Dizajn Responsiv (Mobile/Tablet)</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Integrim Formular Kontakti</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Optimizim Bazë SEO</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Lidhje me Rrjetet Sociale</li>
+                    </ul>
+                </div>
+                <a href="#contact-section" class="w-full py-3 rounded-xl border border-cyber-blue/40 text-cyber-blue font-semibold text-center hover:bg-cyber-blue/10 transition">Porosit Tani</a>
+            </div>
+
+            <!-- Paketë Corporate (Featured) -->
+            <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition flex flex-col justify-between relative border-cyber-blue/50 bg-cyber-blue/[0.03]">
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black text-xs font-black uppercase tracking-wider">
+                    Më e Populluara
+                </div>
+                <div>
+                    <div class="text-cyber-blue font-bold text-sm tracking-widest uppercase mb-2">Multi-Page Architecture</div>
+                    <h3 class="text-2xl font-bold mb-4">Corporate & Agency</h3>
+                    <p class="text-slate-400 text-sm mb-6">Për kompani që kërkojnë strukturë të plotë me disa faqe me menaxhim të lehtë.</p>
+                    <ul class="space-y-3 text-sm text-slate-300 mb-8">
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Deri në 6-10 Faqe Individuale</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Suport Multigjuhësh (Albanian/English)</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Animacione Cyber Glassmorphism</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Optimizim i Lartë i Shpejtësisë</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Lidhje me Custom Domain & Hosting</li>
+                    </ul>
+                </div>
+                <a href="#contact-section" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-center shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition">Porosit Tani</a>
+            </div>
+
+            <!-- Paketë Custom Web App -->
+            <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition flex flex-col justify-between">
+                <div>
+                    <div class="text-cyber-blue font-bold text-sm tracking-widest uppercase mb-2">Custom Software</div>
+                    <h3 class="text-2xl font-bold mb-4">Web App & E-Commerce</h3>
+                    <p class="text-slate-400 text-sm mb-6">Zgjidhje me masë për dyqane online, platforma me kyçje përdoruesish apo API integrations.</p>
+                    <ul class="space-y-3 text-sm text-slate-300 mb-8">
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Integrim Sektori e-Commerce / Pagesa</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Dashboard / Panel Administrimi</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Baza e të Dhënave & API Support</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Siguri e Lartë (SSL/Database Encryption)</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-cyber-blue"></i> Mirëmbajtje Teknike 24/7</li>
+                    </ul>
+                </div>
+                <a href="#contact-section" class="w-full py-3 rounded-xl border border-cyber-blue/40 text-cyber-blue font-semibold text-center hover:bg-cyber-blue/10 transition">Kërko Kuotim</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CALCULATOR INTERAKTIV -->
+    <section id="calculator" class="py-20 px-6 max-w-4xl mx-auto w-full">
+        <div class="glass-panel p-8 md:p-12 rounded-3xl border border-cyber-blue/20">
+            <div class="text-center mb-8">
+                <h3 class="text-2xl md:text-3xl font-bold mb-2">Kalkulator i Përafërt i Projektit</h3>
+                <p class="text-slate-400 text-sm">Zgjidhni opsionet tuaja për të marrë një vlerësim me afërsi.</p>
+            </div>
+
+            <form id="calc-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Lloji i Uebsajtit:</label>
+                    <select id="calc-type" class="w-full p-3 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none">
+                        <option value="150">Landing Page (1 Faqe)</option>
+                        <option value="300">Multi-Page Corporate (Deri 5-8 faqe)</option>
+                        <option value="600">E-Commerce / Web Application</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="flex items-center gap-3 p-4 rounded-xl bg-black/30 border border-white/5 cursor-pointer hover:border-cyber-blue/30">
+                        <input type="checkbox" id="calc-lang" value="50" class="w-4 h-4 accent-cyber-blue">
+                        <span class="text-sm">Multigjuhësh (+Shqip / Eng)</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-4 rounded-xl bg-black/30 border border-white/5 cursor-pointer hover:border-cyber-blue/30">
+                        <input type="checkbox" id="calc-seo" value="40" class="w-4 h-4 accent-cyber-blue">
+                        <span class="text-sm">Optimizim Avancuar SEO</span>
+                    </label>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between">
+                    <div>
+                        <span class="text-slate-400 text-xs uppercase font-bold tracking-wider">Vlerësimi i Përafërt:</span>
+                        <div id="total-price" class="text-3xl font-black text-cyber-blue">$150</div>
+                    </div>
+                    <a href="#contact-section" class="px-6 py-2.5 rounded-xl bg-cyber-blue text-black font-bold text-sm hover:opacity-90 transition">
+                        Aplikoni Tani
+                    </a>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- FORMULARI I KONTAKTIT -->
+    <section id="contact-section" class="py-20 px-6 max-w-3xl mx-auto w-full">
+        <div class="glass-panel p-8 md:p-12 rounded-3xl text-center">
+            <h3 class="text-3xl font-extrabold mb-4">Gati për të nisur <span class="text-gradient">Uebsajtin Tënd?</span></h3>
+            <p class="text-slate-400 text-sm mb-8">Na dërgoni detajet e projektit tuaj dhe do t'ju kontaktojmë brenda pak orësh.</p>
+
+            <form id="web-project-form" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Emri Juaj</label>
+                    <input type="text" required placeholder="p.sh. Filan Fisteku" class="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Email / WhatsApp</label>
+                    <input type="text" required placeholder="Email ose Numër Telefoni" class="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Përshkrimi i Projektit</label>
+                    <textarea rows="4" placeholder="Tregoni shkurtimisht se çfarë uebsajti kërkoni..." class="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-cyber-blue outline-none text-sm"></textarea>
+                </div>
+                <button type="submit" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-base shadow-[0_0_25px_rgba(0,240,255,0.3)] hover:opacity-90 transition">
+                    Dërgo Kërkesën
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto py-8 border-t border-white/10 glass-panel text-center text-xs text-slate-500">
+        <p>&copy; 2026 XSUS STUDIO. Të gjitha të drejtat e rezervuara. | xsusstudio.com</p>
+    </footer>
+
+    <!-- SCRIPT FOR LUCIDE ICONS & CALCULATOR -->
+    <script>
+        lucide.createIcons();
+
+        // Simple Price Calculator JS Logic
+        const calcType = document.getElementById('calc-type');
+        const calcLang = document.getElementById('calc-lang');
+        const calcSeo = document.getElementById('calc-seo');
+        const totalPrice = document.getElementById('total-price');
+
+        function updatePrice() {
+            let base = parseInt(calcType.value) || 0;
+            if(calcLang.checked) base += parseInt(calcLang.value);
+            if(calcSeo.checked) base += parseInt(calcSeo.value);
+            totalPrice.textContent = '$' + base;
+        }
+
+        calcType?.addEventListener('change', updatePrice);
+        calcLang?.addEventListener('change', updatePrice);
+        calcSeo?.addEventListener('change', updatePrice);
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
