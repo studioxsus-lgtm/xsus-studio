@@ -2,7 +2,7 @@ const translations = {
     en: {
         navAi: "Xsus AI",
         navEcosystem: "Ecosystem",
-        navApps: "Apps",
+        navApps: "Xsus App",
         heroBadge: "Official Hybrid Intelligence Platform",
         heroTitle: 'Most powerful digital tools in a <span class="gradient-text">Single Studio</span>',
         heroSub: "Integrated platform combining artificial intelligence, app development, web, games, and graphic design.",
@@ -14,6 +14,11 @@ const translations = {
         welcomeMsg: "Hello! I am Xsus AI. Ask me for a video script, creative text, or technical question!",
         placeholder: "Ask Xsus AI anything...",
         send: "Send",
+        appStudioDesc: "Design, customize, and preview your hybrid ecosystem mobile application in real-time.",
+        appThemeTitle: "App Color Aesthetics",
+        appToolsTitle: "Included Tools & Features",
+        appLangTitle: "App Tri-Lingual Support",
+        appLangSub: "Native dynamic switching between English, French, and Albanian (EN | FR | SQ) built directly into the mobile binary.",
         toolsTitle: "Xsus Studio Ecosystem",
         toolsSub: "All our integrated tools in one single platform.",
         cardAi: "Smart assistant for text generation, video scripts, analysis, and coding.",
@@ -28,7 +33,7 @@ const translations = {
     fr: {
         navAi: "Xsus AI",
         navEcosystem: "Écosystème",
-        navApps: "Applications",
+        navApps: "Xsus App",
         heroBadge: "Plateforme d'intelligence hybride officielle",
         heroTitle: 'Les outils numériques les plus puissants dans un <span class="gradient-text">Seul Studio</span>',
         heroSub: "Plateforme intégrée combinant intelligence artificielle, développement d'applications, web, jeux et design.",
@@ -40,6 +45,11 @@ const translations = {
         welcomeMsg: "Bonjour! Je suis Xsus AI. Demandez-moi un script vidéo, du texte ou une question!",
         placeholder: "Posez votre question à Xsus AI...",
         send: "Envoyer",
+        appStudioDesc: "Personnalisez et prévisualisez votre application mobile en temps réel.",
+        appThemeTitle: "Esthétique des couleurs",
+        appToolsTitle: "Outils & Fonctionnalités inclus",
+        appLangTitle: "Support Trilingue Intégré",
+        appLangSub: "Bascule dynamique entre l'anglais, le français et l'albanais intégrée directement.",
         toolsTitle: "Écosystème Xsus Studio",
         toolsSub: "Tous nos outils intégrés sur une seule plateforme.",
         cardAi: "Assistant intelligent pour la génération de texte, scripts vidéo et code.",
@@ -54,7 +64,7 @@ const translations = {
     sq: {
         navAi: "Xsus AI",
         navEcosystem: "Ekosistemi",
-        navApps: "Aplikacionet",
+        navApps: "Xsus App",
         heroBadge: "Platforma Zyrtare e Inteligjencës Hibride",
         heroTitle: 'Veglat më të fuqishme digjitale në një <span class="gradient-text">Studio të Vetme</span>',
         heroSub: "Platformë e integruar që ndërthur inteligjencën artificiale, zhvillimin e aplikacioneve, uebit, lojërave dhe dizajnit grafik.",
@@ -66,6 +76,11 @@ const translations = {
         welcomeMsg: "Përshëndetje! Unë jam Xsus AI. Më kërkoni një skenar videoje, një tekst apo pyetje profesionale!",
         placeholder: "Pyet Xsus AI për çfarëdo që dëshiron...",
         send: "Dërgo",
+        appStudioDesc: "Dizajnoni, personalizoni dhe shikoni pamjen e aplikacionit tuaj celular në kohë reale.",
+        appThemeTitle: "Dizajni & Ngjyrat e App-it",
+        appToolsTitle: "Veglat e Përfshira në App",
+        appLangTitle: "Mbështetje për Tri Gjuhët",
+        appLangSub: "Kalim dinamik midis Anglishtes, Frëngjishtes dhe Shqipes direkt brenda aplikacionit.",
         toolsTitle: "Ekosistemi Xsus Studio",
         toolsSub: "Të gjitha mjetet tona të integruara në një platformë të vetme.",
         cardAi: "Asistent inteligjent për gjenerim teksti, skenarë videosh, analiza dhe kodim.",
@@ -79,7 +94,6 @@ const translations = {
     }
 };
 
-// Caktojmë Anglishten si gjuhë parazgjedhjeje (Default)
 let currentLang = 'en';
 
 function setLanguage(lang) {
@@ -114,6 +128,12 @@ function setLanguage(lang) {
     if (document.getElementById('userInput')) document.getElementById('userInput').placeholder = t.placeholder;
     if (document.getElementById('txt-send')) document.getElementById('txt-send').innerText = t.send;
     
+    if (document.getElementById('app-studio-desc')) document.getElementById('app-studio-desc').innerText = t.appStudioDesc;
+    if (document.getElementById('app-theme-title')) document.getElementById('app-theme-title').innerText = t.appThemeTitle;
+    if (document.getElementById('app-tools-title')) document.getElementById('app-tools-title').innerText = t.appToolsTitle;
+    if (document.getElementById('app-lang-title')) document.getElementById('app-lang-title').innerText = t.appLangTitle;
+    if (document.getElementById('app-lang-sub')) document.getElementById('app-lang-sub').innerText = t.appLangSub;
+
     if (document.getElementById('tools-title')) document.getElementById('tools-title').innerText = t.toolsTitle;
     if (document.getElementById('tools-sub')) document.getElementById('tools-sub').innerText = t.toolsSub;
     if (document.getElementById('card-ai-desc')) document.getElementById('card-ai-desc').innerText = t.cardAi;
@@ -125,6 +145,33 @@ function setLanguage(lang) {
     
     if (document.getElementById('app-section-title')) document.getElementById('app-section-title').innerText = t.appTitle;
     if (document.getElementById('app-section-subtitle')) document.getElementById('app-section-subtitle').innerText = t.appSub;
+}
+
+function setAppTheme(theme) {
+    const screen = document.getElementById('phoneScreen');
+    if (!screen) return;
+    
+    if (theme === 'cyan') {
+        screen.className = "flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border border-cyan-500/50 shadow-lg shadow-cyan-500/20";
+    } else if (theme === 'purple') {
+        screen.className = "flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border border-purple-500/50 shadow-lg shadow-purple-500/20";
+    } else if (theme === 'emerald') {
+        screen.className = "flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border border-emerald-500/50 shadow-lg shadow-emerald-500/20";
+    } else if (theme === 'gold') {
+        screen.className = "flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border border-amber-500/50 shadow-lg shadow-amber-500/20";
+    }
+}
+
+function updateMockup() {
+    const ai = document.getElementById('chk-ai')?.checked;
+    const scripts = document.getElementById('chk-scripts')?.checked;
+    const logo = document.getElementById('chk-logo')?.checked;
+    const games = document.getElementById('chk-games')?.checked;
+
+    document.getElementById('m-ai').style.display = ai ? 'block' : 'none';
+    document.getElementById('m-scripts').style.display = scripts ? 'block' : 'none';
+    document.getElementById('m-logo').style.display = logo ? 'block' : 'none';
+    document.getElementById('m-games').style.display = games ? 'block' : 'none';
 }
 
 function scrollToSection(id) {
