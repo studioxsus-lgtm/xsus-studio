@@ -1,599 +1,245 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="sq" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xsus Studio | AI Platforms & Digital Solutions</title>
+    <title>Xsus Studio | AI & Digital Solutions</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
                         brand: {
-                            cyan: '#00f2fe',
-                            purple: '#7928ca',
-                            pink: '#ff0080',
-                            dark: '#0a0a0f',
-                            card: '#12121a'
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            900: '#312e81',
                         }
                     }
                 }
             }
         }
     </script>
-    <!-- Font Awesome Icons -->
+    <!-- FontAwesome për ikona -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            background-color: #0a0a0f;
-            color: #f3f4f6;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        }
-        .glass-card {
-            background: rgba(18, 18, 26, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .glass-card:hover {
-            border-color: rgba(0, 242, 254, 0.3);
-            box-shadow: 0 0 25px rgba(0, 242, 254, 0.15);
-        }
-        .text-gradient {
-            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #00f2fe 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .btn-gradient {
-            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-        }
-        .lang-btn.active {
-            color: #00f2fe;
-            font-weight: bold;
-            border-bottom: 2px solid #00f2fe;
-        }
-    </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white">
 
     <!-- HEADER / NAVIGATION -->
-    <header class="sticky top-0 z-50 glass-card border-b border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-20">
-                <!-- Logo -->
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl btn-gradient flex items-center justify-center font-bold text-black text-xl shadow-lg shadow-cyan-500/20">
-                        X
-                    </div>
-                    <span class="text-2xl font-extrabold tracking-wider text-white">XSUS <span class="text-gradient">STUDIO</span></span>
+    <header class="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-indigo-400 flex items-center justify-center shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid fa-cube text-white text-lg"></i>
                 </div>
-
-                <!-- Desktop Nav Links -->
-                <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-300">
-                    <a href="#about" class="hover:text-cyan-400 transition-colors" data-i18n="nav_about">About Us</a>
-                    <a href="#tools" class="hover:text-cyan-400 transition-colors" data-i18n="nav_tools">AI Modules</a>
-                    <a href="#showcase" class="hover:text-cyan-400 transition-colors" data-i18n="nav_projects">Projects</a>
-                    <a href="#faq" class="hover:text-cyan-400 transition-colors" data-i18n="nav_faq">FAQ</a>
-                    <a href="#contact" class="hover:text-cyan-400 transition-colors" data-i18n="nav_contact">Contact</a>
-                </nav>
-
-                <!-- Language Selector & Action Button -->
-                <div class="hidden md:flex items-center space-x-6">
-                    <!-- Language Switcher -->
-                    <div class="flex items-center space-x-2 text-xs font-semibold text-gray-400 bg-gray-900/80 px-3 py-1.5 rounded-lg border border-gray-800">
-                        <button onclick="setLanguage('en')" id="lang-en" class="lang-btn active transition-all">EN</button>
-                        <span>|</span>
-                        <button onclick="setLanguage('fr')" id="lang-fr" class="lang-btn transition-all">FR</button>
-                        <span>|</span>
-                        <button onclick="setLanguage('sq')" id="lang-sq" class="lang-btn transition-all">SQ</button>
-                    </div>
-
-                    <a href="#contact" class="btn-gradient text-black font-semibold px-6 py-2.5 rounded-lg shadow-lg hover:opacity-90 transition-all transform hover:-translate-y-0.5" data-i18n="btn_get_started">
-                        Get Started
-                    </a>
-                </div>
-
-                <!-- Mobile Menu Button -->
-                <div class="md:hidden flex items-center space-x-3">
-                    <div class="flex items-center space-x-1.5 text-xs font-semibold text-gray-400 bg-gray-900 px-2.5 py-1 rounded-lg border border-gray-800">
-                        <button onclick="setLanguage('en')">EN</button>
-                        <span>|</span>
-                        <button onclick="setLanguage('fr')">FR</button>
-                        <span>|</span>
-                        <button onclick="setLanguage('sq')">SQ</button>
-                    </div>
-
-                    <button id="mobile-menu-btn" class="text-gray-300 hover:text-white focus:outline-none p-2">
-                        <i class="fas fa-bars text-2xl"></i>
-                    </button>
-                </div>
+                <span class="text-xl font-bold tracking-wider text-white">Xsus<span class="text-brand-500">Studio</span></span>
             </div>
-        </div>
 
-        <!-- Mobile Menu Dropdown -->
-        <div id="mobile-menu" class="hidden md:hidden glass-card border-t border-gray-800 px-4 pt-2 pb-6 space-y-3">
-            <a href="#about" class="block py-2 text-gray-300 hover:text-cyan-400" data-i18n="nav_about">About Us</a>
-            <a href="#tools" class="block py-2 text-gray-300 hover:text-cyan-400" data-i18n="nav_tools">AI Modules</a>
-            <a href="#showcase" class="block py-2 text-gray-300 hover:text-cyan-400" data-i18n="nav_projects">Projects</a>
-            <a href="#faq" class="block py-2 text-gray-300 hover:text-cyan-400" data-i18n="nav_faq">FAQ</a>
-            <a href="#contact" class="block py-2 text-gray-300 hover:text-cyan-400" data-i18n="nav_contact">Contact</a>
-            <a href="#contact" class="block mt-4 text-center btn-gradient text-black font-semibold py-2.5 rounded-lg" data-i18n="btn_get_started">
-                Get Started
-            </a>
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
+                <a href="#services" class="hover:text-white transition" data-i18n="nav_services">Shërbimet</a>
+                <a href="#ai-solutions" class="hover:text-white transition" data-i18n="nav_ai">Zgjidhjet AI</a>
+                <a href="#about" class="hover:text-white transition" data-i18n="nav_about">Rreth Nesh</a>
+                <a href="#contact" class="hover:text-white transition" data-i18n="nav_contact">Kontakti</a>
+            </nav>
+
+            <!-- Language Switcher & Mobile Toggle -->
+            <div class="flex items-center space-x-4">
+                <select id="langSwitch" onchange="changeLanguage(this.value)" class="bg-slate-800 text-slate-200 border border-slate-700 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500">
+                    <option value="sq">SQ</option>
+                    <option value="en">EN</option>
+                    <option value="fr">FR</option>
+                </select>
+                <a href="#contact" class="hidden sm:inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-brand-600 rounded-xl hover:bg-brand-500 transition shadow-md shadow-brand-600/20" data-i18n="btn_get_started">Fillo Tani</a>
+            </div>
         </div>
     </header>
 
     <!-- HERO SECTION -->
-    <section class="relative py-24 md:py-32 overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-            <span class="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest bg-cyan-950 text-cyan-400 border border-cyan-800/50 mb-6" data-i18n="hero_badge">
-                AI Powered Digital Platform
+    <section class="relative pt-20 pb-32 overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.15),transparent_50%)]"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium text-brand-400 bg-brand-950/60 border border-brand-800/50 rounded-full mb-6">
+                <i class="fa-solid fa-sparkles mr-2"></i> <span data-i18n="hero_badge">E ardhmja e Inovacionit Dixhital</span>
             </span>
-            <h1 class="text-4xl md:text-7xl font-black tracking-tight text-white mb-6">
-                <span data-i18n="hero_title_1">Build Your Future</span> <br>
-                <span data-i18n="hero_title_2">with</span> <span class="text-gradient">Xsus Studio</span>
+            <h1 class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight max-w-3xl mx-auto leading-tight" data-i18n="hero_title">
+                Transformojmë idhët tuaja në <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-indigo-300">Zgjidhje Digjitale</span>
             </h1>
-            <p class="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl mb-10" data-i18n="hero_description">
-                Advanced AI solutions, web development, app creation, and high-end branding tailored to global standards.
+            <p class="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto" data-i18n="hero_subtitle">
+                Ndërtojmë uebsajte moderne, aplikacione të avancuara dhe automatizime me Inteligjencë Artificiale për biznesin tuaj.
             </p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <a href="#tools" class="btn-gradient text-black font-bold px-8 py-4 rounded-xl text-lg shadow-xl shadow-cyan-500/10 hover:opacity-90 transition-all" data-i18n="btn_explore_tools">
-                    Explore AI Modules
-                </a>
-                <a href="#showcase" class="glass-card text-white font-semibold px-8 py-4 rounded-xl text-lg hover:bg-gray-800/50 transition-all" data-i18n="btn_view_projects">
-                    View Projects
-                </a>
+            <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#contact" class="px-8 py-3.5 text-sm font-semibold text-white bg-brand-600 rounded-xl hover:bg-brand-500 transition shadow-lg shadow-brand-600/30 text-center" data-i18n="btn_cta_primary">Na Kontaktoni</a>
+                <a href="#services" class="px-8 py-3.5 text-sm font-semibold text-slate-300 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 hover:text-white transition text-center" data-i18n="btn_cta_secondary">Eksploro Shërbimet</a>
             </div>
         </div>
     </section>
 
-    <!-- ABOUT US SECTION -->
-    <section id="about" class="py-20 border-t border-gray-900 bg-black/20">
+    <!-- SERVICES SECTION -->
+    <section id="services" class="py-24 bg-slate-900/40 border-t border-slate-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-3xl font-bold text-white" data-i18n="services_heading">Shërbimet Tona</h2>
+                <p class="mt-4 text-slate-400" data-i18n="services_subheading">Ofrojmë cilësi dhe teknologjinë më të fundit për çdo projekt.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-brand-500/50 transition">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center text-xl mb-6">
+                        <i class="fa-solid fa-code"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-3" data-i18n="service_1_title">Zhvillim Uebsajtesh</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed" data-i18n="service_1_desc">Faqe interneti moderne, të shpejta dhe plotësisht të përshtatura për çdo pajisje celulare.</p>
+                </div>
+                <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-brand-500/50 transition">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center text-xl mb-6">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-3" data-i18n="service_2_title">Integrim AI</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed" data-i18n="service_2_desc">Përdorimi i Inteligjencës Artificiale për automatizim procesesh dhe përmirësim të eksperiencës së përdoruesit.</p>
+                </div>
+                <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-brand-500/50 transition">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center text-xl mb-6">
+                        <i class="fa-solid fa-paintbrush"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-3" data-i18n="service_3_title">UI/UX Design</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed" data-i18n="service_3_desc">Dizajne vizuale tërheqëse, estetike dhe të ndërtuara posaçërisht për identitetin e markës suaj.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <section id="contact" class="py-24 border-t border-slate-900">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-white" data-i18n="contact_heading">Na Kontaktoni</h2>
+                <p class="mt-4 text-slate-400" data-i18n="contact_subheading">Keni ndonjë pyetje apo projekt në mendje? Na shkruani tani.</p>
+            </div>
+            <form onsubmit="handleSubmit(event)" class="space-y-6 bg-slate-900/60 p-8 rounded-2xl border border-slate-800">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-2" data-i18n="form_name">Emri juaj</label>
+                        <input type="text" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-2" data-i18n="form_email">Email juaj</label>
+                        <input type="email" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
                 <div>
-                    <span class="text-xs font-semibold text-cyan-400 uppercase tracking-widest" data-i18n="about_tag">Innovation & Expertise</span>
-                    <h2 class="text-3xl md:text-4xl font-bold text-white mt-2 mb-6" data-i18n="about_title">Who We Are</h2>
-                    <p class="text-gray-400 leading-relaxed mb-6" data-i18n="about_p1">
-                        Xsus Studio is a next-generation technology agency focusing on artificial intelligence solutions, web & mobile architecture, and high-impact digital branding.
-                    </p>
-                    <p class="text-gray-400 leading-relaxed" data-i18n="about_p2">
-                        We empower startups, businesses, and entrepreneurs across Europe and globally by building fast, scalable, and intelligent digital products.
-                    </p>
+                    <label class="block text-xs font-medium text-slate-300 mb-2" data-i18n="form_message">Mesazhi</label>
+                    <textarea rows="4" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-500"></textarea>
                 </div>
-                <div class="glass-card p-8 rounded-3xl border border-gray-800 relative">
-                    <div class="grid grid-cols-2 gap-6 text-center">
-                        <div class="p-4 rounded-2xl bg-gray-900/50 border border-gray-800">
-                            <h3 class="text-3xl font-bold text-cyan-400">100%</h3>
-                            <p class="text-xs text-gray-400 mt-1" data-i18n="stat_1">Custom AI Tech</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-gray-900/50 border border-gray-800">
-                            <h3 class="text-3xl font-bold text-cyan-400">24/7</h3>
-                            <p class="text-xs text-gray-400 mt-1" data-i18n="stat_2">Global Support</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-gray-900/50 border border-gray-800">
-                            <h3 class="text-3xl font-bold text-cyan-400">3</h3>
-                            <p class="text-xs text-gray-400 mt-1" data-i18n="stat_3">Languages (EN/FR/SQ)</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-gray-900/50 border border-gray-800">
-                            <h3 class="text-3xl font-bold text-cyan-400">Fast</h3>
-                            <p class="text-xs text-gray-400 mt-1" data-i18n="stat_4">Delivery Time</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- MODULES / TOOLS SECTION -->
-    <section id="tools" class="py-20 bg-black/40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" data-i18n="modules_title">Key Modules & Features</h2>
-                <p class="text-gray-400" data-i18n="modules_subtitle">Everything you need to digitalize and scale your business.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- AI Assistant -->
-                <div class="glass-card p-8 rounded-2xl transition-all">
-                    <div class="w-12 h-12 rounded-lg bg-cyan-950 flex items-center justify-center text-cyan-400 text-2xl mb-6">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3" data-i18n="m1_title">AI Assistant</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed" data-i18n="m1_desc">
-                        Intelligent virtual assistant tailored to automate processes, analyze data, and optimize workflow communication.
-                    </p>
-                </div>
-
-                <!-- Web/App Builders -->
-                <div class="glass-card p-8 rounded-2xl transition-all">
-                    <div class="w-12 h-12 rounded-lg bg-cyan-950 flex items-center justify-center text-cyan-400 text-2xl mb-6">
-                        <i class="fas fa-code"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3" data-i18n="m2_title">Web & App Builder</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed" data-i18n="m2_desc">
-                        Build modern websites and high-performance mobile applications with intuitive UI/UX design.
-                    </p>
-                </div>
-
-                <!-- Logo Studio -->
-                <div class="glass-card p-8 rounded-2xl transition-all">
-                    <div class="w-12 h-12 rounded-lg bg-cyan-950 flex items-center justify-center text-cyan-400 text-2xl mb-6">
-                        <i class="fas fa-paint-brush"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3" data-i18n="m3_title">Logo Studio</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed" data-i18n="m3_desc">
-                        Design unique visual identities and professional logos for your brand with state-of-the-art AI tools.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- PORTFOLIO / SHOWCASE SECTION -->
-    <section id="showcase" class="py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" data-i18n="showcase_title">Featured Projects</h2>
-                <p class="text-gray-400" data-i18n="showcase_subtitle">A look into some of our custom AI platforms and digital products.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Project 1 -->
-                <div class="glass-card rounded-2xl overflow-hidden group">
-                    <div class="h-48 bg-gradient-to-br from-cyan-900/40 to-purple-900/40 flex items-center justify-center p-6 border-b border-gray-800">
-                        <i class="fas fa-brain text-5xl text-cyan-400 group-hover:scale-110 transition-transform"></i>
-                    </div>
-                    <div class="p-6">
-                        <span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider" data-i18n="p1_tag">AI Platform</span>
-                        <h3 class="text-xl font-bold text-white mt-1 mb-2" data-i18n="p1_title">Smart AI Assistant</h3>
-                        <p class="text-gray-400 text-sm mb-4" data-i18n="p1_desc">Automated customer service bot integrated with natural language processing.</p>
-                        <a href="#contact" class="text-cyan-400 text-sm font-semibold hover:underline flex items-center space-x-1">
-                            <span data-i18n="btn_learn_more">Learn More</span>
-                            <i class="fas fa-arrow-right text-xs"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Project 2 -->
-                <div class="glass-card rounded-2xl overflow-hidden group">
-                    <div class="h-48 bg-gradient-to-br from-purple-900/40 to-pink-900/40 flex items-center justify-center p-6 border-b border-gray-800">
-                        <i class="fas fa-laptop-code text-5xl text-purple-400 group-hover:scale-110 transition-transform"></i>
-                    </div>
-                    <div class="p-6">
-                        <span class="text-xs font-semibold text-purple-400 uppercase tracking-wider" data-i18n="p2_tag">Web Development</span>
-                        <h3 class="text-xl font-bold text-white mt-1 mb-2" data-i18n="p2_title">SaaS Platform UI</h3>
-                        <p class="text-gray-400 text-sm mb-4" data-i18n="p2_desc">Modern, responsive Web dashboard for digital product management.</p>
-                        <a href="#contact" class="text-cyan-400 text-sm font-semibold hover:underline flex items-center space-x-1">
-                            <span data-i18n="btn_learn_more">Learn More</span>
-                            <i class="fas fa-arrow-right text-xs"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Project 3 -->
-                <div class="glass-card rounded-2xl overflow-hidden group">
-                    <div class="h-48 bg-gradient-to-br from-cyan-900/40 to-blue-900/40 flex items-center justify-center p-6 border-b border-gray-800">
-                        <i class="fas fa-palette text-5xl text-pink-400 group-hover:scale-110 transition-transform"></i>
-                    </div>
-                    <div class="p-6">
-                        <span class="text-xs font-semibold text-pink-400 uppercase tracking-wider" data-i18n="p3_tag">Branding</span>
-                        <h3 class="text-xl font-bold text-white mt-1 mb-2" data-i18n="p3_title">Xsus Brand Identity</h3>
-                        <p class="text-gray-400 text-sm mb-4" data-i18n="p3_desc">Custom futuristic branding, logo design, and visual asset generation.</p>
-                        <a href="#contact" class="text-cyan-400 text-sm font-semibold hover:underline flex items-center space-x-1">
-                            <span data-i18n="btn_learn_more">Learn More</span>
-                            <i class="fas fa-arrow-right text-xs"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ SECTION -->
-    <section id="faq" class="py-20 bg-black/40">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" data-i18n="faq_title">Frequently Asked Questions</h2>
-                <p class="text-gray-400" data-i18n="faq_subtitle">Common questions about working with Xsus Studio.</p>
-            </div>
-
-            <div class="space-y-6">
-                <div class="glass-card p-6 rounded-2xl">
-                    <h3 class="text-lg font-semibold text-white mb-2" data-i18n="faq_q1">What services does Xsus Studio provide?</h3>
-                    <p class="text-gray-400 text-sm" data-i18n="faq_a1">We specialize in custom web development, mobile application design, AI workflows/bots, and professional logo & brand identity.</p>
-                </div>
-                <div class="glass-card p-6 rounded-2xl">
-                    <h3 class="text-lg font-semibold text-white mb-2" data-i18n="faq_q2">How long does it take to deliver a project?</h3>
-                    <p class="text-gray-400 text-sm" data-i18n="faq_a2">Most standard web and branding projects are delivered within 1 to 2 weeks, depending on complexity.</p>
-                </div>
-                <div class="glass-card p-6 rounded-2xl">
-                    <h3 class="text-lg font-semibold text-white mb-2" data-i18n="faq_q3">Do you offer multi-language website support?</h3>
-                    <p class="text-gray-400 text-sm" data-i18n="faq_a3">Yes! All our platforms come with full multi-language capabilities integrated natively.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CONTACT / ORDER FORM SECTION (WEB3FORMS INTEGRATED) -->
-    <section id="contact" class="py-20 relative">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="glass-card p-8 md:p-12 rounded-3xl border border-gray-800 shadow-2xl">
-                <div class="text-center mb-10">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-3" data-i18n="contact_title">Start a Project</h2>
-                    <p class="text-gray-400" data-i18n="contact_subtitle">Send us a message and let's turn your ideas into reality.</p>
-                </div>
-
-                <form action="https://api.web3forms.com/submit" method="POST" class="space-y-6">
-                    <!-- Web3Forms Access Key -->
-                    <input type="hidden" name="access_key" value="42448108-e5e3-4fca-8a1e-c44c161abdb8">
-                    <input type="hidden" name="subject" value="New Order / Contact from Xsus Studio Website">
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2" data-i18n="form_name">Your Name</label>
-                            <input type="text" name="name" required class="w-full bg-gray-900/90 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 transition-colors" placeholder="John Doe">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2" data-i18n="form_email">Your Email</label>
-                            <input type="email" name="email" required class="w-full bg-gray-900/90 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 transition-colors" placeholder="john@example.com">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2" data-i18n="form_service">Service Needed</label>
-                        <select name="service" class="w-full bg-gray-900/90 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 transition-colors">
-                            <option value="web" data-i18n="opt_web">Web Development</option>
-                            <option value="app" data-i18n="opt_app">Mobile Application</option>
-                            <option value="ai" data-i18n="opt_ai">AI Solutions & Automation</option>
-                            <option value="branding" data-i18n="opt_branding">Logo & Branding</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2" data-i18n="form_message">Project Details</label>
-                        <textarea name="message" rows="4" required class="w-full bg-gray-900/90 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 transition-colors" placeholder="Tell us about your project..."></textarea>
-                    </div>
-
-                    <button type="submit" class="w-full btn-gradient text-black font-bold py-4 rounded-xl text-lg shadow-xl shadow-cyan-500/10 hover:opacity-90 transition-all" data-i18n="btn_send">
-                        Send Message
-                    </button>
-                </form>
-            </div>
+                <button type="submit" class="w-full py-3.5 text-sm font-semibold text-white bg-brand-600 rounded-xl hover:bg-brand-500 transition shadow-lg shadow-brand-600/30" data-i18n="form_submit">Dërgo Mesazhin</button>
+            </form>
         </div>
     </section>
 
     <!-- FOOTER -->
-    <footer class="glass-card border-t border-gray-800 py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div class="flex justify-center items-center space-x-3 mb-6">
-                <div class="w-8 h-8 rounded-lg btn-gradient flex items-center justify-center font-bold text-black text-lg">
-                    X
-                </div>
-                <span class="text-xl font-bold text-white">XSUS STUDIO</span>
-            </div>
-            <p class="text-gray-500 text-sm mb-4">&copy; 2026 Xsus Studio (xsusstudio.com). All rights reserved.</p>
-            <p class="text-gray-600 text-xs" data-i18n="footer_privacy">Privacy Policy & Terms of Service apply.</p>
-        </div>
+    <footer class="py-12 bg-slate-900 border-t border-slate-800 text-center text-sm text-slate-500">
+        <p>&copy; 2026 Xsus Studio. Të gjitha të drejtat e rezervuara.</p>
     </footer>
 
-    <!-- TRANSLATION SCRIPT -->
+    <!-- MULTI-LANGUAGE JAVASCRIPT SYSTEM -->
     <script>
         const translations = {
+            sq: {
+                nav_services: "Shërbimet",
+                nav_ai: "Zgjidhjet AI",
+                nav_about: "Rreth Nesh",
+                nav_contact: "Kontakti",
+                btn_get_started: "Fillo Tani",
+                hero_badge: "E ardhmja e Inovacionit Dixhital",
+                hero_title: "Transformojmë idhët tuaja në Zgjidhje Digjitale",
+                hero_subtitle: "Ndërtojmë uebsajte moderne, aplikacione të avancuara dhe automatizime me Inteligjencë Artificiale për biznesin tuaj.",
+                btn_cta_primary: "Na Kontaktoni",
+                btn_cta_secondary: "Eksploro Shërbimet",
+                services_heading: "Shërbimet Tona",
+                services_subheading: "Ofrojmë cilësi dhe teknologjinë më të fundit për çdo projekt.",
+                service_1_title: "Zhvillim Uebsajtesh",
+                service_1_desc: "Faqe interneti moderne, të shpejta dhe plotësisht të përshtatura për çdo pajisje celulare.",
+                service_2_title: "Integrim AI",
+                service_2_desc: "Përdorimi i Inteligjencës Artificiale për automatizim procesesh dhe përmirësim të eksperiencës së përdoruesit.",
+                service_3_title: "UI/UX Design",
+                service_3_desc: "Dizajne vizuale tërheqëse, estetike dhe të ndërtuara posaçërisht për identitetin e markës suaj.",
+                contact_heading: "Na Kontaktoni",
+                contact_subheading: "Keni ndonjë pyetje apo projekt në mendje? Na shkruani tani.",
+                form_name: "Emri juaj",
+                form_email: "Email juaj",
+                form_message: "Mesazhi",
+                form_submit: "Dërgo Mesazhin"
+            },
             en: {
-                nav_about: "About Us",
                 nav_services: "Services",
-                nav_tools: "AI Modules",
-                nav_projects: "Projects",
-                nav_faq: "FAQ",
+                nav_ai: "AI Solutions",
+                nav_about: "About Us",
                 nav_contact: "Contact",
                 btn_get_started: "Get Started",
-                hero_badge: "AI Powered Digital Platform",
-                hero_title_1: "Build Your Future",
-                hero_title_2: "with",
-                hero_description: "Advanced AI solutions, web development, app creation, and high-end branding tailored to global standards.",
-                btn_explore_tools: "Explore AI Modules",
-                btn_view_projects: "View Projects",
-                about_tag: "Innovation & Expertise",
-                about_title: "Who We Are",
-                about_p1: "Xsus Studio is a next-generation technology agency focusing on artificial intelligence solutions, web & mobile architecture, and high-impact digital branding.",
-                about_p2: "We empower startups, businesses, and entrepreneurs across Europe and globally by building fast, scalable, and intelligent digital products.",
-                stat_1: "Custom AI Tech",
-                stat_2: "Global Support",
-                stat_3: "Languages (EN/FR/SQ)",
-                stat_4: "Delivery Time",
-                modules_title: "Key Modules & Features",
-                modules_subtitle: "Everything you need to digitalize and scale your business.",
-                m1_title: "AI Assistant",
-                m1_desc: "Intelligent virtual assistant tailored to automate processes, analyze data, and optimize workflow communication.",
-                m2_title: "Web & App Builder",
-                m2_desc: "Build modern websites and high-performance mobile applications with intuitive UI/UX design.",
-                m3_title: "Logo Studio",
-                m3_desc: "Design unique visual identities and professional logos for your brand with state-of-the-art AI tools.",
-                showcase_title: "Featured Projects",
-                showcase_subtitle: "A look into some of our custom AI platforms and digital products.",
-                p1_tag: "AI Platform",
-                p1_title: "Smart AI Assistant",
-                p1_desc: "Automated customer service bot integrated with natural language processing.",
-                p2_tag: "Web Development",
-                p2_title: "SaaS Platform UI",
-                p2_desc: "Modern, responsive Web dashboard for digital product management.",
-                p3_tag: "Branding",
-                p3_title: "Xsus Brand Identity",
-                p3_desc: "Custom futuristic branding, logo design, and visual asset generation.",
-                btn_learn_more: "Learn More",
-                faq_title: "Frequently Asked Questions",
-                faq_subtitle: "Common questions about working with Xsus Studio.",
-                faq_q1: "What services does Xsus Studio provide?",
-                faq_a1: "We specialize in custom web development, mobile application design, AI workflows/bots, and professional logo & brand identity.",
-                faq_q2: "How long does it take to deliver a project?",
-                faq_a2: "Most standard web and branding projects are delivered within 1 to 2 weeks, depending on complexity.",
-                faq_q3: "Do you offer multi-language website support?",
-                faq_a3: "Yes! All our platforms come with full multi-language capabilities integrated natively.",
-                contact_title: "Start a Project",
-                contact_subtitle: "Send us a message and let's turn your ideas into reality.",
+                hero_badge: "The Future of Digital Innovation",
+                hero_title: "Transforming Your Ideas into Digital Solutions",
+                hero_subtitle: "We build modern websites, advanced apps, and AI-powered automations for your business.",
+                btn_cta_primary: "Contact Us",
+                btn_cta_secondary: "Explore Services",
+                services_heading: "Our Services",
+                services_subheading: "We deliver quality and cutting-edge technology for every project.",
+                service_1_title: "Web Development",
+                service_1_desc: "Modern, fast, and fully responsive websites tailored for all mobile and desktop devices.",
+                service_2_title: "AI Integration",
+                service_2_desc: "Leveraging Artificial Intelligence to automate workflows and enhance user experience.",
+                service_3_title: "UI/UX Design",
+                service_3_desc: "Attractive, aesthetic visual designs crafted specifically for your brand identity.",
+                contact_heading: "Get in Touch",
+                contact_subheading: "Have a question or a project in mind? Drop us a message.",
                 form_name: "Your Name",
                 form_email: "Your Email",
-                form_service: "Service Needed",
-                opt_web: "Web Development",
-                opt_app: "Mobile Application",
-                opt_ai: "AI Solutions & Automation",
-                opt_branding: "Logo & Branding",
-                form_message: "Project Details",
-                btn_send: "Send Message",
-                footer_privacy: "Privacy Policy & Terms of Service apply."
+                form_message: "Message",
+                form_submit: "Send Message"
             },
             fr: {
-                nav_about: "À Propos",
                 nav_services: "Services",
-                nav_tools: "Modules IA",
-                nav_projects: "Projets",
-                nav_faq: "FAQ",
+                nav_ai: "Solutions IA",
+                nav_about: "À Propos",
                 nav_contact: "Contact",
                 btn_get_started: "Commencer",
-                hero_badge: "Plateforme Numérique Basée sur l'IA",
-                hero_title_1: "Construisez Votre Avenir",
-                hero_title_2: "avec",
-                hero_description: "Solutions IA avancées, développement web, création d'applications et branding haut de gamme selon les normes internationales.",
-                btn_explore_tools: "Explorer les Modules IA",
-                btn_view_projects: "Voir les Projets",
-                about_tag: "Innovation & Expertise",
-                about_title: "Qui Sommes-Nous",
-                about_p1: "Xsus Studio est une agence technologique de nouvelle génération axée sur les solutions d'intelligence artificielle, l'architecture web et mobile et le branding numérique.",
-                about_p2: "Nous accompagnons les startups, entreprises et entrepreneurs en Europe et dans le monde en créant des produits numériques rapides et intelligents.",
-                stat_1: "Technologie IA Sur Mesure",
-                stat_2: "Support Global",
-                stat_3: "Langues (EN/FR/SQ)",
-                stat_4: "Délai de Livraison",
-                modules_title: "Modules et Fonctionnalités Clés",
-                modules_subtitle: "Tout ce dont vous avez besoin pour numériser et développer votre entreprise.",
-                m1_title: "Assistant IA",
-                m1_desc: "Assistant virtuel intelligent conçu pour automatiser les processus, analyser les données et optimiser la communication.",
-                m2_title: "Créateur Web & App",
-                m2_desc: "Concevez des sites web modernes et des applications mobiles performantes avec un design intuitif.",
-                m3_title: "Studio de Logo",
-                m3_desc: "Créez des identités visuelles uniques et des logos professionnels grâce aux outils IA de pointe.",
-                showcase_title: "Projets En Vedette",
-                showcase_subtitle: "Aperçu de nos plateformes IA et produits numériques sur mesure.",
-                p1_tag: "Plateforme IA",
-                p1_title: "Assistant IA Intelligent",
-                p1_desc: "Bot de service client automatisé intégré au traitement du langage naturel.",
-                p2_tag: "Développement Web",
-                p2_title: "Interface SaaS",
-                p2_desc: "Tableau de bord web moderne pour la gestion de produits numériques.",
-                p3_tag: "Branding",
-                p3_title: "Identité Visuelle Xsus",
-                p3_desc: "Branding futuriste, création de logos et génération d'actifs visuels.",
-                btn_learn_more: "En Savoir Plus",
-                faq_title: "Foire Aux Questions",
-                faq_subtitle: "Questions fréquentes sur notre collaboration.",
-                faq_q1: "Quels services propose Xsus Studio ?",
-                faq_a1: "Nous sommes spécialisés dans le développement web sur mesure, les applications mobiles, les flux IA et l'identité de marque.",
-                faq_q2: "Combien de temps prend la réalisation d'un projet ?",
-                faq_a2: "La plupart des projets web et branding sont livrés sous 1 à 2 semaines selon la complexité.",
-                faq_q3: "Proposez-vous des sites web multilingues ?",
-                faq_a3: "Oui ! Toutes nos plateformes intègrent nativement le support multilingue.",
-                contact_title: "Lancer un Projet",
-                contact_subtitle: "Envoyez-nous un message et concrétisons vos idées.",
+                hero_badge: "L'avenir de l'Innovation Numérique",
+                hero_title: "Transformez Vos Idées en Solutions Numériques",
+                hero_subtitle: "Nous concevons des sites web modernes, des applications avancées et des automatisations par IA pour votre entreprise.",
+                btn_cta_primary: "Contactez-nous",
+                btn_cta_secondary: "Explorer les Services",
+                services_heading: "Nos Services",
+                services_subheading: "Nous offrons qualité et technologie de pointe pour chaque projet.",
+                service_1_title: "Développement Web",
+                service_1_desc: "Sites web modernes, rapides et entièrement adaptés à tous les appareils mobiles.",
+                service_2_title: "Intégration IA",
+                service_2_desc: "Utilisation de l'intelligence artificielle pour automatiser les processus et améliorer l'expérience.",
+                service_3_title: "Design UI/UX",
+                service_3_desc: "Designs visuels attrayants et esthétiques conçus sur mesure pour l'identité de votre marque.",
+                contact_heading: "Contactez-nous",
+                contact_subheading: "Une question ou un projet en tête ? Envoyez-nous un message.",
                 form_name: "Votre Nom",
-                form_email: "Votre E-mail",
-                form_service: "Service Requis",
-                opt_web: "Développement Web",
-                opt_app: "Application Mobile",
-                opt_ai: "Solutions IA & Automatisation",
-                opt_branding: "Logo & Image de Marque",
-                form_message: "Détails du Projet",
-                btn_send: "Envoyer le Message",
-                footer_privacy: "Politique de confidentialité et conditions d'utilisation applicables."
-            },
-            sq: {
-                nav_about: "Rreth Nesh",
-                nav_services: "Shërbimet",
-                nav_tools: "Modulet AI",
-                nav_projects: "Projektet",
-                nav_faq: "FAQ",
-                nav_contact: "Kontakti",
-                btn_get_started: "Nisa Tani",
-                hero_badge: "Platformë Digjitale me AI",
-                hero_title_1: "Ndërtoni të Ardhmen tuaj",
-                hero_title_2: "me",
-                hero_description: "Solucione të avancuara të inteligjencës artificiale, zhvillim uebi, krijim aplikacionesh dhe brenduesitë me standarde ndërkombëtare.",
-                btn_explore_tools: "Eksploro Modulet AI",
-                btn_view_projects: "Shiko Projektet",
-                about_tag: "Inovacion & Ekspertizë",
-                about_title: "Kush Jemi Ne",
-                about_p1: "Xsus Studio është një agjenci teknologjike e gjeneratës së re e fokusuar në zgjidhjet e inteligjencës artificiale, arkitekturën web & mobile dhe brendimin digjital.",
-                about_p2: "Ne fuqizojmë bizneset dhe sipërmarrësit në Evropë dhe globalisht duke ndërtuar produkte digjitale të shpejta, të shkallëzueshme dhe inteligjente.",
-                stat_1: "Teknologji AI me Porosi",
-                stat_2: "Mbështetje Globale",
-                stat_3: "Gjuhë (EN/FR/SQ)",
-                stat_4: "Koha e Realizimit",
-                modules_title: "Modulet & Veçoritë Kryesore",
-                modules_subtitle: "Gjithçka që ju nevojitet për të digjitalizuar dhe zhvilluar biznesin tuaj.",
-                m1_title: "AI Assistant",
-                m1_desc: "Asistent inteligjent i përshtatur për automatizimin e proceseve, analizën e të dhënave dhe komunikimin automatik.",
-                m2_title: "Web & App Builder",
-                m2_desc: "Krijoni uebsajte moderne dhe aplikacione celulare me performancë të lartë dhe dizajn super intuitiv.",
-                m3_title: "Logo Studio",
-                m3_desc: "Dizajnoni identitete vizuale unike dhe logo profesionale për brendin tuaj me ndihmën e mjeteve inteligjente.",
-                showcase_title: "Projektet Kryesore",
-                showcase_subtitle: "Një pamje mbi platformat tona AI dhe produktet digjitale.",
-                p1_tag: "Platformë AI",
-                p1_title: "Asistent AI Inteligjent",
-                p1_desc: "Bot automatik për shërbimin ndaj klientit i integruar me përpunimin e gjuhës natyrore.",
-                p2_tag: "Zhvillim Uebi",
-                p2_title: "SaaS Platform UI",
-                p2_desc: "Paneli modern web për menaxhimin e produkteve digjitale.",
-                p3_tag: "Brendim",
-                p3_title: "Identiteti Vizual Xsus",
-                p3_desc: "Brendim futuristik, dizajn logoje dhe krijim i grafikave me AI.",
-                btn_learn_more: "Mëso Më Shumë",
-                faq_title: "Pyetjet e Shpeshta (FAQ)",
-                faq_subtitle: "Pyetjet më të shpeshta rreth bashkëpunimit me Xsus Studio.",
-                faq_q1: "Cilat shërbime ofron Xsus Studio?",
-                faq_a1: "Ne specializohemi në zhvillimin e uebsajteve, aplikacioneve celulare, zgjidhjeve AI dhe dizajnit të logos e identitetit të brendit.",
-                faq_q2: "Sa kohë duhet për të përfunduar një projekt?",
-                faq_a2: "Shumica e projekteve kryhen brenda 1 deri në 2 javë, në varësi të kompleksitetit.",
-                faq_q3: "A ofroni uebsajte në shumë gjuhë?",
-                faq_a3: "Po! Të gjitha platformat tona vijnë me mbështetje të plotë shumëgjuhëshe të integruar.",
-                contact_title: "Filloni një Projekt",
-                contact_subtitle: "Dërgoni një mesazh dhe le t'i realizojmë idetë tuaja.",
-                form_name: "Emri Juaj",
-                form_email: "Email-i Juaj",
-                form_service: "Shërbimi i Kërkuar",
-                opt_web: "Zhvillim Uebi (Web Development)",
-                opt_app: "Aplikacion Celular (Mobile App)",
-                opt_ai: "Zgjidhje AI & Automatizim",
-                opt_branding: "Logo & Brendim",
-                form_message: "Detajet e Projektit",
-                btn_send: "Dërgo Mesazhin",
-                footer_privacy: "Zbatohen Politikat e Privatësisë dhe Kushtet e Shërbimit."
+                form_email: "Votre Email",
+                form_message: "Message",
+                form_submit: "Envoyer le Message"
             }
         };
 
-        function setLanguage(lang) {
-            document.querySelectorAll('[data-i18n]').forEach(el => {
+        function changeLanguage(lang) {
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (translations[lang] && translations[lang][key]) {
                     el.textContent = translations[lang][key];
                 }
             });
-
-            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = document.getElementById(`lang-${lang}`);
-            if (activeBtn) activeBtn.classList.add('active');
-
-            document.documentElement.lang = lang;
         }
 
-        // Mobile Menu Toggle
-        const menuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        menuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
+        function handleSubmit(event) {
+            event.preventDefault();
+            alert("Mesazhi u dërgua me sukses! (Demo)");
+            event.target.reset();
+        }
     </script>
 </body>
 </html>
