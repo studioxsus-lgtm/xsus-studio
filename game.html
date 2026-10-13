@@ -3,32 +3,472 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xsus Game - WebGL Gaming</title>
+    <title>Xsus Game | AI Game Generator & Arcade</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            blue: '#00f0ff',
+                            purple: '#7000ff',
+                            pink: '#ff007f',
+                            dark: '#0a0a12',
+                            card: 'rgba(18, 18, 35, 0.6)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(18, 18, 35, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #00f0ff 0%, #7000ff 50%, #ff007f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
 </head>
-<body class="min-h-screen relative flex flex-col justify-between">
-    <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+<body class="bg-[#06060c] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-cyber-blue selection:text-black">
 
-    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 p-[2px]"><div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center"><span class="font-extrabold text-cyan-400">X</span></div></div>
-                <h1 class="font-bold text-xl text-white">Xsus Game</h1>
+    <!-- NAVIGATION BAR -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-4 md:px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-lg shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+                    X
+                </div>
+                <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">GAME</span></span>
             </a>
-            <a href="index.html" class="text-xs text-cyan-400 hover:underline">&larr; Back to Ecosystem</a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden lg:flex items-center gap-6 font-medium text-xs text-slate-300">
+                <a href="ai.html" class="hover:text-cyber-blue transition">Xsus AI</a>
+                <a href="app.html" class="hover:text-cyber-blue transition">Xsus App</a>
+                <a href="web.html" class="hover:text-cyber-blue transition">Xsus Web</a>
+                <a href="game.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Xsus Game</a>
+                <a href="logo.html" class="hover:text-cyber-blue transition">Xsus Logo</a>
+                <a href="domain.html" class="hover:text-cyber-blue transition">Xsus Domain</a>
+            </div>
+
+            <!-- Language Selector & CTA -->
+            <div class="flex items-center gap-3">
+                <div class="glass-panel px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-300">
+                    <i data-lucide="globe" class="w-3.5 h-3.5 text-cyber-blue"></i>
+                    <select id="language-select" class="bg-transparent text-white outline-none cursor-pointer">
+                        <option value="en" class="bg-[#0a0a12] text-white">EN</option>
+                        <option value="sq" class="bg-[#0a0a12] text-white">SQ</option>
+                        <option value="fr" class="bg-[#0a0a12] text-white">FR</option>
+                    </select>
+                </div>
+
+                <a href="#arcade-section" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-xs hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
+                    <i data-lucide="gamepad-2" class="w-3.5 h-3.5"></i>
+                    <span data-i18n="nav-play">Play Arcade</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="pt-36 pb-12 px-6 relative overflow-hidden">
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyber-purple/15 rounded-full blur-[140px] pointer-events-none"></div>
+        
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-purple/30 text-cyber-purple text-xs font-semibold uppercase tracking-widest mb-6">
+                <i data-lucide="wand-2" class="w-4 h-4"></i> <span data-i18n="hero-badge">AI Game Generator & Retro Arcade</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
+                <span data-i18n="hero-title1">Create & Play Games.</span> <br><span class="text-gradient" data-i18n="hero-title2">Powered by AI Intelligence.</span>
+            </h1>
+            <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mb-8 leading-relaxed" data-i18n="hero-desc">
+                Generate custom game concepts and code with AI, or jump straight into retro arcade action directly in your browser.
+            </p>
         </div>
     </header>
 
-    <main class="relative z-10 max-w-4xl mx-auto px-4 py-16 flex-1 text-center space-y-6">
-        <i data-lucide="gamepad-2" class="w-16 h-16 text-purple-400 mx-auto"></i>
-        <h2 class="text-3xl font-bold text-white">Interactive WebGL Games</h2>
-        <p class="text-slate-400 max-w-lg mx-auto">Browser-based high performance gaming experiences powered by HTML5 and WebGL rendering engines.</p>
-    </main>
+    <!-- MAIN CONTENT SECTION -->
+    <section id="arcade-section" class="py-6 px-4 md:px-6 max-w-7xl mx-auto w-full mb-20">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- LEFT: AI GAME GENERATOR -->
+            <div class="lg:col-span-5 glass-panel p-6 rounded-3xl border border-cyber-purple/30 shadow-[0_0_40px_rgba(112,0,255,0.15)] space-y-4">
+                <div class="flex items-center gap-3 pb-3 border-b border-white/10">
+                    <div class="w-9 h-9 rounded-xl bg-cyber-purple/20 border border-cyber-purple/40 flex items-center justify-center text-cyber-purple">
+                        <i data-lucide="cpu" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-white" data-i18n="gen-title">AI Game Generator</h2>
+                        <p class="text-xs text-slate-400" data-i18n="gen-subtitle">Design your custom game concept</p>
+                    </div>
+                </div>
 
-    <footer class="glass-panel border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">&copy; 2026 Xsus Studio. All rights reserved.</footer>
+                <!-- Game Prompt Input -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5" data-i18n="label-prompt">Game Concept / Idea</label>
+                    <textarea id="game-prompt" rows="3" class="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-sm text-white outline-none focus:border-cyber-purple resize-none" data-i18n-placeholder="place-prompt" placeholder="e.g. A neon space runner where a ship collects crystals..."></textarea>
+                </div>
+
+                <!-- Genre Selector -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5" data-i18n="label-genre">Game Genre</label>
+                    <select id="game-genre" class="w-full bg-black/80 border border-white/15 rounded-xl p-3 text-sm text-white outline-none focus:border-cyber-purple cursor-pointer">
+                        <option value="arcade" selected>Retro Arcade / Action</option>
+                        <option value="puzzle">Puzzle & Logic</option>
+                        <option value="sci-fi">Sci-Fi Space Adventure</option>
+                        <option value="cyberpunk">Cyberpunk RPG / Story</option>
+                    </select>
+                </div>
+
+                <!-- Generate Button -->
+                <button id="generate-game-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink text-black font-extrabold text-sm hover:opacity-90 transition shadow-[0_0_20px_rgba(112,0,255,0.3)] flex items-center justify-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span data-i18n="btn-generate">Generate Game Design with AI</span>
+                </button>
+
+                <!-- AI Output Box -->
+                <div id="ai-game-output" class="hidden p-4 rounded-2xl bg-black/50 border border-white/10 text-xs text-slate-300 space-y-2 leading-relaxed max-h-[250px] overflow-y-auto">
+                    <!-- AI response populates here -->
+                </div>
+            </div>
+
+            <!-- RIGHT: RETRO ARCADE (CYBER SNAKE GAME) -->
+            <div class="lg:col-span-7 space-y-6">
+                <div class="glass-panel p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center relative overflow-hidden">
+                    
+                    <!-- Game Header & Score -->
+                    <div class="w-full flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="gamepad" class="w-5 h-5 text-cyber-blue"></i>
+                            <span class="font-bold text-white text-base" data-i18n="game-name">Cyber Snake Arcade</span>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs font-bold">
+                            <span class="text-slate-400"><span data-i18n="score-text">Score:</span> <strong id="current-score" class="text-cyber-blue text-sm">0</strong></span>
+                            <span class="text-slate-400"><span data-i18n="highscore-text">High Score:</span> <strong id="high-score" class="text-cyber-pink text-sm">0</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Screen -->
+                    <div class="relative bg-black/80 border border-cyber-blue/30 rounded-2xl overflow-hidden shadow-[0_0_25px_rgba(0,240,255,0.15)] mb-4">
+                        <canvas id="snakeCanvas" width="400" height="400" class="block w-full max-w-[400px] aspect-square"></canvas>
+                        
+                        <!-- Overlay Start Screen -->
+                        <div id="game-overlay" class="absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 transition-all">
+                            <div class="w-16 h-16 rounded-2xl bg-cyber-blue/20 border border-cyber-blue/40 flex items-center justify-center text-cyber-blue mb-3 shadow-[0_0_20px_rgba(0,240,255,0.4)]">
+                                <i data-lucide="play" class="w-8 h-8 ml-1"></i>
+                            </div>
+                            <h3 class="text-xl font-black text-white mb-1" data-i18n="overlay-title">Cyber Snake</h3>
+                            <p class="text-xs text-slate-400 mb-5 max-w-xs" data-i18n="overlay-desc">Use arrow keys or buttons below to play. Avoid walls and your own tail!</p>
+                            <button id="start-game-btn" class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-xs hover:opacity-90 transition shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+                                <span data-i18n="btn-start">Start Game</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mobile / On-Screen Controls -->
+                    <div class="grid grid-cols-3 gap-2 w-full max-w-[220px]">
+                        <div></div>
+                        <button onclick="changeDirection('UP')" class="p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition border border-white/10">
+                            <i data-lucide="chevron-up" class="w-5 h-5"></i>
+                        </button>
+                        <div></div>
+                        <button onclick="changeDirection('LEFT')" class="p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition border border-white/10">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button onclick="changeDirection('DOWN')" class="p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition border border-white/10">
+                            <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                        </button>
+                        <button onclick="changeDirection('RIGHT')" class="p-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition border border-white/10">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto py-8 border-t border-white/10 glass-panel text-center text-xs text-slate-500">
+        <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
+    </footer>
+
+    <!-- INTERACTIVE JAVASCRIPT LOGIC -->
+    <script>
+        lucide.createIcons();
+
+        // 1. MULTI-LANGUAGE DICTIONARY (EN, SQ, FR)
+        const i18nData = {
+            en: {
+                "nav-play": "Play Arcade",
+                "hero-badge": "AI Game Generator & Retro Arcade",
+                "hero-title1": "Create & Play Games.",
+                "hero-title2": "Powered By AI Intelligence.",
+                "hero-desc": "Generate custom game concepts and code with AI, or jump straight into retro arcade action directly in your browser.",
+                "gen-title": "AI Game Generator",
+                "gen-subtitle": "Design your custom game concept",
+                "label-prompt": "Game Concept / Idea",
+                "place-prompt": "e.g. A neon space runner where a ship collects crystals...",
+                "label-genre": "Game Genre",
+                "btn-generate": "Generate Game Design with AI",
+                "game-name": "Cyber Snake Arcade",
+                "score-text": "Score:",
+                "highscore-text": "High Score:",
+                "overlay-title": "Cyber Snake",
+                "overlay-desc": "Use arrow keys or buttons below to play. Avoid walls and your own tail!",
+                "btn-start": "Start Game"
+            },
+            sq: {
+                "nav-play": "Luaj Arcade",
+                "hero-badge": "Gjenerues Lojërash me AI & Arcade Retro",
+                "hero-title1": "Krijo & Luaj Lojëra.",
+                "hero-title2": "Fuqizuar nga Inteligjenca Artificiale.",
+                "hero-desc": "Gjeno koncepte të personalizuara lojërash me AI, ose shijo lojërat tona retro direkt në shfletuesin tënd.",
+                "gen-title": "Gjenerues Lojërash me AI",
+                "gen-subtitle": "Krijo konceptin e lojës tënde",
+                "label-prompt": "Koncepti / Ideja e Lojës",
+                "place-prompt": "p.sh. Një lojë hapësinore ku anija mbledh kristale...",
+                "label-genre": "Zhanri i Lojës",
+                "btn-generate": "Gjenero Dizajnin me AI",
+                "game-name": "Cyber Snake Arcade",
+                "score-text": "Pikët:",
+                "highscore-text": "Rekordi:",
+                "overlay-title": "Cyber Snake",
+                "overlay-desc": "Përdor shigjetat e tastierës ose butonat poshtë për të luajtur. Shmang muret!",
+                "btn-start": "Fillo Lojën"
+            },
+            fr: {
+                "nav-play": "Jouer à l'Arcade",
+                "hero-badge": "Générateur de Jeux IA & Arcade",
+                "hero-title1": "Créez & Jouez à des Jeux.",
+                "hero-title2": "Propulsé par l'Intelligence Artificielle.",
+                "hero-desc": "Générez des concepts de jeux personnalisés avec l'IA ou plongez directement dans l'action rétro.",
+                "gen-title": "Générateur de Jeux IA",
+                "gen-subtitle": "Concevez votre concept de jeu",
+                "label-prompt": "Concept / Idée de Jeu",
+                "place-prompt": "ex: Un jeu spatial cyberpunk avec des cristaux...",
+                "label-genre": "Genre de Jeu",
+                "btn-generate": "Générer avec l'IA",
+                "game-name": "Cyber Snake Arcade",
+                "score-text": "Score:",
+                "highscore-text": "Meilleur:",
+                "overlay-title": "Cyber Snake",
+                "overlay-desc": "Utilisez les flèches du clavier ou les boutons pour jouer.",
+                "btn-start": "Commencer"
+            }
+        };
+
+        const langSelect = document.getElementById('language-select');
+        let currentLang = 'en';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            const dict = i18nData[lang] || i18nData['en'];
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) el.textContent = dict[key];
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (dict[key]) el.placeholder = dict[key];
+            });
+
+            document.documentElement.lang = lang;
+            if (langSelect) langSelect.value = lang;
+        }
+
+        langSelect?.addEventListener('change', (e) => setLanguage(e.target.value));
+
+        const userBrowserLang = navigator.language.slice(0, 2);
+        if (['sq', 'fr', 'en'].includes(userBrowserLang)) setLanguage(userBrowserLang);
+
+        function formatMarkdownToHTML(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em class="text-slate-300">$1</em>')
+                .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc text-slate-300">$1</li>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // 2. AI GAME GENERATOR LOGIC
+        const gamePrompt = document.getElementById('game-prompt');
+        const gameGenre = document.getElementById('game-genre');
+        const generateGameBtn = document.getElementById('generate-game-btn');
+        const aiGameOutput = document.getElementById('ai-game-output');
+
+        generateGameBtn?.addEventListener('click', async () => {
+            const promptText = gamePrompt.value.trim() || 'A neon cyberpunk runner game';
+            const genre = gameGenre.value;
+
+            aiGameOutput.classList.remove('hidden');
+            aiGameOutput.innerHTML = `<div class="animate-pulse text-cyber-purple">${currentLang === 'sq' ? 'Duke gjeneruar konceptin e lojës...' : currentLang === 'fr' ? 'Génération du concept...' : 'Generating game design with AI...'}</div>`;
+
+            const targetLanguageName = currentLang === 'sq' ? 'Albanian' : currentLang === 'fr' ? 'French' : 'English';
+
+            try {
+                const response = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: 'system', content: `You are an expert game designer and developer. Give a short, creative game design document (Rules, Mechanics, Objective, Code snippet idea) in ${targetLanguageName}.` },
+                            { role: 'user', content: `Create a game design based on this concept: "${promptText}" (Genre: ${genre}) written entirely in ${targetLanguageName}.` }
+                        ],
+                        model: 'openai'
+                    })
+                });
+
+                if (response.ok) {
+                    const text = await response.text();
+                    const formattedHTML = formatMarkdownToHTML(text);
+                    aiGameOutput.innerHTML = `<strong class="text-cyber-blue block mb-2 text-sm">AI Game Design Document:</strong><div class="space-y-1">${formattedHTML}</div>`;
+                } else {
+                    aiGameOutput.innerHTML = `<span class="text-rose-400">Unable to generate game design at this moment.</span>`;
+                }
+            } catch (err) {
+                aiGameOutput.innerHTML = `<span class="text-rose-400">Network connection error.</span>`;
+            }
+        });
+
+        // 3. RETRO ARCADE (CYBER SNAKE GAME LOGIC)
+        const canvas = document.getElementById('snakeCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('current-score');
+        const highScoreEl = document.getElementById('high-score');
+        const gameOverlay = document.getElementById('game-overlay');
+        const startGameBtn = document.getElementById('start-game-btn');
+
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+        
+        let snake = [{ x: 10, y: 10 }];
+        let food = { x: 5, y: 5 };
+        let dx = 0;
+        let dy = 0;
+        let score = 0;
+        let highScore = localStorage.getItem('xsus_snake_highscore') || 0;
+        highScoreEl.textContent = highScore;
+
+        let gameInterval = null;
+        let isGameRunning = false;
+
+        function startGame() {
+            snake = [{ x: 10, y: 10 }];
+            score = 0;
+            scoreEl.textContent = score;
+            dx = 1;
+            dy = 0;
+            spawnFood();
+            gameOverlay.classList.add('hidden');
+            isGameRunning = true;
+
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, 100);
+        }
+
+        startGameBtn?.addEventListener('click', startGame);
+
+        function gameLoop() {
+            update();
+            if (isGameOver()) {
+                endGame();
+                return;
+            }
+            draw();
+        }
+
+        function update() {
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            snake.unshift(head);
+
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                scoreEl.textContent = score;
+                if (score > highScore) {
+                    highScore = score;
+                    highScoreEl.textContent = highScore;
+                    localStorage.setItem('xsus_snake_highscore', highScore);
+                }
+                spawnFood();
+            } else {
+                snake.pop();
+            }
+        }
+
+        function spawnFood() {
+            food.x = Math.floor(Math.random() * tileCount);
+            food.y = Math.floor(Math.random() * tileCount);
+        }
+
+        function isGameOver() {
+            const head = snake[0];
+            // Wall collision
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) return true;
+            // Self collision
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) return true;
+            }
+            return false;
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            clearInterval(gameInterval);
+            gameOverlay.classList.remove('hidden');
+            document.querySelector('#game-overlay h3').textContent = currentLang === 'sq' ? 'Humbët!' : currentLang === 'fr' ? 'Partie Terminée!' : 'Game Over!';
+        }
+
+        function draw() {
+            // Background grid
+            ctx.fillStyle = '#0a0a12';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Food (Neon Pink)
+            ctx.fillStyle = '#ff007f';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#ff007f';
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+
+            // Draw Snake (Neon Blue)
+            ctx.fillStyle = '#00f0ff';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00f0ff';
+            snake.forEach(part => {
+                ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 2, gridSize - 2);
+            });
+            ctx.shadowBlur = 0; // Reset shadow
+        }
+
+        function changeDirection(direction) {
+            if (!isGameRunning) return;
+            if (direction === 'UP' && dy === 0) { dx = 0; dy = -1; }
+            if (direction === 'DOWN' && dy === 0) { dx = 0; dy = 1; }
+            if (direction === 'LEFT' && dx === 0) { dx = -1; dy = 0; }
+            if (direction === 'RIGHT' && dx === 0) { dx = 1; dy = 0; }
+        }
+
+        window.addEventListener('keydown', e => {
+            if (['ArrowUp', 'KeyW'].includes(e.code)) changeDirection('UP');
+            if (['ArrowDown', 'KeyS'].includes(e.code)) changeDirection('DOWN');
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) changeDirection('LEFT');
+            if (['ArrowRight', 'KeyD'].includes(e.code)) changeDirection('RIGHT');
+        });
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
