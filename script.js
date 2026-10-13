@@ -79,7 +79,8 @@ const translations = {
     }
 };
 
-let currentLang = 'sq';
+// Caktojmë Anglishten si gjuhë parazgjedhjeje (Default)
+let currentLang = 'en';
 
 function setLanguage(lang) {
     currentLang = lang;
@@ -96,7 +97,6 @@ function setLanguage(lang) {
 
     const t = translations[lang];
 
-    // Rregullimi i elementeve kryesore
     if (document.getElementById('nav-ai-link')) document.getElementById('nav-ai-link').innerText = t.navAi;
     if (document.getElementById('nav-ecosystem-link')) document.getElementById('nav-ecosystem-link').innerText = t.navEcosystem;
     if (document.getElementById('nav-apps-link')) document.getElementById('nav-apps-link').innerText = t.navApps;
@@ -180,25 +180,25 @@ function generateSmartAiResponse(userPrompt) {
     const prompt = userPrompt.toLowerCase();
 
     if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("islame") || prompt.includes("script")) {
-        return `🎬 **Skenar Profesional për Video Islame (30-60 Sekonda)**\n\n` +
-               `📌 **Titulli:** Drita e Sabrit dhe Besimit\n\n` +
-               `🎥 **Pamja 1 (00:00 - 00:04):**\n` +
-               `*Vizuale:* Pamje nga mali gjatë lindjes së diellit, me rreze të ngrohta që përhapen ngadalë.\n` +
-               `*Zëri (Voiceover):* "Në çdo stuhi që kalon në jetë, kujto se stuhitë nuk zgjasin përgjithmonë..."\n\n` +
-               `🎥 **Pamja 2 (00:04 - 00:10):**\n` +
-               `*Vizuale:* Një person duke u lutur me qetësi në dritën e mëngjesit.\n` +
-               `*Zëri (Voiceover):* "Zoti nuk ngarkon asnjë shpirt më shumë se sa ai mund të mbajë. Çdo sprovë ka një lehtësim mbrapa."\n\n` +
-               `🎥 **Pamja 3 (00:10 - 00:15):**\n` +
-               `*Vizuale:* Ujë i pastër që rrjedh ngadalë midis gurëve në natyrë.\n` +
-               `*Zëri (Voiceover):* "Mbaje shpresën të gjallë dhe kërko qetësinë në lutje."\n\n` +
-               `💬 **Call To Action:** "Ruaje këtë video dhe shpërndaje me miqtë e tu! ✨"`;
+        return `🎬 **Professional Islamic Video Script (30-60 Seconds)**\n\n` +
+               `📌 **Title:** The Light of Sabr and Trust\n\n` +
+               `🎥 **Scene 1 (00:00 - 00:04):**\n` +
+               `*Visual:* Cinematic view of mountains during sunrise with warm light rays.\n` +
+               `*Voiceover:* "In every storm you face in life, remember that storms do not last forever..."\n\n` +
+               `🎥 **Scene 2 (00:04 - 00:10):**\n` +
+               `*Visual:* A person praying peacefully in the morning light.\n` +
+               `*Voiceover:* "Allah does not burden a soul beyond that it can bear. With every hardship comes ease."\n\n` +
+               `🎥 **Scene 3 (00:10 - 00:15):**\n` +
+               `*Visual:* Pure flowing water between rocks in nature.\n` +
+               `*Voiceover:* "Keep your hope alive and seek comfort in prayer."\n\n` +
+               `💬 **Call To Action:** "Save this video and share it with someone who needs it today! ✨"`;
     }
 
     if (prompt.includes("shqip") || prompt.includes("përshëndetje")) {
-        return "Përshëndetje! Unë jam **Xsus AI**. Flas shqip rrjedhshëm dhe jam i përgatitur t'ju ndihmoj me skenarë videosh, tekst letrar, kodim apo koncepte dizajni!";
+        return "Hello! I am **Xsus AI**. How can I assist you today with your tasks or projects?";
     }
 
-    return `Mora kërkesën tuaj: **"${userPrompt}"**.\n\nSi modul inteligjent i **Xsus Studio**, jam i gatshëm t'ju ndihmoj ta zhvilloni këtë ide në një skenar të plotë, artikull apo kod kërkimor!`;
+    return `I received your prompt: **"${userPrompt}"**.\n\nAs an intelligent module of **Xsus Studio**, I am ready to help you develop this idea further!`;
 }
 
 function appendAiMessage(msg) {
@@ -268,5 +268,8 @@ if (canvas) {
     }
     animateParticles();
 }
+
+// Ekzekutojmë thirrjen fillestare në Anglisht sapo të hapet faqja
+setLanguage('en');
 
 if (window.lucide) lucide.createIcons();
