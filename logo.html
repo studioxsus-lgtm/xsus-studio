@@ -103,7 +103,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             <!-- LEFT CONTROL PANEL (FORM) -->
-            <div class="lg:col-span-5 glass-panel p-6 rounded-3xl border border-cyber-pink/30 shadow-[0_0_40px_rgba(255,0,127,0.15)] space-y-5">
+            <div class="lg:col-span-5 glass-panel p-6 rounded-3xl border border-cyber-pink/30 shadow-[0_0_40px_rgba(255,0,127,0.15)] space-y-4">
                 <div class="flex items-center gap-3 pb-3 border-b border-white/10">
                     <div class="w-9 h-9 rounded-xl bg-cyber-pink/20 border border-cyber-pink/40 flex items-center justify-center text-cyber-pink">
                         <i data-lucide="sliders" class="w-5 h-5"></i>
@@ -151,6 +151,18 @@
                     </select>
                 </div>
 
+                <!-- Platform Dimension Preset Selector -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5" data-i18n="label-platform">Platform / Format Preset</label>
+                    <select id="logo-platform" class="w-full bg-black/80 border border-cyber-blue/40 rounded-xl p-3 text-sm text-cyber-blue font-semibold outline-none focus:border-cyber-blue cursor-pointer">
+                        <option value="standard">Standard Studio View (Landscape)</option>
+                        <option value="appstore">Apple App Store Icon (1024x1024)</option>
+                        <option value="playstore">Google Play Store Icon (512x512)</option>
+                        <option value="social">Social Media Profile (FB / IG / TikTok)</option>
+                        <option value="youtube">YouTube Banner / Wide Preview</option>
+                    </select>
+                </div>
+
                 <!-- Generate & AI Assistant Buttons -->
                 <div class="space-y-2 pt-2">
                     <button id="update-preview-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink text-black font-extrabold text-sm hover:opacity-90 transition shadow-[0_0_20px_rgba(255,0,127,0.3)] flex items-center justify-center gap-2">
@@ -172,19 +184,19 @@
             <!-- RIGHT LIVE PREVIEW & MOCKUPS -->
             <div class="lg:col-span-7 space-y-6">
                 
-                <!-- Main Preview Box -->
-                <div class="glass-panel p-8 md:p-12 rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center justify-center min-h-[360px] relative overflow-hidden" id="canvas-container">
+                <!-- Main Preview Box (Dynamic Aspect Ratio) -->
+                <div class="glass-panel p-6 md:p-10 rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 min-h-[400px]" id="canvas-wrapper">
                     <div id="canvas-bg" class="absolute inset-0 bg-[#0a0a12] transition-all duration-500"></div>
 
                     <!-- LOGO RENDERING AREA -->
-                    <div id="logo-render" class="relative z-10 text-center flex flex-col items-center justify-center p-8 transition-all duration-300 transform">
+                    <div id="logo-render" class="relative z-10 text-center flex flex-col items-center justify-center p-6 transition-all duration-300 transform">
                         <div id="logo-icon-wrap" class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(0,240,255,0.4)]">
                             <i id="render-icon" data-lucide="cpu" class="w-10 h-10 text-black"></i>
                         </div>
-                        <h1 id="render-name" class="text-3xl md:text-5xl font-black tracking-tight text-white mb-2">
+                        <h1 id="render-name" class="text-2xl md:text-4xl font-black tracking-tight text-white mb-1.5">
                             Kallabak.com
                         </h1>
-                        <p id="render-tagline" class="text-xs md:text-sm font-semibold tracking-widest text-cyber-blue uppercase">
+                        <p id="render-tagline" class="text-[11px] md:text-xs font-semibold tracking-widest text-cyber-blue uppercase">
                             News
                         </p>
                     </div>
@@ -200,9 +212,9 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <button id="download-svg-btn" class="px-4 py-2 rounded-xl bg-cyber-blue text-black font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-[0_0_15px_rgba(0,240,255,0.3)]">
-                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                            <span data-i18n="btn-download">Download Logo</span>
+                        <button id="download-svg-btn" class="px-5 py-2.5 rounded-xl bg-cyber-blue text-black font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-[0_0_15px_rgba(0,240,255,0.3)]">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span data-i18n="btn-download">Download Logo (PNG)</span>
                         </button>
                     </div>
                 </div>
@@ -237,10 +249,11 @@
                 "place-tagline": "e.g. Future of AI...",
                 "label-icon": "Symbol / Icon",
                 "label-style": "Visual Style",
+                "label-platform": "Platform / Format Preset",
                 "btn-update": "Update Logo Preview",
                 "btn-ai-ideas": "Get AI Brand Identity Suggestions",
                 "bg-label": "Background:",
-                "btn-download": "Download Logo"
+                "btn-download": "Download Logo (PNG)"
             },
             sq: {
                 "nav-create": "Krijo Logo",
@@ -256,10 +269,11 @@
                 "place-tagline": "p.sh. E ardhmja e AI...",
                 "label-icon": "Simboli / Ikona",
                 "label-style": "Stili Vizual",
+                "label-platform": "Formati / Përmasat e Platformës",
                 "btn-update": "Përditëso Pamjen e Logos",
                 "btn-ai-ideas": "Merr Sugjerime Identiteti nga AI",
                 "bg-label": "Sfondi:",
-                "btn-download": "Shkarko Logon"
+                "btn-download": "Shkarko Logon (PNG)"
             },
             fr: {
                 "nav-create": "Créer un Logo",
@@ -275,10 +289,11 @@
                 "place-tagline": "ex: L'avenir de l'IA...",
                 "label-icon": "Symbole / Icône",
                 "label-style": "Style Visuel",
+                "label-platform": "Format / Plateforme",
                 "btn-update": "Mettre à Jour le Logo",
                 "btn-ai-ideas": "Obtenir des Idées IA de Marque",
                 "bg-label": "Arrière-plan:",
-                "btn-download": "Télécharger le Logo"
+                "btn-download": "Télécharger le Logo (PNG)"
             }
         };
 
@@ -317,16 +332,18 @@
                 .replace(/\n/g, '<br>');
         }
 
-        // 2. LOGO PREVIEW CONTROLLER
+        // 2. LOGO PREVIEW CONTROLLER & PLATFORM PRESETS
         const logoName = document.getElementById('logo-name');
         const logoTagline = document.getElementById('logo-tagline');
         const logoIcon = document.getElementById('logo-icon');
         const logoStyle = document.getElementById('logo-style');
+        const logoPlatform = document.getElementById('logo-platform');
 
         const renderName = document.getElementById('render-name');
         const renderTagline = document.getElementById('render-tagline');
         const renderIcon = document.getElementById('render-icon');
         const logoIconWrap = document.getElementById('logo-icon-wrap');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
         const updateBtn = document.getElementById('update-preview-btn');
 
         function updateLogo() {
@@ -339,27 +356,38 @@
             const styleVal = logoStyle.value;
             if (styleVal === 'cyber') {
                 logoIconWrap.className = "w-20 h-20 rounded-2xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(0,240,255,0.4)]";
-                renderTagline.className = "text-xs md:text-sm font-semibold tracking-widest text-cyber-blue uppercase";
-                renderName.className = "text-3xl md:text-5xl font-black tracking-tight text-white mb-2";
+                renderTagline.className = "text-[11px] md:text-xs font-semibold tracking-widest text-cyber-blue uppercase";
+                renderName.className = "text-2xl md:text-4xl font-black tracking-tight text-white mb-1.5";
             } else if (styleVal === 'minimal') {
                 logoIconWrap.className = "w-20 h-20 rounded-2xl bg-white text-black flex items-center justify-center mb-4 shadow-xl";
-                renderTagline.className = "text-xs md:text-sm font-semibold tracking-widest text-slate-400 uppercase";
-                renderName.className = "text-3xl md:text-5xl font-bold tracking-tight text-white mb-2";
+                renderTagline.className = "text-[11px] md:text-xs font-semibold tracking-widest text-slate-400 uppercase";
+                renderName.className = "text-2xl md:text-4xl font-bold tracking-tight text-white mb-1.5";
             } else if (styleVal === 'luxury') {
                 logoIconWrap.className = "w-20 h-20 rounded-2xl bg-gradient-to-tr from-amber-300 via-amber-500 to-yellow-600 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(245,158,11,0.4)]";
-                renderTagline.className = "text-xs md:text-sm font-semibold tracking-widest text-amber-400 uppercase";
-                renderName.className = "text-3xl md:text-5xl font-serif font-black tracking-wider text-amber-200 mb-2";
+                renderTagline.className = "text-[11px] md:text-xs font-semibold tracking-widest text-amber-400 uppercase";
+                renderName.className = "text-2xl md:text-4xl font-serif font-black tracking-wider text-amber-200 mb-1.5";
             } else if (styleVal === 'sunset') {
                 logoIconWrap.className = "w-20 h-20 rounded-2xl bg-gradient-to-tr from-orange-500 to-pink-600 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(219,39,119,0.4)]";
-                renderTagline.className = "text-xs md:text-sm font-semibold tracking-widest text-pink-400 uppercase";
-                renderName.className = "text-3xl md:text-5xl font-black tracking-tight text-white mb-2";
+                renderTagline.className = "text-[11px] md:text-xs font-semibold tracking-widest text-pink-400 uppercase";
+                renderName.className = "text-2xl md:text-4xl font-black tracking-tight text-white mb-1.5";
+            }
+
+            // Adjust canvas shape based on platform selection
+            const platform = logoPlatform.value;
+            if (platform === 'appstore' || platform === 'playstore' || platform === 'social') {
+                canvasWrapper.className = "glass-panel p-6 md:p-10 rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 aspect-square max-w-md mx-auto";
+            } else if (platform === 'youtube') {
+                canvasWrapper.className = "glass-panel p-6 md:p-10 rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 aspect-[16/9]";
+            } else {
+                canvasWrapper.className = "glass-panel p-6 md:p-10 rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 min-h-[400px]";
             }
 
             lucide.createIcons();
         }
 
         updateBtn?.addEventListener('click', updateLogo);
-        [logoName, logoTagline, logoIcon, logoStyle].forEach(el => el?.addEventListener('input', updateLogo));
+        [logoName, logoTagline, logoIcon, logoStyle, logoPlatform].forEach(el => el?.addEventListener('change', updateLogo));
+        [logoName, logoTagline].forEach(el => el?.addEventListener('input', updateLogo));
 
         let currentBgType = 'dark';
         function setPreviewBg(type) {
@@ -407,25 +435,28 @@
             }
         });
 
-        // 4. REAL LOGO DOWNLOAD (PNG EXPORT)
+        // 4. PLATFORM-BASED PNG EXPORT & DOWNLOAD
         document.getElementById('download-svg-btn')?.addEventListener('click', () => {
             const name = (logoName.value.trim() || 'Xsus-Studio').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            const container = document.getElementById('canvas-container');
+            const platform = logoPlatform.value;
 
-            // Use HTML2Canvas or dynamic SVG/Canvas drawing to export
-            import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js').then(() => {}).catch(()=>{});
+            let width = 1200;
+            let height = 800;
+            if (platform === 'appstore') { width = 1024; height = 1024; }
+            else if (platform === 'playstore') { width = 512; height = 512; }
+            else if (platform === 'social') { width = 800; height = 800; }
+            else if (platform === 'youtube') { width = 1280; height = 720; }
 
-            // Fallback direct canvas render using SVG data URI
             const canvas = document.createElement('canvas');
-            canvas.width = 1200;
-            canvas.height = 800;
+            canvas.width = width;
+            canvas.height = height;
             const ctx = canvas.getContext('2d');
 
-            // Draw background
+            // Background
             if (currentBgType === 'light') {
                 ctx.fillStyle = '#f8fafc';
             } else if (currentBgType === 'neon') {
-                const gradient = ctx.createLinearGradient(0, 0, 1200, 800);
+                const gradient = ctx.createLinearGradient(0, 0, width, height);
                 gradient.addColorStop(0, '#0a0a12');
                 gradient.addColorStop(0.5, '#120a22');
                 gradient.addColorStop(1, '#1f002b');
@@ -433,22 +464,21 @@
             } else {
                 ctx.fillStyle = '#0a0a12';
             }
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, width, height);
 
-            // Draw Brand Name Text
+            // Text scaling
             ctx.fillStyle = currentBgType === 'light' ? '#0f172a' : '#ffffff';
-            ctx.font = '900 72px sans-serif';
+            ctx.font = '900 64px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(logoName.value.trim() || 'Xsus Studio', canvas.width / 2, canvas.height / 2 + 50);
+            ctx.fillText(logoName.value.trim() || 'Xsus Studio', width / 2, height / 2 + 40);
 
-            // Draw Tagline Text
             ctx.fillStyle = '#00f0ff';
-            ctx.font = 'bold 24px sans-serif';
-            ctx.fillText((logoTagline.value.trim() || 'FUTURE OF AI').toUpperCase(), canvas.width / 2, canvas.height / 2 + 110);
+            ctx.font = 'bold 22px sans-serif';
+            ctx.fillText((logoTagline.value.trim() || 'FUTURE OF AI').toUpperCase(), width / 2, height / 2 + 95);
 
-            // Trigger download
+            // Download trigger
             const link = document.createElement('a');
-            link.download = `${name}-logo.png`;
+            link.download = `${name}-${platform}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         });
