@@ -85,38 +85,46 @@ function setLanguage(lang) {
     currentLang = lang;
     ['en', 'fr', 'sq'].forEach(l => {
         const btn = document.getElementById(`lang-${l}`);
-        if (l === lang) {
-            btn.className = "px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40";
-        } else {
-            btn.className = "px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white";
+        if (btn) {
+            if (l === lang) {
+                btn.className = "px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40";
+            } else {
+                btn.className = "px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white";
+            }
         }
     });
 
     const t = translations[lang];
-    document.getElementById('nav-ai-link').innerText = t.navAi;
-    document.getElementById('nav-ecosystem-link').innerText = t.navEcosystem;
-    document.getElementById('nav-apps-link').innerText = t.navApps;
-    document.getElementById('hero-badge').innerText = t.heroBadge;
-    document.getElementById('hero-title').innerHTML = t.heroTitle;
-    document.getElementById('hero-subtitle').innerText = t.heroSub;
-    document.getElementById('btn-explore').innerText = t.btnExplore;
-    document.getElementById('btn-tools').innerText = t.btnTools;
-    document.getElementById('ai-desc').innerText = t.aiDesc;
-    document.getElementById('ai-console-title').innerText = t.aiConsoleTitle;
-    document.getElementById('txt-clear').innerText = t.clearChat;
-    document.getElementById('welcome-msg').innerText = t.welcomeMsg;
-    document.getElementById('userInput').placeholder = t.placeholder;
-    document.getElementById('txt-send').innerText = t.send;
-    document.getElementById('tools-title').innerText = t.toolsTitle;
-    document.getElementById('tools-sub').innerText = t.toolsSub;
-    document.getElementById('card-ai-desc').innerText = t.cardAi;
-    document.getElementById('card-app-desc').innerText = t.cardApp;
-    document.getElementById('card-web-desc').innerText = t.cardWeb;
-    document.getElementById('card-game-desc').innerText = t.cardGame;
-    document.getElementById('card-logo-desc').innerText = t.cardLogo;
-    document.getElementById('card-domain-desc').innerText = t.cardDomain;
-    document.getElementById('app-section-title').innerText = t.appTitle;
-    document.getElementById('app-section-subtitle').innerText = t.appSub;
+
+    // Rregullimi i elementeve kryesore
+    if (document.getElementById('nav-ai-link')) document.getElementById('nav-ai-link').innerText = t.navAi;
+    if (document.getElementById('nav-ecosystem-link')) document.getElementById('nav-ecosystem-link').innerText = t.navEcosystem;
+    if (document.getElementById('nav-apps-link')) document.getElementById('nav-apps-link').innerText = t.navApps;
+    
+    if (document.getElementById('hero-badge')) document.getElementById('hero-badge').innerText = t.heroBadge;
+    if (document.getElementById('hero-title')) document.getElementById('hero-title').innerHTML = t.heroTitle;
+    if (document.getElementById('hero-subtitle')) document.getElementById('hero-subtitle').innerText = t.heroSub;
+    if (document.getElementById('btn-explore')) document.getElementById('btn-explore').innerText = t.btnExplore;
+    if (document.getElementById('btn-tools')) document.getElementById('btn-tools').innerText = t.btnTools;
+    
+    if (document.getElementById('ai-desc')) document.getElementById('ai-desc').innerText = t.aiDesc;
+    if (document.getElementById('ai-console-title')) document.getElementById('ai-console-title').innerText = t.aiConsoleTitle;
+    if (document.getElementById('txt-clear')) document.getElementById('txt-clear').innerText = t.clearChat;
+    if (document.getElementById('welcome-msg')) document.getElementById('welcome-msg').innerText = t.welcomeMsg;
+    if (document.getElementById('userInput')) document.getElementById('userInput').placeholder = t.placeholder;
+    if (document.getElementById('txt-send')) document.getElementById('txt-send').innerText = t.send;
+    
+    if (document.getElementById('tools-title')) document.getElementById('tools-title').innerText = t.toolsTitle;
+    if (document.getElementById('tools-sub')) document.getElementById('tools-sub').innerText = t.toolsSub;
+    if (document.getElementById('card-ai-desc')) document.getElementById('card-ai-desc').innerText = t.cardAi;
+    if (document.getElementById('card-app-desc')) document.getElementById('card-app-desc').innerText = t.cardApp;
+    if (document.getElementById('card-web-desc')) document.getElementById('card-web-desc').innerText = t.cardWeb;
+    if (document.getElementById('card-game-desc')) document.getElementById('card-game-desc').innerText = t.cardGame;
+    if (document.getElementById('card-logo-desc')) document.getElementById('card-logo-desc').innerText = t.cardLogo;
+    if (document.getElementById('card-domain-desc')) document.getElementById('card-domain-desc').innerText = t.cardDomain;
+    
+    if (document.getElementById('app-section-title')) document.getElementById('app-section-title').innerText = t.appTitle;
+    if (document.getElementById('app-section-subtitle')) document.getElementById('app-section-subtitle').innerText = t.appSub;
 }
 
 function scrollToSection(id) {
@@ -125,23 +133,25 @@ function scrollToSection(id) {
 
 function clearChat() {
     const stream = document.getElementById('chatStream');
-    stream.innerHTML = `
-        <div class="flex gap-3 max-w-3xl">
-            <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
-                <i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i>
+    if (stream) {
+        stream.innerHTML = `
+            <div class="flex gap-3 max-w-3xl">
+                <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
+                    <i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl rounded-tl-none border-slate-800 text-sm text-slate-200">
+                    <p id="welcome-msg">${translations[currentLang].welcomeMsg}</p>
+                </div>
             </div>
-            <div class="glass-panel p-4 rounded-2xl rounded-tl-none border-slate-800 text-sm text-slate-200">
-                <p>${translations[currentLang].welcomeMsg}</p>
-            </div>
-        </div>
-    `;
-    lucide.createIcons();
+        `;
+        if (window.lucide) lucide.createIcons();
+    }
 }
 
 function handleChatSubmit(e) {
     e.preventDefault();
     const input = document.getElementById('userInput');
-    const text = input.value.trim();
+    const text = input ? input.value.trim() : '';
     if (!text) return;
 
     const stream = document.getElementById('chatStream');
@@ -209,7 +219,7 @@ function appendAiMessage(msg) {
         </div>
     `;
     stream.appendChild(aiBubble);
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
     stream.scrollTop = stream.scrollHeight;
 }
 
@@ -219,42 +229,44 @@ function escapeHtml(text) {
 
 // Particle Canvas Background
 const canvas = document.getElementById('particleCanvas');
-const ctx = canvas.getContext('2d');
+if (canvas) {
+    const ctx = canvas.getContext('2d');
 
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const particles = Array.from({ length: 45 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 1,
+        speedX: (Math.random() - 0.5) * 0.5,
+        speedY: (Math.random() - 0.5) * 0.5,
+        opacity: Math.random() * 0.5 + 0.2
+    }));
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            p.x += p.speedX;
+            p.y += p.speedY;
+
+            if (p.x < 0) p.x = canvas.width;
+            if (p.x > canvas.width) p.x = 0;
+            if (p.y < 0) p.y = canvas.height;
+            if (p.y > canvas.height) p.y = 0;
+
+            ctx.fillStyle = `rgba(0, 242, 254, ${p.opacity})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
 }
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
 
-const particles = Array.from({ length: 45 }, () => ({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    size: Math.random() * 2 + 1,
-    speedX: (Math.random() - 0.5) * 0.5,
-    speedY: (Math.random() - 0.5) * 0.5,
-    opacity: Math.random() * 0.5 + 0.2
-}));
-
-function animateParticles() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-        p.x += p.speedX;
-        p.y += p.speedY;
-
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-
-        ctx.fillStyle = `rgba(0, 242, 254, ${p.opacity})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-    requestAnimationFrame(animateParticles);
-}
-animateParticles();
-
-lucide.createIcons();
+if (window.lucide) lucide.createIcons();
