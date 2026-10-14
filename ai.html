@@ -234,7 +234,17 @@
     <!-- SCRIPT INTEGRESUES -->
     <script type="module">
         import { readDocumentFile } from './services/file-service.js';
-        import { smartRouter } from './services/router.js';
+
+        let smartRouterFunc = null;
+
+        try {
+            const module = await import('./services/router.js');
+            if (module && module.smartRouter) {
+                smartRouterFunc = module.smartRouter;
+            }
+        } catch (err) {
+            console.warn("SmartRouter nuk u ngarkua:", err);
+        }
 
         function refreshIcons() {
             if (window.lucide) {
@@ -441,6 +451,7 @@
         }
 
         function showWelcomeMessage() {
+            // E lëmë dritaren e bisedës të pastër në fillim, pa mesazh automatik
             aiOutputBox.innerHTML = '';
         }
 
@@ -607,9 +618,9 @@
 
             let reply = "";
 
-            if (!attachedFileContent && !attachedImageBase64 && smartRouter) {
+            if (!attachedFileContent && !attachedImageBase64 && smartRouterFunc) {
                 try {
-                    const routerReply = await smartRouter(text);
+                    const routerReply = await smartRouterFunc(text);
                     if (routerReply) {
                         reply = routerReply;
                         conversationHistory.push({ role: 'user', content: text });
@@ -680,7 +691,6 @@
         }
 
         loadChatFromLocalStorage();
-        refreshIcons();
     </script>
 </body>
 </html>
