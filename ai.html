@@ -141,8 +141,10 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT FOR DYNAMIC I18N AND CLEAN AI INTEGRATION -->
-    <script>
+    <!-- SCRIPT FOR DYNAMIC I18N AND CLEAN AI INTEGRATION WITH SMART ROUTER -->
+    <script type="module">
+        import { smartRouter } from './services/router.js';
+
         lucide.createIcons();
 
         // 1. MULTI-LANGUAGE DICTIONARY
@@ -306,8 +308,18 @@
             aiOutputBox.appendChild(loadingMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Fetch AI Response
-            const reply = await fetchAIResponse(text);
+            // 1. KONTROLLI ME SMART ROUTER (Custom Knowledge & Service Connectors)
+            const routerReply = await smartRouter(text);
+
+            let reply = "";
+            if (routerReply) {
+                reply = routerReply;
+                conversationHistory.push({ role: 'user', content: text });
+                conversationHistory.push({ role: 'assistant', content: reply });
+            } else {
+                // 2. Përdor motorin neural Pollinations për pyetje të përgjithshme
+                reply = await fetchAIResponse(text);
+            }
 
             // Remove loading
             document.getElementById('loading-bubble')?.remove();
