@@ -199,7 +199,7 @@ function clearChat() {
 
 // Lidhja kryesore asinkrone me Router-in lokal
 async function handleChatSubmit(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     const input = document.getElementById('userInput');
     const text = input ? input.value.trim() : '';
     if (!text) return;
@@ -326,6 +326,30 @@ if (canvas) {
     }
     animateParticles();
 }
+
+// Mbivendosja automatike e eventeve për chat-in
+document.addEventListener('DOMContentLoaded', () => {
+    const chatForm = document.querySelector('form');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('txt-send')?.parentElement;
+
+    if (chatForm) {
+        chatForm.onsubmit = handleChatSubmit;
+    }
+
+    if (sendBtn) {
+        sendBtn.onclick = handleChatSubmit;
+    }
+
+    if (userInput) {
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleChatSubmit(e);
+            }
+        });
+    }
+});
 
 // Ekzekutojmë thirrjen fillestare
 setLanguage('en');
