@@ -5,6 +5,7 @@ import { checkNews } from './news-service.js';
 import { checkWeather } from './weather-service.js';
 import { checkFinance } from './finance-service.js';
 import { checkTranslation } from './translation-service.js';
+import { checkConverter } from './converter-service.js';
 
 loadCustomKnowledge();
 
@@ -16,23 +17,27 @@ export async function smartRouter(userQuery) {
     const customAnswer = checkCustomKnowledge(query);
     if (customAnswer) return customAnswer;
 
-    // 2. Përkthyesi i Avancuar
+    // 2. Konvertuesi i Njësive & Valutave
+    const converterAnswer = await checkConverter(query);
+    if (converterAnswer) return converterAnswer;
+
+    // 3. Përkthyesi
     const translationAnswer = await checkTranslation(query);
     if (translationAnswer) return translationAnswer;
 
-    // 3. Financë (Kripto & Aksione)
+    // 4. Financë
     const financeAnswer = await checkFinance(query);
     if (financeAnswer) return financeAnswer;
 
-    // 4. Moti live
+    // 5. Moti live
     const weatherAnswer = await checkWeather(query);
     if (weatherAnswer) return weatherAnswer;
 
-    // 5. Lajmet live
+    // 6. Lajmet live
     const newsAnswer = await checkNews(query);
     if (newsAnswer) return newsAnswer;
 
-    // 6. Wikipedia
+    // 7. Wikipedia
     const wikiAnswer = await checkWikipedia(query);
     if (wikiAnswer) return wikiAnswer;
 
