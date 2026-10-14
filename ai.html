@@ -265,7 +265,7 @@
                 "input-placeholder": "Ask Xsus AI or create image (/image)...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
-                "sys-prompt": "You are Xsus AI, an advanced AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input."
+                "sys-prompt": "You are Xsus AI, an advanced vision-capable AI created by Xsus Studio. You speak fluently in Albanian, English, and French. When the user sends an image, carefully analyze its visual elements and describe or answer their question about it in detail. ALWAYS reply in the SAME language as the user's input."
             },
             sq: {
                 "nav-start": "Nis AI",
@@ -279,7 +279,7 @@
                 "input-placeholder": "Pyet Xsus AI apo krijo imazh (/image)...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
-                "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij."
+                "sys-prompt": "Ti je Xsus AI, një asistent i avancuar i krijuar nga Xsus Studio që kupton edhe imazhet. Kur përdoruesi dërgon një foto, analizoje me kujdes pamjen e saj, ngjyrat, detajet dhe përgjigju saktë pyetjes së bërë. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi."
             },
             fr: {
                 "nav-start": "Lancer IA",
@@ -293,7 +293,7 @@
                 "input-placeholder": "Posez une question ou créez une image (/image)...",
                 "btn-send": "Envoyer",
                 "thinking": "En réflexion...",
-                "sys-prompt": "Vous êtes Xsus AI, créé par Xsus Studio. Répondez TOUJOURS dans la même langue que le message de l'utilisateur."
+                "sys-prompt": "Vous êtes Xsus AI, créé par Xsus Studio. Analysez visuellement les images envoyées par l'utilisateur et répondez TOUJOURS dans la même langue."
             }
         };
 
@@ -545,22 +545,32 @@
         }
 
         async function fetchAIResponse(userText) {
-            let promptToSend = userText;
+            let messagesPayload = [...conversationHistory];
 
             if (attachedFileContent) {
-                promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA E PËRDORUESIT]:\n${userText}`;
+                messagesPayload.push({
+                    role: 'user',
+                    content: `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA]: ${userText}`
+                });
             } else if (attachedImageBase64) {
-                promptToSend = `[Përdoruesi ka ngarkuar një foto: ${attachedFileName}]\nKërkesa e përdoruesit për këtë foto është: "${userText}". Si asistent inteligjent, ndihmoje përdoruesin duke i ofruar një përshkrim ose analizë të detajuar të kësaj kërkeze vizuale.`;
+                // Formatojmë payload-in që modeli OpenAI / Vision të lexojë imazhin e bashkangjitur si URL/Base64
+                messagesPayload.push({
+                    role: 'user',
+                    content: [
+                        { type: "text", text: userText || "Çfarë shihni në këtë imazh? Ma përshkruaj." },
+                        { type: "image_url", image_url: { url: attachedImageBase64 } }
+                    ]
+                });
+            } else {
+                messagesPayload.push({ role: 'user', content: userText });
             }
-
-            conversationHistory.push({ role: 'user', content: promptToSend });
 
             try {
                 const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        messages: conversationHistory,
+                        messages: messagesPayload,
                         model: 'openai',
                         search: true,
                         seed: Math.floor(Math.random() * 1000)
@@ -570,6 +580,9 @@
                 if (response.ok) {
                     let reply = await response.text();
                     reply = cleanResponseText(reply);
+                    
+                    // Ruajmë historikun në mënyrë të pastër pa objektet e rënda të imazhit
+                    conversationHistory.push({ role: 'user', content: userText + (attachedFileName ? ` [Foto: ${attachedFileName}]` : "") });
                     conversationHistory.push({ role: 'assistant', content: reply });
 
                     if (removeFileBtn) removeFileBtn.click();
