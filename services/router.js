@@ -2,7 +2,8 @@
 import { loadCustomKnowledge, checkCustomKnowledge } from './custom-knowledge-service.js';
 import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
-import { checkSports } from './sports-service.js'; // 1. Shto importin këtu
+import { checkSports } from './sports-service.js';
+import { checkNotes } from './notes-service.js';
 import { checkWeather } from './weather-service.js';
 import { checkFinance } from './finance-service.js';
 import { checkTranslation } from './translation-service.js';
@@ -43,11 +44,15 @@ export async function smartRouter(userQuery) {
     const newsAnswer = await checkNews(query);
     if (newsAnswer) return newsAnswer;
 
-    // 8. Lajmet Sportive Live (2. Shto thirrjen e shërbimit këtu)
+    // 8. Lajmet Sportive Live
     const sportsAnswer = await checkSports(query);
     if (sportsAnswer) return sportsAnswer;
 
-    // 9. Wikipedia
+    // 9. Shënimet & Përkujtuesit (Lokal)
+    const notesAnswer = await checkNotes(query);
+    if (notesAnswer) return notesAnswer;
+
+    // 10. Wikipedia
     const wikiAnswer = await checkWikipedia(query);
     if (wikiAnswer) return wikiAnswer;
 
