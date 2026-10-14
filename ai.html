@@ -38,6 +38,37 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .xsus-brand-logo {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 12px;
+            background: #0a0a12;
+            border: 1.5px solid #00f0ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+            line-height: 0.9;
+            user-select: none;
+        }
+        .xsus-brand-logo .logo-x {
+            font-size: 17px;
+            font-weight: 900;
+            color: #00f0ff;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
+            font-family: sans-serif;
+        }
+        .xsus-brand-logo .logo-sus {
+            font-size: 9px;
+            font-weight: 700;
+            color: #7000ff;
+            text-transform: lowercase;
+            letter-spacing: 0.5px;
+            font-family: sans-serif;
+            margin-top: 1px;
+        }
     </style>
 </head>
 <body class="bg-[#06060c] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-cyber-blue selection:text-black">
@@ -45,9 +76,11 @@
     <!-- NAVIGATION BAR -->
     <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-4 md:px-6 py-4">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-2">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-lg shadow-[0_0_15px_rgba(0,240,255,0.4)]">
-                    X
+            <a href="index.html" class="flex items-center gap-2.5">
+                <!-- LOGOJA E RE XSUS NË KRYE -->
+                <div class="xsus-brand-logo">
+                    <span class="logo-x">X</span>
+                    <span class="logo-sus">sus</span>
                 </div>
                 <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">AI</span></span>
             </a>
@@ -116,9 +149,10 @@
             <!-- Chat Messages Container -->
             <div id="ai-output-box" class="flex-1 bg-black/60 border border-white/10 rounded-2xl p-4 overflow-y-auto space-y-4 mb-4 text-sm">
                 <div class="flex items-start gap-3">
-                    <!-- LOGOJA E XSUS AI -->
-                    <div class="w-9 h-9 rounded-xl bg-[#0a0a12] border border-cyber-blue flex items-center justify-center font-extrabold text-cyber-blue text-sm shrink-0 shadow-[0_0_12px_rgba(0,240,255,0.4)]">
-                        X
+                    <!-- LOGOJA E RE XSUS (X LART, SUS POSHTË) -->
+                    <div class="xsus-brand-logo shrink-0">
+                        <span class="logo-x">X</span>
+                        <span class="logo-sus">sus</span>
                     </div>
                     <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-slate-200 max-w-[85%] leading-relaxed">
                         <p id="welcome-msg-text" data-i18n="ai-welcome">Hello! I am connected to live AI models. Ask me anything, request information, or chat in Albanian, English, or French!</p>
@@ -129,8 +163,9 @@
             <!-- Input Form Bar -->
             <div class="flex items-center gap-2">
                 <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI anything..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
-                <button id="ai-send-btn" type="button" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
-                    <i data-lucide="send" class="w-4 h-4"></i> <span data-i18n="btn-send">Send</span>
+                <button id="ai-send-btn" type="button" onclick="window.handleAIResponse()" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span data-i18n="btn-send">Send</span>
                 </button>
             </div>
 
@@ -142,14 +177,14 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT FOR DYNAMIC I18N AND CLEAN AI INTEGRATION WITH SMART ROUTER -->
+    <!-- SCRIPT FOR DYNAMIC I18N AND CLEAN AI INTEGRATION -->
     <script type="module">
         import { smartRouter } from './services/router.js';
 
-        // Inicializojmë ikonat Lucide
-        if (window.lucide) {
-            lucide.createIcons();
-        }
+        // Ripërtëritja e ikonave Lucide
+        setTimeout(() => {
+            if (window.lucide) lucide.createIcons();
+        }, 100);
 
         // 1. MULTI-LANGUAGE DICTIONARY
         const i18nData = {
@@ -217,7 +252,6 @@
 
         langSelect?.addEventListener('change', (e) => setLanguage(e.target.value));
 
-        // Zbulojmë gjuhën e shfletuesit
         const userBrowserLang = navigator.language.slice(0, 2);
         if (['sq', 'fr', 'en'].includes(userBrowserLang)) {
             setLanguage(userBrowserLang);
@@ -225,14 +259,14 @@
             setLanguage('en');
         }
 
-        // SHABLONI I LOGOS TË XSUS AI
+        // KODI HTML I LOGOS TEK MESAZHET (X LART, SUS POSHTË)
         const xsusAiLogoHTML = `
-            <div class="w-9 h-9 rounded-xl bg-[#0a0a12] border border-cyber-blue flex items-center justify-center font-extrabold text-cyber-blue text-sm shrink-0 shadow-[0_0_12px_rgba(0,240,255,0.4)]">
-                X
+            <div class="xsus-brand-logo shrink-0">
+                <span class="logo-x">X</span>
+                <span class="logo-sus">sus</span>
             </div>
         `;
 
-        // 2. AI ENGINE LOGIC
         let conversationHistory = [
             {
                 role: 'system',
@@ -241,7 +275,6 @@
         ];
 
         const aiInput = document.getElementById('ai-input');
-        const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
         const clearChatBtn = document.getElementById('clear-chat');
 
@@ -284,11 +317,11 @@
             }
         }
 
-        async function handleAIResponse() {
+        window.handleAIResponse = async function() {
             const text = aiInput.value.trim();
             if(!text) return;
 
-            // Shfaqim Mesazhin e Përdoruesit
+            // Display User Message
             const userMsg = document.createElement('div');
             userMsg.className = "flex items-start gap-3 justify-end";
             userMsg.innerHTML = `
@@ -303,7 +336,7 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Shfaqim Flluskën e Ngarkimit me logon Xsus AI
+            // Loading Bubble with Xsus Logo
             const loadingText = i18nData[currentLang]["thinking"] || i18nData["en"]["thinking"];
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
@@ -317,7 +350,6 @@
             aiOutputBox.appendChild(loadingMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // 1. KONTROLLI ME SMART ROUTER
             let reply = "";
             try {
                 const routerReply = await smartRouter(text);
@@ -327,18 +359,16 @@
                     conversationHistory.push({ role: 'assistant', content: reply });
                 }
             } catch (e) {
-                console.warn("SmartRouter opcional:", e);
+                console.warn("SmartRouter Check:", e);
             }
 
             if (!reply) {
-                // 2. Përdorim motorin e përgjithshëm AI
                 reply = await fetchAIResponse(text);
             }
 
-            // Heqim flluskën e ngarkimit
             document.getElementById('loading-bubble')?.remove();
 
-            // Shfaqim Përgjigjen e Plotë të AI me logon Xsus AI
+            // Display AI Response
             const aiMsg = document.createElement('div');
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
@@ -349,39 +379,30 @@
             `;
             aiOutputBox.appendChild(aiMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
-        }
+        };
 
-        // Lidhja e ngjarjeve për klikim dhe tastin Enter
-        if (aiSendBtn) {
-            aiSendBtn.addEventListener('click', handleAIResponse);
-        }
+        aiInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') window.handleAIResponse();
+        });
 
-        if (aiInput) {
-            aiInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') handleAIResponse();
-            });
-        }
+        clearChatBtn?.addEventListener('click', () => {
+            conversationHistory = [
+                {
+                    role: 'system',
+                    content: 'You are Xsus AI, an advanced AI assistant created by Xsus Studio. Never call yourself OpenAI, ChatGPT, or LLM. Always state you are Xsus AI created by Xsus Studio. You speak fluently in Albanian, English, and French.'
+                }
+            ];
+            const welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
 
-        if (clearChatBtn) {
-            clearChatBtn.addEventListener('click', () => {
-                conversationHistory = [
-                    {
-                        role: 'system',
-                        content: 'You are Xsus AI, an advanced AI assistant created by Xsus Studio. Never call yourself OpenAI, ChatGPT, or LLM. Always state you are Xsus AI created by Xsus Studio. You speak fluently in Albanian, English, and French.'
-                    }
-                ];
-                const welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
-
-                aiOutputBox.innerHTML = `
-                    <div class="flex items-start gap-3">
-                        ${xsusAiLogoHTML}
-                        <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed">
-                            <p id="welcome-msg-text" data-i18n="ai-welcome">${welcomeText}</p>
-                        </div>
+            aiOutputBox.innerHTML = `
+                <div class="flex items-start gap-3">
+                    ${xsusAiLogoHTML}
+                    <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed">
+                        <p id="welcome-msg-text" data-i18n="ai-welcome">${welcomeText}</p>
                     </div>
-                `;
-            });
-        }
+                </div>
+            `;
+        });
     </script>
 </body>
 </html>
