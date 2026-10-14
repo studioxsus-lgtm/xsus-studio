@@ -161,7 +161,7 @@
 
     <!-- UNIVERSAL AI CHAT CONSOLE -->
     <section id="ai-console" class="py-6 px-4 md:px-6 max-w-4xl mx-auto w-full mb-20">
-        <div class="glass-panel p-4 md:p-6 rounded-3xl border border-cyber-purple/30 shadow-[0_0_50px_rgba(112,0,255,0.15)] flex flex-col h-[580px]">
+        <div class="glass-panel p-4 md:p-6 rounded-3xl border border-cyber-purple/30 shadow-[0_0_50px_rgba(112,0,255,0.15)] flex flex-col h-[580px] relative">
             
             <!-- Console Header -->
             <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
@@ -178,11 +178,11 @@
             <div id="ai-output-box" class="flex-1 bg-black/60 border border-white/10 rounded-2xl p-4 overflow-y-auto space-y-4 mb-4 text-sm">
             </div>
 
-            <!-- Pre-view element i skedarit të ngarkuar -->
+            <!-- Pre-view element i skedarit ose fotos së ngarkuar -->
             <div id="file-badge-container" class="hidden mb-2 flex items-center gap-2">
                 <div class="glass-panel px-3 py-1.5 rounded-xl border border-cyber-blue/40 bg-cyber-blue/10 text-xs text-cyber-blue flex items-center gap-2">
-                    <i data-lucide="file-text" class="w-4 h-4"></i>
-                    <span id="file-name-label">document.pdf</span>
+                    <i data-lucide="paperclip" class="w-4 h-4"></i>
+                    <span id="file-name-label">attachment</span>
                     <button id="remove-file-btn" type="button" class="hover:text-red-400 ml-1">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </button>
@@ -190,10 +190,29 @@
             </div>
 
             <!-- Input Form Bar -->
-            <div class="flex items-center gap-2">
-                <input type="file" id="file-input" class="hidden" accept=".pdf,.txt,.md,.js,.json,.html,.css,.py">
-                <button id="upload-btn" type="button" title="Ngarko PDF ose Dokument" class="p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-slate-300 hover:text-cyber-blue hover:border-cyber-blue transition shrink-0 cursor-pointer">
-                    <i data-lucide="paperclip" class="w-4 h-4"></i>
+            <div class="flex items-center gap-2 relative">
+                
+                <!-- MENUJA E PLUSIT (Dropdown) -->
+                <div id="plus-menu" class="absolute bottom-16 left-0 glass-panel border border-cyber-blue/30 rounded-2xl p-2 hidden flex-col gap-1.5 shadow-2xl z-30 w-48 bg-[#0a0a12]/95 backdrop-blur-xl">
+                    <button type="button" id="menu-doc-btn" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-cyber-blue/20 hover:text-cyber-blue transition text-left cursor-pointer">
+                        <i data-lucide="file-text" class="w-4 h-4 text-cyber-blue"></i> PDF / Dokument
+                    </button>
+                    <button type="button" id="menu-img-btn" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-cyber-blue/20 hover:text-cyber-blue transition text-left cursor-pointer">
+                        <i data-lucide="image" class="w-4 h-4 text-cyber-purple"></i> Foto / Imazh
+                    </button>
+                    <button type="button" id="menu-cam-btn" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-cyber-blue/20 hover:text-cyber-blue transition text-left cursor-pointer">
+                        <i data-lucide="camera" class="w-4 h-4 text-cyber-pink"></i> Përdor Kamerën
+                    </button>
+                </div>
+
+                <!-- Inputet e fshehura për secilin funksion -->
+                <input type="file" id="doc-input" class="hidden" accept=".pdf,.txt,.md,.js,.json,.html,.css,.py">
+                <input type="file" id="img-input" class="hidden" accept="image/*">
+                <input type="file" id="cam-input" class="hidden" accept="image/*" capture="environment">
+
+                <!-- Butoni Plus (+) -->
+                <button id="plus-btn" type="button" title="Shto dokument, foto ose kap me kamerë" class="p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-slate-300 hover:text-cyber-blue hover:border-cyber-blue transition shrink-0 cursor-pointer flex items-center justify-center">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
 
                 <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI or create image (/image)..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
@@ -242,7 +261,7 @@
                 "hero-desc": "Your live AI companion connected directly to advanced neural models for accurate answers in any language.",
                 "chat-header": "Xsus Live Neural Assistant",
                 "clear-btn": "Clear Chat",
-                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, create images with '/image', or upload a PDF document!",
+                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, create images with '/image', or attach documents, photos & camera captures via '+'!",
                 "input-placeholder": "Ask Xsus AI or create image (/image)...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
@@ -256,7 +275,7 @@
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
                 "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
                 "clear-btn": "Pastro Bisedën",
-                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash, krijo imazhe me '/image' ose ngarko një dokument PDF!",
+                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash, krijo imazhe me '/image' ose shto dokumente, foto dhe kamerë përmes '+'!",
                 "input-placeholder": "Pyet Xsus AI apo krijo imazh (/image)...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
@@ -270,7 +289,7 @@
                 "hero-desc": "Votre compagnon IA en direct connecté aux modèles neuronaux avancés pour des réponses précises.",
                 "chat-header": "Assistant en Direct Xsus",
                 "clear-btn": "Effacer",
-                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez des questions, créez des images avec '/image' ou analysez un document !",
+                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez des questions, créez des images ou ajoutez des documents/photos via '+' !",
                 "input-placeholder": "Posez une question ou créez une image (/image)...",
                 "btn-send": "Envoyer",
                 "thinking": "En réflexion...",
@@ -299,18 +318,122 @@
         const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
         const clearChatBtn = document.getElementById('clear-chat');
-        const fileInput = document.getElementById('file-input');
-        const uploadBtn = document.getElementById('upload-btn');
+
+        const plusBtn = document.getElementById('plus-btn');
+        const plusMenu = document.getElementById('plus-menu');
+        const menuDocBtn = document.getElementById('menu-doc-btn');
+        const menuImgBtn = document.getElementById('menu-img-btn');
+        const menuCamBtn = document.getElementById('menu-cam-btn');
+
+        const docInput = document.getElementById('doc-input');
+        const imgInput = document.getElementById('img-input');
+        const camInput = document.getElementById('cam-input');
+
         const fileBadgeContainer = document.getElementById('file-badge-container');
         const fileNameLabel = document.getElementById('file-name-label');
         const removeFileBtn = document.getElementById('remove-file-btn');
+
         let attachedFileContent = null;
         let attachedFileName = null;
+        let attachedImageBase64 = null;
 
-        // --- 1. LOCAL STORAGE (HISTORIKU I BISEDËS) ---
+        if (plusBtn) {
+            plusBtn.onclick = (e) => {
+                e.stopPropagation();
+                plusMenu.classList.toggle('hidden');
+                plusMenu.classList.toggle('flex');
+            };
+        }
+
+        document.addEventListener('click', () => {
+            if (plusMenu) {
+                plusMenu.classList.add('hidden');
+                plusMenu.classList.remove('flex');
+            }
+        });
+
+        if (menuDocBtn) {
+            menuDocBtn.onclick = () => {
+                plusMenu.classList.add('hidden');
+                docInput.click();
+            };
+        }
+        if (docInput) {
+            docInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    fileNameLabel.textContent = "Duke lexuar " + file.name + "...";
+                    fileBadgeContainer.classList.remove('hidden');
+                    refreshIcons();
+
+                    const text = await readDocumentFile(file);
+                    attachedFileContent = text;
+                    attachedFileName = file.name;
+                    attachedImageBase64 = null;
+                    fileNameLabel.textContent = "📄 " + file.name;
+                } catch (err) {
+                    alert(err);
+                    fileBadgeContainer.classList.add('hidden');
+                }
+            };
+        }
+
+        if (menuImgBtn) {
+            menuImgBtn.onclick = () => {
+                plusMenu.classList.add('hidden');
+                imgInput.click();
+            };
+        }
+        if (imgInput) {
+            imgInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                processImageFile(file);
+            };
+        }
+
+        if (menuCamBtn) {
+            menuCamBtn.onclick = () => {
+                plusMenu.classList.add('hidden');
+                camInput.click();
+            };
+        }
+        if (camInput) {
+            camInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                processImageFile(file);
+            };
+        }
+
+        function processImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(uploadEvent) {
+                attachedImageBase64 = uploadEvent.target.result;
+                attachedFileName = file.name || "foto_kamerë.jpg";
+                attachedFileContent = null;
+                fileNameLabel.textContent = "📷 " + attachedFileName;
+                fileBadgeContainer.classList.remove('hidden');
+                refreshIcons();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        if (removeFileBtn) {
+            removeFileBtn.onclick = () => {
+                docInput.value = '';
+                imgInput.value = '';
+                camInput.value = '';
+                attachedFileContent = null;
+                attachedFileName = null;
+                attachedImageBase64 = null;
+                fileBadgeContainer.classList.add('hidden');
+            };
+        }
+
         function saveChatToLocalStorage() {
-            const chatHTML = aiOutputBox.innerHTML;
-            localStorage.setItem('xsus_chat_history', chatHTML);
+            localStorage.setItem('xsus_chat_history', aiOutputBox.innerHTML);
             localStorage.setItem('xsus_history_array', JSON.stringify(conversationHistory));
         }
 
@@ -342,7 +465,6 @@
             `;
         }
 
-        // --- 2. AUDIO & COPY BUTTONS (LECITJA ME ZË DHE KOPJIMI) ---
         function attachInteractiveButtons() {
             document.querySelectorAll('.copy-btn').forEach(btn => {
                 btn.onclick = function() {
@@ -363,7 +485,6 @@
                     const parent = this.closest('.msg-bubble');
                     const text = parent ? parent.innerText : '';
                     if (!text) return;
-
                     window.speechSynthesis.cancel();
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.lang = currentLang === 'sq' ? 'sq-AL' : (currentLang === 'fr' ? 'fr-FR' : 'en-US');
@@ -408,42 +529,6 @@
             setLanguage('en');
         }
 
-        if (uploadBtn) {
-            uploadBtn.onclick = () => fileInput.click();
-        }
-
-        if (fileInput) {
-            fileInput.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                try {
-                    fileNameLabel.textContent = "Duke lexuar " + file.name + "...";
-                    fileBadgeContainer.classList.remove('hidden');
-                    refreshIcons();
-
-                    const text = await readDocumentFile(file);
-                    attachedFileContent = text;
-                    attachedFileName = file.name;
-                    fileNameLabel.textContent = file.name;
-                } catch (err) {
-                    alert(err);
-                    fileBadgeContainer.classList.add('hidden');
-                    attachedFileContent = null;
-                    attachedFileName = null;
-                }
-            };
-        }
-
-        if (removeFileBtn) {
-            removeFileBtn.onclick = () => {
-                fileInput.value = '';
-                attachedFileContent = null;
-                attachedFileName = null;
-                fileBadgeContainer.classList.add('hidden');
-            };
-        }
-
         function cleanResponseText(rawText) {
             return rawText
                 .replace(/\\n/g, '\n')
@@ -464,6 +549,8 @@
 
             if (attachedFileContent) {
                 promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA E PËRDORUESIT]:\n${userText}`;
+            } else if (attachedImageBase64) {
+                promptToSend = `[FOTO E BASHKËNGJITUR: ${attachedFileName}]\n![Foto](${attachedImageBase64})\n\n[PYETJA E PËRDORUESIT]:\n${userText}`;
             }
 
             conversationHistory.push({ role: 'user', content: promptToSend });
@@ -486,25 +573,23 @@
                     conversationHistory.push({ role: 'assistant', content: reply });
 
                     if (removeFileBtn) removeFileBtn.click();
-
                     return reply;
                 } else {
-                    return currentLang === 'sq' ? "Ndodhi një shkëputje e përkohshme me serverin." :
-                           currentLang === 'fr' ? "Une déconnexion temporaire est survenue." :
-                           "A temporary disconnection occurred.";
+                    return currentLang === 'sq' ? "Ndodhi një shkëputje e përkohshme me serverin." : "A temporary error occurred.";
                 }
             } catch (err) {
-                return currentLang === 'sq' ? "Gabim në lidhje me rrjetin." :
-                       currentLang === 'fr' ? "Erreur de connexion réseau." :
-                       "Network connection error.";
+                return currentLang === 'sq' ? "Gabim në lidhje me rrjetin." : "Network connection error.";
             }
         }
 
         async function handleAIResponse() {
-            const text = aiInput.value.trim() || (attachedFileContent ? "Lutem bëj një përmbledhje të këtij dokumenti." : "");
-            if (!text && !attachedFileContent) return;
+            const text = aiInput.value.trim() || (attachedFileContent ? "Përmblidh këtë dokument." : (attachedImageBase64 ? "Çfarë shihni në këtë foto?" : ""));
+            if (!text && !attachedFileContent && !attachedImageBase64) return;
 
-            const userDisplayMsg = attachedFileName ? `📄 **[${attachedFileName}]**\n${text}` : text;
+            let userDisplayMsg = text;
+            if (attachedFileName) {
+                userDisplayMsg = attachedImageBase64 ? `📷 **[${attachedFileName}]**\n<img src="${attachedImageBase64}" class="w-48 rounded-xl my-2"/>\n${text}` : `📄 **[${attachedFileName}]**\n${text}`;
+            }
 
             const userMsg = document.createElement('div');
             userMsg.className = "flex items-start gap-3 justify-end";
@@ -535,7 +620,7 @@
 
             let reply = "";
 
-            if (!attachedFileContent && smartRouterFunc) {
+            if (!attachedFileContent && !attachedImageBase64 && smartRouterFunc) {
                 try {
                     const routerReply = await smartRouterFunc(text);
                     if (routerReply) {
@@ -561,11 +646,11 @@
                 <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed markdown-body msg-bubble relative group">
                     <div>${renderContent(reply)}</div>
                     <div class="flex items-center gap-2 mt-3 pt-2 border-t border-white/10 text-xs text-slate-400">
-                        <button type="button" class="copy-btn hover:text-cyber-blue transition flex items-center gap-1">
+                        <button type="button" class="copy-btn hover:text-cyber-blue transition flex items-center gap-1 cursor-pointer">
                             <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
                         </button>
                         <span class="text-white/20">•</span>
-                        <button type="button" class="speak-btn hover:text-cyber-blue transition flex items-center gap-1">
+                        <button type="button" class="speak-btn hover:text-cyber-blue transition flex items-center gap-1 cursor-pointer">
                             <i data-lucide="volume-2" class="w-3.5 h-3.5"></i> Listen
                         </button>
                     </div>
@@ -607,7 +692,6 @@
             };
         }
 
-        // Ngarkojmë historikun gjatë hyrjes në faqen
         loadChatFromLocalStorage();
     </script>
 </body>
