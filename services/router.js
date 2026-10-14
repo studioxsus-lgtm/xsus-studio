@@ -4,7 +4,7 @@ import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
 import { checkWeather } from './weather-service.js';
 import { checkFinance } from './finance-service.js';
-import { checkCodeRequest } from './code-service.js';
+// Hiq përkohësisht: import { checkCodeRequest } from './code-service.js';
 
 loadCustomKnowledge();
 
@@ -15,8 +15,9 @@ export async function smartRouter(userQuery) {
     const customAnswer = checkCustomKnowledge(query);
     if (customAnswer) return customAnswer;
 
-    const codeAnswer = checkCodeRequest(query);
-    if (codeAnswer) return codeAnswer;
+    // Hiq përkohësisht:
+    // const codeAnswer = checkCodeRequest(query);
+    // if (codeAnswer) return codeAnswer;
 
     const financeAnswer = await checkFinance(query);
     if (financeAnswer) return financeAnswer;
