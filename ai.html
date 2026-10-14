@@ -261,7 +261,6 @@
                 "hero-desc": "Your live AI companion connected directly to advanced neural models for accurate answers in any language.",
                 "chat-header": "Xsus Live Neural Assistant",
                 "clear-btn": "Clear Chat",
-                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, create images with '/image', or attach documents & photos via '+'!",
                 "input-placeholder": "Ask Xsus AI or create image (/image)...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
@@ -275,7 +274,6 @@
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
                 "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
                 "clear-btn": "Pastro Bisedën",
-                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash, krijo imazhe me '/image' ose shto dokumente dhe foto përmes '+'!",
                 "input-placeholder": "Pyet Xsus AI apo krijo imazh (/image)...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
@@ -289,7 +287,6 @@
                 "hero-desc": "Votre compagnon IA en direct connecté aux modèles neuronaux avancés pour des réponses précises.",
                 "chat-header": "Assistant en Direct Xsus",
                 "clear-btn": "Effacer",
-                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez des questions, créez des images ou ajoutez des documents via '+' !",
                 "input-placeholder": "Posez une question ou créez une image (/image)...",
                 "btn-send": "Envoyer",
                 "thinking": "En réflexion...",
@@ -454,15 +451,8 @@
         }
 
         function showWelcomeMessage() {
-            const welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
-            aiOutputBox.innerHTML = `
-                <div class="flex items-start gap-3">
-                    ${xsusAiLogoHTML}
-                    <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-slate-200 max-w-[85%] leading-relaxed markdown-body">
-                        <p id="welcome-msg-text" data-i18n="ai-welcome">${welcomeText}</p>
-                    </div>
-                </div>
-            `;
+            // E lëmë dritaren e bisedës të pastër në fillim, pa mesazh automatik
+            aiOutputBox.innerHTML = '';
         }
 
         function attachInteractiveButtons() {
