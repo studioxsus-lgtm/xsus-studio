@@ -4,6 +4,7 @@ import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
 import { checkSports } from './sports-service.js';
 import { checkNotes } from './notes-service.js';
+import { checkContentIdeas } from './ideas-service.js'; // Shtohet importi
 import { checkWeather } from './weather-service.js';
 import { checkFinance } from './finance-service.js';
 import { checkTranslation } from './translation-service.js';
@@ -52,7 +53,11 @@ export async function smartRouter(userQuery) {
     const notesAnswer = await checkNotes(query);
     if (notesAnswer) return notesAnswer;
 
-    // 10. Wikipedia
+    // 10. Ide për Përmbajtje & Skenare
+    const ideasAnswer = await checkContentIdeas(query);
+    if (ideasAnswer) return ideasAnswer;
+
+    // 11. Wikipedia
     const wikiAnswer = await checkWikipedia(query);
     if (wikiAnswer) return wikiAnswer;
 
