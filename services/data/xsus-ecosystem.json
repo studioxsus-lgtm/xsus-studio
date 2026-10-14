@@ -1,12 +1,26 @@
 {
   "items": [
     {
-      "keywords": ["çfarë është xsus studio", "kush e krijoi xsus", "çfarë bën xsus", "xsus ai"],
-      "answer": "⚡ **Xsus Studio** është një ekosistem modern dixhital i përbërë nga module të specializuara si Xsus AI, Domain, Logo, Game, App dhe Web Architect."
+      "keywords": [
+        "kush je ti", "çfarë je ti", "kush je", "si quhesh", "kush të krijoi", "kush të ka krijuar", 
+        "çfarë është xsus ai", "kush është xsus ai", "who are you", "what are you", "who created you", 
+        "who made you", "qui es tu", "qui t'a créé", "qui es-tu"
+      ],
+      "answer": "🤖 **XSUS AI**\n\n• **SQ:** Jam **Xsus AI**, asistenti i zgjuar dixhital i krijuar nga **Xsus Studio**. Përdor arkitekturën Smart Router për të dhënë përgjigje në kohë reale në Shqip, Anglisht dhe Frëngjisht.\n\n• **EN:** I am **Xsus AI**, the intelligent digital assistant created by **Xsus Studio**. Powered by a Smart Router architecture for real-time answers in Albanian, English, and French.\n\n• **FR:** Je suis **Xsus AI**, l'assistant numérique intelligent créé par **Xsus Studio**. Propulsé par une architecture Smart Router pour des réponses en temps réel en albanais, anglais et français."
     },
     {
-      "keywords": ["kallabak", "lajmet e kukësit", "kallabak.com"],
-      "answer": "📰 **Kallabak.com** është një portal mediatik dixhital i fokusuar në mbulimin e lajmeve, ngjarjeve dhe kulturës së rajonit të Kukësit."
+      "keywords": [
+        "çfarë është xsus studio", "xsus studio", "ekosistemi xsus", "rreth xsus studio", 
+        "what is xsus studio", "about xsus studio", "qu'est-ce que xsus studio"
+      ],
+      "answer": "⚡ **XSUS STUDIO**\n\n• **SQ:** Xsus Studio është ekosistemi dixhital që përfshin modulet e specializuara: **Xsus AI**, **Xsus App**, **Xsus Web**, **Xsus Game**, **Xsus Logo** dhe **Xsus Domain**.\n\n• **EN:** Xsus Studio is the digital ecosystem featuring specialized modules: **Xsus AI**, **Xsus App**, **Xsus Web**, **Xsus Game**, **Xsus Logo**, and **Xsus Domain**.\n\n• **FR:** Xsus Studio est l'écosystème numérique comprenant les modules spécialisés : **Xsus AI**, **Xsus App**, **Xsus Web**, **Xsus Game**, **Xsus Logo** et **Xsus Domain**."
+    },
+    {
+      "keywords": [
+        "çfarë mund të bësh", "shërbimet", "aftësitë", "what can you do", "services", 
+        "que peux-tu faire", "fonctions"
+      ],
+      "answer": "🚀 **Aftësitë / Capabilities / Capacités**\n\n• **SQ:** Kërkim në kohë reale me Smart Router, njohuri enciklopedike përmes Wikipedia API, asistencë për zhvillim uebi dhe biseda shumëgjuhëshe.\n\n• **EN:** Real-time search via Smart Router, encyclopedic knowledge integration via Wikipedia API, web development assistance, and multilingual conversational AI.\n\n• **FR:** Recherche en temps réel via Smart Router, connaissances encyclopédiques via l'API Wikipédia, assistance au développement web et IA conversationnelle multilingue."
     }
   ]
 }
