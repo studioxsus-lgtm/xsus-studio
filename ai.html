@@ -1,14 +1,182 @@
-    <!-- SCRIPT -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Solutions & Engine | Xsus Studio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-        let smartRouterFunc = null;
-        import('./services/router.js').then(module => {
-            if (module && module.smartRouter) {
-                smartRouterFunc = module.smartRouter;
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            blue: '#00f0ff',
+                            purple: '#7000ff',
+                            pink: '#ff007f',
+                            dark: '#0a0a12',
+                            card: 'rgba(18, 18, 35, 0.6)'
+                        }
+                    }
+                }
             }
-        }).catch(err => {
-            console.warn("SmartRouter nuk u ngarkua:", err);
-        });
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(18, 18, 35, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #00f0ff 0%, #7000ff 50%, #ff007f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .xsus-custom-logo {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 10px;
+            background: #0a0a12;
+            border: 1.5px solid #00f0ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+            line-height: 1;
+            user-select: none;
+        }
+        .xsus-custom-logo .logo-x {
+            font-size: 16px;
+            font-weight: 900;
+            color: #00f0ff;
+            text-shadow: 0 0 6px rgba(0, 240, 255, 0.8);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .xsus-custom-logo .logo-sus {
+            font-size: 8px;
+            font-weight: 700;
+            color: #7000ff;
+            text-transform: lowercase;
+            margin-top: 1px;
+            letter-spacing: 0.5px;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-[#06060c] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-cyber-blue selection:text-black">
 
+    <!-- NAVIGATION BAR -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-4 md:px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2.5">
+                <div class="xsus-custom-logo">
+                    <span class="logo-x">X</span>
+                    <span class="logo-sus">sus</span>
+                </div>
+                <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">AI</span></span>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden lg:flex items-center gap-6 font-medium text-xs text-slate-300">
+                <a href="ai.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Xsus AI</a>
+                <a href="app.html" class="hover:text-cyber-blue transition">Xsus App</a>
+                <a href="web.html" class="hover:text-cyber-blue transition">Xsus Web</a>
+                <a href="game.html" class="hover:text-cyber-blue transition">Xsus Game</a>
+                <a href="logo.html" class="hover:text-cyber-blue transition">Xsus Logo</a>
+                <a href="domain.html" class="hover:text-cyber-blue transition">Xsus Domain</a>
+            </div>
+
+            <!-- Language Selector & CTA -->
+            <div class="flex items-center gap-3">
+                <div class="glass-panel px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-300">
+                    <i data-lucide="globe" class="w-3.5 h-3.5 text-cyber-blue"></i>
+                    <select id="language-select" class="bg-transparent text-white outline-none cursor-pointer">
+                        <option value="en" class="bg-[#0a0a12] text-white">EN</option>
+                        <option value="sq" class="bg-[#0a0a12] text-white">SQ</option>
+                        <option value="fr" class="bg-[#0a0a12] text-white">FR</option>
+                    </select>
+                </div>
+
+                <a href="#ai-console" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-xs hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                    <span data-i18n="nav-start">Launch AI</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="pt-36 pb-12 px-6 relative overflow-hidden">
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyber-purple/15 rounded-full blur-[140px] pointer-events-none"></div>
+        
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-purple/30 text-cyber-purple text-xs font-semibold uppercase tracking-widest mb-6">
+                <i data-lucide="sparkles" class="w-4 h-4"></i> <span data-i18n="hero-badge">Real-Time Open Neural Engine</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
+                <span data-i18n="hero-title1">Ask Anything. Create Everything.</span> <br><span class="text-gradient" data-i18n="hero-title2">Powered by Xsus AI</span>
+            </h1>
+            <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mb-6 leading-relaxed" data-i18n="hero-desc">
+                Your live AI companion connected directly to advanced neural models for accurate answers in any language.
+            </p>
+        </div>
+    </header>
+
+    <!-- UNIVERSAL AI CHAT CONSOLE -->
+    <section id="ai-console" class="py-6 px-4 md:px-6 max-w-4xl mx-auto w-full mb-20">
+        <div class="glass-panel p-4 md:p-6 rounded-3xl border border-cyber-purple/30 shadow-[0_0_50px_rgba(112,0,255,0.15)] flex flex-col h-[550px]">
+            
+            <!-- Console Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-cyber-blue animate-pulse"></div>
+                    <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Live Neural Assistant</span>
+                </div>
+                <button id="clear-chat" type="button" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i> <span data-i18n="clear-btn">Clear Chat</span>
+                </button>
+            </div>
+
+            <!-- Chat Messages Container -->
+            <div id="ai-output-box" class="flex-1 bg-black/60 border border-white/10 rounded-2xl p-4 overflow-y-auto space-y-4 mb-4 text-sm">
+                <div class="flex items-start gap-3">
+                    <div class="xsus-custom-logo shrink-0">
+                        <span class="logo-x">X</span>
+                        <span class="logo-sus">sus</span>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-slate-200 max-w-[85%] leading-relaxed">
+                        <p id="welcome-msg-text" data-i18n="ai-welcome">Hello! I am connected to live AI models. Ask me anything, request information, or chat in Albanian, English, or French!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Form Bar -->
+            <div class="flex items-center gap-2">
+                <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI anything..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                <button id="ai-send-btn" type="button" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span data-i18n="btn-send">Send</span>
+                </button>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto py-8 border-t border-white/10 glass-panel text-center text-xs text-slate-500">
+        <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
+    </footer>
+
+    <!-- SCRIPT TËRËSISHT I PASTAR DHE I SIGURT -->
+    <script>
         function refreshIcons() {
             if (window.lucide) {
                 lucide.createIcons();
@@ -16,7 +184,7 @@
         }
         refreshIcons();
 
-        // 1. DICTIONARY SHUMËGJUHËSH
+        // DICTIONARY ME SYSTEM PROMPTS ZYRTARË TË STRICT-GJUHËS
         const i18nData = {
             en: {
                 "nav-start": "Launch AI",
@@ -30,7 +198,7 @@
                 "input-placeholder": "Ask Xsus AI anything...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
-                "sys-prompt": "You are Xsus AI, an advanced AI assistant created by Xsus Studio. Never call yourself OpenAI, ChatGPT, or LLM. Always state you are Xsus AI created by Xsus Studio. CRITICAL: You must reply ONLY in English unless requested otherwise."
+                "sys-prompt": "You are Xsus AI, created by Xsus Studio. You must answer ONLY in English. Do NOT provide translation in other languages unless explicitly asked."
             },
             sq: {
                 "nav-start": "Nis AI",
@@ -44,7 +212,7 @@
                 "input-placeholder": "Pyet Xsus AI për çdo gjë...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
-                "sys-prompt": "Ti je Xsus AI, një asistenti i avancuar i krijuar nga Xsus Studio. Kurrë mos e quaj veten OpenAI, ChatGPT apo LLM. Thuaj gjithmonë se je Xsus AI i krijuar nga Xsus Studio. KRITIKE: Duhet të përgjigjesh VETËM në gjuhën Shqipe për çdo pyetje që të bëhet."
+                "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Duhet të përgjigjesh VETËM në gjuhën Shqipe. MOS kthe përgjigje në gjuhë të tjera përveç nëse ta kërkojnë me ngulm."
             },
             fr: {
                 "nav-start": "Lancer IA",
@@ -58,18 +226,19 @@
                 "input-placeholder": "Posez une question à Xsus AI...",
                 "btn-send": "Envoyer",
                 "thinking": "En réflexion...",
-                "sys-prompt": "Vous êtes Xsus AI, un assistant IA avancé créé par Xsus Studio. Ne vous appelez jamais OpenAI, ChatGPT ou LLM. Dites toujours que vous êtes Xsus AI créé par Xsus Studio. CRITIQUE : Vous devez répondre UNIQUEMENT en français."
+                "sys-prompt": "Vous êtes Xsus AI, créé par Xsus Studio. Vous devez répondre UNIQUEMENT en Français. NE fournissez PAS de réponses dans d'autres langues."
             }
         };
 
         const langSelect = document.getElementById('language-select');
         let currentLang = 'en';
 
-        function updateSystemPrompt() {
-            if (conversationHistory.length > 0 && conversationHistory[0].role === 'system') {
-                conversationHistory[0].content = i18nData[currentLang]["sys-prompt"] || i18nData["en"]["sys-prompt"];
+        let conversationHistory = [
+            {
+                role: 'system',
+                content: i18nData['en']["sys-prompt"]
             }
-        }
+        ];
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -87,8 +256,13 @@
 
             document.documentElement.lang = lang;
             if (langSelect) langSelect.value = lang;
-            
-            updateSystemPrompt();
+
+            // Përditësojmë prompt-in e sistemit me gjuhën e re
+            conversationHistory[0] = {
+                role: 'system',
+                content: dictionary["sys-prompt"]
+            };
+
             refreshIcons();
         }
 
@@ -109,14 +283,6 @@
                 <span class="logo-sus">sus</span>
             </div>
         `;
-
-        // 2. MOTORRI I AI
-        let conversationHistory = [
-            {
-                role: 'system',
-                content: i18nData[currentLang]["sys-prompt"]
-            }
-        ];
 
         const aiInput = document.getElementById('ai-input');
         const aiSendBtn = document.getElementById('ai-send-btn');
@@ -151,14 +317,14 @@
                     conversationHistory.push({ role: 'assistant', content: reply });
                     return reply;
                 } else {
-                    return currentLang === 'sq' ? "Ndodhi një shkëputje e përkohshme me serverin. Ju lutem provoni përsëri." :
-                           currentLang === 'fr' ? "Une déconnexion temporaire est survenue. Veuillez réessayer." :
-                           "A temporary disconnection occurred. Please try again.";
+                    return currentLang === 'sq' ? "Ndodhi një shkëputje e përkohshme me serverin." :
+                           currentLang === 'fr' ? "Une déconnexion temporaire est survenue." :
+                           "A temporary disconnection occurred.";
                 }
             } catch (err) {
-                return currentLang === 'sq' ? "Gabim në lidhje me rrjetin. Kontrolloni lidhjen me internetin." :
-                       currentLang === 'fr' ? "Erreur de connexion réseau. Vérifiez votre accès internet." :
-                       "Network connection error. Please check your internet connection.";
+                return currentLang === 'sq' ? "Gabim në lidhje me rrjetin." :
+                       currentLang === 'fr' ? "Erreur de connexion réseau." :
+                       "Network connection error.";
             }
         }
 
@@ -166,6 +332,7 @@
             const text = aiInput.value.trim();
             if (!text) return;
 
+            // User message
             const userMsg = document.createElement('div');
             userMsg.className = "flex items-start gap-3 justify-end";
             userMsg.innerHTML = `
@@ -180,6 +347,7 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
+            // Loading bubble
             const loadingText = i18nData[currentLang]["thinking"] || i18nData["en"]["thinking"];
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
@@ -193,26 +361,11 @@
             aiOutputBox.appendChild(loadingMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            let reply = "";
-            if (smartRouterFunc) {
-                try {
-                    const routerReply = await smartRouterFunc(text);
-                    if (routerReply) {
-                        reply = routerReply;
-                        conversationHistory.push({ role: 'user', content: text });
-                        conversationHistory.push({ role: 'assistant', content: reply });
-                    }
-                } catch (e) {
-                    console.warn("Dështoi ekzekutimi i router.js:", e);
-                }
-            }
-
-            if (!reply) {
-                reply = await fetchAIResponse(text);
-            }
+            const reply = await fetchAIResponse(text);
 
             document.getElementById('loading-bubble')?.remove();
 
+            // AI response
             const aiMsg = document.createElement('div');
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
@@ -261,3 +414,5 @@
             };
         }
     </script>
+</body>
+</html>
