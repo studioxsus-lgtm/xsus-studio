@@ -25,7 +25,7 @@ export async function smartRouter(userQuery) {
     const translationAnswer = await checkTranslation(query);
     if (translationAnswer) return translationAnswer;
 
-    // 4. Financë
+    // 4. Financë & Kurse Valutore Live
     const financeAnswer = await checkFinance(query);
     if (financeAnswer) return financeAnswer;
 
