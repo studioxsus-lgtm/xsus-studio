@@ -116,8 +116,9 @@
             <!-- Chat Messages Container -->
             <div id="ai-output-box" class="flex-1 bg-black/60 border border-white/10 rounded-2xl p-4 overflow-y-auto space-y-4 mb-4 text-sm">
                 <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xs shrink-0">
-                        AI
+                    <!-- LOGOJA E RE E XSUS AI -->
+                    <div class="w-8 h-8 rounded-xl bg-[#0a0a12] border border-cyber-blue flex items-center justify-center font-extrabold text-cyber-blue text-sm shrink-0 shadow-[0_0_12px_rgba(0,240,255,0.4)]">
+                        X
                     </div>
                     <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-slate-200 max-w-[85%] leading-relaxed">
                         <p id="welcome-msg-text" data-i18n="ai-welcome">Hello! I am connected to live AI models. Ask me anything, request information, or chat in Albanian, English, or French!</p>
@@ -221,6 +222,13 @@
             setLanguage('en');
         }
 
+        // HTML SHABLONI I LOGOS TË RE TË XSUS AI
+        const xsusAiLogoHTML = `
+            <div class="w-8 h-8 rounded-xl bg-[#0a0a12] border border-cyber-blue flex items-center justify-center font-extrabold text-cyber-blue text-sm shrink-0 shadow-[0_0_12px_rgba(0,240,255,0.4)]">
+                X
+            </div>
+        `;
+
         // 2. AI ENGINE LOGIC
         let conversationHistory = [
             {
@@ -292,15 +300,13 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Display Dynamic Language Loading Bubble
+            // Display Dynamic Language Loading Bubble me Logon e Re
             const loadingText = i18nData[currentLang]["thinking"] || i18nData["en"]["thinking"];
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
             loadingMsg.id = "loading-bubble";
             loadingMsg.innerHTML = `
-                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xs shrink-0">
-                    AI
-                </div>
+                ${xsusAiLogoHTML}
                 <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-400 max-w-[85%] animate-pulse">
                     ${loadingText}
                 </div>
@@ -324,13 +330,11 @@
             // Remove loading
             document.getElementById('loading-bubble')?.remove();
 
-            // Display Clean AI Response
+            // Display Clean AI Response me Logon e Re
             const aiMsg = document.createElement('div');
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
-                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xs shrink-0">
-                    AI
-                </div>
+                ${xsusAiLogoHTML}
                 <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed whitespace-pre-line">
                     <p>${reply}</p>
                 </div>
@@ -355,9 +359,7 @@
 
             aiOutputBox.innerHTML = `
                 <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-xs shrink-0">
-                        AI
-                    </div>
+                    ${xsusAiLogoHTML}
                     <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed">
                         <p id="welcome-msg-text" data-i18n="ai-welcome">${welcomeText}</p>
                     </div>
