@@ -1,3 +1,5 @@
+import { smartRouter } from './services/router.js';
+
 const translations = {
     en: {
         navAi: "Xsus AI",
@@ -195,7 +197,8 @@ function clearChat() {
     }
 }
 
-function handleChatSubmit(e) {
+// Lidhja kryesore asinkrone me Router-in lokal
+async function handleChatSubmit(e) {
     e.preventDefault();
     const input = document.getElementById('userInput');
     const text = input ? input.value.trim() : '';
@@ -217,6 +220,19 @@ function handleChatSubmit(e) {
     input.value = '';
     stream.scrollTop = stream.scrollHeight;
 
+    // 1. Kontrollojmë fillimisht me Router-in lokal (Kuis, Math, QR, etj.)
+    try {
+        const localResponse = await smartRouter(text);
+        if (localResponse) {
+            // Nëse ekziston përgjigje nga modulet tona, e shfaqim dhe NDALOJMË KËTU
+            appendAiMessage(localResponse);
+            return;
+        }
+    } catch (err) {
+        console.error("Local router error:", err);
+    }
+
+    // 2. Nëse nuk kapet lokalisht, kërkesa bie te AI-ja e jashtme
     setTimeout(() => {
         const responseText = generateSmartAiResponse(text);
         appendAiMessage(responseText);
@@ -226,23 +242,16 @@ function handleChatSubmit(e) {
 function generateSmartAiResponse(userPrompt) {
     const prompt = userPrompt.toLowerCase();
 
-    if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("islame") || prompt.includes("script")) {
-        return `🎬 **Professional Islamic Video Script (30-60 Seconds)**\n\n` +
-               `📌 **Title:** The Light of Sabr and Trust\n\n` +
+    if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("script")) {
+        return `🎬 **Professional Video Script (30-60 Seconds)**\n\n` +
+               `📌 **Title:** The Light of Trust and Hope\n\n` +
                `🎥 **Scene 1 (00:00 - 00:04):**\n` +
-               `*Visual:* Cinematic view of mountains during sunrise with warm light rays.\n` +
+               `*Visual:* Cinematic view of mountains during sunrise.\n` +
                `*Voiceover:* "In every storm you face in life, remember that storms do not last forever..."\n\n` +
                `🎥 **Scene 2 (00:04 - 00:10):**\n` +
-               `*Visual:* A person praying peacefully in the morning light.\n` +
-               `*Voiceover:* "Allah does not burden a soul beyond that it can bear. With every hardship comes ease."\n\n` +
-               `🎥 **Scene 3 (00:10 - 00:15):**\n` +
-               `*Visual:* Pure flowing water between rocks in nature.\n` +
-               `*Voiceover:* "Keep your hope alive and seek comfort in prayer."\n\n` +
-               `💬 **Call To Action:** "Save this video and share it with someone who needs it today! ✨"`;
-    }
-
-    if (prompt.includes("shqip") || prompt.includes("përshëndetje")) {
-        return "Hello! I am **Xsus AI**. How can I assist you today with your tasks or projects?";
+               `*Visual:* Peaceful morning light flowing through nature.\n` +
+               `*Voiceover:* "With every hardship comes ease."\n\n` +
+               `💬 **Call To Action:** "Save this video and share it with someone today! ✨"`;
     }
 
     return `I received your prompt: **"${userPrompt}"**.\n\nAs an intelligent module of **Xsus Studio**, I am ready to help you develop this idea further!`;
@@ -253,8 +262,10 @@ function appendAiMessage(msg) {
     const aiBubble = document.createElement('div');
     aiBubble.className = "flex gap-3 max-w-3xl";
     
-    const formatted = escapeHtml(msg)
+    // Suportojmë formatimin bold (\*\*) dhe imazhet Markdown (![alt](url)) për kodesh QR
+    let formatted = escapeHtml(msg)
         .replace(/\*\*(.*?)\*\*/g, '<strong class="text-cyan-300 font-semibold">$1</strong>')
+        .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="mt-2 rounded-lg max-w-[220px] border border-cyan-500/30 shadow-md" />')
         .replace(/\n/g, '<br>');
 
     aiBubble.innerHTML = `
@@ -316,7 +327,7 @@ if (canvas) {
     animateParticles();
 }
 
-// Ekzekutojmë thirrjen fillestare në Anglisht sapo të hapet faqja
+// Ekzekutojmë thirrjen fillestare
 setLanguage('en');
 
 if (window.lucide) lucide.createIcons();
