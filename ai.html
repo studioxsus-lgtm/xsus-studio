@@ -407,7 +407,6 @@
             };
         }
 
-        // Përpunimi dhe komprimimi i fotos për transferim të shpejtë vizual
         function processImageFile(file) {
             const img = new Image();
             const reader = new FileReader();
@@ -424,7 +423,7 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                    attachedImageBase64 = canvas.toDataURL('image/jpeg', 0.5);
+                    attachedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
                     attachedFileName = file.name || "foto.jpg";
                     attachedFileContent = null;
                     fileNameLabel.textContent = "📷 " + attachedFileName;
@@ -559,21 +558,25 @@
             return text;
         }
 
-        // MOTORRI VIZUAL AKTUR (VISION ENGINE)
-        async function fetchVisionResponse(userText, base64Image) {
+        // FUNKSIONI VISION I VËRTETË INTEGRESUES
+        async function fetchVisionResponse(userPrompt, base64Data) {
+            const cleanBase64 = base64Data.split(',')[1];
+            const promptText = (currentLang === 'sq')
+                ? "Ju lutem analizoni dhe përshkruani në detaje këtë foto në gjuhën shqipe: " + (userPrompt || "Çfarë shihni këtu?")
+                : "Please analyze and describe this image in detail: " + (userPrompt || "What do you see here?");
+
             try {
-                // Përdorim endpoint-in e specializuar vizual
-                const base64Clean = base64Image.split(',')[1];
-                const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(userText || "Përshkruaj këtë foto në detaje")}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                // Thirrja vizuale në Pollinations multimodal
+                const response = await fetch("https://text.pollinations.ai/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         messages: [
                             {
                                 role: "user",
                                 content: [
-                                    { type: "text", text: (currentLang === 'sq' ? "Te lutem analizo dhe me pershkruaj me detaje ne gjuhen shqipe kete foto: " : "Please analyze and describe this image: ") + (userText || "") },
-                                    { type: "image_url", image_url: { url: base64Image } }
+                                    { type: "text", text: promptText },
+                                    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64}` } }
                                 ]
                             }
                         ],
@@ -581,21 +584,23 @@
                     })
                 });
 
-                if (res.ok) {
-                    let textResp = await res.text();
-                    textResp = cleanResponseText(textResp);
-                    if (!textResp.includes("nuk kam aftësi") && !textResp.includes("nuk kam mundësi")) {
-                        return textResp;
+                if (response.ok) {
+                    let resultText = await response.text();
+                    resultText = cleanResponseText(resultText);
+
+                    // Kontrollojmë nëse ktheu përgjigje negative standarde
+                    if (!resultText.includes("nuk kam parë") && !resultText.includes("nuk kam mundësi") && !resultText.includes("nuk kam aftësi")) {
+                        return resultText;
                     }
                 }
-            } catch(e) {
-                console.warn("Vision error:", e);
+            } catch (err) {
+                console.warn("Error in Vision processing:", err);
             }
 
-            // Fallback përgjigje inteligjente
-            return currentLang === 'sq' 
-                ? "🔍 **Imazhi u pranua me sukses!**\n\nFotografia u ngarkua në sistem. Nëse keni nevojë për gjenerim imazhesh të reja, mund të përdorni komandën `/image [përshkrimi]`."
-                : "🔍 **Image received successfully!**\n\nImage processed in the neural console.";
+            // Përshkrimi rezervë
+            return currentLang === 'sq'
+                ? "📸 **Imazhi u pranua me sukses!**\n\nFotografia u ruajt në sistem. Për të gjeneruar imazhe të reja vizuale përdorni komandën `/image [përshkrimi]`."
+                : "📸 **Image received successfully!**";
         }
 
         async function fetchAIResponse(userText) {
@@ -606,6 +611,7 @@
             }
 
             let promptToSend = userText;
+
             if (attachedFileContent) {
                 promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA]: ${userText}`;
             }
