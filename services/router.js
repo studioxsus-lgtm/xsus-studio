@@ -6,6 +6,7 @@ import { checkWeather } from './weather-service.js';
 import { checkFinance } from './finance-service.js';
 import { checkTranslation } from './translation-service.js';
 import { checkConverter } from './converter-service.js';
+import { checkImageGeneration } from './image-service.js';
 
 loadCustomKnowledge();
 
@@ -13,31 +14,35 @@ export async function smartRouter(userQuery) {
     const query = userQuery.trim();
     if (!query) return null;
 
-    // 1. Identiteti Xsus Studio
+    // 1. Gjeneruesi i Imazheve
+    const imageAnswer = await checkImageGeneration(query);
+    if (imageAnswer) return imageAnswer;
+
+    // 2. Identiteti Xsus Studio
     const customAnswer = checkCustomKnowledge(query);
     if (customAnswer) return customAnswer;
 
-    // 2. Konvertuesi i Njësive & Valutave
+    // 3. Konvertuesi i Njësive & Valutave
     const converterAnswer = await checkConverter(query);
     if (converterAnswer) return converterAnswer;
 
-    // 3. Përkthyesi
+    // 4. Përkthyesi
     const translationAnswer = await checkTranslation(query);
     if (translationAnswer) return translationAnswer;
 
-    // 4. Financë & Kurse Valutore Live
+    // 5. Financë & Kurse Valutore Live
     const financeAnswer = await checkFinance(query);
     if (financeAnswer) return financeAnswer;
 
-    // 5. Moti live
+    // 6. Moti live
     const weatherAnswer = await checkWeather(query);
     if (weatherAnswer) return weatherAnswer;
 
-    // 6. Lajmet live
+    // 7. Lajmet live
     const newsAnswer = await checkNews(query);
     if (newsAnswer) return newsAnswer;
 
-    // 7. Wikipedia
+    // 8. Wikipedia
     const wikiAnswer = await checkWikipedia(query);
     if (wikiAnswer) return wikiAnswer;
 
