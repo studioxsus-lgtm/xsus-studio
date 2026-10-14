@@ -24,13 +24,13 @@ export async function smartRouter(userQuery) {
     const imageAnswer = await checkImageGeneration(query);
     if (imageAnswer) return imageAnswer;
 
-    // 2. Gjeneruesi i Kodeve QR
-    const qrAnswer = await checkQRCode(query);
-    if (qrAnswer) return qrAnswer;
-
-    // 3. Moduli i Pyetjeve Kuis (Lokal - kapet menjëherë)
+    // 2. Moduli i Pyetjeve Kuis (E vendosim KËTU në krye!)
     const quizAnswer = await checkQuiz(query);
     if (quizAnswer) return quizAnswer;
+
+    // 3. Gjeneruesi i Kodeve QR
+    const qrAnswer = await checkQRCode(query);
+    if (qrAnswer) return qrAnswer;
 
     // 4. Llogaritjet Matematikore
     const mathAnswer = await checkMath(query);
