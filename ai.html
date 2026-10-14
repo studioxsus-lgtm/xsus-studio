@@ -175,7 +175,7 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT TËRËSISHT I PASTAR DHE I SIGURT -->
+    <!-- SCRIPT -->
     <script>
         function refreshIcons() {
             if (window.lucide) {
@@ -184,7 +184,7 @@
         }
         refreshIcons();
 
-        // DICTIONARY ME SYSTEM PROMPTS ZYRTARË TË STRICT-GJUHËS
+        // DICTIONARY ME PROMPT INTELIGJENT PËR GJUHËN
         const i18nData = {
             en: {
                 "nav-start": "Launch AI",
@@ -198,7 +198,7 @@
                 "input-placeholder": "Ask Xsus AI anything...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
-                "sys-prompt": "You are Xsus AI, created by Xsus Studio. You must answer ONLY in English. Do NOT provide translation in other languages unless explicitly asked."
+                "sys-prompt": "You are Xsus AI, an advanced AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input (if the user writes in Albanian, answer in Albanian; if in French, answer in French; if in English, answer in English)."
             },
             sq: {
                 "nav-start": "Nis AI",
@@ -212,7 +212,7 @@
                 "input-placeholder": "Pyet Xsus AI për çdo gjë...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
-                "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Duhet të përgjigjesh VETËM në gjuhën Shqipe. MOS kthe përgjigje në gjuhë të tjera përveç nëse ta kërkojnë me ngulm."
+                "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij (nëse shkruan shqip ktheji përgjigje në shqip, nëse frëngjisht në frëngjisht, etj.)."
             },
             fr: {
                 "nav-start": "Lancer IA",
@@ -226,7 +226,7 @@
                 "input-placeholder": "Posez une question à Xsus AI...",
                 "btn-send": "Envoyer",
                 "thinking": "En réflexion...",
-                "sys-prompt": "Vous êtes Xsus AI, créé par Xsus Studio. Vous devez répondre UNIQUEMENT en Français. NE fournissez PAS de réponses dans d'autres langues."
+                "sys-prompt": "Vous êtes Xsus AI, créé par Xsus Studio. Répondez TOUJOURS dans la même langue que le message de l'utilisateur."
             }
         };
 
@@ -257,7 +257,6 @@
             document.documentElement.lang = lang;
             if (langSelect) langSelect.value = lang;
 
-            // Përditësojmë prompt-in e sistemit me gjuhën e re
             conversationHistory[0] = {
                 role: 'system',
                 content: dictionary["sys-prompt"]
@@ -332,7 +331,6 @@
             const text = aiInput.value.trim();
             if (!text) return;
 
-            // User message
             const userMsg = document.createElement('div');
             userMsg.className = "flex items-start gap-3 justify-end";
             userMsg.innerHTML = `
@@ -347,7 +345,6 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Loading bubble
             const loadingText = i18nData[currentLang]["thinking"] || i18nData["en"]["thinking"];
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
@@ -365,7 +362,6 @@
 
             document.getElementById('loading-bubble')?.remove();
 
-            // AI response
             const aiMsg = document.createElement('div');
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
