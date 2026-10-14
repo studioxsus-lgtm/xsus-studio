@@ -4,6 +4,7 @@ import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
 import { checkWeather } from './weather-service.js';
 import { checkFinance } from './finance-service.js';
+import { checkCodeRequest } from './code-service.js';
 
 loadCustomKnowledge();
 
@@ -15,19 +16,23 @@ export async function smartRouter(userQuery) {
     const customAnswer = checkCustomKnowledge(query);
     if (customAnswer) return customAnswer;
 
-    // 2. Financë (Kripto & Aksione)
+    // 2. Kontrolli i pyetjeve për Kod
+    const codeAnswer = checkCodeRequest(query);
+    if (codeAnswer) return codeAnswer;
+
+    // 3. Financë (Kripto & Aksione)
     const financeAnswer = await checkFinance(query);
     if (financeAnswer) return financeAnswer;
 
-    // 3. Moti live
+    // 4. Moti live
     const weatherAnswer = await checkWeather(query);
     if (weatherAnswer) return weatherAnswer;
 
-    // 4. Lajmet live
+    // 5. Lajmet live
     const newsAnswer = await checkNews(query);
     if (newsAnswer) return newsAnswer;
 
-    // 5. Wikipedia
+    // 6. Wikipedia
     const wikiAnswer = await checkWikipedia(query);
     if (wikiAnswer) return wikiAnswer;
 
