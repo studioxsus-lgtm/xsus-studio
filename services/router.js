@@ -4,7 +4,8 @@ import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
 import { checkSports } from './sports-service.js';
 import { checkNotes } from './notes-service.js';
-import { checkContentIdeas } from './ideas-service.js'; // Shtohet importi
+import { checkContentIdeas } from './ideas-service.js';
+import { checkMath } from './math-service.js'; // 1. Importimi i modulit të matematikës
 import { checkWeather } from './weather-service.js';
 import { checkFinance } from './finance-service.js';
 import { checkTranslation } from './translation-service.js';
@@ -29,35 +30,39 @@ export async function smartRouter(userQuery) {
     const converterAnswer = await checkConverter(query);
     if (converterAnswer) return converterAnswer;
 
-    // 4. Përkthyesi
+    // 4. Llogaritjet Matematikore & Përqindjet (Lokal)
+    const mathAnswer = await checkMath(query);
+    if (mathAnswer) return mathAnswer;
+
+    // 5. Përkthyesi
     const translationAnswer = await checkTranslation(query);
     if (translationAnswer) return translationAnswer;
 
-    // 5. Financë & Kurse Valutore Live
+    // 6. Financë & Kurse Valutore Live
     const financeAnswer = await checkFinance(query);
     if (financeAnswer) return financeAnswer;
 
-    // 6. Moti live
+    // 7. Moti live
     const weatherAnswer = await checkWeather(query);
     if (weatherAnswer) return weatherAnswer;
 
-    // 7. Lajmet live
+    // 8. Lajmet live
     const newsAnswer = await checkNews(query);
     if (newsAnswer) return newsAnswer;
 
-    // 8. Lajmet Sportive Live
+    // 9. Lajmet Sportive Live
     const sportsAnswer = await checkSports(query);
     if (sportsAnswer) return sportsAnswer;
 
-    // 9. Shënimet & Përkujtuesit (Lokal)
+    // 10. Shënimet & Përkujtuesit (Lokal)
     const notesAnswer = await checkNotes(query);
     if (notesAnswer) return notesAnswer;
 
-    // 10. Ide për Përmbajtje & Skenare
+    // 11. Ide për Përmbajtje & Skenare
     const ideasAnswer = await checkContentIdeas(query);
     if (ideasAnswer) return ideasAnswer;
 
-    // 11. Wikipedia
+    // 12. Wikipedia
     const wikiAnswer = await checkWikipedia(query);
     if (wikiAnswer) return wikiAnswer;
 
