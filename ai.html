@@ -261,11 +261,11 @@
                 "hero-desc": "Your live AI companion connected directly to advanced neural models for accurate answers in any language.",
                 "chat-header": "Xsus Live Neural Assistant",
                 "clear-btn": "Clear Chat",
-                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, create images with '/image', or attach documents, photos & camera captures via '+'!",
+                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, create images with '/image', or attach documents & photos via '+'!",
                 "input-placeholder": "Ask Xsus AI or create image (/image)...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
-                "sys-prompt": "You are Xsus AI, an advanced vision-capable AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input."
+                "sys-prompt": "You are Xsus AI, an advanced AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input."
             },
             sq: {
                 "nav-start": "Nis AI",
@@ -275,11 +275,11 @@
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
                 "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
                 "clear-btn": "Pastro Bisedën",
-                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash, krijo imazhe me '/image' ose shto dokumente, foto dhe kamerë përmes '+'!",
+                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash, krijo imazhe me '/image' ose shto dokumente dhe foto përmes '+'!",
                 "input-placeholder": "Pyet Xsus AI apo krijo imazh (/image)...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
-                "sys-prompt": "Ti je Xsus AI, një asistent i avancuar i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij."
+                "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij."
             },
             fr: {
                 "nav-start": "Lancer IA",
@@ -289,7 +289,7 @@
                 "hero-desc": "Votre compagnon IA en direct connecté aux modèles neuronaux avancés pour des réponses précises.",
                 "chat-header": "Assistant en Direct Xsus",
                 "clear-btn": "Effacer",
-                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez des questions, créez des images ou ajoutez des documents/photos via '+' !",
+                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez des questions, créez des images ou ajoutez des documents via '+' !",
                 "input-placeholder": "Posez une question ou créez une image (/image)...",
                 "btn-send": "Envoyer",
                 "thinking": "En réflexion...",
@@ -407,15 +407,31 @@
             };
         }
 
+        // Zvogëlon madhësinë e fotos për të mos shkaktuar shkëputje nga serveri
         function processImageFile(file) {
+            const img = new Image();
             const reader = new FileReader();
-            reader.onload = function(uploadEvent) {
-                attachedImageBase64 = uploadEvent.target.result;
-                attachedFileName = file.name || "foto_kamerë.jpg";
-                attachedFileContent = null;
-                fileNameLabel.textContent = "📷 " + attachedFileName;
-                fileBadgeContainer.classList.remove('hidden');
-                refreshIcons();
+
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    // Komprimohet fotoja në 0.6 JPEG për të reduktuar madhësinë
+                    attachedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                    attachedFileName = file.name || "foto.jpg";
+                    attachedFileContent = null;
+                    fileNameLabel.textContent = "📷 " + attachedFileName;
+                    fileBadgeContainer.classList.remove('hidden');
+                    refreshIcons();
+                };
             };
             reader.readAsDataURL(file);
         }
@@ -545,35 +561,23 @@
         }
 
         async function fetchAIResponse(userText) {
-            let messagesPayload = [...conversationHistory];
-            let activeModel = 'openai';
+            let promptToSend = userText;
 
             if (attachedFileContent) {
-                messagesPayload.push({
-                    role: 'user',
-                    content: `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA]: ${userText}`
-                });
+                promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA]: ${userText}`;
             } else if (attachedImageBase64) {
-                // Përdorim strukturën e imazhit dhe modelin gemini për shikim
-                activeModel = 'gemini';
-                messagesPayload.push({
-                    role: 'user',
-                    content: [
-                        { type: "text", text: userText || "Përshkruaj këtë foto në detaje." },
-                        { type: "image_url", image_url: { url: attachedImageBase64 } }
-                    ]
-                });
-            } else {
-                messagesPayload.push({ role: 'user', content: userText });
+                promptToSend = `[Përdoruesi ka dërguar një foto me emrin ${attachedFileName}].\n\nKërkesa e përdoruesit: "${userText}".\nNëse je model me aftësi vizuale, analizo foton. Nëse jo, përgjigju në mënyrë të dobishme mbi përmbajtjen e kësaj kërkese.`;
             }
+
+            conversationHistory.push({ role: 'user', content: promptToSend });
 
             try {
                 const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        messages: messagesPayload,
-                        model: activeModel,
+                        messages: conversationHistory,
+                        model: 'openai',
                         search: true,
                         seed: Math.floor(Math.random() * 1000)
                     })
@@ -582,8 +586,6 @@
                 if (response.ok) {
                     let reply = await response.text();
                     reply = cleanResponseText(reply);
-                    
-                    conversationHistory.push({ role: 'user', content: userText + (attachedFileName ? ` [Foto: ${attachedFileName}]` : "") });
                     conversationHistory.push({ role: 'assistant', content: reply });
 
                     if (removeFileBtn) removeFileBtn.click();
