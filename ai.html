@@ -38,7 +38,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        /* STILI ZYRTAR I LOGOS XSUS AI */
         .xsus-custom-logo {
             width: 36px;
             height: 36px;
@@ -162,7 +161,7 @@
             <!-- Input Form Bar -->
             <div class="flex items-center gap-2">
                 <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI anything..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
-                <button id="ai-send-btn" type="button" onclick="window.handleAIResponse()" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
+                <button id="ai-send-btn" type="button" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
                     <i data-lucide="send" class="w-4 h-4"></i>
                     <span data-i18n="btn-send">Send</span>
                 </button>
@@ -176,11 +175,19 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT FOR DYNAMIC I18N AND CLEAN AI INTEGRATION -->
-    <script type="module">
-        import { smartRouter } from './services/router.js';
+    <!-- SCRIPT BEHIND STANDARD JS (PA BLLOKIM MODULE) -->
+    <script>
+        // Funksion i sigurt për marrjen e SmartRouter pa bllokuar faqe
+        let smartRouterFunc = null;
+        import('./services/router.js').then(module => {
+            if (module && module.smartRouter) {
+                smartRouterFunc = module.smartRouter;
+            }
+        }).catch(err => {
+            console.warn("SmartRouter nuk u ngarkua, vazhdohet me motorin standard AI:", err);
+        });
 
-        // Inicializimi i ikonave
+        // Inicializimi i ikonave Lucide
         function refreshIcons() {
             if (window.lucide) {
                 lucide.createIcons();
@@ -253,9 +260,10 @@
             refreshIcons();
         }
 
-        langSelect?.addEventListener('change', (e) => setLanguage(e.target.value));
+        if (langSelect) {
+            langSelect.addEventListener('change', (e) => setLanguage(e.target.value));
+        }
 
-        // Zbulimi i gjuhës së shfletuesit
         const userBrowserLang = navigator.language.slice(0, 2);
         if (['sq', 'fr', 'en'].includes(userBrowserLang)) {
             setLanguage(userBrowserLang);
@@ -279,6 +287,7 @@
         ];
 
         const aiInput = document.getElementById('ai-input');
+        const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
         const clearChatBtn = document.getElementById('clear-chat');
 
@@ -321,12 +330,11 @@
             }
         }
 
-        // FUNKSIONI GLOBAL PËR DËRGIMIN E MESAZHEVE
-        window.handleAIResponse = async function() {
+        async function handleAIResponse() {
             const text = aiInput.value.trim();
             if (!text) return;
 
-            // Mesazhi i Përdoruesit
+            // Display User Message
             const userMsg = document.createElement('div');
             userMsg.className = "flex items-start gap-3 justify-end";
             userMsg.innerHTML = `
@@ -341,7 +349,7 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Flluska e ngarkimit me logon Xsus AI
+            // Loading Bubble
             const loadingText = i18nData[currentLang]["thinking"] || i18nData["en"]["thinking"];
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
@@ -355,17 +363,19 @@
             aiOutputBox.appendChild(loadingMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // SmartRouter Check
+            // Kontrolli i sigurt me SmartRouter
             let reply = "";
-            try {
-                const routerReply = await smartRouter(text);
-                if (routerReply) {
-                    reply = routerReply;
-                    conversationHistory.push({ role: 'user', content: text });
-                    conversationHistory.push({ role: 'assistant', content: reply });
+            if (smartRouterFunc) {
+                try {
+                    const routerReply = await smartRouterFunc(text);
+                    if (routerReply) {
+                        reply = routerReply;
+                        conversationHistory.push({ role: 'user', content: text });
+                        conversationHistory.push({ role: 'assistant', content: reply });
+                    }
+                } catch (e) {
+                    console.warn("Dështoi ekzekutimi i router.js:", e);
                 }
-            } catch (e) {
-                console.warn("SmartRouter Check:", e);
             }
 
             if (!reply) {
@@ -374,7 +384,7 @@
 
             document.getElementById('loading-bubble')?.remove();
 
-            // Përgjigja e AI me logon Xsus AI
+            // Përgjigja e AI
             const aiMsg = document.createElement('div');
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
@@ -386,36 +396,43 @@
             aiOutputBox.appendChild(aiMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
             refreshIcons();
-        };
+        }
 
-        // Event listener për tastin Enter
-        aiInput?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                window.handleAIResponse();
-            }
-        });
+        // Lidhja e drejtpërdrejtë e butonisë dhe tastierës
+        if (aiSendBtn) {
+            aiSendBtn.onclick = handleAIResponse;
+        }
 
-        // Event listener për butonin Clear Chat
-        clearChatBtn?.addEventListener('click', () => {
-            conversationHistory = [
-                {
-                    role: 'system',
-                    content: 'You are Xsus AI, an advanced AI assistant created by Xsus Studio. Never call yourself OpenAI, ChatGPT, or LLM. Always state you are Xsus AI created by Xsus Studio. You speak fluently in Albanian, English, and French.'
+        if (aiInput) {
+            aiInput.onkeypress = function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAIResponse();
                 }
-            ];
-            const welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
+            };
+        }
 
-            aiOutputBox.innerHTML = `
-                <div class="flex items-start gap-3">
-                    ${xsusAiLogoHTML}
-                    <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed">
-                        <p id="welcome-msg-text" data-i18n="ai-welcome">${welcomeText}</p>
+        if (clearChatBtn) {
+            clearChatBtn.onclick = function() {
+                conversationHistory = [
+                    {
+                        role: 'system',
+                        content: 'You are Xsus AI, an advanced AI assistant created by Xsus Studio. Never call yourself OpenAI, ChatGPT, or LLM. Always state you are Xsus AI created by Xsus Studio. You speak fluently in Albanian, English, and French.'
+                    }
+                ];
+                const welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
+
+                aiOutputBox.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        ${xsusAiLogoHTML}
+                        <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed">
+                            <p id="welcome-msg-text" data-i18n="ai-welcome">${welcomeText}</p>
+                        </div>
                     </div>
-                </div>
-            `;
-            refreshIcons();
-        });
+                `;
+                refreshIcons();
+            };
+        }
     </script>
 </body>
 </html>
