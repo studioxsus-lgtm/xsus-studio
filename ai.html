@@ -38,7 +38,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        /* Stili i saktë i logos Xsus (X lart, sus poshtë me të vogla) */
         .xsus-custom-logo {
             width: 36px;
             height: 36px;
@@ -76,7 +75,6 @@
     <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-4 md:px-6 py-4">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-2.5">
-                <!-- LOGOJA E RE NË KRYE -->
                 <div class="xsus-custom-logo">
                     <span class="logo-x">X</span>
                     <span class="logo-sus">sus</span>
@@ -140,7 +138,7 @@
                     <div class="w-3 h-3 rounded-full bg-cyber-blue animate-pulse"></div>
                     <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Live Neural Assistant</span>
                 </div>
-                <button id="clear-chat" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10">
+                <button id="clear-chat" type="button" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/15 cursor-pointer">
                     <i data-lucide="trash-2" class="w-3 h-3"></i> <span data-i18n="clear-btn">Clear Chat</span>
                 </button>
             </div>
@@ -148,7 +146,6 @@
             <!-- Chat Messages Container -->
             <div id="ai-output-box" class="flex-1 bg-black/60 border border-white/10 rounded-2xl p-4 overflow-y-auto space-y-4 mb-4 text-sm">
                 <div class="flex items-start gap-3">
-                    <!-- LOGOJA E RE E XSUS TE MESAZHI -->
                     <div class="xsus-custom-logo shrink-0">
                         <span class="logo-x">X</span>
                         <span class="logo-sus">sus</span>
@@ -159,10 +156,10 @@
                 </div>
             </div>
 
-            <!-- Input Form Bar -->
+            <!-- Input Form Bar (Shtuar onclick direkt që butoni të reagojë 100%) -->
             <div class="flex items-center gap-2">
                 <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI anything..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
-                <button id="ai-send-btn" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0">
+                <button id="ai-send-btn" type="button" onclick="window.handleAIResponse()" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
                     <i data-lucide="send" class="w-4 h-4"></i> <span data-i18n="btn-send">Send</span>
                 </button>
             </div>
@@ -181,7 +178,6 @@
 
         lucide.createIcons();
 
-        // 1. MULTI-LANGUAGE DICTIONARY
         const i18nData = {
             en: {
                 "nav-start": "Launch AI",
@@ -254,7 +250,6 @@
             setLanguage('en');
         }
 
-        // HTML SHABLONI I LOGOS PËR FLLUSKAT E MESAZHEVE
         const xsusAiLogoHTML = `
             <div class="xsus-custom-logo shrink-0">
                 <span class="logo-x">X</span>
@@ -262,7 +257,6 @@
             </div>
         `;
 
-        // 2. AI ENGINE LOGIC
         let conversationHistory = [
             {
                 role: 'system',
@@ -271,7 +265,6 @@
         ];
 
         const aiInput = document.getElementById('ai-input');
-        const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
         const clearChatBtn = document.getElementById('clear-chat');
 
@@ -314,11 +307,11 @@
             }
         }
 
-        async function handleAIResponse() {
+        // Bëjmë funksionin global që butoni Send ta thërrasë pa problem
+        window.handleAIResponse = async function() {
             const text = aiInput.value.trim();
             if(!text) return;
 
-            // Display User Message
             const userMsg = document.createElement('div');
             userMsg.className = "flex items-start gap-3 justify-end";
             userMsg.innerHTML = `
@@ -333,7 +326,6 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Display Dynamic Language Loading Bubble
             const loadingText = i18nData[currentLang]["thinking"] || i18nData["en"]["thinking"];
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
@@ -347,7 +339,6 @@
             aiOutputBox.appendChild(loadingMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // 1. KONTROLLI ME SMART ROUTER
             let reply = "";
             try {
                 const routerReply = await smartRouter(text);
@@ -361,14 +352,11 @@
             }
 
             if (!reply) {
-                // 2. Përdorim motorin e përgjithshëm AI
                 reply = await fetchAIResponse(text);
             }
 
-            // Remove loading
             document.getElementById('loading-bubble')?.remove();
 
-            // Display Clean AI Response
             const aiMsg = document.createElement('div');
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
@@ -379,11 +367,10 @@
             `;
             aiOutputBox.appendChild(aiMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
-        }
+        };
 
-        aiSendBtn?.addEventListener('click', handleAIResponse);
         aiInput?.addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') handleAIResponse();
+            if(e.key === 'Enter') window.handleAIResponse();
         });
 
         clearChatBtn?.addEventListener('click', () => {
