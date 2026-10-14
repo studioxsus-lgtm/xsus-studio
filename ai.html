@@ -547,12 +547,11 @@
         async function fetchAIResponse(userText) {
             let promptToSend = userText;
 
-            // Nëse është ngarkuar një imazh, e shfaqim në chat dhe e trajtojmë si kërkesë vizuale pa shkaktuar gabim në serverin e tekstit
             if (attachedImageBase64) {
                 const imgTag = `<img src="${attachedImageBase64}" class="w-64 rounded-xl my-2 border border-cyber-blue/30"/>`;
                 const imageReply = currentLang === 'sq'
-                    ? `Imazhi u ngarkua me sukses në Xsus Neural Engine! 📷\n\n${imgTag}\nKërkesa juaj: "${userText}". Për të gjeneruar imazhe të reja përdorni komandën \`/image [përshkrimi]\`.`
-                    : `Image uploaded successfully to Xsus Neural Engine! 📷\n\n${imgTag}\nYour query: "${userText}". To generate new images use \`/image [prompt]\`.`;
+                    ? `Imazhi u ngarkua me sukses! 📷\n\n${imgTag}\nKërkesa juaj: "${userText}". Për të gjeneruar imazhe të reja vizuale përdorni komandën \`/image [përshkrimi]\`.`
+                    : `Image uploaded successfully! 📷\n\n${imgTag}\nYour query: "${userText}". To generate new images use \`/image [prompt]\`.`;
                 
                 if (removeFileBtn) removeFileBtn.click();
                 return imageReply;
@@ -686,8 +685,8 @@
             };
         }
 
-        if (clearChat_btn = document.getElementById('clear-chat')) {
-            clearChat_btn.onclick = function() {
+        if (clearChatBtn) {
+            clearChatBtn.onclick = function() {
                 localStorage.removeItem('xsus_chat_history');
                 localStorage.removeItem('xsus_history_array');
                 conversationHistory = [
