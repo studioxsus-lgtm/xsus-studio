@@ -7,6 +7,7 @@ import { checkNotes } from './notes-service.js';
 import { checkContentIdeas } from './ideas-service.js';
 import { checkMath } from './math-service.js';
 import { checkQRCode } from './qr-service.js';
+import { checkQuiz } from './quiz-service.js'; // 1. Importimi i modulit Quiz
 import { checkWeather } from './weather-service.js';
 import { checkFinance } from './finance-service.js';
 import { checkTranslation } from './translation-service.js';
@@ -23,7 +24,7 @@ export async function smartRouter(userQuery) {
     const imageAnswer = await checkImageGeneration(query);
     if (imageAnswer) return imageAnswer;
 
-    // 2. Gjeneruesi i Kodeve QR (E vendosim në krye që ta kapë menjëherë!)
+    // 2. Gjeneruesi i Kodeve QR
     const qrAnswer = await checkQRCode(query);
     if (qrAnswer) return qrAnswer;
 
@@ -31,43 +32,47 @@ export async function smartRouter(userQuery) {
     const mathAnswer = await checkMath(query);
     if (mathAnswer) return mathAnswer;
 
-    // 4. Identiteti Xsus Studio
+    // 4. Moduli i Pyetjeve Kuis (Lokal)
+    const quizAnswer = await checkQuiz(query);
+    if (quizAnswer) return quizAnswer;
+
+    // 5. Identiteti Xsus Studio
     const customAnswer = checkCustomKnowledge(query);
     if (customAnswer) return customAnswer;
 
-    // 5. Konvertuesi i Njësive
+    // 6. Konvertuesi i Njësive
     const converterAnswer = await checkConverter(query);
     if (converterAnswer) return converterAnswer;
 
-    // 6. Përkthyesi
+    // 7. Përkthyesi
     const translationAnswer = await checkTranslation(query);
     if (translationAnswer) return translationAnswer;
 
-    // 7. Financë
+    // 8. Financë
     const financeAnswer = await checkFinance(query);
     if (financeAnswer) return financeAnswer;
 
-    // 8. Moti
+    // 9. Moti
     const weatherAnswer = await checkWeather(query);
     if (weatherAnswer) return weatherAnswer;
 
-    // 9. Lajmet
+    // 10. Lajmet
     const newsAnswer = await checkNews(query);
     if (newsAnswer) return newsAnswer;
 
-    // 10. Sporti
+    // 11. Sporti
     const sportsAnswer = await checkSports(query);
     if (sportsAnswer) return sportsAnswer;
 
-    // 11. Shënimet
+    // 12. Shënimet
     const notesAnswer = await checkNotes(query);
     if (notesAnswer) return notesAnswer;
 
-    // 12. Idetë
+    // 13. Idetë
     const ideasAnswer = await checkContentIdeas(query);
     if (ideasAnswer) return ideasAnswer;
 
-    // 13. Wikipedia
+    // 14. Wikipedia
     const wikiAnswer = await checkWikipedia(query);
     if (wikiAnswer) return wikiAnswer;
 
