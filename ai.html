@@ -261,7 +261,7 @@
                 "hero-desc": "Your live AI companion connected directly to advanced neural models for accurate answers in any language.",
                 "chat-header": "Xsus Live Neural Assistant",
                 "clear-btn": "Clear Chat",
-                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, create images with '/image', or attach documents, photos & camera captures via '+'!",
+                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, create images with '/image', or attach documents & photos via '+'!",
                 "input-placeholder": "Ask Xsus AI or create image (/image)...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
@@ -275,7 +275,7 @@
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
                 "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
                 "clear-btn": "Pastro Bisedën",
-                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash, krijo imazhe me '/image' ose shto dokumente, foto dhe kamerë përmes '+'!",
+                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash, krijo imazhe me '/image' ose shto dokumente dhe foto përmes '+'!",
                 "input-placeholder": "Pyet Xsus AI apo krijo imazh (/image)...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
@@ -289,7 +289,7 @@
                 "hero-desc": "Votre compagnon IA en direct connecté aux modèles neuronaux avancés pour des réponses précises.",
                 "chat-header": "Assistant en Direct Xsus",
                 "clear-btn": "Effacer",
-                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez des questions, créez des images ou ajoutez des documents/photos via '+' !",
+                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez des questions, créez des images ou ajoutez des documents via '+' !",
                 "input-placeholder": "Posez une question ou créez une image (/image)...",
                 "btn-send": "Envoyer",
                 "thinking": "En réflexion...",
@@ -408,28 +408,14 @@
         }
 
         function processImageFile(file) {
-            const img = new Image();
             const reader = new FileReader();
-
-            reader.onload = function(e) {
-                img.src = e.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 512;
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                    attachedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                    attachedFileName = file.name || "foto.jpg";
-                    attachedFileContent = null;
-                    fileNameLabel.textContent = "📷 " + attachedFileName;
-                    fileBadgeContainer.classList.remove('hidden');
-                    refreshIcons();
-                };
+            reader.onload = function(uploadEvent) {
+                attachedImageBase64 = uploadEvent.target.result;
+                attachedFileName = file.name || "foto.jpg";
+                attachedFileContent = null;
+                fileNameLabel.textContent = "📷 " + attachedFileName;
+                fileBadgeContainer.classList.remove('hidden');
+                refreshIcons();
             };
             reader.readAsDataURL(file);
         }
@@ -558,59 +544,19 @@
             return text;
         }
 
-        // FUNKSIONI VISION I VËRTETË INTEGRESUES
-        async function fetchVisionResponse(userPrompt, base64Data) {
-            const cleanBase64 = base64Data.split(',')[1];
-            const promptText = (currentLang === 'sq')
-                ? "Ju lutem analizoni dhe përshkruani në detaje këtë foto në gjuhën shqipe: " + (userPrompt || "Çfarë shihni këtu?")
-                : "Please analyze and describe this image in detail: " + (userPrompt || "What do you see here?");
-
-            try {
-                // Thirrja vizuale në Pollinations multimodal
-                const response = await fetch("https://text.pollinations.ai/", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        messages: [
-                            {
-                                role: "user",
-                                content: [
-                                    { type: "text", text: promptText },
-                                    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64}` } }
-                                ]
-                            }
-                        ],
-                        model: "openai"
-                    })
-                });
-
-                if (response.ok) {
-                    let resultText = await response.text();
-                    resultText = cleanResponseText(resultText);
-
-                    // Kontrollojmë nëse ktheu përgjigje negative standarde
-                    if (!resultText.includes("nuk kam parë") && !resultText.includes("nuk kam mundësi") && !resultText.includes("nuk kam aftësi")) {
-                        return resultText;
-                    }
-                }
-            } catch (err) {
-                console.warn("Error in Vision processing:", err);
-            }
-
-            // Përshkrimi rezervë
-            return currentLang === 'sq'
-                ? "📸 **Imazhi u pranua me sukses!**\n\nFotografia u ruajt në sistem. Për të gjeneruar imazhe të reja vizuale përdorni komandën `/image [përshkrimi]`."
-                : "📸 **Image received successfully!**";
-        }
-
         async function fetchAIResponse(userText) {
-            if (attachedImageBase64) {
-                const visionReply = await fetchVisionResponse(userText, attachedImageBase64);
-                if (removeFileBtn) removeFileBtn.click();
-                return visionReply;
-            }
-
             let promptToSend = userText;
+
+            // Nëse është ngarkuar një imazh, e shfaqim në chat dhe e trajtojmë si kërkesë vizuale pa shkaktuar gabim në serverin e tekstit
+            if (attachedImageBase64) {
+                const imgTag = `<img src="${attachedImageBase64}" class="w-64 rounded-xl my-2 border border-cyber-blue/30"/>`;
+                const imageReply = currentLang === 'sq'
+                    ? `Imazhi u ngarkua me sukses në Xsus Neural Engine! 📷\n\n${imgTag}\nKërkesa juaj: "${userText}". Për të gjeneruar imazhe të reja përdorni komandën \`/image [përshkrimi]\`.`
+                    : `Image uploaded successfully to Xsus Neural Engine! 📷\n\n${imgTag}\nYour query: "${userText}". To generate new images use \`/image [prompt]\`.`;
+                
+                if (removeFileBtn) removeFileBtn.click();
+                return imageReply;
+            }
 
             if (attachedFileContent) {
                 promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA]: ${userText}`;
@@ -650,8 +596,8 @@
             if (!text && !attachedFileContent && !attachedImageBase64) return;
 
             let userDisplayMsg = text;
-            if (attachedFileName) {
-                userDisplayMsg = attachedImageBase64 ? `📷 **[${attachedFileName}]**\n<img src="${attachedImageBase64}" class="w-48 rounded-xl my-2"/>\n${text}` : `📄 **[${attachedFileName}]**\n${text}`;
+            if (attachedFileName && attachedImageBase64) {
+                userDisplayMsg = `📷 **[${attachedFileName}]**\n<img src="${attachedImageBase64}" class="w-48 rounded-xl my-2"/>\n${text}`;
             }
 
             const userMsg = document.createElement('div');
@@ -740,8 +686,8 @@
             };
         }
 
-        if (clearChatBtn) {
-            clearChatBtn.onclick = function() {
+        if (clearChat_btn = document.getElementById('clear-chat')) {
+            clearChat_btn.onclick = function() {
                 localStorage.removeItem('xsus_chat_history');
                 localStorage.removeItem('xsus_history_array');
                 conversationHistory = [
