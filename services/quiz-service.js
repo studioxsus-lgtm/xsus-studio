@@ -34,20 +34,15 @@ const quizQuestions = [
 export async function checkQuiz(userQuery) {
     if (!userQuery) return null;
 
-    const lowerQuery = userQuery.trim().toLowerCase();
+    const lower = userQuery.trim().toLowerCase();
 
-    // Kontrollojmë fjalët kyçe për kuis
-    const isQuizRequest = lowerQuery.includes("kuis") || 
-                          lowerQuery.includes("quiz") || 
-                          lowerQuery.includes("pyetje diturie") || 
-                          lowerQuery.includes("pyetje kuis") ||
-                          lowerQuery.includes("pyetje");
+    // Kontrollojmë çdo fjalë kyçe të mundshme
+    if (lower.includes("kuis") || lower.includes("quiz") || lower.includes("pyetje")) {
+        const randomIndex = Math.floor(Math.random() * quizQuestions.length);
+        const q = quizQuestions[randomIndex];
 
-    if (!isQuizRequest) return null;
+        return `❓ **Pyetje Kuis [${q.category}]**\n\n**${q.question}**\n\n${q.options.join("\n")}\n\n---\n💡 *Zgjidh opsionin e saktë (A, B, C, D) ose shkruaj 'kuis' për pyetjen tjetër!*`;
+    }
 
-    // Zgjedhim një pyetje rastësore
-    const randomIndex = Math.floor(Math.random() * quizQuestions.length);
-    const q = quizQuestions[randomIndex];
-
-    return `❓ **Pyetje Kuis [${q.category}]**\n\n**${q.question}**\n\n${q.options.join("\n")}\n\n---\n💡 *Përgjigju me shkronjën përkatëse (A, B, C, ose D) ose kërko 'kuis' për pyetjen tjetër!*`;
+    return null;
 }
