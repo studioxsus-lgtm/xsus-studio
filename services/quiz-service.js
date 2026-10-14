@@ -6,11 +6,11 @@ const quizQuestions = [
         question: "Cili është kryeqyteti i Belgjikës?",
         options: ["A) Paris", "B) Brukseli", "C) Amsterdami", "D) Berlini"],
         answer: "B",
-        explanation: "Brukseli është kryeqyteti i Belgjikës dhe qendra kryesore e Bashkimit Evropian."
+        explanation: "Brukseli është kryeqyteti i Belgjikës dhe qendra kryesore e BE-së."
     },
     {
         category: "Teknologji",
-        question: "Çfarë do të thotë akronimi 'AI' në gjuhën angleze?",
+        question: "Çfarë do të thotë akronimi 'AI' në teknologji?",
         options: ["A) Automated Interface", "B) Artificial Intelligence", "C) Advanced Internet", "D) Access Information"],
         answer: "B",
         explanation: "AI do të thotë 'Artificial Intelligence' (Inteligjenca Artificiale)."
@@ -24,7 +24,7 @@ const quizQuestions = [
     },
     {
         category: "Dituri e Përgjithshme",
-        question: "Cila është planeti më i madh në sistemin tonë diellor?",
+        question: "Cili është planeti më i madh në sistemin tonë diellor?",
         options: ["A) Marsi", "B) Toka", "C) Jupiteri", "D) Saturni"],
         answer: "C",
         explanation: "Jupiteri është planeti më i madh në sistemin diellor."
@@ -34,20 +34,20 @@ const quizQuestions = [
 export async function checkQuiz(userQuery) {
     if (!userQuery) return null;
 
-    const query = userQuery.trim();
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = userQuery.trim().toLowerCase();
 
     // Kontrollojmë fjalët kyçe për kuis
     const isQuizRequest = lowerQuery.includes("kuis") || 
                           lowerQuery.includes("quiz") || 
                           lowerQuery.includes("pyetje diturie") || 
-                          lowerQuery.includes("pyetje kuis");
+                          lowerQuery.includes("pyetje kuis") ||
+                          lowerQuery.includes("pyetje");
 
     if (!isQuizRequest) return null;
 
-    // Zgjedhim një pyetje rastësore nga lista
+    // Zgjedhim një pyetje rastësore
     const randomIndex = Math.floor(Math.random() * quizQuestions.length);
     const q = quizQuestions[randomIndex];
 
-    return `❓ **Pyetje Kuis [${q.category}]**\n\n**${q.question}**\n\n${q.options.join("\n")}\n\n---\n💡 *Përgjigju me shkronjën përkatëse (p.sh. B) ose kërko një pyetje tjetër me 'Kuis'!*`;
+    return `❓ **Pyetje Kuis [${q.category}]**\n\n**${q.question}**\n\n${q.options.join("\n")}\n\n---\n💡 *Përgjigju me shkronjën përkatëse (A, B, C, ose D) ose kërko 'kuis' për pyetjen tjetër!*`;
 }
