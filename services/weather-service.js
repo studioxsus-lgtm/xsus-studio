@@ -3,48 +3,44 @@
 export async function checkWeather(userQuery) {
     const query = userQuery.toLowerCase().trim();
 
-    // Fjalët kyçe për zbulimin e kërkesës për motin
-    const weatherKeywords = [
-        "moti", "moti sot", "si është moti", "si eshte moti", "temperatura",
-        "weather", "temperature", "forecast",
-        "météo", "meteo", "température", "temperature"
-    ];
+    // Kontrollojmë nëse pyetja përmban fjalë kyçe të motit
+    const hasWeatherWord = query.includes("moti") || query.includes("temperatura") || 
+                           query.includes("weather") || query.includes("temperature") || 
+                           query.includes("météo") || query.includes("meteo");
 
-    const isWeatherRequest = weatherKeywords.some(keyword => query.includes(keyword));
-    if (!isWeatherRequest) return null;
+    if (!hasWeatherWord) return null;
 
-    // Identifikojmë gjuhën e përdoruesit
-    const isSq = query.includes("moti") || query.includes("temperatura") || query.includes("sot") || query.includes("ne") || query.includes("në");
-    const isFr = query.includes("météo") || query.includes("meteo") || query.includes("température") || query.includes("aujourd'hui");
+    const isSq = query.includes("moti") || query.includes("temperatura") || query.includes("sot") || query.includes("në") || query.includes("ne");
+    const isFr = query.includes("météo") || query.includes("meteo") || query.includes("température");
 
-    // Nxjerrim emrin e qytetit nga pyetja
+    // Nxjerrim çdo gjë pas fjalëve kyçe si emër qyteti (p.sh. "në kukes", "ne tirana")
     let city = query
-        .replace(/si është moti në|si eshte moti ne|moti në|moti ne|moti sot|moti|temperatura në|temperatura ne|temperatura/g, "")
-        .replace(/weather in|weather today|weather|temperature in|temperature|forecast for/g, "")
-        .replace(/météo à|meteo a|météo|meteo|température à|temperature/g, "")
+        .replace(/si është moti sot në|si eshte moti sot ne|si është moti në|si eshte moti ne|moti sot në|moti sot ne|moti në|moti ne|moti|temperatura në|temperatura ne|temperatura/g, "")
+        .replace(/weather today in|weather in|weather today|weather|temperature in|temperature|forecast for/g, "")
+        .replace(/météo aujourd'hui à|meteo aujourd'hui a|météo à|meteo a|météo|meteo|température à|temperature/g, "")
+        .replace(/sot|today|aujourd'hui|në|ne|a|à/g, "")
         .trim();
 
-    // Qyteti parazgjedhur nëse nuk shkruhet asnjë
+    // Nëse nuk mbetet qytet pas pastrimit, marrim fjalën e fundit të shkruar nga përdoruesi (p.sh. "kukes")
     if (!city || city.length < 2) {
-        city = "Brussels";
+        const words = query.split(" ");
+        city = words[words.length - 1]; // Merr fjalën e fundit, si p.sh. "kukes"
     }
 
     try {
-        // 1. Kërkojmë koordinatat e qytetit
         const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
         const geoRes = await fetch(geoUrl);
         const geoData = await geoRes.json();
 
         if (!geoData.results || geoData.results.length === 0) {
             return isSq ? `Nuk u gjet asnjë informacion për motin në qytetin "${city}".` :
-                   isFr ? `Aucune information météo trouvée pour la ville "${city}".` :
+                   isFr ? `Aucune information météo trouvée pour la ville "${city}" vag.` :
                           `Could not find weather information for "${city}".`;
         }
 
         const location = geoData.results[0];
         const { latitude, longitude, name, country } = location;
 
-        // 2. Marrim të dhënat e motit
         const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
         const weatherRes = await fetch(weatherUrl);
         const weatherData = await weatherRes.json();
@@ -54,19 +50,18 @@ export async function checkWeather(userQuery) {
         const { temperature, windspeed, weathercode } = weatherData.current_weather;
         const weatherStatus = getWeatherStatus(weathercode, isSq ? "sq" : isFr ? "fr" : "en");
 
-        // Formatojmë përgjigjen pa markdown yje apo pika të çuditshme
         if (isSq) {
-            return `🌤️ Moti në ${name}, ${country}:\n\n` +
+            return `Moti në ${name}, ${country}:\n\n` +
                    `- Temperatura: ${temperature}°C\n` +
                    `- Kushtet: ${weatherStatus.description} ${weatherStatus.icon}\n` +
                    `- Shpejtësia e erës: ${windspeed} km/h`;
         } else if (isFr) {
-            return `🌤️ Météo à ${name}, ${country}:\n\n` +
+            return `Météo à ${name}, ${country}:\n\n` +
                    `- Température: ${temperature}°C\n` +
                    `- Conditions: ${weatherStatus.description} ${weatherStatus.icon}\n` +
                    `- Vitesse du vent: ${windspeed} km/h`;
         } else {
-            return `🌤️ Weather in ${name}, ${country}:\n\n` +
+            return `Weather in ${name}, ${country}:\n\n` +
                    `- Temperature: ${temperature}°C\n` +
                    `- Conditions: ${weatherStatus.description} ${weatherStatus.icon}\n` +
                    `- Wind Speed: ${windspeed} km/h`;
