@@ -1,40 +1,38 @@
 // services/qr-service.js
 
 export async function checkQRCode(userQuery) {
+    if (!userQuery) return null;
+    
     const query = userQuery.trim();
     const lowerQuery = query.toLowerCase();
 
-    // Fjalët kyçe për kërkim të kodeve QR
-    const qrKeywords = [
-        "krijo qr", "gjenero qr", "kod qr", "qr code",
-        "create qr", "generate qr", "créer qr", "générer qr"
-    ];
+    // 1. Kontrollojmë nëse kërkesa përmban fjalën kyçe QR
+    const hasQRKeyword = lowerQuery.includes("qr") || 
+                         lowerQuery.includes("qrcode") || 
+                         lowerQuery.includes("kod qr") || 
+                         lowerQuery.includes("code qr");
 
-    const matchedKeyword = qrKeywords.find(keyword => lowerQuery.includes(keyword));
+    if (!hasQRKeyword) return null;
 
-    if (!matchedKeyword) return null;
+    // 2. Pastrojmë tekstin për të marrë vetëm linkun ose përmbajtjen
+    let targetText = query
+        .replace(/krijo|gjenero|make|create|generate|code|kod|qrcode|qr/gi, '')
+        .replace(/^[:\s"']+|[:\s"']+$|për|per|for|pour/gi, '')
+        .trim();
 
-    // Nxjerrmë tekstin ose linkun që dëshiron përdoruesi të kthejë në QR
-    let targetText = query;
-    qrKeywords.forEach(kw => {
-        targetText = targetText.replace(new RegExp(kw, 'gi'), '');
-    });
-    
-    // Pastrojmë shenjat e tepërta
-    targetText = targetText.replace(/^[:\s"']+|[:\s"']+$|për|per|for|pour/gi, '').trim();
-
+    // 3. Nëse nuk ka vendosur tekst/link, kërkojmë të vendosë një
     if (!targetText) {
-        return lowerQuery.includes("fr") ? "_Veuillez spécifier un lien ou un texte pour créer le code QR (ex: 'Krijo QR per https://kallabak.com')._" :
-               lowerQuery.includes("sq") ? "_Ju lutem specifikoni një link ose tekst për të krijuar kodin QR (p.sh: 'Krijo QR per https://kallabak.com')._" :
-               "_Please specify a link or text to generate the QR code (e.g., 'Create QR for https://kallabak.com')._";
+        return lowerQuery.includes("fr") ? "Ju lutem specifikoni një link ose tekst për të krijuar kodin QR (p.sh: 'Krijo QR https://kallabak.com')." :
+               lowerQuery.includes("sq") ? "Ju lutem specifikoni një link ose tekst për të krijuar kodin QR (p.sh: 'Krijo QR https://kallabak.com')." :
+               "Please specify a link or text to generate the QR code (e.g., 'Create QR https://kallabak.com').";
     }
 
-    // Linku publik i gjenerimit të QR kodesh
+    // 4. Gjenerojmë imazhin e kodit QR
     const encodedText = encodeURIComponent(targetText);
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodedText}`;
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodedText}`;
 
-    const isSq = lowerQuery.includes("krijo") || lowerQuery.includes("kod") || lowerQuery.includes("gjenero");
-    const isFr = lowerQuery.includes("créer") || lowerQuery.includes("générer");
+    const isSq = lowerQuery.includes("krijo") || lowerQuery.includes("për") || lowerQuery.includes("per") || lowerQuery.includes("kod");
+    const isFr = lowerQuery.includes("créer") || lowerQuery.includes("pour");
 
     let title = isSq ? `📱 **Kodi QR u gjenerua me sukses!**` :
                 isFr ? `📱 **Code QR généré avec succès!**` :
