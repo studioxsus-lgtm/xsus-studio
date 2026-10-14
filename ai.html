@@ -265,7 +265,7 @@
                 "input-placeholder": "Ask Xsus AI or create image (/image)...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
-                "sys-prompt": "You are Xsus AI, an advanced AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input."
+                "sys-prompt": "You are Xsus AI, an advanced vision-capable AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input."
             },
             sq: {
                 "nav-start": "Nis AI",
@@ -279,7 +279,7 @@
                 "input-placeholder": "Pyet Xsus AI apo krijo imazh (/image)...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
-                "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij."
+                "sys-prompt": "Ti je Xsus AI, një asistent i avancuar i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij."
             },
             fr: {
                 "nav-start": "Lancer IA",
@@ -545,23 +545,35 @@
         }
 
         async function fetchAIResponse(userText) {
-            let promptToSend = userText;
+            let messagesPayload = [...conversationHistory];
+            let activeModel = 'openai';
 
             if (attachedFileContent) {
-                promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA]: ${userText}`;
+                messagesPayload.push({
+                    role: 'user',
+                    content: `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA]: ${userText}`
+                });
             } else if (attachedImageBase64) {
-                promptToSend = `[Përdoruesi ka ngarkuar një imazh vizual: ${attachedFileName}]\nPyetja e përdoruesit për foton është: "${userText}". Analizo këtë kërkesë dhe ofro një përgjigje ose përshkrim të saktë.`;
+                // Përdorim strukturën e imazhit dhe modelin gemini për shikim
+                activeModel = 'gemini';
+                messagesPayload.push({
+                    role: 'user',
+                    content: [
+                        { type: "text", text: userText || "Përshkruaj këtë foto në detaje." },
+                        { type: "image_url", image_url: { url: attachedImageBase64 } }
+                    ]
+                });
+            } else {
+                messagesPayload.push({ role: 'user', content: userText });
             }
-
-            conversationHistory.push({ role: 'user', content: promptToSend });
 
             try {
                 const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        messages: conversationHistory,
-                        model: 'openai',
+                        messages: messagesPayload,
+                        model: activeModel,
                         search: true,
                         seed: Math.floor(Math.random() * 1000)
                     })
@@ -570,6 +582,8 @@
                 if (response.ok) {
                     let reply = await response.text();
                     reply = cleanResponseText(reply);
+                    
+                    conversationHistory.push({ role: 'user', content: userText + (attachedFileName ? ` [Foto: ${attachedFileName}]` : "") });
                     conversationHistory.push({ role: 'assistant', content: reply });
 
                     if (removeFileBtn) removeFileBtn.click();
