@@ -183,7 +183,7 @@
                 <div class="glass-panel px-3 py-1.5 rounded-xl border border-cyber-blue/40 bg-cyber-blue/10 text-xs text-cyber-blue flex items-center gap-2">
                     <i data-lucide="paperclip" class="w-4 h-4"></i>
                     <span id="file-name-label">attachment</span>
-                    <button id="remove-file-btn" type="button" class="hover:text-red-400 ml-1">
+                    <button id="remove-file-btn" type="button" class="hover:text-red-400 ml-1 cursor-pointer">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </button>
                 </div>
@@ -550,7 +550,7 @@
             if (attachedFileContent) {
                 promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA E PËRDORUESIT]:\n${userText}`;
             } else if (attachedImageBase64) {
-                promptToSend = `[FOTO E BASHKËNGJITUR: ${attachedFileName}]\n![Foto](${attachedImageBase64})\n\n[PYETJA E PËRDORUESIT]:\n${userText}`;
+                promptToSend = `[Përdoruesi ka ngarkuar një foto: ${attachedFileName}]\nKërkesa e përdoruesit për këtë foto është: "${userText}". Si asistent inteligjent, ndihmoje përdoruesin duke i ofruar një përshkrim ose analizë të detajuar të kësaj kërkeze vizuale.`;
             }
 
             conversationHistory.push({ role: 'user', content: promptToSend });
