@@ -74,7 +74,6 @@
             font-family: system-ui, -apple-system, sans-serif;
         }
 
-        /* STILI PËR TABELAT DHE MARKDOWN */
         .markdown-body table {
             width: 100%;
             border-collapse: collapse;
@@ -205,7 +204,7 @@
                     </button>
                 </div>
 
-                <!-- Inputet e fshehura për secilin funksion -->
+                <!-- Inputet e fshehura -->
                 <input type="file" id="doc-input" class="hidden" accept=".pdf,.txt,.md,.js,.json,.html,.css,.py">
                 <input type="file" id="img-input" class="hidden" accept="image/*">
                 <input type="file" id="cam-input" class="hidden" accept="image/*" capture="environment">
@@ -217,6 +216,7 @@
 
                 <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI or create image (/image)..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
                 
+                <!-- Butoni Send (I rregulluar plotësisht) -->
                 <button id="ai-send-btn" type="button" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
                     <i data-lucide="send" class="w-4 h-4"></i>
                     <span data-i18n="btn-send">Send</span>
@@ -607,7 +607,7 @@
 
             let reply = "";
 
-            // PRIORITET KRYESOR: Kontrollojmë router-in lokal (Math, QR, Kuis, etj.)
+            // Kontrollojmë router-in lokal (Math, QR, Kuis, etj.)
             if (!attachedFileContent && !attachedImageBase64 && smartRouter) {
                 try {
                     const routerReply = await smartRouter(text);
@@ -621,7 +621,7 @@
                 }
             }
 
-            // Nëse nuk kapet nga modulet lokale, thërrasim AI-në e jashtme
+            // Nëse nuk kapet lokalisht, thërrasim AI-në e jashtme
             if (!reply) {
                 reply = await fetchAIResponse(text);
             }
@@ -669,7 +669,7 @@
         if (clearChatBtn) {
             clearChatBtn.onclick = function() {
                 localStorage.removeItem('xsus_chat_history');
-                localStorage.removeItem('xsus_history_array');
+                localStorage.removeItem('xs_history_array');
                 conversationHistory = [
                     {
                         role: 'system',
@@ -682,6 +682,7 @@
         }
 
         loadChatFromLocalStorage();
+        refreshIcons();
     </script>
 </body>
 </html>
