@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Marked.js për Renderimin e Tabelave dhe Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- PDF.js për leximin e dokumenteve PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -72,7 +74,7 @@
             font-family: system-ui, -apple-system, sans-serif;
         }
 
-        /* STILI PËR TABELAT DHE FORMATIMIN MARKDOWN */
+        /* STILI PËR TABELAT DHE MARKDOWN */
         .markdown-body table {
             width: 100%;
             border-collapse: collapse;
@@ -197,9 +199,27 @@
                 </div>
             </div>
 
+            <!-- Pre-view element i skedarit të ngarkuar -->
+            <div id="file-badge-container" class="hidden mb-2 flex items-center gap-2">
+                <div class="glass-panel px-3 py-1.5 rounded-xl border border-cyber-blue/40 bg-cyber-blue/10 text-xs text-cyber-blue flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    <span id="file-name-label">document.pdf</span>
+                    <button id="remove-file-btn" type="button" class="hover:text-red-400 ml-1">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+
             <!-- Input Form Bar -->
             <div class="flex items-center gap-2">
+                <!-- Butoni i Ngarkimit të Skedarit (Upload File) -->
+                <input type="file" id="file-input" class="hidden" accept=".pdf,.txt,.md,.js,.json,.html,.css,.py">
+                <button id="upload-btn" type="button" title="Ngarko PDF ose Dokument" class="p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-slate-300 hover:text-cyber-blue hover:border-cyber-blue transition shrink-0 cursor-pointer">
+                    <i data-lucide="paperclip" class="w-4 h-4"></i>
+                </button>
+
                 <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI anything..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                
                 <button id="ai-send-btn" type="button" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
                     <i data-lucide="send" class="w-4 h-4"></i>
                     <span data-i18n="btn-send">Send</span>
@@ -214,19 +234,19 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT INTEGRESUES MBRYESË -->
+    <!-- SCRIPT INTEGRESUES -->
     <script type="module">
+        import { readDocumentFile } from './services/file-service.js';
+
         let smartRouterFunc = null;
 
-        // IMPORTI ME TENTATIVË SIGURIE TË DOSJES TËNDE SERVICES/ROUTER.JS
         try {
             const module = await import('./services/router.js');
             if (module && module.smartRouter) {
                 smartRouterFunc = module.smartRouter;
-                console.log("SmartRouter u ngarkua me sukses nga services/router.js!");
             }
         } catch (err) {
-            console.warn("SmartRouter nuk u ngarkua nga dosja services. Po përdoret motorri rezervë AI:", err);
+            console.warn("SmartRouter nuk u ngarkua nga dosja services:", err);
         }
 
         function refreshIcons() {
@@ -245,8 +265,8 @@
                 "hero-desc": "Your live AI companion connected directly to advanced neural models for accurate answers in any language.",
                 "chat-header": "Xsus Live Neural Assistant",
                 "clear-btn": "Clear Chat",
-                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, request information, or chat in Albanian, English, or French!",
-                "input-placeholder": "Ask Xsus AI anything...",
+                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, request information, or upload a PDF/text document to analyze!",
+                "input-placeholder": "Ask Xsus AI or analyze document...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
                 "sys-prompt": "You are Xsus AI, an advanced AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input."
@@ -259,8 +279,8 @@
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
                 "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
                 "clear-btn": "Pastro Bisedën",
-                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash në Shqip, Anglisht apo Frëngjisht!",
-                "input-placeholder": "Pyet Xsus AI për çdo gjë...",
+                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash ose ngarko një dokument PDF për analizim!",
+                "input-placeholder": "Pyet Xsus AI apo ngarko një dokument...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
                 "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij."
@@ -273,8 +293,8 @@
                 "hero-desc": "Votre compagnon IA en direct connecté aux modèles neuronaux avancés pour des réponses précises.",
                 "chat-header": "Assistant en Direct Xsus",
                 "clear-btn": "Effacer",
-                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez vos questions en français, anglais ou albanais !",
-                "input-placeholder": "Posez une question à Xsus AI...",
+                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez vos questions ou téléchargez un document PDF !",
+                "input-placeholder": "Posez une question ou analysez un document...",
                 "btn-send": "Envoyer",
                 "thinking": "En réflexion...",
                 "sys-prompt": "Vous êtes Xsus AI, créé par Xsus Studio. Répondez TOUJOURS dans la même langue que le message de l'utilisateur."
@@ -338,6 +358,51 @@
         const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
         const clearChatBtn = document.getElementById('clear-chat');
+        
+        // Elementët e Ngarkimit të Skedarëve
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileBadgeContainer = document.getElementById('file-badge-container');
+        const fileNameLabel = document.getElementById('file-name-label');
+        const removeFileBtn = document.getElementById('remove-file-btn');
+        let attachedFileContent = null;
+        let attachedFileName = null;
+
+        if (uploadBtn) {
+            uploadBtn.onclick = () => fileInput.click();
+        }
+
+        if (fileInput) {
+            fileInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    fileNameLabel.textContent = "Duke lexuar " + file.name + "...";
+                    fileBadgeContainer.classList.remove('hidden');
+                    refreshIcons();
+
+                    const text = await readDocumentFile(file);
+                    attachedFileContent = text;
+                    attachedFileName = file.name;
+                    fileNameLabel.textContent = file.name;
+                } catch (err) {
+                    alert(err);
+                    fileBadgeContainer.classList.add('hidden');
+                    attachedFileContent = null;
+                    attachedFileName = null;
+                }
+            };
+        }
+
+        if (removeFileBtn) {
+            removeFileBtn.onclick = () => {
+                fileInput.value = '';
+                attachedFileContent = null;
+                attachedFileName = null;
+                fileBadgeContainer.classList.add('hidden');
+            };
+        }
 
         function cleanResponseText(rawText) {
             return rawText
@@ -354,9 +419,15 @@
             return text;
         }
 
-        // MOTORRI AI ME SEARCH LIVE TEK INTERNETI
         async function fetchAIResponse(userText) {
-            conversationHistory.push({ role: 'user', content: userText });
+            let promptToSend = userText;
+
+            // Nëse ka skedar të bashkëngjitur, e përfshijmë tekstin e tij te kërkesa
+            if (attachedFileContent) {
+                promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA E PËRDORUESIT]:\n${userText}`;
+            }
+
+            conversationHistory.push({ role: 'user', content: promptToSend });
 
             try {
                 const response = await fetch('https://text.pollinations.ai/', {
@@ -374,6 +445,10 @@
                     let reply = await response.text();
                     reply = cleanResponseText(reply);
                     conversationHistory.push({ role: 'assistant', content: reply });
+
+                    // Pastrojmë skedarin e bashkëngjitur pas dërgimit me sukses
+                    if (removeFileBtn) removeFileBtn.click();
+
                     return reply;
                 } else {
                     return currentLang === 'sq' ? "Ndodhi një shkëputje e përkohshme me serverin." :
@@ -388,14 +463,16 @@
         }
 
         async function handleAIResponse() {
-            const text = aiInput.value.trim();
-            if (!text) return;
+            const text = aiInput.value.trim() || (attachedFileContent ? "Lutem bëj një përmbledhje të këtij dokumenti." : "");
+            if (!text && !attachedFileContent) return;
+
+            const userDisplayMsg = attachedFileName ? `📄 **[${attachedFileName}]**\n${text}` : text;
 
             const userMsg = document.createElement('div');
             userMsg.className = "flex items-start gap-3 justify-end";
             userMsg.innerHTML = `
                 <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tr-none text-sm text-slate-100 max-w-[85%] border-cyber-blue/30 bg-cyber-blue/10 leading-relaxed">
-                    <p>${text}</p>
+                    <p>${renderContent(userDisplayMsg)}</p>
                 </div>
                 <div class="w-9 h-9 rounded-xl bg-cyber-blue flex items-center justify-center font-bold text-black text-xs shrink-0 shadow-[0_0_12px_rgba(0,240,255,0.4)]">
                     YOU
@@ -420,8 +497,7 @@
 
             let reply = "";
 
-            // 1. SHIKOJME NESE SMARTROUTER E KAP PYETJEN TEK SERVICES (P.SH. FINANCE, WEATHER, NEWS ETJ.)
-            if (smartRouterFunc) {
+            if (!attachedFileContent && smartRouterFunc) {
                 try {
                     const routerReply = await smartRouterFunc(text);
                     if (routerReply) {
@@ -430,11 +506,10 @@
                         conversationHistory.push({ role: 'assistant', content: reply });
                     }
                 } catch (e) {
-                    console.warn("Ekzekutimi i router.js dështoi:", e);
+                    console.warn("Router error:", e);
                 }
             }
 
-            // 2. NESE ROUTER NUK KTHEN PERGJIGJE, PËRDORIM MOTORRIN AI ME SEARCH LIVE
             if (!reply) {
                 reply = await fetchAIResponse(text);
             }
