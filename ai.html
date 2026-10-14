@@ -94,21 +94,12 @@
         .markdown-body td {
             background: rgba(10, 10, 18, 0.4);
         }
-        .markdown-body ul {
-            list-style-type: disc;
-            padding-left: 20px;
-            margin: 8px 0;
-        }
-        .markdown-body ol {
-            list-style-type: decimal;
-            padding-left: 20px;
-            margin: 8px 0;
-        }
-        .markdown-body p {
-            margin-bottom: 8px;
-        }
-        .markdown-body p:last-child {
-            margin-bottom: 0;
+        .markdown-body img {
+            border-radius: 16px;
+            margin: 10px 0;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+            max-width: 100%;
         }
     </style>
 </head>
@@ -125,7 +116,6 @@
                 <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">AI</span></span>
             </a>
 
-            <!-- Desktop Menu -->
             <div class="hidden lg:flex items-center gap-6 font-medium text-xs text-slate-300">
                 <a href="ai.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Xsus AI</a>
                 <a href="app.html" class="hover:text-cyber-blue transition">Xsus App</a>
@@ -135,7 +125,6 @@
                 <a href="domain.html" class="hover:text-cyber-blue transition">Xsus Domain</a>
             </div>
 
-            <!-- Language Selector & CTA -->
             <div class="flex items-center gap-3">
                 <div class="glass-panel px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-300">
                     <i data-lucide="globe" class="w-3.5 h-3.5 text-cyber-blue"></i>
@@ -157,7 +146,6 @@
     <!-- HERO SECTION -->
     <header class="pt-36 pb-12 px-6 relative overflow-hidden">
         <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyber-purple/15 rounded-full blur-[140px] pointer-events-none"></div>
-        
         <div class="max-w-4xl mx-auto text-center relative z-10">
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-purple/30 text-cyber-purple text-xs font-semibold uppercase tracking-widest mb-6">
                 <i data-lucide="sparkles" class="w-4 h-4"></i> <span data-i18n="hero-badge">Real-Time Open Neural Engine</span>
@@ -173,7 +161,7 @@
 
     <!-- UNIVERSAL AI CHAT CONSOLE -->
     <section id="ai-console" class="py-6 px-4 md:px-6 max-w-4xl mx-auto w-full mb-20">
-        <div class="glass-panel p-4 md:p-6 rounded-3xl border border-cyber-purple/30 shadow-[0_0_50px_rgba(112,0,255,0.15)] flex flex-col h-[550px]">
+        <div class="glass-panel p-4 md:p-6 rounded-3xl border border-cyber-purple/30 shadow-[0_0_50px_rgba(112,0,255,0.15)] flex flex-col h-[580px]">
             
             <!-- Console Header -->
             <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
@@ -188,15 +176,6 @@
 
             <!-- Chat Messages Container -->
             <div id="ai-output-box" class="flex-1 bg-black/60 border border-white/10 rounded-2xl p-4 overflow-y-auto space-y-4 mb-4 text-sm">
-                <div class="flex items-start gap-3">
-                    <div class="xsus-custom-logo shrink-0">
-                        <span class="logo-x">X</span>
-                        <span class="logo-sus">sus</span>
-                    </div>
-                    <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-slate-200 max-w-[85%] leading-relaxed markdown-body">
-                        <p id="welcome-msg-text" data-i18n="ai-welcome">Hello! I am connected to live AI models. Ask me anything, request information, or chat in Albanian, English, or French!</p>
-                    </div>
-                </div>
             </div>
 
             <!-- Pre-view element i skedarit të ngarkuar -->
@@ -212,13 +191,12 @@
 
             <!-- Input Form Bar -->
             <div class="flex items-center gap-2">
-                <!-- Butoni i Ngarkimit të Skedarit (Upload File) -->
                 <input type="file" id="file-input" class="hidden" accept=".pdf,.txt,.md,.js,.json,.html,.css,.py">
                 <button id="upload-btn" type="button" title="Ngarko PDF ose Dokument" class="p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-slate-300 hover:text-cyber-blue hover:border-cyber-blue transition shrink-0 cursor-pointer">
                     <i data-lucide="paperclip" class="w-4 h-4"></i>
                 </button>
 
-                <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI anything..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI or create image (/image)..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
                 
                 <button id="ai-send-btn" type="button" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
                     <i data-lucide="send" class="w-4 h-4"></i>
@@ -246,7 +224,7 @@
                 smartRouterFunc = module.smartRouter;
             }
         } catch (err) {
-            console.warn("SmartRouter nuk u ngarkua nga dosja services:", err);
+            console.warn("SmartRouter nuk u ngarkua:", err);
         }
 
         function refreshIcons() {
@@ -254,7 +232,6 @@
                 lucide.createIcons();
             }
         }
-        refreshIcons();
 
         const i18nData = {
             en: {
@@ -265,8 +242,8 @@
                 "hero-desc": "Your live AI companion connected directly to advanced neural models for accurate answers in any language.",
                 "chat-header": "Xsus Live Neural Assistant",
                 "clear-btn": "Clear Chat",
-                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, request information, or upload a PDF/text document to analyze!",
-                "input-placeholder": "Ask Xsus AI or analyze document...",
+                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, create images with '/image', or upload a PDF document!",
+                "input-placeholder": "Ask Xsus AI or create image (/image)...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
                 "sys-prompt": "You are Xsus AI, an advanced AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input."
@@ -279,8 +256,8 @@
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
                 "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
                 "clear-btn": "Pastro Bisedën",
-                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash ose ngarko një dokument PDF për analizim!",
-                "input-placeholder": "Pyet Xsus AI apo ngarko një dokument...",
+                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash, krijo imazhe me '/image' ose ngarko një dokument PDF!",
+                "input-placeholder": "Pyet Xsus AI apo krijo imazh (/image)...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
                 "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij."
@@ -293,8 +270,8 @@
                 "hero-desc": "Votre compagnon IA en direct connecté aux modèles neuronaux avancés pour des réponses précises.",
                 "chat-header": "Assistant en Direct Xsus",
                 "clear-btn": "Effacer",
-                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez vos questions ou téléchargez un document PDF !",
-                "input-placeholder": "Posez une question ou analysez un document...",
+                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez des questions, créez des images avec '/image' ou analysez un document !",
+                "input-placeholder": "Posez une question ou créez une image (/image)...",
                 "btn-send": "Envoyer",
                 "thinking": "En réflexion...",
                 "sys-prompt": "Vous êtes Xsus AI, créé par Xsus Studio. Répondez TOUJOURS dans la même langue que le message de l'utilisateur."
@@ -310,6 +287,90 @@
                 content: i18nData['en']["sys-prompt"]
             }
         ];
+
+        const xsusAiLogoHTML = `
+            <div class="xsus-custom-logo shrink-0">
+                <span class="logo-x">X</span>
+                <span class="logo-sus">sus</span>
+            </div>
+        `;
+
+        const aiInput = document.getElementById('ai-input');
+        const aiSendBtn = document.getElementById('ai-send-btn');
+        const aiOutputBox = document.getElementById('ai-output-box');
+        const clearChatBtn = document.getElementById('clear-chat');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileBadgeContainer = document.getElementById('file-badge-container');
+        const fileNameLabel = document.getElementById('file-name-label');
+        const removeFileBtn = document.getElementById('remove-file-btn');
+        let attachedFileContent = null;
+        let attachedFileName = null;
+
+        // --- 1. LOCAL STORAGE (HISTORIKU I BISEDËS) ---
+        function saveChatToLocalStorage() {
+            const chatHTML = aiOutputBox.innerHTML;
+            localStorage.setItem('xsus_chat_history', chatHTML);
+            localStorage.setItem('xsus_history_array', JSON.stringify(conversationHistory));
+        }
+
+        function loadChatFromLocalStorage() {
+            const savedHTML = localStorage.getItem('xsus_chat_history');
+            const savedHistory = localStorage.getItem('xsus_history_array');
+
+            if (savedHTML && savedHTML.trim() !== '') {
+                aiOutputBox.innerHTML = savedHTML;
+                if (savedHistory) {
+                    try { conversationHistory = JSON.parse(savedHistory); } catch(e){}
+                }
+            } else {
+                showWelcomeMessage();
+            }
+            refreshIcons();
+            attachInteractiveButtons();
+        }
+
+        function showWelcomeMessage() {
+            const welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
+            aiOutputBox.innerHTML = `
+                <div class="flex items-start gap-3">
+                    ${xsusAiLogoHTML}
+                    <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-slate-200 max-w-[85%] leading-relaxed markdown-body">
+                        <p id="welcome-msg-text" data-i18n="ai-welcome">${welcomeText}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 2. AUDIO & COPY BUTTONS (LECITJA ME ZË DHE KOPJIMI) ---
+        function attachInteractiveButtons() {
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const parent = this.closest('.msg-bubble');
+                    const text = parent ? parent.innerText : '';
+                    navigator.clipboard.writeText(text);
+                    this.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-green-400"></i>`;
+                    refreshIcons();
+                    setTimeout(() => {
+                        this.innerHTML = `<i data-lucide="copy" class="w-3.5 h-3.5"></i>`;
+                        refreshIcons();
+                    }, 2000);
+                };
+            });
+
+            document.querySelectorAll('.speak-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const parent = this.closest('.msg-bubble');
+                    const text = parent ? parent.innerText : '';
+                    if (!text) return;
+
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = currentLang === 'sq' ? 'sq-AL' : (currentLang === 'fr' ? 'fr-FR' : 'en-US');
+                    window.speechSynthesis.speak(utterance);
+                };
+            });
+        }
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -346,27 +407,6 @@
         } else {
             setLanguage('en');
         }
-
-        const xsusAiLogoHTML = `
-            <div class="xsus-custom-logo shrink-0">
-                <span class="logo-x">X</span>
-                <span class="logo-sus">sus</span>
-            </div>
-        `;
-
-        const aiInput = document.getElementById('ai-input');
-        const aiSendBtn = document.getElementById('ai-send-btn');
-        const aiOutputBox = document.getElementById('ai-output-box');
-        const clearChatBtn = document.getElementById('clear-chat');
-        
-        // Elementët e Ngarkimit të Skedarëve
-        const fileInput = document.getElementById('file-input');
-        const uploadBtn = document.getElementById('upload-btn');
-        const fileBadgeContainer = document.getElementById('file-badge-container');
-        const fileNameLabel = document.getElementById('file-name-label');
-        const removeFileBtn = document.getElementById('remove-file-btn');
-        let attachedFileContent = null;
-        let attachedFileName = null;
 
         if (uploadBtn) {
             uploadBtn.onclick = () => fileInput.click();
@@ -422,7 +462,6 @@
         async function fetchAIResponse(userText) {
             let promptToSend = userText;
 
-            // Nëse ka skedar të bashkëngjitur, e përfshijmë tekstin e tij te kërkesa
             if (attachedFileContent) {
                 promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA E PËRDORUESIT]:\n${userText}`;
             }
@@ -446,7 +485,6 @@
                     reply = cleanResponseText(reply);
                     conversationHistory.push({ role: 'assistant', content: reply });
 
-                    // Pastrojmë skedarin e bashkëngjitur pas dërgimit me sukses
                     if (removeFileBtn) removeFileBtn.click();
 
                     return reply;
@@ -520,13 +558,25 @@
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
                 ${xsusAiLogoHTML}
-                <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed markdown-body">
-                    ${renderContent(reply)}
+                <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed markdown-body msg-bubble relative group">
+                    <div>${renderContent(reply)}</div>
+                    <div class="flex items-center gap-2 mt-3 pt-2 border-t border-white/10 text-xs text-slate-400">
+                        <button type="button" class="copy-btn hover:text-cyber-blue transition flex items-center gap-1">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+                        </button>
+                        <span class="text-white/20">•</span>
+                        <button type="button" class="speak-btn hover:text-cyber-blue transition flex items-center gap-1">
+                            <i data-lucide="volume-2" class="w-3.5 h-3.5"></i> Listen
+                        </button>
+                    </div>
                 </div>
             `;
             aiOutputBox.appendChild(aiMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
+
             refreshIcons();
+            attachInteractiveButtons();
+            saveChatToLocalStorage();
         }
 
         if (aiSendBtn) {
@@ -544,25 +594,21 @@
 
         if (clearChatBtn) {
             clearChatBtn.onclick = function() {
+                localStorage.removeItem('xsus_chat_history');
+                localStorage.removeItem('xsus_history_array');
                 conversationHistory = [
                     {
                         role: 'system',
                         content: i18nData[currentLang]["sys-prompt"]
                     }
                 ];
-                const welcomeText = i18nData[currentLang]["ai-welcome"] || i18nData["en"]["ai-welcome"];
-
-                aiOutputBox.innerHTML = `
-                    <div class="flex items-start gap-3">
-                        ${xsusAiLogoHTML}
-                        <div class="glass-panel p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed markdown-body">
-                            <p id="welcome-msg-text" data-i18n="ai-welcome">${welcomeText}</p>
-                        </div>
-                    </div>
-                `;
+                showWelcomeMessage();
                 refreshIcons();
             };
         }
+
+        // Ngarkojmë historikun gjatë hyrjes në faqen
+        loadChatFromLocalStorage();
     </script>
 </body>
 </html>
