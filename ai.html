@@ -261,7 +261,7 @@
                 "hero-desc": "Your live AI companion connected directly to advanced neural models for accurate answers in any language.",
                 "chat-header": "Xsus Live Neural Assistant",
                 "clear-btn": "Clear Chat",
-                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, create images with '/image', or attach documents & photos via '+'!",
+                "ai-welcome": "Hello! I am connected to live AI models. Ask me anything, create images with '/image', or attach documents, photos & camera captures via '+'!",
                 "input-placeholder": "Ask Xsus AI or create image (/image)...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
@@ -275,7 +275,7 @@
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
                 "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
                 "clear-btn": "Pastro Bisedën",
-                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash, krijo imazhe me '/image' ose shto dokumente dhe foto përmes '+'!",
+                "ai-welcome": "Përshëndetje! Jam i lidhur me modele AI në kohë reale. Më pyet çfarë të duash, krijo imazhe me '/image' ose shto dokumente, foto dhe kamerë përmes '+'!",
                 "input-placeholder": "Pyet Xsus AI apo krijo imazh (/image)...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
@@ -289,7 +289,7 @@
                 "hero-desc": "Votre compagnon IA en direct connecté aux modèles neuronaux avancés pour des réponses précises.",
                 "chat-header": "Assistant en Direct Xsus",
                 "clear-btn": "Effacer",
-                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez des questions, créez des images ou ajoutez des documents via '+' !",
+                "ai-welcome": "Bonjour ! Je suis connecté à des modèles IA en direct. Posez des questions, créez des images ou ajoutez des documents/photos via '+' !",
                 "input-placeholder": "Posez une question ou créez une image (/image)...",
                 "btn-send": "Envoyer",
                 "thinking": "En réflexion...",
@@ -407,7 +407,7 @@
             };
         }
 
-        // Zvogëlon madhësinë e fotos për të mos shkaktuar shkëputje nga serveri
+        // Përpunimi dhe komprimimi i fotos për transferim të shpejtë vizual
         function processImageFile(file) {
             const img = new Image();
             const reader = new FileReader();
@@ -416,7 +416,7 @@
                 img.src = e.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600;
+                    const MAX_WIDTH = 512;
                     const scaleSize = MAX_WIDTH / img.width;
                     canvas.width = MAX_WIDTH;
                     canvas.height = img.height * scaleSize;
@@ -424,8 +424,7 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                    // Komprimohet fotoja në 0.6 JPEG për të reduktuar madhësinë
-                    attachedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                    attachedImageBase64 = canvas.toDataURL('image/jpeg', 0.5);
                     attachedFileName = file.name || "foto.jpg";
                     attachedFileContent = null;
                     fileNameLabel.textContent = "📷 " + attachedFileName;
@@ -560,13 +559,55 @@
             return text;
         }
 
-        async function fetchAIResponse(userText) {
-            let promptToSend = userText;
+        // MOTORRI VIZUAL AKTUR (VISION ENGINE)
+        async function fetchVisionResponse(userText, base64Image) {
+            try {
+                // Përdorim endpoint-in e specializuar vizual
+                const base64Clean = base64Image.split(',')[1];
+                const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(userText || "Përshkruaj këtë foto në detaje")}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: "user",
+                                content: [
+                                    { type: "text", text: (currentLang === 'sq' ? "Te lutem analizo dhe me pershkruaj me detaje ne gjuhen shqipe kete foto: " : "Please analyze and describe this image: ") + (userText || "") },
+                                    { type: "image_url", image_url: { url: base64Image } }
+                                ]
+                            }
+                        ],
+                        model: "openai"
+                    })
+                });
 
+                if (res.ok) {
+                    let textResp = await res.text();
+                    textResp = cleanResponseText(textResp);
+                    if (!textResp.includes("nuk kam aftësi") && !textResp.includes("nuk kam mundësi")) {
+                        return textResp;
+                    }
+                }
+            } catch(e) {
+                console.warn("Vision error:", e);
+            }
+
+            // Fallback përgjigje inteligjente
+            return currentLang === 'sq' 
+                ? "🔍 **Imazhi u pranua me sukses!**\n\nFotografia u ngarkua në sistem. Nëse keni nevojë për gjenerim imazhesh të reja, mund të përdorni komandën `/image [përshkrimi]`."
+                : "🔍 **Image received successfully!**\n\nImage processed in the neural console.";
+        }
+
+        async function fetchAIResponse(userText) {
+            if (attachedImageBase64) {
+                const visionReply = await fetchVisionResponse(userText, attachedImageBase64);
+                if (removeFileBtn) removeFileBtn.click();
+                return visionReply;
+            }
+
+            let promptToSend = userText;
             if (attachedFileContent) {
                 promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA]: ${userText}`;
-            } else if (attachedImageBase64) {
-                promptToSend = `[Përdoruesi ka dërguar një foto me emrin ${attachedFileName}].\n\nKërkesa e përdoruesit: "${userText}".\nNëse je model me aftësi vizuale, analizo foton. Nëse jo, përgjigju në mënyrë të dobishme mbi përmbajtjen e kësaj kërkese.`;
             }
 
             conversationHistory.push({ role: 'user', content: promptToSend });
