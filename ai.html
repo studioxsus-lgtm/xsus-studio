@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Marked.js për parser-in e Markdown (Tabela, Bolding, Vijat) -->
+    <!-- Marked.js për Renderimin e Tabelave dhe Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         tailwind.config = {
@@ -72,7 +72,7 @@
             font-family: system-ui, -apple-system, sans-serif;
         }
 
-        /* STILI PËR TABELAT DHE FORMATIMIN NË CHAT */
+        /* STILI PËR TABELAT DHE FORMATIMIN MARKDOWN */
         .markdown-body table {
             width: 100%;
             border-collapse: collapse;
@@ -214,8 +214,21 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT -->
-    <script>
+    <!-- SCRIPT INTEGRESUES MBRYESË -->
+    <script type="module">
+        let smartRouterFunc = null;
+
+        // IMPORTI ME TENTATIVË SIGURIE TË DOSJES TËNDE SERVICES/ROUTER.JS
+        try {
+            const module = await import('./services/router.js');
+            if (module && module.smartRouter) {
+                smartRouterFunc = module.smartRouter;
+                console.log("SmartRouter u ngarkua me sukses nga services/router.js!");
+            }
+        } catch (err) {
+            console.warn("SmartRouter nuk u ngarkua nga dosja services. Po përdoret motorri rezervë AI:", err);
+        }
+
         function refreshIcons() {
             if (window.lucide) {
                 lucide.createIcons();
@@ -236,7 +249,7 @@
                 "input-placeholder": "Ask Xsus AI anything...",
                 "btn-send": "Send",
                 "thinking": "Thinking...",
-                "sys-prompt": "You are Xsus AI, an advanced AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input (if the user writes in Albanian, answer in Albanian; if in French, answer in French; if in English, answer in English)."
+                "sys-prompt": "You are Xsus AI, an advanced AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input."
             },
             sq: {
                 "nav-start": "Nis AI",
@@ -250,7 +263,7 @@
                 "input-placeholder": "Pyet Xsus AI për çdo gjë...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke menduar...",
-                "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij (nëse shkruan shqip ktheji përgjigje në shqip, nëse frëngjisht në frëngjisht, etj.)."
+                "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij."
             },
             fr: {
                 "nav-start": "Lancer IA",
@@ -334,7 +347,6 @@
                 .trim();
         }
 
-        // FUNKSION I RRI PËR KTHIMIN E MARKDOWN NË HTML ZYRTAR
         function renderContent(text) {
             if (window.marked) {
                 return marked.parse(text);
@@ -342,6 +354,7 @@
             return text;
         }
 
+        // MOTORRI AI ME SEARCH LIVE TEK INTERNETI
         async function fetchAIResponse(userText) {
             conversationHistory.push({ role: 'user', content: userText });
 
@@ -352,6 +365,7 @@
                     body: JSON.stringify({
                         messages: conversationHistory,
                         model: 'openai',
+                        search: true,
                         seed: Math.floor(Math.random() * 1000)
                     })
                 });
@@ -404,11 +418,29 @@
             aiOutputBox.appendChild(loadingMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            const reply = await fetchAIResponse(text);
+            let reply = "";
+
+            // 1. SHIKOJME NESE SMARTROUTER E KAP PYETJEN TEK SERVICES (P.SH. FINANCE, WEATHER, NEWS ETJ.)
+            if (smartRouterFunc) {
+                try {
+                    const routerReply = await smartRouterFunc(text);
+                    if (routerReply) {
+                        reply = routerReply;
+                        conversationHistory.push({ role: 'user', content: text });
+                        conversationHistory.push({ role: 'assistant', content: reply });
+                    }
+                } catch (e) {
+                    console.warn("Ekzekutimi i router.js dështoi:", e);
+                }
+            }
+
+            // 2. NESE ROUTER NUK KTHEN PERGJIGJE, PËRDORIM MOTORRIN AI ME SEARCH LIVE
+            if (!reply) {
+                reply = await fetchAIResponse(text);
+            }
 
             document.getElementById('loading-bubble')?.remove();
 
-            // PËRDORIM RENDERCONTENT PËR TË NDERTUAR TABELAT DHE FORMATIMIN VIZUAL
             const aiMsg = document.createElement('div');
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
