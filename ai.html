@@ -234,17 +234,7 @@
     <!-- SCRIPT INTEGRESUES -->
     <script type="module">
         import { readDocumentFile } from './services/file-service.js';
-
-        let smartRouterFunc = null;
-
-        try {
-            const module = await import('./services/router.js');
-            if (module && module.smartRouter) {
-                smartRouterFunc = module.smartRouter;
-            }
-        } catch (err) {
-            console.warn("SmartRouter nuk u ngarkua:", err);
-        }
+        import { smartRouter } from './services/router.js';
 
         function refreshIcons() {
             if (window.lucide) {
@@ -451,7 +441,6 @@
         }
 
         function showWelcomeMessage() {
-            // E lëmë dritaren e bisedës të pastër në fillim, pa mesazh automatik
             aiOutputBox.innerHTML = '';
         }
 
@@ -618,9 +607,10 @@
 
             let reply = "";
 
-            if (!attachedFileContent && !attachedImageBase64 && smartRouterFunc) {
+            // PRIORITET KRYESOR: Kontrollojmë router-in lokal (Math, QR, Kuis, etj.)
+            if (!attachedFileContent && !attachedImageBase64 && smartRouter) {
                 try {
-                    const routerReply = await smartRouterFunc(text);
+                    const routerReply = await smartRouter(text);
                     if (routerReply) {
                         reply = routerReply;
                         conversationHistory.push({ role: 'user', content: text });
@@ -631,6 +621,7 @@
                 }
             }
 
+            // Nëse nuk kapet nga modulet lokale, thërrasim AI-në e jashtme
             if (!reply) {
                 reply = await fetchAIResponse(text);
             }
