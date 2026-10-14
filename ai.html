@@ -38,11 +38,12 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .xsus-brand-logo {
-            width: 38px;
-            height: 38px;
-            min-width: 38px;
-            border-radius: 12px;
+        /* Stili i saktë i logos Xsus (X lart, sus poshtë me të vogla) */
+        .xsus-custom-logo {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 10px;
             background: #0a0a12;
             border: 1.5px solid #00f0ff;
             display: flex;
@@ -50,24 +51,22 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
-            line-height: 0.9;
+            line-height: 1;
             user-select: none;
         }
-        .xsus-brand-logo .logo-x {
-            font-size: 17px;
+        .xsus-custom-logo .logo-x {
+            font-size: 16px;
             font-weight: 900;
             color: #00f0ff;
-            text-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
-            font-family: sans-serif;
+            text-shadow: 0 0 6px rgba(0, 240, 255, 0.8);
         }
-        .xsus-brand-logo .logo-sus {
-            font-size: 9px;
+        .xsus-custom-logo .logo-sus {
+            font-size: 8px;
             font-weight: 700;
             color: #7000ff;
             text-transform: lowercase;
-            letter-spacing: 0.5px;
-            font-family: sans-serif;
             margin-top: 1px;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
@@ -77,8 +76,8 @@
     <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-4 md:px-6 py-4">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-2.5">
-                <!-- LOGOJA E RE XSUS NË KRYE -->
-                <div class="xsus-brand-logo">
+                <!-- LOGOJA E RE NË KRYE -->
+                <div class="xsus-custom-logo">
                     <span class="logo-x">X</span>
                     <span class="logo-sus">sus</span>
                 </div>
@@ -141,7 +140,7 @@
                     <div class="w-3 h-3 rounded-full bg-cyber-blue animate-pulse"></div>
                     <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Live Neural Assistant</span>
                 </div>
-                <button id="clear-chat" type="button" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
+                <button id="clear-chat" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10">
                     <i data-lucide="trash-2" class="w-3 h-3"></i> <span data-i18n="clear-btn">Clear Chat</span>
                 </button>
             </div>
@@ -149,8 +148,8 @@
             <!-- Chat Messages Container -->
             <div id="ai-output-box" class="flex-1 bg-black/60 border border-white/10 rounded-2xl p-4 overflow-y-auto space-y-4 mb-4 text-sm">
                 <div class="flex items-start gap-3">
-                    <!-- LOGOJA E RE XSUS (X LART, SUS POSHTË) -->
-                    <div class="xsus-brand-logo shrink-0">
+                    <!-- LOGOJA E RE E XSUS TE MESAZHI -->
+                    <div class="xsus-custom-logo shrink-0">
                         <span class="logo-x">X</span>
                         <span class="logo-sus">sus</span>
                     </div>
@@ -163,9 +162,8 @@
             <!-- Input Form Bar -->
             <div class="flex items-center gap-2">
                 <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI anything..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
-                <button id="ai-send-btn" type="button" onclick="window.handleAIResponse()" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
-                    <i data-lucide="send" class="w-4 h-4"></i>
-                    <span data-i18n="btn-send">Send</span>
+                <button id="ai-send-btn" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0">
+                    <i data-lucide="send" class="w-4 h-4"></i> <span data-i18n="btn-send">Send</span>
                 </button>
             </div>
 
@@ -177,14 +175,11 @@
         <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
     </footer>
 
-    <!-- SCRIPT FOR DYNAMIC I18N AND CLEAN AI INTEGRATION -->
+    <!-- SCRIPT FOR DYNAMIC I18N AND CLEAN AI INTEGRATION WITH SMART ROUTER -->
     <script type="module">
         import { smartRouter } from './services/router.js';
 
-        // Ripërtëritja e ikonave Lucide
-        setTimeout(() => {
-            if (window.lucide) lucide.createIcons();
-        }, 100);
+        lucide.createIcons();
 
         // 1. MULTI-LANGUAGE DICTIONARY
         const i18nData = {
@@ -259,14 +254,15 @@
             setLanguage('en');
         }
 
-        // KODI HTML I LOGOS TEK MESAZHET (X LART, SUS POSHTË)
+        // HTML SHABLONI I LOGOS PËR FLLUSKAT E MESAZHEVE
         const xsusAiLogoHTML = `
-            <div class="xsus-brand-logo shrink-0">
+            <div class="xsus-custom-logo shrink-0">
                 <span class="logo-x">X</span>
                 <span class="logo-sus">sus</span>
             </div>
         `;
 
+        // 2. AI ENGINE LOGIC
         let conversationHistory = [
             {
                 role: 'system',
@@ -275,6 +271,7 @@
         ];
 
         const aiInput = document.getElementById('ai-input');
+        const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
         const clearChatBtn = document.getElementById('clear-chat');
 
@@ -317,7 +314,7 @@
             }
         }
 
-        window.handleAIResponse = async function() {
+        async function handleAIResponse() {
             const text = aiInput.value.trim();
             if(!text) return;
 
@@ -336,7 +333,7 @@
             aiInput.value = '';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Loading Bubble with Xsus Logo
+            // Display Dynamic Language Loading Bubble
             const loadingText = i18nData[currentLang]["thinking"] || i18nData["en"]["thinking"];
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
@@ -350,6 +347,7 @@
             aiOutputBox.appendChild(loadingMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
+            // 1. KONTROLLI ME SMART ROUTER
             let reply = "";
             try {
                 const routerReply = await smartRouter(text);
@@ -359,16 +357,18 @@
                     conversationHistory.push({ role: 'assistant', content: reply });
                 }
             } catch (e) {
-                console.warn("SmartRouter Check:", e);
+                console.warn("SmartRouter opcional:", e);
             }
 
             if (!reply) {
+                // 2. Përdorim motorin e përgjithshëm AI
                 reply = await fetchAIResponse(text);
             }
 
+            // Remove loading
             document.getElementById('loading-bubble')?.remove();
 
-            // Display AI Response
+            // Display Clean AI Response
             const aiMsg = document.createElement('div');
             aiMsg.className = "flex items-start gap-3";
             aiMsg.innerHTML = `
@@ -379,10 +379,11 @@
             `;
             aiOutputBox.appendChild(aiMsg);
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
-        };
+        }
 
+        aiSendBtn?.addEventListener('click', handleAIResponse);
         aiInput?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') window.handleAIResponse();
+            if(e.key === 'Enter') handleAIResponse();
         });
 
         clearChatBtn?.addEventListener('click', () => {
