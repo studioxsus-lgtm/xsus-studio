@@ -3,6 +3,7 @@ import { loadCustomKnowledge, checkCustomKnowledge } from './custom-knowledge-se
 import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
 import { checkWeather } from './weather-service.js';
+import { checkFinance } from './finance-service.js';
 
 loadCustomKnowledge();
 
@@ -14,15 +15,19 @@ export async function smartRouter(userQuery) {
     const customAnswer = checkCustomKnowledge(query);
     if (customAnswer) return customAnswer;
 
-    // 2. Moti live
+    // 2. Financë (Kripto & Aksione)
+    const financeAnswer = await checkFinance(query);
+    if (financeAnswer) return financeAnswer;
+
+    // 3. Moti live
     const weatherAnswer = await checkWeather(query);
     if (weatherAnswer) return weatherAnswer;
 
-    // 3. Lajmet live
+    // 4. Lajmet live
     const newsAnswer = await checkNews(query);
     if (newsAnswer) return newsAnswer;
 
-    // 4. Wikipedia
+    // 5. Wikipedia
     const wikiAnswer = await checkWikipedia(query);
     if (wikiAnswer) return wikiAnswer;
 
