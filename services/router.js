@@ -23,47 +23,47 @@ export async function smartRouter(userQuery) {
     const imageAnswer = await checkImageGeneration(query);
     if (imageAnswer) return imageAnswer;
 
-    // 2. Identiteti Xsus Studio
-    const customAnswer = checkCustomKnowledge(query);
-    if (customAnswer) return customAnswer;
+    // 2. Gjeneruesi i Kodeve QR (E vendosim në krye që ta kapë menjëherë!)
+    const qrAnswer = await checkQRCode(query);
+    if (qrAnswer) return qrAnswer;
 
-    // 3. Konvertuesi i Njësive & Valutave
-    const converterAnswer = await checkConverter(query);
-    if (converterAnswer) return converterAnswer;
-
-    // 4. Llogaritjet Matematikore & Përqindjet (Lokal)
+    // 3. Llogaritjet Matematikore
     const mathAnswer = await checkMath(query);
     if (mathAnswer) return mathAnswer;
 
-    // 5. Gjeneruesi i Kodeve QR (Lokal)
-    const qrAnswer = await checkQRCode(query);
-    if (qrAnswer) return qrAnswer;
+    // 4. Identiteti Xsus Studio
+    const customAnswer = checkCustomKnowledge(query);
+    if (customAnswer) return customAnswer;
+
+    // 5. Konvertuesi i Njësive
+    const converterAnswer = await checkConverter(query);
+    if (converterAnswer) return converterAnswer;
 
     // 6. Përkthyesi
     const translationAnswer = await checkTranslation(query);
     if (translationAnswer) return translationAnswer;
 
-    // 7. Financë & Kurse Valutore Live
+    // 7. Financë
     const financeAnswer = await checkFinance(query);
     if (financeAnswer) return financeAnswer;
 
-    // 8. Moti live
+    // 8. Moti
     const weatherAnswer = await checkWeather(query);
     if (weatherAnswer) return weatherAnswer;
 
-    // 9. Lajmet live
+    // 9. Lajmet
     const newsAnswer = await checkNews(query);
     if (newsAnswer) return newsAnswer;
 
-    // 10. Lajmet Sportive Live
+    // 10. Sporti
     const sportsAnswer = await checkSports(query);
     if (sportsAnswer) return sportsAnswer;
 
-    // 11. Shënimet & Përkujtuesit (Lokal)
+    // 11. Shënimet
     const notesAnswer = await checkNotes(query);
     if (notesAnswer) return notesAnswer;
 
-    // 12. Ide për Përmbajtje & Skenare
+    // 12. Idetë
     const ideasAnswer = await checkContentIdeas(query);
     if (ideasAnswer) return ideasAnswer;
 
