@@ -7,7 +7,7 @@ import { checkNotes } from './notes-service.js';
 import { checkContentIdeas } from './ideas-service.js';
 import { checkMath } from './math-service.js';
 import { checkQRCode } from './qr-service.js';
-import { checkQuiz } from './quiz-service.js'; // 1. Importimi i modulit Quiz
+import { checkQuiz } from './quiz-service.js';
 import { checkWeather } from './weather-service.js';
 import { checkFinance } from './finance-service.js';
 import { checkTranslation } from './translation-service.js';
@@ -28,13 +28,13 @@ export async function smartRouter(userQuery) {
     const qrAnswer = await checkQRCode(query);
     if (qrAnswer) return qrAnswer;
 
-    // 3. Llogaritjet Matematikore
-    const mathAnswer = await checkMath(query);
-    if (mathAnswer) return mathAnswer;
-
-    // 4. Moduli i Pyetjeve Kuis (Lokal)
+    // 3. Moduli i Pyetjeve Kuis (Lokal - kapet menjëherë)
     const quizAnswer = await checkQuiz(query);
     if (quizAnswer) return quizAnswer;
+
+    // 4. Llogaritjet Matematikore
+    const mathAnswer = await checkMath(query);
+    if (mathAnswer) return mathAnswer;
 
     // 5. Identiteti Xsus Studio
     const customAnswer = checkCustomKnowledge(query);
