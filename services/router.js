@@ -19,7 +19,7 @@ try {
     console.warn("Gabim te custom knowledge:", e);
 }
 
-// Funksion për pastrimin e tekstit nga aksentet (ë -> e, ç -> c)
+// Funksion për pastrimin e tekstit nga aksentet (ë -> e, ç -> c, é -> e)
 function normalizeText(text) {
     if (!text) return "";
     return text
@@ -51,12 +51,81 @@ function checkSportLive(userQuery) {
     return null;
 }
 
+// Moduli Islamik Multilingval (AL / EN / FR)
+function checkIslamicKnowledge(userQuery) {
+    if (!userQuery) return null;
+    const clean = normalizeText(userQuery);
+
+    // 1. ORARET & NAMAZET (Prayers)
+    const prayerKeywords = [
+        'namaz', 'falje', 'orari i namazit', 'sabahu', 'dreka', 'ikindia', 'akshami', 'jacia', 
+        'fejr', 'dhuhr', 'asr', 'maghrib', 'isha', 'prayer times', 'salat', 'heures de priere', 'priere', 'fajr', 'dhohr'
+    ];
+    if (prayerKeywords.some(kw => clean.includes(kw))) {
+        return `🕌 **Informacion mbi Namazet (Daily Prayers / Prières quotidiennes)**\n\n` +
+               `* **🌅 Fajr / Sabahu:** Prière du matin (para lindjes së diellit / before sunrise).\n` +
+               `* **☀️ Dhuhr / Dreka:** Prière du midi (mesdita / midday).\n` +
+               `* **⛅ Asr / Ikindia:** Prière de l'après-midi (pasdite / afternoon).\n` +
+               `* **🌅 Maghrib / Akshami:** Prière du coucher du soleil (perëndimi i diellit / sunset).\n` +
+               `* **🌌 Isha / Jacia:** Prière de la nuit (nata / night).\n\n` +
+               `---\n` +
+               `💡 **Të dhëna të dobishme / Useful info:**\n` +
+               `* **SQ:** Namazi është shtylla e dytë e Islamit. Oraret e sakta varen nga vendndodhja jote gjeografike.\n` +
+               `* **EN:** Prayer is the second pillar of Islam. Exact times depend on your geographical location.\n` +
+               `* **FR:** La prière est le deuxième pilier de l'Islam. Les horaires exacts dépendent de votre position géographique.`;
+    }
+
+    // 2. RAMAZANI & AGJËRIMI (Ramadan & Fasting)
+    const ramadanKeywords = ['ramazan', 'ramadan', 'agjerim', 'agjerimi', 'fasting', 'jeune', 'imsak', 'iftar'];
+    if (ramadanKeywords.some(kw => clean.includes(kw))) {
+        return `🌙 **Ramazani & Agjërimi (Ramadan & Fasting / Le Jeûne)**\n\n` +
+               `* **🇦🇱 Shqip:** Ramazani është muaji i shenjtë i agjërimit, vetëpërmbajtjes dhe devotshmërisë. Agjërimi zgjat nga Imsaku (syfyri) deri në Aksham (iftari).\n` +
+               `* **🇬🇧 English:** Ramadan is the holy month of fasting, self-reflection, and prayer. Fasting lasts from dawn (Imsak/Suhoor) to sunset (Iftar).\n` +
+               `* **🇫🇷 Français:** Le Ramadan est le mois sacré du jeûne, de la prière et du partage. Le jeûne dure de l'aube (Imsak/Suhoor) au coucher du soleil (Iftar).\n\n` +
+               `---\n` +
+               `✨ **Të mirat e Ramazanit / Benefits:**\n` +
+               `* Pastrim shpirtëror dhe trupor (Spiritual & physical purification).\n` +
+               `* Ndihmë për të varfërit dhe solidaritet (Charity & solidarity).`;
+    }
+
+    // 3. ZEQATI (Zakat / Financial Charity)
+    const zakatKeywords = ['zeqat', 'zekat', 'zakat', 'alms'];
+    if (zakatKeywords.some(kw => clean.includes(kw))) {
+        return `💰 **Zeqati (Zakat - Financial Obligations & Charity)**\n\n` +
+               `* **🇦🇱 Shqip:** Zeqati është detyrim vjetor financiar (2.5%) mbi pasurinë që kalon nivelin e caktuar (Nisabin), për t'iu dhënë të varfërve dhe të nevojtarëve.\n` +
+               `* **🇬🇧 English:** Zakat is a mandatory annual charity (2.5%) on qualifying wealth above the Nisab threshold, distributed to those in need.\n` +
+               `* **🇫🇷 Français:** La Zakat est l'aumône obligatoire annuelle (2,5%) sur la richesse dépassant le seuil du Nisab, destinée aux personnes nécessiteuses.`;
+    }
+
+    // 4. HAXHI (Hajj / Pilgrimage)
+    const hajjKeywords = ['haxh', 'haxhi', 'hajj', 'haj', 'pelerinage', 'mecca', 'qabe', 'kaaba'];
+    if (hajjKeywords.some(kw => clean.includes(kw))) {
+        return `🕋 **Haxhi (Hajj Pilgrimage / Le Pèlerinage)**\n\n` +
+               `* **🇦🇱 Shqip:** Haxhi është udhëtimi i shenjtë në Mekë, i obligueshëm të paktën një herë në jetë për çdo musliman që ka mundësi financiare dhe shëndetësore.\n` +
+               `* **🇬🇧 English:** Hajj is the sacred pilgrimage to Mecca, mandatory once in a lifetime for every adult Muslim who is physically and financially able.\n` +
+               `* **🇫🇷 Français:** Le Hajj est le pèlerinage sacré à La Mecque, obligatoire une fois dans la vie pour tout musulman qui en a les moyens physiques et financiers.`;
+    }
+
+    // 5. KUSHTET E ISLAMIT (5 Pillars of Islam)
+    const pillarsKeywords = ['kushtet e islamit', 'pillars of islam', 'piliers de l islam', 'shahada', 'deshmia'];
+    if (pillarsKeywords.some(kw => clean.includes(kw))) {
+        return `🌟 **5 Kushtet e Islamit (5 Pillars of Islam / Les 5 Piliers de l'Islam)**\n\n` +
+               `1. **Shahada (Dëshmia / Testimony):** Besimi në një Zot të Vetëm (Allah) dhe Muhamedin a.s. Si të dërguar të Tij.\n` +
+               `2. **Salat (Namazi / Prayer):** Kryerja e 5 namazeve ditore.\n` +
+               `3. **Zakat (Zeqati / Almsgiving):** Dhënia e lëmoshës vjetore prej 2.5%.\n` +
+               `4. **Sawm (Agjërimi / Fasting):** Agjërimi i muajit të Ramazanit.\n` +
+               `5. **Hajj (Haxhi / Pilgrimage):** Udhëtimi në Mekë për ata që kanë mundësi.`;
+    }
+
+    return null;
+}
+
 export async function smartRouter(userQuery) {
     if (!userQuery) return null;
     const clean = normalizeText(userQuery);
 
     // -------------------------------------------------------------
-    // 1. UTILITETET LOKALE (Fjalëkalim, Ngjyra, Sport Live)
+    // 1. UTILITETET LOKALE (Fjalëkalim, Ngjyra, Sport Live, Moduli Islamik)
     // -------------------------------------------------------------
     if (
         clean.includes("fjalekalim") || 
@@ -83,6 +152,9 @@ export async function smartRouter(userQuery) {
 
     const sportAnswer = checkSportLive(userQuery);
     if (sportAnswer) return sportAnswer;
+
+    const islamicAnswer = checkIslamicKnowledge(userQuery);
+    if (islamicAnswer) return islamicAnswer;
 
     // -------------------------------------------------------------
     // 2. TË GJITHA SHËRBIMET E TJERA EKZISTUESE
