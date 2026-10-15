@@ -19,20 +19,28 @@ try {
     console.warn("Gabim te custom knowledge:", e);
 }
 
+// Funksion për pastrimin e tekstit nga aksentet (ë -> e, ç -> c)
+function normalizeText(text) {
+    if (!text) return "";
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+}
+
 export async function smartRouter(userQuery) {
     if (!userQuery) return null;
-    const text = userQuery.toLowerCase().trim();
+    const clean = normalizeText(userQuery);
 
     // -------------------------------------------------------------
-    // 0. KONTROLLI I PARË DHE ABSOLUT: FJALËKALIMI
-    // (Ky bllok vendoset këtu që asnjë shërbim tjetër të mos e ndalojë)
+    // 1. KONTROLLI I UTILITETEVE LOKALE (FJALËKALIM & NGJYRA HEX)
     // -------------------------------------------------------------
     if (
-        text.includes("fjal") || 
-        text.includes("kalim") || 
-        text.includes("password") || 
-        text.includes("pass") ||
-        text.includes("fjalekalim")
+        clean.includes("fjalekalim") || 
+        clean.includes("fjalikalim") || 
+        clean.includes("password") || 
+        clean.includes("pass")
     ) {
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*!";
         let pass = "";
@@ -42,27 +50,19 @@ export async function smartRouter(userQuery) {
         return `🔒 **Fjalëkalim i Sigurt i Gjeneruar:**\n\`\`\`text\n${pass}\n\`\`\`\n*(Kopjoje dhe ruaje në një vend të sigurt!)*`;
     }
 
-    // -------------------------------------------------------------
-    // 1. GJENERUESI I NGJYRAVE HEX
-    // -------------------------------------------------------------
     if (
-        text.includes("ngjyr") || 
-        text.includes("ngjyre") || 
-        text.includes("color") || 
-        text.includes("hex")
+        clean.includes("ngjyre") || 
+        clean.includes("color") || 
+        clean.includes("hex")
     ) {
         const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
         return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
     }
 
     // -------------------------------------------------------------
-    // 2. SHËRBIMET E TJERA
+    // 2. TË GJITHA SHËRBIMET TUAJA EKZISTUESE (Të Mbrojtura me Try/Catch)
     // -------------------------------------------------------------
     try {
-        if (typeof checkCustomKnowledge === 'function') {
-            const custom = checkCustomKnowledge(userQuery);
-            if (custom) return custom;
-        }
         if (typeof checkImageGeneration === 'function') {
             const img = await checkImageGeneration(userQuery);
             if (img) return img;
@@ -75,6 +75,10 @@ export async function smartRouter(userQuery) {
             const math = await checkMath(userQuery);
             if (math) return math;
         }
+        if (typeof checkCustomKnowledge === 'function') {
+            const custom = checkCustomKnowledge(userQuery);
+            if (custom) return custom;
+        }
         if (typeof checkConverter === 'function') {
             const conv = await checkConverter(userQuery);
             if (conv) return conv;
@@ -83,8 +87,36 @@ export async function smartRouter(userQuery) {
             const tr = await checkTranslation(userQuery);
             if (tr) return tr;
         }
+        if (typeof checkFinance === 'function') {
+            const fin = await checkFinance(userQuery);
+            if (fin) return fin;
+        }
+        if (typeof checkWeather === 'function') {
+            const weather = await checkWeather(userQuery);
+            if (weather) return weather;
+        }
+        if (typeof checkNews === 'function') {
+            const news = await checkNews(userQuery);
+            if (news) return news;
+        }
+        if (typeof checkSports === 'function') {
+            const sports = await checkSports(userQuery);
+            if (sports) return sports;
+        }
+        if (typeof checkNotes === 'function') {
+            const notes = await checkNotes(userQuery);
+            if (notes) return notes;
+        }
+        if (typeof checkContentIdeas === 'function') {
+            const ideas = await checkContentIdeas(userQuery);
+            if (ideas) return ideas;
+        }
+        if (typeof checkWikipedia === 'function') {
+            const wiki = await checkWikipedia(userQuery);
+            if (wiki) return wiki;
+        }
     } catch (err) {
-        console.warn("Gabim në router:", err);
+        console.warn("Gabim gjatë ekzekutimit të moduleve sekondare:", err);
     }
 
     return null;
