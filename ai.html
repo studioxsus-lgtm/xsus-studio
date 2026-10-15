@@ -101,6 +101,12 @@
             box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
             max-width: 100%;
         }
+
+        /* Rregullimi i hapësirës dhe distancës së sigurt poshtë (Space Fix) */
+        #ai-console {
+            padding-bottom: max(50px, env(safe-area-inset-bottom)) !important;
+            margin-bottom: calc(30px + env(safe-area-inset-bottom));
+        }
     </style>
 </head>
 <body class="bg-[#06060c] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-cyber-blue selection:text-black">
