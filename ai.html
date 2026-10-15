@@ -649,8 +649,8 @@
 
                         refreshIcons();
                         attachInteractiveButtons();
-                        saveChatToLocalStorage();
-                        return; // Ndalon thirrjen e API-së së jashtme
+                        saveChatToLocalStorage(); // Ruajtja e bisedës para mbylljes së router-it lokal
+                        return; 
                     }
                 } catch (e) {
                     console.warn("Router error:", e);
@@ -701,21 +701,19 @@
             };
         }
 
-        if (clearChatTab || clearChatBtn) {
-            if (clearChatBtn) {
-                clearChatBtn.onclick = function() {
-                    localStorage.removeItem('xsus_chat_history');
-                    localStorage.removeItem('xsus_history_array');
-                    conversationHistory = [
-                        {
-                            role: 'system',
-                            content: i18nData[currentLang]["sys-prompt"]
-                        }
-                    ];
-                    showWelcomeMessage();
-                    refreshIcons();
-                };
-            }
+        if (clearChatBtn) {
+            clearChatBtn.onclick = function() {
+                localStorage.removeItem('xsus_chat_history');
+                localStorage.removeItem('xsus_history_array');
+                conversationHistory = [
+                    {
+                        role: 'system',
+                        content: i18nData[currentLang]["sys-prompt"]
+                    }
+                ];
+                showWelcomeMessage();
+                refreshIcons();
+            };
         }
 
         loadChatFromLocalStorage();
