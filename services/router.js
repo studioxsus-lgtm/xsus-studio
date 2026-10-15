@@ -16,11 +16,12 @@ import { checkImageGeneration } from './image-service.js';
 try {
     loadCustomKnowledge();
 } catch (e) {
-    console.warn("Gabim në ngarkimin e custom knowledge:", e);
+    console.warn("Gabim te custom knowledge:", e);
 }
 
-// Funksion për pastrimin e tekstit nga aksentet (ë -> e, ç -> c)
+// Funksion për pastrimin e tekstit nga aksentet dhe hapat
 function normalizeText(text) {
+    if (!text) return "";
     return text
         .toLowerCase()
         .normalize("NFD")
@@ -28,11 +29,15 @@ function normalizeText(text) {
         .trim();
 }
 
-// 1. Moduli Lokal: Gjenerues i Fjalëkalimeve
-function checkPasswordGenerator(userQuery) {
+export async function smartRouter(userQuery) {
     if (!userQuery) return null;
     const clean = normalizeText(userQuery);
-    
+
+    // -------------------------------------------------------------
+    // 1. KONTROLLI I MENSËGJIHSHËM LOKAL (Ekzekutohet Pa Gabime)
+    // -------------------------------------------------------------
+
+    // A. Gjeneruesi i Fjalëkalimeve
     if (
         clean.includes("fjalekalim") || 
         clean.includes("fjalikalim") || 
@@ -46,14 +51,8 @@ function checkPasswordGenerator(userQuery) {
         }
         return `🔒 **Fjalëkalim i Sigurt i Gjeneruar:**\n\`\`\`text\n${pass}\n\`\`\`\n*(Kopjoje dhe ruaje në një vend të sigurt!)*`;
     }
-    return null;
-}
 
-// 2. Moduli Lokal: Gjenerues i Ngjyrave Hex
-function checkColorGenerator(userQuery) {
-    if (!userQuery) return null;
-    const clean = normalizeText(userQuery);
-    
+    // B. Gjeneruesi i Ngjyrave Hex
     if (
         clean.includes("ngjyre") || 
         clean.includes("color") || 
@@ -62,50 +61,37 @@ function checkColorGenerator(userQuery) {
         const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
         return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
     }
-    return null;
-}
 
-export async function smartRouter(userQuery) {
-    if (!userQuery) return null;
-    const query = userQuery.trim();
-
-    // 1. Fjalëkalimi Lokal (Kapet i pari)
-    const passwordAnswer = checkPasswordGenerator(query);
-    if (passwordAnswer) return passwordAnswer;
-
-    // 2. Ngjyra Hex Lokale
-    const colorAnswer = checkColorGenerator(query);
-    if (colorAnswer) return colorAnswer;
-
-    // 3. Modulet e tjera
-    if (typeof checkImageGeneration === 'function') {
-        const imageAnswer = await checkImageGeneration(query);
-        if (imageAnswer) return imageAnswer;
-    }
-
-    if (typeof checkQRCode === 'function') {
-        const qrAnswer = await checkQRCode(query);
-        if (qrAnswer) return qrAnswer;
-    }
-
-    if (typeof checkMath === 'function') {
-        const mathAnswer = await checkMath(query);
-        if (mathAnswer) return mathAnswer;
-    }
-
-    if (typeof checkCustomKnowledge === 'function') {
-        const customAnswer = checkCustomKnowledge(query);
-        if (customAnswer) return customAnswer;
-    }
-
-    if (typeof checkConverter === 'function') {
-        const converterAnswer = await checkConverter(query);
-        if (converterAnswer) return converterAnswer;
-    }
-
-    if (typeof checkTranslation === 'function') {
-        const translationAnswer = await checkTranslation(query);
-        if (translationAnswer) return translationAnswer;
+    // -------------------------------------------------------------
+    // 2. SHËRBIMET E TJERA (Të mbrojtura me Try/Catch)
+    // -------------------------------------------------------------
+    try {
+        if (typeof checkImageGeneration === 'function') {
+            const imageAnswer = await checkImageGeneration(userQuery);
+            if (imageAnswer) return imageAnswer;
+        }
+        if (typeof checkQRCode === 'function') {
+            const qrAnswer = await checkQRCode(userQuery);
+            if (qrAnswer) return qrAnswer;
+        }
+        if (typeof checkMath === 'function') {
+            const mathAnswer = await checkMath(userQuery);
+            if (mathAnswer) return mathAnswer;
+        }
+        if (typeof checkCustomKnowledge === 'function') {
+            const customAnswer = checkCustomKnowledge(userQuery);
+            if (customAnswer) return customAnswer;
+        }
+        if (typeof checkConverter === 'function') {
+            const converterAnswer = await checkConverter(userQuery);
+            if (converterAnswer) return converterAnswer;
+        }
+        if (typeof checkTranslation === 'function') {
+            const translationAnswer = await checkTranslation(userQuery);
+            if (translationAnswer) return translationAnswer;
+        }
+    } catch (err) {
+        console.warn("Gabim në shërbimet sekondare të router-it:", err);
     }
 
     return null;
