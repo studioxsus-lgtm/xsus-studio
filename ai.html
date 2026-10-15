@@ -221,7 +221,7 @@
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
 
-                <!-- Textarea e re me zgjerim automatik (Auto-expanding) -->
+                <!-- Textarea e re me zgjerim automatik dhe pa bllokim space -->
                 <textarea id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI or create image (/image)..." rows="1" class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none resize-none overflow-y-hidden min-h-[52px] max-h-[150px] leading-relaxed"></textarea>
                 
                 <button id="ai-send-btn" type="button" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
@@ -341,7 +341,7 @@
         let attachedFileName = null;
         let attachedImageBase64 = null;
 
-        // Auto-expanding Textarea & Enter key event handling
+        // Auto-expanding Textarea & Lirimi i tastit Space (Pa e dërguar para kohe)
         if (aiInput) {
             aiInput.addEventListener('input', function() {
                 this.style.height = 'auto';
@@ -349,6 +349,7 @@
             });
 
             aiInput.addEventListener('keydown', function(e) {
+                // Lejohet vetëm Enter pa Shift për dërgim nga kompjuteri, space punon normalisht
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleAIResponse();
