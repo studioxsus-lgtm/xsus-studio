@@ -451,7 +451,6 @@
         }
 
         function showWelcomeMessage() {
-            // E lëmë dritaren e bisedës të pastër në fillim, pa mesazh automatik
             aiOutputBox.innerHTML = '';
         }
 
@@ -651,7 +650,7 @@
                         refreshIcons();
                         attachInteractiveButtons();
                         saveChatToLocalStorage();
-                        return; // Ndalon çdo thirrje tjetër dytësore
+                        return; // Ndalon thirrjen e API-së së jashtme
                     }
                 } catch (e) {
                     console.warn("Router error:", e);
@@ -702,19 +701,21 @@
             };
         }
 
-        if (clearChatBtn) {
-            clearChatBtn.onclick = function() {
-                localStorage.removeItem('xsus_chat_history');
-                localStorage.removeItem('xsus_history_array');
-                conversationHistory = [
-                    {
-                        role: 'system',
-                        content: i18nData[currentLang]["sys-prompt"]
-                    }
-                ];
-                showWelcomeMessage();
-                refreshIcons();
-            };
+        if (clearChatTab || clearChatBtn) {
+            if (clearChatBtn) {
+                clearChatBtn.onclick = function() {
+                    localStorage.removeItem('xsus_chat_history');
+                    localStorage.removeItem('xsus_history_array');
+                    conversationHistory = [
+                        {
+                            role: 'system',
+                            content: i18nData[currentLang]["sys-prompt"]
+                        }
+                    ];
+                    showWelcomeMessage();
+                    refreshIcons();
+                };
+            }
         }
 
         loadChatFromLocalStorage();
