@@ -1,9 +1,4 @@
-// ============================================================================
-// XSUS AI - JAVASCRIPT MASTER KNOWLEDGE BASE
-// Version: 6.0.0 (Bilingual Structured Engine)
-// ============================================================================
-
-export const javascriptMasterKnowledge = {
+const javascriptMasterKnowledge = {
   // ==========================================
   // 1. BAZAT E JAVASCRIPT-IT / FUNDAMENTALS
   // ==========================================
@@ -813,4 +808,3 @@ console.log(content);
 if (typeof module !== "undefined" && module.exports) {
   module.exports = javascriptMasterKnowledge;
 }
-
