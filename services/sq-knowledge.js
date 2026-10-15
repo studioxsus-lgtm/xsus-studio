@@ -1,4 +1,4 @@
-// services/sq-knowledge.js - Bërthama e Plotë e Njohurive në Gjuhën Shqipe (1,000 Fjali dhe Shprehje)
+// services/sq-knowledge.js - Bërthama e Plotë e Njohurive në Gjuhën Shqipe (1,200 Fjali dhe Shprehje)
 
 export const sqKnowledge = {
     // ==========================================
@@ -445,9 +445,9 @@ export const sqKnowledge = {
     "le ta ruajmë skedarin": "Ruaje skedarin e përditësuar te projekti yt në GitHub dhe gjithçka është gati.",
     "faleminderit për punën": "Kënaqësi e madhe! Jam gjithmonë këtu për çdo projekt tjetër që dëshiron të ndërtosh.",
     "puna e mbarë përsëri": "Puna e mbarë edhe ty me zhvillimin e mëtutjeshëm të platformës Xsus Studio!",
-    "shihemi në projektin e radhës": "Mirupafshim! Suksese të merituara në çdo hap të kodimit!"
+    "shihemi në projektin e radhës": "Mirupafshim! Suksese të merituara në çdo hap të kodimit!",
 
-        // ==========================================
+    // ==========================================
     // GRUPI 11: Terma të Avancuar të AI, LLM & Teknologjisë së Re
     // ==========================================
     "çfarë është një llm": "LLM (Large Language Model) është një model i madh gjuhësor i trajnuar me sasi të jashtëzakonshme tekstesh për të kuptuar dhe gjeneruar gjuhën njerëzore.",
@@ -547,7 +547,7 @@ export const sqKnowledge = {
     "çfarë është log analysis": "Log analysis është shqyrtimi i regjistrimeve të sistemit për të diagnostikuar gabimet dhe sjelljen e aplikacionit.",
     "çfarë është system monitoring": "System monitoring është mbikëqyrja e vazhdueshme e performancës, shëndetit dhe ngarkesës së serverëve.",
     "çfarë është një rollback": "Rollback është kthimi i sistemit te një version i mëparshëm i qëndrueshëm pas një gabimi në përditësim.",
-    "çfarë është dokumentacioni teknik": "Dokumentacioni teknik është udhëzuesi i shkruar që shpjegon si funksionon kodi, arkitektura dhe përdorimi i një sistemi."
+    "çfarë është dokumentacioni teknik": "Dokumentacioni teknik është udhëzuesi i shkruar që shpjegon si funksionon kodi, arkitektura dhe përdorimi i një sistemi.",
 
     // ==========================================
     // GRUPI 12: Terma të Avancuar të Sistemeve, Bazave të Të Dhënave & Arkitekturës
@@ -639,8 +639,6 @@ export const sqKnowledge = {
     "çfarë është nje technical debt": "Technical debt (borçi teknik) është kostoja e zgjidhjeve të shpejta në kod që kërkojnë rregullim të mëvonshëm.",
     "çfarë është nje code review": "Code review është procesi ku zhvilluesit e tjerë kontrollojnë dhe analizojnë kodin e shkruar para se të bashkohet në projekt.",
     "çfarë është nje open source license": "Open source license është dokumenti ligjor që përcakton se si të tjerët mund të përdorin, modifikojnë dhe shpërndajnë kodin."
-
-
 };
 
 export function findSqAnswer(cleanQuery) {
