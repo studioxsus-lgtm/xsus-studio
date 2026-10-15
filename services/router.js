@@ -19,30 +19,19 @@ try {
     console.warn("Gabim te custom knowledge:", e);
 }
 
-// Funksion për pastrimin e tekstit nga aksentet dhe hapat
-function normalizeText(text) {
-    if (!text) return "";
-    return text
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim();
-}
-
 export async function smartRouter(userQuery) {
     if (!userQuery) return null;
-    const clean = normalizeText(userQuery);
+    const text = userQuery.toLowerCase().trim();
 
     // -------------------------------------------------------------
-    // 1. KONTROLLI I MENSËGJIHSHËM LOKAL (Ekzekutohet Pa Gabime)
+    // 1. GJENERUESI I FJALËKALIMEVE (Kontroll direkt i fjalëve kyçe)
     // -------------------------------------------------------------
-
-    // A. Gjeneruesi i Fjalëkalimeve
     if (
-        clean.includes("fjalekalim") || 
-        clean.includes("fjalikalim") || 
-        clean.includes("password") || 
-        clean.includes("pass")
+        text.includes("fjal") || 
+        text.includes("kalim") || 
+        text.includes("password") || 
+        text.includes("pass") ||
+        text.includes("fjalekalim")
     ) {
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*!";
         let pass = "";
@@ -52,46 +41,49 @@ export async function smartRouter(userQuery) {
         return `🔒 **Fjalëkalim i Sigurt i Gjeneruar:**\n\`\`\`text\n${pass}\n\`\`\`\n*(Kopjoje dhe ruaje në një vend të sigurt!)*`;
     }
 
-    // B. Gjeneruesi i Ngjyrave Hex
+    // -------------------------------------------------------------
+    // 2. GJENERUESI I NGJYRAVE HEX
+    // -------------------------------------------------------------
     if (
-        clean.includes("ngjyre") || 
-        clean.includes("color") || 
-        clean.includes("hex")
+        text.includes("ngjyr") || 
+        text.includes("ngjyre") || 
+        text.includes("color") || 
+        text.includes("hex")
     ) {
         const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
         return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
     }
 
     // -------------------------------------------------------------
-    // 2. SHËRBIMET E TJERA (Të mbrojtura me Try/Catch)
+    // 3. SHËRBIMET E TJERA
     // -------------------------------------------------------------
     try {
         if (typeof checkImageGeneration === 'function') {
-            const imageAnswer = await checkImageGeneration(userQuery);
-            if (imageAnswer) return imageAnswer;
+            const img = await checkImageGeneration(userQuery);
+            if (img) return img;
         }
         if (typeof checkQRCode === 'function') {
-            const qrAnswer = await checkQRCode(userQuery);
-            if (qrAnswer) return qrAnswer;
+            const qr = await checkQRCode(userQuery);
+            if (qr) return qr;
         }
         if (typeof checkMath === 'function') {
-            const mathAnswer = await checkMath(userQuery);
-            if (mathAnswer) return mathAnswer;
+            const math = await checkMath(userQuery);
+            if (math) return math;
         }
         if (typeof checkCustomKnowledge === 'function') {
-            const customAnswer = checkCustomKnowledge(userQuery);
-            if (customAnswer) return customAnswer;
+            const custom = checkCustomKnowledge(userQuery);
+            if (custom) return custom;
         }
         if (typeof checkConverter === 'function') {
-            const converterAnswer = await checkConverter(userQuery);
-            if (converterAnswer) return converterAnswer;
+            const conv = await checkConverter(userQuery);
+            if (conv) return conv;
         }
         if (typeof checkTranslation === 'function') {
-            const translationAnswer = await checkTranslation(userQuery);
-            if (translationAnswer) return translationAnswer;
+            const tr = await checkTranslation(userQuery);
+            if (tr) return tr;
         }
     } catch (err) {
-        console.warn("Gabim në shërbimet sekondare të router-it:", err);
+        console.warn("Gabim në router:", err);
     }
 
     return null;
