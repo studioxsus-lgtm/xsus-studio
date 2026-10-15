@@ -15,7 +15,7 @@ import { checkImageGeneration } from './image-service.js';
 
 loadCustomKnowledge();
 
-// Lista e pyetjeve të kuisit të integruara direkt këtu
+// Quiz local
 const localQuizQuestions = [
     {
         category: "Gjeografi",
@@ -28,18 +28,6 @@ const localQuizQuestions = [
         question: "Çfarë do të thotë akronimi 'AI' në teknologji?",
         options: ["A) Automated Interface", "B) Artificial Intelligence", "C) Advanced Internet", "D) Access Information"],
         answer: "B"
-    },
-    {
-        category: "Sport",
-        question: "Sa lojtarë ka një ekip futbolli në fushë gjatë lojës?",
-        options: ["A) 9", "B) 10", "C) 11", "D) 12"],
-        answer: "C"
-    },
-    {
-        category: "Dituri e Përgjithshme",
-        question: "Cili është planeti më i madh në sistemin tonë diellor?",
-        options: ["A) Marsi", "B) Toka", "C) Jupiteri", "D) Saturni"],
-        answer: "C"
     }
 ];
 
@@ -55,14 +43,20 @@ function checkLocalQuiz(userQuery) {
     return null;
 }
 
-// Mjet Lokal: Gjenerues i Fjalëkalimeve
+// Générateur de mot de passe local (supporte les accents et variantes)
 function checkPasswordGenerator(userQuery) {
     if (!userQuery) return null;
     const lower = userQuery.trim().toLowerCase();
-    if (lower.includes("fjalëkalim") || lower.includes("password")) {
+    
+    if (
+        lower.includes("fjalëkalim") || 
+        lower.includes("fjalekalim") || 
+        lower.includes("password") || 
+        lower.includes("pass")
+    ) {
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*!";
         let pass = "";
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 14; i++) {
             pass += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return `🔒 **Fjalëkalim i Sigurt i Gjeneruar:**\n\`\`\`text\n${pass}\n\`\`\`\n*(Kopjoje dhe ruaje në një vend të sigurt!)*`;
@@ -70,11 +64,17 @@ function checkPasswordGenerator(userQuery) {
     return null;
 }
 
-// Mjet Lokal: Gjenerues i Ngjyrave Hex
+// Générateur de couleur Hex local
 function checkColorGenerator(userQuery) {
     if (!userQuery) return null;
     const lower = userQuery.trim().toLowerCase();
-    if (lower.includes("ngjyrë") || lower.includes("color") || lower.includes("hex")) {
+    
+    if (
+        lower.includes("ngjyrë") || 
+        lower.includes("ngjyre") || 
+        lower.includes("color") || 
+        lower.includes("hex")
+    ) {
         const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
         return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
     }
@@ -82,70 +82,70 @@ function checkColorGenerator(userQuery) {
 }
 
 export async function smartRouter(userQuery) {
+    if (!userQuery) return null;
     const query = userQuery.trim();
-    if (!query) return null;
 
-    // 1. Gjeneruesi i Imazheve
-    const imageAnswer = await checkImageGeneration(query);
-    if (imageAnswer) return imageAnswer;
-
-    // 2. Moduli i Kuisit
-    const quizAnswer = checkLocalQuiz(query);
-    if (quizAnswer) return quizAnswer;
-
-    // 3. Gjeneruesi i Fjalëkalimeve (Lokal)
+    // 1. Mot de passe local
     const passwordAnswer = checkPasswordGenerator(query);
     if (passwordAnswer) return passwordAnswer;
 
-    // 4. Gjeneruesi i Ngjyrave Hex (Lokal)
+    // 2. Couleur Hex locale
     const colorAnswer = checkColorGenerator(query);
     if (colorAnswer) return colorAnswer;
 
-    // 5. Gjeneruesi i Kodeve QR
+    // 3. Générateur d'images
+    const imageAnswer = await checkImageGeneration(query);
+    if (imageAnswer) return imageAnswer;
+
+    // 4. Quiz
+    const quizAnswer = checkLocalQuiz(query);
+    if (quizAnswer) return quizAnswer;
+
+    // 5. Code QR
     const qrAnswer = await checkQRCode(query);
     if (qrAnswer) return qrAnswer;
 
-    // 6. Llogaritjet Matematikore
+    // 6. Mathématiques
     const mathAnswer = await checkMath(query);
     if (mathAnswer) return mathAnswer;
 
-    // 7. Identiteti Xsus Studio
+    // 7. Connaissances Xsus Studio
     const customAnswer = checkCustomKnowledge(query);
     if (customAnswer) return customAnswer;
 
-    // 8. Konvertuesi i Njësive
+    // 8. Convertisseur
     const converterAnswer = await checkConverter(query);
     if (converterAnswer) return converterAnswer;
 
-    // 9. Përkthyesi
+    // 9. Traduction
     const translationAnswer = await checkTranslation(query);
     if (translationAnswer) return translationAnswer;
 
-    // 10. Financë
+    // 10. Finance
     const financeAnswer = await checkFinance(query);
     if (financeAnswer) return financeAnswer;
 
-    // 11. Moti
+    // 11. Météo
     const weatherAnswer = await checkWeather(query);
     if (weatherAnswer) return weatherAnswer;
 
-    // 12. Lajmet
+    // 12. Actualités
     const newsAnswer = await checkNews(query);
     if (newsAnswer) return newsAnswer;
 
-    // 13. Sporti
+    // 13. Sports
     const sportsAnswer = await checkSports(query);
     if (sportsAnswer) return sportsAnswer;
 
-    // 14. Shënimet
+    // 14. Notes
     const notesAnswer = await checkNotes(query);
     if (notesAnswer) return notesAnswer;
 
-    // 15. Idetë
+    // 15. Idées
     const ideasAnswer = await checkContentIdeas(query);
     if (ideasAnswer) return ideasAnswer;
 
-    // 16. Wikipedia
+    // 16. Wikipédia
     const wikiAnswer = await checkWikipedia(query);
     if (wikiAnswer) return wikiAnswer;
 
