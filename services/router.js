@@ -55,6 +55,32 @@ function checkLocalQuiz(userQuery) {
     return null;
 }
 
+// Mjet Lokal: Gjenerues i Fjalëkalimeve
+function checkPasswordGenerator(userQuery) {
+    if (!userQuery) return null;
+    const lower = userQuery.trim().toLowerCase();
+    if (lower.includes("fjalëkalim") || lower.includes("password")) {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*!";
+        let pass = "";
+        for (let i = 0; i < 12; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return `🔒 **Fjalëkalim i Sigurt i Gjeneruar:**\n\`\`\`text\n${pass}\n\`\`\`\n*(Kopjoje dhe ruaje në një vend të sigurt!)*`;
+    }
+    return null;
+}
+
+// Mjet Lokal: Gjenerues i Ngjyrave Hex
+function checkColorGenerator(userQuery) {
+    if (!userQuery) return null;
+    const lower = userQuery.trim().toLowerCase();
+    if (lower.includes("ngjyrë") || lower.includes("color") || lower.includes("hex")) {
+        const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+        return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
+    }
+    return null;
+}
+
 export async function smartRouter(userQuery) {
     const query = userQuery.trim();
     if (!query) return null;
@@ -63,55 +89,63 @@ export async function smartRouter(userQuery) {
     const imageAnswer = await checkImageGeneration(query);
     if (imageAnswer) return imageAnswer;
 
-    // 2. Moduli i Kuisit (Ekzekutohet menjëherë lokalisht)
+    // 2. Moduli i Kuisit
     const quizAnswer = checkLocalQuiz(query);
     if (quizAnswer) return quizAnswer;
 
-    // 3. Gjeneruesi i Kodeve QR
+    // 3. Gjeneruesi i Fjalëkalimeve (Lokal)
+    const passwordAnswer = checkPasswordGenerator(query);
+    if (passwordAnswer) return passwordAnswer;
+
+    // 4. Gjeneruesi i Ngjyrave Hex (Lokal)
+    const colorAnswer = checkColorGenerator(query);
+    if (colorAnswer) return colorAnswer;
+
+    // 5. Gjeneruesi i Kodeve QR
     const qrAnswer = await checkQRCode(query);
     if (qrAnswer) return qrAnswer;
 
-    // 4. Llogaritjet Matematikore
+    // 6. Llogaritjet Matematikore
     const mathAnswer = await checkMath(query);
     if (mathAnswer) return mathAnswer;
 
-    // 5. Identiteti Xsus Studio
+    // 7. Identiteti Xsus Studio
     const customAnswer = checkCustomKnowledge(query);
     if (customAnswer) return customAnswer;
 
-    // 6. Konvertuesi i Njësive
+    // 8. Konvertuesi i Njësive
     const converterAnswer = await checkConverter(query);
     if (converterAnswer) return converterAnswer;
 
-    // 7. Përkthyesi
+    // 9. Përkthyesi
     const translationAnswer = await checkTranslation(query);
     if (translationAnswer) return translationAnswer;
 
-    // 8. Financë
+    // 10. Financë
     const financeAnswer = await checkFinance(query);
     if (financeAnswer) return financeAnswer;
 
-    // 9. Moti
+    // 11. Moti
     const weatherAnswer = await checkWeather(query);
     if (weatherAnswer) return weatherAnswer;
 
-    // 10. Lajmet
+    // 12. Lajmet
     const newsAnswer = await checkNews(query);
     if (newsAnswer) return newsAnswer;
 
-    // 11. Sporti
+    // 13. Sporti
     const sportsAnswer = await checkSports(query);
     if (sportsAnswer) return sportsAnswer;
 
-    // 12. Shënimet
+    // 14. Shënimet
     const notesAnswer = await checkNotes(query);
     if (notesAnswer) return notesAnswer;
 
-    // 13. Idetë
+    // 15. Idetë
     const ideasAnswer = await checkContentIdeas(query);
     if (ideasAnswer) return ideasAnswer;
 
-    // 14. Wikipedia
+    // 16. Wikipedia
     const wikiAnswer = await checkWikipedia(query);
     if (wikiAnswer) return wikiAnswer;
 
