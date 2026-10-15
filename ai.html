@@ -595,6 +595,31 @@
             }
         }
 
+        // FUNKSIONI PËR EFEKTIN E SHKRIMIT GËRMË PAS GËRME (TYPEWRITER)
+        function typeWriterEffect(element, htmlText, speed = 12, callback) {
+            let i = 0;
+            // Për të mos prishur tagjet HTML gjatë animacionit, e shfaqim tekstin si bllok markdown nëse është i shkurtër,
+            // ose përdorim një shpejtësi të lartë shfaqjeje me copëza, ose shtojmë tekstin rrjedhshëm.
+            // Për siguri maksimale të tabelave dhe markdown, po përdorim shfaqjen e fjalëve rrjedhshëm:
+            
+            const words = htmlText.split(' ');
+            let currentText = '';
+            
+            function addWord() {
+                if (i < words.length) {
+                    currentText += (i === 0 ? '' : ' ') + words[i];
+                    element.innerHTML = renderContent(currentText);
+                    aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
+                    i++;
+                    setTimeout(addWord, speed);
+                } else {
+                    element.innerHTML = renderContent(htmlText); // Siguron që gjithçka është renderuar saktë në fund
+                    if (callback) callback();
+                }
+            }
+            addWord();
+        }
+
         async function handleAIResponse() {
             const text = aiInput.value.trim() || (attachedFileContent ? "Përmblidh këtë dokument." : (attachedImageBase64 ? "Përshkruaj këtë foto." : ""));
             if (!text && !attachedFileContent && !attachedImageBase64) return;
@@ -649,7 +674,7 @@
                         aiMsg.innerHTML = `
                             ${xsusAiLogoHTML}
                             <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed markdown-body msg-bubble relative group">
-                                <div>${renderContent(reply)}</div>
+                                <div class="ai-text-content"></div>
                                 <div class="flex items-center gap-2 mt-3 pt-2 border-t border-white/10 text-xs text-slate-400">
                                     <button type="button" class="copy-btn hover:text-cyber-blue transition flex items-center gap-1 cursor-pointer">
                                         <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
@@ -662,11 +687,15 @@
                             </div>
                         `;
                         aiOutputBox.appendChild(aiMsg);
-                        aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
+                        
+                        const textContainer = aiMsg.querySelector('.ai-text-content');
+                        typeWriterEffect(textContainer, reply, 15, () => {
+                            refreshIcons();
+                            attachInteractiveButtons();
+                            saveChatToLocalStorage();
+                        });
 
-                        refreshIcons();
-                        attachInteractiveButtons();
-                        saveChatToLocalStorage();
+                        aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
                         return; 
                     }
                 } catch (e) {
@@ -685,7 +714,7 @@
             aiMsg.innerHTML = `
                 ${xsusAiLogoHTML}
                 <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed markdown-body msg-bubble relative group">
-                    <div>${renderContent(reply)}</div>
+                    <div class="ai-text-content"></div>
                     <div class="flex items-center gap-2 mt-3 pt-2 border-t border-white/10 text-xs text-slate-400">
                         <button type="button" class="copy-btn hover:text-cyber-blue transition flex items-center gap-1 cursor-pointer">
                             <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
@@ -698,11 +727,15 @@
                 </div>
             `;
             aiOutputBox.appendChild(aiMsg);
-            aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
+            
+            const textContainer = aiMsg.querySelector('.ai-text-content');
+            typeWriterEffect(textContainer, reply, 15, () => {
+                refreshIcons();
+                attachInteractiveButtons();
+                saveChatToLocalStorage();
+            });
 
-            refreshIcons();
-            attachInteractiveButtons();
-            saveChatToLocalStorage();
+            aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
         }
 
         if (aiSendBtn) {
