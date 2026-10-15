@@ -56,7 +56,7 @@ body {
 }
 
 /* ==========================================================
-   CHAT INPUT AREA (Rregullimi i Hapësirës Poshtë / Keyboard Space)
+   CHAT INPUT AREA & AUTO-EXPANDING TEXTAREA
    ========================================================== */
 
 .chat-input-wrapper, 
@@ -69,7 +69,7 @@ footer.chat-footer {
     width: 100%;
     box-sizing: border-box;
     
-    /* Hapësira kryesore nga poshtë (dhe mbrojtja për tastierë/ekrane moderne) */
+    /* Hapësira dhe mbrojtja për tastierën e celularit */
     padding-top: 12px;
     padding-left: 16px;
     padding-right: 16px;
@@ -82,11 +82,10 @@ footer.chat-footer {
     z-index: 100;
 }
 
-/* Stilimi i vetë kutisë ku shkruhet teksti */
-.chat-input-wrapper input,
+/* Stilimi dhe vetia e zgjerimit automatik për Textarea */
 .chat-input-wrapper textarea,
-.input-container input,
 .input-container textarea {
+    width: 100%;
     border-radius: 14px;
     padding: 12px 16px;
     font-size: 15px;
@@ -94,12 +93,18 @@ footer.chat-footer {
     border: 1px solid rgba(0, 242, 254, 0.25);
     color: #ffffff;
     outline: none;
-    transition: all 0.2s ease-in-out;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    
+    /* Pjesët kyçe për auto-expand (zgjerimin lart) */
+    resize: none;
+    overflow-y: hidden;
+    min-height: 44px;
+    max-height: 150px;
+    line-height: 1.5;
+    box-sizing: border-box;
 }
 
-.chat-input-wrapper input:focus,
 .chat-input-wrapper textarea:focus,
-.input-container input:focus,
 .input-container textarea:focus {
     border-color: rgba(0, 242, 254, 0.6);
     box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
