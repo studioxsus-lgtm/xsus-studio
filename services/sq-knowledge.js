@@ -1127,11 +1127,44 @@ export const sqKnowledge = {
     "çfarë është mbyllja e një projekti": "Mbyllja e projektit është hapi përfundimtar ku dorëzohet produkti, paguhen faturat dhe bëhet vlerësimi përfundimtar."
 };
 
+
+function normalizeSqText(text) {
+    return String(text ?? "")
+        .toLocaleLowerCase("sq")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
 export function findSqAnswer(cleanQuery) {
-    for (const [key, answer] of Object.entries(sqKnowledge)) {
-        if (cleanQuery.includes(key)) {
+    if (!cleanQuery) return null;
+
+    const query = normalizeSqText(cleanQuery);
+
+    // Fraza më të gjata kontrollohen të parat.
+    const entries = Object.entries(sqKnowledge)
+        .map(([key, answer]) => ({
+            key: normalizeSqText(key),
+            answer
+        }))
+        .filter(item => item.key.length > 0)
+        .sort((a, b) => b.key.length - a.key.length);
+
+    for (const { key, answer } of entries) {
+        // Përputhje me frazën e plotë brenda pyetjes.
+        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const pattern = new RegExp(
+            `(^|\\s)${escapedKey}(?=\\s|$)`,
+            "u"
+        );
+
+        if (pattern.test(query)) {
             return answer;
         }
     }
+
     return null;
 }
+
