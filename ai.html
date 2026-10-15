@@ -190,7 +190,7 @@
             </div>
 
             <!-- Input Form Bar -->
-            <div class="flex items-center gap-2 relative">
+            <div class="flex items-end gap-2 relative">
                 
                 <!-- MENUJA E PLUSIT (Dropdown) -->
                 <div id="plus-menu" class="absolute bottom-16 left-0 glass-panel border border-cyber-blue/30 rounded-2xl p-2 hidden flex-col gap-1.5 shadow-2xl z-30 w-48 bg-[#0a0a12]/95 backdrop-blur-xl">
@@ -215,7 +215,8 @@
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
 
-                <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI or create image (/image)..." class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none">
+                <!-- Textarea e re me zgjerim automatik (Auto-expanding) -->
+                <textarea id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI or create image (/image)..." rows="1" class="flex-1 p-3.5 md:p-4 rounded-xl bg-black/80 border border-white/15 text-white text-sm focus:border-cyber-blue outline-none resize-none overflow-y-hidden min-h-[52px] max-h-[150px] leading-relaxed"></textarea>
                 
                 <button id="ai-send-btn" type="button" class="px-5 md:px-6 py-3.5 md:py-4 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
                     <i data-lucide="send" class="w-4 h-4"></i>
@@ -333,6 +334,22 @@
         let attachedFileContent = null;
         let attachedFileName = null;
         let attachedImageBase64 = null;
+
+        // Auto-expanding Textarea & Enter key event handling
+        if (aiInput) {
+            aiInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+
+            aiInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAIResponse();
+                    this.style.height = 'auto';
+                }
+            });
+        }
 
         if (plusBtn) {
             plusBtn.onclick = (e) => {
@@ -600,6 +617,7 @@
             `;
             aiOutputBox.appendChild(userMsg);
             aiInput.value = '';
+            aiInput.style.height = 'auto'; // Rivendos lartësinë fillestare pas dërgimit
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
             const loadingText = i18nData[currentLang]["thinking"] || i18nData["en"]["thinking"];
@@ -649,7 +667,7 @@
 
                         refreshIcons();
                         attachInteractiveButtons();
-                        saveChatToLocalStorage(); // Ruajtja e bisedës para mbylljes së router-it lokal
+                        saveChatToLocalStorage();
                         return; 
                     }
                 } catch (e) {
@@ -690,15 +708,6 @@
 
         if (aiSendBtn) {
             aiSendBtn.onclick = handleAIResponse;
-        }
-
-        if (aiInput) {
-            aiInput.onkeypress = function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAIResponse();
-                }
-            };
         }
 
         if (clearChatBtn) {
