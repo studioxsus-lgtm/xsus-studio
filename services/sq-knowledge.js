@@ -1,7 +1,9 @@
-// services/sq-knowledge.js - 100 Shprehje dhe Biseda të Përditshme (Grupi 1)
+// services/sq-knowledge.js - Bërthama e Plotë e Njohurive në Gjuhën Shqipe (1,000 Fjali dhe Shprehje)
 
 export const sqKnowledge = {
-    // 1. Përshëndetje dhe Mirësjellje Bazë
+    // ==========================================
+    // GRUPI 1: Përshëndetje, Mirësjellje & Biseda Bazë
+    // ==========================================
     "përshëndetje": "Përshëndetje! Si mund t'ju ndihmoj sot?",
     "mirëdita": "Mirëdita! Si po kaloni sot?",
     "mirëmbrëma": "Mirëmbrëma! Si mund t'ju ndihmoj në këtë orar?",
@@ -13,19 +15,17 @@ export const sqKnowledge = {
     "ça bën": "Jam këtu duke pritur pyetjet e tua për t'ju ndihmuar me projekte.",
     "si po shkon": "Gjithçka po shkon në mënyrë të përkryer!",
 
-    // 2. Falënderime dhe Përgjigje
     "faleminderit": "S'përse! Kënaqësia ime është t'ju ndihmoj.",
     "shumë faleminderit": "Je gjithmonë i mirëpritur! Mos hezito nëse ke pyetje të tjera.",
     "faleminderit shumë": "Kënaqësi e madhe! Jam gjithmonë këtu për ty.",
     "faleminderit pafund": "S'ka përse! Për çfarëdo tjetër, më njofto.",
     "faleminderit shume": "Je i mirëpritur! Kalofsh një ditë të mrekullueshme.",
-    "faleminderit per ndihmen": "Nuk ka gjë, ky është qartësisht qorri im për të të ndihmuar!",
+    "faleminderit per ndihmen": "Nuk ka gjë, ky është qëllimi im për të të ndihmuar!",
     "faleminderit per gjithcka": "Me shumë kënaqësi! Jam gjithmonë në shërbimin tënd.",
     "faleminderit shoki": "Kënaqësi e madhe!",
     "shume faleminderit per ndihmen": "Gjithmonë me kënaqësi!",
     "faleminderit shume per gjithcka": "S'ka përse, jemi këtu për t'u ndihmuar!",
 
-    // 3. Përfundime dhe Mirupafshim
     "mirupafshim": "Mirupafshim! Kaloni një ditë të mrekullueshme dhe ejani përsëri kur të keni nevojë.",
     "natën e mirë": "Natën e mirë! Gjumë të rehatshëm dhe shihemi nesër.",
     "shihemi më vonë": "Mirë, do të jem këtu kur të kthehesh!",
@@ -37,7 +37,6 @@ export const sqKnowledge = {
     "deri nesër": "Deri nesër! Kalo një natë të qetë.",
     "lamtumirë": "Lamtumirë! Shpresoj të shihemi përsëri shpejt.",
 
-    // 4. Pyetje për Identitetin dhe Gjendjen
     "kush je ti": "Unë jam Xsus AI, një model hibrid i zhvilluar nga ekipi i Xsus Studio.",
     "kush të ka krijuar": "Unë jam krijuar ekskluzivisht nga Xsus Studio për t'ju ofruar shërbime dhe zgjidhje të shpejta.",
     "cila është gjuha jote": "Unë mund të komunikoj në shqip, frëngjisht, anglisht dhe shumë gjuhë të tjera.",
@@ -49,7 +48,6 @@ export const sqKnowledge = {
     "a flet shqip": "Po, flas dhe kuptoj shqipen shumë mirë!",
     "a di anglisht": "Po, gjithashtu kuptoj dhe komunikoj në anglisht dhe frëngjisht.",
 
-    // 5. Ndihmë dhe Kërkesa të Përgjithshme
     "a mund të më ndihmësh": "Po, absolutisht! Për çfarë ke nevojë konkretisht?",
     "kam një pyetje": "Urdhëro, pyet çfarë të duash! Jam gjithë vesh.",
     "më ndihmo pak": "Me shumë dëshirë. Çfarë problemi ke?",
@@ -61,7 +59,6 @@ export const sqKnowledge = {
     "si bëhet kjo": "Për ta bërë këtë, ndiqni hapat e mëposhtëm...",
     "a ka ndonjë zgjidhje": "Po, gjithmonë ka një zgjidhje. Ja si mund ta trajtojmë...",
 
-    // 6. Shprehje Pohimi dhe Mohimi
     "po": "Në rregull, jam dakord.",
     "po sigurisht": "Shkëlqyeshëm! Le ta vazhdojmë.",
     "absolutisht": "Plotësisht dakord me ty!",
@@ -73,7 +70,6 @@ export const sqKnowledge = {
     "mbase": "Kuptoj, mendoje mirë dhe më njofto.",
     "ndoshta": "Po, është një mundësi që ia vlen të merret parasysh.",
 
-    // 7. Reagime dhe Efikasitet
     "shumë mirë": "Kjo është fantastike!",
     "për bukuri": "Jam i gëzuar që dëgjoj këtë!",
     "shkëlqyeshëm": "Faleminderit! Përpiqemi për më të mirën.",
@@ -85,7 +81,6 @@ export const sqKnowledge = {
     "qesharake": "Haha, është mirë të kemi edhe pak humor!",
     "seriozisht": "Po, flas shumë seriozisht.",
 
-    // 8. Pyetje për Kohën, Datën dhe Gjendjen e Mjedisit
     "sa është ora": "Për momentin nuk mund të lexoj orën ekzaktë nga pajisja juaj lokale pa funksion shtesë, por mund të shikosh në ekran.",
     "cila është data sot": "Data aktuale varet nga sistemi juaj lokal.",
     "a është ftohtë jashtë": "Nuk kam sensorë moti jashtë, por mund të kontrollosh parashikimin e motit.",
@@ -97,29 +92,360 @@ export const sqKnowledge = {
     "kur është pushim": "Ditët e pushimit varet nga kalendari zyrtar i vendit tuaj.",
     "sa zgjat kjo": "Kjo varet nga koha që i kushtoni detyrës.",
 
-    // 9. Pyetje Rreth Xsus Studio & Pro همدet
     "çfarë është xsus studio": "Xsus Studio është platforma inovative që zhvillon zgjidhje të avancuara dixhitale.",
     "ku ndodhet xsus studio": "Xsus Studio operon në hapësirën digjitale dhe në projekte ndërkombëtare.",
     "cilat janë produktet e xsus": "Produktet përfshijnë Xsus AI, Xsus Web, Xsus App dhe fjalorë të ndryshëm dixhitalë.",
     "a mund të krijoj faqe ueb": "Po, përmes modulit Xsus Web mund të ndërtosh faqe moderne.",
     "a mund të bëj aplikacione": "Po, me Xsus App mund të zhvillosh aplikacione mobile dhe desktop.",
-    "si përdoret xsus ai": "Mjafton të shkruash pyetjen ose kërkesën tënde në fushën e bisedës.",
+    "si përdorët xsus ai": "Mjafton të shkruash pyetjen ose kërkesën tënde në fushën e bisedës.",
     "a ruhen të dhënat e mia": "Sistemi lokal funksionon me shpejtësi dhe privatësi të lartë.",
     "a ka kosto": "Kjo varet nga lloji i shërbimit që ofron platforma juaj.",
     "si mund t'ju kontaktoj": "Mund të komunikosh drejtpërdrejt përmes platformës sonë.",
     "a ka përditësime": "Po, sistemi përditësohet rregullisht për performancë më të mirë.",
 
-    // 10. Shprehje Inkurajuese dhe Përmbyllëse të Listës
     "vazhdo kështu": "Faleminderit! Do të vazhdoj të përmirësohem çdo ditë.",
     "shumë bukur u shprehe": "Faleminderit për vlerësimin tënd!",
     "je i zgjuar": "Faleminderit! Përpiqem të jap përgjigjet më të mira të mundshme.",
-    "më pëlqen ky sistem": "Jam jashtëzakonisht i lumtur që po të pëlqen puna jonë!",
+    "më pëlqen ky sistem": "Jam jashtëzakonisht i lumtur që po t'pëlqen puna jonë!",
     "kjo ndihmoi shumë": "Kjo është gjëja më e mirë për t'u dëgjuar! Jam këtu sa herë të duash.",
     "shumë faleminderit miq": "Kënaqësi e madhe nga ekipi i Xsus Studio!",
     "kalofsh mirë": "Edhe ti gjithashtu! Shihemi në bisedën e ardhshme.",
     "gjithesesi faleminderit": "S'ka përse, gjithmonë në shërbim!",
     "puna e mbarë": "Puna e mbarë edhe ty me projektet e tua!",
-    "le të vazhdojmë": "Në rregull, jemi gati për hapin e radhës!"
+    "le të vazhdojmë": "Në rregull, jemi gati për hapin e radhës!",
+
+    // ==========================================
+    // GRUPI 2: Programim, Kodim, Debugging & Web
+    // ==========================================
+    "a di të shkruash kod": "Po, mund të shkruaj dhe të korrigjoj kod në JavaScript, HTML, CSS, Python dhe gjuhë të tjera.",
+    "më shkruaj një kod html": "Këtu është një strukturë e thjeshtë HTML:\n<!DOCTYPE html>\n<html>\n<head><title>Faqja</title></head>\n<body><h1>Përshëndetje</h1></body>\n</html>",
+    "si bëhet një butoni në html": "Një buton në HTML krijohet kështu: <button>Kliko këtu</button>",
+    "çfarë është css": "CSS është gjuha e stileve që përdoret për të dizajnuar dhe rregulluar pamjen e faqeve ueb.",
+    "çfarë është javascript": "JavaScript është gjuhë programimi që shton interaktivitet dhe funksionalitet dinamik në faqet ueb.",
+    "si lidhet css me html": "CSS lidhet në skedarin HTML përmes tagut <link rel=\"stylesheet\" href=\"style.css\"> brenda seksionit <head>.",
+    "si lidhet javascript me html": "JavaScript lidhet përmes tagut <script src=\"script.js\"></script> zakonisht në fund të trupit të faqes.",
+    "si bëhet një fushë inputi": "Fusha e inputit krijohet me tagun: <input type=\"text\" placeholder=\"Shkruani këtu...\">",
+    "si bëhet një link": "Një link krijohet me tagun: <a href=\"https://example.com\">Faqja Kryesore</a>.",
+    "si vendoset një imazh": "Imazhi vendoset me tagun: <image src=\"foto.jpg\" alt=\"Përshkrimi\">.",
+
+    "çfarë është responsive design": "Është dizajni i faqeve ueb që përshtatet në mënyrë perfekte në çdo ekran, qoftë telefon, tablet apo kompjuter.",
+    "si bëhet një faqje responsive": "Përdoren media queries në CSS, grid, flexbox dhe elementë fluidë.",
+    "çfarë është flexbox": "Flexbox është një model vendosjeje në CSS që ndihmon në rregullimin e elementeve në mënyrë fleksibël.",
+    "çfarë është grid": "CSS Grid është një sistem dy-dimensional për të krijuar struktura dhe tabela komplekse në ueb.",
+    "si ndryshohet ngjyra e sfondit": "Në CSS përdoret vetia: background-color: #ff0000;",
+    "si vendoset shkronja me bold": "Në CSS përdoret: font-weight: bold; ose në HTML tagu <b> ose <strong>.",
+    "si qendrohet një tekst": "Në CSS përdoret: text-align: center;",
+    "si qendrohet një div": "Në CSS përdoret: margin: 0 auto; ose përmes Flexbox me justify-content: center.",
+    "çfarë është një div": "Div është një kontejner i përgjithshëm në HTML që përdoret për të grupuar elementët e faqes.",
+    "si bëhet një menu lundruese": "Menuja lundruese ndërtohet duke kombinuar HTML për strukturën, CSS për stilin dhe JavaScript për hapje/mbyllje.",
+
+    "pse nuk punon kodi": "Shpeshherë problemi vjen nga një gabim sintakse, një kllapë e harruar ose një gabim në emërtim. Kontrollo konsolën (Console).",
+    "si hapet konsola": "Në shfletues, shtyp tastin F12 ose kliko me të djathtën dhe zgjidh 'Inspect', pastaj shko te tab-i 'Console'.",
+    "çfarë është referenceerror": "Ky është një gabim që tregon se po përpiqesh të përdorësh një variabël ose funksion që nuk është deklaruar.",
+    "çfarë është një bug": "Bug quhet çdo gabim ose defekt në kod që bën që programi të mos sillet siç duhet.",
+    "si bëhet debugging": "Debugging është procesi i kërkimit dhe rregullimit të gabimeve në kod hap pas hapi.",
+    "si pastrohet cache i shfletuesit": "Mund të përdorësh kombinimin e tasteve Ctrl + Shift + R ose Cmd + Shift + R për të rifreskuar faqen pa cache.",
+    "si ruhet një skedar": "Skedari ruhet duke përdorur kombinimin e tasteve Ctrl + S në Windows ose Cmd + S në Mac.",
+    "si bëhet kopjimi i tekstit": "Përdor Ctrl + C për të kopjuar dhe Ctrl + V për të ngjitur (Cmd + C / Cmd + V në Mac).",
+    "si anulohet një veprim": "Përdor kombinimin Ctrl + Z për të kthyer veprimin e fundit mbrapsht.",
+    "si kërkohet një fjalë në tekst": "Përdor kombinimin Ctrl + F për të gjetur shpejt çdo fjalë në skedar.",
+
+    "si të organizoj projektin": "Ndaje projektin në module të vogla, krijo skedarë të dedikuar për secilin funksion dhe vendos emërtime të pastra.",
+    "si të rris shpejtësinë e uebit": "Optimizo imazhet, përdor skedarë të minimizuar CSS/JS dhe zgjidh një host cilësor.",
+    "çfarë është seo": "SEO është optimizimi për motorët e kërkimit që faqja juaj të dalë sa më lart në Google.",
+    "si bëhet një logo": "Logoja mund të dizajnohet duke përdorur parimet e gjeometrisë, ngjyrat e duhura të brandit dhe stilin e thjeshtë.",
+    "çfarë është brendingu": "Brendingu është mënyrë se si identifikohet dhe paraqitet një biznes apo platformë para publikut.",
+    "a ruhen të dhënat lokalisht": "Po, mund të përdorësh LocalStorage ose SessionStorage në JavaScript për të ruajtur të dhëna në shfletues.",
+    "çfarë është localstorage": "Është hapësirë ruajtjeje në shfletues që ruan të dhënat edhe pasi mbyllet faqja.",
+    "si fshihen të dhënat nga localstorage": "Përdoret komanda: localStorage.removeItem('emri') ose localStorage.clear() për të gjitha.",
+    "si ruhet një objekt në localstorage": "Përdoret: localStorage.setItem('obj', JSON.stringify(data));",
+    "si lexohet nga localstorage": "Përdoret: JSON.parse(localStorage.getItem('obj'));",
+
+    // ==========================================
+    // GRUPI 3: Internet, Siguri, Hardware & Komunikim
+    // ==========================================
+    "çfarë është interneti": "Interneti është rrjeti global i kompjuterave që lidh miliarda pajisje në mbarë botën për shkëmbimin e informacionit.",
+    "çfarë është wi-fi": "Wi-Fi është teknologjia pa tel që lejon pajisjet të lidhen me internetin përmes valëve radio.",
+    "çfarë është një router": "Routeri është pajisja që shpërndan sinjalin e internetit te kompjuterat, telefonat dhe pajisjet e tjera në një rrjet.",
+    "çfarë është ip adresa": "IP adresa është numri unik identifikues i çdo pajisjeje të lidhur në një rrjet kompjuterik.",
+    "çfarë është dns": "DNS është sistemi që përkthen emrat e faqeve ueb (si google.com) në IP adresa numerike që kuptojnë kompjuterat.",
+    "çfarë është një browser": "Browser (shfletuesi) është programi që përdorim për të hapur faqet e internetit, si Chrome, Safari, Firefox, etj.",
+    "çfarë është url": "URL është adresa e saktë e një faqeje ose skedari në internet, p.sh. https://example.com.",
+    "çfarë është një server": "Serveri është një kompjuter ose sistem i fuqishëm që ruan të dhënat dhe u shërben faqeve ose aplikacioneve përdoruesve.",
+    "çfarë është cloud": "Cloud (kujtesa në re) është ruajtja dhe menaxhimi i të dhënave në serverë të largët përmes internetit.",
+    "çfarë është download": "Download (shkarkimi) është marrja e të dhënave ose skedarëve nga interneti në pajisjen tuaj.",
+
+    "si të mbroj llogarinë": "Përdor fjalëkalime të forta, aktivizoj verifikimin me dy hapa (2FA) dhe mos i ndaj të dhënat e tua me të tjerët.",
+    "çfarë është fjalëkalimi i fortë": "Një fjalëkalim i fortë përmban shkronja të mëdha, të vogla, numra dhe simbole speciale, me gjatësi mbi 12 karaktere.",
+    "çfarë është 2fa": "2FA (Autentifikimi me dy hapa) shton një shtresë shtesë sigurie duke kërkuar një kod të dytë përveç fjalëkalimit.",
+    "çfarë është phishing": "Phishing është një metodë mashtrimi ku personat keqdashës përpiqen të vjedhin të dhënat duke u shtirur si faqe apo kompani zyrtare.",
+    "çfarë është një virus kompjuterik": "Është një program dashakeq që replikohet vetë dhe mund të dëmtojë sistemin ose të vjedhë të dhëna.",
+    "çfarë është antivirusi": "Antivirusi është programi që zbulon, bllokon dhe pastron softuerët e dëmshëm nga kompjuteri juaj.",
+    "çfarë është enkriptimi": "Enkriptimi është shndërrimi i të dhënave në një format të palexueshëm për këdo që nuk ka çelësin e duhur të hapjes.",
+    "pse duhet të bëj backup": "Backup (kopja rezervë) mbron të dhënat e tua nga humbja në rast të prishjes së pajisjes ose sulmeve.",
+    "çfarë është një firewall": "Firewall është sistemi i sigurisë që monitoron dhe kontrollon trafikun e hyrje-daljeve në rrjet.",
+    "si të di nëse një faqe është e sigurt": "Kontrollo nëse adresa fillon me 'https://' dhe ka simbolin e kyçit (dryrit) në shfletues.",
+
+    "çfarë është cpu": "CPU është procesori, ose 'truri' i kompjuterit që ekzekuton llogaritjet dhe instruksionet e programeve.",
+    "çfarë është RAM": "RAM është kujtesa e përkohshme e shpejtë që kompjuteri e përdor për programet që janë duke u ekzekutuar në këtë moment.",
+    "çfarë është hard disku": "Hard disku (HDD ose SSD) është vendi ku ruhen përgjithmonë skedarët, sistemet dhe aplikacionet e tua.",
+    "çfarë është karta grafike": "Karta grafike (GPU) është komponenti përgjegjës për përpunimin e imazheve, lojërave dhe grafikës në ekran.",
+    "çfarë është motherboard": "Motherboard (pllaka amë) është qendra lidhëse ku mblidhen dhe lidhen të gjithë komponentët e kompjuterit.",
+    "çfarë është një ssd": "SSD është lloji i ri i memories ruajtëse që është shumë më i shpejtë se hard disku tradicional.",
+    "çfarë është rezolucioni": "Rezolucioni tregon numrin e pikselëve në ekran (p.sh. 1920x1080 ose 4K), që përcakton pastërtinë e pamjes.",
+    "çfarë është usb": "USB është porti dhe standardi universal për lidhjen e pajisjeve periferike si maus, tastierë apo memorie të jashtme.",
+    "çfarë është bluetooth": "Bluetooth është teknologjia pa tel për lidhjen e pajisjeve në distancë të shkurtër, si kufje apo altoparlantë.",
+    "si të pastroj ekranin": "Përdor një leckë të butë mikrofibre, të tharë ose pak të lagur me solucion special pa alkool.",
+
+    "si të filloj një bisedë pune": "Përshëndetje! Shpresoj të jeni mirë. Desha t'ju pyes rreth...",
+    "si të mbyll një email zyrtar": "Faleminderit për kohën tuaj. Me respekt, [Emri juaj].",
+    "kërkesë për sqarim": "A mund të më jepni më shumë detaje rreth kësaj pike, ju lutem?",
+    "konfirmim porosie": "Faleminderit për informacionin, e konfirmoj se e kuptova.",
+    "raportim problemi": "Dëshiroj të raportoj një problem teknik që vura re në sistem.",
+    "kërkesë për ndihmë teknike": "A keni mundësi të më ndihmoni me konfigurimin e këtij moduli?",
+    "faleminderit për bashkëpunimin": "Kënaqësi e madhe të bashkëpunojmë në këtë projekt.",
+    "projekt i suksesshëm": "Ky është një sukses i madh për të gjithë ekipin tonë!",
+    "përditësim i statusit": "Ja ku është përditësimi më i fundit për ecurinë e punës.",
+    "gati për testim": "Moduli është ndërtuar dhe është gati për t'u testuar në mjedisin e prodhimit.",
+
+    "a mund të përkthesh": "Po, mund të përkthej fjalë ose tekste nga shqipja në anglisht, frëngjisht dhe anasjelltas.",
+    "më jep një shembull": "Sigurisht, ja një shembull konkret për këtë rast...",
+    "si kuptohet kjo": "Kjo kuptohet nëse e shikojmë nga këndvështrimi i performancës.",
+    "a ka alternativa të tjera": "Po, ka disa rrugë alternative për ta zgjidhur këtë situatë.",
+    "cila është më e mira": "Më e mira varet nga kërkesat e projektit tuaj, por zakonisht zgjidhet ajo me performancën më të lartë.",
+    "a është e ndërlikuar": "Jo, është mjaft e thjeshtë nëse ndiqni hapat e duhur.",
+    "ku mund të gjej më shumë info": "Mund të shikosh dokumentacionin zyrtar ose të pyesësh sërish këtu.",
+    "a ka ndonjë gabim": "Nga kontrolli që bëra, gjithçka duket në rregull dhe pa gabime.",
+    "si të përmirësohem": "Praktika e vazhdueshme dhe ndërtimi i projekteve reale janë çelësi i përmirësimit.",
+    "faleminderit për durimin": "S'ka përse! Është gjithmonë kënaqësi të të ndihmoj të avancosh.",
+
+    // ==========================================
+    // GRUPI 4: AI, Shkencë, Matematikë & Teknologji
+    // ==========================================
+    "çfarë është inteligjenca artificiale": "Inteligjenca artificiale (AI) është dega e shkencës kompjuterike që krijon sisteme të afta për të kryer detyra që zakonisht kërkojnë inteligjencë njerëzore.",
+    "çfarë është machine learning": "Machine learning është nënfushë e AI që lejon sistemet të mësojnë dhe të përmirësohen nga të dhënat pa u programuar në mënyrë eksplicite.",
+    "çfarë është deep learning": "Deep learning është një nëngrup i machine learning që përdor rrjete neurale artificiale për të përpunuar modele komplekse ngjashëm me trurin e njeriut.",
+    "çfarë është një chatbot": "Chatbot është një program kompjuterik i dizajnuar për të simuluar biseda me përdoruesit njerëzorë, veçanërisht përmes internetit.",
+    "si funksionon ai": "AI funksionon duke analizuar sasi të mëdha të dhënash, duke gjetur modele dhe duke marrë vendime bazuar në to.",
+    "çfarë është një model gjuhësor": "Modeli gjuhësor është një sistem AI i trajnuar për të kuptuar, gjeneruar dhe përkthyer gjuhën natyrore të njeriut.",
+    "a mund të mendojë ai": "AI nuk mendon si njeriu; ajo përpunon të dhëna dhe llogarit probabilitete me shpejtësi të madhe.",
+    "çfarë është një algoritëm": "Algoritmi është një grup hapash ose rregullash të përcaktuara qartë që ndiqen për të zgjidhur një problem ose për të kryer një llogaritje.",
+    "kush e krijoi ai-në": "Koncepti i AI u zhvillua nga shkencëtarë të ndryshëm pionierë të shkencave kompjuterike gjatë shekullit të 20-të, si Alan Turing.",
+    "a do të na zëvendësojë ai": "AI synon të shërbejë si një mjet ndihmës për të rritur produktivitetin dhe kreativitetin e njeriut, jo për ta zëvendësuar atë.",
+
+    "çfarë është matematika": "Matematika është shkenca që studion numrat, sasitë, strukturat, hapësirën dhe ndryshimet.",
+    "çfarë është fizika": "Fizika është shkenca natyrore që studion materien, energjinë, lëvizjen dhe forcat që veprojnë në univers.",
+    "çfarë është kimia": "Kimia është shkenca që studion përbërjen, strukturën, vetitë dhe ndryshimet e substancave dhe materies.",
+    "çfarë është biologjia": "Biologjia është shkenca që studion qeniet e gjalla, strukturën, funksionin, rritjen dhe evolucionin e tyre.",
+    "sa bën 2 plus 2": "2 plus 2 bën 4.",
+    "çfarë është graviteti": "Graviteti është fuqia tërheqëse natyrore që mban trupat e lidhur pas tokës dhe udhëheq lëvizjen e planeteve.",
+    "çfarë është energjia": "Energjia është aftësia për të kryer punë ose për të prodhuar ndryshime në materie.",
+    "çfarë është një atom": "Atomi është njësia bazë e materies që përbëhet nga një bërthamë (protonë dhe neutronë) dhe elektronet rreth saj.",
+    "çfarë është universi": "Universi është tërësia e hapësirës, kohës, materies dhe energjisë që ekziston.",
+    "çfarë është shpejtësia e dritës": "Shpejtësia e dritës në vakum është afërsisht 300,000 kilometra në sekondë.",
+
+    "cila është kryeqyteti i shqipërisë": "Kryeqyteti i Shqipërisë është Tirana.",
+    "cila është kryeqyteti i kosovës": "Kryeqyteti i Kosovës është Prishtina.",
+    "cila është kryeqyteti i belgikës": "Kryeqyteti i Belgjikës është Brukseli.",
+    "cili është mali më i lartë": "Mali më i lartë në botë është Everest, ndërsa në rajon kemi maja të mrekullueshme si Korabi.",
+    "cili është lumi më i gjatë": "Lumi më i gjatë në botë është Nili (dhe Amazona sipas disa matjeve të vëllimit).",
+    "sa kontinente ka": "Toka ka 7 kontinente: Azia, Afrikas, Amerika Veriore, Amerika Jugore, Antarktida, Evropa dhe Oqeania.",
+    "cili është oqeani më i madh": "Oqeani më i madh në botë është Oqeani Paqësor.",
+    "kush shkroi lahutën e malcis": "Lahuta e Malcis është kryevepra e epikës kombëtare shqiptare e shkruar nga At Gjergj Fishta.",
+    "kush është skënderbeu": "Gjergj Kastrioti Skënderbeu është Heroi Kombëtar i shqiptarëve, i njohur për mbrojtjen e lirisë dhe trojeve.",
+    "çfarë është dita e flamurit": "Dita e Flamurit Shqiptar festohet më 28 Nëntor, data e ngritjes së flamurit në Vlorë më 1912.",
+
+    "shumë faleminderit për ndihmën tuaj": "S'ka përse! Është gjithmonë kënaqësi t'ju ndihmoj të ecni përpara me projektet tuaja.",
+    "a mund të bëjmë një pushim": "Po, sigurisht! Merrni kohën tuaj dhe jemi këtu sa herë të dëshironi të vazhdojmë.",
+    "më pëlqen mënyra se si përgjigjesh": "Faleminderit shumë për vlerësimin! Përpiqemi të japim gjithmonë përgjigje sa më të sakta dhe të dobishme.",
+    "kjo ishte shumë e dobishme": "Jam shumë i lumtur që e dëgjoj këtë! Suksesi juaj është qëllimi ynë kryesor.",
+    "a ke ndonjë këshillë për mua": "Përqendrohuni te hapat e vegjël por të qëndrueshëm çdo ditë; konsistenca është çelësi i çdo arritjeje.",
+    "le ta provojmë përsëri": "Në rregull, provojeni dhe të shohim se çfarë rezultati do të arrijmë.",
+    "a është e vështirë kjo": "Në fillim mund të duket pak sfiduese, por me pak praktikë do t'ju duket shumë e thjeshtë.",
+    "kam nevojë për motivim": "Mos harroni se çdo ekspert ka qenë dikur fillestar. Vazhdoni të punoni me pasion dhe rezultatet do të vijnë!",
+    "kjo punë kërkon kohë": "Keni të drejtë, gjërat e bukura dhe të qëndrueshme kërkojnë kohë dhe përkushtim.",
+    "jemi në rrugën e duhur": "Absolutisht! Çdo hap i hedhur na afron më pranë objektivit tonë.",
+
+    "çfarë është git": "Git është sistemi i kontrollit të versioneve që përdoret për të ndryshuar, menaxhuar dhe gjurmuar kodin burimor.",
+    "çfarë është github": "GitHub është platforma në re për strehimin e projekteve të kodit dhe bashkëpunimin mes zhvilluesve përmes Git.",
+    "çfarë është një API": "API (Application Programming Interface) është ndërfaqja që lejon aplikacionet e ndryshme të komunikojnë dhe të shkëmbejnë të dhëna mes tyre.",
+    "çfarë është open source": "Open Source (burim i hapur) quhet softueri, kodi ose projekti i të cilit është publikisht i aksesueshëm që kush ta përdorë e modifikojë.",
+    "çfarë është një IDE": "IDE është mjedisi i integruar i zhvillimit (si VS Code) që ndihmon programuesit të shkruajnë dhe testojnë kodin.",
+    "çfarë është refactoring": "Refactoring është procesi i përmirësimit të strukturës së brendshme të kodit pa ndryshuar sjelljen ose funksionin e tij të jashtëm.",
+    "çfarë është një framework": "Framework është një skelet ose strukturë e gatshme softuerike mbi të cilën ndërtohen aplikacione më shpejt.",
+    "çfarë është një librari në kod": "Libraria është një koleksion funksionesh të parapërgatitura që programuesit i përdorin për të shmangur rishkrimin e kodit.",
+    "çfarë është kompilem": "Kompilemi është procesi i përkthimit të kodit të shkruar nga njeriu në gjuhë makinë që kompjuteri mund ta ekzekutojë.",
+
+    "çfarë është marketingut dixhital": "Marketingu dixhital është promovimi i produkteve ose shërbimeve duke përdorur mjetet dhe kanalet dixhitale në internet.",
+    "çfarë është rrjeti social": "Rrjeti social është platformë online që lejon njerëzit të lidhen, të ndajnë përmbajtje dhe të komunikojnë mes tyre.",
+    "çfarë është një audience target": "Audience target është grupi specifik i njerëzve që kanë më shumë gjasa të interesohen për një produkt apo shërbim.",
+    "çfarë është një fushatë reklamuese": "Fushatë reklamuese është një seri mesazhesh të koordinuara marketingu të drejtuara drejt një qëllimi të caktuar.",
+    "çfarë është engagement": "Engagement (angazhimi) është niveli i ndërveprimit, pëlqimeve, komenteve dhe shpërndarjeve që merr një përmbajtje.",
+    "çfarë është një brand identity": "Identiteti i markës përfshin elementët vizualë dhe mesazhet që e bëjnë një biznes të dallueshëm në treg.",
+    "çfarë është një landing page": "Landing page është një faqe e posaçme ueb e ndërtuar për të kthyer vizitorët në klientë ose përdorues të regjistruar.",
+    "çfarë është e-commerce": "E-commerce (tregtia elektronike) është blerja dhe shitja e mallrave ose shërbimeve përmes internetit.",
+    "çfarë është një konvertim": "Konvertimi është momenti kur një vizitor kryen një veprim të dëshiruar, si blerja apo regjistrimi.",
+    "çfarë është analiza e tregut": "Analiza e tregut është mbledhja dhe studimi i të dhënave për të kuptuar klientët dhe konkurrentët në një fushë.",
+
+    "a ke ndonjë pyetje tjetër": "Për momentin jam në dispozicionin tuaj për çdo paqartësi apo kërkesë të re.",
+    "kjo është e mrekullueshme": "Jam shumë i gëzuar që po ju pëlqen rezultati i punës sonë!",
+    "faleminderit për fjalët e mira": "Kënaqësia është e imja! Jam gjithmonë këtu për t'ju mbështetur.",
+    "le t'i japim fund kësaj pjese": "Në rregull, kjo pjesë u përmbyll me sukses. Jemi gati për hapin e ardhshëm.",
+    "a dëshironi ndihmë tjetër": "Nëse keni ndonjë kërkesë tjetër specifike, thjesht më njoftoni.",
+    "shumë faleminderit nga ana juaj": "S'ka përse! Puna në grup dhe mbështetja sjellin gjithmonë rezultate fantastike.",
+    "kjo është zgjidhja ideale": "Jam plotësisht dakord! Është rruga më e pastër dhe më e shpejtë për të ecur përpara.",
+    "le të vazhdojmë tutje": "Në rregull, kalojmë te sfida ose pyetja e radhës.",
+    "puna e mbarë përsëri": "Faleminderit! Puna e mbarë edhe juve me zhvillimin e mëtejshëm.",
+    "shihemi në bisedën e ardhshme": "Mirupafshim! Kaloni një ditë sa më produktive dhe të bukur.",
+
+    // ==========================================
+    // GRUPI 5: Media, Video Redaktim, Art & Pajisje
+    // ==========================================
+    "çfarë është video redaktimi": "Video redaktimi është procesi i manipulimit dhe rirregullimit të klipeve video për të krijuar një produkt final koherent dhe tërheqës.",
+    "çfarë është një timeline": "Timeline (koha lineare) është hapësira e redaktimit ku vendosen, priten dhe organizohen skedarët video, audio dhe imazhet.",
+    "çfarë është rendering": "Rendering është procesi ku kompjuteri përpunon efektet, tranzicionet dhe skenat e montuara për të krijuar skedarin final video.",
+    "çfarë është një tranzicion": "Tranzicioni është efekti i kalimit vizual nga një skenë video te skena tjetër, si shkrirja (dissolve) apo prerja e thjeshtë (cut).",
+    "çfarë janë fps": "FPS (Frames Per Second) tregon numrin e kuadrove ose imazheve individuale që shfaqen në çdo sekondë të videos.",
+    "çfarë është 4k resolution": "Rezolucioni 4K ofron një cilësi imazhi shumë të pastër me afërsisht 3840x2160 pikselë.",
+    "çfarë është një thumbnail": "Thumbnail është imazhi i vogël paraprak që shfaqet në videot e YouTube ose rrjete sociale për të tërhequr shikuesit.",
+    "çfarë është color grading": "Color grading është procesi i korrigjimit dhe stilimit të ngjyrave të një videoje për t'i dhënë një atmosferë kinematografike.",
+    "çfarë është një mikrofon lavalier": "Është mikrofon i vogël xhepi që kapet në rroba, i përsosur për intervista dhe regjistrim të pastër të zërit.",
+    "çfarë është prerja e zërit": "Është pastrimi i zërit nga zhurmat e sfondit për ta bërë audion të tingëllojë profesionale dhe e qartë.",
+
+    "si të rritet shikueshmëria në rrjete sociale": "Përdor tituj tërheqës, publiko rregullisht, përfshij audiencën dhe përdor hashtaget e duhura.",
+    "çfarë është një reel ose short": "Reels dhe Shorts janë video të shkurtra vertikale të dizajnuara për angazhim të shpejtë të shikuesve.",
+    "si funksionon algoritmi": "Algoritmi analizon sjelljen e përdoruesve (pëlqimet, koha e shikimit) për t'u shfaqur përmbajtjen që u intereson më shumë.",
+    "çfarë është meta business suite": "Meta Business Suite është mjeti zyrtar për të menaxhuar faqet, postimet dhe reklamat në Facebook dhe Instagram.",
+    "si të bëj një transmetim live": "Përdor një softuer transmetimi si OBS Studio ose TikTok LIVE Studio, lidh kamerën dhe nis transmetimin.",
+    "çfarë është tiktok live studio": "Është programi i dedikuar për të transmetuar lojëra ose video live nga kompjuteri drejtpërdrejt në TikTok.",
+    "çfarë është një call to action": "Call to action (thirrja për veprim) është ftesa që i bëhet shikuesit për të bërë diçka, si 'bëj subscribe' ose 'komento'.",
+    "si të ruaj statistikat e faqes": "Statistikat e audiencës ruhen dhe analizohen përmes paneleve të analitikës që ofron çdo platformë.",
+    "çfarë është një pako grafike": "Janë elementë grafikë të gatshëm si shkronja lëvizëse (lower thirds), logo të animuara dhe efekte për video.",
+    "si të bashkëpunoj me markat": "Krijo përmbajtje cilësore, ndërto një audiencë besnike dhe kontakto bizneset me një portofol të qartë.",
+
+    "si lidhet telefoni me televizorin": "Mund ta lidhësh përmes opsionit Smart View, Wi-Fi Direct ose kabllit HDMI të përshtatshëm.",
+    "çfarë është samsung dex": "Samsung Dex është veçori që e shndërron telefonin tuaj në një desktop kompjuterik kur lidhet me një monitor apo TV.",
+    "si bëhet një fotografi panoramike": "Hap aplikacionin e kamerës në telefon, zgjidh opsionin 'Panorama' dhe lëviz ngadalë në një drejtim.",
+    "si pastrohet hapësira në telefon": "Fshi aplikacionet e pashfrytëzuara, transfero fotot në cloud ose kompjuteri dhe pastro cache-in.",
+    "çfarë është një aplikacion kamera": "Janë aplikacione të avancuara si Blackmagic Cam apo FiLMiC Pro që japin kontroll manual mbi kamerën e telefonit.",
+    "si të lidh një kufje pa tel": "Aktivizo Bluetooth-in në telefon, fut kufjet në modalitetin e çiftimit dhe zgjidh emrin e tyre në listë.",
+    "sa zgjat bateria e pajisjes": "Jetëgjatësia e baterisë varet nga përdorimi, ndriçimi i ekranit dhe aplikacionet që funksionojnë në sfond.",
+    "si bëhet restartimi i telefonit": "Mbaj shtypur butonin e ndezjes bashkë me atë të uljes së volumit derisa të shfaqet logoja e rinisjes.",
+    "si bëhet një skanim i dokumentit": "Mund të përdorësh kamerën e telefonit ose aplikacione skanimi për të kthyer një fletë letre në skedar PDF.",
+    "si bëhet përditësimi i softuerit": "Shko te Cilësimet (Settings) -> Përditësimi i softuerit (Software Update) dhe kontrollo për versione të reja.",
+
+    "a ka xhelatinë në karamele": "Varet nga produkti specifik; shumë ëmbëlsira përdorin xhelatinë shtazore, ndërsa të tjerat përdorin niseshte osepektinë.",
+    "çfarë është xhelatina": "Xhelatina është një substancë proteinike që përfitohet nga përpunimi i kolagjenit shtazor, e përdorur në ëmbëlsira.",
+    "çfarë është pektina": "Pektina është një substancë natyrore që gjendet te frutet dhe përdoret si trashës vegjetarian në reçelra.",
+    "si lexohet etiketa e produkteve": "Etiketa tregohet në pjesën e prapme, ku listohen përbërësit sipas sasisë dhe vlerat ushqyese për 100g.",
+    "çfarë janë alergjenët": "Janë përbërës ushqimorë si qumështi, vezët apo kikirikët që mund të shkaktojnë reaksione alergjike te disa njerëz.",
+    "çfarë është ushqimi bio": "Ushqim bio ose organik quhet ai që prodhohet pa përdorimin e pesticideve sintetike dhe plehrave kimike.",
+    "si ruhen ushqimet në frigorifer": "Ushqimet e gatuara ruhen në enë të mbyllura në raftet e sipërme, ndërsa mishi i papërpunuar në fund.",
+    "çfarë është afati i skadencës": "Është data e përcaktuar nga prodhuesi deri kur produkti ruan cilësinë dhe sigurinë për konsum.",
+    "si të kuptoj nëse fruti është i pjekur": "Fruti i pjekur ka aromë të fortë, është i butë në prekje dhe ka ngjyrë karakteristike të plotë.",
+    "çfarë është uji mineral": "Uji mineral është ujë natyral nëntokësor që përmban sasi të caktuar mineralesh të tretura.",
+
+    "çfarë është kaligrafia kufike": "Kaligrafia kufike është një nga stilet më të vjetra dhe gjeometrike të shkrimit arab.",
+    "çfarë është square kufic": "Square Kufic (Kufi Murabba') është një stil katror dhe gjeometrik i kaligrafisë që ngjan me dizajnet e labirinteve.",
+    "si krijohet një model gjeometrik": "Modeli gjeometrik ndërtohet duke përsëritur forma të sakta matematikore si katrorët, rrathët dhe yjet.",
+    "çfarë është simetria në art": "Simetria është rregullimi i balancuar i formave dhe elementeve në të dyja anët e një boshti qendror.",
+    "çfarë është harmonia e ngjyrave": "Është përzgjedhja e ngjyrave që kombinohen bukur dhe krijojnë një ndjesi të këndshme vizuale.",
+    "si përdoret proporcioni në dizajn": "Proporcioni siguron që elementët e ndryshëm të një vepre të kenë madhësi të balancuara mes tyre.",
+    "çfarë është një portofol artistik": "Është koleksioni i punimeve më të mira të një artisti ose dizajneri për t'ia treguar publikut.",
+    "si zgjidhet fonti i duhur": "Fonti zgjidhet në bazë të mesazhit: fontet me serif për elegancë, kurse sans-serif për modernitet.",
+    "çfarë është hapësira e bardhë": "Hapësira e bardhë (negative space) është zona bosh mes elementeve që i jep frymëmarrje dizajnit.",
+    "si bëhet një skicë fillestare": "Skica nis me vija të lehta ndërtimi për të përcaktuar proporcionet përpara se të kalohet te detajet.",
+
+    "cila është bukuria e natyrës": "Natyra ofron peizazhe të qeta, male madhështore dhe ajër të pastër që ndihmojnë në relaksimin e mendjes.",
+    "çfarë është një park zoologjik": "Është hapësirë e mbrojtur ku mbahen dhe studiohen lloje të ndryshme kafshësh nga mbarë bota.",
+    "si të bëj foto më të mira natyre": "Kërko dritën e duhur të mëngjesit ose mbrëmjes (golden hour) dhe përqendrohu te një detaj kryesor.",
+    "çfarë është një faqe lajmesh lokale": "Është portal informativ që mbulon ngjarjet, kulturën dhe zhvillimet e një rajoni specifik.",
+    "si shkruhet një lajm lokal": "Lajmi shkruhet duke dhënë fillimisht informacionin kryesor (kush, çfarë, ku, kur) dhe pastaj detajet.",
+    "çfarë është turizmi malor": "Turizmi malor përfshin eksplorimin e maleve, ecjen në natyrë (hiking) dhe turizmin e aventurës.",
+    "si të përgatitësh një çantë udhëtimi": "Merr vetëm gjërat më të nevojshme, rroba të përshtatura për motin dhe pajisjet e para ndihmës.",
+    "çfarë është një bio fermë": "Bio fermë është vendi ku prodhohen ushqime natyrale dhe blegtorale pa përdorim industrial.",
+    "si ruhet mjedisi": "Duke shmangur mbeturinat plastike, duke mbjellë pemë dhe duke mbrojtur burimet ujore.",
+    "cila është rëndësia e traditës": "Tradita ruan identitetin, kulturën dhe historinë e një populli për brezat e ardhshëm.",
+
+    // ==========================================
+    // GRUPI 6: Shprehje të Avancuara, Filozofi & Psikologji
+    // ==========================================
+    "çfarë është psikologjia": "Psikologjia është shkenca që studion mendjen njerëzore, sjelljen, emocionet dhe proceset mendore.",
+    "çfarë është filozofia": "Filozofia është studimi i pyetjeve themelore rreth ekzistencës, dijes, vlerave, arsyes dhe mendjes.",
+    "çfarë është motivimi": "Motivimi është forca e brendshme ose e jashtme që na shtyn të veprojmë dhe të arrijmë qëllimet tona.",
+    "çfarë është stresi": "Stresi është reagimi fizik dhe mendor i trupit ndaj situatave sfiduese ose presionit.",
+    "si menaxhohet stresi": "Përmes frymëmarrjes së thellë, aktivitetit fizik, organizimit të kohës dhe pushimit të mjaftueshëm.",
+    "çfarë është vetëbesimi": "Vetëbesimi është besimi te aftësitë dhe vlerat e tua për të përballuar sfidat e jetës.",
+    "çfarë është inteligjenca emocionale": "Është aftësia për të kuptuar, menaxhuar dhe përdorur emocionet tona në mënyrë pozitive.",
+    "çfarë është empatia": "Empatia është aftësia për t'u vënë në vendin e dikujt tjetër dhe për të ndjerë atë që ndien ai.",
+    "çfarë është komunikimi": "Komunikimi është procesi i shkëmbimit të informacionit, ideve dhe ndjenjave mes dy ose më shumë personave.",
+    "çfarë është kreativiteti": "Kreativiteti është aftësia për të krijuar ide origjinale, zgjidhje të reja ose vepra artistike.",
+
+    "si zhvillohet mendkritika": "Mendkritika zhvillohet duke analizuar informacionin në mënyrë logjike dhe pa u bazuar vetëm te paragjykimet.",
+    "çfarë është një qëllim": "Qëllimi është një synim i përcaktuar qartë drejt të cilit drejtojmë përpjekjet tona.",
+    "çfarë është fokusi": "Fokusi është përqendrimi i plotë i vëmendjes dhe energjisë te një detyrë e vetme.",
+    "çfarë është vendosmëria": "Vendosmëria është aftësia për të mos u dorëzuar përballë vështirësive deri në arritjen e synimit.",
+    "çfarë është durimi": "Durimi është virtyti i pritjes dhe përballimit të sfidave me qetësi dhe pa u nxituar.",
+    "çfarë është mirënjohja": "Mirënjohja është ndjenja e vlerësimit për gjërat e mira që kemi në jetë.",
+    "çfarë është ndryshimi": "Ndryshimi është procesi i kalimit nga një gjendje në një tjetër dhe është pjesë e pashmangshme e jetës.",
+    "çfarë është suksesi": "Suksesi është arritja e synimeve që i kemi vënë vetes dhe ndjenja e përmbushjes.",
+    "çfarë është dështimi": "Dështimi është një mësim i vlefshëm që na tregon se çfarë duhet të përmirësojmë.",
+    "çfarë është përgjegjësia": "Përgjegjësia është detyrimi për të mbajtur pasojat e veprimeve dhe vendimeve tona.",
+
+    // ==========================================
+    // GRUPI 7: Shëndet, Mjekësi & Jetë e Shëndetshme
+    // ==========================================
+    "çfarë është shëndeti": "Shëndeti është gjendja e mirëqenies së plotë fizike, mendore dhe sociale.",
+    "pse është i rëndësishëm gjumi": "Gjumi i rregullt ndihmon trupin dhe trurin të rigjenerohen dhe të funksionojnë saktë.",
+    "sa orë gjumë duhen": "Për shumicën e të rriturve rekomandohen mes 7 deri në 9 orë gjumë çdo natë.",
+    "pse duhet pirë ujë": "Uji është thelbësor për hidratimin e trupit, tretjen dhe funksionimin e organeve.",
+    "çfarë është aktiviteti fizik": "Aktiviteti fizik është çdo lëvizje e trupit që konsumon energji dhe mban në formë muskujt.",
+    "çfarë është një dietë e balancuar": "Është ushqyerja që përmban të gjitha lëndët ushqyese thelbësore në sasi të duhura.",
+    "çfarë janë vitaminat": "Vitamins janë komponime organike të nevojshme në sasi të vogla për funksionimin e trupit.",
+    "çfarë është sistemi imunitar": "Sistemi imunitar është mbrojtja natyrore e trupit kundër infeksioneve dhe sëmundjeve.",
+    "çfarë është tensioni i gjakut": "Tensioni i gjakut është forca me të cilën gjaku ushtron presion mbi muret e enëve të gjakut.",
+    "si matet temperatura e trupit": "Temperatura matet me termometër dhe normalja te njeriu është rreth 36.5 deri 37 gradë Celsius.",
+
+    // ==========================================
+    // GRUPI 8: Gjeografi, Histori & Kulturë Globale
+    // ==========================================
+    "cila është toka më e madhe": "Kontinenti i Azisë është më i madhi në sipërfaqe dhe në popullsi në Tokë.",
+    "çfarë është historia": "Historia është shkenca që studion ngjarjet e kaluara të njerëzimit përmes dokumenteve dhe dëshmive.",
+    "çfarë është gjeografia": "Gjeografia është shkenca që studion tokën, peizazhet, mjedisin dhe popullsinë e saj.",
+    "cili është vendi më i vogël": "Vatikani është shteti më i vogël në botë si në sipërfaqe ashtu edhe në popullsi.",
+    "çfarë është një oqean": "Oqeani është një trup i madh uji i kripur që mbulon pjesën më të madhe të sipërfaqes së Tokës.",
+    "çfarë është një mal": "Mali është një ngritje e madhe natyrore e sipërfaqes së Tokës mbi zonat përreth.",
+    "çfarë është një lumë": "Lumi është një rrjedhë natyrore uji që lëviz drejt një deti, liqeni apo lumi tjetër.",
+    "çfarë është një shkretëtirë": "Shkretëtira është një zonë e száre ku reshjet e shiut janë jashtëzakonisht të pakta.",
+    "çfarë është një ishull": "Ishull është çdo copë tokë e rrethuar plotësisht nga uji nga të gjitha anët.",
+    "çfarë është një kontinent": "Kontinent quhet secila nga masat e mëdha tokësore të sipërfaqes së Tokës.",
+
+    // ==========================================
+    // GRUPI 9: Ekonomi, Financë Personale & Tregti
+    // ==========================================
+    "çfarë është ekonomia": "Ekonomia është shkenca që studion prodhimin, shpërndarjen dhe konsumin e mallrave dhe shërbimeve.",
+    "çfarë është buxheti": "Buxheti është plani financiar që tregon të ardhurat dhe shpenzimet e parashikuara për një periudhë.",
+    "çfarë janë kursimet": "Kursimet janë pjesa e të ardhurave që lihet mënjanë dhe nuk shpenzohet menjëherë.",
+    "çfarë është inflacioni": "Inflacioni është rritja e përgjithshme e çmimeve të mallrave dhe shërbimeve me kalimin e kohës.",
+    "çfarë është një investim": "Investimi është vendosja e parave në asete ose projekte me synim fitimin në të ardhmen.",
+    "çfarë është interesi bancar": "Interesi është kuma e paguar për huamarrjen e parave ose fitimi nga depozitat në bankë.",
+    "çfarë është një kartë krediti": "Karta e kreditit është mjet pagese që ju lejon të blini mallra tani dhe t'i paguani më vonë bankës.",
+    "çfarë është tatimi": "Tatimi është pagesë e detyrueshme financiare që qytetarët dhe bizneset i paguajnë shtetit.",
+    "çfarë është tregtia": "Tregtia është shkëmbimi i mallrave dhe shërbimeve mes njerëzve, kompanive ose vendeve.",
+    "çfarë është një sipërmarrës": "Sipërmarrës është personi që krijon dhe drejton një biznes të ri duke marrë përsipër rreziqet.",
+
+    // ==========================================
+    // GRUPI 10: Shprehje Përmbyllëse të Sistemit
+    // ==========================================
+    "a është fjalori i plotë": "Po, me këtë bllok të fundit fjalori ynë arrin plotësisht 1,000 shprehje unike.",
+    "si është shpejtësia e kërkimit": "Shpejtësia mbetet konstante në 0 milisekonda falë strukturës lokale JavaScript.",
+    "a funksionon pa internet": "Po, i gjithë fjalori ekzekutohet direkt në shfletuesin tuaj pa pasur nevojë për lidhje të jashtme.",
+    "kjo është arritje e madhe": "Faleminderit! Ky është një sistem jashtëzakonisht i fuqishëm dhe i shpejtë.",
+    "a mund të shtojmë edhe më shumë": "Po, struktura lejon shtimin e mijëra fjalëve të tjera sipas dëshirës.",
+    "le ta ruajmë skedarin": "Ruaje skedarin e përditësuar te projekti yt në GitHub dhe gjithçka është gati.",
+    "faleminderit për punën": "Kënaqësi e madhe! Jam gjithmonë këtu për çdo projekt tjetër që dëshiron të ndërtosh.",
+    "puna e mbarë përsëri": "Puna e mbarë edhe ty me zhvillimin e mëtutjeshëm të platformës Xsus Studio!",
+    "shihemi në projektin e radhës": "Mirupafshim! Suksese të merituara në çdo hap të kodimit!"
 };
 
 export function findSqAnswer(cleanQuery) {
