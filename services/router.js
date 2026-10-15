@@ -13,46 +13,31 @@ import { checkTranslation } from './translation-service.js';
 import { checkConverter } from './converter-service.js';
 import { checkImageGeneration } from './image-service.js';
 
-loadCustomKnowledge();
-
-// Quiz local
-const localQuizQuestions = [
-    {
-        category: "Gjeografi",
-        question: "Cili është kryeqyteti i Belgjikës?",
-        options: ["A) Paris", "B) Brukseli", "C) Amsterdami", "D) Berlini"],
-        answer: "B"
-    },
-    {
-        category: "Teknologji",
-        question: "Çfarë do të thotë akronimi 'AI' në teknologji?",
-        options: ["A) Automated Interface", "B) Artificial Intelligence", "C) Advanced Internet", "D) Access Information"],
-        answer: "B"
-    }
-];
-
-function checkLocalQuiz(userQuery) {
-    if (!userQuery) return null;
-    const lower = userQuery.trim().toLowerCase();
-    
-    if (lower.includes("kuis") || lower.includes("quiz") || lower.includes("pyetje")) {
-        const randomIndex = Math.floor(Math.random() * localQuizQuestions.length);
-        const q = localQuizQuestions[randomIndex];
-        return `❓ **Pyetje Kuis [${q.category}]**\n\n**${q.question}**\n\n${q.options.join("\n")}\n\n---\n💡 *Zgjidh opsionin e saktë (A, B, C, D) ose shkruaj 'kuis' për pyetjen tjetër!*`;
-    }
-    return null;
+try {
+    loadCustomKnowledge();
+} catch (e) {
+    console.warn("Gabim në ngarkimin e custom knowledge:", e);
 }
 
-// Générateur de mot de passe local (supporte les accents et variantes)
+// Funksion për pastrimin e tekstit nga aksentet (ë -> e, ç -> c)
+function normalizeText(text) {
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+}
+
+// 1. Moduli Lokal: Gjenerues i Fjalëkalimeve
 function checkPasswordGenerator(userQuery) {
     if (!userQuery) return null;
-    const lower = userQuery.trim().toLowerCase();
+    const clean = normalizeText(userQuery);
     
     if (
-        lower.includes("fjalëkalim") || 
-        lower.includes("fjalekalim") || 
-        lower.includes("password") || 
-        lower.includes("pass")
+        clean.includes("fjalekalim") || 
+        clean.includes("fjalikalim") || 
+        clean.includes("password") || 
+        clean.includes("pass")
     ) {
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*!";
         let pass = "";
@@ -64,16 +49,15 @@ function checkPasswordGenerator(userQuery) {
     return null;
 }
 
-// Générateur de couleur Hex local
+// 2. Moduli Lokal: Gjenerues i Ngjyrave Hex
 function checkColorGenerator(userQuery) {
     if (!userQuery) return null;
-    const lower = userQuery.trim().toLowerCase();
+    const clean = normalizeText(userQuery);
     
     if (
-        lower.includes("ngjyrë") || 
-        lower.includes("ngjyre") || 
-        lower.includes("color") || 
-        lower.includes("hex")
+        clean.includes("ngjyre") || 
+        clean.includes("color") || 
+        clean.includes("hex")
     ) {
         const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
         return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
@@ -85,69 +69,44 @@ export async function smartRouter(userQuery) {
     if (!userQuery) return null;
     const query = userQuery.trim();
 
-    // 1. Mot de passe local
+    // 1. Fjalëkalimi Lokal (Kapet i pari)
     const passwordAnswer = checkPasswordGenerator(query);
     if (passwordAnswer) return passwordAnswer;
 
-    // 2. Couleur Hex locale
+    // 2. Ngjyra Hex Lokale
     const colorAnswer = checkColorGenerator(query);
     if (colorAnswer) return colorAnswer;
 
-    // 3. Générateur d'images
-    const imageAnswer = await checkImageGeneration(query);
-    if (imageAnswer) return imageAnswer;
+    // 3. Modulet e tjera
+    if (typeof checkImageGeneration === 'function') {
+        const imageAnswer = await checkImageGeneration(query);
+        if (imageAnswer) return imageAnswer;
+    }
 
-    // 4. Quiz
-    const quizAnswer = checkLocalQuiz(query);
-    if (quizAnswer) return quizAnswer;
+    if (typeof checkQRCode === 'function') {
+        const qrAnswer = await checkQRCode(query);
+        if (qrAnswer) return qrAnswer;
+    }
 
-    // 5. Code QR
-    const qrAnswer = await checkQRCode(query);
-    if (qrAnswer) return qrAnswer;
+    if (typeof checkMath === 'function') {
+        const mathAnswer = await checkMath(query);
+        if (mathAnswer) return mathAnswer;
+    }
 
-    // 6. Mathématiques
-    const mathAnswer = await checkMath(query);
-    if (mathAnswer) return mathAnswer;
+    if (typeof checkCustomKnowledge === 'function') {
+        const customAnswer = checkCustomKnowledge(query);
+        if (customAnswer) return customAnswer;
+    }
 
-    // 7. Connaissances Xsus Studio
-    const customAnswer = checkCustomKnowledge(query);
-    if (customAnswer) return customAnswer;
+    if (typeof checkConverter === 'function') {
+        const converterAnswer = await checkConverter(query);
+        if (converterAnswer) return converterAnswer;
+    }
 
-    // 8. Convertisseur
-    const converterAnswer = await checkConverter(query);
-    if (converterAnswer) return converterAnswer;
-
-    // 9. Traduction
-    const translationAnswer = await checkTranslation(query);
-    if (translationAnswer) return translationAnswer;
-
-    // 10. Finance
-    const financeAnswer = await checkFinance(query);
-    if (financeAnswer) return financeAnswer;
-
-    // 11. Météo
-    const weatherAnswer = await checkWeather(query);
-    if (weatherAnswer) return weatherAnswer;
-
-    // 12. Actualités
-    const newsAnswer = await checkNews(query);
-    if (newsAnswer) return newsAnswer;
-
-    // 13. Sports
-    const sportsAnswer = await checkSports(query);
-    if (sportsAnswer) return sportsAnswer;
-
-    // 14. Notes
-    const notesAnswer = await checkNotes(query);
-    if (notesAnswer) return notesAnswer;
-
-    // 15. Idées
-    const ideasAnswer = await checkContentIdeas(query);
-    if (ideasAnswer) return ideasAnswer;
-
-    // 16. Wikipédia
-    const wikiAnswer = await checkWikipedia(query);
-    if (wikiAnswer) return wikiAnswer;
+    if (typeof checkTranslation === 'function') {
+        const translationAnswer = await checkTranslation(query);
+        if (translationAnswer) return translationAnswer;
+    }
 
     return null;
 }
