@@ -29,16 +29,18 @@ function normalizeText(text) {
         .trim();
 }
 
-// Moduli i Sportit Live
+// Moduli i Sportit Live i përmirësuar
 function checkSportLive(userQuery) {
     if (!userQuery) return null;
     const clean = normalizeText(userQuery);
     
     if (
         clean.includes("sport") || 
+        clean.includes("ndeshj") || 
         clean.includes("ndeshje") || 
+        clean.includes("ndeshjet") || 
         clean.includes("futboll") || 
-        clean.includes("rezultate") ||
+        clean.includes("rezultat") ||
         clean.includes("live")
     ) {
         return `⚽ **Xsus Sport Live Hub:**\n\n` +
