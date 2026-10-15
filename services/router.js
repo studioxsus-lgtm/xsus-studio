@@ -1,4 +1,5 @@
 // services/router.js
+import { studioCore } from './xsus-core.js';
 import { loadCustomKnowledge, checkCustomKnowledge } from './custom-knowledge-service.js';
 import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
@@ -127,8 +128,21 @@ function checkIslamicKnowledge(userQuery) {
     return null;
 }
 
-export async function smartRouter(userQuery) {
+export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai') {
     if (!userQuery) return null;
+
+    // -------------------------------------------------------------
+    // 0. BËRTHAMA QENDRORE (Xsus Studio Core Engine - 0ms Response)
+    // -------------------------------------------------------------
+    try {
+        if (studioCore && typeof studioCore.requestAccess === 'function') {
+            const coreReply = studioCore.requestAccess(moduleName, userQuery, lang);
+            if (coreReply) return coreReply;
+        }
+    } catch (coreErr) {
+        console.warn("Gabim te Bërthama Qendrore (xsus-core):", coreErr);
+    }
+
     const clean = normalizeText(userQuery);
 
     // -------------------------------------------------------------
