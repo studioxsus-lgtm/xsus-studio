@@ -24,7 +24,8 @@ export async function smartRouter(userQuery) {
     const text = userQuery.toLowerCase().trim();
 
     // -------------------------------------------------------------
-    // 1. GJENERUESI I FJALËKALIMEVE (Kontroll direkt i fjalëve kyçe)
+    // 0. KONTROLLI I PARË DHE ABSOLUT: FJALËKALIMI
+    // (Ky bllok vendoset këtu që asnjë shërbim tjetër të mos e ndalojë)
     // -------------------------------------------------------------
     if (
         text.includes("fjal") || 
@@ -42,7 +43,7 @@ export async function smartRouter(userQuery) {
     }
 
     // -------------------------------------------------------------
-    // 2. GJENERUESI I NGJYRAVE HEX
+    // 1. GJENERUESI I NGJYRAVE HEX
     // -------------------------------------------------------------
     if (
         text.includes("ngjyr") || 
@@ -55,9 +56,13 @@ export async function smartRouter(userQuery) {
     }
 
     // -------------------------------------------------------------
-    // 3. SHËRBIMET E TJERA
+    // 2. SHËRBIMET E TJERA
     // -------------------------------------------------------------
     try {
+        if (typeof checkCustomKnowledge === 'function') {
+            const custom = checkCustomKnowledge(userQuery);
+            if (custom) return custom;
+        }
         if (typeof checkImageGeneration === 'function') {
             const img = await checkImageGeneration(userQuery);
             if (img) return img;
@@ -69,10 +74,6 @@ export async function smartRouter(userQuery) {
         if (typeof checkMath === 'function') {
             const math = await checkMath(userQuery);
             if (math) return math;
-        }
-        if (typeof checkCustomKnowledge === 'function') {
-            const custom = checkCustomKnowledge(userQuery);
-            if (custom) return custom;
         }
         if (typeof checkConverter === 'function') {
             const conv = await checkConverter(userQuery);
