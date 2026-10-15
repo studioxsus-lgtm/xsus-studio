@@ -1,13 +1,20 @@
 // services/xsus-core.js - Bërthama Qendrore e Xsus Studio
-import { xsusCoreKnowledge } from './core-knowledge.js';
+import { sqKnowledge, findSqAnswer } from './sq-knowledge.js';
+import { frKnowledge, findFrAnswer } from './fr-knowledge.js';
+import { enKnowledge, findEnAnswer } from './en-knowledge.js';
 
 export class XsusCoreEngine {
     constructor() {
-        this.knowledge = xsusCoreKnowledge;
+        // Ruajmë fjalorët e ndarë sipas gjuhëve dhe funksionet e tyre të kërkimit
+        this.dictionaries = {
+            sq: { data: sqKnowledge, find: findSqAnswer },
+            fr: { data: frKnowledge, find: findFrAnswer },
+            en: { data: enKnowledge, find: findEnAnswer }
+        };
     }
 
     /**
-     * Merr përgjigje ose mjete të dedikuara sipas modulit kërkues
+     * Merr përgjigje ose mjete të dedikuara sipas modulit kërkues dhe gjuhës
      * @param {string} moduleName - Emri i modulit ('xsus-ai', 'xsus-web', 'xsus-app', 'xsus-game', 'xsus-logo')
      * @param {string} query - Pyetja ose kërkesa e përdoruesit
      * @param {string} lang - Gjuha ('sq', 'en', 'fr')
@@ -16,42 +23,42 @@ export class XsusCoreEngine {
         if (!query) return null;
         const cleanQuery = query.toLowerCase().trim().replace(/[?.,!]/g, '');
 
+        // Zgjedhim fjalorin sipas gjuhës, me zgjedhje të paracaktuar shqipen ('sq')
+        const currentLang = this.dictionaries[lang] ? lang : 'sq';
+        const dict = this.dictionaries[currentLang];
+
         switch (moduleName) {
             case 'xsus-ai':
-                // Xsus AI ka akses të plotë në të gjitha njohuritë e bërthamës
-                return this.knowledge.findInstantAnswer(cleanQuery, lang);
+                // Kërkon te fjalori përkatës i gjuhës
+                return dict.find ? dict.find(cleanQuery) : null;
 
             case 'xsus-web':
-                // Akses i specializuar vetëm për terma, mjete dhe zhvillim ueb-i
                 if (this._isWebQuery(cleanQuery)) {
-                    return this.knowledge.findInstantAnswer(cleanQuery, lang) || 
-                           this._getWebContext(cleanQuery, lang);
+                    return (dict.find ? dict.find(cleanQuery) : null) || 
+                           this._getWebContext(cleanQuery, currentLang);
                 }
                 return null;
 
             case 'xsus-app':
-                // Akses vetëm për aplikacione dhe sisteme mobile/desktop
                 if (cleanQuery.includes('app') || cleanQuery.includes('aplikacion') || cleanQuery.includes('android') || cleanQuery.includes('ios')) {
-                    return this.knowledge.findInstantAnswer(cleanQuery, lang);
+                    return dict.find ? dict.find(cleanQuery) : null;
                 }
                 return null;
 
             case 'xsus-game':
-                // Akses vetëm për zhvillim lojërash dhe grafikë
                 if (cleanQuery.includes('game') || cleanQuery.includes('lojë') || cleanQuery.includes('graphics')) {
-                    return this.knowledge.findInstantAnswer(cleanQuery, lang);
+                    return dict.find ? dict.find(cleanQuery) : null;
                 }
                 return null;
 
             case 'xsus-logo':
-                // Akses vetëm për dizajn dhe brending
                 if (cleanQuery.includes('logo') || cleanQuery.includes('design') || cleanQuery.includes('brand')) {
-                    return this.knowledge.findInstantAnswer(cleanQuery, lang);
+                    return dict.find ? dict.find(cleanQuery) : null;
                 }
                 return null;
 
             default:
-                return this.knowledge.findInstantAnswer(cleanQuery, lang);
+                return dict.find ? dict.find(cleanQuery) : null;
         }
     }
 
