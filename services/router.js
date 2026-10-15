@@ -29,12 +29,32 @@ function normalizeText(text) {
         .trim();
 }
 
+// Moduli i Sportit Live
+function checkSportLive(userQuery) {
+    if (!userQuery) return null;
+    const clean = normalizeText(userQuery);
+    
+    if (
+        clean.includes("sport") || 
+        clean.includes("ndeshje") || 
+        clean.includes("futboll") || 
+        clean.includes("rezultate") ||
+        clean.includes("live")
+    ) {
+        return `⚽ **Xsus Sport Live Hub:**\n\n` +
+               `- **Ndeshjet Kryesore sot:** Përditësimet live janë aktive në rrjet.\n` +
+               `- **Kampionatet:** Champions League, Premier League, Serie A, La Liga.\n\n` +
+               `💡 *Shkruaj emrin e një skuadre ose kampionati specifik për të marrë detaje të tjera!*`;
+    }
+    return null;
+}
+
 export async function smartRouter(userQuery) {
     if (!userQuery) return null;
     const clean = normalizeText(userQuery);
 
     // -------------------------------------------------------------
-    // 1. KONTROLLI I UTILITETEVE LOKALE (FJALËKALIM & NGJYRA HEX)
+    // 1. UTILITETET LOKALE (Fjalëkalim, Ngjyra, Sport Live)
     // -------------------------------------------------------------
     if (
         clean.includes("fjalekalim") || 
@@ -59,8 +79,11 @@ export async function smartRouter(userQuery) {
         return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
     }
 
+    const sportAnswer = checkSportLive(userQuery);
+    if (sportAnswer) return sportAnswer;
+
     // -------------------------------------------------------------
-    // 2. TË GJITHA SHËRBIMET TUAJA EKZISTUESE (Të Mbrojtura me Try/Catch)
+    // 2. TË GJITHA SHËRBIMET E TJERA EKZISTUESE
     // -------------------------------------------------------------
     try {
         if (typeof checkImageGeneration === 'function') {
