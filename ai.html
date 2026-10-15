@@ -176,9 +176,15 @@
                     <div class="w-3 h-3 rounded-full bg-cyber-blue animate-pulse"></div>
                     <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Live Neural Assistant</span>
                 </div>
-                <button id="clear-chat" type="button" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
-                    <i data-lucide="trash-2" class="w-3 h-3"></i> <span data-i18n="clear-btn">Clear Chat</span>
-                </button>
+                <!-- Seksioni i butonave: Export dhe Clear Chat -->
+                <div class="flex items-center gap-2">
+                    <button id="export-chat" type="button" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
+                    </button>
+                    <button id="clear-chat" type="button" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> <span data-i18n="clear-btn">Clear Chat</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Chat Messages Container -->
@@ -261,7 +267,6 @@
             }
         }
 
-        // Përkthimet e përditësuara për të 3 gjuhët (Inkludojnë opsionin e tretë të zgjedhur)
         const i18nData = {
             en: {
                 "nav-start": "Launch AI",
@@ -325,6 +330,7 @@
         const aiSendBtn = document.getElementById('ai-send-btn');
         const aiOutputBox = document.getElementById('ai-output-box');
         const clearChatBtn = document.getElementById('clear-chat');
+        const exportChatBtn = document.getElementById('export-chat');
 
         const plusBtn = document.getElementById('plus-btn');
         const plusMenu = document.getElementById('plus-menu');
@@ -344,7 +350,6 @@
         let attachedFileName = null;
         let attachedImageBase64 = null;
 
-        // Auto-expanding Textarea
         if (aiInput) {
             aiInput.addEventListener('input', function() {
                 this.style.height = 'auto';
@@ -751,6 +756,26 @@
                 ];
                 showWelcomeMessage();
                 refreshIcons();
+            };
+        }
+
+        if (exportChatBtn) {
+            exportChatBtn.onclick = function() {
+                const chatContent = aiOutputBox.innerText;
+                if (!chatContent.trim()) {
+                    alert(currentLang === 'sq' ? "Nuk ka asnjë bisedë për të eksportuar!" : "No chat available to export!");
+                    return;
+                }
+
+                const blob = new Blob([chatContent], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'xsus-ai-chat-' + new Date().toISOString().slice(0, 10) + '.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             };
         }
 
