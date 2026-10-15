@@ -625,6 +625,33 @@
                         reply = routerReply;
                         conversationHistory.push({ role: 'user', content: text });
                         conversationHistory.push({ role: 'assistant', content: reply });
+
+                        document.getElementById('loading-bubble')?.remove();
+
+                        const aiMsg = document.createElement('div');
+                        aiMsg.className = "flex items-start gap-3";
+                        aiMsg.innerHTML = `
+                            ${xsusAiLogoHTML}
+                            <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed markdown-body msg-bubble relative group">
+                                <div>${renderContent(reply)}</div>
+                                <div class="flex items-center gap-2 mt-3 pt-2 border-t border-white/10 text-xs text-slate-400">
+                                    <button type="button" class="copy-btn hover:text-cyber-blue transition flex items-center gap-1 cursor-pointer">
+                                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+                                    </button>
+                                    <span class="text-white/20">•</span>
+                                    <button type="button" class="speak-btn hover:text-cyber-blue transition flex items-center gap-1 cursor-pointer">
+                                        <i data-lucide="volume-2" class="w-3.5 h-3.5"></i> Listen
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        aiOutputBox.appendChild(aiMsg);
+                        aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
+
+                        refreshIcons();
+                        attachInteractiveButtons();
+                        saveChatToLocalStorage();
+                        return; // Ndalon çdo thirrje tjetër dytësore
                     }
                 } catch (e) {
                     console.warn("Router error:", e);
