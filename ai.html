@@ -159,8 +159,9 @@
             <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
                 <span data-i18n="hero-title1">Ask Anything. Create Everything.</span> <br><span class="text-gradient" data-i18n="hero-title2">Powered by Xsus AI</span>
             </h1>
+            <!-- Teksti i përditësuar që ndryshon sipas gjuhës -->
             <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mb-6 leading-relaxed" data-i18n="hero-desc">
-                Your live AI companion connected directly to advanced neural models for accurate answers in any language.
+                Innovation, creativity, and accurate responses in any language, powered by Xsus technology.
             </p>
         </div>
     </header>
@@ -195,7 +196,7 @@
                 </div>
             </div>
 
-            <!-- KONTEJNERI I UNIFIKUAR (Kapsula e gjatë e ngjashme me Gemini) -->
+            <!-- KONTEJNERI I UNIFIKUAR -->
             <div class="glass-panel p-2.5 rounded-full md:rounded-3xl border border-cyber-blue/40 flex items-end gap-2 relative shadow-[0_0_25px_rgba(0,240,255,0.15)]">
                 
                 <!-- MENUJA E PLUSIT (Dropdown) -->
@@ -211,20 +212,20 @@
                     </button>
                 </div>
 
-                <!-- Inputet e fshehura për secilin funksion -->
+                <!-- Inputet e fshehura -->
                 <input type="file" id="doc-input" class="hidden" accept=".pdf,.txt,.md,.js,.json,.html,.css,.py">
                 <input type="file" id="img-input" class="hidden" accept="image/*">
                 <input type="file" id="cam-input" class="hidden" accept="image/*" capture="environment">
 
-                <!-- Butoni Plus (+) i integruar majtas -->
+                <!-- Butoni Plus (+) -->
                 <button id="plus-btn" type="button" title="Shto dokument, foto ose kap me kamerë" class="p-3 rounded-full bg-white/5 hover:bg-cyber-blue/20 text-slate-300 hover:text-cyber-blue transition shrink-0 cursor-pointer flex items-center justify-center">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
 
-                <!-- Textarea inteligjente me zgjerim automatik në qendër -->
+                <!-- Textarea inteligjente -->
                 <textarea id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI or create image (/image)..." rows="1" class="flex-1 bg-transparent px-2 py-3 text-white text-sm outline-none resize-none overflow-y-hidden min-h-[44px] max-h-[150px] leading-relaxed"></textarea>
                 
-                <!-- Butoni Send i integruar djathtas si pilulë -->
+                <!-- Butoni Send -->
                 <button id="ai-send-btn" type="button" class="px-5 py-3 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
                     <i data-lucide="send" class="w-4 h-4"></i>
                     <span data-i18n="btn-send">Send</span>
@@ -260,13 +261,14 @@
             }
         }
 
+        // Përkthimet e përditësuara për të 3 gjuhët (Inkludojnë opsionin e tretë të zgjedhur)
         const i18nData = {
             en: {
                 "nav-start": "Launch AI",
                 "hero-badge": "Real-Time Open Neural Engine",
                 "hero-title1": "Ask Anything. Create Everything.",
                 "hero-title2": "Powered by Xsus AI",
-                "hero-desc": "Your live AI companion connected directly to advanced neural models for accurate answers in any language.",
+                "hero-desc": "Innovation, creativity, and accurate responses in any language, powered by Xsus technology.",
                 "chat-header": "Xsus Live Neural Assistant",
                 "clear-btn": "Clear Chat",
                 "input-placeholder": "Ask Xsus AI or create image (/image)...",
@@ -279,7 +281,7 @@
                 "hero-badge": "Motor Neural në Kohë Reale",
                 "hero-title1": "Pyet Çdo Gjë. Krijo Çdo Gjë.",
                 "hero-title2": "Mbështetur nga Xsus AI",
-                "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
+                "hero-desc": "Inovacion, kreativitet dhe përgjigje të sakta në çdo gjuhë, të fuqizuara nga teknologjia e Xsus.",
                 "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
                 "clear-btn": "Pastro Bisedën",
                 "input-placeholder": "Pyet Xsus AI apo krijo imazh (/image)...",
@@ -292,7 +294,7 @@
                 "hero-badge": "Moteur Neural en Direct",
                 "hero-title1": "Demandez Tout. Créez Tout.",
                 "hero-title2": "Propulsé par Xsus AI",
-                "hero-desc": "Votre compagnon IA en direct connecté aux modèles neuronaux avancés pour des réponses précises.",
+                "hero-desc": "Innovation, créativité et réponses précises dans toutes les langues, propulsées par la technologie Xsus.",
                 "chat-header": "Assistant en Direct Xsus",
                 "clear-btn": "Effacer",
                 "input-placeholder": "Posez une question ou créez une image (/image)...",
@@ -595,13 +597,8 @@
             }
         }
 
-        // FUNKSIONI PËR EFEKTIN E SHKRIMIT GËRMË PAS GËRME (TYPEWRITER)
         function typeWriterEffect(element, htmlText, speed = 12, callback) {
             let i = 0;
-            // Për të mos prishur tagjet HTML gjatë animacionit, e shfaqim tekstin si bllok markdown nëse është i shkurtër,
-            // ose përdorim një shpejtësi të lartë shfaqjeje me copëza, ose shtojmë tekstin rrjedhshëm.
-            // Për siguri maksimale të tabelave dhe markdown, po përdorim shfaqjen e fjalëve rrjedhshëm:
-            
             const words = htmlText.split(' ');
             let currentText = '';
             
@@ -613,7 +610,7 @@
                     i++;
                     setTimeout(addWord, speed);
                 } else {
-                    element.innerHTML = renderContent(htmlText); // Siguron që gjithçka është renderuar saktë në fund
+                    element.innerHTML = renderContent(htmlText);
                     if (callback) callback();
                 }
             }
