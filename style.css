@@ -55,10 +55,67 @@ body {
     background: rgba(0, 242, 254, 0.5);
 }
 
+/* ==========================================================
+   CHAT INPUT AREA (Rregullimi i Hapësirës Poshtë / Keyboard Space)
+   ========================================================== */
+
+.chat-input-wrapper, 
+.input-container,
+footer.chat-footer {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
+    
+    /* Hapësira kryesore nga poshtë (dhe mbrojtja për tastierë/ekrane moderne) */
+    padding-top: 12px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    margin-bottom: 8px;
+    
+    background: rgba(5, 8, 17, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 100;
+}
+
+/* Stilimi i vetë kutisë ku shkruhet teksti */
+.chat-input-wrapper input,
+.chat-input-wrapper textarea,
+.input-container input,
+.input-container textarea {
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 15px;
+    background: rgba(13, 19, 34, 0.9);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    color: #ffffff;
+    outline: none;
+    transition: all 0.2s ease-in-out;
+}
+
+.chat-input-wrapper input:focus,
+.chat-input-wrapper textarea:focus,
+.input-container input:focus,
+.input-container textarea:focus {
+    border-color: rgba(0, 242, 254, 0.6);
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     .glass-panel {
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
+    }
+
+    .chat-input-wrapper, 
+    .input-container,
+    footer.chat-footer {
+        padding-bottom: max(24px, env(safe-area-inset-bottom));
+        margin-bottom: 12px;
     }
 }
