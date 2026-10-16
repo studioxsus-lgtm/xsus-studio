@@ -5,23 +5,18 @@ export async function checkWeather(userQuery) {
     const query = userQuery.toLowerCase().trim();
 
     // Kontrollojmë nëse pyetja përmban fjalë kyçe të motit ose temperaturës
-    const hasWeatherWord = query.includes("moti") || query.includes("temperatura") || 
-                           query.includes("temperaturat") || query.includes("weather") || 
-                           query.includes("temperature") || query.includes("météo") || 
-                           query.includes("meteo") || query.includes("température");
+    const hasWeatherWord = /\b(moti|temperatura|temperaturat|weather|temperature|météo|meteo|température)\b/i.test(query);
 
     if (!hasWeatherWord) return null;
 
-    const isSq = query.includes("moti") || query.includes("temperatura") || query.includes("sot") || query.includes("neser") || query.includes("në") || query.includes("ne");
+    const isSq = query.includes("moti") || query.includes("temperatura") || query.includes("sot") || query.includes("neser") || query.includes("nesër") || query.includes("në") || query.includes("ne");
     const isFr = query.includes("météo") || query.includes("meteo") || query.includes("température") || query.includes("demain");
     const isTomorrow = query.includes("neser") || query.includes("nesër") || query.includes("tomorrow") || query.includes("demain");
 
-    // Pastrojmë fjalët e tepërta për të izoluar emrin e qytetit
+    // Pastrojmë VETËM fjalët e plota për të izoluar emrin e qytetit
     let city = query
-        .replace(/si është moti sot në|si eshte moti sot ne|si është moti nesër në|si eshte moti neser ne|si është moti në|si eshte moti ne|moti sot në|moti sot ne|moti nesër në|moti neser ne|moti në|moti ne|moti|temperatura në|temperatura ne|temperaturat në|temperaturat ne|temperatura|temperaturat/g, "")
-        .replace(/weather today in|weather tomorrow in|weather in|weather today|weather tomorrow|weather|temperature in|temperature|forecast for/g, "")
-        .replace(/météo aujourd'hui à|meteo aujourd'hui a|météo demain à|meteo demain a|météo à|meteo a|météo|meteo|température à|temperature/g, "")
-        .replace(/sot|neser|nesër|today|tomorrow|demain|aujourd'hui|në|ne|a|à/g, "")
+        .replace(/\b(si është|si eshte|moti|temperatura|temperaturat|sot|neser|nesër|today|tomorrow|demain|aujourd'hui|në|ne|a|à|weather|temperature|forecast|for|in)\b/gi, "")
+        .replace(/\s+/g, " ")
         .trim();
 
     // Nëse nuk është specifikuar asnjë qytet, përdorim Namur si default
@@ -43,7 +38,7 @@ export async function checkWeather(userQuery) {
         const location = geoData.results[0];
         const { latitude, longitude, name, country } = location;
 
-        // Përdorim API-në me parashikim ditor për të mbuluar edhe të nesërmen
+        // API me parashikim ditor
         const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min,windspeed_10m_max&timezone=auto`;
         const weatherRes = await fetch(weatherUrl);
         const weatherData = await weatherRes.json();
