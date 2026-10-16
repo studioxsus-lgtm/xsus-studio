@@ -144,18 +144,21 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
         for (let i = 0; i < 14; i++) {
             pass += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        const titleMsg = activeLang === 'en' ? 'Secure Generated Password:' : 'Fjalëkalim i Sigurt i Gjeneruar:';
-        const noteMsg = activeLang === 'en' ? '(Copy and save it in a safe place!)' : '(Kopjoje dhe ruaje në një vend të sigurt!)';
+        const isSq = activeLang === 'sq' || lang === 'sq' || userQuery.toLowerCase().includes('fjalëkalim') || userQuery.toLowerCase().includes('fjalekalim');
+        const titleMsg = isSq ? 'Fjalëkalim i Sigurt i Gjeneruar:' : 'Secure Generated Password:';
+        const noteMsg = isSq ? '(Kopjoje dhe ruaje në një vend të sigurt!)' : '(Copy and save it in a safe place!)';
         return `🔒 **${titleMsg}**\n\`\`\`text\n${pass}\n\`\`\`\n*${noteMsg}*`;
     }
 
     if (
         clean.includes("ngjyre") || 
+        clean.includes("ngjyrë") || 
         clean.includes("color") || 
         clean.includes("hex")
     ) {
         const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-        const titleMsg = activeLang === 'en' ? 'Random Color for Design:' : 'Ngjyrë e Rastësishme për Dizajn:';
+        const isSq = activeLang === 'sq' || lang === 'sq' || userQuery.toLowerCase().includes('ngjyrë') || userQuery.toLowerCase().includes('ngjyre');
+        const titleMsg = isSq ? 'Ngjyrë e Rastësishme për Dizajn:' : 'Random Color for Design:';
         return `🎨 **${titleMsg}**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
     }
 
