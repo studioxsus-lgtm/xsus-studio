@@ -117,7 +117,7 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
     const activeLang = detectedLang && detectedLang !== 'auto' ? detectedLang : (lang === 'auto' || !lang ? 'en' : lang);
 
     // -------------------------------------------------------------
-    // 0. BËRTHAMA QENDROre (Xsus Studio Core Engine - 0ms Response)
+    // 0. BËRTHAMA QENDRORE (Xsus Studio Core Engine - 0ms Response)
     // -------------------------------------------------------------
     try {
         if (studioCore && typeof studioCore.requestAccess === 'function') {
@@ -158,8 +158,12 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
     ) {
         const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
         const isSq = activeLang === 'sq' || lang === 'sq' || userQuery.toLowerCase().includes('ngjyrë') || userQuery.toLowerCase().includes('ngjyre');
-        const titleMsg = isSq ? 'Ngjyrë e Rastësishme për Dizajn:' : 'Random Color for Design:';
-        return `🎨 **${titleMsg}**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
+        
+        if (isSq) {
+            return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
+        }
+        
+        return `🎨 **Random Color for Design:**\n- Hex Code: **${randomHex}**\n- Color: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
     }
 
     const javaAnswer = checkJavaKnowledge(userQuery, activeLang);
