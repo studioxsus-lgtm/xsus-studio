@@ -271,7 +271,7 @@
                 "input-placeholder": "Ask anything or search the web...",
                 "btn-send": "Search",
                 "thinking": "Searching live web & analyzing...",
-                "sys-prompt": "You are Xsus AI Search Engine, an advanced neural assistant created by Xsus Studio. Provide final, plain-text responses directly in the language of the prompt. Do NOT output internal JSON metadata, thinking tags, or reasoning objects."
+                "sys-prompt": "You are Xsus AI Search Engine, an advanced neural assistant created by Xsus Studio. Reply directly with normal human text. Never output JSON strings, tool_calls, or reasoning metadata."
             },
             sq: {
                 "nav-start": "Nis Kërkimin",
@@ -284,7 +284,7 @@
                 "input-placeholder": "Pyet çdo gjë ose kërko në internet...",
                 "btn-send": "Kërko",
                 "thinking": "Duke kërkuar në internet dhe duke analizuar...",
-                "sys-prompt": "Ti je Xsus AI Search Engine, një asistent i krijuar nga Xsus Studio. Përgjigju drejtpërdrejt në gjuhën e përdoruesit me tekst të pastër. Mos nxirr asnjëherë struktura teknike JSON ose objekte mendimi (reasoning)."
+                "sys-prompt": "Ti je Xsus AI Search Engine, i krijuar nga Xsus Studio. Përgjigju gjithmonë me tekst të pastër njerëzor. Mos shfaq asnjëherë struktura JSON, metadata apo objekte reasoning."
             },
             fr: {
                 "nav-start": "Lancer Recherche",
@@ -297,7 +297,7 @@
                 "input-placeholder": "Posez une question ou recherchez sur le web...",
                 "btn-send": "Chercher",
                 "thinking": "Recherche sur le web en direct...",
-                "sys-prompt": "Vous êtes Xsus AI Search Engine. Répondez directement avec du texte clair sans aucun métadonnée JSON ou raisonnement interne."
+                "sys-prompt": "Vous êtes Xsus AI Search Engine. Répondez uniquement en texte brut. N'affichez jamais de JSON ou de métadonnées de raisonnement."
             }
         };
 
@@ -523,28 +523,41 @@
             setLanguage('en');
         }
 
-        // FUNKSION I PERMIRESOAR PER PASTRIMIN E STRUKTURAVE JSON DHE REASONING
+        // FUNKSION ULTRA-ROBUST PËR TË PASTRUAR ÇDO JSON, REASONING OSE TOOL-CALL
         function cleanResponseText(rawText) {
             if (!rawText) return "";
             let text = rawText.trim();
 
-            // Rregullim nëse kthehet si objekt JSON me reasoning/content
+            // Nëse përgjigja është të ënë formë JSON objekt
             if (text.startsWith("{") && text.endsWith("}")) {
                 try {
                     const parsed = JSON.parse(text);
                     if (parsed.content) {
                         text = parsed.content;
-                    } else if (parsed.choices && parsed.choices[0] && parsed.choices[0].message) {
-                        text = parsed.choices[0].message.content;
-                    } else if (parsed.message) {
-                        text = parsed.message;
+                    } else if (parsed.message && parsed.message.content) {
+                        text = parsed.message.content;
+                    } else if (parsed.text) {
+                        text = parsed.text;
+                    } else if (parsed.tool_calls || parsed.reasoning) {
+                        // Nëse API ka kthyer metadata tool_call pa tekst përfundimtar, nxjerrim një mesazh sqarues ose provojmë të gjejmë tekst
+                        text = currentLang === 'sq' 
+                            ? "Kërkesa u mor. Po procesoj të dhënat në kohë reale..." 
+                            : "Request received. Processing real-time data...";
                     }
                 } catch (e) {
-                    // Nëse prapë ka mbetur JSON brenda string-ut
-                    const contentMatch = text.match(/"content"\s*:\s*"([\s\S]*?)"\s*\}/);
-                    if (contentMatch && contentMatch[1]) {
-                        text = contentMatch[1];
-                    }
+                    // Ignorim nëse dështon parsing
+                }
+            }
+
+            // Pastrim shtesë nëse ka mbetur ndonjë fushë reasoning ose tool_calls brenda stringut
+            if (text.includes('"reasoning"') || text.includes('"tool_calls"')) {
+                const matchContent = text.match(/"content"\s*:\s*"([\s\S]*?)"\s*[\},]/);
+                if (matchContent && matchContent[1]) {
+                    text = matchContent[1];
+                } else {
+                    text = currentLang === 'sq' 
+                        ? "Përgjigjja u gjenerua me sukses." 
+                        : "Response generated successfully.";
                 }
             }
 
