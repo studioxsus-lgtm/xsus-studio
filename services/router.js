@@ -31,28 +31,6 @@ function normalizeText(text) {
         .trim();
 }
 
-// Moduli i Sportit Live
-function checkSportLive(userQuery) {
-    if (!userQuery) return null;
-    const clean = normalizeText(userQuery);
-    
-    if (
-        clean.includes("sport") || 
-        clean.includes("ndeshj") || 
-        clean.includes("ndeshje") || 
-        clean.includes("ndeshjet") || 
-        clean.includes("futboll") || 
-        clean.includes("rezultat") ||
-        clean.includes("live")
-    ) {
-        return `⚽ **Xsus Sport Live Hub:**\n\n` +
-               `- **Ndeshjet Kryesore sot:** Përditësimet live janë aktive në rrjet.\n` +
-               `- **Kampionatet:** Champions League, Premier League, Serie A, La Liga.\n\n` +
-               `💡 *Shkruaj emrin e një skuadre ose kampionati specifik për të marrë detaje të tjera!*`;
-    }
-    return null;
-}
-
 // Moduli i Njohurive Teknike & Java Master Engine
 function checkJavaKnowledge(userQuery) {
     if (!userQuery || !Array.isArray(javaKnowledge)) return null;
@@ -170,7 +148,7 @@ export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai'
     const clean = normalizeText(userQuery);
 
     // -------------------------------------------------------------
-    // 1. UTILITETET LOKALE (Fjalëkalim, Ngjyra, Sport Live, Java, Moduli Islamik)
+    // 1. UTILITETET LOKALE (Fjalëkalim, Ngjyra, Java, Moduli Islamik)
     // -------------------------------------------------------------
     if (
         clean.includes("fjalekalim") || 
@@ -198,9 +176,6 @@ export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai'
     const javaAnswer = checkJavaKnowledge(userQuery);
     if (javaAnswer) return javaAnswer;
 
-    const sportAnswer = checkSportLive(userQuery);
-    if (sportAnswer) return sportAnswer;
-
     const islamicAnswer = checkIslamicKnowledge(userQuery);
     if (islamicAnswer) return islamicAnswer;
 
@@ -208,6 +183,10 @@ export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai'
     // 2. TË GJITHA SHËRBIMET E TJERA EKZISTUESE
     // -------------------------------------------------------------
     try {
+        if (typeof checkSports === 'function') {
+            const sports = await checkSports(userQuery);
+            if (sports) return sports;
+        }
         if (typeof checkImageGeneration === 'function') {
             const img = await checkImageGeneration(userQuery);
             if (img) return img;
@@ -243,10 +222,6 @@ export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai'
         if (typeof checkNews === 'function') {
             const news = await checkNews(userQuery);
             if (news) return news;
-        }
-        if (typeof checkSports === 'function') {
-            const sports = await checkSports(userQuery);
-            if (sports) return sports;
         }
         if (typeof checkNotes === 'function') {
             const notes = await checkNotes(userQuery);
