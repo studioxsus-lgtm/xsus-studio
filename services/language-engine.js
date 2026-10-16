@@ -1,25 +1,64 @@
 // services/language-engine.js
 
-// 1. Zbulimi i Gjuhës (Language Detection)
+// 1. Profilizimi i Gjuhës Shqipe & Fjalët Bosh (Stop Words)
+export const ALBANIAN_PROFILE = {
+    code: 'sq',
+    name: 'Albanian',
+    nativeName: 'Shqip'
+};
+
+// Lista e fjalëve pa peshë kërkimi (Stop Words)
+export const ALBANIAN_STOP_WORDS = new Set([
+    'a', 'as', 'dhe', 'e', 'edhe', 'i', 'ia',
+    'jam', 'je', 'ishte', 'jane', 'janë',
+    'ka', 'me', 'në', 'ne', 'nga', 'një', 'nje', 'pa',
+    'për', 'per', 'që', 'qe', 'sa', 'se', 'si', 'të', 'te', 
+    'atë', 'ate', 'kjo', 'këtë', 'kete', 'ata', 'ato', 
+    'mund', 'nëse', 'duhet'
+]);
+
+// 2. Normalizimi i avancuar i tekstit Shqip
+export function normalizeAlbanian(text = "") {
+    if (!text) return "";
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Heq aksentet (ë->e, ç->c, é->e)
+        .replace(/[^a-z0-9\s-]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+// Nxjerrja e fjalëve kyçe (Keywords) duke hequr Stop Words
+export function getAlbanianKeywords(text = "") {
+    const cleanText = normalizeAlbanian(text);
+    const words = cleanText.split(" ");
+    
+    return words.filter(word => {
+        return word.length > 2 && !ALBANIAN_STOP_WORDS.has(word);
+    });
+}
+
+// 3. Zbulimi i Gjuhës (Language Detection System)
 export function detectQueryLanguage(userQuery = "") {
+    if (!userQuery) return "en";
     const text = userQuery.toLowerCase().trim();
 
-    // Fjalë kyçe për gjuhën shqipe
+    // Fjalë treguese për shqipen
     const sqKeywords = [
         "moti", "sot", "nesër", "neser", "si", "është", "eshte", "sa", "janë", "jane", 
         "temperatura", "ndeshje", "lajme", "renditja", "namaz", "falje", "faleminderit", 
-        "përshëndetje", "pershendetje", "çfarë", "cfare", "kush", "ku"
+        "përshëndetje", "pershendetje", "çfarë", "cfare", "kush", "ku", "nga", "dhe"
     ];
 
-    // Fjalë kyçe për gjuhën frëngjisht
+    // Fjalë treguese për frëngjishten
     const frKeywords = [
         "météo", "meteo", "demain", "aujourd'hui", "aujourdhui", "quel", "quelle", 
         "température", "temperature", "match", "classement", "prière", "priere", 
-        "bonjour", "merci", "comment", "où", "ou"
+        "bonjour", "merci", "comment", "où", "ou", "dans", "avec"
     ];
 
     const words = text.split(/\s+/);
-    
     let sqScore = 0;
     let frScore = 0;
 
@@ -31,22 +70,14 @@ export function detectQueryLanguage(userQuery = "") {
 
     if (sqScore > frScore) return "sq";
     if (frScore > sqScore) return "fr";
-    return "en"; // Default në anglisht nëse nuk detektohet shqip ose frëngjisht
+    return "en";
 }
 
-// 2. Normalizimi i Tekstit (Text Normalization)
 export function normalizeQueryText(text = "") {
-    if (!text) return "";
-    return text
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Heq aksentet (ë->e, ç->c, é->e, etj.)
-        .replace(/[^a-z0-9\s-]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
+    return normalizeAlbanian(text);
 }
 
-// 3. Fjalor & Përkthime të Shpejta për Përgjigjet e Sistemit
+// 4. Përkthime të Shpejta të Sistemit
 export const systemTranslations = {
     sq: {
         error: "Ndodhi një gabim gjatë përpunimit të kërkesës suaj.",
