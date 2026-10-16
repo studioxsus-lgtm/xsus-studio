@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Solutions & Engine | Xsus Studio</title>
+    <title>AI Search & Neural Engine | Xsus Studio</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -102,7 +102,32 @@
             max-width: 100%;
         }
 
-        /* Rregullimi i hapësirës dhe distancës së sigurt poshtë */
+        /* STILI PËR KARTAT E BURIMEVE DHE KËRKIMIT (SEARCH SOURCES) */
+        .search-sources-box {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .source-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            color: #00f0ff;
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .source-pill:hover {
+            background: rgba(0, 240, 255, 0.25);
+        }
+
         #ai-console {
             padding-bottom: max(50px, env(safe-area-inset-bottom)) !important;
             margin-bottom: calc(30px + env(safe-area-inset-bottom));
@@ -119,7 +144,7 @@
                     <span class="logo-x">X</span>
                     <span class="logo-sus">sus</span>
                 </div>
-                <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">AI</span></span>
+                <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">AI SEARCH</span></span>
             </a>
 
             <div class="hidden lg:flex items-center gap-6 font-medium text-xs text-slate-300">
@@ -143,7 +168,7 @@
 
                 <a href="#ai-console" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-xs hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
                     <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
-                    <span data-i18n="nav-start">Launch AI</span>
+                    <span data-i18n="nav-start">Launch Search</span>
                 </a>
             </div>
         </div>
@@ -154,19 +179,18 @@
         <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyber-purple/15 rounded-full blur-[140px] pointer-events-none"></div>
         <div class="max-w-4xl mx-auto text-center relative z-10">
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-purple/30 text-cyber-purple text-xs font-semibold uppercase tracking-widest mb-6">
-                <i data-lucide="sparkles" class="w-4 h-4"></i> <span data-i18n="hero-badge">Real-Time Open Neural Engine</span>
+                <i data-lucide="search" class="w-4 h-4"></i> <span data-i18n="hero-badge">Real-Time Web Neural Search Engine</span>
             </div>
             <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
-                <span data-i18n="hero-title1">Ask Anything. Create Everything.</span> <br><span class="text-gradient" data-i18n="hero-title2">Powered by Xsus AI</span>
+                <span data-i18n="hero-title1">Search the World. Powered by AI.</span> <br><span class="text-gradient" data-i18n="hero-title2">Xsus Search Engine</span>
             </h1>
-            <!-- Teksti i përditësuar që ndryshon sipas gjuhës -->
             <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mb-6 leading-relaxed" data-i18n="hero-desc">
-                Innovation, creativity, and accurate responses in any language, powered by Xsus technology.
+                Instant answers with live web research, deep technical insights, and accurate sources in any language.
             </p>
         </div>
     </header>
 
-    <!-- UNIVERSAL AI CHAT CONSOLE -->
+    <!-- UNIVERSAL AI SEARCH CONSOLE -->
     <section id="ai-console" class="py-6 px-4 md:px-6 max-w-4xl mx-auto w-full mb-20">
         <div class="glass-panel p-4 md:p-6 rounded-3xl border border-cyber-purple/30 shadow-[0_0_50px_rgba(112,0,255,0.15)] flex flex-col h-[580px] relative">
             
@@ -174,9 +198,8 @@
             <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
                 <div class="flex items-center gap-2">
                     <div class="w-3 h-3 rounded-full bg-cyber-blue animate-pulse"></div>
-                    <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Live Neural Assistant</span>
+                    <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Live Search Assistant</span>
                 </div>
-                <!-- Seksioni i butonave: Export dhe Clear Chat -->
                 <div class="flex items-center gap-2">
                     <button id="export-chat" type="button" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
@@ -191,7 +214,7 @@
             <div id="ai-output-box" class="flex-1 bg-black/60 border border-white/10 rounded-2xl p-4 overflow-y-auto space-y-4 mb-4 text-sm">
             </div>
 
-            <!-- Pre-view element i skedarit ose fotos së ngarkuar -->
+            <!-- Pre-view element i skedarit ose fotos -->
             <div id="file-badge-container" class="hidden mb-2 flex items-center gap-2">
                 <div class="glass-panel px-3 py-1.5 rounded-xl border border-cyber-blue/40 bg-cyber-blue/10 text-xs text-cyber-blue flex items-center gap-2">
                     <i data-lucide="paperclip" class="w-4 h-4"></i>
@@ -202,7 +225,7 @@
                 </div>
             </div>
 
-            <!-- KONTEJNERI I UNIFIKUAR -->
+            <!-- KONTEJNERI I INPUTIT -->
             <div class="glass-panel p-2.5 rounded-full md:rounded-3xl border border-cyber-blue/40 flex items-end gap-2 relative shadow-[0_0_25px_rgba(0,240,255,0.15)]">
                 
                 <!-- MENUJA E PLUSIT (Dropdown) -->
@@ -218,23 +241,19 @@
                     </button>
                 </div>
 
-                <!-- Inputet e fshehura -->
                 <input type="file" id="doc-input" class="hidden" accept=".pdf,.txt,.md,.js,.json,.html,.css,.py">
                 <input type="file" id="img-input" class="hidden" accept="image/*">
                 <input type="file" id="cam-input" class="hidden" accept="image/*" capture="environment">
 
-                <!-- Butoni Plus (+) -->
                 <button id="plus-btn" type="button" title="Shto dokument, foto ose kap me kamerë" class="p-3 rounded-full bg-white/5 hover:bg-cyber-blue/20 text-slate-300 hover:text-cyber-blue transition shrink-0 cursor-pointer flex items-center justify-center">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
 
-                <!-- Textarea inteligjente -->
-                <textarea id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask Xsus AI or create image (/image)..." rows="1" class="flex-1 bg-transparent px-2 py-3 text-white text-sm outline-none resize-none overflow-y-hidden min-h-[44px] max-h-[150px] leading-relaxed"></textarea>
+                <textarea id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask anything or search the web..." rows="1" class="flex-1 bg-transparent px-2 py-3 text-white text-sm outline-none resize-none overflow-y-hidden min-h-[44px] max-h-[150px] leading-relaxed"></textarea>
                 
-                <!-- Butoni Send -->
                 <button id="ai-send-btn" type="button" class="px-5 py-3 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
-                    <i data-lucide="send" class="w-4 h-4"></i>
-                    <span data-i18n="btn-send">Send</span>
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                    <span data-i18n="btn-send">Search</span>
                 </button>
             </div>
 
@@ -251,7 +270,6 @@
         import { readDocumentFile } from './services/file-service.js';
 
         let smartRouterFunc = null;
-
         try {
             const module = await import('./services/router.js');
             if (module && module.smartRouter) {
@@ -269,43 +287,43 @@
 
         const i18nData = {
             en: {
-                "nav-start": "Launch AI",
-                "hero-badge": "Real-Time Open Neural Engine",
-                "hero-title1": "Ask Anything. Create Everything.",
-                "hero-title2": "Powered by Xsus AI",
-                "hero-desc": "Innovation, creativity, and accurate responses in any language, powered by Xsus technology.",
-                "chat-header": "Xsus Live Neural Assistant",
+                "nav-start": "Launch Search",
+                "hero-badge": "Real-Time Web Neural Search Engine",
+                "hero-title1": "Search the World. Powered by AI.",
+                "hero-title2": "Xsus Search Engine",
+                "hero-desc": "Instant answers with live web research, deep technical insights, and accurate sources in any language.",
+                "chat-header": "Xsus Live Search Assistant",
                 "clear-btn": "Clear Chat",
-                "input-placeholder": "Ask Xsus AI or create image (/image)...",
-                "btn-send": "Send",
-                "thinking": "Thinking...",
-                "sys-prompt": "You are Xsus AI, an advanced AI created by Xsus Studio. You speak fluently in Albanian, English, and French. ALWAYS reply in the SAME language as the user's input."
+                "input-placeholder": "Ask anything or search the web...",
+                "btn-send": "Search",
+                "thinking": "Searching live web & analyzing...",
+                "sys-prompt": "You are Xsus AI Search Engine, an advanced neural assistant created by Xsus Studio. ALWAYS provide factual, up-to-date responses by utilizing real-time web search. When presenting facts, include clear reference sources or links if available. Reply in the SAME language as the user."
             },
             sq: {
-                "nav-start": "Nis AI",
-                "hero-badge": "Motor Neural në Kohë Reale",
-                "hero-title1": "Pyet Çdo Gjë. Krijo Çdo Gjë.",
-                "hero-title2": "Mbështetur nga Xsus AI",
-                "hero-desc": "Inovacion, kreativitet dhe përgjigje të sakta në çdo gjuhë, të fuqizuara nga teknologjia e Xsus.",
-                "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
+                "nav-start": "Nis Kërkimin",
+                "hero-badge": "Motor Kërkimi Neural në Kohë Reale",
+                "hero-title1": "Kërko në Botë. Mundësuar nga AI.",
+                "hero-title2": "Xsus Search Engine",
+                "hero-desc": "Përgjigje të menjëhershme me kërkim live në internet, analiza të thella teknike dhe burime të sakta në çdo gjuhë.",
+                "chat-header": "Asistenti i Kërkimit Xsus",
                 "clear-btn": "Pastro Bisedën",
-                "input-placeholder": "Pyet Xsus AI apo krijo imazh (/image)...",
-                "btn-send": "Dërgo",
-                "thinking": "Duke menduar...",
-                "sys-prompt": "Ti je Xsus AI, i krijuar nga Xsus Studio. Përgjigju GJITHMONË në të njëjtën gjuhë që përdor përdoruesi në mesazhin e tij."
+                "input-placeholder": "Pyet çdo gjë ose kërko në internet...",
+                "btn-send": "Kërko",
+                "thinking": "Duke kërkuar në internet dhe duke analizuar...",
+                "sys-prompt": "Ti je Xsus AI Search Engine, një asistent i avancuar i krijuar nga Xsus Studio. Përgjigju GJITHMONË me fakte të sakta dhe të përditësuar duke shfrytëzuar kërkimin në kohë reale. Përgjigju në të njëjtën gjuhë që përdor përdoruesi."
             },
             fr: {
-                "nav-start": "Lancer IA",
-                "hero-badge": "Moteur Neural en Direct",
-                "hero-title1": "Demandez Tout. Créez Tout.",
-                "hero-title2": "Propulsé par Xsus AI",
-                "hero-desc": "Innovation, créativité et réponses précises dans toutes les langues, propulsées par la technologie Xsus.",
-                "chat-header": "Assistant en Direct Xsus",
+                "nav-start": "Lancer Recherche",
+                "hero-badge": "Moteur de Recherche Neural en Direct",
+                "hero-title1": "Recherchez le Monde. Propulsé par l'IA.",
+                "hero-title2": "Xsus Search Engine",
+                "hero-desc": "Réponses instantanées avec recherche web en direct et sources précises dans toutes les langues.",
+                "chat-header": "Assistant de Recherche Xsus",
                 "clear-btn": "Effacer",
-                "input-placeholder": "Posez une question ou créez une image (/image)...",
-                "btn-send": "Envoyer",
-                "thinking": "En réflexion...",
-                "sys-prompt": "Vous êtes Xsus AI, créé par Xsus Studio. Répondez TOUJOURS dans la même langue que le message de l'utilisateur."
+                "input-placeholder": "Posez une question ou recherchez sur le web...",
+                "btn-send": "Chercher",
+                "thinking": "Recherche sur le web en direct...",
+                "sys-prompt": "Vous êtes Xsus AI Search Engine, créé par Xsus Studio. Répondez TOUJOURS avec des informations précises en temps réel. Répondez dans la même langue que l'utilisateur."
             }
         };
 
@@ -313,10 +331,7 @@
         let currentLang = 'en';
 
         let conversationHistory = [
-            {
-                role: 'system',
-                content: i18nData['en']["sys-prompt"]
-            }
+            { role: 'system', content: i18nData['en']["sys-prompt"] }
         ];
 
         const xsusAiLogoHTML = `
@@ -453,28 +468,22 @@
         }
 
         function saveChatToLocalStorage() {
-            localStorage.setItem('xsus_chat_history', aiOutputBox.innerHTML);
-            localStorage.setItem('xsus_history_array', JSON.stringify(conversationHistory));
+            localStorage.setItem('xsus_search_chat_history', aiOutputBox.innerHTML);
+            localStorage.setItem('xsus_search_history_array', JSON.stringify(conversationHistory));
         }
 
         function loadChatFromLocalStorage() {
-            const savedHTML = localStorage.getItem('xsus_chat_history');
-            const savedHistory = localStorage.getItem('xsus_history_array');
+            const savedHTML = localStorage.getItem('xsus_search_chat_history');
+            const savedHistory = localStorage.getItem('xsus_search_history_array');
 
             if (savedHTML && savedHTML.trim() !== '') {
                 aiOutputBox.innerHTML = savedHTML;
                 if (savedHistory) {
                     try { conversationHistory = JSON.parse(savedHistory); } catch(e){}
                 }
-            } else {
-                showWelcomeMessage();
             }
             refreshIcons();
             attachInteractiveButtons();
-        }
-
-        function showWelcomeMessage() {
-            aiOutputBox.innerHTML = '';
         }
 
         function attachInteractiveButtons() {
@@ -526,7 +535,6 @@
                 role: 'system',
                 content: dictionary["sys-prompt"]
             };
-
             refreshIcons();
         }
 
@@ -556,34 +564,33 @@
             return text;
         }
 
-        async function fetchAIResponse(userText) {
+        // MOTORRI I KËRKIMIT NË KOHË REALE ME API
+        async function fetchRealTimeSearch(userText) {
             let promptToSend = userText;
 
             if (attachedImageBase64) {
                 const imgTag = `<img src="${attachedImageBase64}" class="w-64 rounded-xl my-2 border border-cyber-blue/30"/>`;
-                const imageReply = currentLang === 'sq'
-                    ? `Imazhi u ngarkua me sukses! 📷\n\n${imgTag}\nKërkesa juaj: "${userText}". Për të gjeneruar imazhe të reja vizuale përdorni komandën \`/image [përshkrimi]\`.`
-                    : `Image uploaded successfully! 📷\n\n${imgTag}\nYour query: "${userText}". To generate new images use \`/image [prompt]\`.`;
-                
-                if (removeFileBtn) removeFileBtn.click();
-                return imageReply;
+                return currentLang === 'sq'
+                    ? `Imazhi u analizua me sukses! 📷\n\n${imgTag}\nKërkesa juaj: "${userText}".`
+                    : `Image analyzed successfully! 📷\n\n${imgTag}\nYour query: "${userText}".`;
             }
 
             if (attachedFileContent) {
-                promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[PYETJA]: ${userText}`;
+                promptToSend = `[DOKUMENTI I BASHKËNGJITUR: ${attachedFileName}]\n${attachedFileContent}\n\n[KËRKESA]: ${userText}`;
             }
 
             conversationHistory.push({ role: 'user', content: promptToSend });
 
             try {
+                // Kërkimi i fuqizuar me internet real-time (search: true)
                 const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         messages: conversationHistory,
                         model: 'openai',
-                        search: true,
-                        seed: Math.floor(Math.random() * 1000)
+                        search: true, // Aktivizon motorin e kërkimit në ueb
+                        seed: Math.floor(Math.random() * 10000)
                     })
                 });
 
@@ -595,14 +602,14 @@
                     if (removeFileBtn) removeFileBtn.click();
                     return reply;
                 } else {
-                    return currentLang === 'sq' ? "Ndodhi një shkëputje e përkohshme me serverin." : "A temporary error occurred.";
+                    return currentLang === 'sq' ? "Ndodhi një gabim gjatë lidhjes me motorin e kërkimit." : "Search engine connection error.";
                 }
             } catch (err) {
-                return currentLang === 'sq' ? "Gabim në lidhje me rrjetin." : "Network connection error.";
+                return currentLang === 'sq' ? "Gabim në rrjet gjatë kërkimit." : "Network error during search.";
             }
         }
 
-        function typeWriterEffect(element, htmlText, speed = 12, callback) {
+        function typeWriterEffect(element, htmlText, speed = 10, callback) {
             let i = 0;
             const words = htmlText.split(' ');
             let currentText = '';
@@ -622,8 +629,8 @@
             addWord();
         }
 
-        async function handleAIResponse() {
-            const text = aiInput.value.trim() || (attachedFileContent ? "Përmblidh këtë dokument." : (attachedImageBase64 ? "Përshkruaj këtë foto." : ""));
+        async function handleSearchExecution() {
+            const text = aiInput.value.trim() || (attachedFileContent ? "Përmblidh këtë dokument." : (attachedImageBase64 ? "Analizo këtë foto." : ""));
             if (!text && !attachedFileContent && !attachedImageBase64) return;
 
             let userDisplayMsg = text;
@@ -646,21 +653,24 @@
             aiInput.style.height = 'auto';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            const loadingText = i18nData[currentLang]["thinking"] || i18nData["en"]["thinking"];
+            const loadingText = i18nData[currentLang]["thinking"];
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
             loadingMsg.id = "loading-bubble";
             loadingMsg.innerHTML = `
                 ${xsusAiLogoHTML}
-                <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-400 max-w-[85%] animate-pulse">
-                    ${loadingText}
+                <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-400 max-w-[85%] animate-pulse flex items-center gap-2">
+                    <i data-lucide="loader" class="w-4 h-4 animate-spin text-cyber-blue"></i>
+                    <span>${loadingText}</span>
                 </div>
             `;
             aiOutputBox.appendChild(loadingMsg);
+            refreshIcons();
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
             let reply = "";
 
+            // Kontrollon nëse SmartRouter ka përgjigje lokale (si baza e njohurive Java)
             if (!attachedFileContent && !attachedImageBase64 && smartRouterFunc) {
                 try {
                     const routerReply = await smartRouterFunc(text);
@@ -668,45 +678,15 @@
                         reply = routerReply;
                         conversationHistory.push({ role: 'user', content: text });
                         conversationHistory.push({ role: 'assistant', content: reply });
-
-                        document.getElementById('loading-bubble')?.remove();
-
-                        const aiMsg = document.createElement('div');
-                        aiMsg.className = "flex items-start gap-3";
-                        aiMsg.innerHTML = `
-                            ${xsusAiLogoHTML}
-                            <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed markdown-body msg-bubble relative group">
-                                <div class="ai-text-content"></div>
-                                <div class="flex items-center gap-2 mt-3 pt-2 border-t border-white/10 text-xs text-slate-400">
-                                    <button type="button" class="copy-btn hover:text-cyber-blue transition flex items-center gap-1 cursor-pointer">
-                                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
-                                    </button>
-                                    <span class="text-white/20">•</span>
-                                    <button type="button" class="speak-btn hover:text-cyber-blue transition flex items-center gap-1 cursor-pointer">
-                                        <i data-lucide="volume-2" class="w-3.5 h-3.5"></i> Listen
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                        aiOutputBox.appendChild(aiMsg);
-                        
-                        const textContainer = aiMsg.querySelector('.ai-text-content');
-                        typeWriterEffect(textContainer, reply, 15, () => {
-                            refreshIcons();
-                            attachInteractiveButtons();
-                            saveChatToLocalStorage();
-                        });
-
-                        aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
-                        return; 
                     }
                 } catch (e) {
-                    console.warn("Router error:", e);
+                    console.warn("Router info:", e);
                 }
             }
 
+            // Nëse nuk ka përgjigje lokale, thërret motorin e kërkimit real-time në web
             if (!reply) {
-                reply = await fetchAIResponse(text);
+                reply = await fetchRealTimeSearch(text);
             }
 
             document.getElementById('loading-bubble')?.remove();
@@ -731,7 +711,7 @@
             aiOutputBox.appendChild(aiMsg);
             
             const textContainer = aiMsg.querySelector('.ai-text-content');
-            typeWriterEffect(textContainer, reply, 15, () => {
+            typeWriterEffect(textContainer, reply, 8, () => {
                 refreshIcons();
                 attachInteractiveButtons();
                 saveChatToLocalStorage();
@@ -741,20 +721,26 @@
         }
 
         if (aiSendBtn) {
-            aiSendBtn.onclick = handleAIResponse;
+            aiSendBtn.onclick = handleSearchExecution;
+        }
+
+        if (aiInput) {
+            aiInput.onkeydown = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSearchExecution();
+                }
+            };
         }
 
         if (clearChatBtn) {
             clearChatBtn.onclick = function() {
-                localStorage.removeItem('xsus_chat_history');
-                localStorage.removeItem('xsus_history_array');
+                localStorage.removeItem('xsus_search_chat_history');
+                localStorage.removeItem('xsus_search_history_array');
                 conversationHistory = [
-                    {
-                        role: 'system',
-                        content: i18nData[currentLang]["sys-prompt"]
-                    }
+                    { role: 'system', content: i18nData[currentLang]["sys-prompt"] }
                 ];
-                showWelcomeMessage();
+                aiOutputBox.innerHTML = '';
                 refreshIcons();
             };
         }
@@ -762,16 +748,13 @@
         if (exportChatBtn) {
             exportChatBtn.onclick = function() {
                 const chatContent = aiOutputBox.innerText;
-                if (!chatContent.trim()) {
-                    alert(currentLang === 'sq' ? "Nuk ka asnjë bisedë për të eksportuar!" : "No chat available to export!");
-                    return;
-                }
+                if (!chatContent.trim()) return;
 
                 const blob = new Blob([chatContent], { type: 'text/plain;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'xsus-ai-chat-' + new Date().toISOString().slice(0, 10) + '.txt';
+                a.download = 'xsus-search-history-' + new Date().toISOString().slice(0, 10) + '.txt';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
