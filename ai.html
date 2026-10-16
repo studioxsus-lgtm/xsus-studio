@@ -196,7 +196,7 @@
                 </div>
             </div>
 
-            <!-- KONTEJNERI I INPUTIT (Rregulluar pozicionimi vertikal) -->
+            <!-- KONTEJNERI I INPUTIT (Tani me input text për një rresht të vetëm dhe tekst më të vogël) -->
             <div class="glass-panel p-2 rounded-full md:rounded-3xl border border-cyber-blue/40 flex items-center gap-2 relative shadow-[0_0_25px_rgba(0,240,255,0.15)]">
                 
                 <!-- MENUJA E PLUSIT (Dropdown) -->
@@ -220,8 +220,8 @@
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
 
-                <!-- TEXTAREA E POZICIONUAR SAKTË NË QENDËR VERTIKALISHT -->
-                <textarea id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask XSUS AI anything..." rows="1" class="flex-1 bg-transparent px-2 py-2 text-white text-sm outline-none resize-none overflow-y-hidden min-h-[38px] max-h-[150px] leading-normal flex items-center"></textarea>
+                <!-- INPUT TYPE TEXT QË RRI NË NJË RRESHT TË VETËM DHE ËSHTË MË I VOGËL -->
+                <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask XSUS AI..." class="flex-1 bg-transparent px-2 text-white text-xs md:text-sm outline-none truncate"/>
                 
                 <button id="ai-send-btn" type="button" class="px-5 py-2.5 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
                     <i data-lucide="send" class="w-4 h-4"></i>
@@ -266,7 +266,7 @@
                 "hero-desc": "Instant answers with live web research, deep technical insights, and accurate sources in any language.",
                 "chat-header": "Xsus Neural AI Assistant",
                 "clear-btn": "Clear Chat",
-                "input-placeholder": "Ask XSUS AI anything...",
+                "input-placeholder": "Ask XSUS AI...",
                 "btn-send": "Send",
                 "thinking": "Searching live web & analyzing...",
                 "sys-prompt": "You are Xsus AI Neural Engine, an advanced assistant created by Xsus Studio. Respond ONLY with clear, direct human text in English."
@@ -278,7 +278,7 @@
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
                 "chat-header": "Asistenti Neural Xsus AI",
                 "clear-btn": "Pastro Bisedën",
-                "input-placeholder": "Pyet XSUS AI për çdo gjë...",
+                "input-placeholder": "Pyet XSUS AI...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke analizuar dhe përgatitur përgjigjen...",
                 "sys-prompt": "Ti je Xsus AI Neural Engine, i krijuar nga Xsus Studio. Përgjigju VETËM me tekst të pastër njerëzor në gjuhën shqipe. Përdor ë dhe ç të sakta me ton natyral."
@@ -290,7 +290,7 @@
                 "hero-desc": "Des réponses instantanées avec des recherches web en direct, des analyses techniques approfondies et des sources précises dans n'importe quelle langue.",
                 "chat-header": "Assistant Neural Xsus AI",
                 "clear-btn": "Effacer le Chat",
-                "input-placeholder": "Posez une question à XSUS AI...",
+                "input-placeholder": "Demandez à XSUS AI...",
                 "btn-send": "Envoyer",
                 "thinking": "Recherche sur le web en direct et analyse...",
                 "sys-prompt": "Vous êtes Xsus AI Neural Engine. Répondez uniquement en texte brut en français."
@@ -334,13 +334,6 @@
         let attachedFileContent = null;
         let attachedFileName = null;
         let attachedImageBase64 = null;
-
-        if (aiInput) {
-            aiInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-            });
-        }
 
         if (plusBtn) {
             plusBtn.onclick = (e) => {
@@ -626,7 +619,6 @@
             `;
             aiOutputBox.appendChild(userMsg);
             aiInput.value = '';
-            aiInput.style.height = 'auto';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
             const loadingText = (i18nData[currentLang] && i18nData[currentLang]["thinking"]) 
@@ -715,7 +707,7 @@
 
         if (aiInput) {
             aiInput.onkeydown = (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === 'Enter') {
                     e.preventDefault();
                     handleSearchExecution();
                 }
