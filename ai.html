@@ -225,9 +225,10 @@
 
                 <textarea id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask anything or search the web..." rows="1" class="flex-1 bg-transparent px-2 py-3 text-white text-sm outline-none resize-none overflow-y-hidden min-h-[44px] max-h-[150px] leading-relaxed"></textarea>
                 
+                <!-- Butoni i dërgimit (SEND) me ikonë send dhe tekst të përkthyer -->
                 <button id="ai-send-btn" type="button" class="px-5 py-3 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
-                    <i data-lucide="search" class="w-4 h-4"></i>
-                    <span data-i18n="btn-send">Search</span>
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span data-i18n="btn-send">Send</span>
                 </button>
             </div>
 
@@ -259,6 +260,7 @@
             }
         }
 
+        // Fjalori i përditësuar me përkthimet e mesazhit thinking dhe butonit send në 3 gjuhë
         const i18nData = {
             en: {
                 "nav-start": "Launch Search",
@@ -269,7 +271,7 @@
                 "chat-header": "Xsus Live Search Assistant",
                 "clear-btn": "Clear Chat",
                 "input-placeholder": "Ask anything or search the web...",
-                "btn-send": "Search",
+                "btn-send": "Send",
                 "thinking": "Searching live web & analyzing...",
                 "sys-prompt": "You are Xsus AI Search Engine, an advanced neural assistant created by Xsus Studio. Respond ONLY with clear, direct human text in the exact language requested. Never use JSON formatting, code blocks containing JSON, reasoning tags, or tool execution metadata."
             },
@@ -282,7 +284,7 @@
                 "chat-header": "Asistenti i Kërkimit Xsus",
                 "clear-btn": "Pastro Bisedën",
                 "input-placeholder": "Pyet çdo gjë ose kërko në internet...",
-                "btn-send": "Kërko",
+                "btn-send": "Dërgo",
                 "thinking": "Duke kërkuar në internet dhe duke analizuar...",
                 "sys-prompt": "Ti je Xsus AI Search Engine, i krijuar nga Xsus Studio. Përgjigju VETËM me tekst të pastër njerëzor në gjuhën shqipe. Mos kthe kurrë struktura JSON, metadata apo objekte reasoning."
             },
@@ -295,8 +297,8 @@
                 "chat-header": "Assistant de Recherche Xsus",
                 "clear-btn": "Effacer",
                 "input-placeholder": "Posez une question ou recherchez sur le web...",
-                "btn-send": "Chercher",
-                "thinking": "Recherche sur le web en direct...",
+                "btn-send": "Envoyer",
+                "thinking": "Recherche sur le web en direct et analyse...",
                 "sys-prompt": "Vous êtes Xsus AI Search Engine. Répondez uniquement en texte brut. N'affichez jamais de JSON ou de métadonnées de raisonnement."
             }
         };
@@ -528,7 +530,6 @@
             if (!rawText) return "";
             let text = rawText.trim();
 
-            // Dekodimi i strukturave te JSON-it nëse vijnë si string
             try {
                 if (text.startsWith("{") && text.endsWith("}")) {
                     const parsed = JSON.parse(text);
@@ -538,14 +539,12 @@
                 }
             } catch (e) {}
 
-            // Nëse përgjigja përmban JSON ose reasoning brenda, nxjerrim vetëm përmbajtjen e vërtetë
             if (text.includes('"reasoning"') || text.includes('"tool_calls"')) {
                 const contentRegex = /"content"\s*:\s*"([\s\S]*?)"\s*(,\s*"|\})/i;
                 const match = text.match(contentRegex);
                 if (match && match[1]) {
                     text = match[1];
                 } else {
-                    // Përgjigje alternative e pastër
                     return currentLang === 'sq' 
                         ? "Përgjigjja nga kërkimi live në internet u krye me sukses." 
                         : "The response from live web search completed successfully.";
@@ -566,7 +565,6 @@
             return text;
         }
 
-        // MOTORRI I KËRKIMIT NË KOHË REALE ME API
         async function fetchRealTimeSearch(userText) {
             let promptToSend = userText;
 
@@ -655,7 +653,11 @@
             aiInput.style.height = 'auto';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            const loadingText = i18nData[currentLang]["thinking"];
+            // Përdorimi i tekstit të përkthyer për "thinking" sipas gjuhës aktive
+            const loadingText = (i18nData[currentLang] && i18nData[currentLang]["thinking"]) 
+                                ? i18nData[currentLang]["thinking"] 
+                                : i18nData["en"]["thinking"];
+
             const loadingMsg = document.createElement('div');
             loadingMsg.className = "flex items-start gap-3";
             loadingMsg.id = "loading-bubble";
