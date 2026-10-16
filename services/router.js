@@ -1,6 +1,7 @@
 // services/router.js
 import { studioCore } from './xsus-core.js';
 import { loadCustomKnowledge, checkCustomKnowledge } from './custom-knowledge-service.js';
+import { searchKnowledge } from './knowledge-service.js'; // Integrimi i kërkimit shumëgjuhësh të artikujve
 import { javaKnowledge } from './javaKnowledge.js'; // Integrimi i bazës Master të njohurive
 import { detectQueryLanguage, normalizeQueryText } from './language-engine.js'; // Motorri i ri i gjuhës
 import { checkWikipedia } from './wikipedia-service.js';
@@ -202,6 +203,13 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
         if (typeof checkCustomKnowledge === 'function') {
             const custom = checkCustomKnowledge(userQuery, activeLang);
             if (custom) return custom;
+        }
+        // Kontrolli i Bazës së Artikujve / Njohurive të Përgjithshme
+        if (typeof searchKnowledge === 'function') {
+            const docs = searchKnowledge(userQuery, activeLang, 1);
+            if (docs && docs.length > 0) {
+                return `📚 **${docs[0].title}**\n\n${docs[0].content}`;
+            }
         }
         if (typeof checkConverter === 'function') {
             const conv = await checkConverter(userQuery, activeLang);
