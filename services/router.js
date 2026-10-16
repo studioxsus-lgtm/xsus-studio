@@ -1,6 +1,7 @@
 // services/router.js
 import { studioCore } from './xsus-core.js';
 import { loadCustomKnowledge, checkCustomKnowledge } from './custom-knowledge-service.js';
+import { javaKnowledge } from './javaKnowledge.js'; // Integrimi i bazës Master të njohurive
 import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
 import { checkSports } from './sports-service.js';
@@ -52,12 +53,35 @@ function checkSportLive(userQuery) {
     return null;
 }
 
+// Moduli i Njohurive Teknike & Java Master Engine
+function checkJavaKnowledge(userQuery) {
+    if (!userQuery || !Array.isArray(javaKnowledge)) return null;
+    const clean = normalizeText(userQuery);
+
+    const match = javaKnowledge.find(item => {
+        const titleSqClean = normalizeText(item.title_sq || "");
+        const titleEnClean = normalizeText(item.title || "");
+        return (
+            (titleSqClean && clean.includes(titleSqClean)) ||
+            (titleEnClean && clean.includes(titleEnClean))
+        );
+    });
+
+    if (match) {
+        return `### ☕ ${match.title_sq} /${match.title}\n\n` +
+               `**🇦🇱 Shqip:**\n${match.content_sq}\n\n` +
+               `**🇬🇧 English:**\n${match.content_en}\n\n` +
+               `**💻 Shembull Kodi / Code Example:**\n\`\`\`java\n${match.example || '// Kod i avancuar Enterprise Java'}\n\`\`\``;
+    }
+    return null;
+}
+
 // Moduli Islamik Multilingval (AL / EN / FR)
 function checkIslamicKnowledge(userQuery) {
     if (!userQuery) return null;
     const clean = normalizeText(userQuery);
 
-    // 1. ORARET & NAMAZET (Prayers) - Mbështet të gjitha trajtat e fjalëve
+    // 1. ORARET & NAMAZET (Prayers)
     const prayerKeywords = [
         'namaz', 'falje', 'orari i namazit', 
         'sabah', 'sabahu', 'sabahit',
@@ -146,7 +170,7 @@ export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai'
     const clean = normalizeText(userQuery);
 
     // -------------------------------------------------------------
-    // 1. UTILITETET LOKALE (Fjalëkalim, Ngjyra, Sport Live, Moduli Islamik)
+    // 1. UTILITETET LOKALE (Fjalëkalim, Ngjyra, Sport Live, Java, Moduli Islamik)
     // -------------------------------------------------------------
     if (
         clean.includes("fjalekalim") || 
@@ -170,6 +194,9 @@ export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai'
         const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
         return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
     }
+
+    const javaAnswer = checkJavaKnowledge(userQuery);
+    if (javaAnswer) return javaAnswer;
 
     const sportAnswer = checkSportLive(userQuery);
     if (sportAnswer) return sportAnswer;
