@@ -102,32 +102,6 @@
             max-width: 100%;
         }
 
-        /* STILI PËR KARTAT E BURIMEVE DHE KËRKIMIT (SEARCH SOURCES) */
-        .search-sources-box {
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        .source-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background: rgba(0, 240, 255, 0.1);
-            border: 1px solid rgba(0, 240, 255, 0.25);
-            color: #00f0ff;
-            font-size: 0.7rem;
-            padding: 3px 8px;
-            border-radius: 12px;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-        .source-pill:hover {
-            background: rgba(0, 240, 255, 0.25);
-        }
-
         #ai-console {
             padding-bottom: max(50px, env(safe-area-inset-bottom)) !important;
             margin-bottom: calc(30px + env(safe-area-inset-bottom));
@@ -297,7 +271,7 @@
                 "input-placeholder": "Ask anything or search the web...",
                 "btn-send": "Search",
                 "thinking": "Searching live web & analyzing...",
-                "sys-prompt": "You are Xsus AI Search Engine, an advanced neural assistant created by Xsus Studio. ALWAYS provide factual, up-to-date responses by utilizing real-time web search. When presenting facts, include clear reference sources or links if available. Reply in the SAME language as the user."
+                "sys-prompt": "You are Xsus AI Search Engine, an advanced neural assistant created by Xsus Studio. Provide final, plain-text responses directly in the language of the prompt. Do NOT output internal JSON metadata, thinking tags, or reasoning objects."
             },
             sq: {
                 "nav-start": "Nis Kërkimin",
@@ -310,7 +284,7 @@
                 "input-placeholder": "Pyet çdo gjë ose kërko në internet...",
                 "btn-send": "Kërko",
                 "thinking": "Duke kërkuar në internet dhe duke analizuar...",
-                "sys-prompt": "Ti je Xsus AI Search Engine, një asistent i avancuar i krijuar nga Xsus Studio. Përgjigju GJITHMONË me fakte të sakta dhe të përditësuar duke shfrytëzuar kërkimin në kohë reale. Përgjigju në të njëjtën gjuhë që përdor përdoruesi."
+                "sys-prompt": "Ti je Xsus AI Search Engine, një asistent i krijuar nga Xsus Studio. Përgjigju drejtpërdrejt në gjuhën e përdoruesit me tekst të pastër. Mos nxirr asnjëherë struktura teknike JSON ose objekte mendimi (reasoning)."
             },
             fr: {
                 "nav-start": "Lancer Recherche",
@@ -323,7 +297,7 @@
                 "input-placeholder": "Posez une question ou recherchez sur le web...",
                 "btn-send": "Chercher",
                 "thinking": "Recherche sur le web en direct...",
-                "sys-prompt": "Vous êtes Xsus AI Search Engine, créé par Xsus Studio. Répondez TOUJOURS avec des informations précises en temps réel. Répondez dans la même langue que l'utilisateur."
+                "sys-prompt": "Vous êtes Xsus AI Search Engine. Répondez directement avec du texte clair sans aucun métadonnée JSON ou raisonnement interne."
             }
         };
 
@@ -549,8 +523,32 @@
             setLanguage('en');
         }
 
+        // FUNKSION I PERMIRESOAR PER PASTRIMIN E STRUKTURAVE JSON DHE REASONING
         function cleanResponseText(rawText) {
-            return rawText
+            if (!rawText) return "";
+            let text = rawText.trim();
+
+            // Rregullim nëse kthehet si objekt JSON me reasoning/content
+            if (text.startsWith("{") && text.endsWith("}")) {
+                try {
+                    const parsed = JSON.parse(text);
+                    if (parsed.content) {
+                        text = parsed.content;
+                    } else if (parsed.choices && parsed.choices[0] && parsed.choices[0].message) {
+                        text = parsed.choices[0].message.content;
+                    } else if (parsed.message) {
+                        text = parsed.message;
+                    }
+                } catch (e) {
+                    // Nëse prapë ka mbetur JSON brenda string-ut
+                    const contentMatch = text.match(/"content"\s*:\s*"([\s\S]*?)"\s*\}/);
+                    if (contentMatch && contentMatch[1]) {
+                        text = contentMatch[1];
+                    }
+                }
+            }
+
+            return text
                 .replace(/\\n/g, '\n')
                 .replace(/\\r/g, '')
                 .replace(/^"|"$/g, '')
@@ -582,14 +580,13 @@
             conversationHistory.push({ role: 'user', content: promptToSend });
 
             try {
-                // Kërkimi i fuqizuar me internet real-time (search: true)
                 const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         messages: conversationHistory,
                         model: 'openai',
-                        search: true, // Aktivizon motorin e kërkimit në ueb
+                        search: true,
                         seed: Math.floor(Math.random() * 10000)
                     })
                 });
@@ -609,7 +606,7 @@
             }
         }
 
-        function typeWriterEffect(element, htmlText, speed = 10, callback) {
+        function typeWriterEffect(element, htmlText, speed = 8, callback) {
             let i = 0;
             const words = htmlText.split(' ');
             let currentText = '';
@@ -670,7 +667,6 @@
 
             let reply = "";
 
-            // Kontrollon nëse SmartRouter ka përgjigje lokale (si baza e njohurive Java)
             if (!attachedFileContent && !attachedImageBase64 && smartRouterFunc) {
                 try {
                     const routerReply = await smartRouterFunc(text);
@@ -684,7 +680,6 @@
                 }
             }
 
-            // Nëse nuk ka përgjigje lokale, thërret motorin e kërkimit real-time në web
             if (!reply) {
                 reply = await fetchRealTimeSearch(text);
             }
