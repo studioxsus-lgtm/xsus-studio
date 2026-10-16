@@ -196,8 +196,8 @@
                 </div>
             </div>
 
-            <!-- KONTEJNERI I INPUTIT (Tani me input text për një rresht të vetëm dhe tekst më të vogël) -->
-            <div class="glass-panel p-2 rounded-full md:rounded-3xl border border-cyber-blue/40 flex items-center gap-2 relative shadow-[0_0_25px_rgba(0,240,255,0.15)]">
+            <!-- KONTEJNERI I INPUTIT (Përditësuar me padding anësor p-1.5 që butoni të futet brenda estetikisht) -->
+            <div class="glass-panel p-1.5 md:p-2 rounded-full md:rounded-3xl border border-cyber-blue/40 flex items-center gap-2 relative shadow-[0_0_25px_rgba(0,240,255,0.15)]">
                 
                 <!-- MENUJA E PLUSIT (Dropdown) -->
                 <div id="plus-menu" class="absolute bottom-16 left-0 glass-panel border border-cyber-blue/30 rounded-2xl p-2 hidden flex-col gap-1.5 shadow-2xl z-30 w-48 bg-[#0a0a12]/95 backdrop-blur-xl">
@@ -216,15 +216,16 @@
                 <input type="file" id="img-input" class="hidden" accept="image/*">
                 <input type="file" id="cam-input" class="hidden" accept="image/*" capture="environment">
 
-                <button id="plus-btn" type="button" title="Add document, image, or use camera" class="p-3 rounded-full bg-white/5 hover:bg-cyber-blue/20 text-slate-300 hover:text-cyber-blue transition shrink-0 cursor-pointer flex items-center justify-center">
+                <button id="plus-btn" type="button" title="Add document, image, or use camera" class="p-2.5 rounded-full bg-white/5 hover:bg-cyber-blue/20 text-slate-300 hover:text-cyber-blue transition shrink-0 cursor-pointer flex items-center justify-center">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
 
-                <!-- INPUT TYPE TEXT QË RRI NË NJË RRESHT TË VETËM DHE ËSHTË MË I VOGËL -->
+                <!-- INPUT TYPE TEXT -->
                 <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask XSUS AI..." class="flex-1 bg-transparent px-2 text-white text-xs md:text-sm outline-none truncate"/>
                 
-                <button id="ai-send-btn" type="button" class="px-5 py-2.5 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
-                    <i data-lucide="send" class="w-4 h-4"></i>
+                <!-- BUTONI I DËRGIMIT (I futur saktësisht brenda) -->
+                <button id="ai-send-btn" type="button" class="px-4 py-2 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-xs md:text-sm shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-1.5 shrink-0 cursor-pointer">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
                     <span data-i18n="btn-send">Send</span>
                 </button>
             </div>
