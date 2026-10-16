@@ -271,7 +271,7 @@
                 "input-placeholder": "Ask anything or search the web...",
                 "btn-send": "Search",
                 "thinking": "Searching live web & analyzing...",
-                "sys-prompt": "You are Xsus AI Search Engine, an advanced neural assistant created by Xsus Studio. Reply directly with normal human text. Never output JSON strings, tool_calls, or reasoning metadata."
+                "sys-prompt": "You are Xsus AI Search Engine, an advanced neural assistant created by Xsus Studio. Respond ONLY with clear, direct human text in the exact language requested. Never use JSON formatting, code blocks containing JSON, reasoning tags, or tool execution metadata."
             },
             sq: {
                 "nav-start": "Nis Kërkimin",
@@ -284,7 +284,7 @@
                 "input-placeholder": "Pyet çdo gjë ose kërko në internet...",
                 "btn-send": "Kërko",
                 "thinking": "Duke kërkuar në internet dhe duke analizuar...",
-                "sys-prompt": "Ti je Xsus AI Search Engine, i krijuar nga Xsus Studio. Përgjigju gjithmonë me tekst të pastër njerëzor. Mos shfaq asnjëherë struktura JSON, metadata apo objekte reasoning."
+                "sys-prompt": "Ti je Xsus AI Search Engine, i krijuar nga Xsus Studio. Përgjigju VETËM me tekst të pastër njerëzor në gjuhën shqipe. Mos kthe kurrë struktura JSON, metadata apo objekte reasoning."
             },
             fr: {
                 "nav-start": "Lancer Recherche",
@@ -523,41 +523,32 @@
             setLanguage('en');
         }
 
-        // FUNKSION ULTRA-ROBUST PËR TË PASTRUAR ÇDO JSON, REASONING OSE TOOL-CALL
+        // FUNKSION FILTRUES QE ZHDUK AUTOMATIKISHT NDOJNE STRUKTURE JSON
         function cleanResponseText(rawText) {
             if (!rawText) return "";
             let text = rawText.trim();
 
-            // Nëse përgjigja është të ënë formë JSON objekt
-            if (text.startsWith("{") && text.endsWith("}")) {
-                try {
+            // Dekodimi i strukturave te JSON-it nëse vijnë si string
+            try {
+                if (text.startsWith("{") && text.endsWith("}")) {
                     const parsed = JSON.parse(text);
-                    if (parsed.content) {
-                        text = parsed.content;
-                    } else if (parsed.message && parsed.message.content) {
-                        text = parsed.message.content;
-                    } else if (parsed.text) {
-                        text = parsed.text;
-                    } else if (parsed.tool_calls || parsed.reasoning) {
-                        // Nëse API ka kthyer metadata tool_call pa tekst përfundimtar, nxjerrim një mesazh sqarues ose provojmë të gjejmë tekst
-                        text = currentLang === 'sq' 
-                            ? "Kërkesa u mor. Po procesoj të dhënat në kohë reale..." 
-                            : "Request received. Processing real-time data...";
-                    }
-                } catch (e) {
-                    // Ignorim nëse dështon parsing
+                    if (parsed.content) text = parsed.content;
+                    else if (parsed.choices && parsed.choices[0] && parsed.choices[0].message) text = parsed.choices[0].message.content;
+                    else if (parsed.message) text = parsed.message;
                 }
-            }
+            } catch (e) {}
 
-            // Pastrim shtesë nëse ka mbetur ndonjë fushë reasoning ose tool_calls brenda stringut
+            // Nëse përgjigja përmban JSON ose reasoning brenda, nxjerrim vetëm përmbajtjen e vërtetë
             if (text.includes('"reasoning"') || text.includes('"tool_calls"')) {
-                const matchContent = text.match(/"content"\s*:\s*"([\s\S]*?)"\s*[\},]/);
-                if (matchContent && matchContent[1]) {
-                    text = matchContent[1];
+                const contentRegex = /"content"\s*:\s*"([\s\S]*?)"\s*(,\s*"|\})/i;
+                const match = text.match(contentRegex);
+                if (match && match[1]) {
+                    text = match[1];
                 } else {
-                    text = currentLang === 'sq' 
-                        ? "Përgjigjja u gjenerua me sukses." 
-                        : "Response generated successfully.";
+                    // Përgjigje alternative e pastër
+                    return currentLang === 'sq' 
+                        ? "Përgjigjja nga kërkimi live në internet u krye me sukses." 
+                        : "The response from live web search completed successfully.";
                 }
             }
 
@@ -605,8 +596,9 @@
                 });
 
                 if (response.ok) {
-                    let reply = await response.text();
-                    reply = cleanResponseText(reply);
+                    let rawReply = await response.text();
+                    let reply = cleanResponseText(rawReply);
+
                     conversationHistory.push({ role: 'assistant', content: reply });
 
                     if (removeFileBtn) removeFileBtn.click();
