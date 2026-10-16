@@ -1,7 +1,7 @@
 // services/xsus-ai-service.js
 import { detectLanguage } from './language-engine.js';
 import { searchKnowledge } from './knowledge-service.js';
-import { analyzeAlbanian } from './language-engine.js'; // Shtohet importi i analizuesit të shqipes
+import { analyzeAlbanian } from './language-engine.js';
 
 const LANGUAGE_NAMES = {
   sq: "Albanian (Shqip)",
@@ -80,6 +80,9 @@ Use this analysis as a linguistic hint, not as guaranteed truth. Interpret the f
   // 4. Formulimi i Prompt-it të Sistemit
   const systemPrompt = `
 You are XSUS AI, a helpful multilingual assistant.
+
+CRITICAL LANGUAGE RULE:
+You MUST respond in the exact language requested by the user or detected from their message (${LANGUAGE_NAMES[language]}). If the user writes in Albanian, your entire response must be strictly in natural standard Albanian. Do not switch to English.
 
 RESPONSE LANGUAGE:
 Respond in ${LANGUAGE_NAMES[language]}.
