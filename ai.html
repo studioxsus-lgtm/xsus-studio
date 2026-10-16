@@ -243,6 +243,7 @@
     <!-- SCRIPT INTEGRESUES -->
     <script type="module">
         import { readDocumentFile } from './services/file-service.js';
+        import { checkWeather } from './services/weather-service.js';
 
         let smartRouterFunc = null;
         try {
@@ -653,7 +654,6 @@
             aiInput.style.height = 'auto';
             aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
 
-            // Përdorimi i tekstit të përkthyer për "thinking" sipas gjuhës aktive
             const loadingText = (i18nData[currentLang] && i18nData[currentLang]["thinking"]) 
                                 ? i18nData[currentLang]["thinking"] 
                                 : i18nData["en"]["thinking"];
@@ -674,21 +674,36 @@
 
             let reply = "";
 
+            // 1. Provojmë Router-in tonë Lokal
             if (!attachedFileContent && !attachedImageBase64 && smartRouterFunc) {
                 try {
                     const routerReply = await smartRouterFunc(text);
                     if (routerReply) {
                         reply = routerReply;
-                        conversationHistory.push({ role: 'user', content: text });
-                        conversationHistory.push({ role: 'assistant', content: reply });
                     }
                 } catch (e) {
                     console.warn("Router info:", e);
                 }
             }
 
+            // 2. RRETHI I SIGURISË: Nëse router-i nuk u përgjigj, provojmë checkWeather direkt
+            if (!reply && !attachedFileContent && !attachedImageBase64) {
+                try {
+                    const directWeather = await checkWeather(text);
+                    if (directWeather) {
+                        reply = directWeather;
+                    }
+                } catch (wErr) {
+                    console.warn("Direct weather check error:", wErr);
+                }
+            }
+
+            // 3. Nëse asnjë modul nuk ktheu përgjigje, përdorim kërkimin e jashtëm AI
             if (!reply) {
                 reply = await fetchRealTimeSearch(text);
+            } else {
+                conversationHistory.push({ role: 'user', content: text });
+                conversationHistory.push({ role: 'assistant', content: reply });
             }
 
             document.getElementById('loading-bubble')?.remove();
