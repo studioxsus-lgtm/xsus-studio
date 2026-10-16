@@ -196,8 +196,8 @@
                 </div>
             </div>
 
-            <!-- KONTEJNERI I INPUTIT -->
-            <div class="glass-panel p-2.5 rounded-full md:rounded-3xl border border-cyber-blue/40 flex items-end gap-2 relative shadow-[0_0_25px_rgba(0,240,255,0.15)]">
+            <!-- KONTEJNERI I INPUTIT (Rregulluar pozicionimi vertikal) -->
+            <div class="glass-panel p-2 rounded-full md:rounded-3xl border border-cyber-blue/40 flex items-center gap-2 relative shadow-[0_0_25px_rgba(0,240,255,0.15)]">
                 
                 <!-- MENUJA E PLUSIT (Dropdown) -->
                 <div id="plus-menu" class="absolute bottom-16 left-0 glass-panel border border-cyber-blue/30 rounded-2xl p-2 hidden flex-col gap-1.5 shadow-2xl z-30 w-48 bg-[#0a0a12]/95 backdrop-blur-xl">
@@ -220,9 +220,10 @@
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
 
-                <textarea id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask XSUS AI anything..." rows="1" class="flex-1 bg-transparent px-2 py-3 text-white text-sm outline-none resize-none overflow-y-hidden min-h-[44px] max-h-[150px] leading-relaxed"></textarea>
+                <!-- TEXTAREA E POZICIONUAR SAKTË NË QENDËR VERTIKALISHT -->
+                <textarea id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask XSUS AI anything..." rows="1" class="flex-1 bg-transparent px-2 py-2 text-white text-sm outline-none resize-none overflow-y-hidden min-h-[38px] max-h-[150px] leading-normal flex items-center"></textarea>
                 
-                <button id="ai-send-btn" type="button" class="px-5 py-3 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
+                <button id="ai-send-btn" type="button" class="px-5 py-2.5 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-sm shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-2 shrink-0 cursor-pointer">
                     <i data-lucide="send" class="w-4 h-4"></i>
                     <span data-i18n="btn-send">Send</span>
                 </button>
