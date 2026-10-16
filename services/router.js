@@ -24,7 +24,7 @@ try {
 }
 
 // Moduli i Njohurive Teknike & Java Master Engine
-function checkJavaKnowledge(userQuery) {
+function checkJavaKnowledge(userQuery, lang = 'sq') {
     if (!userQuery || !Array.isArray(javaKnowledge)) return null;
     const clean = normalizeQueryText(userQuery);
 
@@ -38,16 +38,16 @@ function checkJavaKnowledge(userQuery) {
     });
 
     if (match) {
-        return `### ☕ ${match.title_sq} /${match.title}\n\n` +
-               `**🇦🇱 Shqip:**\n${match.content_sq}\n\n` +
-               `**🇬🇧 English:**\n${match.content_en}\n\n` +
-               `**💻 Shembull Kodi / Code Example:**\n\`\`\`java\n${match.example || '// Kod i avancuar Enterprise Java'}\n\`\`\``;
+        if (lang === 'en') {
+            return `### ☕ ${match.title}\n\n${match.content_en}\n\n**💻 Code Example:**\n\`\`\`java\n${match.example || '// Advanced Enterprise Java Code'}\n\`\`\``;
+        }
+        return `### ☕ ${match.title_sq}\n\n${match.content_sq}\n\n**💻 Shembull Kodi:**\n\`\`\`java\n${match.example || '// Kod i avancuar Enterprise Java'}\n\`\`\``;
     }
     return null;
 }
 
 // Moduli Islamik Multilingval (AL / EN / FR)
-function checkIslamicKnowledge(userQuery) {
+function checkIslamicKnowledge(userQuery, lang = 'sq') {
     if (!userQuery) return null;
     const clean = normalizeQueryText(userQuery);
 
@@ -64,59 +64,51 @@ function checkIslamicKnowledge(userQuery) {
     ];
     
     if (prayerKeywords.some(kw => clean.includes(kw))) {
-        return `🕌 **Informacion mbi Namazet (Daily Prayers / Prières quotidiennes)**\n\n` +
-               `* **🌅 Fajr / Sabahu:** Prière du matin (para lindjes së diellit / before sunrise).\n` +
-               `* **☀️ Dhuhr / Dreka:** Prière du midi (mesdita / midday).\n` +
-               `* **⛅ Asr / Ikindia:** Prière de l'après-midi (pasdite / afternoon).\n` +
-               `* **🌅 Maghrib / Akshami:** Prière du coucher du soleil (perëndimi i diellit / sunset).\n` +
-               `* **🌌 Isha / Jacia:** Prière de la nuit (nata / night).\n\n` +
-               `---\n` +
-               `💡 **Të dhëna të dobishme / Useful info:**\n` +
-               `* **SQ:** Namazi është shtylla e dytë e Islamit. Oraret e sakta varen nga vendndodhja jote gjeografike.\n` +
-               `* **EN:** Prayer is the second pillar of Islam. Exact times depend on your geographical location.\n` +
-               `* **FR:** La prière est le deuxième pilier de l'Islam. Les horaires exacts dépendent de votre position géographique.`;
+        if (lang === 'en') {
+            return `🕌 **Daily Prayer Information**\n\n* **Fajr:** Morning prayer (before sunrise).\n* **Dhuhr:** Midday prayer.\n* **Asr:** Afternoon prayer.\n* **Maghrib:** Sunset prayer.\n* **Isha:** Night prayer.\n\n*Note: Exact times depend on your geographical location.*`;
+        } else if (lang === 'fr') {
+            return `🕌 **Informations sur les prières quotidiennes**\n\n* **Fajr:** Prière du matin.\n* **Dhuhr:** Prière du midi.\n* **Asr:** Prière de l'après-midi.\n* **Maghrib:** Prière du coucher du soleil.\n* **Isha:** Prière de la nuit.`;
+        }
+        return `🕌 **Informacion mbi Namazet (Daily Prayers)**\n\n` +
+               `* **🌅 Fajr / Sabahu:** Para lindjes së diellit.\n` +
+               `* **☀️ Dhuhr / Dreka:** Mesdita.\n` +
+               `* **⛅ Asr / Ikindia:** Pasdite.\n` +
+               `* **🌅 Maghrib / Akshami:** Perëndimi i diellit.\n` +
+               `* **🌌 Isha / Jacia:** Nata.\n\n` +
+               `💡 *Namazi është shtylla e dytë e Islamit. Oraret e sakta varen nga vendndodhja jote.*`;
     }
 
-    // 2. RAMAZANI & AGJËRIMI (Ramadan & Fasting)
+    // 2. RAMAZANI & AGJËRIMI
     const ramadanKeywords = ['ramazan', 'ramadan', 'agjerim', 'agjerimi', 'fasting', 'jeune', 'imsak', 'iftar', 'syfyr', 'syfyri'];
     if (ramadanKeywords.some(kw => clean.includes(kw))) {
-        return `🌙 **Ramazani & Agjërimi (Ramadan & Fasting / Le Jeûne)**\n\n` +
-               `* **🇦🇱 Shqip:** Ramazani është muaji i shenjtë i agjërimit, vetëpërmbajtjes dhe devotshmërisë. Agjërimi zgjat nga Imsaku (syfyri) deri në Aksham (iftari).\n` +
-               `* **🇬🇧 English:** Ramadan is the holy month of fasting, self-reflection, and prayer. Fasting lasts from dawn (Imsak/Suhoor) to sunset (Iftar).\n` +
-               `* **🇫🇷 Français:** Le Ramadan est le mois sacré du jeûne, de la prière et du partage. Le jeûne dure de l'aube (Imsak/Suhoor) au coucher du soleil (Iftar).\n\n` +
-               `---\n` +
-               `✨ **Të mirat e Ramazanit / Benefits:**\n` +
-               `* Pastrim shpirtëror dhe trupor (Spiritual & physical purification).\n` +
-               `* Ndihmë për të varfërit dhe solidaritet (Charity & solidarity).`;
+        if (lang === 'en') {
+            return `🌙 **Ramadan & Fasting**\nRamadan is the holy month of fasting and self-reflection, lasting from dawn (Suhoor) to sunset (Iftar).`;
+        }
+        return `🌙 **Ramazani & Agjërimi**\nRamazani është muaji i shenjtë i agjërimit dhe devotshmërisë. Agjërimi zgjat nga Imsaku (syfyri) deri në Aksham (iftari).`;
     }
 
-    // 3. ZEQATI (Zakat / Financial Charity)
+    // 3. ZEQATI
     const zakatKeywords = ['zeqat', 'zeqati', 'zekat', 'zakat', 'alms'];
     if (zakatKeywords.some(kw => clean.includes(kw))) {
-        return `💰 **Zeqati (Zakat - Financial Obligations & Charity)**\n\n` +
-               `* **🇦🇱 Shqip:** Zeqati është detyrim vjetor financiar (2.5%) mbi pasurinë që kalon nivelin e caktuar (Nisabin), për t'iu dhënë të varfërve dhe të nevojtarëve.\n` +
-               `* **🇬🇧 English:** Zakat is a mandatory annual charity (2.5%) on qualifying wealth above the Nisab threshold, distributed to those in need.\n` +
-               `* **🇫🇷 Français:** La Zakat est l'aumône obligatoire annuelle (2,5%) sur la richesse dépassant le seuil du Nisab, destinée aux personnes nécessiteuses.`;
+        if (lang === 'en') {
+            return `💰 **Zakat**\nZakat is a mandatory annual charity (2.5%) on qualifying wealth above the Nisab threshold.`;
+        }
+        return `💰 **Zeqati**\nZeqati është detyrim vjetor financiar (2.5%) mbi pasurinë që kalon nivelin e caktuar (Nisabin).`;
     }
 
-    // 4. HAXHI (Hajj / Pilgrimage)
+    // 4. HAXHI
     const hajjKeywords = ['haxh', 'haxhi', 'hajj', 'haj', 'pelerinage', 'mecca', 'meke', 'qabe', 'kaaba'];
     if (hajjKeywords.some(kw => clean.includes(kw))) {
-        return `🕋 **Haxhi (Hajj Pilgrimage / Le Pèlerinage)**\n\n` +
-               `* **🇦🇱 Shqip:** Haxhi është udhëtimi i shenjtë në Mekë, i obligueshëm të paktën një herë në jetë për çdo musliman që ka mundësi financiare dhe shëndetësore.\n` +
-               `* **🇬🇧 English:** Hajj is the sacred pilgrimage to Mecca, mandatory once in a lifetime for every adult Muslim who is physically and financially able.\n` +
-               `* **🇫🇷 Français:** Le Hajj est le pèlerinage sacré à La Mecque, obligatoire une fois dans la vie pour tout musulman qui en a les moyens physiques et financiers.`;
+        if (lang === 'en') {
+            return `🕋 **Hajj Pilgrimage**\nHajj is the sacred pilgrimage to Mecca, mandatory once in a lifetime for those who are able.`;
+        }
+        return `🕋 **Haxhi**\nHaxhi është udhëtimi i shenjtë në Mekë, i obligueshëm për çdo musliman që ka mundësi.`;
     }
 
-    // 5. KUSHTET E ISLAMIT (5 Pillars of Islam)
+    // 5. KUSHTET E ISLAMIT
     const pillarsKeywords = ['kushtet e islamit', 'pillars of islam', 'piliers de l islam', 'shahada', 'deshmia'];
     if (pillarsKeywords.some(kw => clean.includes(kw))) {
-        return `🌟 **5 Kushtet e Islamit (5 Pillars of Islam / Les 5 Piliers de l'Islam)**\n\n` +
-               `1. **Shahada (Dëshmia / Testimony):** Besimi në një Zot të Vetëm (Allah) dhe Muhamedin a.s. si të dërguar të Tij.\n` +
-               `2. **Salat (Namazi / Prayer):** Kryerja e 5 namazeve ditore.\n` +
-               `3. **Zakat (Zeqati / Almsgiving):** Dhënia e lëmoshës vjetore prej 2.5%.\n` +
-               `4. **Sawm (Agjërimi / Fasting):** Agjërimi i muajit të Ramazanit.\n` +
-               `5. **Hajj (Haxhi / Pilgrimage):** Udhëtimi në Mekë për ata që kanë mundësi.`;
+        return `🌟 **5 Kushtet e Islamit (5 Pillars of Islam)**\n1. Shahada (Dëshmia)\n2. Salat (Namazi)\n3. Zakat (Zeqati)\n4. Sawm (Agjërimi)\n5. Hajj (Haxhi)`;
     }
 
     return null;
@@ -156,7 +148,9 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
         for (let i = 0; i < 14; i++) {
             pass += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        return `🔒 **Fjalëkalim i Sigurt i Gjeneruar:**\n\`\`\`text\n${pass}\n\`\`\`\n*(Kopjoje dhe ruaje në një vend të sigurt!)*`;
+        const titleMsg = activeLang === 'en' ? 'Secure Generated Password:' : 'Fjalëkalim i Sigurt i Gjeneruar:';
+        const noteMsg = activeLang === 'en' ? '(Copy and save it in a safe place!)' : '(Kopjoje dhe ruaje në një vend të sigurt!)';
+        return `🔒 **${titleMsg}**\n\`\`\`text\n${pass}\n\`\`\`\n*${noteMsg}*`;
     }
 
     if (
@@ -165,25 +159,24 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
         clean.includes("hex")
     ) {
         const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-        return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
+        const titleMsg = activeLang === 'en' ? 'Random Color for Design:' : 'Ngjyrë e Rastësishme për Dizajn:';
+        return `🎨 **${titleMsg}**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
     }
 
-    const javaAnswer = checkJavaKnowledge(userQuery);
+    const javaAnswer = checkJavaKnowledge(userQuery, activeLang);
     if (javaAnswer) return javaAnswer;
 
-    const islamicAnswer = checkIslamicKnowledge(userQuery);
+    const islamicAnswer = checkIslamicKnowledge(userQuery, activeLang);
     if (islamicAnswer) return islamicAnswer;
 
     // -------------------------------------------------------------
     // 2. TË GJITHA SHËRBIMET E TJERA EKZISTUESE
     // -------------------------------------------------------------
     try {
-        // 1. Kontrolli i Sportit (ndeshje live & renditje)
         if (typeof checkSports === 'function') {
             const sports = await checkSports(userQuery, activeLang);
             if (sports) return sports;
         }
-        // 2. Kontrolli i Motit (temperatuat & parashikimi)
         if (typeof checkWeather === 'function') {
             const weather = await checkWeather(userQuery, activeLang);
             if (weather) return weather;
@@ -204,7 +197,6 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
             const custom = checkCustomKnowledge(userQuery, activeLang);
             if (custom) return custom;
         }
-        // Kontrolli i Bazës së Artikujve / Njohurive të Përgjithshme
         if (typeof searchKnowledge === 'function') {
             const docs = searchKnowledge(userQuery, activeLang, 1);
             if (docs && docs.length > 0) {
