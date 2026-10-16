@@ -51,7 +51,6 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
     if (!userQuery) return null;
     const clean = normalizeQueryText(userQuery);
 
-    // 1. ORARET & NAMAZET (Prayers)
     const prayerKeywords = [
         'namaz', 'falje', 'orari i namazit', 
         'sabah', 'sabahu', 'sabahit',
@@ -78,7 +77,6 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
                `💡 *Namazi është shtylla e dytë e Islamit. Oraret e sakta varen nga vendndodhja jote.*`;
     }
 
-    // 2. RAMAZANI & AGJËRIMI
     const ramadanKeywords = ['ramazan', 'ramadan', 'agjerim', 'agjerimi', 'fasting', 'jeune', 'imsak', 'iftar', 'syfyr', 'syfyri'];
     if (ramadanKeywords.some(kw => clean.includes(kw))) {
         if (lang === 'en') {
@@ -87,7 +85,6 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
         return `🌙 **Ramazani & Agjërimi**\nRamazani është muaji i shenjtë i agjërimit dhe devotshmërisë. Agjërimi zgjat nga Imsaku (syfyri) deri në Aksham (iftari).`;
     }
 
-    // 3. ZEQATI
     const zakatKeywords = ['zeqat', 'zeqati', 'zekat', 'zakat', 'alms'];
     if (zakatKeywords.some(kw => clean.includes(kw))) {
         if (lang === 'en') {
@@ -96,7 +93,6 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
         return `💰 **Zeqati**\nZeqati është detyrim vjetor financiar (2.5%) mbi pasurinë që kalon nivelin e caktuar (Nisabin).`;
     }
 
-    // 4. HAXHI
     const hajjKeywords = ['haxh', 'haxhi', 'hajj', 'haj', 'pelerinage', 'mecca', 'meke', 'qabe', 'kaaba'];
     if (hajjKeywords.some(kw => clean.includes(kw))) {
         if (lang === 'en') {
@@ -105,7 +101,6 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
         return `🕋 **Haxhi**\nHaxhi është udhëtimi i shenjtë në Mekë, i obligueshëm për çdo musliman që ka mundësi.`;
     }
 
-    // 5. KUSHTET E ISLAMIT
     const pillarsKeywords = ['kushtet e islamit', 'pillars of islam', 'piliers de l islam', 'shahada', 'deshmia'];
     if (pillarsKeywords.some(kw => clean.includes(kw))) {
         return `🌟 **5 Kushtet e Islamit (5 Pillars of Islam)**\n1. Shahada (Dëshmia)\n2. Salat (Namazi)\n3. Zakat (Zeqati)\n4. Sawm (Agjërimi)\n5. Hajj (Haxhi)`;
@@ -117,11 +112,12 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
 export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-ai') {
     if (!userQuery) return null;
 
-    // 1. Zbulimi automatik i gjuhës nëse nuk kaloi e zgjedhur
-    const activeLang = lang === 'auto' || !lang ? detectQueryLanguage(userQuery) : lang;
+    // Zbulimi automatik i gjuhës nga vetë pyetja ka prioritet absolut
+    const detectedLang = detectQueryLanguage(userQuery);
+    const activeLang = detectedLang && detectedLang !== 'auto' ? detectedLang : (lang === 'auto' || !lang ? 'en' : lang);
 
     // -------------------------------------------------------------
-    // 0. BËRTHAMA QENDRORE (Xsus Studio Core Engine - 0ms Response)
+    // 0. BËRTHAMA QENDROre (Xsus Studio Core Engine - 0ms Response)
     // -------------------------------------------------------------
     try {
         if (studioCore && typeof studioCore.requestAccess === 'function') {
