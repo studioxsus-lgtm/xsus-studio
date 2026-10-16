@@ -1,0 +1,10 @@
+{
+  "name": "xsus-ai",
+  "version": "1.0.0",
+  "scripts": {
+    "test:language": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0"
+  }
+}
