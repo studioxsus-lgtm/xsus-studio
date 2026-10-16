@@ -183,10 +183,15 @@ export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai'
     // 2. TË GJITHA SHËRBIMET E TJERA EKZISTUESE
     // -------------------------------------------------------------
     try {
-        // Kontrolli i Sportit ekzekutohet i primi në mënyrë që të kapë kërkesat live (p.sh. Serie A, Premier League)
+        // 1. Kontrolli i Sportit (ndeshje live & renditje)
         if (typeof checkSports === 'function') {
             const sports = await checkSports(userQuery);
             if (sports) return sports;
+        }
+        // 2. Kontrolli i Motit (temperatuat & parashikimi) - Vendosur në krye!
+        if (typeof checkWeather === 'function') {
+            const weather = await checkWeather(userQuery);
+            if (weather) return weather;
         }
         if (typeof checkImageGeneration === 'function') {
             const img = await checkImageGeneration(userQuery);
@@ -215,10 +220,6 @@ export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai'
         if (typeof checkFinance === 'function') {
             const fin = await checkFinance(userQuery);
             if (fin) return fin;
-        }
-        if (typeof checkWeather === 'function') {
-            const weather = await checkWeather(userQuery);
-            if (weather) return weather;
         }
         if (typeof checkNews === 'function') {
             const news = await checkNews(userQuery);
