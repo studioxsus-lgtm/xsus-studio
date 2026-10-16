@@ -197,7 +197,7 @@ function clearChat() {
     }
 }
 
-// Lidhja kryesore asinkrone me Router-in lokal
+// Lidhja kryesore asinkrone me Router-in lokal (duke përcjellë currentLang)
 async function handleChatSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
     const input = document.getElementById('userInput');
@@ -220,11 +220,10 @@ async function handleChatSubmit(e) {
     input.value = '';
     stream.scrollTop = stream.scrollHeight;
 
-    // 1. Kontrollojmë fillimisht me Router-in lokal (Kuis, Math, QR, etj.)
+    // 1. Kontrollojmë fillimisht me Router-in lokal duke i kaluar activeLang (currentLang)
     try {
-        const localResponse = await smartRouter(text);
+        const localResponse = await smartRouter(text, currentLang);
         if (localResponse) {
-            // Nëse ekziston përgjigje nga modulet tona, e shfaqim dhe NDALOJMË KËTU
             appendAiMessage(localResponse);
             return;
         }
@@ -262,7 +261,6 @@ function appendAiMessage(msg) {
     const aiBubble = document.createElement('div');
     aiBubble.className = "flex gap-3 max-w-3xl";
     
-    // Suportojmë formatimin bold (\*\*) dhe imazhet Markdown (![alt](url)) për kodesh QR
     let formatted = escapeHtml(msg)
         .replace(/\*\*(.*?)\*\*/g, '<strong class="text-cyan-300 font-semibold">$1</strong>')
         .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="mt-2 rounded-lg max-w-[220px] border border-cyan-500/30 shadow-md" />')
@@ -327,7 +325,6 @@ if (canvas) {
     animateParticles();
 }
 
-// Mbivendosja automatike e eventeve për chat-in
 document.addEventListener('DOMContentLoaded', () => {
     const chatForm = document.querySelector('form');
     const userInput = document.getElementById('userInput');
@@ -351,7 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Ekzekutojmë thirrjen fillestare
 setLanguage('en');
 
 if (window.lucide) lucide.createIcons();
