@@ -7,7 +7,6 @@ export const ALBANIAN_PROFILE = {
     nativeName: 'Shqip'
 };
 
-// Lista e fjalëve pa peshë kërkimi (Stop Words)
 export const ALBANIAN_STOP_WORDS = new Set([
     'a', 'as', 'dhe', 'e', 'edhe', 'i', 'ia',
     'jam', 'je', 'ishte', 'jane', 'janë',
@@ -23,73 +22,109 @@ export function normalizeAlbanian(text = "") {
     return text
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Heq aksentet (ë->e, ç->c, é->e)
+        .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9\s-]/g, " ")
         .replace(/\s+/g, " ")
         .trim();
-}
-
-// Nxjerrja e fjalëve kyçe (Keywords) duke hequr Stop Words
-export function getAlbanianKeywords(text = "") {
-    const cleanText = normalizeAlbanian(text);
-    const words = cleanText.split(" ");
-    
-    return words.filter(word => {
-        return word.length > 2 && !ALBANIAN_STOP_WORDS.has(word);
-    });
-}
-
-// 3. Zbulimi i Gjuhës (Language Detection System)
-export function detectQueryLanguage(userQuery = "") {
-    if (!userQuery) return "en";
-    const text = userQuery.toLowerCase().trim();
-
-    // Fjalë treguese për shqipen
-    const sqKeywords = [
-        "moti", "sot", "nesër", "neser", "si", "është", "eshte", "sa", "janë", "jane", 
-        "temperatura", "ndeshje", "lajme", "renditja", "namaz", "falje", "faleminderit", 
-        "përshëndetje", "pershendetje", "çfarë", "cfare", "kush", "ku", "nga", "dhe"
-    ];
-
-    // Fjalë treguese për frëngjishten
-    const frKeywords = [
-        "météo", "meteo", "demain", "aujourd'hui", "aujourdhui", "quel", "quelle", 
-        "température", "temperature", "match", "classement", "prière", "priere", 
-        "bonjour", "merci", "comment", "où", "ou", "dans", "avec"
-    ];
-
-    const words = text.split(/\s+/);
-    let sqScore = 0;
-    let frScore = 0;
-
-    words.forEach(word => {
-        const cleanWord = word.replace(/[^a-zëçàâéèêëîïôûùüÿñæœ]/g, "");
-        if (sqKeywords.includes(cleanWord)) sqScore++;
-        if (frKeywords.includes(cleanWord)) frScore++;
-    });
-
-    if (sqScore > frScore) return "sq";
-    if (frScore > sqScore) return "fr";
-    return "en";
 }
 
 export function normalizeQueryText(text = "") {
     return normalizeAlbanian(text);
 }
 
-// 4. Përkthime të Shpejta të Sistemit
+export function getAlbanianKeywords(text = "") {
+    const cleanText = normalizeAlbanian(text);
+    const words = cleanText.split(" ");
+    return words.filter(word => word.length > 2 && !ALBANIAN_STOP_WORDS.has(word));
+}
+
+// 3. Markuesit dhe Zbulimi i Avancuar i 6 Gjuhëve
+const LANGUAGE_MARKERS = {
+  en: ["the", "what", "how", "please", "hello", "thanks", "help", "explain"],
+  fr: ["bonjour", "merci", "comment", "pourquoi", "avec", "je", "vous", "aidez"],
+  de: ["hallo", "danke", "bitte", "warum", "und", "ich", "nicht", "hilfe"],
+  it: ["ciao", "grazie", "come", "perché", "sono", "aiuto"],
+  es: ["hola", "gracias", "cómo", "porque", "quiero", "ayuda"]
+};
+
+const ALBANIAN_MARKERS = [
+  "shqip", "shqipja", "përshëndetje", "faleminderit", "çfarë", 
+  "si je", "dua", "mund të", "më ndihmo", "është", "gjuhë", "futboll", "moti", "sot", "neser", "nesër"
+];
+
+export function detectLanguage(input = "", preferred = "auto") {
+  const normalizedText = normalizeQueryText(input);
+  const text = normalizedText.toLowerCase();
+
+  if (preferred !== "auto") {
+    return {
+      language: preferred,
+      confidence: 1,
+      normalizedText,
+    };
+  }
+
+  if (!text.trim()) {
+    return {
+      language: "sq",
+      confidence: 0,
+      normalizedText,
+    };
+  }
+
+  const scores = { sq: 0, en: 0, fr: 0, de: 0, it: 0, es: 0 };
+
+  if (/[ëç]/i.test(text)) scores.sq += 2;
+
+  for (const marker of ALBANIAN_MARKERS) {
+    if (text.includes(marker)) scores.sq += 2;
+  }
+
+  const words = new Set(text.match(/[\p{L}\p{M}]+/gu) || []);
+
+  for (const [language, markers] of Object.entries(LANGUAGE_MARKERS)) {
+    for (const marker of markers) {
+      if (words.has(marker)) scores[language] += 1;
+    }
+  }
+
+  const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const [language, score] = ranked[0];
+  const secondScore = ranked[1][1];
+
+  if (score === 0) {
+    return {
+      language: "sq",
+      confidence: 0.25,
+      normalizedText,
+    };
+  }
+
+  const confidence = Math.min(0.98, 0.5 + (score - secondScore) * 0.1);
+
+  return { language, confidence, normalizedText };
+}
+
+export function detectQueryLanguage(userQuery = "") {
+  return detectLanguage(userQuery, "auto").language;
+}
+
+// 4. Përkthimet e Sistemit
 export const systemTranslations = {
     sq: {
+        greeting: "Përshëndetje! Si mund t'ju ndihmoj sot?",
         error: "Ndodhi një gabim gjatë përpunimit të kërkesës suaj.",
         notFound: "Nuk u gjet asnjë informacion për kërkesën tuaj.",
-        loading: "Duke kërkuar dhe analizuar..."
+        loading: "Duke kërkuar në internet dhe duke analizuar..."
     },
     en: {
+        greeting: "Hello! How can I help you today?",
         error: "An error occurred while processing your request.",
         notFound: "No information could be found for your request.",
         loading: "Searching live web & analyzing..."
     },
     fr: {
+        greeting: "Bonjour ! Comment puis-je vous aider aujourd'hui ?",
         error: "Une erreur s'est produite lors du traitement de votre demande.",
         notFound: "Aucune information trouvée pour votre demande.",
         loading: "Recherche sur le web en direct et analyse..."
