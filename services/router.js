@@ -183,6 +183,7 @@ export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai'
     // 2. TË GJITHA SHËRBIMET E TJERA EKZISTUESE
     // -------------------------------------------------------------
     try {
+        // Kontrolli i Sportit ekzekutohet i primi në mënyrë që të kapë kërkesat live (p.sh. Serie A, Premier League)
         if (typeof checkSports === 'function') {
             const sports = await checkSports(userQuery);
             if (sports) return sports;
