@@ -1,24 +1,17 @@
 // services/custom-knowledge-service.js
 
+import { normalizeQueryText } from './language-engine.js';
+
 let customData = [];
 
-// Funksion për pastrimin e tekstit nga aksentet
-function normalizeText(text) {
-    if (!text) return "";
-    return text
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim();
-}
-
+// Ngarkimi i të dhënave dinamike nga skedari JSON
 export async function loadCustomKnowledge() {
     try {
         const res = await fetch('services/data/xsus-ecosystem.json');
         if (res.ok) {
             const json = await res.json();
             if (json.items) {
-                customData.push(...json.items);
+                customData = json.items;
                 console.log("Custom Knowledge u ngarkua me sukses nga JSON!");
             }
         }
@@ -27,22 +20,42 @@ export async function loadCustomKnowledge() {
     }
 }
 
-export function checkCustomKnowledge(userQuery) {
+// Kontrolli dhe kërkimi i njohurive të personalizuara
+export function checkCustomKnowledge(userQuery = "", activeLang = "sq") {
     if (!userQuery) return null;
-    const clean = normalizeText(userQuery);
+    const clean = normalizeQueryText(userQuery);
 
     // 1. KONTROLLI NGA SKEDARI JSON (Dinamik)
-    for (const item of customData) {
-        const match = item.keywords.some(kw => clean.includes(normalizeText(kw)));
-        if (match) {
-            return item.answer;
+    if (customData.length > 0) {
+        for (const item of customData) {
+            if (item.keywords && Array.isArray(item.keywords)) {
+                const match = item.keywords.some(kw => clean.includes(normalizeQueryText(kw)));
+                if (match) {
+                    // Kthen përgjigjen sipas gjuhës nëse ekziston, përndryshe përgjigjen standarde
+                    return item.answers?.[activeLang] || item.answer || item.content;
+                }
+            }
         }
     }
 
-    // 2. NJOHURITË E DEDIKUARA TOKËSORE (0ms Statike)
+    // 2. NJOHURITË E DEDIKUARA STATIKE (0ms)
 
     // A. Xsus Studio & Xsus AI
     if (clean.includes("xsus") || clean.includes("xsus studio") || clean.includes("xsus ai") || clean.includes("cfare eshte xsus")) {
+        if (activeLang === "fr") {
+            return `🚀 **Xsus Studio & Xsus AI**\n\n` +
+                   `**Xsus Studio** est une plateforme numérique avancée intégrée avec l'intelligence artificielle (**Xsus AI**), conçue pour fournir des services rapides et une assistance intelligente en temps réel.\n\n` +
+                   `✨ **Caractéristiques principales:**\n` +
+                   `- **Architecture Hybride:** Réponses ultra-rapides (0ms) pour divers utilitaires.\n` +
+                   `- **Interface Cyber Glassmorphism:** Design moderne et réactif.`;
+        }
+        if (activeLang === "en") {
+            return `🚀 **Xsus Studio & Xsus AI**\n\n` +
+                   `**Xsus Studio** is an advanced digital technology platform integrated with artificial intelligence (**Xsus AI**), designed to deliver fast services and real-time intelligent assistance.\n\n` +
+                   `✨ **Key Features:**\n` +
+                   `- **Hybrid Architecture:** Ultra-fast (0ms) responses for utilities, finance, sports, and translations.\n` +
+                   `- **Cyber Glassmorphism UI:** Modern, lightweight, and fully responsive layout.`;
+        }
         return `🚀 **Xsus Studio & Xsus AI**\n\n` +
                `**Xsus Studio** është një platformë dixhitalo-teknologjike e avancuar, e integruar me inteligjencë artificiale (**Xsus AI**), e projektuar për të ofruar shërbime të shpejta, mjete zhvillimi, dhe asistencë inteligjente në kohë reale.\n\n` +
                `✨ **Karakteristikat kryesore:**\n` +
