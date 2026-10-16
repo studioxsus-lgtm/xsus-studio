@@ -2,6 +2,7 @@
 import { studioCore } from './xsus-core.js';
 import { loadCustomKnowledge, checkCustomKnowledge } from './custom-knowledge-service.js';
 import { javaKnowledge } from './javaKnowledge.js'; // Integrimi i bazës Master të njohurive
+import { detectQueryLanguage, normalizeQueryText } from './language-engine.js'; // Motorri i ri i gjuhës
 import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
 import { checkSports } from './sports-service.js';
@@ -21,24 +22,14 @@ try {
     console.warn("Gabim te custom knowledge:", e);
 }
 
-// Funksion për pastrimin e tekstit nga aksentet (ë -> e, ç -> c, é -> e, è -> e)
-function normalizeText(text) {
-    if (!text) return "";
-    return text
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim();
-}
-
 // Moduli i Njohurive Teknike & Java Master Engine
 function checkJavaKnowledge(userQuery) {
     if (!userQuery || !Array.isArray(javaKnowledge)) return null;
-    const clean = normalizeText(userQuery);
+    const clean = normalizeQueryText(userQuery);
 
     const match = javaKnowledge.find(item => {
-        const titleSqClean = normalizeText(item.title_sq || "");
-        const titleEnClean = normalizeText(item.title || "");
+        const titleSqClean = normalizeQueryText(item.title_sq || "");
+        const titleEnClean = normalizeQueryText(item.title || "");
         return (
             (titleSqClean && clean.includes(titleSqClean)) ||
             (titleEnClean && clean.includes(titleEnClean))
@@ -57,7 +48,7 @@ function checkJavaKnowledge(userQuery) {
 // Moduli Islamik Multilingval (AL / EN / FR)
 function checkIslamicKnowledge(userQuery) {
     if (!userQuery) return null;
-    const clean = normalizeText(userQuery);
+    const clean = normalizeQueryText(userQuery);
 
     // 1. ORARET & NAMAZET (Prayers)
     const prayerKeywords = [
@@ -130,22 +121,25 @@ function checkIslamicKnowledge(userQuery) {
     return null;
 }
 
-export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai') {
+export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-ai') {
     if (!userQuery) return null;
+
+    // 1. Zbulimi automatik i gjuhës nëse nuk kaloi e zgjedhur
+    const activeLang = lang === 'auto' || !lang ? detectQueryLanguage(userQuery) : lang;
 
     // -------------------------------------------------------------
     // 0. BËRTHAMA QENDRORE (Xsus Studio Core Engine - 0ms Response)
     // -------------------------------------------------------------
     try {
         if (studioCore && typeof studioCore.requestAccess === 'function') {
-            const coreReply = studioCore.requestAccess(moduleName, userQuery, lang);
+            const coreReply = studioCore.requestAccess(moduleName, userQuery, activeLang);
             if (coreReply) return coreReply;
         }
     } catch (coreErr) {
         console.warn("Gabim te Bërthama Qendrore (xsus-core):", coreErr);
     }
 
-    const clean = normalizeText(userQuery);
+    const clean = normalizeQueryText(userQuery);
 
     // -------------------------------------------------------------
     // 1. UTILITETET LOKALE (Fjalëkalim, Ngjyra, Java, Moduli Islamik)
@@ -185,56 +179,56 @@ export async function smartRouter(userQuery, lang = 'sq', moduleName = 'xsus-ai'
     try {
         // 1. Kontrolli i Sportit (ndeshje live & renditje)
         if (typeof checkSports === 'function') {
-            const sports = await checkSports(userQuery);
+            const sports = await checkSports(userQuery, activeLang);
             if (sports) return sports;
         }
-        // 2. Kontrolli i Motit (temperatuat & parashikimi) - Vendosur në krye!
+        // 2. Kontrolli i Motit (temperatuat & parashikimi)
         if (typeof checkWeather === 'function') {
-            const weather = await checkWeather(userQuery);
+            const weather = await checkWeather(userQuery, activeLang);
             if (weather) return weather;
         }
         if (typeof checkImageGeneration === 'function') {
-            const img = await checkImageGeneration(userQuery);
+            const img = await checkImageGeneration(userQuery, activeLang);
             if (img) return img;
         }
         if (typeof checkQRCode === 'function') {
-            const qr = await checkQRCode(userQuery);
+            const qr = await checkQRCode(userQuery, activeLang);
             if (qr) return qr;
         }
         if (typeof checkMath === 'function') {
-            const math = await checkMath(userQuery);
+            const math = await checkMath(userQuery, activeLang);
             if (math) return math;
         }
         if (typeof checkCustomKnowledge === 'function') {
-            const custom = checkCustomKnowledge(userQuery);
+            const custom = checkCustomKnowledge(userQuery, activeLang);
             if (custom) return custom;
         }
         if (typeof checkConverter === 'function') {
-            const conv = await checkConverter(userQuery);
+            const conv = await checkConverter(userQuery, activeLang);
             if (conv) return conv;
         }
         if (typeof checkTranslation === 'function') {
-            const tr = await checkTranslation(userQuery);
+            const tr = await checkTranslation(userQuery, activeLang);
             if (tr) return tr;
         }
         if (typeof checkFinance === 'function') {
-            const fin = await checkFinance(userQuery);
+            const fin = await checkFinance(userQuery, activeLang);
             if (fin) return fin;
         }
         if (typeof checkNews === 'function') {
-            const news = await checkNews(userQuery);
+            const news = await checkNews(userQuery, activeLang);
             if (news) return news;
         }
         if (typeof checkNotes === 'function') {
-            const notes = await checkNotes(userQuery);
+            const notes = await checkNotes(userQuery, activeLang);
             if (notes) return notes;
         }
         if (typeof checkContentIdeas === 'function') {
-            const ideas = await checkContentIdeas(userQuery);
+            const ideas = await checkContentIdeas(userQuery, activeLang);
             if (ideas) return ideas;
         }
         if (typeof checkWikipedia === 'function') {
-            const wiki = await checkWikipedia(userQuery);
+            const wiki = await checkWikipedia(userQuery, activeLang);
             if (wiki) return wiki;
         }
     } catch (err) {
