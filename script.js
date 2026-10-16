@@ -241,6 +241,22 @@ async function handleChatSubmit(e) {
 function generateSmartAiResponse(userPrompt) {
     const prompt = userPrompt.toLowerCase();
 
+    // Kontrollojmë nëse gjuha aktuale ose pyetja është në shqip
+    if (currentLang === 'sq' || prompt.includes("më jep") || prompt.includes("çfarë") || prompt.includes("si")) {
+        if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("script")) {
+            return `🎬 **Skenar Profesional Videoje (30-60 Sekonda)**\n\n` +
+                   `📌 **Titulli:** Drita e Besimit dhe Shpresës\n\n` +
+                   `🎥 **Skena 1 (00:00 - 00:04):**\n` +
+                   `*Pamja:* Pamje kinematografike e maleve gjatë lindjes së diellit.\n` +
+                   `*Zëri në sfond:* "Në çdo stuhi që kalon në jetë, kujto se stuhitë nuk zgjasin përgjithmonë..."\n\n` +
+                   `🎥 **Skena 2 (00:04 - 00:10):**\n` +
+                   `*Pamja:* Drita e qetë e mëngjesit që përhapet në natyrë.\n` +
+                   `*Zëri në sfond:* "Pas çdo vështirësie vjen lehtësimi."\n\n` +
+                   `💬 **Thirrje për veprim:** "Ruaje këtë video dhe shpërndaje me dikë sot! ✨"`;
+        }
+        return `Mora kërkesën tuaj: **"${userPrompt}"**.\n\nSi modul inteligjent i **Xsus Studio**, jam gati t'ju ndihmoj ta zhvillojmë këtë ide më tej!`;
+    }
+
     if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("script")) {
         return `🎬 **Professional Video Script (30-60 Seconds)**\n\n` +
                `📌 **Title:** The Light of Trust and Hope\n\n` +
