@@ -117,7 +117,8 @@
                     <span class="logo-x">X</span>
                     <span class="logo-sus">sus</span>
                 </div>
-                <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">AI SEARCH</span></span>
+                <!-- VETËM XSUS AI (U HOQ SEARCH) -->
+                <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">AI</span></span>
             </a>
 
             <div class="hidden lg:flex items-center gap-6 font-medium text-xs text-slate-300">
@@ -169,7 +170,8 @@
             <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
                 <div class="flex items-center gap-2">
                     <div class="w-3 h-3 rounded-full bg-cyber-blue animate-pulse"></div>
-                    <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Live Search Assistant</span>
+                    <!-- TITULLI I NDYSHUAR TE XSUS AI NEURAL ASSISTANT -->
+                    <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Neural AI Assistant</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <button id="export-chat" type="button" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
@@ -263,41 +265,40 @@
                 "hero-title1": "Ask Anything. Create Anything.",
                 "hero-title2": "Powered by Xsus AI",
                 "hero-desc": "Instant answers with live web research, deep technical insights, and accurate sources in any language.",
-                "chat-header": "Xsus Live Search Assistant",
+                "chat-header": "Xsus Neural AI Assistant",
                 "clear-btn": "Clear Chat",
                 "input-placeholder": "Ask anything or search the web...",
                 "btn-send": "Send",
                 "thinking": "Searching live web & analyzing...",
-                "sys-prompt": "You are Xsus AI Search Engine, an advanced neural assistant created by Xsus Studio. Respond ONLY with clear, direct human text in English."
+                "sys-prompt": "You are Xsus AI Neural Engine, an advanced assistant created by Xsus Studio. Respond ONLY with clear, direct human text in English."
             },
             sq: {
                 "nav-start": "Nis Kërkimin",
                 "hero-title1": "Pyet Çdo Gjë. Krijo Çdo Gjë.",
                 "hero-title2": "Mbështetur nga Xsus AI",
                 "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
-                "chat-header": "Asistenti i Drejtpërdrejtë Xsus",
+                "chat-header": "Asistenti Neural Xsus AI",
                 "clear-btn": "Pastro Bisedën",
                 "input-placeholder": "Pyet çdo gjë ose kërko në internet...",
                 "btn-send": "Dërgo",
                 "thinking": "Duke analizuar dhe përgatitur përgjigjen...",
-                "sys-prompt": "Ti je Xsus AI Search Engine, i krijuar nga Xsus Studio. Përgjigju VETËM me tekst të pastër njerëzor në gjuhën shqipe. Përdor ë dhe ç të sakta me ton natyral."
+                "sys-prompt": "Ti je Xsus AI Neural Engine, i krijuar nga Xsus Studio. Përgjigju VETËM me tekst të pastër njerëzor në gjuhën shqipe. Përdor ë dhe ç të sakta me ton natyral."
             },
             fr: {
                 "nav-start": "Lancer Recherche",
                 "hero-title1": "Demandez Tout. Créez Tout.",
                 "hero-title2": "Propulsé par Xsus AI",
                 "hero-desc": "Des réponses instantanées avec des recherches web en direct, des analyses techniques approfondies et des sources précises dans n'importe quelle langue.",
-                "chat-header": "Assistant de Recherche en Direct Xsus",
+                "chat-header": "Assistant Neural Xsus AI",
                 "clear-btn": "Effacer le Chat",
                 "input-placeholder": "Posez une question ou recherchez sur le web...",
                 "btn-send": "Envoyer",
                 "thinking": "Recherche sur le web en direct et analyse...",
-                "sys-prompt": "Vous êtes Xsus AI Search Engine. Répondez uniquement en texte brut en français."
+                "sys-prompt": "Vous êtes Xsus AI Neural Engine. Répondez uniquement en texte brut en français."
             }
         };
 
         const langSelect = document.getElementById('language-select');
-        // VENDOSIM ANGLISHTEN SI GJUHË KRYESORE DEFINITIVE (DEFAULT)
         let currentLang = 'en';
 
         let conversationHistory = [
@@ -512,7 +513,6 @@
             langSelect.addEventListener('change', (e) => setLanguage(e.target.value));
         }
 
-        // DETOROHET TË JETË GJITHMONË ANGLISHT (EN) ME REFRESH
         setLanguage('en');
 
         function cleanResponseText(rawText) {
