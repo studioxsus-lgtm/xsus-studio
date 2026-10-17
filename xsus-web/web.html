@@ -142,6 +142,18 @@
                     <!-- AI response populates here -->
                 </div>
 
+                <!-- MODIFY CURRENT WEBSITE WITH AI -->
+                <div class="pt-4 border-t border-white/10 space-y-3">
+                    <label for="web-edit-prompt" class="block text-xs font-semibold text-slate-300">
+                        Modify your website with AI
+                    </label>
+                    <textarea id="web-edit-prompt" rows="2" maxlength="2000" placeholder="e.g. Add a contact section and improve the mobile layout..." class="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-sm text-white outline-none focus:border-cyber-blue resize-y"></textarea>
+                    <button id="modify-web-btn" type="button" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-sm hover:opacity-90 transition cursor-pointer flex items-center justify-center">
+                        <i data-lucide="wand-sparkles" class="w-4 h-4 inline-block mr-1"></i>
+                        Modify Current Website
+                    </button>
+                </div>
+
                 <!-- XSUS WEB: PROJECT MANAGEMENT -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-white/10">
                     <button id="save-web-project"
@@ -365,15 +377,6 @@
         const userBrowserLang = navigator.language.slice(0, 2);
         if (['sq', 'fr', 'en'].includes(userBrowserLang)) setLanguage(userBrowserLang);
 
-        function formatMarkdownToHTML(text) {
-            return text
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em class="text-slate-300">$1</em>')
-                .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc text-slate-300">$1</li>')
-                .replace(/\n\n/g, '<br><br>')
-                .replace(/\n/g, '<br>');
-        }
-
         // 2. AI WEBSITE ARCHITECT LOGIC
         const webPrompt = document.getElementById('web-prompt');
         const webTemplate = document.getElementById('web-template');
@@ -395,6 +398,41 @@
                     livePreview.srcdoc = htmlOutput;
                 }
                 aiWebOutput.innerHTML = `<strong class="text-cyber-blue block mb-2 text-sm">AI Website Generated & Loaded in Live Preview!</strong><div class="text-slate-300">Code length: ${htmlOutput.length} characters. Preview updated successfully.</div>`;
+            } catch (err) {
+                aiWebOutput.innerHTML = `<span class="text-rose-400">${escapePreviewText(err.message)}</span>`;
+            }
+        });
+
+        // MODIFY WEBSITE LOGIC
+        const webEditPrompt = document.getElementById('web-edit-prompt');
+        const modifyWebBtn = document.getElementById('modify-web-btn');
+
+        modifyWebBtn?.addEventListener('click', async () => {
+            const editInstruction = webEditPrompt?.value.trim();
+            const currentHtml = livePreview?.srcdoc || '';
+
+            if (!currentHtml || !currentHtml.trim()) {
+                alert(currentLang === 'sq' ? 'Ju lutem gjeneroni ose hapni një faqe përpara se ta modifikoni.' : 'Please generate or open a website before modifying.');
+                return;
+            }
+
+            if (!editInstruction) {
+                alert(currentLang === 'sq' ? 'Shkruani udhëzimin e ndryshimit (p.sh. shto një section kontakti).' : 'Please enter modification instructions.');
+                return;
+            }
+
+            aiWebOutput.classList.remove('hidden');
+            aiWebOutput.innerHTML = `<div class="animate-pulse text-cyber-blue">${currentLang === 'sq' ? 'Duke modifikuar faqen ekzistuese me AI...' : 'Modifying existing website via AI...'}</div>`;
+
+            const fullPrompt = `Here is the current HTML code of the website:\n\`\`\`html\n${currentHtml}\n\`\`\`\n\nPlease modify and improve this HTML according to these user requests:\n"${editInstruction}"`;
+
+            try {
+                const updatedHtml = await generateWebsiteCode(fullPrompt, webTemplate.value, currentLang);
+                if (livePreview) {
+                    livePreview.srcdoc = updatedHtml;
+                }
+                aiWebOutput.innerHTML = `<strong class="text-cyber-blue block mb-2 text-sm">Website Modified & Updated Successfully!</strong>`;
+                webEditPrompt.value = '';
             } catch (err) {
                 aiWebOutput.innerHTML = `<span class="text-rose-400">${escapePreviewText(err.message)}</span>`;
             }
