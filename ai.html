@@ -549,7 +549,13 @@
                 promptToSend = `[ATTACHED DOCUMENT: ${attachedFileName}]\n${attachedFileContent}\n\n[QUERY]: ${userText}`;
             }
 
-            conversationHistory.push({ role: 'user', content: promptToSend });
+            // Detyrim i gjuhës direkt te kërkesa nëse gjuha është shqip
+            let finalPromptToSend = promptToSend;
+            if (currentLang === 'sq') {
+                finalPromptToSend = "[PËRGJIGJU KATEGORIKISHT NË GJUHËN SHQIPE, MOS PËRKTHE NË ANGLISHT]: " + promptToSend;
+            }
+
+            conversationHistory.push({ role: 'user', content: finalPromptToSend });
 
             try {
                 const response = await fetch('https://text.pollinations.ai/', {
