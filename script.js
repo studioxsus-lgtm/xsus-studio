@@ -197,7 +197,6 @@ function clearChat() {
     }
 }
 
-// Lidhja kryesore asinkrone me Router-in lokal
 async function handleChatSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
     const input = document.getElementById('userInput');
@@ -220,20 +219,22 @@ async function handleChatSubmit(e) {
     input.value = '';
     stream.scrollTop = stream.scrollHeight;
 
-    // Detektojmë nëse kërkesa është shkruar në shqip
+    // Detektim universal i kërkesave në Shqip
     const lowerText = text.toLowerCase();
     const isAlbanian = lowerText.includes('më jep') || 
-                       lowerText.includes('ngjyrë') || 
-                       lowerText.includes('ngjyre') || 
+                       lowerText.includes('me jep') || 
+                       lowerText.includes('ngjyr') || 
+                       lowerText.includes('rast') || 
                        lowerText.includes('fjalëkalim') || 
                        lowerText.includes('fjalekalim') || 
                        lowerText.includes('çfarë') || 
+                       lowerText.includes('cfare') || 
                        lowerText.includes('si') || 
                        currentLang === 'sq';
 
     const targetLang = isAlbanian ? 'sq' : currentLang;
 
-    // 1. Dërgojmë kërkesën te Router-i lokal me targetLang
+    // 1. Kalimi te Router-i Lokal
     try {
         const localResponse = await smartRouter(text, targetLang);
         if (localResponse) {
@@ -244,7 +245,7 @@ async function handleChatSubmit(e) {
         console.error("Local router error:", err);
     }
 
-    // 2. Nëse nuk kapet nga router-i lokal, përdorim AI-në e jashtme
+    // 2. Kalimi te AI e jashtme me targetLang
     setTimeout(() => {
         const responseText = generateSmartAiResponse(text, targetLang);
         appendAiMessage(responseText);
@@ -254,7 +255,7 @@ async function handleChatSubmit(e) {
 function generateSmartAiResponse(userPrompt, activeLang = currentLang) {
     const prompt = userPrompt.toLowerCase();
 
-    if (activeLang === 'sq' || prompt.includes("më jep") || prompt.includes("çfarë") || prompt.includes("si")) {
+    if (activeLang === 'sq' || prompt.includes("më jep") || prompt.includes("me jep") || prompt.includes("çfarë") || prompt.includes("si")) {
         if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("script")) {
             return `🎬 **Skenar Profesional Videoje (30-60 Sekonda)**\n\n` +
                    `📌 **Titulli:** Drita e Besimit dhe Shpresës\n\n` +
