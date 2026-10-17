@@ -74,7 +74,7 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
                `* **⛅ Asr / Ikindia:** Pasdite.\n` +
                `* **🌅 Maghrib / Akshami:** Perëndimi i diellit.\n` +
                `* **🌌 Isha / Jacia:** Nata.\n\n` +
-               `💡 *Namazi është shtylla e dytë e Islamit. Oraret e sakta varen nga vendndodhja jote.*`;
+               `💡 *Namazi është shtylla e dytë e Islamit. Oraret e sakta varen nga vendndodbja jote.*`;
     }
 
     const ramadanKeywords = ['ramazan', 'ramadan', 'agjerim', 'agjerimi', 'fasting', 'jeune', 'imsak', 'iftar', 'syfyr', 'syfyri'];
@@ -112,10 +112,10 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
 export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-ai') {
     if (!userQuery) return null;
 
-    const lowerQuery = userQuery.toLowerCase();
+    const lowerQuery = userQuery.toLowerCase().trim();
     const clean = normalizeQueryText(userQuery);
 
-    // Kapim çfarëdo varianti të fjalëve shqip
+    // Zbulimi i plotë i gjuhës shqipe nga teksti origjinal i papërpunuar
     const isAlbanianQuery = lowerQuery.includes('më jep') || 
                             lowerQuery.includes('me jep') || 
                             lowerQuery.includes('ngjyr') || 
@@ -130,12 +130,14 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
     const activeLang = isAlbanianQuery ? 'sq' : (detectedLang && detectedLang !== 'auto' ? detectedLang : (lang === 'auto' || !lang ? 'en' : lang));
 
     // -------------------------------------------------------------
-    // PRIORITET ABSOLUT 1: UTILITETET LOKALE (Ngjyra, Fjalëkalim)
+    // PRIORITET ABSOLUT 1: UTILITETET LOKALE (Ngjyra dhe Fjalëkalime)
     // -------------------------------------------------------------
     if (
-        clean.includes("ngjyr") || 
-        clean.includes("color") || 
-        clean.includes("hex")
+        lowerQuery.includes("ngjyr") || 
+        lowerQuery.includes("color") || 
+        lowerQuery.includes("hex") ||
+        (lowerQuery.includes("më jep") && lowerQuery.includes("rast")) ||
+        (lowerQuery.includes("me jep") && lowerQuery.includes("rast"))
     ) {
         const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
         if (activeLang === 'sq' || isAlbanianQuery) {
@@ -145,10 +147,11 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
     }
 
     if (
-        clean.includes("fjalekalim") || 
-        clean.includes("fjalikalim") || 
-        clean.includes("password") || 
-        clean.includes("pass")
+        lowerQuery.includes("fjalëkalim") || 
+        lowerQuery.includes("fjalekalim") || 
+        lowerQuery.includes("fjalikalim") || 
+        lowerQuery.includes("password") || 
+        lowerQuery.includes("pass")
     ) {
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*!";
         let pass = "";
