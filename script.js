@@ -197,7 +197,7 @@ function clearChat() {
     }
 }
 
-// Lidhja kryesore asinkrone me Router-in lokal (duke përcjellë currentLang)
+// Lidhja kryesore asinkrone me Router-in lokal
 async function handleChatSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
     const input = document.getElementById('userInput');
@@ -220,9 +220,22 @@ async function handleChatSubmit(e) {
     input.value = '';
     stream.scrollTop = stream.scrollHeight;
 
-    // 1. Kontrollojmë fillimisht me Router-in lokal duke i kaluar activeLang (currentLang)
+    // Detektojmë nëse kërkesa është shkruar në shqip
+    const lowerText = text.toLowerCase();
+    const isAlbanian = lowerText.includes('më jep') || 
+                       lowerText.includes('ngjyrë') || 
+                       lowerText.includes('ngjyre') || 
+                       lowerText.includes('fjalëkalim') || 
+                       lowerText.includes('fjalekalim') || 
+                       lowerText.includes('çfarë') || 
+                       lowerText.includes('si') || 
+                       currentLang === 'sq';
+
+    const targetLang = isAlbanian ? 'sq' : currentLang;
+
+    // 1. Dërgojmë kërkesën te Router-i lokal me targetLang
     try {
-        const localResponse = await smartRouter(text, currentLang);
+        const localResponse = await smartRouter(text, targetLang);
         if (localResponse) {
             appendAiMessage(localResponse);
             return;
@@ -231,18 +244,17 @@ async function handleChatSubmit(e) {
         console.error("Local router error:", err);
     }
 
-    // 2. Nëse nuk kapet lokalisht, kërkesa bie te AI-ja e jashtme
+    // 2. Nëse nuk kapet nga router-i lokal, përdorim AI-në e jashtme
     setTimeout(() => {
-        const responseText = generateSmartAiResponse(text);
+        const responseText = generateSmartAiResponse(text, targetLang);
         appendAiMessage(responseText);
     }, 400);
 }
 
-function generateSmartAiResponse(userPrompt) {
+function generateSmartAiResponse(userPrompt, activeLang = currentLang) {
     const prompt = userPrompt.toLowerCase();
 
-    // Kontrollojmë nëse gjuha aktuale ose pyetja është në shqip
-    if (currentLang === 'sq' || prompt.includes("më jep") || prompt.includes("çfarë") || prompt.includes("si")) {
+    if (activeLang === 'sq' || prompt.includes("më jep") || prompt.includes("çfarë") || prompt.includes("si")) {
         if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("script")) {
             return `🎬 **Skenar Profesional Videoje (30-60 Sekonda)**\n\n` +
                    `📌 **Titulli:** Drita e Besimit dhe Shpresës\n\n` +
