@@ -4,6 +4,7 @@ import { loadCustomKnowledge, checkCustomKnowledge } from './custom-knowledge-se
 import { searchKnowledge } from './knowledge-service.js';
 import { javaKnowledge } from './javaKnowledge.js';
 import { detectQueryLanguage, normalizeQueryText } from './language-engine.js';
+import { analyzeAlbanianGrammar } from './grammar-engine.js'; // Integrimi i motorit të ri të gramatikës
 import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
 import { checkSports } from './sports-service.js';
@@ -74,7 +75,7 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
                `* **⛅ Asr / Ikindia:** Pasdite.\n` +
                `* **🌅 Maghrib / Akshami:** Perëndimi i diellit.\n` +
                `* **🌌 Isha / Jacia:** Nata.\n\n` +
-               `💡 *Namazi është shtylla e dytë e Islamit. Oraret e sakta varen nga vendndodbja jote.*`;
+               `💡 *Namazi është shtylla e dytë e Islamit. Oraret e sakta varen nga vendndodhja jote.*`;
     }
 
     const ramadanKeywords = ['ramazan', 'ramadan', 'agjerim', 'agjerimi', 'fasting', 'jeune', 'imsak', 'iftar', 'syfyr', 'syfyri'];
@@ -130,6 +131,31 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
     const activeLang = isAlbanianQuery ? 'sq' : (detectedLang && detectedLang !== 'auto' ? detectedLang : (lang === 'auto' || !lang ? 'en' : lang));
 
     // -------------------------------------------------------------
+    // FAZA 2.2: ANALIZA E SHPEJTË GRAMATIKORE SHQIPE (NLP Engine)
+    // -------------------------------------------------------------
+    let albanianAnalysis = null;
+    let grammarContext = "";
+
+    if (activeLang === 'sq') {
+        try {
+            albanianAnalysis = analyzeAlbanianGrammar(userQuery);
+            grammarContext = JSON.stringify({
+                language: albanianAnalysis.language,
+                sentenceType: albanianAnalysis.sentenceType,
+                hasNegation: albanianAnalysis.hasNegation,
+                hasRequestMarker: albanianAnalysis.hasRequestMarker,
+                tokens: albanianAnalysis.tokens.map((token) => ({
+                    word: token.text,
+                    nounLemma: token.nounLemma,
+                    verbLemma: token.verbLemma,
+                })),
+            });
+        } catch (grammarErr) {
+            console.warn("Gabim gjatë ekzekutimit të motorit gramatikor:", grammarErr);
+        }
+    }
+
+    // -------------------------------------------------------------
     // PRIORITET ABSOLUT 1: UTILITETET LOKALE (Ngjyra dhe Fjalëkalime)
     // -------------------------------------------------------------
     if (
@@ -169,7 +195,7 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
     // -------------------------------------------------------------
     try {
         if (studioCore && typeof studioCore.requestAccess === 'function') {
-            const coreReply = studioCore.requestAccess(moduleName, userQuery, activeLang);
+            const coreReply = studioCore.requestAccess(moduleName, userQuery, activeLang, { grammarContext });
             if (coreReply) return coreReply;
         }
     } catch (coreErr) {
