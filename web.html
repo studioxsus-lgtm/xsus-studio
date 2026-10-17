@@ -210,6 +210,39 @@
                         </div>
                     </div>
 
+                    <!-- XSUS WEB LIVE PREVIEW ENGINE INTEGRATION -->
+                    <div class="p-5 rounded-2xl bg-black/80 border border-cyber-blue/30 space-y-4">
+                        <div class="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-white/10">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2.5 h-2.5 rounded-full bg-cyber-blue animate-pulse"></div>
+                                <span class="text-xs font-bold text-white tracking-wide">Live Preview Engine</span>
+                            </div>
+                            
+                            <!-- Device Viewport Switchers -->
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="setPreviewDevice('desktop')" class="preview-device-btn px-2.5 py-1 rounded-lg border border-cyber-blue/40 bg-cyber-blue/10 text-cyber-blue text-[11px] font-bold transition flex items-center gap-1 cursor-pointer">
+                                    <i data-lucide="monitor" class="w-3 h-3"></i> Desktop
+                                </button>
+                                <button type="button" onclick="setPreviewDevice('tablet')" class="preview-device-btn px-2.5 py-1 rounded-lg border border-white/10 text-slate-400 text-[11px] font-bold hover:text-white transition flex items-center gap-1 cursor-pointer">
+                                    <i data-lucide="tablet" class="w-3 h-3"></i> Tablet
+                                </button>
+                                <button type="button" onclick="setPreviewDevice('mobile')" class="preview-device-btn px-2.5 py-1 rounded-lg border border-white/10 text-slate-400 text-[11px] font-bold hover:text-white transition flex items-center gap-1 cursor-pointer">
+                                    <i data-lucide="smartphone" class="w-3 h-3"></i> Mobile
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Canvas Container -->
+                        <div id="preview-canvas" class="w-full bg-[#0a0a12] rounded-xl border border-white/10 overflow-hidden flex justify-center items-center p-2 transition-all duration-300">
+                            <iframe id="website-live-preview" class="w-full h-[500px] rounded-lg border border-white/10 bg-white transition-all duration-300" sandbox="allow-scripts"></iframe>
+                        </div>
+
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                            <span id="preview-status">Preview updated successfully.</span>
+                            <span id="preview-viewport-label" class="font-mono text-cyber-blue">Desktop · 100%</span>
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
@@ -353,9 +386,160 @@
             }
         });
 
-        // 3. PRESET TEMPLATE SELECTOR
+        // 3. PRESET TEMPLATE SELECTOR & LIVE PREVIEW ENGINE
         const presetBadge = document.getElementById('active-preset-badge');
         const presetDesc = document.getElementById('preset-structure-desc');
+
+        const livePreview = document.getElementById('website-live-preview');
+        const previewCanvas = document.getElementById('preview-canvas');
+        const previewStatus = document.getElementById('preview-status');
+        const viewportLabel = document.getElementById('preview-viewport-label');
+
+        let activePreviewDevice = 'desktop';
+
+        function escapePreviewText(value) {
+            return String(value).replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[char]);
+        }
+
+        function getPreviewDocument(type) {
+            const userTitle = webPrompt?.value.trim();
+
+            const titles = {
+                news: userTitle || 'Kukës News Portal',
+                landing: userTitle || 'Build the Future with AI',
+                ecommerce: userTitle || 'Bio Farm — Natural Products',
+                portfolio: userTitle || 'My Creative Portfolio'
+            };
+
+            const title = escapePreviewText(titles[type] || titles.news);
+
+            const designs = {
+                news: {
+                    accent: '#0891b2',
+                    label: 'LATEST NEWS',
+                    description: 'Local news, breaking stories and community updates.',
+                    sections: ['Breaking News', 'Local News', 'Politics', 'Community']
+                },
+                landing: {
+                    accent: '#7c3aed',
+                    label: 'INNOVATION STARTS HERE',
+                    description: 'Discover modern digital products designed for your future.',
+                    sections: ['Our Features', 'Our Solutions', 'Pricing', 'Get Started']
+                },
+                ecommerce: {
+                    accent: '#16a34a',
+                    label: 'NATURAL & ORGANIC',
+                    description: 'Discover quality products made with care for your home.',
+                    sections: ['Our Products', 'Organic Collection', 'Best Sellers', 'Contact']
+                },
+                portfolio: {
+                    accent: '#d97706',
+                    label: 'CREATIVE PORTFOLIO',
+                    description: 'A collection of my work, ideas and creative projects.',
+                    sections: ['About Me', 'My Projects', 'My Skills', 'Contact']
+                }
+            };
+
+            const design = designs[type] || designs.news;
+
+            const cards = design.sections.map((section, index) => `
+                <article class="card">
+                    <div class="card-image" style="background: linear-gradient(135deg, ${design.accent}44, #151525 80%)"></div>
+                    <span class="tag">${index === 0 ? design.label : 'EXPLORE'}</span>
+                    <h3>${escapePreviewText(section)}</h3>
+                    <p>Discover more about ${escapePreviewText(section.toLowerCase())} and explore the latest updates.</p>
+                    <a href="#section-${index}">Learn more →</a>
+                </article>
+            `).join('');
+
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>${title}</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;color:#172033;background:#f8fafc}
+nav{padding:20px 6%;display:flex;justify-content:space-between;align-items:center;background:white;border-bottom:1px solid #e2e8f0}
+.brand{font-weight:800;font-size:20px;color:${design.accent}}
+nav a{margin-left:12px;text-decoration:none;color:#475569;font-size:12px}
+.hero{padding:65px 7%;background:linear-gradient(135deg,#fff,#e9f7ff)}
+.tag{font-size:10px;font-weight:bold;color:${design.accent};letter-spacing:1px}
+h1{font-size:clamp(30px,6vw,54px);line-height:1.08;margin:16px 0}
+.hero p{max-width:520px;color:#64748b;line-height:1.7}
+.cta{display:inline-block;background:${design.accent};color:white;padding:13px 20px;border-radius:8px;text-decoration:none;margin-top:12px}
+main{padding:35px 6%}
+h2{font-size:24px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:12px;overflow-wrap:anywhere}
+.card-image{height:100px;border-radius:8px;margin-bottom:12px}
+.card h3{font-size:16px}
+.card p{font-size:12px;line-height:1.6;color:#64748b}
+.card a{font-size:12px;color:${design.accent};text-decoration:none}
+footer{padding:25px;text-align:center;color:#64748b;font-size:12px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">${title}</span>
+  <div><a href="#main">Home</a><a href="#sections">Explore</a></div>
+</nav>
+<header class="hero">
+  <span class="tag">${design.label}</span>
+  <h1>${title}</h1>
+  <p>${design.description}</p>
+  <a class="cta" href="#sections">Explore Website →</a>
+</header>
+<main id="main">
+  <h2 id="sections">Discover More</h2>
+  <div class="grid">${cards}</div>
+</main>
+<footer>Created with XSUS Web · AI Website Studio</footer>
+</body>
+</html>`;
+        }
+
+        function renderLivePreview() {
+            if (!livePreview) return;
+            const type = webTemplate?.value || 'news';
+            livePreview.srcdoc = getPreviewDocument(type);
+            if (previewStatus) {
+                previewStatus.textContent = currentLang === 'sq' ? 'Pamja u përditësua me sukses.' : 'Preview updated successfully.';
+            }
+        }
+
+        function setPreviewDevice(device) {
+            if (!livePreview || !previewCanvas) return;
+            activePreviewDevice = device;
+
+            const widths = { desktop: '100%', tablet: '768px', mobile: '390px' };
+            const heights = { desktop: '480px', tablet: '540px', mobile: '520px' };
+
+            livePreview.style.width = widths[device];
+            livePreview.style.height = heights[device];
+
+            document.querySelectorAll('.preview-device-btn').forEach(button => {
+                const active = button.getAttribute('onclick')?.includes(device);
+                button.classList.toggle('border-cyber-blue/40', active);
+                button.classList.toggle('bg-cyber-blue/10', active);
+                button.classList.toggle('text-cyber-blue', active);
+                button.classList.toggle('border-white/10', !active);
+                button.classList.toggle('text-slate-400', !active);
+            });
+
+            if (viewportLabel) {
+                viewportLabel.textContent = { desktop: 'Desktop · 100%', tablet: 'Tablet · 768px', mobile: 'Mobile · 390px' }[device];
+            }
+        }
 
         function selectPreset(type) {
             if (type === 'news') {
@@ -375,8 +559,15 @@
                 presetDesc.textContent = "Minimal Navbar -> Hero Intro with Avatar -> Video & Media Gallery Grid -> Social Links & Contact Form.";
                 webTemplate.value = "portfolio";
             }
+            renderLivePreview();
         }
+
+        webTemplate?.addEventListener('change', renderLivePreview);
+        webPrompt?.addEventListener('input', renderLivePreview);
+
+        // Inicializimi i pamjes live
+        renderLivePreview();
+        setPreviewDevice('desktop');
     </script>
-    <script src="script.js"></script>
 </body>
 </html>
