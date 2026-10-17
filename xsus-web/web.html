@@ -45,7 +45,7 @@
     <!-- NAVIGATION BAR -->
     <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-4 md:px-6 py-4">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-2">
+            <a href="../index.html" class="flex items-center gap-2">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-lg shadow-[0_0_15px_rgba(0,240,255,0.4)]">
                     X
                 </div>
@@ -54,12 +54,12 @@
 
             <!-- Desktop Menu -->
             <div class="hidden lg:flex items-center gap-6 font-medium text-xs text-slate-300">
-                <a href="ai.html" class="hover:text-cyber-blue transition">Xsus AI</a>
-                <a href="app.html" class="hover:text-cyber-blue transition">Xsus App</a>
+                <a href="../ai.html" class="hover:text-cyber-blue transition">Xsus AI</a>
+                <a href="../app.html" class="hover:text-cyber-blue transition">Xsus App</a>
                 <a href="web.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Xsus Web</a>
-                <a href="game.html" class="hover:text-cyber-blue transition">Xsus Game</a>
-                <a href="logo.html" class="hover:text-cyber-blue transition">Xsus Logo</a>
-                <a href="domain.html" class="hover:text-cyber-blue transition">Xsus Domain</a>
+                <a href="../game.html" class="hover:text-cyber-blue transition">Xsus Game</a>
+                <a href="../logo.html" class="hover:text-cyber-blue transition">Xsus Logo</a>
+                <a href="../domain.html" class="hover:text-cyber-blue transition">Xsus Domain</a>
             </div>
 
             <!-- Language Selector & CTA -->
@@ -141,6 +141,32 @@
                 <div id="ai-web-output" class="hidden p-4 rounded-2xl bg-black/50 border border-white/10 text-xs text-slate-300 space-y-2 leading-relaxed max-h-[280px] overflow-y-auto">
                     <!-- AI response populates here -->
                 </div>
+
+                <!-- XSUS WEB: PROJECT MANAGEMENT -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-white/10">
+                    <button id="save-web-project"
+                        class="px-4 py-3 rounded-xl bg-cyber-blue/10 border border-cyber-blue/30 text-cyber-blue text-xs font-bold hover:bg-cyber-blue/20 transition cursor-pointer">
+                        <i data-lucide="save" class="w-4 h-4 inline-block mr-1"></i>
+                        Save
+                    </button>
+
+                    <button id="load-web-project"
+                        class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-xs font-bold hover:border-cyber-blue/40 transition cursor-pointer">
+                        <i data-lucide="folder-open" class="w-4 h-4 inline-block mr-1"></i>
+                        Projects
+                    </button>
+
+                    <button id="new-web-project"
+                        class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-xs font-bold hover:border-cyber-blue/40 transition cursor-pointer">
+                        <i data-lucide="file-plus-2" class="w-4 h-4 inline-block mr-1"></i>
+                        New
+                    </button>
+                </div>
+
+                <div id="web-project-list"
+                     class="hidden space-y-2 mt-3"
+                     aria-live="polite"></div>
+                <!-- END PROJECT MANAGEMENT -->
             </div>
 
             <!-- RIGHT: PRESET TEMPLATES PREVIEW & LIVE ENGINE -->
@@ -256,7 +282,9 @@
     </footer>
 
     <!-- INTERACTIVE JAVASCRIPT LOGIC -->
-    <script>
+    <script type="module">
+        import { generateWebsiteCode } from './web-service.js';
+
         lucide.createIcons();
 
         // 1. MULTI-LANGUAGE DICTIONARY (EN, SQ, FR)
@@ -361,34 +389,83 @@
             aiWebOutput.classList.remove('hidden');
             aiWebOutput.innerHTML = `<div class="animate-pulse text-cyber-blue">${currentLang === 'sq' ? 'Duke gjeneruar arkitekturën web...' : currentLang === 'fr' ? 'Génération de l\'architecture web...' : 'Generating web architecture...'}</div>`;
 
-            const targetLanguageName = currentLang === 'sq' ? 'Albanian' : currentLang === 'fr' ? 'French' : 'English';
-
             try {
-                const response = await fetch('https://text.pollinations.ai/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        messages: [
-                            { role: 'system', content: `You are an expert full-stack web developer and UI/UX designer. Give a concise, high-quality website blueprint (Sections, Layout Hierarchy, Tailwind UI Classes, and Core Features) in ${targetLanguageName}.` },
-                            { role: 'user', content: `Create a website architecture for this concept: "${promptText}" (Template Type: ${templateType}) written entirely in ${targetLanguageName}.` }
-                        ],
-                        model: 'openai'
-                    })
-                });
-
-                if (response.ok) {
-                    const text = await response.text();
-                    const formattedHTML = formatMarkdownToHTML(text);
-                    aiWebOutput.innerHTML = `<strong class="text-cyber-blue block mb-2 text-sm">AI Web Blueprint & Code Guide:</strong><div class="space-y-1">${formattedHTML}</div>`;
-                } else {
-                    aiWebOutput.innerHTML = `<span class="text-rose-400">Unable to generate web blueprint at this moment.</span>`;
-                }
+                const htmlOutput = await generateWebsiteCode(promptText, templateType, currentLang);
+                const formattedHTML = formatMarkdownToHTML(htmlOutput.substring(0, 800) + '...');
+                aiWebOutput.innerHTML = `<strong class="text-cyber-blue block mb-2 text-sm">AI Web Blueprint Generated Successfully:</strong><div class="space-y-1 text-slate-300">${formattedHTML}</div>`;
             } catch (err) {
-                aiWebOutput.innerHTML = `<span class="text-rose-400">Network connection error.</span>`;
+                aiWebOutput.innerHTML = `<span class="text-rose-400">${escapePreviewText(err.message)}</span>`;
             }
         });
 
-        // 3. PRESET TEMPLATE SELECTOR & LIVE PREVIEW ENGINE
+        // 3. PROJECT MANAGEMENT LOGIC (Save, Load, New)
+        const saveProjectBtn = document.getElementById('save-web-project');
+        const loadProjectBtn = document.getElementById('load-web-project');
+        const newProjectBtn = document.getElementById('new-web-project');
+        const projectListContainer = document.getElementById('web-project-list');
+
+        saveProjectBtn?.addEventListener('click', () => {
+            const concept = webPrompt.value.trim();
+            if (!concept) {
+                alert(currentLang === 'sq' ? 'Ju lutem shkruani një koncept para se ta ruani projektin.' : 'Please enter a concept before saving.');
+                return;
+            }
+            const projects = JSON.parse(localStorage.getItem('xsus_web_projects') || '[]');
+            const newProj = {
+                id: Date.now(),
+                title: concept.substring(0, 35) + '...',
+                prompt: concept,
+                template: webTemplate.value,
+                date: new Date().toLocaleDateString()
+            };
+            projects.unshift(newProj);
+            localStorage.setItem('xsus_web_projects', JSON.stringify(projects));
+            alert(currentLang === 'sq' ? 'Projekti u ruajt me sukses!' : 'Project saved successfully!');
+        });
+
+        loadProjectBtn?.addEventListener('click', () => {
+            projectListContainer.classList.toggle('hidden');
+            if (projectListContainer.classList.contains('hidden')) return;
+
+            const projects = JSON.parse(localStorage.getItem('xsus_web_projects') || '[]');
+            if (projects.length === 0) {
+                projectListContainer.innerHTML = `<div class="text-xs text-slate-500 p-2">${currentLang === 'sq' ? 'Nuk ka projekte të ruajtura.' : 'No saved projects found.'}</div>`;
+                return;
+            }
+
+            projectListContainer.innerHTML = projects.map(p => `
+                <div class="flex items-center justify-between p-2 rounded-xl bg-black/60 border border-white/10 text-xs">
+                    <span class="text-slate-300 truncate max-w-[180px] cursor-pointer hover:text-cyber-blue" onclick="loadSpecificProject('${p.prompt}', '${p.template}')">${p.title}</span>
+                    <button onclick="deleteProject(${p.id})" class="text-rose-400 hover:text-rose-300 ml-2">✕</button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        });
+
+        window.loadSpecificProject = function(promptText, templateType) {
+            if (webPrompt) webPrompt.value = promptText;
+            if (webTemplate) webTemplate.value = templateType;
+            projectListContainer.classList.add('hidden');
+            renderLivePreview();
+        };
+
+        window.deleteProject = function(id) {
+            let projects = JSON.parse(localStorage.getItem('xsus_web_projects') || '[]');
+            projects = projects.filter(p => p.id !== id);
+            localStorage.setItem('xsus_web_projects', JSON.stringify(projects));
+            loadProjectBtn.click(); // Refresh list
+        };
+
+        newProjectBtn?.addEventListener('click', () => {
+            if (webPrompt) webPrompt.value = '';
+            if (webTemplate) webTemplate.value = 'news';
+            aiWebOutput.classList.add('hidden');
+            aiWebOutput.innerHTML = '';
+            projectListContainer.classList.add('hidden');
+            renderLivePreview();
+        });
+
+        // 4. PRESET TEMPLATE SELECTOR & LIVE PREVIEW ENGINE
         const presetBadge = document.getElementById('active-preset-badge');
         const presetDesc = document.getElementById('preset-structure-desc');
 
@@ -519,7 +596,7 @@ footer{padding:25px;text-align:center;color:#64748b;font-size:12px}
             }
         }
 
-        function setPreviewDevice(device) {
+        window.setPreviewDevice = function(device) {
             if (!livePreview || !previewCanvas) return;
             activePreviewDevice = device;
 
@@ -541,9 +618,9 @@ footer{padding:25px;text-align:center;color:#64748b;font-size:12px}
             if (viewportLabel) {
                 viewportLabel.textContent = { desktop: 'Desktop · 100%', tablet: 'Tablet · 768px', mobile: 'Mobile · 390px' }[device];
             }
-        }
+        };
 
-        function selectPreset(type) {
+        window.selectPreset = function(type) {
             if (type === 'news') {
                 presetBadge.textContent = "News Portal";
                 presetDesc.textContent = "Header with Navigation -> Breaking Ticker -> Main Featured Article -> 3 Column Grid for Local News -> Footer with Social Links & RSS.";
@@ -562,7 +639,7 @@ footer{padding:25px;text-align:center;color:#64748b;font-size:12px}
                 webTemplate.value = "portfolio";
             }
             renderLivePreview();
-        }
+        };
 
         webTemplate?.addEventListener('change', renderLivePreview);
         webPrompt?.addEventListener('input', renderLivePreview);
