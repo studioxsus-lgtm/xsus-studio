@@ -549,10 +549,23 @@
                 promptToSend = `[ATTACHED DOCUMENT: ${attachedFileName}]\n${attachedFileContent}\n\n[QUERY]: ${userText}`;
             }
 
-            // Detyrim i gjuhës direkt te kërkesa nëse gjuha është shqip
+            // Zbulim automatik nëse inputi është në gjuhën shqipe
+            const lowerText = userText.toLowerCase();
+            const isAlbanianInput = lowerText.includes('studentët') || 
+                                    lowerText.includes('studentet') || 
+                                    lowerText.includes('punojnë') || 
+                                    lowerText.includes('libra') || 
+                                    lowerText.includes('shtëpi') || 
+                                    lowerText.includes('më jep') || 
+                                    lowerText.includes('çfarë') ||
+                                    lowerText.includes('cfare') ||
+                                    lowerText.includes('si');
+
+            const activeLang = isAlbanianInput ? 'sq' : currentLang;
+
             let finalPromptToSend = promptToSend;
-            if (currentLang === 'sq') {
-                finalPromptToSend = "[PËRGJIGJU KATEGORIKISHT NË GJUHËN SHQIPE, MOS PËRKTHE NË ANGLISHT]: " + promptToSend;
+            if (activeLang === 'sq') {
+                finalPromptToSend = "[PËRGJIGJU NË MËNYRË NATYRALE NË GJUHËN SHQIPE, MOS E PËRKTHE NË ANGLISHT]: " + promptToSend;
             }
 
             conversationHistory.push({ role: 'user', content: finalPromptToSend });
@@ -578,10 +591,10 @@
                     if (removeFileBtn) removeFileBtn.click();
                     return reply;
                 } else {
-                    return currentLang === 'sq' ? "Ndodhi një gabim gjatë lidhjes me motorin e kërkimit." : "Search engine connection error.";
+                    return activeLang === 'sq' ? "Ndodhi një gabim gjatë lidhjes me motorin e kërkimit." : "Search engine connection error.";
                 }
             } catch (err) {
-                return currentLang === 'sq' ? "Gabim në rrjet gjatë kërkimit." : "Network error during search.";
+                return activeLang === 'sq' ? "Gabim në rrjet gjatë kërkimit." : "Network error during search.";
             }
         }
 
