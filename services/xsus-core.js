@@ -18,8 +18,9 @@ export class XsusCoreEngine {
      * @param {string} moduleName - Emri i modulit ('xsus-ai', 'xsus-web', 'xsus-app', 'xsus-game', 'xsus-logo')
      * @param {string} query - Pyetja ose kërkesa e përdoruesit
      * @param {string} lang - Gjuha ('sq', 'en', 'fr')
+     * @param {object} extraContext - Konteksti shtesë (p.sh. grammarContext nga router.js)
      */
-    requestAccess(moduleName, query, lang = 'sq') {
+    requestAccess(moduleName, query, lang = 'sq', extraContext = {}) {
         if (!query) return null;
         const cleanQuery = query.toLowerCase().trim().replace(/[?.,!]/g, '');
 
@@ -27,39 +28,67 @@ export class XsusCoreEngine {
         const currentLang = this.dictionaries[lang] ? lang : 'sq';
         const dict = this.dictionaries[currentLang];
 
+        // -------------------------------------------------------------
+        // RREGULLI KRYESOR I GJUHËS SHQIPE (System Instruction Guard)
+        // -------------------------------------------------------------
+        const languageGuard = currentLang === 'sq' ? {
+            systemInstruction: `
+[RREGULL ABSOLUT I GJUHËS - XSUS STUDIO CORE]:
+- Përdoruesi po komunikon në GJUHËN SHQIPE.
+- PËRGJIGJU KATEGORIKISHT VETËM NË SHQIP.
+- MOS E PËRKTHE fjalinë në anglisht ose frëngjisht.
+- MOS jep shpjegime gramatikore apo përkthime në anglisht përveçse nëse përdoruesi e kërkon shprehimisht.
+- Trajtoje mesazhin si bisedë natyrale ose pyetje direkte dhe përgjigju në mënyrë ndihmuese në shqip.
+`,
+            grammarContext: extraContext.grammarContext || null
+        } : null;
+
+        let reply = null;
+
         switch (moduleName) {
             case 'xsus-ai':
-                // Kërkon te fjalori përkatës i gjuhës
-                return dict.find ? dict.find(cleanQuery) : null;
+                reply = dict.find ? dict.find(cleanQuery) : null;
+                break;
 
             case 'xsus-web':
                 if (this._isWebQuery(cleanQuery)) {
-                    return (dict.find ? dict.find(cleanQuery) : null) || 
-                           this._getWebContext(cleanQuery, currentLang);
+                    reply = (dict.find ? dict.find(cleanQuery) : null) || 
+                            this._getWebContext(cleanQuery, currentLang);
                 }
-                return null;
+                break;
 
             case 'xsus-app':
                 if (cleanQuery.includes('app') || cleanQuery.includes('aplikacion') || cleanQuery.includes('android') || cleanQuery.includes('ios')) {
-                    return dict.find ? dict.find(cleanQuery) : null;
+                    reply = dict.find ? dict.find(cleanQuery) : null;
                 }
-                return null;
+                break;
 
             case 'xsus-game':
                 if (cleanQuery.includes('game') || cleanQuery.includes('lojë') || cleanQuery.includes('graphics')) {
-                    return dict.find ? dict.find(cleanQuery) : null;
+                    reply = dict.find ? dict.find(cleanQuery) : null;
                 }
-                return null;
+                break;
 
             case 'xsus-logo':
                 if (cleanQuery.includes('logo') || cleanQuery.includes('design') || cleanQuery.includes('brand')) {
-                    return dict.find ? dict.find(cleanQuery) : null;
+                    reply = dict.find ? dict.find(cleanQuery) : null;
                 }
-                return null;
+                break;
 
             default:
-                return dict.find ? dict.find(cleanQuery) : null;
+                reply = dict.find ? dict.find(cleanQuery) : null;
+                break;
         }
+
+        // Nëse ka përgjigje direkte nga fjalori lokal, e kthen atë
+        if (reply) return reply;
+
+        // Nëse nuk gjendet te fjalori lokal, mund t'i vendosësh udhëzimet e gjuhës për backend-in/LLM
+        if (languageGuard && typeof window !== 'undefined') {
+            window.__XSUS_ACTIVE_GUARD__ = languageGuard;
+        }
+
+        return null;
     }
 
     _isWebQuery(query) {
