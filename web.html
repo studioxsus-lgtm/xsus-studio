@@ -356,6 +356,9 @@
             const promptText = webPrompt.value.trim() || 'A modern news portal website';
             const templateType = webTemplate.value;
 
+            // Rifreskon parapamjen live menjëherë kur klikohet butoni i gjenerimit
+            renderLivePreview();
+
             aiWebOutput.classList.remove('hidden');
             aiWebOutput.innerHTML = `<div class="animate-pulse text-cyber-blue">${currentLang === 'sq' ? 'Duke gjeneruar arkitekturën web...' : currentLang === 'fr' ? 'Génération de l\'architecture web...' : 'Generating web architecture...'}</div>`;
 
@@ -559,7 +562,7 @@ footer{padding:25px;text-align:center;color:#64748b;font-size:12px}
                 presetDesc.textContent = "Minimal Navbar -> Hero Intro with Avatar -> Video & Media Gallery Grid -> Social Links & Contact Form.";
                 webTemplate.value = "portfolio";
             }
-            renderLivePreview();
+            renderLivePreview(); // Thërret rifreskimin e pamjes live menjëherë pas ndryshimit të preset-it
         }
 
         webTemplate?.addEventListener('change', renderLivePreview);
