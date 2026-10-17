@@ -1,9 +1,9 @@
 // services/router.js
 import { studioCore } from './xsus-core.js';
 import { loadCustomKnowledge, checkCustomKnowledge } from './custom-knowledge-service.js';
-import { searchKnowledge } from './knowledge-service.js'; // Integrimi i kërkimit shumëgjuhësh të artikujve
-import { javaKnowledge } from './javaKnowledge.js'; // Integrimi i bazës Master të njohurive
-import { detectQueryLanguage, normalizeQueryText } from './language-engine.js'; // Motorri i ri i gjuhës
+import { searchKnowledge } from './knowledge-service.js';
+import { javaKnowledge } from './javaKnowledge.js';
+import { detectQueryLanguage, normalizeQueryText } from './language-engine.js';
 import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
 import { checkSports } from './sports-service.js';
@@ -112,27 +112,37 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
 export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-ai') {
     if (!userQuery) return null;
 
-    // Zbulimi automatik i gjuhës nga vetë pyetja ka prioritet absolut
+    const clean = normalizeQueryText(userQuery);
+    const lowerQuery = userQuery.toLowerCase();
+
+    // Detektojojmë nëse pyetja është shqip
+    const isAlbanianQuery = lowerQuery.includes('më jep') || 
+                            lowerQuery.includes('ngjyrë') || 
+                            lowerQuery.includes('ngjyre') || 
+                            lowerQuery.includes('fjalëkalim') || 
+                            lowerQuery.includes('fjalekalim') || 
+                            lowerQuery.includes('çfarë') || 
+                            lowerQuery.includes('si');
+
     const detectedLang = detectQueryLanguage(userQuery);
-    const activeLang = detectedLang && detectedLang !== 'auto' ? detectedLang : (lang === 'auto' || !lang ? 'en' : lang);
+    const activeLang = isAlbanianQuery ? 'sq' : (detectedLang && detectedLang !== 'auto' ? detectedLang : (lang === 'auto' || !lang ? 'en' : lang));
 
     // -------------------------------------------------------------
-    // 0. BËRTHAMA QENDRORE (Xsus Studio Core Engine - 0ms Response)
+    // PRIORITET ABSOLUT 1: UTILITETET LOKALE (Përpara çdo moduli tjetër)
     // -------------------------------------------------------------
-    try {
-        if (studioCore && typeof studioCore.requestAccess === 'function') {
-            const coreReply = studioCore.requestAccess(moduleName, userQuery, activeLang);
-            if (coreReply) return coreReply;
+    if (
+        clean.includes("ngjyre") || 
+        clean.includes("ngjyrë") || 
+        clean.includes("color") || 
+        clean.includes("hex")
+    ) {
+        const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+        if (activeLang === 'sq' || isAlbanianQuery) {
+            return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
         }
-    } catch (coreErr) {
-        console.warn("Gabim te Bërthama Qendrore (xsus-core):", coreErr);
+        return `🎨 **Random Color for Design:**\n- Hex Code: **${randomHex}**\n- Color: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
     }
 
-    const clean = normalizeQueryText(userQuery);
-
-    // -------------------------------------------------------------
-    // 1. UTILITETET LOKALE (Fjalëkalim, Ngjyra, Java, Moduli Islamik)
-    // -------------------------------------------------------------
     if (
         clean.includes("fjalekalim") || 
         clean.includes("fjalikalim") || 
@@ -144,26 +154,22 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
         for (let i = 0; i < 14; i++) {
             pass += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        const isSq = activeLang === 'sq' || lang === 'sq' || userQuery.toLowerCase().includes('fjalëkalim') || userQuery.toLowerCase().includes('fjalekalim');
-        const titleMsg = isSq ? 'Fjalëkalim i Sigurt i Gjeneruar:' : 'Secure Generated Password:';
-        const noteMsg = isSq ? '(Kopjoje dhe ruaje në një vend të sigurt!)' : '(Copy and save it in a safe place!)';
-        return `🔒 **${titleMsg}**\n\`\`\`text\n${pass}\n\`\`\`\n*${noteMsg}*`;
+        if (activeLang === 'sq' || isAlbanianQuery) {
+            return `🔒 **Fjalëkalim i Sigurt i Gjeneruar:**\n\`\`\`text\n${pass}\n\`\`\`\n*(Kopjoje dhe ruaje në një vend të sigurt!)*`;
+        }
+        return `🔒 **Secure Generated Password:**\n\`\`\`text\n${pass}\n\`\`\`\n*(Copy and save it in a safe place!)*`;
     }
 
-    if (
-        clean.includes("ngjyre") || 
-        clean.includes("ngjyrë") || 
-        clean.includes("color") || 
-        clean.includes("hex")
-    ) {
-        const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-        const isSq = activeLang === 'sq' || lang === 'sq' || userQuery.toLowerCase().includes('ngjyrë') || userQuery.toLowerCase().includes('ngjyre');
-        
-        if (isSq) {
-            return `🎨 **Ngjyrë e Rastësishme për Dizajn:**\n- Kodi Hex: **${randomHex}**\n- Ngjyra: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
+    // -------------------------------------------------------------
+    // 0. BËRTHAMA QENDRORE (Xsus Studio Core Engine)
+    // -------------------------------------------------------------
+    try {
+        if (studioCore && typeof studioCore.requestAccess === 'function') {
+            const coreReply = studioCore.requestAccess(moduleName, userQuery, activeLang);
+            if (coreReply) return coreReply;
         }
-        
-        return `🎨 **Random Color for Design:**\n- Hex Code: **${randomHex}**\n- Color: <span style="background-color: ${randomHex}; padding: 2px 12px; border-radius: 4px; color: #fff; font-weight: bold;">${randomHex}</span>`;
+    } catch (coreErr) {
+        console.warn("Gabim te Bërthama Qendrore (xsus-core):", coreErr);
     }
 
     const javaAnswer = checkJavaKnowledge(userQuery, activeLang);
