@@ -219,19 +219,15 @@ async function handleChatSubmit(e) {
     input.value = '';
     stream.scrollTop = stream.scrollHeight;
 
-    // Detektim universal i kërkesave në Shqip
+    // Detektim i zgjeruar i fjalive në Shqip (përfshin fjalë si studentët, punojnë, libra, shtëpi, etj.)
     const lowerText = text.toLowerCase();
-    const isAlbanian = lowerText.includes('më jep') || 
-                       lowerText.includes('me jep') || 
-                       lowerText.includes('ngjyr') || 
-                       lowerText.includes('rast') || 
-                       lowerText.includes('fjalëkalim') || 
-                       lowerText.includes('fjalekalim') || 
-                       lowerText.includes('çfarë') || 
-                       lowerText.includes('cfare') || 
-                       lowerText.includes('si') || 
-                       currentLang === 'sq';
-
+    const albanianKeywords = [
+        'studentët', 'studentet', 'punojnë', 'punojne', 'libra', 'shtëpi', 'shtepi', 
+        'më jep', 'me jep', 'ngjyr', 'rast', 'fjalëkalim', 'fjalekalim', 
+        'çfarë', 'cfare', 'si', 'po ', 'në ', 'ne ', 'për', 'per'
+    ];
+    
+    const isAlbanian = albanianKeywords.some(kw => lowerText.includes(kw)) || currentLang === 'sq';
     const targetLang = isAlbanian ? 'sq' : currentLang;
 
     // 1. Kalimi te Router-i Lokal
@@ -245,7 +241,7 @@ async function handleChatSubmit(e) {
         console.error("Local router error:", err);
     }
 
-    // 2. Kalimi te AI e jashtme me targetLang
+    // 2. Kalimi te AI me targetLang
     setTimeout(() => {
         const responseText = generateSmartAiResponse(text, targetLang);
         appendAiMessage(responseText);
@@ -255,7 +251,8 @@ async function handleChatSubmit(e) {
 function generateSmartAiResponse(userPrompt, activeLang = currentLang) {
     const prompt = userPrompt.toLowerCase();
 
-    if (activeLang === 'sq' || prompt.includes("më jep") || prompt.includes("me jep") || prompt.includes("çfarë") || prompt.includes("si")) {
+    // Nëse gjuha është Shqip ose teksti përmban fjalë shqip
+    if (activeLang === 'sq' || prompt.includes("më jep") || prompt.includes("me jep") || prompt.includes("çfarë") || prompt.includes("si") || prompt.includes("punojnë") || prompt.includes("studentët")) {
         if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("script")) {
             return `🎬 **Skenar Profesional Videoje (30-60 Sekonda)**\n\n` +
                    `📌 **Titulli:** Drita e Besimit dhe Shpresës\n\n` +
@@ -267,7 +264,9 @@ function generateSmartAiResponse(userPrompt, activeLang = currentLang) {
                    `*Zëri në sfond:* "Pas çdo vështirësie vjen lehtësimi."\n\n` +
                    `💬 **Thirrje për veprim:** "Ruaje këtë video dhe shpërndaje me dikë sot! ✨"`;
         }
-        return `Mora kërkesën tuaj: **"${userPrompt}"**.\n\nSi modul inteligjent i **Xsus Studio**, jam gati t'ju ndihmoj ta zhvillojmë këtë ide më tej!`;
+        
+        // Përgjigje natyrale në Shqip (pa e përkthyer fjalën në Anglisht!)
+        return `E kuptova deklaratën tuaj: **"${userPrompt}"**.\n\nSi modul inteligjent i **Xsus Studio**, jam këtu për t'ju ndihmuar. Çfarë dëshironi të bëjmë ose të diskutojmë më tej rreth kësaj teme?`;
     }
 
     if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("script")) {
