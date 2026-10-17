@@ -116,29 +116,15 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
     const lowerQuery = userQuery.toLowerCase().trim();
     const clean = normalizeQueryText(userQuery);
 
-    // Zbulimi i plotë i gjuhës shqipe nga teksti origjinal i papërpunuar
-    const isAlbanianQuery = lowerQuery.includes('më jep') || 
-                            lowerQuery.includes('me jep') || 
-                            lowerQuery.includes('ngjyr') || 
-                            lowerQuery.includes('rast') || 
-                            lowerQuery.includes('fjalëkalim') || 
-                            lowerQuery.includes('fjalekalim') || 
-                            lowerQuery.includes('çfarë') || 
-                            lowerQuery.includes('cfare') || 
-                            lowerQuery.includes('si');
-
-    const detectedLang = detectQueryLanguage(userQuery);
-    const activeLang = isAlbanianQuery ? 'sq' : (detectedLang && detectedLang !== 'auto' ? detectedLang : (lang === 'auto' || !lang ? 'en' : lang));
-
     // -------------------------------------------------------------
-    // FAZA 2.2: ANALIZA E SHPEJTË GRAMATIKORE SHQIPE (NLP Engine)
+    // FAZA 2.2: ANALIZA GRAMATIKORE DHE DETEKTIMI I GJUHËS SHQIPE (NLP)
     // -------------------------------------------------------------
     let albanianAnalysis = null;
     let grammarContext = "";
 
-    if (activeLang === 'sq') {
-        try {
-            albanianAnalysis = analyzeAlbanianGrammar(userQuery);
+    try {
+        albanianAnalysis = analyzeAlbanianGrammar(userQuery);
+        if (albanianAnalysis) {
             grammarContext = JSON.stringify({
                 language: albanianAnalysis.language,
                 sentenceType: albanianAnalysis.sentenceType,
@@ -150,10 +136,31 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
                     verbLemma: token.verbLemma,
                 })),
             });
-        } catch (grammarErr) {
-            console.warn("Gabim gjatë ekzekutimit të motorit gramatikor:", grammarErr);
         }
+    } catch (grammarErr) {
+        console.warn("Gabim gjatë ekzekutimit të motorit gramatikor:", grammarErr);
     }
+
+    // Identifikojmë nëse fjalia përmban elemente të fjalorit dhe gramatikës shqipe
+    const hasAlbanianTokens = albanianAnalysis && albanianAnalysis.tokens.some(
+        (t) => t.nounLemma !== null || t.verbLemma !== null || t.isNegation
+    );
+
+    const isAlbanianQuery = hasAlbanianTokens || 
+                            lowerQuery.includes('më jep') || 
+                            lowerQuery.includes('me jep') || 
+                            lowerQuery.includes('ngjyr') || 
+                            lowerQuery.includes('rast') || 
+                            lowerQuery.includes('fjalëkalim') || 
+                            lowerQuery.includes('fjalekalim') || 
+                            lowerQuery.includes('çfarë') || 
+                            lowerQuery.includes('cfare') || 
+                            lowerQuery.includes('si') ||
+                            lowerQuery.includes('po ') ||
+                            lowerQuery.includes('në ');
+
+    const detectedLang = detectQueryLanguage(userQuery);
+    const activeLang = isAlbanianQuery ? 'sq' : (detectedLang && detectedLang !== 'auto' ? detectedLang : (lang === 'auto' || !lang ? 'en' : lang));
 
     // -------------------------------------------------------------
     // PRIORITET ABSOLUT 1: UTILITETET LOKALE (Ngjyra dhe Fjalëkalime)
