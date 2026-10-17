@@ -1,7 +1,7 @@
 // services/xsus-ai-service.js
 import { detectLanguage } from './language-engine.js';
 import { searchKnowledge } from './knowledge-service.js';
-import { analyzeAlbanianGrammar } from './grammar-engine.js'; // Përdorim motorin e ri gramatikor
+import { analyzeAlbanianGrammar } from './grammar-engine.js'; // Integrimi i motorit të ri të gramatikës
 
 const LANGUAGE_NAMES = {
   sq: "Albanian (Shqip)",
