@@ -132,7 +132,7 @@
                 </div>
 
                 <!-- Generate Button -->
-                <button id="generate-web-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink text-black font-extrabold text-sm hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)] flex items-center justify-center gap-2">
+                <button id="generate-web-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink text-black font-extrabold text-sm hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)] flex items-center justify-center gap-2 cursor-pointer">
                     <i data-lucide="code" class="w-4 h-4"></i>
                     <span data-i18n="btn-generate">Generate Web Blueprint & Code</span>
                 </button>
@@ -145,26 +145,26 @@
                 <!-- XSUS WEB: PROJECT MANAGEMENT -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-white/10">
                     <button id="save-web-project"
-                        class="px-4 py-3 rounded-xl bg-cyber-blue/10 border border-cyber-blue/30 text-cyber-blue text-xs font-bold hover:bg-cyber-blue/20 transition cursor-pointer">
+                        class="px-4 py-3 rounded-xl bg-cyber-blue/10 border border-cyber-blue/30 text-cyber-blue text-xs font-bold hover:bg-cyber-blue/20 transition cursor-pointer flex items-center justify-center">
                         <i data-lucide="save" class="w-4 h-4 inline-block mr-1"></i>
                         Save
                     </button>
 
                     <button id="load-web-project"
-                        class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-xs font-bold hover:border-cyber-blue/40 transition cursor-pointer">
+                        class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-xs font-bold hover:border-cyber-blue/40 transition cursor-pointer flex items-center justify-center">
                         <i data-lucide="folder-open" class="w-4 h-4 inline-block mr-1"></i>
                         Projects
                     </button>
 
                     <button id="new-web-project"
-                        class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-xs font-bold hover:border-cyber-blue/40 transition cursor-pointer">
+                        class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-xs font-bold hover:border-cyber-blue/40 transition cursor-pointer flex items-center justify-center">
                         <i data-lucide="file-plus-2" class="w-4 h-4 inline-block mr-1"></i>
                         New
                     </button>
                 </div>
 
                 <div id="web-project-list"
-                     class="hidden space-y-2 mt-3"
+                     class="hidden space-y-2 mt-3 max-h-48 overflow-y-auto"
                      aria-live="polite"></div>
                 <!-- END PROJECT MANAGEMENT -->
             </div>
@@ -379,99 +379,208 @@
         const webTemplate = document.getElementById('web-template');
         const generateWebBtn = document.getElementById('generate-web-btn');
         const aiWebOutput = document.getElementById('ai-web-output');
+        const livePreview = document.getElementById('website-live-preview');
+        const previewStatus = document.getElementById('preview-status');
 
         generateWebBtn?.addEventListener('click', async () => {
-            const promptText = webPrompt.value.trim() || 'A modern news portal website';
+            const promptText = webPrompt.value.trim() || 'A modern website blueprint';
             const templateType = webTemplate.value;
 
-            renderLivePreview();
-
             aiWebOutput.classList.remove('hidden');
-            aiWebOutput.innerHTML = `<div class="animate-pulse text-cyber-blue">${currentLang === 'sq' ? 'Duke gjeneruar arkitekturën web...' : currentLang === 'fr' ? 'Génération de l\'architecture web...' : 'Generating web architecture...'}</div>`;
+            aiWebOutput.innerHTML = `<div class="animate-pulse text-cyber-blue">${currentLang === 'sq' ? 'Duke gjeneruar kodin e plotë të faqes me AI...' : 'Generating complete website code via AI...'}</div>`;
 
             try {
                 const htmlOutput = await generateWebsiteCode(promptText, templateType, currentLang);
-                const formattedHTML = formatMarkdownToHTML(htmlOutput.substring(0, 800) + '...');
-                aiWebOutput.innerHTML = `<strong class="text-cyber-blue block mb-2 text-sm">AI Web Blueprint Generated Successfully:</strong><div class="space-y-1 text-slate-300">${formattedHTML}</div>`;
+                if (livePreview) {
+                    livePreview.srcdoc = htmlOutput;
+                }
+                aiWebOutput.innerHTML = `<strong class="text-cyber-blue block mb-2 text-sm">AI Website Generated & Loaded in Live Preview!</strong><div class="text-slate-300">Code length: ${htmlOutput.length} characters. Preview updated successfully.</div>`;
             } catch (err) {
                 aiWebOutput.innerHTML = `<span class="text-rose-400">${escapePreviewText(err.message)}</span>`;
             }
         });
 
-        // 3. PROJECT MANAGEMENT LOGIC (Save, Load, New)
-        const saveProjectBtn = document.getElementById('save-web-project');
-        const loadProjectBtn = document.getElementById('load-web-project');
-        const newProjectBtn = document.getElementById('new-web-project');
-        const projectListContainer = document.getElementById('web-project-list');
+        // 3. PROJECT MANAGEMENT LOGIC (Advanced Local Storage)
+        const PROJECTS_STORAGE_KEY = "xsus-web-projects-v1";
+        const ACTIVE_PROJECT_KEY = "xsus-web-active-project-v1";
 
-        saveProjectBtn?.addEventListener('click', () => {
-            const concept = webPrompt.value.trim();
-            if (!concept) {
-                alert(currentLang === 'sq' ? 'Ju lutem shkruani një koncept para se ta ruani projektin.' : 'Please enter a concept before saving.');
+        let activeWebProjectId = null;
+
+        function readWebProjects() {
+            try {
+                const value = JSON.parse(localStorage.getItem(PROJECTS_STORAGE_KEY) || "[]");
+                return Array.isArray(value) ? value : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function writeWebProjects(projects) {
+            localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+        }
+
+        function getCurrentProjectHtml() {
+            return livePreview?.srcdoc || "";
+        }
+
+        function saveWebProject() {
+            const html = getCurrentProjectHtml();
+
+            if (!html || !html.trim()) {
+                if (previewStatus) previewStatus.textContent = "Generate a website before saving your project.";
                 return;
             }
-            const projects = JSON.parse(localStorage.getItem('xsus_web_projects') || '[]');
-            const newProj = {
-                id: Date.now(),
-                title: concept.substring(0, 35) + '...',
-                prompt: concept,
+
+            const projects = readWebProjects();
+            const now = new Date().toISOString();
+            const name = webPrompt.value.trim().slice(0, 100) || "My XSUS Website";
+
+            const existingIndex = projects.findIndex(project => project.id === activeWebProjectId);
+
+            const project = {
+                id: activeWebProjectId || crypto.randomUUID(),
+                name,
+                prompt: webPrompt.value.trim(),
                 template: webTemplate.value,
-                date: new Date().toLocaleDateString()
+                html,
+                updatedAt: now,
+                createdAt: existingIndex >= 0 ? projects[existingIndex].createdAt : now
             };
-            projects.unshift(newProj);
-            localStorage.setItem('xsus_web_projects', JSON.stringify(projects));
-            alert(currentLang === 'sq' ? 'Projekti u ruajt me sukses!' : 'Project saved successfully!');
-        });
 
-        loadProjectBtn?.addEventListener('click', () => {
-            projectListContainer.classList.toggle('hidden');
-            if (projectListContainer.classList.contains('hidden')) return;
+            if (existingIndex >= 0) {
+                const previous = projects[existingIndex];
+                project.history = [
+                    {
+                        html: previous.html,
+                        savedAt: previous.updatedAt
+                    },
+                    ...(previous.history || [])
+                ].slice(0, 5);
+            } else {
+                project.history = [];
+            }
 
-            const projects = JSON.parse(localStorage.getItem('xsus_web_projects') || '[]');
+            const updatedProjects = existingIndex >= 0
+                ? projects.map(item => item.id === project.id ? project : item)
+                : [project, ...projects];
+
+            try {
+                writeWebProjects(updatedProjects);
+                activeWebProjectId = project.id;
+                localStorage.setItem(ACTIVE_PROJECT_KEY, project.id);
+                if (previewStatus) previewStatus.textContent = "Project saved in this browser.";
+            } catch (error) {
+                console.error("XSUS Web save error:", error);
+                if (previewStatus) previewStatus.textContent = "Could not save. Browser storage may be full.";
+            }
+        }
+
+        function renderWebProjectList() {
+            const container = document.getElementById("web-project-list");
+            if (!container) return;
+
+            const projects = readWebProjects();
+            container.replaceChildren();
+            container.classList.remove("hidden");
+
             if (projects.length === 0) {
-                projectListContainer.innerHTML = `<div class="text-xs text-slate-500 p-2">${currentLang === 'sq' ? 'Nuk ka projekte të ruajtura.' : 'No saved projects found.'}</div>`;
+                const empty = document.createElement("p");
+                empty.className = "text-xs text-slate-400 py-3 text-center";
+                empty.textContent = "No saved projects yet.";
+                container.appendChild(empty);
                 return;
             }
 
-            projectListContainer.innerHTML = projects.map(p => `
-                <div class="flex items-center justify-between p-2 rounded-xl bg-black/60 border border-white/10 text-xs">
-                    <span class="text-slate-300 truncate max-w-[180px] cursor-pointer hover:text-cyber-blue" onclick="loadSpecificProject('${p.prompt}', '${p.template}')">${p.title}</span>
-                    <button onclick="deleteProject(${p.id})" class="text-rose-400 hover:text-rose-300 ml-2">✕</button>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        });
+            projects.forEach(project => {
+                const row = document.createElement("div");
+                row.className = "flex items-center justify-between gap-3 p-3 rounded-xl bg-black/40 border border-white/10";
 
-        window.loadSpecificProject = function(promptText, templateType) {
-            if (webPrompt) webPrompt.value = promptText;
-            if (webTemplate) webTemplate.value = templateType;
-            projectListContainer.classList.add('hidden');
+                const info = document.createElement("div");
+                info.className = "min-w-0";
+
+                const title = document.createElement("p");
+                title.className = "text-sm font-semibold text-white truncate";
+                title.textContent = project.name;
+
+                const date = document.createElement("p");
+                date.className = "text-xs text-slate-500 mt-1";
+                date.textContent = new Date(project.updatedAt).toLocaleString();
+
+                info.append(title, date);
+
+                const openButton = document.createElement("button");
+                openButton.type = "button";
+                openButton.className = "shrink-0 px-3 py-2 rounded-lg bg-cyber-blue/10 border border-cyber-blue/30 text-cyber-blue text-xs font-bold cursor-pointer hover:bg-cyber-blue/20 transition";
+                openButton.textContent = "Open";
+
+                openButton.addEventListener("click", () => {
+                    openWebProject(project.id);
+                });
+
+                row.append(info, openButton);
+                container.appendChild(row);
+            });
+        }
+
+        function openWebProject(projectId) {
+            const project = readWebProjects().find(item => item.id === projectId);
+            if (!project) {
+                if (previewStatus) previewStatus.textContent = "Project not found.";
+                return;
+            }
+
+            activeWebProjectId = project.id;
+            webPrompt.value = project.prompt || "";
+            webTemplate.value = project.template || "news";
+            livePreview.srcdoc = project.html;
+
+            localStorage.setItem(ACTIVE_PROJECT_KEY, project.id);
+            setPreviewDevice(activePreviewDevice);
+
+            if (previewStatus) previewStatus.textContent = "Opened: " + project.name;
+            document.getElementById("web-project-list")?.classList.add("hidden");
+        }
+
+        function createNewWebProject() {
+            const hasCurrentWork = Boolean(getCurrentProjectHtml());
+
+            if (hasCurrentWork && !confirm("Start a new project? Save your current work first if needed.")) {
+                return;
+            }
+
+            activeWebProjectId = null;
+            webPrompt.value = "";
+            webTemplate.value = "landing";
+
             renderLivePreview();
-        };
+            if (previewStatus) previewStatus.textContent = "New project started. Describe your website to begin.";
+        }
 
-        window.deleteProject = function(id) {
-            let projects = JSON.parse(localStorage.getItem('xsus_web_projects') || '[]');
-            projects = projects.filter(p => p.id !== id);
-            localStorage.setItem('xsus_web_projects', JSON.stringify(projects));
-            loadProjectBtn.click(); // Refresh list
-        };
+        document.getElementById("save-web-project")?.addEventListener("click", saveWebProject);
+        document.getElementById("load-web-project")?.addEventListener("click", renderWebProjectList);
+        document.getElementById("new-web-project")?.addEventListener("click", createNewWebProject);
 
-        newProjectBtn?.addEventListener('click', () => {
-            if (webPrompt) webPrompt.value = '';
-            if (webTemplate) webTemplate.value = 'news';
-            aiWebOutput.classList.add('hidden');
-            aiWebOutput.innerHTML = '';
-            projectListContainer.classList.add('hidden');
-            renderLivePreview();
-        });
+        // Restore active project on reload
+        try {
+            const savedId = localStorage.getItem(ACTIVE_PROJECT_KEY);
+            if (savedId) {
+                const savedProject = readWebProjects().find(project => project.id === savedId);
+                if (savedProject) {
+                    activeWebProjectId = savedProject.id;
+                    webPrompt.value = savedProject.prompt || "";
+                    webTemplate.value = savedProject.template || "news";
+                    livePreview.srcdoc = savedProject.html;
+                }
+            }
+        } catch (error) {
+            console.warn("XSUS Web could not restore the saved project.", error);
+        }
 
         // 4. PRESET TEMPLATE SELECTOR & LIVE PREVIEW ENGINE
         const presetBadge = document.getElementById('active-preset-badge');
         const presetDesc = document.getElementById('preset-structure-desc');
 
-        const livePreview = document.getElementById('website-live-preview');
         const previewCanvas = document.getElementById('preview-canvas');
-        const previewStatus = document.getElementById('preview-status');
         const viewportLabel = document.getElementById('preview-viewport-label');
 
         let activePreviewDevice = 'desktop';
@@ -644,8 +753,10 @@ footer{padding:25px;text-align:center;color:#64748b;font-size:12px}
         webTemplate?.addEventListener('change', renderLivePreview);
         webPrompt?.addEventListener('input', renderLivePreview);
 
-        // Inicializimi i pamjes live
-        renderLivePreview();
+        // Inicializimi i pamjes live vetëm nëse nuk ka projekt të ruajtur paraprakisht
+        if (!livePreview.srcdoc) {
+            renderLivePreview();
+        }
         setPreviewDevice('desktop');
     </script>
 </body>
