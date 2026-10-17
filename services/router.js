@@ -112,27 +112,28 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
 export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-ai') {
     if (!userQuery) return null;
 
-    const clean = normalizeQueryText(userQuery);
     const lowerQuery = userQuery.toLowerCase();
+    const clean = normalizeQueryText(userQuery);
 
-    // Detektojojmë nëse pyetja është shqip
+    // Kapim çfarëdo varianti të fjalëve shqip
     const isAlbanianQuery = lowerQuery.includes('më jep') || 
-                            lowerQuery.includes('ngjyrë') || 
-                            lowerQuery.includes('ngjyre') || 
+                            lowerQuery.includes('me jep') || 
+                            lowerQuery.includes('ngjyr') || 
+                            lowerQuery.includes('rast') || 
                             lowerQuery.includes('fjalëkalim') || 
                             lowerQuery.includes('fjalekalim') || 
                             lowerQuery.includes('çfarë') || 
+                            lowerQuery.includes('cfare') || 
                             lowerQuery.includes('si');
 
     const detectedLang = detectQueryLanguage(userQuery);
     const activeLang = isAlbanianQuery ? 'sq' : (detectedLang && detectedLang !== 'auto' ? detectedLang : (lang === 'auto' || !lang ? 'en' : lang));
 
     // -------------------------------------------------------------
-    // PRIORITET ABSOLUT 1: UTILITETET LOKALE (Përpara çdo moduli tjetër)
+    // PRIORITET ABSOLUT 1: UTILITETET LOKALE (Ngjyra, Fjalëkalim)
     // -------------------------------------------------------------
     if (
-        clean.includes("ngjyre") || 
-        clean.includes("ngjyrë") || 
+        clean.includes("ngjyr") || 
         clean.includes("color") || 
         clean.includes("hex")
     ) {
@@ -179,7 +180,7 @@ export async function smartRouter(userQuery, lang = 'auto', moduleName = 'xsus-a
     if (islamicAnswer) return islamicAnswer;
 
     // -------------------------------------------------------------
-    // 2. TË GJITHA SHËRBIMET E TJERA EKZISTUESE
+    // 2. SHËRBIMET EKZISTUESE
     // -------------------------------------------------------------
     try {
         if (typeof checkSports === 'function') {
