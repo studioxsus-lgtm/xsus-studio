@@ -12,6 +12,7 @@
       padding: 24px;
       line-height: 1.6;
     }
+
     main {
       max-width: 600px;
       margin: 40px auto;
@@ -19,9 +20,11 @@
       border: 1px solid #333;
       border-radius: 16px;
     }
+
     #status {
       overflow-wrap: anywhere;
       color: #00f0ff;
+      white-space: pre-wrap;
     }
   </style>
 </head>
@@ -33,38 +36,59 @@
   </main>
 
   <script type="module">
-    // Ndryshoni rrugën e skedarit nëse kjo faqe është brenda ndonjë dosjeje tjetër (p.sh. "../services/supabase-client.js")
     import { supabase } from "./services/supabase-client.js";
 
     const status = document.getElementById("status");
 
-    async function runTest() {
-      try {
-        // 1. Testojmë sesionin e autentifikimit
-        const { data: sessionData, error: authError } = await supabase.auth.getSession();
-        if (authError) throw authError;
+    function report(message) {
+      status.textContent += "\n" + message;
+    }
 
-        // 2. Testojmë leximin nga tabela projects
-        const { data: projectsData, error: dbError } = await supabase
-          .from("projects")
-          .select("*")
+    async function runTest() {
+      status.textContent = "Klienti Supabase u ngarkua.";
+
+      try {
+        // Testi 1: gjendja e sesionit
+        const {
+          data: sessionData,
+          error: authError
+        } = await supabase.auth.getSession();
+
+        if (authError) {
+          report("AUTENTIKIMI: GABIM — " + authError.message);
+          return;
+        }
+
+        report(
+          sessionData.session
+            ? "AUTENTIKIMI: Ka përdorues të identifikuar."
+            : "AUTENTIKIMI: Nuk ka përdorues të identifikuar."
+        );
+
+        // Testi 2: leximi i sigurt i një fushe nga profiles
+        const {
+          data,
+          error: dbError
+        } = await supabase
+          .from("profiles")
+          .select("id")
           .limit(1);
 
-        if (dbError) throw dbError;
+        if (dbError) {
+          report("DATA API: GABIM");
+          report("Mesazhi: " + dbError.message);
+          report("Kodi: " + (dbError.code || "nuk u dha"));
+          return;
+        }
 
-        status.innerHTML = 
-          "✅ <strong>Sukses i plotë!</strong><br><br>" +
-          "• Klienti Supabase u ngarkua.<br>" +
-          "• Autentifikimi po punon.<br>" +
-          "• Data API dhe baza e të dhënave po përgjigjen fiks siç duhet!";
-          
+        report("DATA API: Kërkesa u krye me sukses.");
+        report("Rreshta të kthyer: " + data.length);
+        report(
+          "Përfundimi: API-ja iu përgjigj kërkesës për profiles."
+        );
+
       } catch (error) {
-        console.error("Supabase test error:", error);
-
-        status.innerHTML = 
-          "❌ <strong>Testi dështoi:</strong> " + 
-          (error.message || "Gabim i panjohur") + 
-          "<br><br><small>Nëse dalin gabime importi, verifiko nëse rruga e skedarit 'supabase-client.js' është e saktë.</small>";
+        report("GABIM I PAPARASHIKUAR: " + error.message);
       }
     }
 
