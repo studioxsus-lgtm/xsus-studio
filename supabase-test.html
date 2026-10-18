@@ -33,6 +33,7 @@
   </main>
 
   <script type="module">
+    // Ndryshoni rrugën e skedarit nëse kjo faqe është brenda ndonjë dosjeje tjetër (p.sh. "../services/supabase-client.js")
     import { supabase } from "./services/supabase-client.js";
 
     const status = document.getElementById("status");
@@ -43,7 +44,7 @@
         const { data: sessionData, error: authError } = await supabase.auth.getSession();
         if (authError) throw authError;
 
-        // 2. Testojmë leximin nga baza e të dhënave (tabela projects që tashmë është e hapur)
+        // 2. Testojmë leximin nga tabela projects
         const { data: projectsData, error: dbError } = await supabase
           .from("projects")
           .select("*")
@@ -63,7 +64,7 @@
         status.innerHTML = 
           "❌ <strong>Testi dështoi:</strong> " + 
           (error.message || "Gabim i panjohur") + 
-          "<br><br><small>Kontrollo konsolën (F12) për detaje.</small>";
+          "<br><br><small>Nëse dalin gabime importi, verifiko nëse rruga e skedarit 'supabase-client.js' është e saktë.</small>";
       }
     }
 
