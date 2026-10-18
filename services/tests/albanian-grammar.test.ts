@@ -11,6 +11,9 @@ import { analyzeVerb } from "../src/lib/language/verb-morphology";
 import { parseAlbanianSentence } from "../src/lib/language/sentence-parser";
 import { analyzeAlbanianGrammar } from "../src/lib/language/grammar-engine";
 
+// RISIA: Importi i analizuesit të frazave komplekse
+import { analyzeAlbanianPhrases } from "../src/lib/language/phrase-analyzer";
+
 describe("XSUS Albanian Language Engine", () => {
   it("normalizon shkronjat Unicode", () => {
     const result = analyzeAlbanianSentence("  Çfarë   është AI?  ");
@@ -97,5 +100,43 @@ describe("XSUS Albanian Grammar Engine", () => {
     expect(result.language).toBe("sq");
     expect(result.tokens.length).toBe(2);
     expect(result.syntax.possibleVerbs).toContain("punoj");
+  });
+});
+
+// RISIA: Blloku i testeve automatike për frazat e avancuara
+describe("Albanian phrase analyzer", () => {
+  it("recognizes the present perfect", () => {
+    const result = analyzeAlbanianPhrases("Unë kam punuar.");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe("perfect");
+    expect(result[0].text.toLowerCase()).toBe("kam punuar");
+  });
+
+  it("recognizes the future construction", () => {
+    const result = analyzeAlbanianPhrases("Unë do të punoj nesër.");
+
+    expect(result[0].type).toBe("future");
+    expect(result[0].tense).toBe("future");
+  });
+
+  it("prioritizes negative perfect over generic perfect", () => {
+    const result = analyzeAlbanianPhrases("Nuk e kam parë.");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe("negative_perfect");
+    expect(result[0].text.toLowerCase()).toBe("nuk e kam parë");
+  });
+
+  it("recognizes a clitic construction", () => {
+    const result = analyzeAlbanianPhrases("Ia dhashë librin.");
+
+    expect(
+      result.some((phrase) => phrase.type === "dative_clitic_construction")
+    ).toBe(true);
+  });
+
+  it("returns no matches for an empty string", () => {
+    expect(analyzeAlbanianPhrases("   ")).toEqual([]);
   });
 });
