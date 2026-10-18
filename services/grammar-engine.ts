@@ -5,6 +5,7 @@ import { analyzeVerb } from "./verb-morphology";
 import { parseAlbanianSentence } from "./sentence-parser";
 import { analyzeAlbanianSentence } from "./grammar-rules";
 import { analyzeAlbanianText } from "./morphology";
+import { analyzeAlbanianPhrases, type AlbanianPhraseMatch } from "./phrase-analyzer";
 
 export interface IntegratedToken {
   text: string;
@@ -29,6 +30,7 @@ export interface IntegratedGrammarResult {
   syntax: ReturnType<typeof parseAlbanianSentence>;
   tokens: IntegratedToken[];
   words: ReturnType<typeof analyzeAlbanianText>;
+  phrases: AlbanianPhraseMatch[]; // <-- RISIA 1: Mbështetje për frazat komplekse
   statistics: {
     totalWords: number;
     knownWords: number;
@@ -38,12 +40,13 @@ export interface IntegratedGrammarResult {
 }
 
 /**
- * Motori qendror i analizës gramatikore dhe sintaksore për gjuhën shqipe në XSUS AI
+ * Motori qendror i analizës gramatikore, sintaksore dhe të frazave për gjuhën shqipe në XSUS AI
  */
 export function analyzeAlbanianGrammar(text: string): IntegratedGrammarResult {
   const sentence = analyzeAlbanianSentence(text);
   const syntax = parseAlbanianSentence(text);
   const words = analyzeAlbanianText(sentence.normalizedText);
+  const phrases = analyzeAlbanianPhrases(sentence.normalizedText); // <-- RISIA 2: Ekzekutimi i analizës së frazave
 
   // Krijojmë një hartë kërkimi të shpejtë për analizën morfologjike të fjalëve
   const wordAnalysisMap = new Map(
@@ -85,6 +88,7 @@ export function analyzeAlbanianGrammar(text: string): IntegratedGrammarResult {
     syntax,
     tokens,
     words,
+    phrases, // <-- RISIA 3: Kthimi i frazave të detektuara në objektin përfundimtar
     statistics: {
       totalWords: words.length,
       knownWords: knownWords.length,
