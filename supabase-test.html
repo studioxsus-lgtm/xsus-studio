@@ -28,7 +28,7 @@
 <body>
   <main>
     <h1>XSUS Studio</h1>
-    <h2>Supabase Connection Test</h2>
+    <h2>Supabase Connection & Database Test</h2>
     <p id="status">Po kontrollojmë konfigurimin...</p>
   </main>
 
@@ -43,7 +43,7 @@
         const { data: sessionData, error: authError } = await supabase.auth.getSession();
         if (authError) throw authError;
 
-        // 2. Testojmë leximin nga baza e të dhënave (tabela projects)
+        // 2. Testojmë leximin nga baza e të dhënave (tabela projects që tashmë është e hapur)
         const { data: projectsData, error: dbError } = await supabase
           .from("projects")
           .select("*")
@@ -55,7 +55,7 @@
           "✅ <strong>Sukses i plotë!</strong><br><br>" +
           "• Klienti Supabase u ngarkua.<br>" +
           "• Autentifikimi po punon.<br>" +
-          "• Data API dhe baza e të dhënave funksionojnë saktë!";
+          "• Data API dhe baza e të dhënave po përgjigjen fiks siç duhet!";
           
       } catch (error) {
         console.error("Supabase test error:", error);
@@ -63,7 +63,7 @@
         status.innerHTML = 
           "❌ <strong>Testi dështoi:</strong> " + 
           (error.message || "Gabim i panjohur") + 
-          "<br><br><small>Kontrollo konsolën (F12 në shfletues) për më shumë detaje.</small>";
+          "<br><br><small>Kontrollo konsolën (F12) për detaje.</small>";
       }
     }
 
