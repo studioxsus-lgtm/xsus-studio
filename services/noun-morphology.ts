@@ -1,4 +1,4 @@
-// noun-morphology.ts
+// src/lib/language/noun-morphology.ts
 
 export type AlbanianCase =
   | "nominative"   // emërore
@@ -44,18 +44,19 @@ const NOUNS: NounEntry[] = [
       { form: "librat", grammaticalCase: "nominative", number: "plural", definiteness: "definite" },
       { form: "librave", grammaticalCase: "dative", number: "plural", definiteness: "definite" },
       { form: "librash", grammaticalCase: "ablative", number: "plural", definiteness: "indefinite" },
+      { form: "libri i", grammaticalCase: "genitive", number: "singular", definiteness: "definite" },
     ],
   },
   {
-    lemma: "shtëpi",
+    lemma: "shkollë",
     gender: "feminine",
     forms: [
-      { form: "shtëpi", grammaticalCase: "nominative", number: "singular", definiteness: "indefinite" },
-      { form: "shtëpia", grammaticalCase: "nominative", number: "singular", definiteness: "definite" },
-      { form: "shtëpinë", grammaticalCase: "accusative", number: "singular", definiteness: "definite" },
-      { form: "shtëpisë", grammaticalCase: "dative", number: "singular", definiteness: "definite" },
-      { form: "shtëpitë", grammaticalCase: "nominative", number: "plural", definiteness: "definite" },
-      { form: "shtëpive", grammaticalCase: "dative", number: "plural", definiteness: "definite" },
+      { form: "shkollë", grammaticalCase: "nominative", number: "singular", definiteness: "indefinite" },
+      { form: "shkolla", grammaticalCase: "nominative", number: "singular", definiteness: "definite" },
+      { form: "shkollat", grammaticalCase: "nominative", number: "plural", definiteness: "definite" },
+      { form: "shkolle", grammaticalCase: "ablative", number: "singular", definiteness: "indefinite" },
+      { form: "shkollës", grammaticalCase: "dative", number: "singular", definiteness: "definite" },
+      { form: "shkollave", grammaticalCase: "dative", number: "plural", definiteness: "definite" },
     ],
   },
   {
@@ -67,7 +68,20 @@ const NOUNS: NounEntry[] = [
       { form: "studentin", grammaticalCase: "accusative", number: "singular", definiteness: "definite" },
       { form: "studentë", grammaticalCase: "nominative", number: "plural", definiteness: "indefinite" },
       { form: "studentët", grammaticalCase: "nominative", number: "plural", definiteness: "definite" },
+      { form: "studentit", grammaticalCase: "dative", number: "singular", definiteness: "definite" },
       { form: "studentëve", grammaticalCase: "dative", number: "plural", definiteness: "definite" },
+    ],
+  },
+  {
+    lemma: "shtëpi",
+    gender: "feminine",
+    forms: [
+      { form: "shtëpi", grammaticalCase: "nominative", number: "singular", definiteness: "indefinite" },
+      { form: "shtëpia", grammaticalCase: "nominative", number: "singular", definiteness: "definite" },
+      { form: "shtëpitë", grammaticalCase: "nominative", number: "plural", definiteness: "definite" },
+      { form: "shtëpisë", grammaticalCase: "dative", number: "singular", definiteness: "definite" },
+      { form: "shtëpive", grammaticalCase: "dative", number: "plural", definiteness: "definite" },
+      { form: "shtëpit", grammaticalCase: "nominative", number: "plural", definiteness: "definite" },
     ],
   },
 ];
