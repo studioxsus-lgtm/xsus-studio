@@ -81,6 +81,9 @@ const entries: AlbanianLexiconEntry[] = [
   },
 ];
 
+/**
+ * Normalizon një varg teksti në gjuhën shqipe (heq hapësirat e tepërta, i kthen në shkronja të vogla sq-AL)
+ */
 function normalize(value: string): string {
   return value
     .normalize("NFC")
@@ -89,17 +92,18 @@ function normalize(value: string): string {
     .replace(/\s+/g, " ");
 }
 
-export const ALBANIAN_LEXICON: ReadonlyArray<
-  AlbanianLexiconEntry
-> = entries.map((entry) => ({
+/**
+ * Leksikoni kryesor i indeksuar dhe i pastruar nga duplikatat e formave
+ */
+export const ALBANIAN_LEXICON: ReadonlyArray<AlbanianLexiconEntry> = entries.map((entry) => ({
   ...entry,
   forms: [...new Set(entry.forms.map(normalize))],
 }));
 
-const formIndex = new Map<
-  string,
-  AlbanianLexiconEntry
->();
+/**
+ * Map-i për kërkim tejet të shpejtë sipas çdo forme të mundshme gramatikore
+ */
+const formIndex = new Map<string, AlbanianLexiconEntry>();
 
 for (const entry of ALBANIAN_LEXICON) {
   formIndex.set(normalize(entry.lemma), entry);
@@ -112,6 +116,11 @@ for (const entry of ALBANIAN_LEXICON) {
   }
 }
 
+/**
+ * Kërkon një fjalë ose formë në fjalorin e gjuhës shqipe
+ * @param word Fjala për t'u kërkuar
+ * @returns Objektin e leksikonit ose undefined nëse nuk gjendet
+ */
 export function lookupAlbanianForm(
   word: string
 ): AlbanianLexiconEntry | undefined {
