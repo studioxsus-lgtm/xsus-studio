@@ -2,380 +2,369 @@ import { smartRouter } from './services/router.js';
 
 const translations = {
     en: {
-        navAi: "Xsus AI",
-        navEcosystem: "Ecosystem",
-        navApps: "Xsus App",
         heroBadge: "Official Hybrid Intelligence Platform",
-        heroTitle: 'Most powerful digital tools in a <span class="gradient-text">Single Studio</span>',
-        heroSub: "Integrated platform combining artificial intelligence, app development, web, games, and graphic design.",
-        btnExplore: "Try Xsus AI",
-        btnTools: "View All Tools",
-        aiDesc: "Smart hybrid assistant for questions, video scripts, content creation, and code.",
-        aiConsoleTitle: "Xsus AI Interactive Console",
-        clearChat: "Clear chat",
-        welcomeMsg: "Hello! I am Xsus AI. Ask me for a video script, creative text, or technical question!",
+        heroTitle: 'The most powerful digital tools in a <span class="gradient-text">Single Studio</span>',
+        heroSub: "Explore our independent digital tools, designed for performance, creativity and productivity.",
+        navAi: "Xsus AI",
+        navApp: "Xsus App",
+        navWeb: "Xsus Web",
+        navGame: "Xsus Game",
+        navLogo: "Xsus Logo",
+        navDomain: "Xsus Domain",
+        login: "Login",
+        signup: "Sign Up",
+        logout: "Logout",
+        cardAi: "Smart assistant for text generation, video scripts, analysis, and coding.",
+        cardApp: "Mobile and web application builder, live previews, and theme customization.",
+        cardWeb: "Modern web design, multi-file architectures, and hosting solutions.",
+        cardGame: "Interactive browser gaming experiences and physics engines.",
+        cardLogo: "Brand identity, vector graphics, and professional logo design services.",
+        cardDomain: "Domain management, DNS routing, and secure web presence configuration.",
+        footer: "All rights reserved.",
+        signedOut: "You have signed out.",
+        logoutError: "Could not sign out.",
+        welcome: "Hello! I am Xsus AI. Ask me for a video script, creative text, or technical help!",
         placeholder: "Ask Xsus AI anything...",
         send: "Send",
-        appStudioDesc: "Design, customize, and preview your hybrid ecosystem mobile application in real-time.",
-        appThemeTitle: "App Color Aesthetics",
-        appToolsTitle: "Included Tools & Features",
-        appLangTitle: "App Tri-Lingual Support",
-        appLangSub: "Native dynamic switching between English, French, and Albanian (EN | FR | SQ) built directly into the mobile binary.",
-        toolsTitle: "Xsus Studio Ecosystem",
-        toolsSub: "All our integrated tools in one single platform.",
-        cardAi: "Smart assistant for text generation, video scripts, analysis, and coding.",
-        cardApp: "High performance mobile and web applications for daily use.",
-        cardWeb: "Modern web design, development, and hosting architectures.",
-        cardGame: "Interactive gaming experiences and browser games built on WebGL.",
-        cardLogo: "Brand identity, vector graphics, and logo design services.",
-        cardDomain: "Domain management, DNS routing, and web presence configuration.",
-        appTitle: "Our apps on Play Store or App Store",
-        appSub: "Download our official mobile applications for the best experience."
+        clear: "Clear chat"
     },
+
     fr: {
+        heroBadge: "Plateforme officielle d’intelligence hybride",
+        heroTitle: 'Les outils numériques les plus puissants dans un <span class="gradient-text">Studio unique</span>',
+        heroSub: "Découvrez nos outils numériques indépendants, conçus pour la performance, la créativité et la productivité.",
         navAi: "Xsus AI",
-        navEcosystem: "Écosystème",
-        navApps: "Xsus App",
-        heroBadge: "Plateforme d'intelligence hybride officielle",
-        heroTitle: 'Les outils numériques les plus puissants dans un <span class="gradient-text">Seul Studio</span>',
-        heroSub: "Plateforme intégrée combinant intelligence artificielle, développement d'applications, web, jeux et design.",
-        btnExplore: "Essayer Xsus AI",
-        btnTools: "Voir tous les outils",
-        aiDesc: "Assistant hybride intelligent pour questions, scripts vidéo, création de contenu et code.",
-        aiConsoleTitle: "Console Interactive Xsus AI",
-        clearChat: "Effacer la discussion",
-        welcomeMsg: "Bonjour! Je suis Xsus AI. Demandez-moi un script vidéo, du texte ou une question!",
+        navApp: "Xsus App",
+        navWeb: "Xsus Web",
+        navGame: "Xsus Game",
+        navLogo: "Xsus Logo",
+        navDomain: "Xsus Domain",
+        login: "Connexion",
+        signup: "Inscription",
+        logout: "Déconnexion",
+        cardAi: "Assistant intelligent pour la génération de texte, les scripts vidéo, l’analyse et le code.",
+        cardApp: "Création d’applications mobiles et web, aperçu en direct et personnalisation des thèmes.",
+        cardWeb: "Conception web moderne, architectures multi-fichiers et solutions d’hébergement.",
+        cardGame: "Jeux interactifs sur navigateur et moteurs physiques.",
+        cardLogo: "Identité de marque, graphismes vectoriels et conception professionnelle de logos.",
+        cardDomain: "Gestion de domaines, routage DNS et configuration sécurisée de présence web.",
+        footer: "Tous droits réservés.",
+        signedOut: "Vous êtes déconnecté.",
+        logoutError: "Impossible de vous déconnecter.",
+        welcome: "Bonjour ! Je suis Xsus AI. Demandez-moi un script vidéo, un texte créatif ou une aide technique !",
         placeholder: "Posez votre question à Xsus AI...",
         send: "Envoyer",
-        appStudioDesc: "Personnalisez et prévisualisez votre application mobile en temps réel.",
-        appThemeTitle: "Esthétique des couleurs",
-        appToolsTitle: "Outils & Fonctionnalités inclus",
-        appLangTitle: "Support Trilingue Intégré",
-        appLangSub: "Bascule dynamique entre l'anglais, le français et l'albanais intégrée directement.",
-        toolsTitle: "Écosystème Xsus Studio",
-        toolsSub: "Tous nos outils intégrés sur une seule plateforme.",
-        cardAi: "Assistant intelligent pour la génération de texte, scripts vidéo et code.",
-        cardApp: "Applications mobiles et web haute performance à usage quotidien.",
-        cardWeb: "Design web moderne, développement et architectures d'hébergement.",
-        cardGame: "Expériences de jeu interactives et jeux par navigateur basés sur WebGL.",
-        cardLogo: "Identité de marque, graphismes vectoriels et création de logos.",
-        cardDomain: "Gestion de domaines, routage DNS et configuration web.",
-        appTitle: "Nos applications sur Play Store ou App Store",
-        appSub: "Téléchargez nos applications mobiles officielles pour une meilleure expérience."
+        clear: "Effacer la discussion"
     },
+
     sq: {
+        heroBadge: "Platforma zyrtare e inteligjencës hibride",
+        heroTitle: 'Veglat më të fuqishme digjitale në një <span class="gradient-text">Studio të vetme</span>',
+        heroSub: "Eksploro veglat tona digjitale, të krijuara për performancë, kreativitet dhe produktivitet.",
         navAi: "Xsus AI",
-        navEcosystem: "Ekosistemi",
-        navApps: "Xsus App",
-        heroBadge: "Platforma Zyrtare e Inteligjencës Hibride",
-        heroTitle: 'Veglat më të fuqishme digjitale në një <span class="gradient-text">Studio të Vetme</span>',
-        heroSub: "Platformë e integruar që ndërthur inteligjencën artificiale, zhvillimin e aplikacioneve, uebit, lojërave dhe dizajnit grafik.",
-        btnExplore: "Provo Xsus AI",
-        btnTools: "Shiko të Gjitha Veglat",
-        aiDesc: "Asistent hibrid inteligjent për pyetje, skenarë videosh, krijim përmbajtjeje dhe kodim.",
-        aiConsoleTitle: "Xsus AI Interactive Console",
-        clearChat: "Pastro bisedën",
-        welcomeMsg: "Përshëndetje! Unë jam Xsus AI. Më kërkoni një skenar videoje, një tekst apo pyetje profesionale!",
+        navApp: "Xsus App",
+        navWeb: "Xsus Web",
+        navGame: "Xsus Game",
+        navLogo: "Xsus Logo",
+        navDomain: "Xsus Domain",
+        login: "Hyr",
+        signup: "Regjistrohu",
+        logout: "Dil",
+        cardAi: "Asistent inteligjent për krijimin e teksteve, skenarëve të videove, analizave dhe kodit.",
+        cardApp: "Krijim aplikacionesh për celular dhe ueb, pamje paraprake dhe personalizim të temave.",
+        cardWeb: "Dizajn modern uebi, struktura me shumë skedarë dhe zgjidhje për hostim.",
+        cardGame: "Lojëra interaktive në shfletues dhe motorë fizikë.",
+        cardLogo: "Identitet marke, grafika vektoriale dhe dizajn profesional logosh.",
+        cardDomain: "Menaxhim domenesh, rutim DNS dhe konfigurim i sigurt i pranisë në ueb.",
+        footer: "Të gjitha të drejtat e rezervuara.",
+        signedOut: "Dole nga llogaria.",
+        logoutError: "Dalja nga llogaria dështoi.",
+        welcome: "Përshëndetje! Unë jam Xsus AI. Më kërko një skenar videoje, tekst krijues ose ndihmë teknike!",
         placeholder: "Pyet Xsus AI për çfarëdo që dëshiron...",
         send: "Dërgo",
-        appStudioDesc: "Dizajnoni, personalizoni dhe shikoni pamjen e aplikacionit tuaj celular në kohë reale.",
-        appThemeTitle: "Dizajni & Ngjyrat e App-it",
-        appToolsTitle: "Veglat e Përfshira në App",
-        appLangTitle: "Mbështetje për Tri Gjuhët",
-        appLangSub: "Kalim dinamik midis Anglishtes, Frëngjishtes dhe Shqipes direkt brenda aplikacionit.",
-        toolsTitle: "Ekosistemi Xsus Studio",
-        toolsSub: "Të gjitha mjetet tona të integruara në një platformë të vetme.",
-        cardAi: "Asistent inteligjent për gjenerim teksti, skenarë videosh, analiza dhe kodim.",
-        cardApp: "Aplikacione celulare dhe ueb me performancë të lartë për përdorim të përditshëm.",
-        cardWeb: "Zgjidhje moderne për dizajn uebi, zhvillim dhe arkitektura gostitjeje (hosting).",
-        cardGame: "Përvoja lojërash interaktive dhe lojëra direkte në shfletues të ndërtuara mbi WebGL.",
-        cardLogo: "Identitet brandi, grafika vektoriale dhe konceptim profesional logosh.",
-        cardDomain: "Menaxhim domenesht, rutim DNS dhe konfigurim i pranisë në ueb.",
-        appTitle: "App tona në Play Store ose App Store",
-        appSub: "Shkarkoni aplikacionet tona zyrtare për përvojën më të mirë në celular."
+        clear: "Pastro bisedën"
     }
 };
 
-let currentLang = 'en';
+let currentLang = localStorage.getItem("xsus_language") || "en";
+
+if (!translations[currentLang]) {
+    currentLang = "en";
+}
 
 function setLanguage(lang) {
+    if (!translations[lang]) return;
+
     currentLang = lang;
-    ['en', 'fr', 'sq'].forEach(l => {
-        const btn = document.getElementById(`lang-${l}`);
-        if (btn) {
-            if (l === lang) {
-                btn.className = "px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40";
-            } else {
-                btn.className = "px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white";
-            }
-        }
-    });
+    localStorage.setItem("xsus_language", lang);
+    document.documentElement.lang = lang;
 
     const t = translations[lang];
 
-    if (document.getElementById('nav-ai-link')) document.getElementById('nav-ai-link').innerText = t.navAi;
-    if (document.getElementById('nav-ecosystem-link')) document.getElementById('nav-ecosystem-link').innerText = t.navEcosystem;
-    if (document.getElementById('nav-apps-link')) document.getElementById('nav-apps-link').innerText = t.navApps;
-    
-    if (document.getElementById('hero-badge')) document.getElementById('hero-badge').innerText = t.heroBadge;
-    if (document.getElementById('hero-title')) document.getElementById('hero-title').innerHTML = t.heroTitle;
-    if (document.getElementById('hero-subtitle')) document.getElementById('hero-subtitle').innerText = t.heroSub;
-    if (document.getElementById('btn-explore')) document.getElementById('btn-explore').innerText = t.btnExplore;
-    if (document.getElementById('btn-tools')) document.getElementById('btn-tools').innerText = t.btnTools;
-    
-    if (document.getElementById('ai-desc')) document.getElementById('ai-desc').innerText = t.aiDesc;
-    if (document.getElementById('ai-console-title')) document.getElementById('ai-console-title').innerText = t.aiConsoleTitle;
-    if (document.getElementById('txt-clear')) document.getElementById('txt-clear').innerText = t.clearChat;
-    if (document.getElementById('welcome-msg')) document.getElementById('welcome-msg').innerText = t.welcomeMsg;
-    if (document.getElementById('userInput')) document.getElementById('userInput').placeholder = t.placeholder;
-    if (document.getElementById('txt-send')) document.getElementById('txt-send').innerText = t.send;
-    
-    if (document.getElementById('app-studio-desc')) document.getElementById('app-studio-desc').innerText = t.appStudioDesc;
-    if (document.getElementById('app-theme-title')) document.getElementById('app-theme-title').innerText = t.appThemeTitle;
-    if (document.getElementById('app-tools-title')) document.getElementById('app-tools-title').innerText = t.appToolsTitle;
-    if (document.getElementById('app-lang-title')) document.getElementById('app-lang-title').innerText = t.appLangTitle;
-    if (document.getElementById('app-lang-sub')) document.getElementById('app-lang-sub').innerText = t.appLangSub;
+    ["en", "fr", "sq"].forEach(code => {
+        const button = document.getElementById(`lang-${code}`);
+        if (!button) return;
 
-    if (document.getElementById('tools-title')) document.getElementById('tools-title').innerText = t.toolsTitle;
-    if (document.getElementById('tools-sub')) document.getElementById('tools-sub').innerText = t.toolsSub;
-    if (document.getElementById('card-ai-desc')) document.getElementById('card-ai-desc').innerText = t.cardAi;
-    if (document.getElementById('card-app-desc')) document.getElementById('card-app-desc').innerText = t.cardApp;
-    if (document.getElementById('card-web-desc')) document.getElementById('card-web-desc').innerText = t.cardWeb;
-    if (document.getElementById('card-game-desc')) document.getElementById('card-game-desc').innerText = t.cardGame;
-    if (document.getElementById('card-logo-desc')) document.getElementById('card-logo-desc').innerText = t.cardLogo;
-    if (document.getElementById('card-domain-desc')) document.getElementById('card-domain-desc').innerText = t.cardDomain;
-    
-    if (document.getElementById('app-section-title')) document.getElementById('app-section-title').innerText = t.appTitle;
-    if (document.getElementById('app-section-subtitle')) document.getElementById('app-section-subtitle').innerText = t.appSub;
+        button.className = code === lang
+            ? "px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40"
+            : "px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white";
+    });
+
+    const setText = (selector, value) => {
+        const element = document.querySelector(selector);
+        if (element && value !== undefined) element.textContent = value;
+    };
+
+    const setHTML = (selector, value) => {
+        const element = document.querySelector(selector);
+        if (element && value !== undefined) element.innerHTML = value;
+    };
+
+    setText("#hero-badge", t.heroBadge);
+    setHTML("#hero-title", t.heroTitle);
+    setText("#hero-subtitle", t.heroSub);
+
+    const navLinks = document.querySelectorAll("header nav a");
+    const navKeys = ["navAi", "navApp", "navWeb", "navGame", "navLogo", "navDomain"];
+
+    navLinks.forEach((link, index) => {
+        if (t[navKeys[index]]) link.textContent = t[navKeys[index]];
+    });
+
+    setText("#loginLink", t.login);
+    setText("#signupLink", t.signup);
+    setText("#logoutButton", t.logout);
+
+    const cardDescriptions = [
+        t.cardAi,
+        t.cardApp,
+        t.cardWeb,
+        t.cardGame,
+        t.cardLogo,
+        t.cardDomain
+    ];
+
+    document.querySelectorAll("main section.grid > a").forEach((card, index) => {
+        if (cardDescriptions[index]) {
+            const description = card.querySelector("p");
+            if (description) description.textContent = cardDescriptions[index];
+        }
+    });
+
+    const footer = document.querySelector("footer");
+    if (footer) {
+        footer.innerHTML = `&copy; 2026 Xsus Studio. ${t.footer}`;
+    }
+
+    setText("#welcome-msg", t.welcome);
+    setText("#txt-send", t.send);
+    setText("#txt-clear", t.clear);
+
+    const input = document.getElementById("userInput");
+    if (input) input.placeholder = t.placeholder;
+
+    window.dispatchEvent(new CustomEvent("xsus:languageChanged", {
+        detail: { language: lang }
+    }));
 }
 
 function setAppTheme(theme) {
-    const screen = document.getElementById('phoneScreen');
+    const screen = document.getElementById("phoneScreen");
     if (!screen) return;
-    
-    if (theme === 'cyan') {
-        screen.className = "flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border border-cyan-500/50 shadow-lg shadow-cyan-500/20";
-    } else if (theme === 'purple') {
-        screen.className = "flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border border-purple-500/50 shadow-lg shadow-purple-500/20";
-    } else if (theme === 'emerald') {
-        screen.className = "flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border border-emerald-500/50 shadow-lg shadow-emerald-500/20";
-    } else if (theme === 'gold') {
-        screen.className = "flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border border-amber-500/50 shadow-lg shadow-amber-500/20";
-    }
+
+    const colors = {
+        cyan: "border-cyan-500/50 shadow-cyan-500/20",
+        purple: "border-purple-500/50 shadow-purple-500/20",
+        emerald: "border-emerald-500/50 shadow-emerald-500/20",
+        gold: "border-amber-500/50 shadow-amber-500/20"
+    };
+
+    if (!colors[theme]) return;
+
+    screen.className =
+        `flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border ${colors[theme]} shadow-lg`;
 }
 
 function updateMockup() {
-    const ai = document.getElementById('chk-ai')?.checked;
-    const scripts = document.getElementById('chk-scripts')?.checked;
-    const logo = document.getElementById('chk-logo')?.checked;
-    const games = document.getElementById('chk-games')?.checked;
+    ["ai", "scripts", "logo", "games"].forEach(name => {
+        const checkbox = document.getElementById(`chk-${name}`);
+        const item = document.getElementById(`m-${name}`);
 
-    document.getElementById('m-ai').style.display = ai ? 'block' : 'none';
-    document.getElementById('m-scripts').style.display = scripts ? 'block' : 'none';
-    document.getElementById('m-logo').style.display = logo ? 'block' : 'none';
-    document.getElementById('m-games').style.display = games ? 'block' : 'none';
+        if (checkbox && item) {
+            item.style.display = checkbox.checked ? "block" : "none";
+        }
+    });
 }
 
 function scrollToSection(id) {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+}
+
+function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
 }
 
 function clearChat() {
-    const stream = document.getElementById('chatStream');
-    if (stream) {
-        stream.innerHTML = `
-            <div class="flex gap-3 max-w-3xl">
-                <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
-                    <i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i>
-                </div>
-                <div class="glass-panel p-4 rounded-2xl rounded-tl-none border-slate-800 text-sm text-slate-200">
-                    <p id="welcome-msg">${translations[currentLang].welcomeMsg}</p>
-                </div>
+    const stream = document.getElementById("chatStream");
+    if (!stream) return;
+
+    stream.innerHTML = `
+        <div class="flex gap-3 max-w-3xl">
+            <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
+                <i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i>
             </div>
-        `;
-        if (window.lucide) lucide.createIcons();
-    }
+            <div class="glass-panel p-4 rounded-2xl rounded-tl-none border-slate-800 text-sm text-slate-200">
+                <p id="welcome-msg">${escapeHtml(translations[currentLang].welcome)}</p>
+            </div>
+        </div>
+    `;
+
+    window.lucide?.createIcons();
 }
 
-async function handleChatSubmit(e) {
-    if (e && e.preventDefault) e.preventDefault();
-    const input = document.getElementById('userInput');
-    const text = input ? input.value.trim() : '';
-    if (!text) return;
+async function handleChatSubmit(event) {
+    event?.preventDefault();
 
-    const stream = document.getElementById('chatStream');
+    const input = document.getElementById("userInput");
+    const stream = document.getElementById("chatStream");
+    if (!input || !stream) return;
 
-    const userBubble = document.createElement('div');
+    const userText = input.value.trim();
+    if (!userText) return;
+
+    const userBubble = document.createElement("div");
     userBubble.className = "flex gap-3 max-w-3xl ml-auto justify-end";
     userBubble.innerHTML = `
         <div class="glass-panel p-4 rounded-2xl rounded-tr-none border-cyan-500/30 bg-cyan-950/30 text-sm text-cyan-100">
-            <p class="whitespace-pre-wrap">${escapeHtml(text)}</p>
+            <p class="whitespace-pre-wrap">${escapeHtml(userText)}</p>
         </div>
-        <div class="w-8 h-8 rounded-lg bg-cyan-500 flex items-center justify-center shrink-0 font-bold text-slate-950 text-xs">
-            YOU
-        </div>
+        <div class="w-8 h-8 rounded-lg bg-cyan-500 flex items-center justify-center shrink-0 font-bold text-slate-950 text-xs">YOU</div>
     `;
+
     stream.appendChild(userBubble);
-    input.value = '';
+    input.value = "";
     stream.scrollTop = stream.scrollHeight;
 
-    // Detektim i zgjeruar i fjalive në Shqip (përfshin fjalë si studentët, punojnë, libra, shtëpi, etj.)
-    const lowerText = text.toLowerCase();
+    const lower = userText.toLowerCase();
     const albanianKeywords = [
-        'studentët', 'studentet', 'punojnë', 'punojne', 'libra', 'shtëpi', 'shtepi', 
-        'më jep', 'me jep', 'ngjyr', 'rast', 'fjalëkalim', 'fjalekalim', 
-        'çfarë', 'cfare', 'si', 'po ', 'në ', 'ne ', 'për', 'per'
+        "studentët", "studentet", "punojnë", "punojne",
+        "libra", "shtëpi", "shtepi", "më jep", "me jep",
+        "ngjyr", "fjalëkalim", "fjalekalim", "çfarë",
+        "cfare", "për", "per"
     ];
-    
-    const isAlbanian = albanianKeywords.some(kw => lowerText.includes(kw)) || currentLang === 'sq';
-    const targetLang = isAlbanian ? 'sq' : currentLang;
 
-    // 1. Kalimi te Router-i Lokal
+    const isAlbanian =
+        albanianKeywords.some(word => lower.includes(word)) ||
+        currentLang === "sq";
+
+    const targetLang = isAlbanian ? "sq" : currentLang;
+
     try {
-        const localResponse = await smartRouter(text, targetLang);
+        const localResponse = await smartRouter(userText, targetLang);
+
         if (localResponse) {
             appendAiMessage(localResponse);
             return;
         }
-    } catch (err) {
-        console.error("Local router error:", err);
+    } catch (error) {
+        console.error("Local router error:", error);
     }
 
-    // 2. Kalimi te AI me targetLang
-    setTimeout(() => {
-        const responseText = generateSmartAiResponse(text, targetLang);
-        appendAiMessage(responseText);
-    }, 400);
+    appendAiMessage(generateSmartAiResponse(userText, targetLang));
 }
 
 function generateSmartAiResponse(userPrompt, activeLang = currentLang) {
     const prompt = userPrompt.toLowerCase();
 
-    // Nëse gjuha është Shqip ose teksti përmban fjalë shqip
-    if (activeLang === 'sq' || prompt.includes("më jep") || prompt.includes("me jep") || prompt.includes("çfarë") || prompt.includes("si") || prompt.includes("punojnë") || prompt.includes("studentët")) {
+    if (
+        activeLang === "sq" ||
+        prompt.includes("çfarë") ||
+        prompt.includes("cfare") ||
+        prompt.includes("më jep") ||
+        prompt.includes("me jep")
+    ) {
         if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("script")) {
-            return `🎬 **Skenar Profesional Videoje (30-60 Sekonda)**\n\n` +
-                   `📌 **Titulli:** Drita e Besimit dhe Shpresës\n\n` +
-                   `🎥 **Skena 1 (00:00 - 00:04):**\n` +
-                   `*Pamja:* Pamje kinematografike e maleve gjatë lindjes së diellit.\n` +
-                   `*Zëri në sfond:* "Në çdo stuhi që kalon në jetë, kujto se stuhitë nuk zgjasin përgjithmonë..."\n\n` +
-                   `🎥 **Skena 2 (00:04 - 00:10):**\n` +
-                   `*Pamja:* Drita e qetë e mëngjesit që përhapet në natyrë.\n` +
-                   `*Zëri në sfond:* "Pas çdo vështirësie vjen lehtësimi."\n\n` +
-                   `💬 **Thirrje për veprim:** "Ruaje këtë video dhe shpërndaje me dikë sot! ✨"`;
+            return `🎬 Skenar profesional videoje
+
+📌 Titulli: Drita e Besimit dhe Shpresës
+
+🎥 Skena 1 (00:00 - 00:04):
+Pamja: Male gjatë lindjes së diellit.
+Zëri: "Edhe pas stuhisë, drita rikthehet."
+
+🎥 Skena 2 (00:04 - 00:10):
+Pamja: Drita e mëngjesit përhapet në natyrë.
+Zëri: "Pas çdo vështirësie vjen lehtësimi."
+
+💬 Thirrje për veprim: Ruaje dhe shpërndaje këtë video! ✨`;
         }
-        
-        // Përgjigje natyrale në Shqip (pa e përkthyer fjalën në Anglisht!)
-        return `E kuptova deklaratën tuaj: **"${userPrompt}"**.\n\nSi modul inteligjent i **Xsus Studio**, jam këtu për t'ju ndihmuar. Çfarë dëshironi të bëjmë ose të diskutojmë më tej rreth kësaj teme?`;
+
+        return `E kuptova kërkesën tuaj: "${userPrompt}".\n\nXsus AI është gati t'ju ndihmojë. Më tregoni pak më shumë për atë që dëshironi të realizoni.`;
     }
 
-    if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("script")) {
-        return `🎬 **Professional Video Script (30-60 Seconds)**\n\n` +
-               `📌 **Title:** The Light of Trust and Hope\n\n` +
-               `🎥 **Scene 1 (00:00 - 00:04):**\n` +
-               `*Visual:* Cinematic view of mountains during sunrise.\n` +
-               `*Voiceover:* "In every storm you face in life, remember that storms do not last forever..."\n\n` +
-               `🎥 **Scene 2 (00:04 - 00:10):**\n` +
-               `*Visual:* Peaceful morning light flowing through nature.\n` +
-               `*Voiceover:* "With every hardship comes ease."\n\n` +
-               `💬 **Call To Action:** "Save this video and share it with someone today! ✨"`;
+    if (activeLang === "fr") {
+        return `J’ai bien reçu votre demande : "${userPrompt}".\n\nXsus AI est prêt à vous aider. Pouvez-vous préciser ce que vous souhaitez réaliser ?`;
     }
 
-    return `I received your prompt: **"${userPrompt}"**.\n\nAs an intelligent module of **Xsus Studio**, I am ready to help you develop this idea further!`;
+    return `I received your request: "${userPrompt}".\n\nXsus AI is ready to help. Tell me a little more about what you want to achieve.`;
 }
 
-function appendAiMessage(msg) {
-    const stream = document.getElementById('chatStream');
-    const aiBubble = document.createElement('div');
-    aiBubble.className = "flex gap-3 max-w-3xl";
-    
-    let formatted = escapeHtml(msg)
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-cyan-300 font-semibold">$1</strong>')
-        .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="mt-2 rounded-lg max-w-[220px] border border-cyan-500/30 shadow-md" />')
-        .replace(/\n/g, '<br>');
+function appendAiMessage(message) {
+    const stream = document.getElementById("chatStream");
+    if (!stream) return;
 
-    aiBubble.innerHTML = `
+    const bubble = document.createElement("div");
+    bubble.className = "flex gap-3 max-w-3xl";
+
+    const formatted = escapeHtml(message)
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-cyan-300 font-semibold">$1</strong>')
+        .replace(/\n/g, "<br>");
+
+    bubble.innerHTML = `
         <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
             <i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i>
         </div>
-        <div class="glass-panel p-4 rounded-2xl rounded-tl-none border-slate-800 text-sm text-slate-200 leading-relaxed space-y-2">
+        <div class="glass-panel p-4 rounded-2xl rounded-tl-none border-slate-800 text-sm text-slate-200 leading-relaxed">
             <p>${formatted}</p>
         </div>
     `;
-    stream.appendChild(aiBubble);
-    if (window.lucide) lucide.createIcons();
+
+    stream.appendChild(bubble);
+    window.lucide?.createIcons();
     stream.scrollTop = stream.scrollHeight;
 }
 
-function escapeHtml(text) {
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+document.addEventListener("DOMContentLoaded", () => {
+    const chatForm = document.getElementById("chatForm")
+        || document.getElementById("userInput")?.closest("form");
 
-// Particle Canvas Background
-const canvas = document.getElementById('particleCanvas');
-if (canvas) {
-    const ctx = canvas.getContext('2d');
+    if (chatForm) chatForm.addEventListener("submit", handleChatSubmit);
 
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    const input = document.getElementById("userInput");
 
-    const particles = Array.from({ length: 45 }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2 + 1,
-        speedX: (Math.random() - 0.5) * 0.5,
-        speedY: (Math.random() - 0.5) * 0.5,
-        opacity: Math.random() * 0.5 + 0.2
-    }));
-
-    function animateParticles() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach(p => {
-            p.x += p.speedX;
-            p.y += p.speedY;
-
-            if (p.x < 0) p.x = canvas.width;
-            if (p.x > canvas.width) p.x = 0;
-            if (p.y < 0) p.y = canvas.height;
-            if (p.y > canvas.height) p.y = 0;
-
-            ctx.fillStyle = `rgba(0, 242, 254, ${p.opacity})`;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fill();
-        });
-        requestAnimationFrame(animateParticles);
-    }
-    animateParticles();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const chatForm = document.querySelector('form');
-    const userInput = document.getElementById('userInput');
-    const sendBtn = document.getElementById('txt-send')?.parentElement;
-
-    if (chatForm) {
-        chatForm.onsubmit = handleChatSubmit;
-    }
-
-    if (sendBtn) {
-        sendBtn.onclick = handleChatSubmit;
-    }
-
-    if (userInput) {
-        userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleChatSubmit(e);
+    if (input) {
+        input.addEventListener("keydown", event => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                handleChatSubmit(event);
             }
         });
     }
+
+    setLanguage(currentLang);
+    window.lucide?.createIcons();
 });
 
-setLanguage('en');
-
-if (window.lucide) lucide.createIcons();
+// Funksionet që thirren nga HTML-ja me onclick.
+window.setLanguage = setLanguage;
+window.setAppTheme = setAppTheme;
+window.updateMockup = updateMockup;
+window.scrollToSection = scrollToSection;
+window.clearChat = clearChat;
+window.handleChatSubmit = handleChatSubmit;
