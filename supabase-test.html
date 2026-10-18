@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XSUS Studio - Supabase Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0a0a12;
+      color: #fff;
+      padding: 24px;
+      line-height: 1.6;
+    }
+    main {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 24px;
+      border: 1px solid #333;
+      border-radius: 16px;
+    }
+    #status {
+      overflow-wrap: anywhere;
+      color: #00f0ff;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>XSUS Studio</h1>
+    <h2>Supabase Connection Test</h2>
+    <p id="status">Po kontrollojmë konfigurimin...</p>
+  </main>
+
+  <script type="module">
+    import { supabase } from "./services/supabase-client.js";
+
+    const status = document.getElementById("status");
+
+    try {
+      const { error } = await supabase.auth.getSession();
+
+      if (error) {
+        throw error;
+      }
+
+      status.textContent =
+        "Klienti Supabase u ngarkua me sukses. " +
+        "Hapi tjetër është testimi i API-së dhe bazës së të dhënave.";
+    } catch (error) {
+      console.error("Supabase test error:", error);
+
+      status.textContent =
+        "Testi dështoi: " +
+        (error.message || "Gabim i panjohur") +
+        ". Kontrollo URL-në, çelësin dhe skedarin supabase-client.js.";
+    }
+  </script>
+</body>
+</html>
