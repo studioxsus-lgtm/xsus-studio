@@ -14,6 +14,8 @@ export interface AlbanianSentenceAnalysis {
   hasPolitenessMarker: boolean;
   hasRequestMarker: boolean;
   hasQuestionWord: boolean;
+  hasConjunctions: boolean;
+  detectedConjunctions: string[];
 }
 
 const QUESTION_WORDS = new Set([
@@ -30,6 +32,11 @@ const QUESTION_WORDS = new Set([
   "cila",
   "cilët",
   "cilat",
+  "kujt",
+  "kë",
+  "ke",
+  "nga",
+  "prej",
 ]);
 
 const NEGATION_WORDS = new Set([
@@ -44,7 +51,11 @@ const POLITENESS_MARKERS = [
   "ju lutem",
   "të lutem",
   "te lutem",
+  "të lutem shumë",
   "faleminderit",
+  "faleminderit shumë",
+  "me respekt",
+  "me kënaqësi",
 ];
 
 const REQUEST_MARKERS = [
@@ -57,6 +68,29 @@ const REQUEST_MARKERS = [
   "a mund të",
   "a mundesh",
   "do të doja",
+  "mund të më",
+  "krijo",
+  "gjenero",
+  "shkruaj",
+  "më bëj",
+  "me bej",
+];
+
+const CONJUNCTIONS = [
+  "sepse",
+  "pasi",
+  "për shkak se",
+  "prandaj",
+  "megjithatë",
+  "mirëpo",
+  "por",
+  "dhe",
+  "edhe",
+  "apo",
+  "ose",
+  "që",
+  "neuse",
+  "nëse",
 ];
 
 export function analyzeAlbanianSentence(
@@ -89,6 +123,11 @@ export function analyzeAlbanianSentence(
     (marker) => text.includes(marker)
   );
 
+  const detectedConjunctions = CONJUNCTIONS.filter(
+    (conj) => text.includes(conj)
+  );
+  const hasConjunctions = detectedConjunctions.length > 0;
+
   let sentenceType: SentenceType = "statement";
 
   if (!text) {
@@ -108,5 +147,7 @@ export function analyzeAlbanianSentence(
     hasPolitenessMarker,
     hasRequestMarker,
     hasQuestionWord,
+    hasConjunctions,
+    detectedConjunctions,
   };
 }
