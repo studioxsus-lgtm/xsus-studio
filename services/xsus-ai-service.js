@@ -56,7 +56,7 @@ export async function generateXSUSResponse(input = {}) {
     throw new Error("Gjuha e kërkuar nuk mbështetet.");
   }
 
-  // RISIA 1: Formatimi i plotë i analizës gramatikore dhe frazave të detektuara për prompt-in e AI
+  // Formatimi i plotë i analizës gramatikore dhe frazave të detektuara për prompt-in e AI
   const grammarContext = (language === "sq" && albanianAnalysis)
     ? JSON.stringify({
         language: albanianAnalysis.language,
@@ -126,9 +126,12 @@ You are XSUS AI, a helpful multilingual assistant.
 
 ${strictAlbanianRule}
 
-RESPONSE LANGUAGE:
+RESPONSE LANGUAGE & STYLE:
 Respond strictly in ${LANGUAGE_NAMES[language]}.
-For Albanian, use natural standard Albanian with correct ë and ç, clear grammar, and a polite, helpful tone.
+For Albanian:
+- Use natural, standard Albanian (Shqipe standarde) with correct 'ë' and 'ç'.
+- Keep the tone clear, direct, professional, and helpful.
+- AVOID artificial words, literal word-for-word translations, or overly complex poetic metaphors.
 
 BEHAVIOR:
 - Answer the user's actual question directly.
