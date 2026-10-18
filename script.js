@@ -1,10 +1,14 @@
+
 import { smartRouter } from './services/router.js';
 
 const translations = {
     en: {
         heroBadge: "Official Hybrid Intelligence Platform",
         heroTitle: 'The most powerful digital tools in a <span class="gradient-text">Single Studio</span>',
+        heroBefore: "The most powerful digital tools in a",
+        heroHighlight: "Single Studio",
         heroSub: "Explore our independent digital tools, designed for performance, creativity and productivity.",
+        subtitle: "Explore our independent digital tools, designed for performance, creativity and productivity.",
         navAi: "Xsus AI",
         navApp: "Xsus App",
         navWeb: "Xsus Web",
@@ -20,6 +24,7 @@ const translations = {
         cardGame: "Interactive browser gaming experiences and physics engines.",
         cardLogo: "Brand identity, vector graphics, and professional logo design services.",
         cardDomain: "Domain management, DNS routing, and secure web presence configuration.",
+        cardAI: "Smart assistant for text generation, video scripts, analysis, and coding.",
         footer: "All rights reserved.",
         signedOut: "You have signed out.",
         logoutError: "Could not sign out.",
@@ -32,7 +37,10 @@ const translations = {
     fr: {
         heroBadge: "Plateforme officielle d’intelligence hybride",
         heroTitle: 'Les outils numériques les plus puissants dans un <span class="gradient-text">Studio unique</span>',
+        heroBefore: "Les outils numériques les plus puissants réunis dans un",
+        heroHighlight: "Studio unique",
         heroSub: "Découvrez nos outils numériques indépendants, conçus pour la performance, la créativité et la productivité.",
+        subtitle: "Découvrez nos outils numériques indépendants, conçus pour la performance, la créativité et la productivité.",
         navAi: "Xsus AI",
         navApp: "Xsus App",
         navWeb: "Xsus Web",
@@ -48,6 +56,7 @@ const translations = {
         cardGame: "Jeux interactifs sur navigateur et moteurs physiques.",
         cardLogo: "Identité de marque, graphismes vectoriels et conception professionnelle de logos.",
         cardDomain: "Gestion de domaines, routage DNS et configuration sécurisée de présence web.",
+        cardAI: "Assistant intelligent pour la génération de texte, les scripts vidéo, l’analyse et le code.",
         footer: "Tous droits réservés.",
         signedOut: "Vous êtes déconnecté.",
         logoutError: "Impossible de vous déconnecter.",
@@ -60,7 +69,10 @@ const translations = {
     sq: {
         heroBadge: "Platforma zyrtare e inteligjencës hibride",
         heroTitle: 'Veglat më të fuqishme digjitale në një <span class="gradient-text">Studio të vetme</span>',
+        heroBefore: "Mjetet dixhitale më të fuqishme në një",
+        heroHighlight: "Studio të vetme",
         heroSub: "Eksploro veglat tona digjitale, të krijuara për performancë, kreativitet dhe produktivitet.",
+        subtitle: "Eksploro veglat tona digjitale, të krijuara për performancë, kreativitet dhe produktivitet.",
         navAi: "Xsus AI",
         navApp: "Xsus App",
         navWeb: "Xsus Web",
@@ -76,6 +88,7 @@ const translations = {
         cardGame: "Lojëra interaktive në shfletues dhe motorë fizikë.",
         cardLogo: "Identitet marke, grafika vektoriale dhe dizajn profesional logosh.",
         cardDomain: "Menaxhim domenesh, rutim DNS dhe konfigurim i sigurt i pranisë në ueb.",
+        cardAI: "Asistent inteligjent për krijimin e teksteve, skenarëve të videove, analizave dhe kodit.",
         footer: "Të gjitha të drejtat e rezervuara.",
         signedOut: "Dole nga llogaria.",
         logoutError: "Dalja nga llogaria dështoi.",
@@ -101,67 +114,113 @@ function setLanguage(lang) {
 
     const t = translations[lang];
 
+    // Butonat e gjuhëve: EN, FR, SQ.
     ["en", "fr", "sq"].forEach(code => {
         const button = document.getElementById(`lang-${code}`);
         if (!button) return;
 
-        button.className = code === lang
+        const selected = code === lang;
+
+        button.className = selected
             ? "px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40"
             : "px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white";
+
+        button.setAttribute("aria-pressed", String(selected));
     });
 
     const setText = (selector, value) => {
         const element = document.querySelector(selector);
-        if (element && value !== undefined) element.textContent = value;
+        if (element && value !== undefined) {
+            element.textContent = value;
+        }
     };
 
     const setHTML = (selector, value) => {
         const element = document.querySelector(selector);
-        if (element && value !== undefined) element.innerHTML = value;
+        if (element && value !== undefined) {
+            element.innerHTML = value;
+        }
     };
 
+    // Titulli dhe përshkrimi kryesor.
     setText("#hero-badge", t.heroBadge);
-    setHTML("#hero-title", t.heroTitle);
+
+    const oldHeroTitle = document.getElementById("hero-title");
+
+    if (oldHeroTitle) {
+        setHTML("#hero-title", t.heroTitle);
+    } else {
+        setText('[data-i18n="heroBefore"]', t.heroBefore);
+        setText('[data-i18n="heroHighlight"]', t.heroHighlight);
+    }
+
     setText("#hero-subtitle", t.heroSub);
 
+    // Navigimi.
     const navLinks = document.querySelectorAll("header nav a");
-    const navKeys = ["navAi", "navApp", "navWeb", "navGame", "navLogo", "navDomain"];
+    const navKeys = [
+        "navAi",
+        "navApp",
+        "navWeb",
+        "navGame",
+        "navLogo",
+        "navDomain"
+    ];
 
     navLinks.forEach((link, index) => {
-        if (t[navKeys[index]]) link.textContent = t[navKeys[index]];
+        const key = navKeys[index];
+        if (key && t[key]) {
+            link.textContent = t[key];
+        }
     });
 
+    // Llogaria.
     setText("#loginLink", t.login);
     setText("#signupLink", t.signup);
     setText("#logoutButton", t.logout);
 
-    const cardDescriptions = [
-        t.cardAi,
-        t.cardApp,
-        t.cardWeb,
-        t.cardGame,
-        t.cardLogo,
-        t.cardDomain
+    // Përshkrimet e kartave.
+    const cardKeys = [
+        "cardAi",
+        "cardApp",
+        "cardWeb",
+        "cardGame",
+        "cardLogo",
+        "cardDomain"
     ];
 
     document.querySelectorAll("main section.grid > a").forEach((card, index) => {
-        if (cardDescriptions[index]) {
-            const description = card.querySelector("p");
-            if (description) description.textContent = cardDescriptions[index];
+        const description = card.querySelector("p");
+        const key = cardKeys[index];
+
+        if (description && key && t[key]) {
+            description.textContent = t[key];
         }
     });
 
+    // Footer.
     const footer = document.querySelector("footer");
+
     if (footer) {
-        footer.innerHTML = `&copy; 2026 Xsus Studio. ${t.footer}`;
+        const translatedFooter =
+            lang === "en"
+                ? "© 2026 XSUS Studio. All rights reserved."
+                : lang === "fr"
+                    ? "© 2026 XSUS Studio. Tous droits réservés."
+                    : "© 2026 XSUS Studio. Të gjitha të drejtat e rezervuara.";
+
+        footer.textContent = translatedFooter;
     }
 
+    // Ndërfaqja e bisedës.
     setText("#welcome-msg", t.welcome);
     setText("#txt-send", t.send);
     setText("#txt-clear", t.clear);
 
     const input = document.getElementById("userInput");
-    if (input) input.placeholder = t.placeholder;
+    if (input) {
+        input.placeholder = t.placeholder;
+    }
 
     window.dispatchEvent(new CustomEvent("xsus:languageChanged", {
         detail: { language: lang }
@@ -197,7 +256,9 @@ function updateMockup() {
 }
 
 function scrollToSection(id) {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById(id)?.scrollIntoView({
+        behavior: "smooth"
+    });
 }
 
 function escapeHtml(value) {
@@ -233,6 +294,7 @@ async function handleChatSubmit(event) {
 
     const input = document.getElementById("userInput");
     const stream = document.getElementById("chatStream");
+
     if (!input || !stream) return;
 
     const userText = input.value.trim();
@@ -240,6 +302,7 @@ async function handleChatSubmit(event) {
 
     const userBubble = document.createElement("div");
     userBubble.className = "flex gap-3 max-w-3xl ml-auto justify-end";
+
     userBubble.innerHTML = `
         <div class="glass-panel p-4 rounded-2xl rounded-tr-none border-cyan-500/30 bg-cyan-950/30 text-sm text-cyan-100">
             <p class="whitespace-pre-wrap">${escapeHtml(userText)}</p>
@@ -252,11 +315,12 @@ async function handleChatSubmit(event) {
     stream.scrollTop = stream.scrollHeight;
 
     const lower = userText.toLowerCase();
+
     const albanianKeywords = [
         "studentët", "studentet", "punojnë", "punojne",
         "libra", "shtëpi", "shtepi", "më jep", "me jep",
         "ngjyr", "fjalëkalim", "fjalekalim", "çfarë",
-        "cfare", "për", "per"
+        "cfare", "për", "per", "dua", "si bëhet", "si behet"
     ];
 
     const isAlbanian =
@@ -269,7 +333,11 @@ async function handleChatSubmit(event) {
         const localResponse = await smartRouter(userText, targetLang);
 
         if (localResponse) {
-            appendAiMessage(localResponse);
+            appendAiMessage(
+                typeof localResponse === "string"
+                    ? localResponse
+                    : localResponse.text || localResponse.answer || JSON.stringify(localResponse)
+            );
             return;
         }
     } catch (error) {
@@ -289,7 +357,11 @@ function generateSmartAiResponse(userPrompt, activeLang = currentLang) {
         prompt.includes("më jep") ||
         prompt.includes("me jep")
     ) {
-        if (prompt.includes("skenar") || prompt.includes("video") || prompt.includes("script")) {
+        if (
+            prompt.includes("skenar") ||
+            prompt.includes("video") ||
+            prompt.includes("script")
+        ) {
             return `🎬 Skenar profesional videoje
 
 📌 Titulli: Drita e Besimit dhe Shpresës
@@ -341,10 +413,13 @@ function appendAiMessage(message) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const chatForm = document.getElementById("chatForm")
-        || document.getElementById("userInput")?.closest("form");
+    const chatForm =
+        document.getElementById("chatForm") ||
+        document.getElementById("userInput")?.closest("form");
 
-    if (chatForm) chatForm.addEventListener("submit", handleChatSubmit);
+    if (chatForm) {
+        chatForm.addEventListener("submit", handleChatSubmit);
+    }
 
     const input = document.getElementById("userInput");
 
@@ -361,7 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.lucide?.createIcons();
 });
 
-// Funksionet që thirren nga HTML-ja me onclick.
+// Funksionet e përdorura nga HTML-ja.
 window.setLanguage = setLanguage;
 window.setAppTheme = setAppTheme;
 window.updateMockup = updateMockup;
