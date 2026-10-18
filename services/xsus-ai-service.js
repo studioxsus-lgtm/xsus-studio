@@ -32,9 +32,10 @@ export async function generateXSUSResponse(input = {}) {
     console.warn("Gabim te motori gramatikor:", e);
   }
 
-  // Kontrollojmë nëse fjalia përmban elemente të fjalorit/gramatikës shqipe
-  const hasAlbanianTokens = albanianAnalysis && albanianAnalysis.tokens.some(
-    (t) => t.nounLemma !== null || t.verbLemma !== null || t.isNegation
+  // Kontrollojmë nëse fjalia përmban elemente të fjalorit/gramatikës shqipe ose fraza të zbuluara
+  const hasAlbanianTokens = albanianAnalysis && (
+    albanianAnalysis.tokens.some((t) => t.nounLemma !== null || t.verbLemma !== null || t.isNegation) ||
+    (albanianAnalysis.phrases && albanianAnalysis.phrases.length > 0)
   );
 
   const lowerMsg = message.toLowerCase();
@@ -55,14 +56,29 @@ export async function generateXSUSResponse(input = {}) {
     throw new Error("Gjuha e kërkuar nuk mbështetet.");
   }
 
+  // RISIA 1: Formatimi i plotë i analizës gramatikore dhe frazave të detektuara për prompt-in e AI
+  const grammarContext = (language === "sq" && albanianAnalysis)
+    ? JSON.stringify({
+        language: albanianAnalysis.language,
+        sentenceType: albanianAnalysis.sentenceType,
+        hasNegation: albanianAnalysis.hasNegation,
+        hasRequestMarker: albanianAnalysis.hasRequestMarker,
+        hasPolitenessMarker: albanianAnalysis.hasPolitenessMarker,
+        phrases: (albanianAnalysis.phrases || []).map((phrase) => ({
+          text: phrase.text,
+          type: phrase.type,
+          tense: phrase.tense,
+          confidence: phrase.confidence,
+        })),
+      }, null, 2)
+    : "";
+
   const languageContext = (language === "sq" && albanianAnalysis)
     ? `
-ALBANIAN LANGUAGE & GRAMMAR ANALYSIS:
-- Sentence type: ${albanianAnalysis.sentenceType}
-- Negation detected: ${albanianAnalysis.hasNegation}
-- Request marker detected: ${albanianAnalysis.hasRequestMarker}
-- Politeness marker detected: ${albanianAnalysis.hasPolitenessMarker}
-- Tokens & Lemmas:
+ALBANIAN LANGUAGE & GRAMMAR ANALYSIS (JSON):
+${grammarContext}
+
+Tokens & Lemmas:
 ${
   albanianAnalysis.tokens
     .map(
