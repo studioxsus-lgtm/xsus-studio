@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="sq" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#06060c">
+  <title>XSUS Studio | Hyrje dhe Regjistrim</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            cyber: {
+              blue: "#00f0ff",
+              purple: "#7000ff",
+              pink: "#ff007f",
+              dark: "#06060c"
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background:
+        radial-gradient(ellipse at 15% 15%, rgba(112,0,255,.18), transparent 42%),
+        radial-gradient(ellipse at 85% 85%, rgba(0,240,255,.12), transparent 42%),
+        #06060c;
+    }
+    .glass {
+      background: rgba(18,18,35,.78);
+      border: 1px solid rgba(255,255,255,.1);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .gradient-text {
+      background: linear-gradient(135deg,#00f0ff,#7000ff 55%,#ff007f);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .field {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.42);
+      border-radius: .8rem;
+      padding: .85rem 1rem;
+      color: #fff;
+      outline: none;
+    }
+    .field:focus { border-color: #00f0ff; box-shadow: 0 0 0 3px rgba(0,240,255,.1); }
+    .field::placeholder { color: #64748b; }
+    button:disabled { opacity: .6; cursor: wait; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 antialiased">
+  <header class="sticky top-0 z-10 border-b border-white/10 glass">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+      <a href="index.html" class="flex items-center gap-3" aria-label="XSUS Studio home">
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple font-black text-black shadow-lg">X</span>
+        <span class="font-bold tracking-wider">XSUS <span class="text-cyber-blue">STUDIO</span></span>
+      </a>
+      <label class="flex items-center gap-2 text-xs text-slate-300">
+        <i data-lucide="globe" class="h-4 w-4 text-cyber-blue"></i>
+        <select id="language-select" class="rounded-lg border border-white/10 bg-[#11111d] px-2 py-2 text-white outline-none" aria-label="Language">
+          <option value="sq">SQ</option>
+          <option value="en">EN</option>
+          <option value="fr">FR</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <main class="mx-auto flex min-h-[calc(100vh-150px)] max-w-6xl items-center justify-center px-4 py-10">
+    <section class="glass w-full max-w-lg rounded-3xl p-5 shadow-2xl sm:p-8">
+      <div class="mb-7 text-center">
+        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-cyber-blue/30 bg-cyber-blue/10 text-cyber-blue">
+          <i data-lucide="shield-check" class="h-7 w-7"></i>
+        </div>
+        <p class="mb-2 text-xs font-bold uppercase tracking-[.25em] text-cyber-blue">XSUS ID</p>
+        <h1 id="page-title" class="text-3xl font-black sm:text-4xl"><span class="gradient-text">Mirë se u ktheve</span></h1>
+        <p id="page-subtitle" class="mt-3 text-sm leading-6 text-slate-400">Hyr në llogarinë tënde për të vazhduar.</p>
+      </div>
+
+      <div class="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/30 p-1">
+        <button type="button" id="tab-login" class="rounded-lg bg-cyber-blue px-3 py-3 text-sm font-bold text-black">Hyrje</button>
+        <button type="button" id="tab-signup" class="rounded-lg px-3 py-3 text-sm font-bold text-slate-300 hover:bg-white/5">Regjistrim</button>
+      </div>
+
+      <div id="notice" class="mb-4 hidden rounded-xl border px-4 py-3 text-sm leading-6" role="status" aria-live="polite"></div>
+
+      <form id="auth-form" class="space-y-4">
+        <div id="name-wrap" class="hidden">
+          <label id="name-label" for="display-name" class="mb-2 block text-sm font-medium text-slate-300">Emri i plotë</label>
+          <input id="display-name" name="displayName" type="text" autocomplete="name" maxlength="80" class="field" placeholder="Emri yt">
+        </div>
+
+        <div>
+          <label id="email-label" for="email" class="mb-2 block text-sm font-medium text-slate-300">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required maxlength="254" class="field" placeholder="ti@shembull.com">
+        </div>
+
+        <div>
+          <label id="password-label" for="password" class="mb-2 block text-sm font-medium text-slate-300">Fjalëkalimi</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" class="field" placeholder="Të paktën 8 karaktere">
+          <p id="password-hint" class="mt-2 text-xs text-slate-500">Përdor të paktën 8 karaktere.</p>
+        </div>
+
+        <div id="confirm-wrap" class="hidden">
+          <label id="confirm-label" for="confirm-password" class="mb-2 block text-sm font-medium text-slate-300">Përsërit fjalëkalimin</label>
+          <input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" class="field" placeholder="Shkruaje përsëri">
+        </div>
+
+        <button id="submit-btn" type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink px-4 py-3.5 font-extrabold text-black shadow-lg transition hover:brightness-110">
+          <i data-lucide="log-in" class="h-4 w-4"></i>
+          <span id="submit-text">Hyr në llogari</span>
+        </button>
+      </form>
+
+      <div id="login-extras" class="mt-4 text-center">
+        <button id="forgot-btn" type="button" class="text-sm text-cyber-blue underline-offset-4 hover:underline">Ke harruar fjalëkalimin?</button>
+      </div>
+
+      <div id="logged-in-panel" class="mt-5 hidden rounded-2xl border border-cyber-blue/20 bg-cyber-blue/5 p-4">
+        <p id="logged-in-title" class="font-bold text-white">Je identifikuar.</p>
+        <p id="logged-in-email" class="mt-1 break-all text-sm text-slate-400"></p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <a id="continue-link" href="index.html" class="rounded-xl bg-cyber-blue px-4 py-2.5 text-sm font-bold text-black">Vazhdo në XSUS Studio</a>
+          <button id="logout-btn" type="button" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-bold hover:bg-white/5">Dil nga llogaria</button>
+        </div>
+      </div>
+
+      <p class="mt-7 text-center text-xs leading-5 text-slate-500">
+        <span id="privacy-text">Të dhënat e llogarisë menaxhohen përmes Supabase Auth.</span>
+        <br><a href="index.html" id="back-link" class="mt-2 inline-block text-slate-300 hover:text-cyber-blue">← Kthehu te XSUS Studio</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="border-t border-white/10 px-4 py-5 text-center text-xs text-slate-600">
+    © 2026 XSUS Studio. All rights reserved.
+  </footer>
+
+  <script type="module">
+    import { supabase } from "./services/supabase-client.js";
+
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      lang: $("language-select"), form: $("auth-form"), notice: $("notice"),
+      title: $("page-title"), subtitle: $("page-subtitle"), tabLogin: $("tab-login"),
+      tabSignup: $("tab-signup"), nameWrap: $("name-wrap"), name: $("display-name"),
+      email: $("email"), password: $("password"), confirmWrap: $("confirm-wrap"),
+      confirm: $("confirm-password"), submit: $("submit-btn"), submitText: $("submit-text"),
+      loginExtras: $("login-extras"), forgot: $("forgot-btn"), loggedPanel: $("logged-in-panel"),
+      loggedEmail: $("logged-in-email"), logout: $("logout-btn"), continueLink: $("continue-link")
+    };
+
+    const translations = {
+      sq: {
+        loginTitle:"Mirë se u ktheve", loginSubtitle:"Hyr në llogarinë tënde për të vazhduar.",
+        signupTitle:"Krijo llogarinë", signupSubtitle:"Regjistrohu për të filluar me XSUS Studio.",
+        loginTab:"Hyrje", signupTab:"Regjistrim", name:"Emri i plotë", email:"Email",
+        password:"Fjalëkalimi", confirm:"Përsërit fjalëkalimin", namePlaceholder:"Emri yt",
+        passwordPlaceholder:"Të paktën 8 karaktere", confirmPlaceholder:"Shkruaje përsëri",
+        loginButton:"Hyr në llogari", signupButton:"Krijo llogari", forgot:"Ke harruar fjalëkalimin?",
+        hint:"Përdor të paktën 8 karaktere.", privacy:"Të dhënat e llogarisë menaxhohen përmes Supabase Auth.",
+        back:"← Kthehu te XSUS Studio", logged:"Je identifikuar.", continue:"Vazhdo në XSUS Studio",
+        logout:"Dil nga llogaria", emailRequired:"Shkruaj një adresë email të vlefshme.",
+        passwordShort:"Fjalëkalimi duhet të ketë të paktën 8 karaktere.",
+        passwordMismatch:"Fjalëkalimet nuk përputhen.", signupSuccess:"Llogaria u krijua. Kontrollo email-in për të konfirmuar adresën përpara se të hysh.",
+        loginSuccess:"Hyrja u krye me sukses.", resetSent:"Nëse adresa është e regjistruar, do të marrësh udhëzimet për rivendosjen e fjalëkalimit.",
+        resetAsk:"Shkruaj email-in tënd në fushën e email-it, pastaj shtyp OK për të marrë lidhjen e rivendosjes.",
+        genericError:"Veprimi nuk u krye. Provo përsëri.", logoutSuccess:"Dole nga llogaria.",
+        signupError:"Regjistrimi dështoi", loginError:"Hyrja dështoi", working:"Duke përpunuar...",
+        signupNeeded:"Konfirmo adresën e email-it përpara se të hysh.",
+        profileWarning:"Llogaria u krijua, por profili nuk u ruajt. Mund të vazhdosh dhe ta rregullojmë më vonë.",
+        profileError:"Profili nuk u ruajt."
+      },
+      en: {
+        loginTitle:"Welcome back", loginSubtitle:"Sign in to continue to your account.",
+        signupTitle:"Create your account", signupSubtitle:"Sign up to get started with XSUS Studio.",
+        loginTab:"Sign in", signupTab:"Sign up", name:"Full name", email:"Email",
+        password:"Password", confirm:"Confirm password", namePlaceholder:"Your name",
+        passwordPlaceholder:"At least 8 characters", confirmPlaceholder:"Enter it again",
+        loginButton:"Sign in", signupButton:"Create account", forgot:"Forgot your password?",
+        hint:"Use at least 8 characters.", privacy:"Account authentication is managed through Supabase Auth.",
+        back:"← Back to XSUS Studio", logged:"You are signed in.", continue:"Continue to XSUS Studio",
+        logout:"Sign out", emailRequired:"Enter a valid email address.",
+        passwordShort:"Password must be at least 8 characters.",
+        passwordMismatch:"Passwords do not match.", signupSuccess:"Account created. Check your email to confirm your address before signing in.",
+        loginSuccess:"You are signed in successfully.", resetSent:"If the address is registered, you will receive password reset instructions.",
+        resetAsk:"Enter your email address above, then press OK to receive a reset link.",
+        genericError:"The action could not be completed. Please try again.",
+        logoutSuccess:"You have signed out.", signupError:"Sign-up failed", loginError:"Sign-in failed",
+        working:"Working...", signupNeeded:"Confirm your email address before signing in.",
+        profileWarning:"Your account was created, but the profile could not be saved. You can continue and we can fix this later.",
+        profileError:"The profile could not be saved."
+      },
+      fr: {
+        loginTitle:"Bon retour", loginSubtitle:"Connectez-vous pour accéder à votre compte.",
+        signupTitle:"Créer un compte", signupSubtitle:"Inscrivez-vous pour commencer avec XSUS Studio.",
+        loginTab:"Connexion", signupTab:"Inscription", name:"Nom complet", email:"E-mail",
+        password:"Mot de passe", confirm:"Confirmer le mot de passe", namePlaceholder:"Votre nom",
+        passwordPlaceholder:"8 caractères minimum", confirmPlaceholder:"Saisissez-le à nouveau",
+        loginButton:"Se connecter", signupButton:"Créer un compte", forgot:"Mot de passe oublié ?",
+        hint:"Utilisez au moins 8 caractères.", privacy:"L’authentification du compte est gérée par Supabase Auth.",
+        back:"← Retour à XSUS Studio", logged:"Vous êtes connecté.", continue:"Continuer vers XSUS Studio",
+        logout:"Se déconnecter", emailRequired:"Saisissez une adresse e-mail valide.",
+        passwordShort:"Le mot de passe doit contenir au moins 8 caractères.",
+        passwordMismatch:"Les mots de passe ne correspondent pas.", signupSuccess:"Compte créé. Consultez votre e-mail pour confirmer votre adresse avant de vous connecter.",
+        loginSuccess:"Connexion réussie.", resetSent:"Si cette adresse est enregistrée, vous recevrez les instructions de réinitialisation.",
+        resetAsk:"Saisissez votre e-mail ci-dessus, puis appuyez sur OK pour recevoir un lien de réinitialisation.",
+        genericError:"L’action n’a pas abouti. Veuillez réessayer.",
+        logoutSuccess:"Vous êtes déconnecté.", signupError:"Échec de l’inscription", loginError:"Échec de la connexion",
+        working:"Traitement...", signupNeeded:"Confirmez votre adresse e-mail avant de vous connecter.",
+        profileWarning:"Votre compte a été créé, mais le profil n’a pas pu être enregistré. Nous pourrons corriger cela plus tard.",
+        profileError:"Le profil n’a pas pu être enregistré."
+      }
+    };
+
+    let language = ["sq","en","fr"].includes(navigator.language.slice(0,2))
+      ? navigator.language.slice(0,2) : "sq";
+    let mode = "login";
+    let busy = false;
+
+    function t(key) { return (translations[language] || translations.sq)[key] || translations.sq[key] || key; }
+    function showNotice(message, type = "info") {
+      els.notice.classList.remove("hidden", "border-rose-500/40", "bg-rose-500/10", "text-rose-200",
+        "border-emerald-500/40", "bg-emerald-500/10", "text-emerald-200",
+        "border-cyan-500/40", "bg-cyan-500/10", "text-cyan-100");
+      const styles = type === "error"
+        ? ["border-rose-500/40","bg-rose-500/10","text-rose-200"]
+        : type === "success"
+        ? ["border-emerald-500/40","bg-emerald-500/10","text-emerald-200"]
+        : ["border-cyan-500/40","bg-cyan-500/10","text-cyan-100"];
+      els.notice.classList.add(...styles);
+      els.notice.textContent = message;
+    }
+    function clearNotice() { els.notice.classList.add("hidden"); els.notice.textContent = ""; }
+    function setBusy(value) {
+      busy = value;
+      els.submit.disabled = value;
+      els.submitText.textContent = value ? t("working") : (mode === "login" ? t("loginButton") : t("signupButton"));
+    }
+    function setMode(nextMode) {
+      mode = nextMode;
+      clearNotice();
+      const signup = mode === "signup";
+      els.nameWrap.classList.toggle("hidden", !signup);
+      els.confirmWrap.classList.toggle("hidden", !signup);
+      els.name.required = signup;
+      els.confirm.required = signup;
+      els.password.autocomplete = signup ? "new-password" : "current-password";
+      els.title.innerHTML = `<span class="gradient-text">${t(signup ? "signupTitle" : "loginTitle")}</span>`;
+      els.subtitle.textContent = t(signup ? "signupSubtitle" : "loginSubtitle");
+      els.tabLogin.textContent = t("loginTab");
+      els.tabSignup.textContent = t("signupTab");
+      els.tabLogin.className = signup
+        ? "rounded-lg px-3 py-3 text-sm font-bold text-slate-300 hover:bg-white/5"
+        : "rounded-lg bg-cyber-blue px-3 py-3 text-sm font-bold text-black";
+      els.tabSignup.className = signup
+        ? "rounded-lg bg-cyber-blue px-3 py-3 text-sm font-bold text-black"
+        : "rounded-lg px-3 py-3 text-sm font-bold text-slate-300 hover:bg-white/5";
+      $("name-label").textContent = t("name");
+      $("email-label").textContent = t("email");
+      $("password-label").textContent = t("password");
+      $("confirm-label").textContent = t("confirm");
+      els.name.placeholder = t("namePlaceholder");
+      els.password.placeholder = t("passwordPlaceholder");
+      els.confirm.placeholder = t("confirmPlaceholder");
+      $("password-hint").textContent = t("hint");
+      els.submitText.textContent = t(signup ? "signupButton" : "loginButton");
+      els.loginExtras.classList.toggle("hidden", signup);
+      $("privacy-text").textContent = t("privacy");
+      $("back-link").textContent = t("back");
+      els.continueLink.textContent = t("continue");
+      els.logout.textContent = t("logout");
+      $("logged-in-title").textContent = t("logged");
+      lucide.createIcons();
+    }
+    function displaySession(session) {
+      const signedIn = Boolean(session);
+      els.loggedPanel.classList.toggle("hidden", !signedIn);
+      els.form.classList.toggle("hidden", signedIn);
+      document.querySelector("#tab-login").classList.toggle("hidden", signedIn);
+      document.querySelector("#tab-signup").classList.toggle("hidden", signedIn);
+      els.loginExtras.classList.toggle("hidden", signedIn || mode === "signup");
+      if (signedIn) els.loggedEmail.textContent = session.user.email || "";
+    }
+    function readableError(error) {
+      const message = error?.message || t("genericError");
+      if (/invalid login credentials/i.test(message)) return language === "sq"
+        ? "Email-i ose fjalëkalimi nuk është i saktë." : language === "fr"
+        ? "E-mail ou mot de passe incorrect." : "Incorrect email or password.";
+      if (/email not confirmed/i.test(message)) return t("signupNeeded");
+      if (/already registered|user already registered/i.test(message)) return language === "sq"
+        ? "Ky email është regjistruar tashmë. Provo të hysh." : language === "fr"
+        ? "Cette adresse est déjà inscrite. Essayez de vous connecter." : "This email is already registered. Try signing in.";
+      return message;
+    }
+
+    els.lang.value = language;
+    els.lang.addEventListener("change", () => {
+      language = els.lang.value;
+      setMode(mode);
+      supabase.auth.getSession().then(({data}) => displaySession(data.session));
+    });
+    els.tabLogin.addEventListener("click", () => setMode("login"));
+    els.tabSignup.addEventListener("click", () => setMode("signup"));
+
+    els.form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (busy) return;
+      clearNotice();
+      const email = els.email.value.trim();
+      const password = els.password.value;
+      if (!email) return showNotice(t("emailRequired"), "error");
+      if (password.length < 8) return showNotice(t("passwordShort"), "error");
+
+      setBusy(true);
+      try {
+        if (mode === "signup") {
+          const name = els.name.value.trim();
+          if (!name) {
+            showNotice(t("name") + " — " + t("emailRequired"), "error");
+            return;
+          }
+          if (password !== els.confirm.value) {
+            showNotice(t("passwordMismatch"), "error");
+            return;
+          }
+
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { display_name: name, preferred_language: language },
+              emailRedirectTo: window.location.origin + "/auth.html"
+            }
+          });
+          if (error) throw error;
+
+          // If email confirmation is enabled, Supabase usually returns no session until confirmed.
+          if (data.session) {
+            const { error: profileError } = await supabase.from("profiles").upsert({
+              id: data.user.id,
+              display_name: name,
+              preferred_language: language
+            }, { onConflict: "id" });
+            if (profileError) showNotice(t("profileWarning"), "info");
+            else showNotice(t("signupSuccess"), "success");
+            displaySession(data.session);
+          } else {
+            showNotice(t("signupSuccess"), "success");
+            setMode("login");
+          }
+        } else {
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          showNotice(t("loginSuccess"), "success");
+          displaySession(data.session);
+          if (data.user) {
+            // Best-effort profile sync; RLS should restrict the row to this authenticated user.
+            const metadataName = data.user.user_metadata?.display_name;
+            if (metadataName) {
+              const { error: profileError } = await supabase.from("profiles").upsert({
+                id: data.user.id,
+                display_name: metadataName,
+                preferred_language: language
+              }, { onConflict: "id" });
+              if (profileError) console.warn("Profile sync did not complete:", profileError.message);
+            }
+          }
+        }
+      } catch (error) {
+        showNotice(readableError(error), "error");
+      } finally {
+        setBusy(false);
+      }
+    });
+
+    els.forgot.addEventListener("click", async () => {
+      clearNotice();
+      const email = els.email.value.trim();
+      if (!email) {
+        showNotice(t("resetAsk"), "info");
+        els.email.focus();
+        return;
+      }
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + "/auth.html?reset=1"
+        });
+        if (error) throw error;
+        showNotice(t("resetSent"), "success");
+      } catch (error) {
+        showNotice(readableError(error), "error");
+      }
+    });
+
+    els.logout.addEventListener("click", async () => {
+      els.logout.disabled = true;
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        displaySession(null);
+        setMode("login");
+        showNotice(t("logoutSuccess"), "success");
+      } catch (error) {
+        showNotice(readableError(error), "error");
+      } finally {
+        els.logout.disabled = false;
+      }
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      displaySession(session);
+    });
+
+    setMode("login");
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      displaySession(data.session);
+      if (new URLSearchParams(window.location.search).get("error_description")) {
+        showNotice(decodeURIComponent(new URLSearchParams(window.location.search).get("error_description")), "error");
+      }
+      // Supabase recovery links can redirect here with a recovery session.
+      if (new URLSearchParams(window.location.search).get("reset") === "1" && data.session) {
+        showNotice(language === "sq"
+          ? "Sesioni i rivendosjes u hap. Ndryshimi i fjalëkalimit mund të shtohet në hapin pasues."
+          : language === "fr"
+          ? "La session de réinitialisation est ouverte. Le formulaire de nouveau mot de passe sera ajouté à l’étape suivante."
+          : "Recovery session opened. The new-password form can be added in the next step.", "info");
+      }
+    } catch (error) {
+      showNotice(readableError(error), "error");
+    }
+    lucide.createIcons();
+  </script>
+</body>
+</html>
