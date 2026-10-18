@@ -37,24 +37,37 @@
 
     const status = document.getElementById("status");
 
-    try {
-      const { error } = await supabase.auth.getSession();
+    async function runTest() {
+      try {
+        // 1. Testojmë sesionin e autentifikimit
+        const { data: sessionData, error: authError } = await supabase.auth.getSession();
+        if (authError) throw authError;
 
-      if (error) {
-        throw error;
+        // 2. Testojmë leximin nga baza e të dhënave (tabela projects)
+        const { data: projectsData, error: dbError } = await supabase
+          .from("projects")
+          .select("*")
+          .limit(1);
+
+        if (dbError) throw dbError;
+
+        status.innerHTML = 
+          "✅ <strong>Sukses i plotë!</strong><br><br>" +
+          "• Klienti Supabase u ngarkua.<br>" +
+          "• Autentifikimi po punon.<br>" +
+          "• Data API dhe baza e të dhënave funksionojnë saktë!";
+          
+      } catch (error) {
+        console.error("Supabase test error:", error);
+
+        status.innerHTML = 
+          "❌ <strong>Testi dështoi:</strong> " + 
+          (error.message || "Gabim i panjohur") + 
+          "<br><br><small>Kontrollo konsolën (F12 në shfletues) për më shumë detaje.</small>";
       }
-
-      status.textContent =
-        "Klienti Supabase u ngarkua me sukses. " +
-        "Hapi tjetër është testimi i API-së dhe bazës së të dhënave.";
-    } catch (error) {
-      console.error("Supabase test error:", error);
-
-      status.textContent =
-        "Testi dështoi: " +
-        (error.message || "Gabim i panjohur") +
-        ". Kontrollo URL-në, çelësin dhe skedarin supabase-client.js.";
     }
+
+    runTest();
   </script>
 </body>
 </html>
