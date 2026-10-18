@@ -1,3 +1,5 @@
+// services/analyze-albanian.ts
+
 import { analyzeAlbanianText } from "./morphology";
 import { analyzeAlbanianSentence } from "./grammar-rules";
 
