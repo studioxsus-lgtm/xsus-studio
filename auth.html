@@ -21,12 +21,9 @@
       --danger: #ff697d;
       --success: #39d9a0;
       --radius: 20px;
-      --page-padding: 20px;
     }
 
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
       box-sizing: border-box;
     }
 
@@ -44,64 +41,43 @@
       min-height: 100vh;
       min-height: 100dvh;
       margin: 0;
-      padding:
-        max(28px, env(safe-area-inset-top))
-        max(14px, env(safe-area-inset-right))
-        max(28px, env(safe-area-inset-bottom))
-        max(14px, env(safe-area-inset-left));
-
+      padding: 20px 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-
-      font-family:
-        Inter, ui-sans-serif, system-ui, -apple-system,
-        BlinkMacSystemFont, "Segoe UI", sans-serif;
-
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
       font-size: 16px;
       line-height: 1.5;
       color: var(--text);
-
       background:
-        radial-gradient(
-          ellipse at 50% 0%,
-          #283568 0%,
-          #151d3c 25%,
-          transparent 62%
-        ),
-        radial-gradient(
-          circle at 100% 100%,
-          #101c38 0%,
-          transparent 42%
-        ),
+        radial-gradient(ellipse at 50% 0%, #283568 0%, #151d3c 30%, transparent 65%),
+        radial-gradient(circle at 100% 100%, #101c38 0%, transparent 42%),
         var(--bg);
-
       overflow-x: hidden;
     }
 
-    button,
-    input {
+    button, input {
       font: inherit;
     }
 
     button {
       -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
     }
 
-    button:focus-visible,
-    input:focus-visible {
+    button:focus-visible, input:focus-visible {
       outline: 2px solid var(--accent2);
       outline-offset: 3px;
     }
 
     button:disabled {
       cursor: not-allowed;
-      opacity: 0.6;
+      opacity: .6;
     }
 
     .container {
       width: 100%;
-      max-width: 460px;
+      max-width: 470px;
       min-width: 0;
       margin: auto;
     }
@@ -109,99 +85,78 @@
     .brand {
       text-align: center;
       margin: 0 0 24px;
-      padding: 0 8px;
+      padding: 0 5px;
     }
 
     .logo {
-      width: 68px;
-      height: 68px;
+      width: 60px;
+      height: 60px;
       display: grid;
       place-items: center;
-      margin: 0 auto 12px;
-      border-radius: 21px;
-      font-size: 27px;
+      margin: 0 auto 10px;
+      border-radius: 18px;
+      font-size: 25px;
       font-weight: 900;
-      color: #fff;
-      background: linear-gradient(
-        135deg,
-        var(--accent),
-        var(--accent2)
-      );
-      box-shadow:
-        0 0 35px #7c5cff40,
-        inset 0 1px 0 #ffffff40;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 35px #7c5cff40;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(25px, 4vw, 32px);
+      font-size: clamp(26px, 5vw, 34px);
       line-height: 1.2;
-      letter-spacing: -0.7px;
+      letter-spacing: -.7px;
       overflow-wrap: anywhere;
     }
 
     .subtitle {
       color: var(--muted);
-      margin-top: 9px;
-      font-size: 15px;
+      margin-top: 8px;
+      font-size: 14px;
       overflow-wrap: anywhere;
     }
 
     .panel {
       width: 100%;
       min-width: 0;
-      padding: clamp(20px, 5vw, 30px);
-      background: rgb(17 24 42 / 94%);
+      padding: 28px;
+      background: rgb(17 24 42 / 96%);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      box-shadow:
-        0 24px 80px #0007,
-        inset 0 1px 0 #ffffff08;
+      box-shadow: 0 24px 80px #0007, inset 0 1px 0 #ffffff08;
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
     }
 
     .languages {
       display: flex;
-      align-items: center;
       justify-content: center;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
     }
 
-    .lang,
-    .tab {
+    .lang, .tab {
       min-height: 44px;
       border: 1px solid var(--line);
       color: var(--muted);
       background: #0b1120;
       border-radius: 11px;
-      padding: 9px 15px;
-      cursor: pointer;
-      transition:
-        background 0.2s ease,
-        border-color 0.2s ease,
-        color 0.2s ease;
+      padding: 9px 14px;
+      transition: background .2s, border-color .2s, color .2s;
     }
 
-    .lang:hover,
-    .tab:hover {
-      border-color: #6552be;
-      color: #fff;
-    }
-
-    .lang.active,
-    .tab.active {
-      color: #fff;
+    .lang.active, .tab.active {
+      color: white;
       border-color: var(--accent);
       background: #7c5cff28;
     }
 
     .tabs {
       display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
+      gap: 8px;
+      margin-bottom: 22px;
     }
 
     .tab {
@@ -212,16 +167,15 @@
 
     h2 {
       margin: 0 0 8px;
-      font-size: clamp(21px, 3vw, 24px);
+      font-size: clamp(21px, 4vw, 25px);
       line-height: 1.3;
-      letter-spacing: -0.3px;
       overflow-wrap: anywhere;
     }
 
     .description {
       color: var(--muted);
       font-size: 14px;
-      margin: 0 0 22px;
+      margin: 0 0 18px;
       line-height: 1.6;
       overflow-wrap: anywhere;
     }
@@ -233,7 +187,7 @@
 
     label {
       display: block;
-      margin: 17px 0 8px;
+      margin: 15px 0 7px;
       font-size: 14px;
       font-weight: 600;
       color: #dce5fa;
@@ -244,19 +198,16 @@
       width: 100%;
       min-width: 0;
       min-height: 50px;
-      padding: 13px 14px;
+      padding: 12px 13px;
       font-size: 16px;
       line-height: 1.4;
-      color: #fff;
+      color: white;
       background: #080e1d;
       border: 1px solid var(--line);
       border-radius: 12px;
       outline: none;
       appearance: none;
       -webkit-appearance: none;
-      transition:
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
     }
 
     input::placeholder {
@@ -269,36 +220,27 @@
       box-shadow: 0 0 0 3px #7c5cff20;
     }
 
-    .primary,
-    .secondary {
+    .primary, .secondary {
       display: flex;
       align-items: center;
       justify-content: center;
       width: 100%;
       min-height: 50px;
-      padding: 13px 16px;
+      padding: 12px 15px;
       font-size: 16px;
       line-height: 1.4;
       text-align: center;
       overflow-wrap: anywhere;
       border-radius: 12px;
-      cursor: pointer;
-      transition:
-        transform 0.15s ease,
-        filter 0.2s ease,
-        background 0.2s ease;
+      transition: transform .15s, filter .2s;
     }
 
     .primary {
-      margin-top: 22px;
+      margin-top: 20px;
       border: 0;
-      color: #fff;
+      color: white;
       font-weight: 750;
-      background: linear-gradient(
-        100deg,
-        var(--accent),
-        #4b8dff
-      );
+      background: linear-gradient(100deg, var(--accent), #4b8dff);
       box-shadow: 0 8px 22px #6548ff25;
     }
 
@@ -306,9 +248,8 @@
       filter: brightness(1.1);
     }
 
-    .primary:active:not(:disabled),
-    .secondary:active {
-      transform: scale(0.99);
+    .primary:active:not(:disabled), .secondary:active {
+      transform: scale(.99);
     }
 
     .secondary {
@@ -318,16 +259,11 @@
       border: 1px solid var(--line);
     }
 
-    .secondary:hover {
-      color: #fff;
-      border-color: var(--accent);
-    }
-
     .link {
       display: block;
       width: 100%;
       min-height: 44px;
-      margin-top: 12px;
+      margin-top: 10px;
       padding: 10px 4px;
       color: #b8afff;
       background: transparent;
@@ -336,19 +272,14 @@
       text-decoration: underline;
       text-underline-offset: 4px;
       overflow-wrap: anywhere;
-      cursor: pointer;
-    }
-
-    .link:hover {
-      color: #fff;
     }
 
     .notice {
       display: none;
       width: 100%;
       min-width: 0;
-      padding: 13px 14px;
-      margin-top: 18px;
+      padding: 13px;
+      margin-top: 17px;
       border-radius: 12px;
       font-size: 14px;
       line-height: 1.6;
@@ -356,9 +287,7 @@
       word-break: break-word;
     }
 
-    .notice.show {
-      display: block;
-    }
+    .notice.show { display: block; }
 
     .notice.success {
       color: var(--success);
@@ -372,14 +301,12 @@
       border: 1px solid #ff697d30;
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
 
     .account {
       width: 100%;
       min-width: 0;
-      padding: 16px;
+      padding: 15px;
       margin-top: 16px;
       border: 1px solid var(--line);
       border-radius: 13px;
@@ -395,225 +322,131 @@
       word-break: break-word;
     }
 
-    .account p {
-      margin-bottom: 0;
-      overflow-wrap: anywhere;
-    }
+    .account p { margin-bottom: 0; }
 
     .footer {
       text-align: center;
       color: #8794af;
       font-size: 12px;
       line-height: 1.6;
-      margin-top: 20px;
-      padding: 0 8px;
+      margin-top: 16px;
+      padding: 0 5px;
     }
 
-    /* Tablet */
-    @media (min-width: 600px) {
-      body {
-        padding: 40px 28px;
-      }
-
-      .container {
-        max-width: 480px;
-      }
-
-      .brand {
-        margin-bottom: 28px;
-      }
-
-      .panel {
-        padding: 32px;
-      }
-    }
-
-    /* Desktop */
-    @media (min-width: 1024px) {
-      body {
-        padding: 48px 32px;
-      }
-
-      .container {
-        max-width: 470px;
-      }
-
-      .panel {
-        padding: 34px;
-      }
-
-      .brand {
-        margin-bottom: 30px;
-      }
-    }
-
-    /* Mobile */
+    /* Telefona */
     @media (max-width: 599px) {
       body {
-        align-items: flex-start;
+        display: block;
         padding:
-          max(22px, env(safe-area-inset-top))
-          max(12px, env(safe-area-inset-right))
-          max(22px, env(safe-area-inset-bottom))
-          max(12px, env(safe-area-inset-left));
+          max(12px, env(safe-area-inset-top))
+          max(8px, env(safe-area-inset-right))
+          max(18px, env(safe-area-inset-bottom))
+          max(8px, env(safe-area-inset-left));
       }
 
       .container {
+        display: block;
         width: 100%;
-        max-width: 100%;
-        margin: auto;
+        max-width: none;
+        margin: 0 auto;
       }
 
       .brand {
-        margin-bottom: 20px;
+        width: 100%;
+        margin-bottom: 15px;
       }
 
       .logo {
-        width: 58px;
-        height: 58px;
-        border-radius: 18px;
-        font-size: 24px;
-        margin-bottom: 11px;
+        width: 50px;
+        height: 50px;
+        border-radius: 15px;
+        font-size: 22px;
+        margin-bottom: 8px;
       }
 
-      h1 {
-        font-size: 27px;
-      }
+      h1 { font-size: 27px; }
 
       .subtitle {
-        max-width: 340px;
-        margin: 8px auto 0;
+        max-width: 100%;
         font-size: 14px;
       }
 
       .panel {
-        padding: 22px 18px;
-        border-radius: 17px;
+        width: 100%;
+        max-width: none;
+        padding: 20px 14px;
+        border-radius: 16px;
       }
 
       .languages {
-        gap: 8px;
-        margin-bottom: 22px;
+        gap: 7px;
+        margin-bottom: 18px;
       }
 
-      .lang {
-        min-width: 48px;
-        min-height: 44px;
-        padding: 9px 13px;
-      }
+      .lang { min-width: 46px; }
 
       .tabs {
-        gap: 8px;
-        margin-bottom: 22px;
+        gap: 7px;
+        margin-bottom: 20px;
       }
 
       .tab {
         min-height: 46px;
-        padding: 9px 8px;
+        padding: 9px 5px;
         font-size: 15px;
       }
 
-      h2 {
-        font-size: 22px;
-      }
+      h2 { font-size: 22px; }
 
-      .description {
-        margin-bottom: 19px;
-      }
+      .description { margin-bottom: 16px; }
 
-      label {
-        margin-top: 16px;
-      }
+      label { margin-top: 14px; }
 
       input {
         min-height: 50px;
-        padding: 13px 12px;
+        padding: 12px;
       }
 
-      .primary {
-        min-height: 50px;
-        margin-top: 20px;
-      }
+      .primary, .secondary { min-height: 50px; }
 
-      .footer {
-        margin-top: 17px;
-      }
+      .footer { margin-top: 13px; }
     }
 
-    /* Ekrane shumë të vogla */
     @media (max-width: 360px) {
-      body {
-        padding-left: 10px;
-        padding-right: 10px;
-      }
-
-      .panel {
-        padding: 19px 14px;
-        border-radius: 15px;
-      }
-
-      .brand {
-        margin-bottom: 17px;
-      }
-
-      h1 {
-        font-size: 25px;
-      }
-
-      .tabs {
-        gap: 6px;
-      }
-
-      .tab {
-        padding-left: 5px;
-        padding-right: 5px;
-        font-size: 14px;
-      }
+      .panel { padding: 17px 11px; }
+      .tab { font-size: 14px; }
+      h1 { font-size: 25px; }
     }
 
-    /* Telefoni horizontal dhe ekrane të shkurtra */
+    /* Tableta */
+    @media (min-width: 600px) {
+      body { padding: 32px 24px; }
+      .container { max-width: 480px; }
+      .panel { padding: 32px; }
+      .logo { width: 64px; height: 64px; }
+    }
+
+    /* Desktop */
+    @media (min-width: 1024px) {
+      body { padding: 40px 30px; }
+      .container { max-width: 470px; }
+      .panel { padding: 34px; }
+    }
+
     @media (max-height: 650px) {
-      body {
-        align-items: flex-start;
-      }
-
-      .container {
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-
-      .brand {
-        margin-bottom: 16px;
-      }
-
-      .logo {
-        width: 48px;
-        height: 48px;
-        margin-bottom: 8px;
-        border-radius: 14px;
-      }
-
-      .panel {
-        padding-top: 20px;
-        padding-bottom: 20px;
-      }
-
-      .languages {
-        margin-bottom: 16px;
-      }
-
-      .tabs {
-        margin-bottom: 17px;
-      }
+      body { align-items: flex-start; }
+      .container { margin-top: 0; margin-bottom: 0; }
+      .brand { margin-bottom: 14px; }
+      .logo { width: 46px; height: 46px; }
+      .panel { padding-top: 18px; padding-bottom: 18px; }
+      .languages { margin-bottom: 14px; }
+      .tabs { margin-bottom: 15px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
+      *, *::before, *::after {
         scroll-behavior: auto !important;
-        transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
+        transition-duration: .01ms !important;
       }
     }
   </style>
@@ -631,143 +464,96 @@
 
     <section class="panel" aria-label="Account access">
       <div class="languages" aria-label="Language">
-        <button class="lang active" type="button" data-lang="sq"
-          aria-label="Shqip">SQ</button>
-        <button class="lang" type="button" data-lang="en"
-          aria-label="English">EN</button>
-        <button class="lang" type="button" data-lang="fr"
-          aria-label="Français">FR</button>
+        <button class="lang active" type="button" data-lang="sq">SQ</button>
+        <button class="lang" type="button" data-lang="en">EN</button>
+        <button class="lang" type="button" data-lang="fr">FR</button>
       </div>
 
       <div id="authForms">
         <div class="tabs">
-          <button class="tab active" type="button" id="loginTab"
-            data-i18n="loginTab">Hyr</button>
-          <button class="tab" type="button" id="signupTab"
-            data-i18n="signupTab">Regjistrohu</button>
+          <button class="tab active" type="button" id="loginTab" data-i18n="loginTab">Hyr</button>
+          <button class="tab" type="button" id="signupTab" data-i18n="signupTab">Regjistrohu</button>
         </div>
 
         <form id="loginForm">
           <h2 data-i18n="loginTitle">Mirë se u ktheve!</h2>
-          <p class="description" data-i18n="loginDescription">
-            Hyr në llogarinë tënde.
-          </p>
+          <p class="description" data-i18n="loginDescription">Hyr në llogarinë tënde.</p>
 
           <label for="loginEmail" data-i18n="email">Email</label>
-          <input id="loginEmail" name="email" type="email"
-            autocomplete="email" inputmode="email"
-            autocapitalize="none" spellcheck="false" required>
+          <input id="loginEmail" name="email" type="email" autocomplete="email"
+            inputmode="email" autocapitalize="none" spellcheck="false"
+            placeholder="name@example.com" required>
 
-          <label for="loginPassword" data-i18n="password">
-            Fjalëkalimi
-          </label>
+          <label for="loginPassword" data-i18n="password">Fjalëkalimi</label>
           <input id="loginPassword" name="password" type="password"
             autocomplete="current-password" required>
 
-          <button class="primary" type="submit" data-i18n="loginButton">
-            Hyr në llogari
-          </button>
-
-          <button class="link" type="button" id="forgotButton"
-            data-i18n="forgot">Harrove fjalëkalimin?</button>
+          <button class="primary" type="submit" data-i18n="loginButton">Hyr në llogari</button>
+          <button class="link" type="button" id="forgotButton" data-i18n="forgot">Harrove fjalëkalimin?</button>
         </form>
 
         <form id="signupForm" class="hidden">
           <h2 data-i18n="signupTitle">Krijo llogarinë</h2>
-          <p class="description" data-i18n="signupDescription">
-            Bashkohu me XSUS Studio.
-          </p>
+          <p class="description" data-i18n="signupDescription">Bashkohu me XSUS Studio.</p>
 
           <label for="signupName" data-i18n="name">Emri</label>
-          <input id="signupName" name="name" type="text"
-            autocomplete="name" required>
+          <input id="signupName" name="name" type="text" autocomplete="name" required>
 
           <label for="signupEmail" data-i18n="email">Email</label>
-          <input id="signupEmail" name="email" type="email"
-            autocomplete="email" inputmode="email"
-            autocapitalize="none" spellcheck="false" required>
+          <input id="signupEmail" name="email" type="email" autocomplete="email"
+            inputmode="email" autocapitalize="none" spellcheck="false"
+            placeholder="name@example.com" required>
 
-          <label for="signupPassword" data-i18n="password">
-            Fjalëkalimi
-          </label>
-          <input id="signupPassword" name="new-password"
-            type="password" autocomplete="new-password"
-            minlength="8" required>
+          <label for="signupPassword" data-i18n="password">Fjalëkalimi</label>
+          <input id="signupPassword" name="new-password" type="password"
+            autocomplete="new-password" minlength="8" required>
 
-          <button class="primary" type="submit" data-i18n="signupButton">
-            Krijo llogari
-          </button>
+          <button class="primary" type="submit" data-i18n="signupButton">Krijo llogari</button>
         </form>
 
         <form id="forgotForm" class="hidden">
           <h2 data-i18n="forgotTitle">Rikupero fjalëkalimin</h2>
-          <p class="description" data-i18n="forgotDescription">
-            Do të të dërgojmë një lidhje në email.
-          </p>
+          <p class="description" data-i18n="forgotDescription">Do të të dërgojmë një lidhje në email.</p>
 
           <label for="forgotEmail" data-i18n="email">Email</label>
-          <input id="forgotEmail" name="email" type="email"
-            autocomplete="email" inputmode="email"
-            autocapitalize="none" spellcheck="false" required>
+          <input id="forgotEmail" name="email" type="email" autocomplete="email"
+            inputmode="email" autocapitalize="none" spellcheck="false" required>
 
-          <button class="primary" type="submit" data-i18n="sendReset">
-            Dërgo lidhjen
-          </button>
-
-          <button class="secondary" type="button" id="backLogin1"
-            data-i18n="backLogin">Kthehu te hyrja</button>
+          <button class="primary" type="submit" data-i18n="sendReset">Dërgo lidhjen</button>
+          <button class="secondary" type="button" id="backLogin1" data-i18n="backLogin">Kthehu te hyrja</button>
         </form>
 
         <form id="newPasswordForm" class="hidden">
-          <h2 data-i18n="newPasswordTitle">
-            Vendos fjalëkalimin e ri
-          </h2>
-          <p class="description" data-i18n="newPasswordDescription">
-            Zgjidh një fjalëkalim të ri me të paktën 8 karaktere.
-          </p>
+          <h2 data-i18n="newPasswordTitle">Vendos fjalëkalimin e ri</h2>
+          <p class="description" data-i18n="newPasswordDescription">Zgjidh një fjalëkalim me të paktën 8 karaktere.</p>
 
-          <label for="newPassword" data-i18n="newPassword">
-            Fjalëkalimi i ri
-          </label>
+          <label for="newPassword" data-i18n="newPassword">Fjalëkalimi i ri</label>
           <input id="newPassword" name="new-password" type="password"
             autocomplete="new-password" minlength="8" required>
 
-          <label for="confirmPassword" data-i18n="confirmPassword">
-            Përsërit fjalëkalimin
-          </label>
-          <input id="confirmPassword" name="confirm-password"
-            type="password" autocomplete="new-password"
-            minlength="8" required>
+          <label for="confirmPassword" data-i18n="confirmPassword">Përsërit fjalëkalimin</label>
+          <input id="confirmPassword" name="confirm-password" type="password"
+            autocomplete="new-password" minlength="8" required>
 
-          <button class="primary" type="submit" data-i18n="savePassword">
-            Ruaj fjalëkalimin
-          </button>
+          <button class="primary" type="submit" data-i18n="savePassword">Ruaj fjalëkalimin</button>
         </form>
       </div>
 
       <div id="accountPanel" class="hidden">
         <h2 data-i18n="accountTitle">Llogaria jote</h2>
-        <p class="description" data-i18n="accountDescription">
-          Je lidhur me sukses.
-        </p>
-
+        <p class="description" data-i18n="accountDescription">Je lidhur me sukses.</p>
         <div class="account">
           <div data-i18n="email">Email</div>
           <strong id="accountEmail"></strong>
           <p id="accountName"></p>
         </div>
-
-        <button class="primary" type="button" id="logoutButton"
-          data-i18n="logout">Dil nga llogaria</button>
+        <button class="primary" type="button" id="logoutButton" data-i18n="logout">Dil nga llogaria</button>
       </div>
 
-      <div id="notice" class="notice" role="status"
-        aria-live="polite"></div>
+      <div id="notice" class="notice" role="status" aria-live="polite"></div>
     </section>
 
-    <footer class="footer">
-      XSUS Studio · Secure account access
-    </footer>
+    <footer class="footer">XSUS Studio · Secure account access</footer>
   </main>
 
   <script type="module">
@@ -795,22 +581,17 @@
     const translations = {
       sq: {
         subtitle: "Llogaria jote në një hapësirë inteligjente.",
-        loginTab: "Hyr",
-        signupTab: "Regjistrohu",
+        loginTab: "Hyr", signupTab: "Regjistrohu",
         loginTitle: "Mirë se u ktheve!",
         loginDescription: "Hyr në llogarinë tënde.",
         signupTitle: "Krijo llogarinë",
         signupDescription: "Bashkohu me XSUS Studio.",
-        email: "Email",
-        password: "Fjalëkalimi",
-        name: "Emri",
-        loginButton: "Hyr në llogari",
-        signupButton: "Krijo llogari",
+        email: "Email", password: "Fjalëkalimi", name: "Emri",
+        loginButton: "Hyr në llogari", signupButton: "Krijo llogari",
         forgot: "Harrove fjalëkalimin?",
         forgotTitle: "Rikupero fjalëkalimin",
         forgotDescription: "Do të të dërgojmë një lidhje në email.",
-        sendReset: "Dërgo lidhjen",
-        backLogin: "Kthehu te hyrja",
+        sendReset: "Dërgo lidhjen", backLogin: "Kthehu te hyrja",
         newPasswordTitle: "Vendos fjalëkalimin e ri",
         newPasswordDescription: "Përdor të paktën 8 karaktere.",
         newPassword: "Fjalëkalimi i ri",
@@ -819,46 +600,36 @@
         accountTitle: "Llogaria jote",
         accountDescription: "Je lidhur me sukses.",
         logout: "Dil nga llogaria",
-        required: "Plotëso të gjitha fushat.",
         passwordShort: "Fjalëkalimi duhet të ketë të paktën 8 karaktere.",
         passwordMismatch: "Fjalëkalimet nuk përputhen.",
         loginSuccess: "Hyrja u krye me sukses.",
         signupSuccess: "Llogaria u krijua. Kontrollo email-in për konfirmim.",
-        resetSent: "Nëse adresa është e regjistruar, do të marrësh një email për rikuperim.",
+        resetSent: "Nëse adresa është e regjistruar, do të marrësh email për rikuperim.",
         passwordUpdated: "Fjalëkalimi u ndryshua me sukses. Mund të hysh tani.",
         logoutSuccess: "Dole me sukses nga llogaria.",
-        recoveryError: "Lidhja e rikuperimit është e pavlefshme ose ka skaduar. Kërko një lidhje të re.",
+        recoveryError: "Lidhja është e pavlefshme ose ka skaduar. Kërko një të re.",
         genericError: "Ndodhi një gabim. Kontrollo të dhënat dhe provo përsëri.",
-        profileError: "Llogaria u hap, por profili nuk mund të ruhej tani.",
-        sessionError: "Nuk u gjet sesion i vlefshëm. Kërko një lidhje të re rikuperimi."
+        sessionError: "Nuk u gjet sesion rikuperimi. Kërko një lidhje të re."
       },
       en: {
         subtitle: "Your account in an intelligent workspace.",
-        loginTab: "Log in",
-        signupTab: "Sign up",
+        loginTab: "Log in", signupTab: "Sign up",
         loginTitle: "Welcome back!",
         loginDescription: "Log in to your account.",
         signupTitle: "Create your account",
         signupDescription: "Join XSUS Studio.",
-        email: "Email",
-        password: "Password",
-        name: "Name",
-        loginButton: "Log in",
-        signupButton: "Create account",
+        email: "Email", password: "Password", name: "Name",
+        loginButton: "Log in", signupButton: "Create account",
         forgot: "Forgot your password?",
         forgotTitle: "Reset your password",
         forgotDescription: "We'll send you a recovery link by email.",
-        sendReset: "Send recovery link",
-        backLogin: "Back to login",
+        sendReset: "Send recovery link", backLogin: "Back to login",
         newPasswordTitle: "Set a new password",
         newPasswordDescription: "Use at least 8 characters.",
-        newPassword: "New password",
-        confirmPassword: "Confirm password",
+        newPassword: "New password", confirmPassword: "Confirm password",
         savePassword: "Save password",
-        accountTitle: "Your account",
-        accountDescription: "You are signed in.",
+        accountTitle: "Your account", accountDescription: "You are signed in.",
         logout: "Log out",
-        required: "Please complete all fields.",
         passwordShort: "Password must contain at least 8 characters.",
         passwordMismatch: "Passwords do not match.",
         loginSuccess: "Login successful.",
@@ -868,36 +639,28 @@
         logoutSuccess: "You have logged out.",
         recoveryError: "The recovery link is invalid or expired. Request a new one.",
         genericError: "Something went wrong. Check your details and try again.",
-        profileError: "Signed in, but your profile could not be saved yet.",
         sessionError: "No valid recovery session. Request a new recovery link."
       },
       fr: {
         subtitle: "Votre compte dans un espace intelligent.",
-        loginTab: "Connexion",
-        signupTab: "Inscription",
+        loginTab: "Connexion", signupTab: "Inscription",
         loginTitle: "Bon retour !",
         loginDescription: "Connectez-vous à votre compte.",
         signupTitle: "Créer un compte",
         signupDescription: "Rejoignez XSUS Studio.",
-        email: "E-mail",
-        password: "Mot de passe",
-        name: "Nom",
-        loginButton: "Se connecter",
-        signupButton: "Créer un compte",
+        email: "E-mail", password: "Mot de passe", name: "Nom",
+        loginButton: "Se connecter", signupButton: "Créer un compte",
         forgot: "Mot de passe oublié ?",
         forgotTitle: "Réinitialiser le mot de passe",
         forgotDescription: "Nous vous enverrons un lien par e-mail.",
-        sendReset: "Envoyer le lien",
-        backLogin: "Retour à la connexion",
+        sendReset: "Envoyer le lien", backLogin: "Retour à la connexion",
         newPasswordTitle: "Nouveau mot de passe",
         newPasswordDescription: "Utilisez au moins 8 caractères.",
         newPassword: "Nouveau mot de passe",
         confirmPassword: "Confirmer le mot de passe",
         savePassword: "Enregistrer",
-        accountTitle: "Votre compte",
-        accountDescription: "Vous êtes connecté.",
+        accountTitle: "Votre compte", accountDescription: "Vous êtes connecté.",
         logout: "Se déconnecter",
-        required: "Veuillez remplir tous les champs.",
         passwordShort: "Le mot de passe doit contenir au moins 8 caractères.",
         passwordMismatch: "Les mots de passe ne correspondent pas.",
         loginSuccess: "Connexion réussie.",
@@ -907,8 +670,7 @@
         logoutSuccess: "Vous êtes déconnecté.",
         recoveryError: "Le lien est invalide ou expiré. Demandez-en un nouveau.",
         genericError: "Une erreur est survenue. Vérifiez vos informations.",
-        profileError: "Connecté, mais le profil n'a pas pu être enregistré.",
-        sessionError: "Aucune session de récupération valide. Demandez un nouveau lien."
+        sessionError: "Aucune session valide. Demandez un nouveau lien."
       }
     };
 
@@ -916,17 +678,13 @@
     if (!translations[language]) language = "sq";
 
     const $ = id => document.getElementById(id);
-
-    const forms = [
-      "loginForm",
-      "signupForm",
-      "forgotForm",
-      "newPasswordForm"
+    const formIds = [
+      "loginForm", "signupForm", "forgotForm", "newPasswordForm"
     ];
+    let recoveryMode = false;
 
     function t(key) {
-      return translations[language][key] ||
-        translations.sq[key] || key;
+      return translations[language][key] || translations.sq[key] || key;
     }
 
     function translatePage() {
@@ -941,10 +699,6 @@
         button.classList.toggle("active", active);
         button.setAttribute("aria-pressed", String(active));
       });
-
-      $("loginEmail").placeholder = "name@example.com";
-      $("signupEmail").placeholder = "name@example.com";
-      $("forgotEmail").placeholder = "name@example.com";
     }
 
     function showNotice(message, type = "success") {
@@ -961,21 +715,18 @@
     function showForm(id) {
       clearNotice();
 
-      forms.forEach(form => {
-        $(form).classList.toggle("hidden", form !== id);
+      formIds.forEach(formId => {
+        $(formId).classList.toggle("hidden", formId !== id);
       });
 
       $("authForms").classList.remove("hidden");
       $("accountPanel").classList.add("hidden");
 
-      $("loginTab").classList.toggle("active", id === "loginForm");
-      $("signupTab").classList.toggle("active", id === "signupForm");
-
-      const hideTabs =
-        id === "forgotForm" || id === "newPasswordForm";
-
+      const hideTabs = id === "forgotForm" || id === "newPasswordForm";
       $("loginTab").classList.toggle("hidden", hideTabs);
       $("signupTab").classList.toggle("hidden", hideTabs);
+      $("loginTab").classList.toggle("active", id === "loginForm");
+      $("signupTab").classList.toggle("active", id === "signupForm");
     }
 
     function setLoading(form, loading) {
@@ -984,13 +735,14 @@
     }
 
     async function saveProfile(user, displayName) {
+      if (!user?.id) return false;
+
       const profile = {
         id: user.id,
         display_name: displayName ||
           user.user_metadata?.display_name ||
           user.user_metadata?.full_name ||
-          user.email?.split("@")[0] ||
-          "User",
+          user.email?.split("@")[0] || "User",
         preferred_language: language
       };
 
@@ -1010,31 +762,22 @@
       $("authForms").classList.add("hidden");
       $("accountPanel").classList.remove("hidden");
       $("accountEmail").textContent = user.email || "";
-
       $("accountName").textContent =
         user.user_metadata?.display_name ||
-        user.user_metadata?.full_name ||
-        "";
+        user.user_metadata?.full_name || "";
 
       await saveProfile(user);
     }
 
-    $("loginTab").addEventListener("click", () => {
-      showForm("loginForm");
-    });
-
-    $("signupTab").addEventListener("click", () => {
-      showForm("signupForm");
-    });
+    $("loginTab").addEventListener("click", () => showForm("loginForm"));
+    $("signupTab").addEventListener("click", () => showForm("signupForm"));
 
     $("forgotButton").addEventListener("click", () => {
       $("forgotEmail").value = $("loginEmail").value.trim();
       showForm("forgotForm");
     });
 
-    $("backLogin1").addEventListener("click", () => {
-      showForm("loginForm");
-    });
+    $("backLogin1").addEventListener("click", () => showForm("loginForm"));
 
     document.querySelectorAll("[data-lang]").forEach(button => {
       button.addEventListener("click", () => {
@@ -1052,16 +795,14 @@
       setLoading(form, true);
 
       try {
-        const email = $("loginEmail").value.trim();
-        const password = $("loginPassword").value;
-
         const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
+          email: $("loginEmail").value.trim(),
+          password: $("loginPassword").value
         });
 
         if (error) throw error;
 
+        recoveryMode = false;
         await showAccount(data.user);
         showNotice(t("loginSuccess"));
       } catch (error) {
@@ -1084,9 +825,7 @@
         const email = $("signupEmail").value.trim();
         const password = $("signupPassword").value;
 
-        if (password.length < 8) {
-          throw new Error(t("passwordShort"));
-        }
+        if (password.length < 8) throw new Error(t("passwordShort"));
 
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -1124,17 +863,14 @@
       setLoading(form, true);
 
       try {
-        const email = $("forgotEmail").value.trim();
-
         const { error } = await supabase.auth.resetPasswordForEmail(
-          email,
+          $("forgotEmail").value.trim(),
           {
             redirectTo: window.location.origin + "/auth.html?reset=1"
           }
         );
 
         if (error) throw error;
-
         showNotice(t("resetSent"));
       } catch (error) {
         console.error(error);
@@ -1155,31 +891,18 @@
         const password = $("newPassword").value;
         const confirm = $("confirmPassword").value;
 
-        if (password.length < 8) {
-          throw new Error(t("passwordShort"));
-        }
+        if (password.length < 8) throw new Error(t("passwordShort"));
+        if (password !== confirm) throw new Error(t("passwordMismatch"));
 
-        if (password !== confirm) {
-          throw new Error(t("passwordMismatch"));
-        }
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) throw new Error(t("sessionError"));
 
-        const { data: sessionData } =
-          await supabase.auth.getSession();
-
-        if (!sessionData.session) {
-          throw new Error(t("sessionError"));
-        }
-
-        const { error } = await supabase.auth.updateUser({
-          password
-        });
-
+        const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
 
+        recoveryMode = false;
         await supabase.auth.signOut();
         history.replaceState(null, "", window.location.pathname);
-
-        recoveryMode = false;
         showForm("loginForm");
         showNotice(t("passwordUpdated"));
       } catch (error) {
@@ -1205,8 +928,6 @@
       showNotice(t("logoutSuccess"));
     });
 
-    let recoveryMode = false;
-
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         recoveryMode = true;
@@ -1230,13 +951,9 @@
       translatePage();
 
       const params = new URLSearchParams(window.location.search);
-      const hash = new URLSearchParams(
-        window.location.hash.replace(/^#/, "")
-      );
-
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
       const isRecovery =
-        params.get("reset") === "1" ||
-        hash.get("type") === "recovery";
+        params.get("reset") === "1" || hash.get("type") === "recovery";
 
       if (isRecovery) {
         recoveryMode = true;
@@ -1247,7 +964,6 @@
         if (error || !data.session) {
           showNotice(t("recoveryError"), "error");
         }
-
         return;
       }
 
@@ -1266,7 +982,11 @@
       }
     }
 
-    initialize();
+    initialize().catch(error => {
+      console.error("Initialization error:", error);
+      showForm("loginForm");
+      showNotice(t("genericError"), "error");
+    });
   </script>
 </body>
 </html>
