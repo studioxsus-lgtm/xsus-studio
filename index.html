@@ -3,31 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080b16">
     <title>Xsus Studio - Hybrid Intelligence Portal</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="min-h-screen relative flex flex-col justify-between">
     <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
 
     <!-- Header -->
     <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-20 py-3 flex flex-wrap items-center justify-between gap-4">
+
+            <!-- Logo -->
             <a href="index.html" class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-600 to-purple-600 p-[2px] shadow-lg shadow-cyan-500/20">
                     <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                         <span class="font-extrabold text-xl text-cyan-400">X</span>
                     </div>
                 </div>
+
                 <div>
                     <h1 class="font-bold text-xl tracking-tight text-white">Xsus Studio</h1>
                     <p class="text-xs text-cyan-400 font-medium">Hybrid Intelligence</p>
                 </div>
             </a>
 
-            <!-- Nav Links -->
+            <!-- Navigation -->
             <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
                 <a href="ai.html" class="hover:text-cyan-400 transition-colors">Xsus AI</a>
                 <a href="app.html" class="hover:text-cyan-400 transition-colors">Xsus App</a>
@@ -37,34 +43,68 @@
                 <a href="domain.html" class="hover:text-cyan-400 transition-colors">Xsus Domain</a>
             </nav>
 
-            <!-- Lang Switcher -->
-            <div class="flex items-center gap-1 bg-slate-900/80 p-1 rounded-lg border border-slate-800 text-xs font-semibold">
-                <button onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">EN</button>
-                <span class="text-slate-600">|</span>
-                <button onclick="setLanguage('fr')" id="lang-fr" class="px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white">FR</button>
-                <span class="text-slate-600">|</span>
-                <button onclick="setLanguage('sq')" id="lang-sq" class="px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white">SQ</button>
+            <!-- Right side -->
+            <div class="flex items-center gap-3 flex-wrap">
+
+                <!-- Language switcher -->
+                <div class="flex items-center gap-1 bg-slate-900/80 p-1 rounded-lg border border-slate-800 text-xs font-semibold">
+                    <button onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 rounded-md transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">EN</button>
+                    <button onclick="setLanguage('fr')" id="lang-fr" class="px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white">FR</button>
+                    <button onclick="setLanguage('sq')" id="lang-sq" class="px-2.5 py-1 rounded-md transition-all text-slate-400 hover:text-white">SQ</button>
+                </div>
+
+                <!-- Login / Sign up -->
+                <div id="authButtons" class="flex items-center gap-2">
+                    <a href="auth.html"
+                       id="loginLink"
+                       class="px-3 py-2 rounded-lg border border-slate-700 text-slate-200 text-sm font-semibold hover:border-cyan-400 hover:text-cyan-400 transition-colors"
+                       data-i18n="login">
+                        Login
+                    </a>
+
+                    <a href="auth.html?mode=signup"
+                       id="signupLink"
+                       class="px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-bold hover:opacity-90 transition-opacity"
+                       data-i18n="signup">
+                        Sign Up
+                    </a>
+                </div>
+
+                <!-- Signed-in account -->
+                <div id="userAccount" class="hidden items-center gap-2">
+                    <span id="userEmail" class="text-xs text-cyan-300 max-w-36 truncate"></span>
+                    <button id="logoutButton"
+                            type="button"
+                            class="px-3 py-2 rounded-lg border border-slate-700 text-slate-200 text-sm hover:border-red-400 hover:text-red-300"
+                            data-i18n="logout">
+                        Logout
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- Main content -->
     <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16 flex-1 w-full">
+
         <section class="text-center space-y-6 max-w-4xl mx-auto">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold tracking-wide uppercase">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
                 <span id="hero-badge">Official Hybrid Intelligence Platform</span>
             </div>
+
             <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight" id="hero-title">
                 Most powerful digital tools in a <span class="gradient-text">Single Studio</span>
             </h1>
+
             <p id="hero-subtitle" class="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
                 Explore our decoupled independent modules designed for peak performance and specialized workflows.
             </p>
         </section>
 
-        <!-- Ecosystem 6 Cards Grid -->
+        <!-- Ecosystem cards -->
         <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
             <a href="ai.html" class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group block">
                 <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform"><i data-lucide="cpu" class="w-6 h-6"></i></div>
                 <h3 class="text-xl font-bold text-white">Xsus AI</h3>
@@ -108,6 +148,133 @@
         &copy; 2026 Xsus Studio. All rights reserved.
     </footer>
 
+    <div id="siteNotice" class="hidden fixed bottom-4 left-4 right-4 z-[100] max-w-lg mx-auto p-4 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm" role="status" aria-live="polite"></div>
+
     <script src="script.js"></script>
+
+    <!-- Supabase account integration -->
+    <script type="module">
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+        const SUPABASE_URL = "https://rdcwqjsmzklktfccebfs.supabase.co";
+        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr";
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
+            }
+        });
+
+        const authButtons = document.getElementById("authButtons");
+        const userAccount = document.getElementById("userAccount");
+        const userEmail = document.getElementById("userEmail");
+        const logoutButton = document.getElementById("logoutButton");
+        const siteNotice = document.getElementById("siteNotice");
+
+        const accountTranslations = {
+            en: { login: "Login", signup: "Sign Up", logout: "Logout", signedOut: "You have signed out.", logoutError: "Could not sign out." },
+            fr: { login: "Connexion", signup: "Inscription", logout: "Déconnexion", signedOut: "Vous êtes déconnecté.", logoutError: "Déconnexion impossible." },
+            sq: { login: "Hyr", signup: "Regjistrohu", logout: "Dil", signedOut: "Dole nga llogaria.", logoutError: "Dalja nga llogaria dështoi." }
+        };
+
+        function currentLanguage() {
+            const saved = localStorage.getItem("xsus_language");
+            if (saved && accountTranslations[saved]) return saved;
+
+            const active = document.documentElement.lang;
+            return accountTranslations[active] ? active : "en";
+        }
+
+        function updateAccountLanguage() {
+            const language = currentLanguage();
+            const labels = accountTranslations[language];
+
+            document.querySelectorAll("[data-i18n]").forEach(element => {
+                const key = element.dataset.i18n;
+                if (labels[key]) element.textContent = labels[key];
+            });
+        }
+
+        function showNotice(message) {
+            siteNotice.textContent = message;
+            siteNotice.classList.remove("hidden");
+
+            window.setTimeout(() => {
+                siteNotice.classList.add("hidden");
+            }, 4000);
+        }
+
+        function showSignedOut() {
+            authButtons.classList.remove("hidden");
+            userAccount.classList.add("hidden");
+            userAccount.classList.remove("flex");
+            userEmail.textContent = "";
+        }
+
+        function showSignedIn(user) {
+            authButtons.classList.add("hidden");
+            userAccount.classList.remove("hidden");
+            userAccount.classList.add("flex");
+            userEmail.textContent = user.email || "";
+        }
+
+        // Let the existing language switcher update the account labels.
+        ["en", "fr", "sq"].forEach(language => {
+            const button = document.getElementById("lang-" + language);
+            if (button) {
+                button.addEventListener("click", () => {
+                    window.setTimeout(updateAccountLanguage, 0);
+                });
+            }
+        });
+
+        logoutButton.addEventListener("click", async () => {
+            logoutButton.disabled = true;
+
+            const { error } = await supabase.auth.signOut();
+
+            logoutButton.disabled = false;
+
+            if (error) {
+                showNotice(accountTranslations[currentLanguage()].logoutError);
+                return;
+            }
+
+            showSignedOut();
+            showNotice(accountTranslations[currentLanguage()].signedOut);
+        });
+
+        // Update the header on login, logout, and session restoration.
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (session && session.user) {
+                showSignedIn(session.user);
+            } else {
+                showSignedOut();
+            }
+        });
+
+        async function initializeAccountHeader() {
+            updateAccountLanguage();
+
+            const { data, error } = await supabase.auth.getSession();
+
+            if (error || !data.session) {
+                showSignedOut();
+                return;
+            }
+
+            showSignedIn(data.session.user);
+        }
+
+        initializeAccountHeader();
+    </script>
+
+    <script>
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    </script>
 </body>
 </html>
