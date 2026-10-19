@@ -1,0 +1,379 @@
+XSUS Technical Architecture
+
+Project: XSUS Studio
+System: XSUS AI Core
+Status: Initial architecture specification
+Version: 0.1.0
+
+---
+
+1. Purpose
+
+This document defines the intended technical architecture of XSUS AI Core.
+
+The objective is to establish a modular foundation for multilingual AI, knowledge retrieval, model execution, security, and future XSUS-owned model development.
+
+This specification describes the target architecture. Individual components must be implemented and tested before they are considered operational.
+
+2. Architectural Overview
+
+XSUS AI Core is organized into the following logical layers:
+
+1. Product and interface layer.
+2. API and request validation layer.
+3. Orchestration and context layer.
+4. Language and knowledge services.
+5. Model abstraction and execution layer.
+6. Data and storage layer.
+7. Security and observability layer.
+
+The architecture must prevent product-specific code from becoming tightly coupled to a particular AI model or provider.
+
+3. Proposed Repository Structure
+
+The following structure is a target layout. It must be reconciled with the existing repository before directories or files are created.
+
+xsus-studio/
+├── apps/
+│   ├── studio/
+│   └── ai/
+├── packages/
+│   ├── ai-core/
+│   ├── language/
+│   ├── knowledge/
+│   ├── model-runtime/
+│   ├── security/
+│   └── shared/
+├── services/
+│   ├── model-serving/
+│   └── training/
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── ROADMAP.md
+│   ├── SECURITY.md
+│   └── EVALUATION.md
+├── tests/
+│   ├── integration/
+│   └── evaluation/
+├── README.md
+└── XSUS_GLOBAL_BLUEPRINT.md
+
+Not every directory needs to exist in the initial implementation.
+
+The repository must retain its existing application structure until compatibility and migration requirements have been reviewed.
+
+4. Product Layer
+
+The product layer contains user-facing applications.
+
+XSUS Studio
+
+Responsibilities:
+
+- Project and workspace management.
+- Configuration and administration.
+- Model and service management.
+- Operational dashboards.
+- User and access management.
+
+XSUS AI
+
+Responsibilities:
+
+- User conversations.
+- Request submission.
+- Response presentation.
+- Conversation history.
+- Language preferences.
+- User-facing AI capabilities.
+
+Both products should use shared interfaces rather than independently implementing the same AI orchestration logic.
+
+5. API Layer
+
+The API layer receives requests and validates them before they enter the AI Core.
+
+Responsibilities:
+
+- Authentication.
+- Authorization.
+- Request validation.
+- Rate limiting.
+- Request identifiers.
+- Input size limits.
+- Structured errors.
+- Response formatting.
+- Usage and latency metrics.
+
+API handlers must not contain provider-specific model logic.
+
+Public API contracts should be versioned when incompatible changes are introduced.
+
+6. AI Core Layer
+
+The core orchestration layer coordinates AI tasks.
+
+Responsibilities:
+
+- Request lifecycle management.
+- Conversation context.
+- Task classification.
+- Model selection.
+- Language service invocation.
+- Knowledge retrieval.
+- Response generation.
+- Timeouts and cancellation.
+- Error handling.
+- Observability.
+
+The orchestrator should depend on internal interfaces rather than concrete model implementations.
+
+7. Language Service
+
+The language service manages language-related capabilities.
+
+Initial responsibilities:
+
+- Language identifier handling.
+- Unicode-safe text processing.
+- Text normalization.
+- Locale metadata.
+- Language detection integration.
+- Language evaluation.
+- Translation integration where required.
+
+Language identifiers should use appropriate standardized formats, such as BCP 47.
+
+Language detection and language quality must be measured separately. A valid language identifier is not evidence that the system can understand or generate that language accurately.
+
+8. Knowledge Service
+
+The knowledge service retrieves relevant information from approved sources.
+
+Responsibilities:
+
+- Document ingestion.
+- Text extraction.
+- Chunking and indexing.
+- Keyword retrieval.
+- Semantic retrieval.
+- Ranking.
+- Source attribution.
+- Access control.
+- Dataset versioning.
+
+The initial implementation should prefer a simple, testable retrieval pipeline before adding complex knowledge graphs or distributed infrastructure.
+
+9. Model Abstraction Layer
+
+The model abstraction layer separates AI Core from individual model implementations.
+
+Proposed internal contract:
+
+export type ModelMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
+export type ModelRequest = {
+  messages: ModelMessage[];
+  model?: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+  signal?: AbortSignal;
+};
+
+export type ModelResponse = {
+  text: string;
+  modelId: string;
+  finishReason?: string;
+  usage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+  };
+};
+
+export interface ModelAdapter {
+  readonly id: string;
+
+  generate(
+    request: ModelRequest
+  ): Promise<ModelResponse>;
+}
+
+This is a proposed baseline contract. Before implementation, it must be reviewed for streaming, structured output, tool calls, error types, and compatibility with the existing project.
+
+Provider-specific authentication and request formatting belong inside individual adapters.
+
+Secrets must never be included in client-side bundles.
+
+10. Model Selection
+
+The model selection component chooses a compatible model based on:
+
+- Task requirements.
+- Language requirements.
+- Quality measurements.
+- Available capacity.
+- Latency.
+- Cost limits.
+- Privacy requirements.
+- Model capabilities.
+
+Selection must use configured policies and measurable capability information rather than assuming that all models provide equivalent results.
+
+The system should support a defined fallback policy when a model becomes unavailable.
+
+Fallbacks must respect privacy restrictions and must not silently send protected data to an unauthorized provider.
+
+11. Runtime Layer
+
+The runtime layer executes models and manages their operational requirements.
+
+Potential responsibilities:
+
+- Model loading.
+- Inference execution.
+- Resource allocation.
+- GPU and memory utilization.
+- Request queues.
+- Concurrency limits.
+- Model version selection.
+- Runtime health checks.
+
+The runtime may initially use an external API adapter. Later implementations may run models in infrastructure controlled by XSUS.
+
+The internal contract should remain stable where practical.
+
+12. Data Layer
+
+The data layer may include:
+
+- PostgreSQL for structured application data.
+- Object storage for documents and model artifacts.
+- Vector indexing where justified.
+- Versioned datasets.
+- Model registry metadata.
+- Audit and operational records.
+
+Data ownership, access policies, retention, backups, and deletion procedures must be documented.
+
+Sensitive information should not be stored in logs unless there is a justified, controlled requirement.
+
+13. Security Boundaries
+
+Security must be enforced across all layers.
+
+Requirements include:
+
+- Server-side secret management.
+- Authentication and authorization.
+- Tenant and user isolation where applicable.
+- Input validation.
+- Resource limits.
+- Secure error handling.
+- Dependency auditing.
+- Access-controlled model and knowledge resources.
+- Auditable administrative operations.
+
+Model output must be treated as untrusted input when passed to tools, databases, or other systems.
+
+Sensitive tool actions require explicit permissions and appropriate approval controls.
+
+14. Observability
+
+The system should expose structured operational signals.
+
+Recommended metrics:
+
+- Request count.
+- Request latency.
+- Error rate.
+- Model selection.
+- Token usage where available.
+- Runtime resource usage.
+- Retrieval quality.
+- Timeout rate.
+- Estimated cost.
+- Provider availability.
+
+Logs must use request identifiers and must avoid exposing secrets or unnecessary personal data.
+
+15. Testing Strategy
+
+Unit Tests
+
+Validate individual functions, adapters, validators, and policy decisions.
+
+Integration Tests
+
+Validate interactions among the API, orchestrator, language service, knowledge service, and model adapters.
+
+Contract Tests
+
+Verify that each model adapter follows the internal interface.
+
+Security Tests
+
+Validate access controls, secret handling, input limits, and isolation boundaries.
+
+Evaluation Tests
+
+Measure model quality, language quality, retrieval relevance, and factual grounding.
+
+Failure Tests
+
+Simulate timeouts, unavailable models, malformed responses, and exhausted resource limits.
+
+16. Technology Boundaries
+
+TypeScript and Next.js are appropriate for the existing web application and the initial orchestration layer.
+
+Python may be introduced for model research, training, evaluation, and serving when these capabilities justify a separate service.
+
+Rust or other systems languages should be introduced only when measured requirements justify the additional complexity.
+
+Each technology boundary should have a documented interface and operational purpose.
+
+17. Initial Implementation Order
+
+1. Inspect the current repository and identify existing application entry points.
+2. Confirm the TypeScript configuration and testing framework.
+3. Define shared request, response, and error types.
+4. Implement the model adapter interface.
+5. Add a deterministic mock adapter for tests.
+6. Implement basic orchestration.
+7. Add structured logging and timeout handling.
+8. Add integration and contract tests.
+9. Integrate a real model only after the internal contract is validated.
+10. Introduce local model execution when resources and requirements justify it.
+
+18. Acceptance Criteria
+
+The architecture is ready for its first implementation when:
+
+- Module responsibilities are documented.
+- Existing application behavior is preserved.
+- Internal model interfaces are defined.
+- A mock adapter can be tested without external credentials.
+- Errors and timeouts have defined behavior.
+- Secrets remain server-side.
+- Automated tests can validate the initial request lifecycle.
+- Future model implementations can be added without rewriting the product layer.
+
+19. Architecture Governance
+
+Significant architectural changes should record:
+
+- The problem being addressed.
+- The options considered.
+- The chosen solution.
+- Security and privacy implications.
+- Operational and financial impact.
+- Migration and rollback procedures.
+
+Architecture must evolve according to evidence, measured requirements, and project priorities.
+
+---
+
+XSUS Studio — Modular architecture for independent AI development.
