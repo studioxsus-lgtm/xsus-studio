@@ -1,22 +1,20 @@
 
-import {
-  normalizeForSearch,
-  normalizeLanguageCode,
-  getBaseLanguage
-} from '../language/normalization.js';
+import { normalizeForSearch, normalizeLanguageCode } from '../language/normalization.js';
+
+import { searchAlbanianKnowledge } from './sq-knowledge.js';
+import { searchEnglishKnowledge } from './en-knowledge.js';
+import { searchFrenchKnowledge } from './fr-knowledge.js';
+import { searchJavaScriptKnowledge } from './javascript-master-knowledge.js';
 
 const knowledgeSources = new Map();
 
-/**
- * Regjistron një burim njohurish pa ndryshuar shërbimet ekzistuese.
- */
 export function registerKnowledgeSource(name, provider) {
   if (typeof name !== 'string' || !name.trim()) {
-    throw new TypeError('Emri i burimit të njohurive është i pavlefshëm.');
+    throw new TypeError('Emri i burimit duhet të jetë tekst.');
   }
 
   if (typeof provider !== 'function') {
-    throw new TypeError('Burimi i njohurive duhet të jetë funksion.');
+    throw new TypeError('Burimi duhet të jetë funksion.');
   }
 
   const key = name.trim();
@@ -34,9 +32,45 @@ export function registerKnowledgeSource(name, provider) {
   };
 }
 
-/**
- * Kërkon njohuri nga të gjithë burimet e regjistruara.
- */
+export function listKnowledgeSources() {
+  return [...knowledgeSources.keys()];
+}
+
+export function hasKnowledgeSource(name) {
+  return typeof name === 'string' && knowledgeSources.has(name.trim());
+}
+
+export function unregisterKnowledgeSource(name) {
+  return typeof name === 'string' &&
+    knowledgeSources.delete(name.trim());
+}
+
+function getBuiltInResults(query, language, limit) {
+  const baseLanguage = language === 'auto'
+    ? 'auto'
+    : language.split('-')[0].toLowerCase();
+
+  const results = [];
+
+  // Në gjuhën auto kërkojmë në të gjitha bazat.
+  if (baseLanguage === 'auto' || baseLanguage === 'sq') {
+    results.push(...searchAlbanianKnowledge(query, { limit }));
+  }
+
+  if (baseLanguage === 'auto' || baseLanguage === 'en') {
+    results.push(...searchEnglishKnowledge(query, { limit }));
+  }
+
+  if (baseLanguage === 'auto' || baseLanguage === 'fr') {
+    results.push(...searchFrenchKnowledge(query, { limit }));
+  }
+
+  // Njohuritë JavaScript mund të përdoren në çdo gjuhë.
+  results.push(...searchJavaScriptKnowledge(query, { limit }));
+
+  return results;
+}
+
 export async function searchKnowledge(query, options = {}) {
   const normalizedQuery = normalizeForSearch(query);
 
@@ -46,26 +80,29 @@ export async function searchKnowledge(query, options = {}) {
       query: '',
       results: [],
       sources: [],
+      errors: [],
       error: 'Shkruaj një pyetje për të kërkuar njohuri.'
     };
   }
 
-  const language = normalizeLanguageCode(
-    options.language || 'auto'
-  );
+  const language = normalizeLanguageCode(options.language || 'auto');
 
   const limit = Number.isInteger(options.limit)
     ? Math.max(1, Math.min(options.limit, 50))
     : 10;
 
-  const results = [];
+  const results = getBuiltInResults(
+    normalizedQuery,
+    language,
+    limit
+  );
+
   const errors = [];
 
   for (const [sourceName, provider] of knowledgeSources) {
     try {
       const response = await provider(normalizedQuery, {
         language,
-        baseLanguage: getBaseLanguage(language),
         metadata: options.metadata || {}
       });
 
@@ -79,18 +116,15 @@ export async function searchKnowledge(query, options = {}) {
         if (typeof item === 'string' && item.trim()) {
           results.push({
             content: item.trim(),
-            source: sourceName,
-            language
+            source: sourceName
           });
         } else if (
           item &&
-          typeof item === 'object' &&
           typeof item.content === 'string' &&
           item.content.trim()
         ) {
           results.push({
             ...item,
-            content: item.content.trim(),
             source: item.source || sourceName
           });
         }
@@ -105,40 +139,34 @@ export async function searchKnowledge(query, options = {}) {
     }
   }
 
+  const uniqueResults = [];
+  const seen = new Set();
+
+  for (const item of results) {
+    const key = normalizeForSearch(
+      `${item.title || ''} ${item.content || ''}`
+    );
+
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      uniqueResults.push(item);
+    }
+  }
+
+  const finalResults = uniqueResults.slice(0, limit);
+
   return {
     success: true,
     query: normalizedQuery,
     language,
-    results: results.slice(0, limit),
-    sources: [...new Set(results.map(item => item.source))],
+    results: finalResults,
+    sources: [...new Set(finalResults.map(item => item.source).filter(Boolean))],
     errors,
     metadata: {
       engine: 'xsus-knowledge-service',
+      builtInLanguages: ['sq', 'en', 'fr'],
       registeredSources: knowledgeSources.size,
-      resultCount: Math.min(results.length, limit)
+      resultCount: finalResults.length
     }
   };
-}
-
-/**
- * Kthen emrat e burimeve të regjistruara.
- */
-export function listKnowledgeSources() {
-  return [...knowledgeSources.keys()];
-}
-
-/**
- * Kontrollon nëse ekziston një burim.
- */
-export function hasKnowledgeSource(name) {
-  return typeof name === 'string' &&
-    knowledgeSources.has(name.trim());
-}
-
-/**
- * Heq një burim të regjistruar.
- */
-export function unregisterKnowledgeSource(name) {
-  return typeof name === 'string' &&
-    knowledgeSources.delete(name.trim());
 }
