@@ -1138,33 +1138,35 @@ function normalizeSqText(text) {
         .trim();
 }
 
-export function findSqAnswer(cleanQuery) {
-    if (!cleanQuery) return null;
+// Përgatitet vetëm një herë, jo në çdo pyetje.
+const normalizedSqEntries = Object.entries(sqKnowledge)
+    .map(([key, answer]) => ({
+        key: normalizeSqText(key),
+        answer
+    }))
+    .filter(item => item.key.length > 0)
+    .sort((a, b) => b.key.length - a.key.length)
+    .map(item => ({
+        ...item,
+        pattern: new RegExp(
+            `(^|\\s)${item.key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=\\s|$)`,
+            "u"
+        )
+    }));
 
+export function findSqAnswer(cleanQuery) {
     const query = normalizeSqText(cleanQuery);
 
-    // Fraza më të gjata kontrollohen të parat.
-    const entries = Object.entries(sqKnowledge)
-        .map(([key, answer]) => ({
-            key: normalizeSqText(key),
-            answer
-        }))
-        .filter(item => item.key.length > 0)
-        .sort((a, b) => b.key.length - a.key.length);
+    if (!query) return null;
 
-    for (const { key, answer } of entries) {
-        // Përputhje me frazën e plotë brenda pyetjes.
-        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const pattern = new RegExp(
-            `(^|\\s)${escapedKey}(?=\\s|$)`,
-            "u"
-        );
-
-        if (pattern.test(query)) {
-            return answer;
+    for (const item of normalizedSqEntries) {
+        if (item.pattern.test(query)) {
+            return item.answer;
         }
     }
 
     return null;
+}
+
 }
 
