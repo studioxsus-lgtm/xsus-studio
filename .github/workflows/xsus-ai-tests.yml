@@ -1,0 +1,34 @@
+
+name: XSUS AI Tests
+
+on:
+  push:
+    branches:
+      - feature/xsus-ai-core
+  pull_request:
+    branches:
+      - feature/xsus-ai-core
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run knowledge service tests
+        run: npx vitest run tests/unit/knowledge-service.test.js
