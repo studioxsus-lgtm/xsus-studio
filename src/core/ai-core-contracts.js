@@ -1,22 +1,22 @@
-export const XSUS_CORE_VERSION = '1.0.0';
+import { normalizeLanguageCode } from "../language/normalization.js";
+
+export const XSUS_CORE_VERSION = "1.0.0";
 
 export const SUPPORTED_LANGUAGES = Object.freeze([
-  'sq',
-  'en',
-  'fr'
+  "sq",
+  "en",
+  "fr"
 ]);
 
 export const REQUEST_TYPES = Object.freeze({
-  CHAT: 'chat',
-  KNOWLEDGE: 'knowledge',
-  TOOL: 'tool',
-  SYSTEM: 'system'
+  CHAT: "chat",
+  KNOWLEDGE: "knowledge",
+  TOOL: "tool",
+  SYSTEM: "system"
 });
 
-const VALID_LANGUAGE_PATTERN = /^(auto|[a-z]{2,3}(?:-[A-Z]{2})?)$/;
-
 function isPlainObject(value) {
-  if (value === null || typeof value !== 'object') {
+  if (value === null || typeof value !== "object") {
     return false;
   }
 
@@ -29,10 +29,31 @@ function normalizeObject(value) {
   return isPlainObject(value) ? { ...value } : {};
 }
 
-function createRequestId() {
+function normalizeLanguageOrThrow(language, errorMessage) {
+  if (typeof language !== "string") {
+    throw new TypeError(errorMessage);
+  }
+
+  const normalizedInput = language.trim();
+
+  if (!normalizedInput) {
+    throw new TypeError(errorMessage);
+  }
+
+  const normalizedLanguage = normalizeLanguageCode(normalizedInput);
+
   if (
-    typeof globalThis.crypto?.randomUUID === 'function'
+    normalizedLanguage === "auto" &&
+    normalizedInput.toLowerCase() !== "auto"
   ) {
+    throw new TypeError(errorMessage);
+  }
+
+  return normalizedLanguage;
+}
+
+function createRequestId() {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
     return globalThis.crypto.randomUUID();
   }
 
@@ -44,39 +65,37 @@ function createRequestId() {
 export function createAIRequest({
   id = null,
   query,
-  language = 'auto',
+  language = "auto",
   type = REQUEST_TYPES.CHAT,
   context = {},
   metadata = {}
 } = {}) {
-  if (typeof query !== 'string' || !query.trim()) {
-    throw new TypeError('Query duhet të jetë tekst jo bosh.');
+  if (typeof query !== "string" || !query.trim()) {
+    throw new TypeError("Query duhet të jetë tekst jo bosh.");
   }
 
-  if (
-    typeof language !== 'string' ||
-    !VALID_LANGUAGE_PATTERN.test(language)
-  ) {
-    throw new TypeError('Gjuha nuk është e vlefshme.');
-  }
+  const normalizedLanguage = normalizeLanguageOrThrow(
+    language,
+    "Gjuha nuk është e vlefshme."
+  );
 
   if (!Object.values(REQUEST_TYPES).includes(type)) {
-    throw new TypeError('Lloji i kërkesës nuk njihet.');
+    throw new TypeError("Lloji i kërkesës nuk njihet.");
   }
 
   if (
     id !== null &&
-    (typeof id !== 'string' || !id.trim())
+    (typeof id !== "string" || !id.trim())
   ) {
-    throw new TypeError('ID-ja e kërkesës nuk është e vlefshme.');
+    throw new TypeError(
+      "ID-ja e kërkesës nuk është e vlefshme."
+    );
   }
 
   return {
     id: id?.trim() || createRequestId(),
     query: query.trim(),
-    language: language.toLowerCase() === 'auto'
-      ? 'auto'
-      : language,
+    language: normalizedLanguage,
     type,
     context: normalizeObject(context),
     metadata: normalizeObject(metadata),
@@ -88,53 +107,55 @@ export function createAIRequest({
 export function createAIResponse({
   requestId = null,
   answer,
-  language = 'auto',
-  source = 'xsus-core',
+  language = "auto",
+  source = "xsus-core",
   confidence = null,
   metadata = {}
 } = {}) {
-  if (typeof answer !== 'string' || !answer.trim()) {
-    throw new TypeError('Answer duhet të jetë tekst jo bosh.');
+  if (typeof answer !== "string" || !answer.trim()) {
+    throw new TypeError(
+      "Answer duhet të jetë tekst jo bosh."
+    );
   }
 
-  if (
-    typeof language !== 'string' ||
-    !VALID_LANGUAGE_PATTERN.test(language)
-  ) {
-    throw new TypeError('Gjuha e përgjigjes nuk është e vlefshme.');
-  }
+  const normalizedLanguage = normalizeLanguageOrThrow(
+    language,
+    "Gjuha e përgjigjes nuk është e vlefshme."
+  );
 
-  if (typeof source !== 'string' || !source.trim()) {
-    throw new TypeError('Burimi i përgjigjes nuk është i vlefshëm.');
+  if (typeof source !== "string" || !source.trim()) {
+    throw new TypeError(
+      "Burimi i përgjigjes nuk është i vlefshëm."
+    );
   }
 
   if (
     requestId !== null &&
-    (typeof requestId !== 'string' || !requestId.trim())
+    (typeof requestId !== "string" || !requestId.trim())
   ) {
-    throw new TypeError('ID-ja e përgjigjes nuk është e vlefshme.');
+    throw new TypeError(
+      "ID-ja e përgjigjes nuk është e vlefshme."
+    );
   }
 
   if (
     confidence !== null &&
     (
-      typeof confidence !== 'number' ||
+      typeof confidence !== "number" ||
       !Number.isFinite(confidence) ||
       confidence < 0 ||
       confidence > 1
     )
   ) {
     throw new TypeError(
-      'Confidence duhet të jetë numër nga 0 deri në 1.'
+      "Confidence duhet të jetë numër nga 0 deri në 1."
     );
   }
 
   return {
     requestId: requestId?.trim() || null,
     answer: answer.trim(),
-    language: language.toLowerCase() === 'auto'
-      ? 'auto'
-      : language,
+    language: normalizedLanguage,
     source: source.trim(),
     confidence,
     metadata: normalizeObject(metadata),
