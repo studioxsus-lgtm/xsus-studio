@@ -1,27 +1,116 @@
-
 import {
   normalizeText,
   normalizeLanguageCode,
   getBaseLanguage
-} from './normalization.js';
+} from "./normalization.js";
 
-import { analyzeGrammar } from './grammar-engine.js';
+import { analyzeGrammar } from "./grammar-engine.js";
 
-/**
- * XSUS AI — International Language Engine
- * Baza fillestare për përpunimin shumëgjuhësh.
- */
+const SUPPORTED_LANGUAGES = Object.freeze([
+  "sq", "en", "fr", "de", "es", "it", "pt", "nl",
+  "ar", "zh", "ja", "ko", "ru"
+]);
+
+const LANGUAGE_SIGNATURES = [
+  {
+    language: "sq",
+    words: [" dhe ", " është ", " jane ", " janë ", " për ", " nje ", " një ", " që ", " çfarë ", " si quhet "]
+  },
+  {
+    language: "en",
+    words: [" the ", " is ", " are ", " and ", " what ", " how ", " why ", " you ", " this ", " with "]
+  },
+  {
+    language: "fr",
+    words: [" le ", " la ", " les ", " est ", " et ", " une ", " des ", " quoi ", " comment ", " pourquoi ", " je suis "]
+  },
+  {
+    language: "de",
+    words: [" der ", " die ", " das ", " und ", " ist ", " was ", " wie ", " nicht "]
+  },
+  {
+    language: "es",
+    words: [" el ", " los ", " las ", " que ", " es ", " una ", " como ", " por qué "]
+  },
+  {
+    language: "it",
+    words: [" il ", " gli ", " che ", " una ", " sono ", " come ", " perché "]
+  },
+  {
+    language: "pt",
+    words: [" não ", " uma ", " são ", " que ", " para ", " como ", " você "]
+  },
+  {
+    language: "nl",
+    words: [" het ", " een ", " van ", " zijn ", " niet ", " hoe ", " wat "]
+  }
+];
+
+function normalizeForDetection(value) {
+  return normalizeText(value)
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function detectScript(text) {
+  if (/[\u0600-\u06FF]/u.test(text)) return "ar";
+  if (/[\u4E00-\u9FFF]/u.test(text)) return "zh";
+  if (/[\u3040-\u30FF]/u.test(text)) return "ja";
+  if (/[\uAC00-\uD7AF]/u.test(text)) return "ko";
+  if (/[\u0400-\u04FF]/u.test(text)) return "ru";
+  return null;
+}
+
+function scoreLanguage(text, words, language) {
+  let score = 0;
+
+  for (const signature of LANGUAGE_SIGNATURES) {
+    if (signature.language !== language) continue;
+
+    for (const phrase of signature.words) {
+      const normalizedPhrase = normalizeForDetection(phrase);
+      if (!normalizedPhrase) continue;
+
+      const paddedText = ` ${text} `;
+      const paddedPhrase = ` ${normalizedPhrase} `;
+
+      if (paddedText.includes(paddedPhrase)) {
+        score += normalizedPhrase.includes(" ") ? 3 : 2;
+      }
+    }
+  }
+
+  const distinctiveWords = {
+    sq: ["shqip", "mirë", "faleminderit", "përshëndetje", "është", "çfarë"],
+    en: ["hello", "thanks", "please", "because", "which", "would"],
+    fr: ["bonjour", "merci", "pourquoi", "avec", "vous", "suis"]
+  };
+
+  for (const word of distinctiveWords[language] || []) {
+    if (words.includes(normalizeForDetection(word))) {
+      score += 3;
+    }
+  }
+
+  return score;
+}
 
 export function analyzeLanguage(input, options = {}) {
   const text = normalizeText(input);
-
   const requestedLanguage = normalizeLanguageCode(
-    options.language || 'auto'
+    options.language || "auto"
   );
 
-  const language = requestedLanguage === 'auto'
+  const detectedLanguage = requestedLanguage === "auto"
     ? detectLanguage(text)
-    : requestedLanguage;
+    : getBaseLanguage(requestedLanguage);
+
+  const language = detectedLanguage === "und"
+    ? "sq"
+    : detectedLanguage;
 
   return {
     text,
@@ -30,109 +119,104 @@ export function analyzeLanguage(input, options = {}) {
     isEmpty: text.length === 0,
     grammar: analyzeGrammar(text, language),
     metadata: {
-      engine: 'xsus-international-language-engine',
-      version: '1.0.0',
-      detectionMethod:
-        requestedLanguage === 'auto'
-          ? 'heuristic'
-          : 'provided'
+      engine: "xsus-international-language-engine",
+      version: "1.1.0",
+      detectionMethod: requestedLanguage === "auto"
+        ? "heuristic"
+        : "provided",
+      supportedLanguages: [...SUPPORTED_LANGUAGES]
     }
   };
 }
 
-/**
- * Zbulim fillestar me shenja karakteristike.
- * Nuk zëvendëson një model profesional të zbulimit të gjuhës.
- */
 export function detectLanguage(input) {
-  const text = normalizeText(input);
-
-  if (!text) {
-    return 'und';
+  if (typeof input !== "string" || !input.trim()) {
+    return "und";
   }
 
-  if (/[\u0600-\u06FF]/u.test(text)) return 'ar';
-  if (/[\u4E00-\u9FFF]/u.test(text)) return 'zh';
-  if (/[\u3040-\u30FF]/u.test(text)) return 'ja';
-  if (/[\uAC00-\uD7AF]/u.test(text)) return 'ko';
-  if (/[\u0400-\u04FF]/u.test(text)) return 'ru';
+  const text = normalizeText(input);
+  const scriptLanguage = detectScript(text);
 
-  const words = text.match(/\p{L}+/gu) || [];
-  const sample = ` ${words.join(' ')} `;
+  if (scriptLanguage) {
+    return scriptLanguage;
+  }
 
-  const signatures = [
-    {
-      language: 'sq',
-      words: [' dhe ', ' është ', ' për ', ' një ', ' që ']
-    },
-    {
-      language: 'en',
-      words: [' the ', ' is ', ' are ', ' and ', ' what ']
-    },
-    {
-      language: 'fr',
-      words: [' le ', ' la ', ' les ', ' est ', ' et ', ' une ']
-    },
-    {
-      language: 'de',
-      words: [' der ', ' die ', ' das ', ' und ', ' ist ']
-    },
-    {
-      language: 'es',
-      words: [' el ', ' los ', ' las ', ' que ', ' es ']
-    },
-    {
-      language: 'it',
-      words: [' il ', ' gli ', ' che ', ' una ', ' sono ']
-    },
-    {
-      language: 'pt',
-      words: [' não ', ' uma ', ' são ', ' que ', ' para ']
-    },
-    {
-      language: 'nl',
-      words: [' het ', ' een ', ' van ', ' zijn ', ' niet ']
-    }
+  const normalized = normalizeForDetection(text);
+
+  if (!normalized) {
+    return "und";
+  }
+
+  const words = normalized.split(/\s+/u);
+  const paddedText = ` ${normalized} `;
+
+  // Fjalë dhe shprehje karakteristike shqipe.
+  const albanianMarkers = [
+    " është ", " janë ", " çfarë ", " përshëndetje ",
+    " faleminderit ", " mirë ", " shumë ", " unë ",
+    " ju lutem ", " si quhesh ", " si jeni "
   ];
 
-  let bestLanguage = 'und';
-  let bestScore = 0;
+  if (
+    albanianMarkers.some(marker =>
+      paddedText.includes(normalizeForDetection(marker))
+    )
+  ) {
+    return "sq";
+  }
 
-  for (const signature of signatures) {
-    const score = signature.words.reduce(
-      (total, word) =>
-        total + (sample.includes(word) ? 1 : 0),
-      0
+  let bestLanguage = "und";
+  let bestScore = 0;
+  let secondBestScore = 0;
+
+  for (const signature of LANGUAGE_SIGNATURES) {
+    const score = scoreLanguage(
+      normalized,
+      words,
+      signature.language
     );
 
     if (score > bestScore) {
+      secondBestScore = bestScore;
       bestScore = score;
       bestLanguage = signature.language;
+    } else if (score > secondBestScore) {
+      secondBestScore = score;
     }
   }
 
-  return bestScore > 0 ? bestLanguage : 'und';
+  // Tekstet shumë të shkurtra janë të vështira për t'u klasifikuar.
+  if (words.length < 2 && bestScore < 3) {
+    return "und";
+  }
+
+  // Kur rezultatet janë tepër të afërta, mos pretendo siguri.
+  if (bestScore === 0 || bestScore === secondBestScore) {
+    return "und";
+  }
+
+  return bestLanguage;
 }
 
 export function getLanguageInfo(language) {
   const code = normalizeLanguageCode(language);
 
-  if (code === 'auto') {
+  if (code === "auto") {
     return {
       code,
-      baseLanguage: 'auto',
-      name: 'Automatic detection'
+      baseLanguage: "auto",
+      name: "Automatic detection"
     };
   }
 
   let name = code;
 
   try {
-    name = new Intl.DisplayNames(['en'], {
-      type: 'language'
+    name = new Intl.DisplayNames(["en"], {
+      type: "language"
     }).of(code) || code;
   } catch {
-    // Mbajmë kodin kur emri nuk mund të gjendet.
+    // Përdor kodin nëse emri nuk mund të përcaktohet.
   }
 
   return {
@@ -140,4 +224,8 @@ export function getLanguageInfo(language) {
     baseLanguage: getBaseLanguage(code),
     name
   };
+}
+
+export function getSupportedLanguages() {
+  return [...SUPPORTED_LANGUAGES];
 }
