@@ -12,10 +12,11 @@
   "scripts": {
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
+    "test:services": "vitest run services",
     "test:integration": "vitest run tests/integration",
-    "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "check": "vitest run"
+    "test:watch": "vitest",
+    "check": "npm test && npm run test:coverage"
   },
   "engines": {
     "node": ">=20"
