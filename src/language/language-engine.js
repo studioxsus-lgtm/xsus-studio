@@ -1,3 +1,4 @@
+// src/language/language-engine.js
 
 import {
   normalizeText,
@@ -7,7 +8,7 @@ import {
 
 import { analyzeGrammar } from "./grammar-engine.js";
 
-export const ENGINE_VERSION = "1.4.0";
+export const ENGINE_VERSION = "1.4.2";
 
 export const SUPPORTED_LANGUAGES = Object.freeze([
   "sq", "en", "fr", "de", "es", "it", "pt", "nl",
@@ -30,13 +31,13 @@ const LANGUAGE_INFO = Object.freeze({
   ru: { name: "Russian", nativeName: "Русский" }
 });
 
-const LANGUAGE_SIGNATURES = Object.freeze({
+const SIGNATURES = Object.freeze({
   sq: [
-    "pershendetje", "përshëndetje", "faleminderit",
-    "ju lutem", "si je", "si jeni", "cfare", "çfarë",
+    "përshëndetje", "pershendetje", "faleminderit",
+    "ju lutem", "si je", "si jeni", "çfarë", "cfare",
     "është", "shqip", "mirë", "mirupafshim",
-    "dua", "kam", "jemi", "jeni", "kanë",
-    "tungjatjeta", "natën e mirë", "mirëmëngjes"
+    "tungjatjeta", "mirëmëngjes", "natën e mirë",
+    "dua", "kam", "jemi", "jeni", "kanë", "unë"
   ],
   en: [
     "hello", "please", "thank you", "how are you",
@@ -45,7 +46,8 @@ const LANGUAGE_SIGNATURES = Object.freeze({
     "why is", "why are", "when is", "when are",
     "can you", "could you", "would you", "will you",
     "tell me", "explain", "good morning", "good evening",
-    "the", "this", "that", "with", "from", "have"
+    "the", "this", "that", "with", "from", "have",
+    "what", "which", "because", "your", "JavaScript"
   ],
   fr: [
     "bonjour", "bonsoir", "salut", "merci",
@@ -53,7 +55,8 @@ const LANGUAGE_SIGNATURES = Object.freeze({
     "comment allez vous", "comment vas tu",
     "qu'est ce que", "je suis", "vous êtes",
     "pourquoi", "avec", "une", "est", "les",
-    "bonne journée", "bonne nuit", "au revoir"
+    "bonne journée", "bonne nuit", "au revoir",
+    "comment", "vous", "nous", "mais"
   ],
   de: [
     "guten tag", "guten morgen", "guten abend",
@@ -84,36 +87,31 @@ const LANGUAGE_SIGNATURES = Object.freeze({
   ]
 });
 
-const DISTINCTIVE_MARKERS = Object.freeze({
-  sq: ["ë", "ç"],
-  fr: ["à", "â", "ê", "è", "é", "ù", "œ"],
-  de: ["ä", "ö", "ü", "ß"],
-  es: ["ñ", "¿", "¡"],
-  pt: ["ã", "õ"],
-  en: [],
-  it: [],
-  nl: [],
-  ar: [],
-  zh: [],
-  ja: [],
-  ko: [],
-  ru: []
+const DISTINCTIVE_PATTERNS = Object.freeze({
+  sq: /\b(çfarë|cfare|përshëndetje|pershendetje|faleminderit|shqip|mirupafshim|tungjatjeta)\b/u,
+  en: /\b(hello|thanks|please|because|would|which|their|they|your|what|where|when|who|why)\b/u,
+  fr: /\b(bonjour|bonsoir|merci|pourquoi|beaucoup|français|francais|aujourd'hui)\b/u,
+  de: /\b(danke|hallo|deutsch|nicht|ich|bitte|tschüss)\b/u,
+  es: /\b(hola|gracias|español|espanol|buenos días|buenas noches)\b/u,
+  it: /\b(ciao|grazie|italiano|buongiorno|arrivederci)\b/u,
+  pt: /\b(obrigado|obrigada|português|portugues|bom dia|tudo bem)\b/u,
+  nl: /\b(bedankt|nederlands|goedemorgen|tot ziens|alsjeblieft)\b/u
 });
 
-function safeNormalize(text) {
-  if (typeof text !== "string") return "";
+function safeNormalize(value) {
+  if (typeof value !== "string") return "";
 
   try {
-    const normalized = normalizeText(text);
-    return String(normalized ?? "").toLowerCase().trim();
+    return String(normalizeText(value) ?? "");
   } catch {
-    return text.toLowerCase().trim();
+    return value;
   }
 }
 
-export function normalizeForDetection(text) {
-  return safeNormalize(text)
+export function normalizeForDetection(value) {
+  return safeNormalize(value)
     .normalize("NFKC")
+    .toLocaleLowerCase("und")
     .replace(/[’‘]/gu, "'")
     .replace(/[“”]/gu, '"')
     .replace(/[-‐‑‒–—]/gu, " ")
@@ -123,164 +121,59 @@ export function normalizeForDetection(text) {
 }
 
 function containsPhrase(text, phrase) {
-  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-  return new RegExp(`(^|\\s)${escaped}(?=$|\\s)`, "u").test(text);
+  const normalizedPhrase = normalizeForDetection(phrase);
+  if (!normalizedPhrase) return false;
+
+  const escaped = normalizedPhrase.replace(
+    /[.*+?^${}()|[\]\\]/gu,
+    "\\$&"
+  );
+
+  return new RegExp(`(^|\\s)${escaped}(?=$|\\s)`, "u")
+    .test(text);
 }
 
 function detectScript(text) {
   if (/\p{Script=Arabic}/u.test(text)) return "ar";
 
-  // Hiragana/Katakana janë sinjale më të forta për japonishten
-  // sesa karakteret Han, të cilat përdoren edhe në kinezisht.
-  if (
-    /\p{Script=Hiragana}|\p{Script=Katakana}/u.test(text)
-  ) {
+  if (/\p{Script=Hiragana}|\p{Script=Katakana}/u.test(text)) {
     return "ja";
   }
 
   if (/\p{Script=Hangul}/u.test(text)) return "ko";
   if (/\p{Script=Cyrillic}/u.test(text)) return "ru";
-  if (/\p{Script=Han}/u.test(text)) return "zh";
+
+  if (/\p{Script=Han}/u.test(text)) {
+    // Shkrimi Han përdoret si në kinezisht, ashtu edhe në japonisht.
+    return "zh";
+  }
 
   return null;
 }
 
 function scoreLanguage(text, language) {
-  const signatures = LANGUAGE_SIGNATURES[language] || [];
   let score = 0;
 
-  for (const phrase of signatures) {
+  for (const phrase of SIGNATURES[language] ?? []) {
     if (containsPhrase(text, phrase)) {
       score += phrase.includes(" ") ? 3 : 1;
     }
   }
 
-  const markers = DISTINCTIVE_MARKERS[language] || [];
-
-  for (const marker of markers) {
-    if (text.includes(marker)) {
-      score += 2;
-    }
+  if (DISTINCTIVE_PATTERNS[language]?.test(text)) {
+    score += 4;
   }
 
   return score;
 }
 
-function detectAlbanian(text) {
-  const patterns = [
-    /\b(si je|si jeni|çfarë|cfare|faleminderit)\b/u,
-    /\b(ju lutem|mirëdita|mirupafshim)\b/u,
-    /\b(është|jam|jemi|jeni|kanë|kam)\b/u,
-    /\b(tungjatjeta|mirëmëngjes|natën e mirë)\b/u
-  ];
-
-  return patterns.some((pattern) => pattern.test(text));
-}
-
-function detectShortEnglish(text) {
-  const patterns = [
-    /^(what is|what are|how do|how does)\b/u,
-    /^(where is|where are|who is|who are)\b/u,
-    /^(why is|why are|when is|when are)\b/u,
-    /^(can you|could you|would you|will you)\b/u,
-    /^(tell me|explain|please explain)\b/u,
-    /^(how can|how to|what does|what did)\b/u
-  ];
-
-  return patterns.some((pattern) => pattern.test(text));
-}
-
-function detectShortFrench(text) {
-  const patterns = [
-    /^bonjour\b/u,
-    /^bonsoir\b/u,
-    /^salut\b/u,
-    /^merci\b/u,
-    /^comment allez vous\b/u,
-    /^comment vas tu\b/u,
-    /^qu'est ce que\b/u,
-    /^bonne journée\b/u,
-    /^bonne nuit\b/u,
-    /^au revoir\b/u
-  ];
-
-  return patterns.some((pattern) => pattern.test(text));
-}
-
-function detectShortGerman(text) {
-  return /^(guten tag|guten morgen|guten abend|danke|bitte|auf wiedersehen)\b/u
-    .test(text);
-}
-
-function detectShortSpanish(text) {
-  return /^(hola|gracias|buenos días|buenas noches|por favor|adiós)\b/u
-    .test(text);
-}
-
-function detectShortItalian(text) {
-  return /^(ciao|grazie|buongiorno|buonasera|per favore|arrivederci)\b/u
-    .test(text);
-}
-
-function detectShortPortuguese(text) {
-  return /^(olá|obrigado|obrigada|bom dia|boa noite|por favor|adeus)\b/u
-    .test(text);
-}
-
-function detectShortDutch(text) {
-  return /^(hallo|bedankt|goedemorgen|goedemiddag|tot ziens|alsjeblieft)\b/u
-    .test(text);
-}
-
-export function detectLanguage(input) {
-  const text = normalizeForDetection(input);
-
-  if (!text) return "und";
-
-  const scriptLanguage = detectScript(text);
-
-  if (scriptLanguage) {
-    return scriptLanguage;
-  }
-
-  if (detectAlbanian(text)) return "sq";
-  if (detectShortFrench(text)) return "fr";
-  if (detectShortEnglish(text)) return "en";
-  if (detectShortGerman(text)) return "de";
-  if (detectShortSpanish(text)) return "es";
-  if (detectShortItalian(text)) return "it";
-  if (detectShortPortuguese(text)) return "pt";
-  if (detectShortDutch(text)) return "nl";
-
-  const scores = SUPPORTED_LANGUAGES
-    .filter((language) => LANGUAGE_SIGNATURES[language])
-    .map((language) => ({
-      language,
-      score: scoreLanguage(text, language)
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  if (!scores.length || scores[0].score < 2) {
-    return "und";
-  }
-
-  if (
-    scores.length > 1 &&
-    scores[0].score === scores[1].score
-  ) {
-    return "und";
-  }
-
-  return scores[0].language;
-}
-
-function resolveLanguageCode(languageCode) {
-  if (typeof languageCode !== "string" || !languageCode.trim()) {
+function resolveLanguageCode(value) {
+  if (typeof value !== "string" || !value.trim()) {
     return null;
   }
 
   try {
-    const normalized = normalizeLanguageCode(languageCode);
+    const normalized = normalizeLanguageCode(value.trim());
     const base = getBaseLanguage(normalized);
 
     return SUPPORTED_LANGUAGES.includes(base) ? base : null;
@@ -289,18 +182,82 @@ function resolveLanguageCode(languageCode) {
   }
 }
 
+function detectStrongPhrase(text) {
+  const checks = [
+    ["sq", /\b(si je|si jeni|çfarë|cfare|faleminderit|ju lutem|mirupafshim)\b/u],
+    ["en", /^(what is|what are|how do|how does|where is|where are|who is|who are|why is|why are|when is|when are|can you|could you|would you|will you|tell me|explain|please explain|how can|how to|what does|what did)\b/u],
+    ["fr", /^(bonjour|bonsoir|salut|merci|comment allez vous|comment vas tu|qu'est ce que|bonne journée|bonne nuit|au revoir)\b/u],
+    ["de", /^(guten tag|guten morgen|guten abend|danke|bitte|auf wiedersehen)\b/u],
+    ["es", /^(hola|gracias|buenos días|buenas noches|por favor|adiós)\b/u],
+    ["it", /^(ciao|grazie|buongiorno|buonasera|per favore|arrivederci)\b/u],
+    ["pt", /^(olá|obrigado|obrigada|bom dia|boa noite|por favor|adeus)\b/u],
+    ["nl", /^(hallo|bedankt|goedemorgen|goedemiddag|tot ziens|alsjeblieft)\b/u]
+  ];
+
+  for (const [language, pattern] of checks) {
+    if (pattern.test(text)) return language;
+  }
+
+  return null;
+}
+
+export function detectLanguage(input) {
+  const text = normalizeForDetection(input);
+
+  if (!text) return "und";
+
+  const scriptLanguage = detectScript(text);
+  if (scriptLanguage) return scriptLanguage;
+
+  // Kontrollohet fillimisht shqipja për të shmangur
+  // ngatërrimin me fjalët e përbashkëta ndërkombëtare.
+  if (DISTINCTIVE_PATTERNS.sq.test(text)) return "sq";
+
+  const strongMatch = detectStrongPhrase(text);
+  if (strongMatch) return strongMatch;
+
+  const scores = Object.keys(SIGNATURES)
+    .map((language) => ({
+      language,
+      score: scoreLanguage(text, language)
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  const best = scores[0];
+  const second = scores[1];
+
+  if (!best || best.score === 0) return "und";
+
+  if (second && best.score === second.score) {
+    return "und";
+  }
+
+  const wordCount = text.split(/\s+/u).length;
+
+  if (wordCount <= 3 && best.score < 3) {
+    return "und";
+  }
+
+  return best.language;
+}
+
 export function analyzeLanguage(input, options = {}) {
-  const text = typeof input === "string" ? input : "";
-  const detectedLanguage = detectLanguage(text);
+  const text = safeNormalize(input);
+  const isEmpty = text.trim().length === 0;
 
-  const requestedLanguage =
-    resolveLanguageCode(options?.language);
+  const detectedLanguage = isEmpty
+    ? "und"
+    : detectLanguage(text);
 
-  const language = requestedLanguage || detectedLanguage;
+  const requestedLanguage = resolveLanguageCode(
+    options?.language
+  );
+
+  const language = requestedLanguage ?? detectedLanguage;
 
   let grammar = null;
 
-  if (text.trim() && language !== "und") {
+  if (!isEmpty && language !== "und") {
     try {
       grammar = analyzeGrammar(text, language);
     } catch {
@@ -311,10 +268,20 @@ export function analyzeLanguage(input, options = {}) {
   return {
     text,
     language,
+    baseLanguage: language === "und"
+      ? "und"
+      : getBaseLanguage(language),
     detectedLanguage,
     requestedLanguage,
+    isEmpty,
     isSupported: SUPPORTED_LANGUAGES.includes(language),
-    grammar
+    grammar,
+    metadata: {
+      engine: "xsus-international-language-engine",
+      version: ENGINE_VERSION,
+      detectionMethod: requestedLanguage ? "provided" : "heuristic",
+      supportedLanguages: [...SUPPORTED_LANGUAGES]
+    }
   };
 }
 
@@ -325,14 +292,24 @@ export function getLanguageInfo(languageCode) {
 
   return {
     code,
+    baseLanguage: code,
+    language: code,
     ...LANGUAGE_INFO[code],
     supported: true
   };
 }
 
+// Kthen kode të thjeshta, për pajtueshmëri me API-n publike:
+// ["sq", "en", "fr", ...]
 export function getSupportedLanguages() {
+  return [...SUPPORTED_LANGUAGES];
+}
+
+// API shtesë për ndërfaqet që kanë nevojë për emra të plotë.
+export function getSupportedLanguageDetails() {
   return SUPPORTED_LANGUAGES.map((code) => ({
     code,
-    ...LANGUAGE_INFO[code]
+    ...LANGUAGE_INFO[code],
+    supported: true
   }));
 }
