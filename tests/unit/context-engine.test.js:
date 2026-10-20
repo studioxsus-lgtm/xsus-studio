@@ -1,0 +1,76 @@
+
+import { describe, expect, it } from "vitest";
+import {
+  createContext,
+  buildContextPrompt,
+} from "../../src/core/context-engine.js";
+
+describe("XSUS Context Engine", () => {
+  it("krijon kontekst në shqip", () => {
+    const context = createContext({
+      userMessage: "Çfarë është inteligjenca artificiale?",
+    });
+
+    expect(context.language).toBe("sq");
+    expect(context.userMessage).toContain("inteligjenca artificiale");
+  });
+
+  it("ruan historikun e vlefshëm", () => {
+    const context = createContext({
+      messages: [
+        { role: "user", content: "Përshëndetje" },
+        { role: "assistant", content: "Përshëndetje!" },
+      ],
+      userMessage: "Si quhet platforma?",
+    });
+
+    expect(context.history).toHaveLength(2);
+    expect(context.metadata.hasPreviousContext).toBe(true);
+  });
+
+  it("heq mesazhet e pavlefshme", () => {
+    const context = createContext({
+      messages: [
+        { role: "tool", content: "rezultat" },
+        { role: "user", content: "" },
+        { role: "assistant", content: "Përshëndetje" },
+      ],
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toHaveLength(1);
+  });
+
+  it("kufizon historikun në 20 mesazhe", () => {
+    const messages = Array.from({ length: 25 }, (_, index) => ({
+      role: "user",
+      content: `Mesazhi ${index}`,
+    }));
+
+    const context = createContext({
+      messages,
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toHaveLength(20);
+    expect(context.history[0].content).toBe("Mesazhi 5");
+  });
+
+  it("ndërton udhëzimet për gjuhën e zgjedhur", () => {
+    const context = createContext({
+      userMessage: "Hello",
+      language: "en",
+    });
+
+    const prompt = buildContextPrompt(context);
+
+    expect(prompt.instructions.join(" ")).toContain("anglisht");
+    expect(prompt.messages.at(-1).content).toBe("Hello");
+  });
+
+  it("refuzon mesazhin bosh", () => {
+    expect(() => createContext({ userMessage: " " })).toThrow(
+      "userMessage duhet të jetë tekst jo bosh."
+    );
+  });
+});
