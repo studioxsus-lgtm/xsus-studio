@@ -58,4 +58,16 @@ describe('XSUS Knowledge Service', () => {
 
     expect(listKnowledgeSources()).not.toContain(sourceName);
   });
+
+  test('kthen burimin dhe përmbajtjen e rezultateve', async () => {
+    const result = await searchKnowledge('JavaScript', {
+      language: 'en',
+      limit: 5
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.results.length).toBeGreaterThan(0);
+    expect(result.results[0]).toHaveProperty('content');
+    expect(result.results[0]).toHaveProperty('source');
+  });
 });
