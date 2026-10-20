@@ -7,7 +7,7 @@ import {
 
 import { analyzeGrammar } from "./grammar-engine.js";
 
-const ENGINE_VERSION = "1.2.0";
+const ENGINE_VERSION = "1.3.0";
 
 const SUPPORTED_LANGUAGES = Object.freeze([
   "sq", "en", "fr", "de", "es", "it", "pt", "nl",
@@ -16,14 +16,15 @@ const SUPPORTED_LANGUAGES = Object.freeze([
 
 const LANGUAGE_SIGNATURES = Object.freeze({
   sq: [
-    "dhe", "eshte", "jane", "per", "nje", "që", "cfare",
+    "dhe", "eshte", "jane", "per", "nje", "cfare",
     "si quhet", "faleminderit", "pershendetje", "shume",
     "mire", "une", "ju lutem", "nuk e di", "si jeni"
   ],
   en: [
     "the", "is", "are", "and", "what", "how", "why",
     "you", "this", "with", "hello", "thanks", "please",
-    "because", "which", "would", "have", "your"
+    "because", "which", "would", "have", "your",
+    "javascript", "explain", "tell me", "can you"
   ],
   fr: [
     "le", "la", "les", "est", "et", "une", "des", "quoi",
@@ -33,7 +34,7 @@ const LANGUAGE_SIGNATURES = Object.freeze({
   de: [
     "der", "die", "das", "und", "ist", "was", "wie",
     "nicht", "hallo", "danke", "ich", "bin", "mit",
-    "ein", "eine", "auf", "für"
+    "ein", "eine", "auf", "fuer"
   ],
   es: [
     "el", "los", "las", "que", "es", "una", "como",
@@ -60,11 +61,13 @@ const LANGUAGE_SIGNATURES = Object.freeze({
 const DISTINCTIVE_MARKERS = Object.freeze({
   sq: [
     "shqip", "faleminderit", "pershendetje", "cfare",
-    "quhesh", "quhet", "jane", "eshte", "pershendetje"
+    "quhesh", "quhet", "jane", "eshte", "shqiptar"
   ],
   en: [
     "hello", "thanks", "please", "because", "would",
-    "which", "they", "their", "there", "about"
+    "which", "they", "their", "there", "about",
+    "javascript", "what is", "how do", "how does",
+    "who is", "where is", "can you", "tell me"
   ],
   fr: [
     "bonjour", "merci", "pourquoi", "aujourd hui",
@@ -96,7 +99,7 @@ function normalizeForDetection(value) {
   return normalizeText(String(value ?? ""))
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
-    .toLocaleLowerCase("und")
+    .toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -129,13 +132,35 @@ function scoreLanguage(normalizedText, language) {
 
   for (const phrase of signatures) {
     if (containsPhrase(normalizedText, phrase)) {
-      score += phrase.includes(" ") ? 3 : 1;
+      score += phrase.includes(" ") ? 3 : 2;
     }
   }
 
   for (const phrase of distinctive) {
     if (containsPhrase(normalizedText, phrase)) {
       score += 4;
+    }
+  }
+
+  // Modele të zakonshme të pyetjeve në anglisht.
+  if (language === "en") {
+    const englishPatterns = [
+      /^what is\b/,
+      /^what are\b/,
+      /^how do\b/,
+      /^how does\b/,
+      /^why is\b/,
+      /^who is\b/,
+      /^where is\b/,
+      /^when is\b/,
+      /^can you\b/,
+      /^could you\b/,
+      /^tell me\b/,
+      /^explain\b/
+    ];
+
+    if (englishPatterns.some(pattern => pattern.test(normalizedText))) {
+      score += 6;
     }
   }
 
@@ -187,25 +212,6 @@ export function detectLanguage(input) {
 
   const words = normalized.split(/\s+/u);
 
-  // Tekstet tepër të shkurtra zakonisht nuk japin prova të mjaftueshme.
-  if (words.length === 1) {
-    const singleWordScores = Object.keys(LANGUAGE_SIGNATURES)
-      .map(language => ({
-        language,
-        score: scoreLanguage(normalized, language)
-      }))
-      .sort((a, b) => b.score - a.score);
-
-    if (
-      singleWordScores[0]?.score >= 4 &&
-      singleWordScores[0].score > (singleWordScores[1]?.score || 0)
-    ) {
-      return singleWordScores[0].language;
-    }
-
-    return "und";
-  }
-
   const scores = Object.keys(LANGUAGE_SIGNATURES)
     .map(language => ({
       language,
@@ -220,12 +226,29 @@ export function detectLanguage(input) {
     return "und";
   }
 
-  // Shmang vendime të pasigurta kur gjuhët kanë pikëzim të ngjashëm.
+  // Për fjalë të vetme kërkojmë një shenjë dalluese të fortë.
+  if (words.length === 1) {
+    return best.score >= 4 &&
+      best.score > (second?.score || 0)
+      ? best.language
+      : "und";
+  }
+
+  // Teksti i shkurtër "What is JavaScript?" duhet të njihet si anglisht.
+  if (
+    best.language === "en" &&
+    /^(what is|what are|how do|how does|why is|who is|where is|when is|can you|could you|tell me|explain)\b/u
+      .test(normalized)
+  ) {
+    return "en";
+  }
+
+  // Mos vendosim gjuhë kur pikëzimet janë të barabarta.
   if (second && best.score === second.score) {
     return "und";
   }
 
-  // Për tekst të shkurtër kërkojmë më shumë prova.
+  // Tekstet e shkurtra pa prova të mjaftueshme mbeten të paidentifikuara.
   if (words.length <= 3 && best.score < 4) {
     return "und";
   }
@@ -265,8 +288,8 @@ export function analyzeLanguage(input, options = {}) {
       confidence: text.length === 0
         ? 0
         : detectedLanguage === "und"
-          ? 0
-          : 1,
+          ? null
+          : null,
       supportedLanguages: [...SUPPORTED_LANGUAGES]
     }
   };
