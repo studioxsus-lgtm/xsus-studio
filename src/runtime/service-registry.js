@@ -1,20 +1,24 @@
 
 const services = new Map();
 
+function normalizeServiceName(name) {
+  if (typeof name !== "string" || !name.trim()) {
+    throw new TypeError(
+      "Emri i shërbimit duhet të jetë tekst jo bosh."
+    );
+  }
+
+  return name.trim();
+}
+
 export function registerService(name, service) {
-  if (typeof name !== 'string' || !name.trim()) {
+  const key = normalizeServiceName(name);
+
+  if (typeof service !== "function") {
     throw new TypeError(
-      'Emri i shërbimit duhet të jetë tekst.'
+      `Shërbimi "${key}" duhet të jetë funksion.`
     );
   }
-
-  if (typeof service !== 'function') {
-    throw new TypeError(
-      `Shërbimi "${name}" duhet të jetë funksion.`
-    );
-  }
-
-  const key = name.trim();
 
   if (services.has(key)) {
     throw new Error(
@@ -24,19 +28,30 @@ export function registerService(name, service) {
 
   services.set(key, service);
 
+  // Lejon çregjistrimin vetëm të këtij regjistrimi.
   return () => {
     if (services.get(key) === service) {
-      services.delete(key);
+      return services.delete(key);
     }
+
+    return false;
   };
 }
 
 export function getService(name) {
-  return services.get(name) ?? null;
+  if (typeof name !== "string" || !name.trim()) {
+    return null;
+  }
+
+  return services.get(name.trim()) ?? null;
 }
 
 export function hasService(name) {
-  return services.has(name);
+  if (typeof name !== "string" || !name.trim()) {
+    return false;
+  }
+
+  return services.has(name.trim());
 }
 
 export function listServices() {
@@ -44,7 +59,11 @@ export function listServices() {
 }
 
 export function unregisterService(name) {
-  return services.delete(name);
+  if (typeof name !== "string" || !name.trim()) {
+    return false;
+  }
+
+  return services.delete(name.trim());
 }
 
 export function clearServices() {
