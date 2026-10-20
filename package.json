@@ -14,12 +14,14 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "check": "vitest run"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.4",
     "vitest": "^3.2.4"
   }
 }
