@@ -1,3 +1,6 @@
+// src/knowledge/knowledge-service.js
+// XSUS AI — Knowledge Service
+// Version: 1.1.1
 
 import {
   normalizeForSearch,
@@ -17,7 +20,7 @@ const knowledgeSources = new Map();
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 const ENGINE_NAME = "xsus-knowledge-service";
-const ENGINE_VERSION = "1.1.0";
+const ENGINE_VERSION = "1.1.1";
 
 function getBaseLanguage(language) {
   if (language === "auto") return "auto";
@@ -95,17 +98,37 @@ function matchesKnowledgeDomain(item, requestedDomain) {
     item.domain.trim().toLowerCase() === requestedDomain;
 }
 
+/**
+ * Krijon një çelës unik për deduplikimin.
+ *
+ * Prioriteti:
+ * 1. Titulli dhe përmbajtja e normalizuar.
+ * 2. Burimi dhe ID-ja, kur mungojnë të dyja fushat tekstuale.
+ *
+ * ID-të e ndryshme nuk duhet të pengojnë heqjen
+ * e dublikatave me të njëjtin titull dhe përmbajtje.
+ */
 function getResultKey(item) {
-  const id = typeof item.id === "string" ? item.id.trim() : "";
-  const source = typeof item.source === "string" ? item.source : "";
+  const title = normalizeForSearch(item.title || "");
+  const content = normalizeForSearch(item.content || "");
 
-  if (id) {
-    return `${source}:${id}`.toLowerCase();
+  if (title || content) {
+    return `content:${title}|${content}`;
   }
 
-  return normalizeForSearch(
-    `${item.title || ""} ${item.content || ""}`
-  );
+  const id = typeof item.id === "string"
+    ? item.id.trim().toLowerCase()
+    : "";
+
+  const source = typeof item.source === "string"
+    ? item.source.trim().toLowerCase()
+    : "";
+
+  if (id) {
+    return `id:${source}:${id}`;
+  }
+
+  return "";
 }
 
 function scoreResult(item, query) {
@@ -339,6 +362,7 @@ export async function searchKnowledge(query, options = {}) {
   }
 
   const uniqueResults = deduplicateResults(results);
+
   const domainResults = uniqueResults.filter(
     item => matchesKnowledgeDomain(item, requestedDomain)
   );
