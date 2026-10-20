@@ -25,10 +25,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
+
+      - name: Verify project files
+        run: |
+          pwd
+          ls -la
+          test -f package.json
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run knowledge service tests
-        run: npx vitest run tests/unit/knowledge-service.test.js
+      - name: Run unit tests
+        run: npm test
