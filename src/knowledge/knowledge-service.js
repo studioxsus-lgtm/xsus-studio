@@ -5,6 +5,7 @@ import {
 } from "../language/normalization.js";
 
 import { validateKnowledgeEntry } from "./knowledge-entry.js";
+import { hasKnowledgeDomain } from "./knowledge-domain-registry.js";
 
 import { searchAlbanianKnowledge } from "./sq-knowledge.js";
 import { searchEnglishKnowledge } from "./en-knowledge.js";
@@ -15,6 +16,8 @@ const knowledgeSources = new Map();
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
+const ENGINE_NAME = "xsus-knowledge-service";
+const ENGINE_VERSION = "1.1.0";
 
 function getBaseLanguage(language) {
   if (language === "auto") return "auto";
@@ -70,9 +73,7 @@ function normalizeResult(item, fallbackSource) {
       : fallbackSource
   };
 
-  // Metadata e standardit të njohurive mbetet opsionale
-  // për të mos prishur bazat ekzistuese.
-  if (typeof result.id === "string" && result.id.trim()) {
+  if (typeof result.id === "string") {
     result.id = result.id.trim();
   }
 
@@ -80,7 +81,18 @@ function normalizeResult(item, fallbackSource) {
     result.language = result.language.trim().toLowerCase();
   }
 
+  if (typeof result.domain === "string") {
+    result.domain = result.domain.trim().toLowerCase();
+  }
+
   return result;
+}
+
+function matchesKnowledgeDomain(item, requestedDomain) {
+  if (!requestedDomain) return true;
+
+  return typeof item.domain === "string" &&
+    item.domain.trim().toLowerCase() === requestedDomain;
 }
 
 function getResultKey(item) {
@@ -142,8 +154,6 @@ function scoreResult(item, query) {
     score += 3;
   }
 
-  // Njohuritë e verifikuara marrin përparësi të kufizuar,
-  // por vetëm kur plotësojnë standardin e hyrjes.
   if (item.status === "verified") score += 2;
   else if (item.status === "reviewed") score += 1;
 
@@ -182,12 +192,29 @@ function getBuiltInResults(query, language, limit) {
     results.push(...searchFrenchKnowledge(query, { limit }));
   }
 
-  // Njohuritë e JavaScript janë të kërkueshme në çdo gjuhë.
+  // Njohuritë për JavaScript kërkohen në çdo gjuhë.
   results.push(...searchJavaScriptKnowledge(query, { limit }));
 
   return results
     .map(item => normalizeResult(item, "built-in-knowledge"))
     .filter(Boolean);
+}
+
+function createFailureResult(query, language, error) {
+  return {
+    success: false,
+    query,
+    language,
+    results: [],
+    sources: [],
+    errors: [],
+    error,
+    metadata: {
+      engine: ENGINE_NAME,
+      version: ENGINE_VERSION,
+      resultCount: 0
+    }
+  };
 }
 
 export function registerKnowledgeSource(name, provider) {
@@ -240,22 +267,27 @@ export async function searchKnowledge(query, options = {}) {
   );
 
   if (!normalizedQuery) {
-    return {
-      success: false,
-      query: "",
+    return createFailureResult(
+      "",
       language,
-      results: [],
-      sources: [],
-      errors: [],
-      error: "Shkruaj një pyetje për të kërkuar njohuri.",
-      metadata: {
-        engine: "xsus-knowledge-service",
-        resultCount: 0
-      }
-    };
+      "Shkruaj një pyetje për të kërkuar njohuri."
+    );
   }
 
   const limit = normalizeLimit(options.limit);
+
+  const requestedDomain = typeof options.domain === "string"
+    ? options.domain.trim().toLowerCase()
+    : "";
+
+  if (requestedDomain && !hasKnowledgeDomain(requestedDomain)) {
+    return createFailureResult(
+      normalizedQuery,
+      language,
+      `Fusha "${requestedDomain}" nuk njihet nga XSUS AI.`
+    );
+  }
+
   const results = getBuiltInResults(
     normalizedQuery,
     language,
@@ -270,6 +302,7 @@ export async function searchKnowledge(query, options = {}) {
       const response = await provider(normalizedQuery, {
         language,
         limit,
+        domain: requestedDomain || undefined,
         metadata: { ...providerMetadata }
       });
 
@@ -306,8 +339,11 @@ export async function searchKnowledge(query, options = {}) {
   }
 
   const uniqueResults = deduplicateResults(results);
+  const domainResults = uniqueResults.filter(
+    item => matchesKnowledgeDomain(item, requestedDomain)
+  );
 
-  const rankedResults = uniqueResults
+  const rankedResults = domainResults
     .map((item, index) => ({
       item,
       index,
@@ -328,15 +364,19 @@ export async function searchKnowledge(query, options = {}) {
     ],
     errors,
     metadata: {
-      engine: "xsus-knowledge-service",
+      engine: ENGINE_NAME,
+      version: ENGINE_VERSION,
       schemaVersion: "1.0.0",
+      requestedDomain: requestedDomain || null,
       builtInLanguages: ["sq", "en", "fr"],
       registeredSources: knowledgeSources.size,
       totalUniqueResults: uniqueResults.length,
+      domainResultCount: domainResults.length,
       resultCount: finalResults.length,
       rankingEnabled: true,
       deduplicationEnabled: true,
-      standardValidationAvailable: typeof validateKnowledgeEntry === "function"
+      standardValidationAvailable:
+        typeof validateKnowledgeEntry === "function"
     }
   };
 }
