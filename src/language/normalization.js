@@ -1,29 +1,26 @@
-
-/**
- * XSUS AI — International Text Normalization
- * Mbështet shkrime dhe kode gjuhësore ndërkombëtare.
- */
+const DEFAULT_LANGUAGE = "auto";
 
 export function normalizeText(value) {
-  if (typeof value !== 'string') {
-    return '';
+  if (typeof value !== "string") {
+    return "";
   }
 
   return value
-    .normalize('NFC')
-    .toLowerCase()
+    .normalize("NFC")
     .replace(/[’‘]/g, "'")
     .replace(/[“”]/g, '"')
-    .replace(/[‐‑‒–—]/g, '-')
-    .replace(/\s+/g, ' ')
+    .replace(/[‐‑‒–—]/g, "-")
+    .replace(/\u00A0/g, " ")
+    .replace(/\s+/gu, " ")
     .trim();
 }
 
 export function normalizeForSearch(value) {
   return normalizeText(value)
-    .normalize('NFKC')
-    .replace(/[^\p{L}\p{M}\p{N}\s'-]/gu, ' ')
-    .replace(/\s+/g, ' ')
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}\s'-]/gu, " ")
+    .replace(/\s+/gu, " ")
     .trim();
 }
 
@@ -34,33 +31,35 @@ export function tokenizeText(value) {
     return [];
   }
 
-  return normalized.split(/\s+/u);
+  return normalized.match(
+    /[\p{L}\p{M}\p{N}]+(?:['’-][\p{L}\p{M}\p{N}]+)*/gu
+  ) || [];
 }
 
 export function normalizeLanguageCode(value) {
-  if (typeof value !== 'string') {
-    return 'auto';
+  if (typeof value !== "string") {
+    return DEFAULT_LANGUAGE;
   }
 
-  const code = value.trim();
+  const input = value.trim();
 
-  if (!code || code.toLowerCase() === 'auto') {
-    return 'auto';
+  if (!input || input.toLowerCase() === "auto") {
+    return DEFAULT_LANGUAGE;
   }
 
   try {
-    return Intl.getCanonicalLocales(code)[0] || 'auto';
+    return Intl.getCanonicalLocales(input)[0] || DEFAULT_LANGUAGE;
   } catch {
-    return 'auto';
+    return DEFAULT_LANGUAGE;
   }
 }
 
 export function getBaseLanguage(value) {
   const locale = normalizeLanguageCode(value);
 
-  if (locale === 'auto') {
-    return 'auto';
+  if (locale === DEFAULT_LANGUAGE) {
+    return DEFAULT_LANGUAGE;
   }
 
-  return locale.split('-')[0].toLowerCase();
+  return locale.split("-")[0].toLowerCase();
 }
