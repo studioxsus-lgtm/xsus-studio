@@ -1,8 +1,7 @@
-
 import {
-  REQUEST_STATUS,
   createAIRequest,
-  createAIResponse
+  createAIResponse,
+  SUPPORTED_LANGUAGES
 } from "./ai-core-contracts.js";
 
 import {
@@ -12,8 +11,6 @@ import {
 
 import { searchKnowledge } from "../knowledge/knowledge-service.js";
 import { detectLanguage } from "../language/language-engine.js";
-
-const SUPPORTED_LANGUAGES = ["sq", "en", "fr"];
 
 function detectRequestLanguage(query, requestedLanguage) {
   const requested = typeof requestedLanguage === "string"
@@ -25,12 +22,15 @@ function detectRequestLanguage(query, requestedLanguage) {
   }
 
   const detected = detectLanguage(query);
-  return SUPPORTED_LANGUAGES.includes(detected) ? detected : "sq";
+
+  return SUPPORTED_LANGUAGES.includes(detected)
+    ? detected
+    : "sq";
 }
 
 function getFallbackAnswer(language) {
   const answers = {
-    sq: "Nuk gjeta informacion të mjaftueshëm në bazën e njohurive për këtë pyetje. Provo ta formulosh ndryshe ose shto njohuri për këtë temë.",
+    sq: "Nuk gjeta informacion të mjaftueshëm në bazën e njohurive. Provo ta formulosh pyetjen ndryshe ose shto njohuri për këtë temë.",
     en: "I couldn't find enough information in the knowledge base. Try rephrasing your question or adding knowledge about this topic.",
     fr: "Je n’ai pas trouvé suffisamment d’informations dans la base de connaissances. Reformulez la question ou ajoutez des connaissances sur ce sujet."
   };
@@ -70,27 +70,54 @@ function buildMetadata(language, results, knowledge) {
     sources: Array.isArray(knowledge?.sources)
       ? knowledge.sources
       : [],
-    engine: "xsus-ai-core"
+    engine: "xsus-ai-core",
+    version: "1.0.0"
+  };
+}
+
+function createErrorResponse(requestId, message, language = "auto") {
+  return {
+    requestId,
+    answer: "",
+    language,
+    source: "xsus-ai-core",
+    confidence: null,
+    metadata: {
+      engine: "xsus-ai-core"
+    },
+    error: message,
+    timestamp: new Date().toISOString(),
+    version: "1.0.0"
   };
 }
 
 export async function processAIRequest(input = {}) {
   let requestId = null;
+  let language = "auto";
 
   try {
+    if (
+      !input ||
+      typeof input !== "object" ||
+      Array.isArray(input)
+    ) {
+      return createErrorResponse(
+        null,
+        "Kërkesa duhet të jetë një objekt i vlefshëm."
+      );
+    }
+
+    if (typeof input.query !== "string" || !input.query.trim()) {
+      return createErrorResponse(
+        typeof input.id === "string" ? input.id : null,
+        "Shkruaj një pyetje për XSUS AI."
+      );
+    }
+
     const request = createAIRequest(input);
     requestId = request.id;
 
-    if (!request.query) {
-      return createAIResponse({
-        requestId,
-        status: REQUEST_STATUS.ERROR,
-        answer: "",
-        error: "Shkruaj një pyetje për XSUS AI."
-      });
-    }
-
-    const language = detectRequestLanguage(
+    language = detectRequestLanguage(
       request.query,
       request.language
     );
@@ -101,29 +128,32 @@ export async function processAIRequest(input = {}) {
     });
 
     if (!isValidRequestContext(context)) {
-      return createAIResponse({
+      return createErrorResponse(
         requestId,
-        status: REQUEST_STATUS.ERROR,
-        error: "Konteksti i kërkesës nuk është i vlefshëm."
-      });
+        "Konteksti i kërkesës nuk është i vlefshëm.",
+        language
+      );
     }
 
-    const knowledge = await searchKnowledge(context.query, {
-      language: context.language,
-      limit: 5,
-      metadata: {
-        requestId: context.requestId,
-        moduleName: context.moduleName
+    const knowledge = await searchKnowledge(
+      context.query,
+      {
+        language: context.language,
+        limit: 5,
+        metadata: {
+          requestId: context.requestId,
+          moduleName: context.moduleName
+        }
       }
-    });
+    );
 
     if (!knowledge || knowledge.success === false) {
-      return createAIResponse({
+      return createErrorResponse(
         requestId,
-        status: REQUEST_STATUS.ERROR,
-        error: knowledge?.error ||
-          "Kërkimi në bazën e njohurive dështoi."
-      });
+        knowledge?.error ||
+          "Kërkimi në bazën e njohurive dështoi.",
+        language
+      );
     }
 
     const results = Array.isArray(knowledge)
@@ -133,26 +163,22 @@ export async function processAIRequest(input = {}) {
         : [];
 
     const answer = buildAnswer(results);
-    const metadata = buildMetadata(
-      context.language,
-      results,
-      knowledge
-    );
 
     return createAIResponse({
       requestId,
-      status: REQUEST_STATUS.SUCCESS,
-      answer: answer || getFallbackAnswer(context.language),
+      answer: answer || getFallbackAnswer(language),
+      language,
       source: "xsus-knowledge-service",
-      metadata
+      confidence: null,
+      metadata: buildMetadata(language, results, knowledge)
     });
   } catch (error) {
-    return createAIResponse({
+    return createErrorResponse(
       requestId,
-      status: REQUEST_STATUS.ERROR,
-      error: error instanceof Error
+      error instanceof Error
         ? error.message
-        : "Ndodhi një gabim gjatë përpunimit të kërkesës."
-    });
+        : "Ndodhi një gabim gjatë përpunimit të kërkesës.",
+      language
+    );
   }
 }
