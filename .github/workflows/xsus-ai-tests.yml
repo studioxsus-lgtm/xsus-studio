@@ -15,24 +15,28 @@ permissions:
 
 jobs:
   test:
-    name: Run unit tests and coverage
+    name: Run tests and coverage
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           package-manager-cache: false
 
       - name: Verify project files
         run: |
-          pwd
-          ls -la
+          node --version
+          npm --version
           test -f package.json
+          test -f vite.config.js
+          test -d services
+          test -d tests/unit
+          echo "Project files verified."
 
       - name: Install dependencies
         run: npm install
