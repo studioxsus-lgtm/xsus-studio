@@ -1,13 +1,15 @@
+// XSUS AI Core — Public API
 
 export {
   processAIRequest
 } from "./core/ai-core.js";
 
 export {
+  XSUS_CORE_VERSION,
+  SUPPORTED_LANGUAGES,
+  REQUEST_TYPES,
   createAIRequest,
-  createAIResponse,
-  REQUEST_STATUS,
-  SUPPORTED_LANGUAGES
+  createAIResponse
 } from "./core/ai-core-contracts.js";
 
 export {
@@ -18,7 +20,8 @@ export {
 export {
   analyzeLanguage,
   detectLanguage,
-  getLanguageInfo
+  getLanguageInfo,
+  getSupportedLanguages
 } from "./language/language-engine.js";
 
 export {
