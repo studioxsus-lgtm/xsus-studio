@@ -1,4 +1,3 @@
-
 export const XSUS_CORE_VERSION = '1.0.0';
 
 export const SUPPORTED_LANGUAGES = Object.freeze([
@@ -14,6 +13,34 @@ export const REQUEST_TYPES = Object.freeze({
   SYSTEM: 'system'
 });
 
+const VALID_LANGUAGE_PATTERN = /^(auto|[a-z]{2,3}(?:-[A-Z]{2})?)$/;
+
+function isPlainObject(value) {
+  if (value === null || typeof value !== 'object') {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
+function normalizeObject(value) {
+  return isPlainObject(value) ? { ...value } : {};
+}
+
+function createRequestId() {
+  if (
+    typeof globalThis.crypto?.randomUUID === 'function'
+  ) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `xsus-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 10)}`;
+}
+
 export function createAIRequest({
   id = null,
   query,
@@ -28,7 +55,7 @@ export function createAIRequest({
 
   if (
     typeof language !== 'string' ||
-    !/^(auto|[a-z]{2,3}(?:-[A-Z]{2})?)$/.test(language)
+    !VALID_LANGUAGE_PATTERN.test(language)
   ) {
     throw new TypeError('Gjuha nuk është e vlefshme.');
   }
@@ -37,13 +64,22 @@ export function createAIRequest({
     throw new TypeError('Lloji i kërkesës nuk njihet.');
   }
 
+  if (
+    id !== null &&
+    (typeof id !== 'string' || !id.trim())
+  ) {
+    throw new TypeError('ID-ja e kërkesës nuk është e vlefshme.');
+  }
+
   return {
-    id: id || createRequestId(),
+    id: id?.trim() || createRequestId(),
     query: query.trim(),
-    language,
+    language: language.toLowerCase() === 'auto'
+      ? 'auto'
+      : language,
     type,
-    context: isPlainObject(context) ? context : {},
-    metadata: isPlainObject(metadata) ? metadata : {},
+    context: normalizeObject(context),
+    metadata: normalizeObject(metadata),
     timestamp: new Date().toISOString(),
     version: XSUS_CORE_VERSION
   };
@@ -62,6 +98,24 @@ export function createAIResponse({
   }
 
   if (
+    typeof language !== 'string' ||
+    !VALID_LANGUAGE_PATTERN.test(language)
+  ) {
+    throw new TypeError('Gjuha e përgjigjes nuk është e vlefshme.');
+  }
+
+  if (typeof source !== 'string' || !source.trim()) {
+    throw new TypeError('Burimi i përgjigjes nuk është i vlefshëm.');
+  }
+
+  if (
+    requestId !== null &&
+    (typeof requestId !== 'string' || !requestId.trim())
+  ) {
+    throw new TypeError('ID-ja e përgjigjes nuk është e vlefshme.');
+  }
+
+  if (
     confidence !== null &&
     (
       typeof confidence !== 'number' ||
@@ -70,39 +124,21 @@ export function createAIResponse({
       confidence > 1
     )
   ) {
-    throw new TypeError('Confidence duhet të jetë nga 0 deri në 1.');
+    throw new TypeError(
+      'Confidence duhet të jetë numër nga 0 deri në 1.'
+    );
   }
 
   return {
-    requestId,
+    requestId: requestId?.trim() || null,
     answer: answer.trim(),
-    language,
-    source,
+    language: language.toLowerCase() === 'auto'
+      ? 'auto'
+      : language,
+    source: source.trim(),
     confidence,
-    metadata: isPlainObject(metadata) ? metadata : {},
+    metadata: normalizeObject(metadata),
     timestamp: new Date().toISOString(),
     version: XSUS_CORE_VERSION
   };
-}
-
-function isPlainObject(value) {
-  if (value === null || typeof value !== 'object') {
-    return false;
-  }
-
-  const prototype = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
-}
-
-function createRequestId() {
-  if (
-    globalThis.crypto &&
-    typeof globalThis.crypto.randomUUID === 'function'
-  ) {
-    return globalThis.crypto.randomUUID();
-  }
-
-  return `xsus-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 10)}`;
 }
