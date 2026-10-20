@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   test:
-    name: Run unit tests
+    name: Run unit tests and coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -36,5 +36,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run unit tests
+      - name: Run all tests
         run: npm test
+
+      - name: Run test coverage
+        run: npm run test:coverage
