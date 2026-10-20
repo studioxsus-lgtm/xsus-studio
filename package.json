@@ -1,0 +1,25 @@
+
+{
+  "name": "xsus-ai-core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Bërthama shumëgjuhëshe e inteligjencës artificiale për XSUS Studio",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:watch": "vitest",
+    "check": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
