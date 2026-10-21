@@ -7,7 +7,7 @@ import {
 
 import { analyzeGrammar } from "./grammar-engine.js";
 
-export const ENGINE_VERSION = "1.4.1";
+export const ENGINE_VERSION = "1.4.2";
 
 export const SUPPORTED_LANGUAGES = Object.freeze([
   "sq", "en", "fr", "de", "es", "it", "pt", "nl",
@@ -32,11 +32,12 @@ const LANGUAGE_INFO = Object.freeze({
 
 const LANGUAGE_SIGNATURES = Object.freeze({
   sq: [
-    "pershendetje", "përshëndetje", "faleminderit",
-    "ju lutem", "si je", "si jeni", "cfare", "çfarë",
-    "është", "shqip", "mirë", "mirupafshim",
-    "dua", "kam", "jemi", "jeni", "kanë",
-    "tungjatjeta", "mirëmëngjes", "natën e mirë"
+    "përshëndetje", "pershendetje", "faleminderit",
+    "ju lutem", "si je", "si jeni", "çfarë", "cfare",
+    "është", "eshte", "shqip", "mirë", "mire",
+    "mirupafshim", "dua", "kam", "jemi", "jeni",
+    "kanë", "kane", "tungjatjeta", "mirëmëngjes",
+    "natën e mirë"
   ],
   en: [
     "hello", "please", "thank you", "how are you",
@@ -45,13 +46,16 @@ const LANGUAGE_SIGNATURES = Object.freeze({
     "why is", "why are", "when is", "when are",
     "can you", "could you", "would you", "will you",
     "tell me", "explain", "good morning", "good evening",
+    "this is", "that is", "it is", "i am", "you are",
+    "we are", "they are", "i need", "i want", "how to",
+    "what does", "what did", "in the", "of the",
     "the", "this", "that", "with", "from", "have"
   ],
   fr: [
     "bonjour", "bonsoir", "salut", "merci",
     "s'il vous plaît", "s'il vous plait",
     "comment allez vous", "comment vas tu",
-    "qu'est ce que", "je suis", "vous êtes",
+    "qu'est ce que", "je suis", "vous êtes", "vous etes",
     "pourquoi", "avec", "une", "est", "les",
     "bonne journée", "bonne nuit", "au revoir"
   ],
@@ -63,7 +67,7 @@ const LANGUAGE_SIGNATURES = Object.freeze({
   ],
   es: [
     "hola", "gracias", "por favor", "cómo estás",
-    "qué es", "buenos días", "buenas noches",
+    "que es", "qué es", "buenos días", "buenas noches",
     "porque", "con", "para", "está", "adiós"
   ],
   it: [
@@ -125,21 +129,25 @@ export function normalizeForDetection(text) {
 
 function containsPhrase(text, phrase) {
   const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-  return new RegExp(`(^|\\s)${escaped}(?=$|\\s)`, "u")
-    .test(text);
+
+  return new RegExp(
+    `(^|\\s)${escaped}(?=$|\\s)`,
+    "u"
+  ).test(text);
 }
 
 function detectScript(text) {
   if (/\p{Script=Arabic}/u.test(text)) return "ar";
 
-  if (
-    /\p{Script=Hiragana}|\p{Script=Katakana}/u.test(text)
-  ) {
+  if (/[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(text)) {
     return "ja";
   }
 
   if (/\p{Script=Hangul}/u.test(text)) return "ko";
   if (/\p{Script=Cyrillic}/u.test(text)) return "ru";
+
+  // Han mund të jetë kinezisht ose japonisht.
+  // Japonezishtja me Hiragana/Katakana kapet më sipër.
   if (/\p{Script=Han}/u.test(text)) return "zh";
 
   return null;
@@ -151,6 +159,7 @@ function scoreLanguage(text, language) {
 
   for (const phrase of signatures) {
     if (containsPhrase(text, phrase)) {
+      // Shprehjet me shumë fjalë janë më specifike.
       score += phrase.includes(" ") ? 3 : 1;
     }
   }
@@ -166,7 +175,7 @@ function detectAlbanian(text) {
   const patterns = [
     /\b(si je|si jeni|çfarë|cfare|faleminderit)\b/u,
     /\b(ju lutem|mirëdita|mirupafshim)\b/u,
-    /\b(është|jam|jemi|jeni|kanë|kam)\b/u,
+    /\b(është|eshte|jam|jemi|jeni|kanë|kane|kam)\b/u,
     /\b(tungjatjeta|mirëmëngjes|natën e mirë)\b/u
   ];
 
@@ -174,7 +183,7 @@ function detectAlbanian(text) {
 }
 
 function detectShortEnglish(text) {
-  return /^(what is|what are|how do|how does|where is|where are|who is|who are|why is|why are|when is|when are|can you|could you|would you|will you|tell me|explain|please explain|how can|how to|what does|what did)\b/u
+  return /^(hello|hi|hey|please|thanks|thank you|good morning|good evening|good night|what is|what are|how do|how does|where is|where are|who is|who are|why is|why are|when is|when are|can you|could you|would you|will you|tell me|explain|please explain|how can|how to|what does|what did|this is|that is|it is|i am|you are|we are|they are|i need|i want)\b/u
     .test(text);
 }
 
@@ -216,6 +225,7 @@ export function detectLanguage(input) {
   const scriptLanguage = detectScript(text);
   if (scriptLanguage) return scriptLanguage;
 
+  // Përputhje specifike për fjali të shkurtra.
   if (detectAlbanian(text)) return "sq";
   if (detectShortFrench(text)) return "fr";
   if (detectShortEnglish(text)) return "en";
