@@ -1,19 +1,27 @@
 
 /**
  * XSUS AI — Knowledge Entry Standard
- * Version: 1.1.2
+ * Version: 1.2.1
  *
  * Standard i përbashkët për njohuritë e të gjitha fushave.
  * Ofron validim, normalizim dhe hyrje të pandryshueshme.
  */
 
 import {
+  hasKnowledgeDomain
+} from "./knowledge-domain-registry.js";
+
+import {
   normalizeLanguageCode as normalizeLanguageCodeBase,
   getBaseLanguage
 } from "../language/normalization.js";
 
-export const KNOWLEDGE_SCHEMA_VERSION = "1.1.2";
+export const KNOWLEDGE_SCHEMA_VERSION = "1.2.1";
 
+/**
+ * Fushat bazë për përputhshmëri me kodin ekzistues.
+ * Për validim dinamik përdoret hasKnowledgeDomain().
+ */
 export const KNOWLEDGE_DOMAINS = Object.freeze([
   "general",
   "programming",
@@ -125,6 +133,14 @@ function assertAllowed(value, allowed, label) {
   );
 }
 
+function validateDomainId(domain) {
+  if (!hasKnowledgeDomain(domain)) {
+    throw new TypeError(
+      `Fusha "${domain}" nuk njihet nga XSUS AI.`
+    );
+  }
+}
+
 /**
  * Krijon një hyrje të standardizuar të njohurive.
  */
@@ -166,7 +182,8 @@ export function createKnowledgeEntry(input = {}) {
     DEFAULTS.domain
   ).toLowerCase();
 
-  assertAllowed(domain, KNOWLEDGE_DOMAINS, "Fusha");
+  // Regjistri qendror kontrollon edhe fushat dinamike.
+  validateDomainId(domain);
 
   const difficulty = cleanString(
     input.difficulty,
