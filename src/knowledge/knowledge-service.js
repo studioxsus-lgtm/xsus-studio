@@ -1,7 +1,6 @@
-
 /**
  * XSUS AI — Knowledge Service
- * Version: 1.1.1
+ * Version: 1.1.2
  *
  * Përgjegjësitë:
  * - Kërkimi në bazat e integruara të njohurive.
@@ -32,7 +31,7 @@ const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 
 const ENGINE_NAME = "xsus-knowledge-service";
-const ENGINE_VERSION = "1.1.1";
+const ENGINE_VERSION = "1.1.2";
 const SCHEMA_VERSION = "1.0.0";
 
 const BUILT_IN_LANGUAGES = Object.freeze([
@@ -50,7 +49,11 @@ function getBaseLanguage(language) {
 }
 
 function normalizeLimit(value) {
-  if (value === undefined || value === null || value === "") {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
     return DEFAULT_LIMIT;
   }
 
@@ -99,7 +102,8 @@ function normalizeResult(item, fallbackSource) {
       ? item.title.trim()
       : "",
     content: item.content.trim(),
-    source: typeof item.source === "string" && item.source.trim()
+    source: typeof item.source === "string" &&
+      item.source.trim()
       ? item.source.trim()
       : fallbackSource
   };
@@ -119,44 +123,26 @@ function normalizeResult(item, fallbackSource) {
   return result;
 }
 
+/**
+ * Kontrollon strukturën minimale të një rezultati.
+ *
+ * Burimet shtesë nuk detyrohen të japin të gjitha
+ * fushat opsionale të skemës së plotë.
+ *
+ * Validimi i plotë i hyrjeve të njohurive mbetet
+ * përgjegjësi e modulit knowledge-entry.js.
+ */
 function isValidKnowledgeResult(item) {
-  if (!item || typeof item !== "object") {
-    return false;
-  }
-
   if (
-    typeof item.content !== "string" ||
-    !item.content.trim()
+    !item ||
+    typeof item !== "object" ||
+    Array.isArray(item)
   ) {
     return false;
   }
 
-  // Lejon rezultatet e normalizuara minimale.
-  // Nëse validator-i mbështet skemën e plotë,
-  // kontrolli shtesë përdoret vetëm kur ekziston.
-  try {
-    if (typeof validateKnowledgeEntry === "function") {
-      const validation = validateKnowledgeEntry(item);
-
-      if (validation === false) {
-        return false;
-      }
-
-      if (
-        validation &&
-        typeof validation === "object" &&
-        validation.valid === false
-      ) {
-        return false;
-      }
-    }
-  } catch {
-    // Mos lejo që një hyrje e papërshtatshme të
-    // rrëzojë kërkimin e gjithë bazës së njohurive.
-    return false;
-  }
-
-  return true;
+  return typeof item.content === "string" &&
+    item.content.trim().length > 0;
 }
 
 function matchesKnowledgeDomain(item, requestedDomain) {
@@ -193,7 +179,9 @@ function scoreResult(item, query) {
   if (!normalizedQuery) return 0;
 
   const queryTokens = [
-    ...new Set(normalizedQuery.split(/\s+/u).filter(Boolean))
+    ...new Set(
+      normalizedQuery.split(/\s+/u).filter(Boolean)
+    )
   ];
 
   const titleTokens = new Set(
@@ -221,8 +209,13 @@ function scoreResult(item, query) {
   }
 
   for (const token of queryTokens) {
-    if (titleTokens.has(token)) matchedTitleTokens += 1;
-    if (contentTokens.has(token)) matchedContentTokens += 1;
+    if (titleTokens.has(token)) {
+      matchedTitleTokens += 1;
+    }
+
+    if (contentTokens.has(token)) {
+      matchedContentTokens += 1;
+    }
   }
 
   score += matchedTitleTokens * 3;
@@ -242,8 +235,11 @@ function scoreResult(item, query) {
     score += 3;
   }
 
-  if (item.status === "verified") score += 2;
-  else if (item.status === "reviewed") score += 1;
+  if (item.status === "verified") {
+    score += 2;
+  } else if (item.status === "reviewed") {
+    score += 1;
+  }
 
   return score;
 }
@@ -264,7 +260,12 @@ function deduplicateResults(results) {
   return uniqueResults;
 }
 
-function safelySearchBuiltIn(searchFunction, query, limit, source) {
+function safelySearchBuiltIn(
+  searchFunction,
+  query,
+  limit,
+  source
+) {
   try {
     const results = searchFunction(query, { limit });
 
@@ -274,7 +275,7 @@ function safelySearchBuiltIn(searchFunction, query, limit, source) {
 
     return results
       .map(item => normalizeResult(item, source))
-      .filter(item => item && isValidKnowledgeResult(item));
+      .filter(isValidKnowledgeResult);
   } catch {
     // Dështimi i një baze të integruar nuk duhet
     // të ndalojë kërkimin në bazat e tjera.
@@ -361,17 +362,23 @@ function normalizeProviderError(error) {
 
 export function registerKnowledgeSource(name, provider) {
   if (typeof name !== "string" || !name.trim()) {
-    throw new TypeError("Emri i burimit duhet të jetë tekst.");
+    throw new TypeError(
+      "Emri i burimit duhet të jetë tekst."
+    );
   }
 
   if (typeof provider !== "function") {
-    throw new TypeError("Burimi duhet të jetë funksion.");
+    throw new TypeError(
+      "Burimi duhet të jetë funksion."
+    );
   }
 
   const key = name.trim();
 
   if (knowledgeSources.has(key)) {
-    throw new Error(`Burimi "${key}" është regjistruar tashmë.`);
+    throw new Error(
+      `Burimi "${key}" është regjistruar tashmë.`
+    );
   }
 
   knowledgeSources.set(key, provider);
@@ -448,6 +455,7 @@ export async function searchKnowledge(query, options = {}) {
   );
 
   const errors = [];
+
   const providerMetadata = normalizeMetadata(
     safeOptions.metadata
   );
