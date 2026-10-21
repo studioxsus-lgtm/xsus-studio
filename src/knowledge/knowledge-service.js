@@ -1,6 +1,17 @@
-// src/knowledge/knowledge-service.js
-// XSUS AI — Knowledge Service
-// Version: 1.1.1
+
+/**
+ * XSUS AI — Knowledge Service
+ * Version: 1.1.1
+ *
+ * Përgjegjësitë:
+ * - Kërkimi në bazat e integruara të njohurive.
+ * - Regjistrimi i burimeve shtesë.
+ * - Normalizimi, validimi dhe deduplikimi.
+ * - Renditja e rezultateve sipas relevancës.
+ * - Filtrimi sipas gjuhës dhe fushës.
+ * - Izolimi i gabimeve të burimeve.
+ * - Metadata të qëndrueshme për XSUS AI Core.
+ */
 
 import {
   normalizeForSearch,
@@ -19,12 +30,23 @@ const knowledgeSources = new Map();
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
+
 const ENGINE_NAME = "xsus-knowledge-service";
 const ENGINE_VERSION = "1.1.1";
+const SCHEMA_VERSION = "1.0.0";
+
+const BUILT_IN_LANGUAGES = Object.freeze([
+  "sq",
+  "en",
+  "fr"
+]);
 
 function getBaseLanguage(language) {
   if (language === "auto") return "auto";
-  return language.split("-")[0].toLowerCase();
+
+  return typeof language === "string"
+    ? language.split("-")[0].toLowerCase()
+    : "auto";
 }
 
 function normalizeLimit(value) {
@@ -34,9 +56,14 @@ function normalizeLimit(value) {
 
   const parsed = Number(value);
 
-  if (!Number.isFinite(parsed)) return DEFAULT_LIMIT;
+  if (!Number.isFinite(parsed)) {
+    return DEFAULT_LIMIT;
+  }
 
-  return Math.max(1, Math.min(Math.floor(parsed), MAX_LIMIT));
+  return Math.max(
+    1,
+    Math.min(Math.floor(parsed), MAX_LIMIT)
+  );
 }
 
 function normalizeMetadata(metadata) {
@@ -51,6 +78,7 @@ function normalizeResult(item, fallbackSource) {
   if (typeof item === "string" && item.trim()) {
     return {
       content: item.trim(),
+      title: "",
       source: fallbackSource
     };
   }
@@ -91,6 +119,46 @@ function normalizeResult(item, fallbackSource) {
   return result;
 }
 
+function isValidKnowledgeResult(item) {
+  if (!item || typeof item !== "object") {
+    return false;
+  }
+
+  if (
+    typeof item.content !== "string" ||
+    !item.content.trim()
+  ) {
+    return false;
+  }
+
+  // Lejon rezultatet e normalizuara minimale.
+  // Nëse validator-i mbështet skemën e plotë,
+  // kontrolli shtesë përdoret vetëm kur ekziston.
+  try {
+    if (typeof validateKnowledgeEntry === "function") {
+      const validation = validateKnowledgeEntry(item);
+
+      if (validation === false) {
+        return false;
+      }
+
+      if (
+        validation &&
+        typeof validation === "object" &&
+        validation.valid === false
+      ) {
+        return false;
+      }
+    }
+  } catch {
+    // Mos lejo që një hyrje e papërshtatshme të
+    // rrëzojë kërkimin e gjithë bazës së njohurive.
+    return false;
+  }
+
+  return true;
+}
+
 function matchesKnowledgeDomain(item, requestedDomain) {
   if (!requestedDomain) return true;
 
@@ -98,16 +166,6 @@ function matchesKnowledgeDomain(item, requestedDomain) {
     item.domain.trim().toLowerCase() === requestedDomain;
 }
 
-/**
- * Krijon një çelës unik për deduplikimin.
- *
- * Prioriteti:
- * 1. Titulli dhe përmbajtja e normalizuar.
- * 2. Burimi dhe ID-ja, kur mungojnë të dyja fushat tekstuale.
- *
- * ID-të e ndryshme nuk duhet të pengojnë heqjen
- * e dublikatave me të njëjtin titull dhe përmbajtje.
- */
 function getResultKey(item) {
   const title = normalizeForSearch(item.title || "");
   const content = normalizeForSearch(item.content || "");
@@ -124,11 +182,7 @@ function getResultKey(item) {
     ? item.source.trim().toLowerCase()
     : "";
 
-  if (id) {
-    return `id:${source}:${id}`;
-  }
-
-  return "";
+  return id ? `id:${source}:${id}` : "";
 }
 
 function scoreResult(item, query) {
@@ -142,18 +196,29 @@ function scoreResult(item, query) {
     ...new Set(normalizedQuery.split(/\s+/u).filter(Boolean))
   ];
 
-  const titleTokens = new Set(title.split(/\s+/u).filter(Boolean));
-  const contentTokens = new Set(content.split(/\s+/u).filter(Boolean));
+  const titleTokens = new Set(
+    title.split(/\s+/u).filter(Boolean)
+  );
+
+  const contentTokens = new Set(
+    content.split(/\s+/u).filter(Boolean)
+  );
 
   let score = 0;
   let matchedTitleTokens = 0;
   let matchedContentTokens = 0;
 
-  if (title === normalizedQuery) score += 12;
-  else if (title.includes(normalizedQuery)) score += 8;
+  if (title === normalizedQuery) {
+    score += 12;
+  } else if (title.includes(normalizedQuery)) {
+    score += 8;
+  }
 
-  if (content === normalizedQuery) score += 10;
-  else if (content.includes(normalizedQuery)) score += 5;
+  if (content === normalizedQuery) {
+    score += 10;
+  } else if (content.includes(normalizedQuery)) {
+    score += 5;
+  }
 
   for (const token of queryTokens) {
     if (titleTokens.has(token)) matchedTitleTokens += 1;
@@ -199,28 +264,72 @@ function deduplicateResults(results) {
   return uniqueResults;
 }
 
+function safelySearchBuiltIn(searchFunction, query, limit, source) {
+  try {
+    const results = searchFunction(query, { limit });
+
+    if (!Array.isArray(results)) {
+      return [];
+    }
+
+    return results
+      .map(item => normalizeResult(item, source))
+      .filter(item => item && isValidKnowledgeResult(item));
+  } catch {
+    // Dështimi i një baze të integruar nuk duhet
+    // të ndalojë kërkimin në bazat e tjera.
+    return [];
+  }
+}
+
 function getBuiltInResults(query, language, limit) {
   const baseLanguage = getBaseLanguage(language);
   const results = [];
 
   if (baseLanguage === "auto" || baseLanguage === "sq") {
-    results.push(...searchAlbanianKnowledge(query, { limit }));
+    results.push(
+      ...safelySearchBuiltIn(
+        searchAlbanianKnowledge,
+        query,
+        limit,
+        "built-in-sq-knowledge"
+      )
+    );
   }
 
   if (baseLanguage === "auto" || baseLanguage === "en") {
-    results.push(...searchEnglishKnowledge(query, { limit }));
+    results.push(
+      ...safelySearchBuiltIn(
+        searchEnglishKnowledge,
+        query,
+        limit,
+        "built-in-en-knowledge"
+      )
+    );
   }
 
   if (baseLanguage === "auto" || baseLanguage === "fr") {
-    results.push(...searchFrenchKnowledge(query, { limit }));
+    results.push(
+      ...safelySearchBuiltIn(
+        searchFrenchKnowledge,
+        query,
+        limit,
+        "built-in-fr-knowledge"
+      )
+    );
   }
 
   // Njohuritë për JavaScript kërkohen në çdo gjuhë.
-  results.push(...searchJavaScriptKnowledge(query, { limit }));
+  results.push(
+    ...safelySearchBuiltIn(
+      searchJavaScriptKnowledge,
+      query,
+      limit,
+      "built-in-javascript-knowledge"
+    )
+  );
 
-  return results
-    .map(item => normalizeResult(item, "built-in-knowledge"))
-    .filter(Boolean);
+  return results;
 }
 
 function createFailureResult(query, language, error) {
@@ -235,9 +344,19 @@ function createFailureResult(query, language, error) {
     metadata: {
       engine: ENGINE_NAME,
       version: ENGINE_VERSION,
-      resultCount: 0
+      schemaVersion: SCHEMA_VERSION,
+      resultCount: 0,
+      totalUniqueResults: 0,
+      rankingEnabled: true,
+      deduplicationEnabled: true
     }
   };
+}
+
+function normalizeProviderError(error) {
+  return error instanceof Error
+    ? error.message
+    : "Gabim gjatë kërkimit në burimin shtesë.";
 }
 
 export function registerKnowledgeSource(name, provider) {
@@ -279,13 +398,20 @@ export function unregisterKnowledgeSource(name) {
 }
 
 export async function searchKnowledge(query, options = {}) {
+  const safeOptions = options &&
+    typeof options === "object" &&
+    !Array.isArray(options)
+    ? options
+    : {};
+
   const normalizedQuery = normalizeForSearch(
     typeof query === "string" ? query : ""
   );
 
   const language = normalizeLanguageCode(
-    typeof options.language === "string" && options.language.trim()
-      ? options.language
+    typeof safeOptions.language === "string" &&
+    safeOptions.language.trim()
+      ? safeOptions.language
       : "auto"
   );
 
@@ -297,13 +423,17 @@ export async function searchKnowledge(query, options = {}) {
     );
   }
 
-  const limit = normalizeLimit(options.limit);
+  const limit = normalizeLimit(safeOptions.limit);
 
-  const requestedDomain = typeof options.domain === "string"
-    ? options.domain.trim().toLowerCase()
-    : "";
+  const requestedDomain =
+    typeof safeOptions.domain === "string"
+      ? safeOptions.domain.trim().toLowerCase()
+      : "";
 
-  if (requestedDomain && !hasKnowledgeDomain(requestedDomain)) {
+  if (
+    requestedDomain &&
+    !hasKnowledgeDomain(requestedDomain)
+  ) {
     return createFailureResult(
       normalizedQuery,
       language,
@@ -318,7 +448,9 @@ export async function searchKnowledge(query, options = {}) {
   );
 
   const errors = [];
-  const providerMetadata = normalizeMetadata(options.metadata);
+  const providerMetadata = normalizeMetadata(
+    safeOptions.metadata
+  );
 
   for (const [sourceName, provider] of knowledgeSources) {
     try {
@@ -336,9 +468,15 @@ export async function searchKnowledge(query, options = {}) {
           : [];
 
       for (const item of items) {
-        const normalizedItem = normalizeResult(item, sourceName);
+        const normalizedItem = normalizeResult(
+          item,
+          sourceName
+        );
 
-        if (normalizedItem) {
+        if (
+          normalizedItem &&
+          isValidKnowledgeResult(normalizedItem)
+        ) {
           results.push(normalizedItem);
         }
       }
@@ -354,17 +492,15 @@ export async function searchKnowledge(query, options = {}) {
     } catch (error) {
       errors.push({
         source: sourceName,
-        error: error instanceof Error
-          ? error.message
-          : "Gabim gjatë kërkimit."
+        error: normalizeProviderError(error)
       });
     }
   }
 
   const uniqueResults = deduplicateResults(results);
 
-  const domainResults = uniqueResults.filter(
-    item => matchesKnowledgeDomain(item, requestedDomain)
+  const domainResults = uniqueResults.filter(item =>
+    matchesKnowledgeDomain(item, requestedDomain)
   );
 
   const rankedResults = domainResults
@@ -373,7 +509,9 @@ export async function searchKnowledge(query, options = {}) {
       index,
       score: scoreResult(item, normalizedQuery)
     }))
-    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .sort((a, b) =>
+      b.score - a.score || a.index - b.index
+    )
     .map(entry => entry.item);
 
   const finalResults = rankedResults.slice(0, limit);
@@ -384,15 +522,19 @@ export async function searchKnowledge(query, options = {}) {
     language,
     results: finalResults,
     sources: [
-      ...new Set(finalResults.map(item => item.source).filter(Boolean))
+      ...new Set(
+        finalResults
+          .map(item => item.source)
+          .filter(Boolean)
+      )
     ],
     errors,
     metadata: {
       engine: ENGINE_NAME,
       version: ENGINE_VERSION,
-      schemaVersion: "1.0.0",
+      schemaVersion: SCHEMA_VERSION,
       requestedDomain: requestedDomain || null,
-      builtInLanguages: ["sq", "en", "fr"],
+      builtInLanguages: [...BUILT_IN_LANGUAGES],
       registeredSources: knowledgeSources.size,
       totalUniqueResults: uniqueResults.length,
       domainResultCount: domainResults.length,
@@ -404,3 +546,5 @@ export async function searchKnowledge(query, options = {}) {
     }
   };
 }
+
+export default searchKnowledge;
