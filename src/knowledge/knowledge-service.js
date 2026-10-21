@@ -1,3 +1,4 @@
+
 /**
  * XSUS AI — Knowledge Service
  * Version: 1.1.1
@@ -156,12 +157,32 @@ function matchesKnowledgeDomain(item, requestedDomain) {
     item.domain.trim().toLowerCase() === requestedDomain;
 }
 
+/**
+ * Krijon një çelës të qëndrueshëm për deduplikim.
+ *
+ * Përmbajtja e normalizuar ka përparësi ndaj titullit,
+ * në mënyrë që i njëjti tekst të mos përsëritet vetëm
+ * sepse burimet kanë tituj të ndryshëm.
+ */
 function getResultKey(item) {
-  const title = normalizeForSearch(item.title || "");
-  const content = normalizeForSearch(item.content || "");
+  const content = normalizeForSearch(
+    typeof item.content === "string"
+      ? item.content
+      : ""
+  );
 
-  if (title || content) {
-    return `content:${title}|${content}`;
+  if (content) {
+    return `content:${content}`;
+  }
+
+  const title = normalizeForSearch(
+    typeof item.title === "string"
+      ? item.title
+      : ""
+  );
+
+  if (title) {
+    return `title:${title}`;
   }
 
   const id = typeof item.id === "string"
