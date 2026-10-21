@@ -5,12 +5,12 @@
  *
  * Përgjegjësitë:
  * - Validimi dhe përpunimi i kërkesave.
- * - Përcaktimi i gjuhës së përgjigjes.
+ * - Përcaktimi i gjuhës.
  * - Integrimi me Context Engine.
- * - Përdorimi i historikut për pyetjet pasuese.
+ * - Përdorimi i historikut të bisedës.
  * - Kërkimi në bazën e njohurive.
- * - Normalizimi i përgjigjeve dhe metadata.
- * - Trajtimi i standardizuar dhe i sigurt i gabimeve.
+ * - Standardizimi i përgjigjeve dhe gabimeve.
+ * - Trajtimi i sigurt i dështimeve.
  */
 
 import {
@@ -39,6 +39,9 @@ const FOLLOW_UP_PATTERNS = [
   /^(jep|më jep|me jep)\s+(një\s+)?(shembull|shembuj)[.!?]*$/i,
   /^(vazhdo|vazhdo më tej|më shumë|me shume)[.!?]*$/i,
 ];
+
+const GENERIC_ERROR_MESSAGE =
+  "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.";
 
 function detectRequestLanguage(query, requestedLanguage) {
   const requested =
@@ -153,22 +156,30 @@ function buildMetadata(language, results, knowledge, context) {
   };
 }
 
+/**
+ * Krijon një përgjigje gabimi të standardizuar.
+ * Versioni i kontratave nuk zëvendëson versionin e motorit.
+ */
 function createErrorResponse(
   requestId,
   message,
   language = "auto",
   code = AI_ERROR_CODES.INTERNAL_ERROR
 ) {
+  const safeRequestId =
+    typeof requestId === "string" && requestId.trim()
+      ? requestId.trim()
+      : null;
+
+  const safeLanguage = SUPPORTED_LANGUAGES.includes(language)
+    ? language
+    : "auto";
+
   const response = createAIErrorResponse({
-    requestId:
-      typeof requestId === "string" && requestId.trim()
-        ? requestId
-        : null,
-    error: message,
+    requestId: safeRequestId,
+    error: message || GENERIC_ERROR_MESSAGE,
     code,
-    language: SUPPORTED_LANGUAGES.includes(language)
-      ? language
-      : "auto",
+    language: safeLanguage,
     source: "xsus-ai-core",
     metadata: {
       engine: "xsus-ai-core",
@@ -193,7 +204,11 @@ export async function processAIRequest(input = {}) {
 
   try {
     // 1. Validimi fillestar.
-    if (!input || typeof input !== "object" || Array.isArray(input)) {
+    if (
+      !input ||
+      typeof input !== "object" ||
+      Array.isArray(input)
+    ) {
       return createErrorResponse(
         null,
         "Kërkesa duhet të jetë një objekt i vlefshëm.",
@@ -202,7 +217,10 @@ export async function processAIRequest(input = {}) {
       );
     }
 
-    if (typeof input.query !== "string" || !input.query.trim()) {
+    if (
+      typeof input.query !== "string" ||
+      !input.query.trim()
+    ) {
       return createErrorResponse(
         typeof input.id === "string" ? input.id : null,
         "Shkruaj një pyetje për XSUS AI.",
@@ -245,7 +263,7 @@ export async function processAIRequest(input = {}) {
       conversationId,
     });
 
-    // 6. Validimi i kontekstit të kërkesës.
+    // 6. Krijimi dhe validimi i kontekstit të kërkesës.
     const validatedContext = createRequestContext({
       id: request.id,
       query: context.userMessage,
@@ -311,10 +329,15 @@ export async function processAIRequest(input = {}) {
       language,
       source: "xsus-knowledge-service",
       confidence: null,
-      metadata: buildMetadata(language, results, knowledge, context),
+      metadata: buildMetadata(
+        language,
+        results,
+        knowledge,
+        context
+      ),
     });
 
-    // 11. Versioni i motorit është autoritativ për këtë modul.
+    // 11. Versioni i motorit mbetet 1.2.0.
     return {
       ...response,
       version: AI_CORE_VERSION,
@@ -324,20 +347,13 @@ export async function processAIRequest(input = {}) {
         version: AI_CORE_VERSION,
       },
     };
-  } catch (error) {
-    // Gabimet e brendshme nuk ekspozohen te përdoruesi.
-    // Gabimet e validimit mbajnë mesazhet e tyre të kontrolluara.
-    const isValidationError = error instanceof TypeError;
-
+  } catch {
+    // Gabimet e papritura nuk ekspozojnë detaje të brendshme.
     return createErrorResponse(
       requestId,
-      isValidationError
-        ? error.message
-        : "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.",
+      GENERIC_ERROR_MESSAGE,
       language,
-      isValidationError
-        ? AI_ERROR_CODES.INVALID_REQUEST
-        : AI_ERROR_CODES.INTERNAL_ERROR
+      AI_ERROR_CODES.INTERNAL_ERROR
     );
   }
 }
