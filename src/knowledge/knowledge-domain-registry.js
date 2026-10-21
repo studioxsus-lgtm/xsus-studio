@@ -1,12 +1,11 @@
-
 /**
  * XSUS AI — Knowledge Domain Registry
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Regjistri qendror i fushave të njohurive.
  */
 
-export const KNOWLEDGE_DOMAIN_REGISTRY_VERSION = "1.0.0";
+export const KNOWLEDGE_DOMAIN_REGISTRY_VERSION = "1.1.0";
 
 const DOMAIN_DEFINITIONS = [
   {
@@ -76,52 +75,52 @@ const DOMAIN_DEFINITIONS = [
   }
 ];
 
-const registry = new Map(
-  DOMAIN_DEFINITIONS.map(domain => [
-    domain.id,
-    Object.freeze({
-      ...domain,
-      name: Object.freeze({ ...domain.name })
-    })
-  ])
+const BASE_DOMAIN_IDS = new Set(
+  DOMAIN_DEFINITIONS.map(domain => domain.id)
 );
 
-export function listKnowledgeDomains() {
-  return [...registry.values()];
+function normalizeDomainId(value) {
+  return typeof value === "string"
+    ? value.trim().toLowerCase()
+    : "";
 }
 
-export function getKnowledgeDomain(domainId) {
-  if (typeof domainId !== "string") return null;
-
-  return registry.get(domainId.trim().toLowerCase()) || null;
+function createDomainSnapshot(domain) {
+  return Object.freeze({
+    id: domain.id,
+    name: Object.freeze({
+      sq: domain.name.sq,
+      en: domain.name.en
+    }),
+    description: domain.description
+  });
 }
 
-export function hasKnowledgeDomain(domainId) {
-  return getKnowledgeDomain(domainId) !== null;
-}
-
-export function registerKnowledgeDomain(domain) {
-  if (!domain || typeof domain !== "object" || Array.isArray(domain)) {
-    throw new TypeError("Fusha e njohurive duhet të jetë objekt.");
+function validateDomain(domain) {
+  if (
+    !domain ||
+    typeof domain !== "object" ||
+    Array.isArray(domain)
+  ) {
+    throw new TypeError(
+      "Fusha e njohurive duhet të jetë objekt."
+    );
   }
 
-  if (typeof domain.id !== "string" || !domain.id.trim()) {
+  const id = normalizeDomainId(domain.id);
+
+  if (!id) {
     throw new TypeError("Fusha duhet të ketë një ID.");
   }
-
-  const id = domain.id.trim().toLowerCase();
 
   if (!/^[a-z][a-z0-9-]*$/u.test(id)) {
     throw new TypeError("ID e fushës nuk është e vlefshme.");
   }
 
-  if (registry.has(id)) {
-    throw new Error(`Fusha "${id}" ekziston tashmë.`);
-  }
-
   if (
     !domain.name ||
     typeof domain.name !== "object" ||
+    Array.isArray(domain.name) ||
     typeof domain.name.sq !== "string" ||
     typeof domain.name.en !== "string"
   ) {
@@ -130,30 +129,105 @@ export function registerKnowledgeDomain(domain) {
     );
   }
 
-  const normalized = Object.freeze({
+  const sq = domain.name.sq.trim();
+  const en = domain.name.en.trim();
+
+  if (!sq || !en) {
+    throw new TypeError(
+      "Emrat e fushës nuk mund të jenë bosh."
+    );
+  }
+
+  if (
+    domain.description !== undefined &&
+    typeof domain.description !== "string"
+  ) {
+    throw new TypeError(
+      "Përshkrimi i fushës duhet të jetë tekst."
+    );
+  }
+
+  return {
     id,
-    name: Object.freeze({
-      sq: domain.name.sq.trim(),
-      en: domain.name.en.trim()
-    }),
+    name: { sq, en },
     description: typeof domain.description === "string"
       ? domain.description.trim()
       : ""
-  });
+  };
+}
 
-  if (!normalized.name.sq || !normalized.name.en) {
-    throw new TypeError("Emrat e fushës nuk mund të jenë bosh.");
+const registry = new Map(
+  DOMAIN_DEFINITIONS.map(domain => [
+    domain.id,
+    createDomainSnapshot(domain)
+  ])
+);
+
+/**
+ * Kthen një listë të fushave pa ekspozuar objektet
+ * e brendshme të regjistrit.
+ */
+export function listKnowledgeDomains() {
+  return [...registry.values()].map(domain =>
+    createDomainSnapshot(domain)
+  );
+}
+
+/**
+ * Kthen një kopje të fushës ose null.
+ */
+export function getKnowledgeDomain(domainId) {
+  const id = normalizeDomainId(domainId);
+
+  if (!id) return null;
+
+  const domain = registry.get(id);
+
+  return domain ? createDomainSnapshot(domain) : null;
+}
+
+/**
+ * Kontrollon nëse një fushë ekziston.
+ */
+export function hasKnowledgeDomain(domainId) {
+  const id = normalizeDomainId(domainId);
+
+  return id !== "" && registry.has(id);
+}
+
+/**
+ * Regjistron një fushë të re.
+ *
+ * Kthen një funksion për çregjistrimin e fushës.
+ * Fushat bazë nuk mund të hiqen.
+ */
+export function registerKnowledgeDomain(domain) {
+  const normalized = validateDomain(domain);
+  const { id } = normalized;
+
+  if (registry.has(id)) {
+    throw new Error(`Fusha "${id}" ekziston tashmë.`);
   }
 
-  registry.set(id, normalized);
+  const snapshot = createDomainSnapshot(normalized);
+
+  registry.set(id, snapshot);
+
+  let unregistered = false;
 
   return () => {
-    // Fushat bazë nuk hiqen nga regjistri.
-    if (
-      registry.get(id) === normalized &&
-      !DOMAIN_DEFINITIONS.some(item => item.id === id)
-    ) {
-      registry.delete(id);
+    if (unregistered) return false;
+
+    unregistered = true;
+
+    if (BASE_DOMAIN_IDS.has(id)) {
+      return false;
     }
+
+    if (registry.get(id) !== snapshot) {
+      return false;
+    }
+
+    return registry.delete(id);
   };
 }
