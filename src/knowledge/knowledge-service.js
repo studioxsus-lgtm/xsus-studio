@@ -1,6 +1,6 @@
 /**
  * XSUS AI — Knowledge Service
- * Version: 1.1.2
+ * Version: 1.1.1
  *
  * Përgjegjësitë:
  * - Kërkimi në bazat e integruara të njohurive.
@@ -31,7 +31,7 @@ const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 
 const ENGINE_NAME = "xsus-knowledge-service";
-const ENGINE_VERSION = "1.1.2";
+const ENGINE_VERSION = "1.1.1";
 const SCHEMA_VERSION = "1.0.0";
 
 const BUILT_IN_LANGUAGES = Object.freeze([
@@ -41,7 +41,9 @@ const BUILT_IN_LANGUAGES = Object.freeze([
 ]);
 
 function getBaseLanguage(language) {
-  if (language === "auto") return "auto";
+  if (language === "auto") {
+    return "auto";
+  }
 
   return typeof language === "string"
     ? language.split("-")[0].toLowerCase()
@@ -146,7 +148,9 @@ function isValidKnowledgeResult(item) {
 }
 
 function matchesKnowledgeDomain(item, requestedDomain) {
-  if (!requestedDomain) return true;
+  if (!requestedDomain) {
+    return true;
+  }
 
   return typeof item.domain === "string" &&
     item.domain.trim().toLowerCase() === requestedDomain;
@@ -176,7 +180,9 @@ function scoreResult(item, query) {
   const content = normalizeForSearch(item.content || "");
   const normalizedQuery = normalizeForSearch(query);
 
-  if (!normalizedQuery) return 0;
+  if (!normalizedQuery) {
+    return 0;
+  }
 
   const queryTokens = [
     ...new Set(
@@ -251,7 +257,9 @@ function deduplicateResults(results) {
   for (const item of results) {
     const key = getResultKey(item);
 
-    if (!key || seen.has(key)) continue;
+    if (!key || seen.has(key)) {
+      continue;
+    }
 
     seen.add(key);
     uniqueResults.push(item);
