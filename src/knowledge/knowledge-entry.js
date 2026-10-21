@@ -1,12 +1,13 @@
 
 /**
  * XSUS AI — Knowledge Entry Standard
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Standard i përbashkët për njohuritë e të gjitha fushave.
+ * Ofron validim, normalizim dhe hyrje të pandryshueshme.
  */
 
-export const KNOWLEDGE_SCHEMA_VERSION = "1.0.0";
+export const KNOWLEDGE_SCHEMA_VERSION = "1.1.0";
 
 export const KNOWLEDGE_DOMAINS = Object.freeze([
   "general",
@@ -37,10 +38,23 @@ export const KNOWLEDGE_STATUSES = Object.freeze([
   "verified"
 ]);
 
+const DEFAULTS = Object.freeze({
+  domain: "general",
+  topic: "general",
+  language: "sq",
+  difficulty: "beginner",
+  status: "draft",
+  source: "xsus-knowledge",
+  version: "1.0.0"
+});
+
 function cleanString(value, fallback = "") {
-  return typeof value === "string"
-    ? value.trim()
-    : fallback;
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const result = value.trim();
+  return result || fallback;
 }
 
 function normalizeList(value) {
@@ -48,14 +62,33 @@ function normalizeList(value) {
     return [];
   }
 
-  return [
-    ...new Set(
-      value
-        .filter(item => typeof item === "string")
-        .map(item => item.trim())
-        .filter(Boolean)
-    )
-  ];
+  const normalized = value
+    .filter((item) => typeof item === "string")
+    .map((item) => item.trim().normalize("NFC"))
+    .filter(Boolean);
+
+  return [...new Set(normalized)];
+}
+
+function normalizeLanguageCode(value) {
+  const language = cleanString(value, DEFAULTS.language)
+    .replace(/_/gu, "-");
+
+  if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/iu.test(language)) {
+    throw new TypeError(
+      "Kodi i gjuhës nuk është i vlefshëm."
+    );
+  }
+
+  return language.toLowerCase();
+}
+
+function assertAllowed(value, allowed, label) {
+  if (!allowed.includes(value)) {
+    throw new TypeError(
+      `${label} "${value}" nuk është i vlefshëm.`
+    );
+  }
 }
 
 /**
@@ -63,7 +96,7 @@ function normalizeList(value) {
  */
 export function createKnowledgeEntry(input = {}) {
   if (
-    !input ||
+    input === null ||
     typeof input !== "object" ||
     Array.isArray(input)
   ) {
@@ -96,65 +129,52 @@ export function createKnowledgeEntry(input = {}) {
 
   const domain = cleanString(
     input.domain,
-    "general"
+    DEFAULTS.domain
   ).toLowerCase();
 
-  if (!KNOWLEDGE_DOMAINS.includes(domain)) {
-    throw new TypeError(
-      `Fusha "${domain}" nuk njihet nga XSUS AI.`
-    );
-  }
+  assertAllowed(domain, KNOWLEDGE_DOMAINS, "Fusha");
 
   const difficulty = cleanString(
     input.difficulty,
-    "beginner"
+    DEFAULTS.difficulty
   ).toLowerCase();
 
-  if (!KNOWLEDGE_DIFFICULTIES.includes(difficulty)) {
-    throw new TypeError(
-      `Niveli "${difficulty}" nuk është i vlefshëm.`
-    );
-  }
+  assertAllowed(
+    difficulty,
+    KNOWLEDGE_DIFFICULTIES,
+    "Niveli"
+  );
 
   const status = cleanString(
     input.status,
-    "draft"
+    DEFAULTS.status
   ).toLowerCase();
 
-  if (!KNOWLEDGE_STATUSES.includes(status)) {
-    throw new TypeError(
-      `Statusi "${status}" nuk është i vlefshëm.`
-    );
-  }
+  assertAllowed(status, KNOWLEDGE_STATUSES, "Statusi");
 
-  const language = cleanString(
-    input.language,
-    "sq"
-  ).toLowerCase();
+  const language = normalizeLanguageCode(input.language);
 
-  if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/u.test(language)) {
-    throw new TypeError(
-      "Kodi i gjuhës nuk është i vlefshëm."
-    );
-  }
+  const keywords = Object.freeze(
+    normalizeList(input.keywords)
+  );
+
+  const tags = Object.freeze(
+    normalizeList(input.tags)
+  );
 
   return Object.freeze({
     id,
     title,
     content,
     domain,
-    topic: cleanString(input.topic, "general"),
+    topic: cleanString(input.topic, DEFAULTS.topic),
     language,
     difficulty,
     status,
-    keywords: Object.freeze(
-      normalizeList(input.keywords)
-    ),
-    tags: Object.freeze(
-      normalizeList(input.tags)
-    ),
-    source: cleanString(input.source, "xsus-knowledge"),
-    version: cleanString(input.version, "1.0.0"),
+    keywords,
+    tags,
+    source: cleanString(input.source, DEFAULTS.source),
+    version: cleanString(input.version, DEFAULTS.version),
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION
   });
 }
@@ -183,7 +203,8 @@ export function validateKnowledgeEntry(input) {
 }
 
 /**
- * Krijon një grup hyrjesh të standardizuara.
+ * Krijon një koleksion hyrjesh të standardizuara.
+ * ID-të duhet të jenë unike brenda koleksionit.
  */
 export function createKnowledgeCollection(entries = []) {
   if (!Array.isArray(entries)) {
@@ -193,20 +214,20 @@ export function createKnowledgeCollection(entries = []) {
   }
 
   const ids = new Set();
+  const collection = [];
 
-  return Object.freeze(
-    entries.map(entry => {
-      const normalized = createKnowledgeEntry(entry);
+  for (const entry of entries) {
+    const normalized = createKnowledgeEntry(entry);
 
-      if (ids.has(normalized.id)) {
-        throw new Error(
-          `ID e përsëritur në koleksion: "${normalized.id}".`
-        );
-      }
+    if (ids.has(normalized.id)) {
+      throw new Error(
+        `ID e përsëritur në koleksion: "${normalized.id}".`
+      );
+    }
 
-      ids.add(normalized.id);
+    ids.add(normalized.id);
+    collection.push(normalized);
+  }
 
-      return normalized;
-    })
-  );
+  return Object.freeze(collection);
 }
