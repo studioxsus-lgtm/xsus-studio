@@ -27,7 +27,7 @@ import { detectLanguage } from "../language/language-engine.js";
 export const AI_CORE_VERSION = "1.2.0";
 
 const GENERIC_ERROR_MESSAGE =
-"Ndodhi një gabim gjatë përpunimit të kërkesës. Provoni përsëri.";
+"Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.";
 
 function detectRequestLanguage(query, requestedLanguage) {
 const requested = typeof requestedLanguage === "string"
