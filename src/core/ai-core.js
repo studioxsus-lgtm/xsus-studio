@@ -24,6 +24,10 @@ addMemoryMessage
 import { searchKnowledge } from "../knowledge/knowledge-service.js";
 import { detectLanguage } from "../language/language-engine.js";
 
+import {
+createResponse
+} from "./response-engine.js";
+
 export const AI_CORE_VERSION = "1.2.0";
 
 const GENERIC_ERROR_MESSAGE =
@@ -58,16 +62,6 @@ if (
 return "sq";
 }
 
-function getFallbackAnswer(language) {
-const answers = {
-sq: "Nuk u gjetën rezultate të mjaftueshme në bazën e njohurive. Provo ta riformulosh pyetjen ose shto informacion për këtë temë.",
-en: "No relevant results were found in the knowledge base. Please rephrase your question or add information about this topic.",
-fr: "Aucun résultat pertinent n’a été trouvé dans la base de connaissances. Veuillez reformuler votre question ou ajouter des informations sur ce sujet."
-};
-
-return answers[language] || answers.sq;
-}
-
 function buildContextualQuery(context) {
 const userMessage = String(context?.userMessage || "").trim();
 
@@ -99,33 +93,6 @@ return [
 ...recentHistory,
 "Current question: ${userMessage}"
 ].join("\n");
-}
-
-function buildAnswer(results) {
-if (!Array.isArray(results)) return "";
-
-const seen = new Set();
-const sections = [];
-
-for (const result of results) {
-const content = typeof result === "string"
-? result.trim()
-: typeof result?.content === "string"
-? result.content.trim()
-: "";
-
-if (!content) continue;
-
-const key = content.toLowerCase();
-
-if (seen.has(key)) continue;
-
-seen.add(key);
-sections.push(content);
-
-}
-
-return sections.join("\n\n");
 }
 
 function readConversationHistory(conversationId, suppliedMessages = []) {
@@ -197,7 +164,8 @@ context,
 history = [],
 requestId,
 conversationId,
-memoryEnabled
+memoryEnabled,
+responseResult
 }) {
 const knowledgeSources = Array.isArray(knowledge?.sources)
 ? knowledge.sources
@@ -216,8 +184,16 @@ if (typeof item === "string") return "";
 })
 .filter(Boolean);
 
+const responseSources = Array.isArray(responseResult?.metadata?.sources)
+? responseResult.metadata.sources
+: [];
+
 const sources = [
-...new Set([...knowledgeSources, ...resultSources])
+...new Set([
+...knowledgeSources,
+...resultSources,
+...responseSources
+])
 ];
 
 const messages = Array.isArray(history) && history.length > 0
@@ -249,6 +225,11 @@ conversationId: conversationId || null,
 historyMessageCount: messages.length,
 hasPreviousContext: messages.length > 0,
 totalHistoryCharacters
+},
+responseEngine: {
+version: responseResult?.version || null,
+confidence: responseResult?.confidence ?? 0,
+success: Boolean(responseResult?.success)
 }
 };
 }
@@ -473,9 +454,14 @@ const results = Array.isArray(knowledge)
     ? knowledge.results
     : [];
 
-const answer =
-  buildAnswer(results) ||
-  getFallbackAnswer(language);
+const standardizedResponse = createResponse({
+  results,
+  language,
+  requestId,
+  conversationId: conversationId || null
+});
+
+const answer = standardizedResponse.answer;
 
 if (memoryEnabled && conversationId) {
   saveMemoryMessage(
@@ -493,7 +479,8 @@ const metadata = buildMetadata({
   history,
   requestId,
   conversationId,
-  memoryEnabled
+  memoryEnabled,
+  responseResult: standardizedResponse
 });
 
 const response = createAIResponse({
@@ -501,7 +488,7 @@ const response = createAIResponse({
   answer,
   language,
   source: "xsus-knowledge-service",
-  confidence: null,
+  confidence: standardizedResponse.confidence,
   metadata
 });
 
@@ -511,7 +498,7 @@ return {
   answer,
   language,
   source: "xsus-knowledge-service",
-  confidence: response?.confidence ?? null,
+  confidence: standardizedResponse.confidence,
   version: AI_CORE_VERSION,
   timestamp: response?.timestamp || new Date().toISOString(),
   metadata: {
