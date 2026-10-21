@@ -1,13 +1,18 @@
 
 /**
  * XSUS AI — Knowledge Entry Standard
- * Version: 1.1.0
+ * Version: 1.1.1
  *
  * Standard i përbashkët për njohuritë e të gjitha fushave.
  * Ofron validim, normalizim dhe hyrje të pandryshueshme.
  */
 
-export const KNOWLEDGE_SCHEMA_VERSION = "1.1.0";
+import {
+  normalizeLanguageCode as normalizeLanguageCodeBase,
+  getBaseLanguage
+} from "../language/normalization.js";
+
+export const KNOWLEDGE_SCHEMA_VERSION = "1.1.1";
 
 export const KNOWLEDGE_DOMAINS = Object.freeze([
   "general",
@@ -62,33 +67,62 @@ function normalizeList(value) {
     return [];
   }
 
-  const normalized = value
-    .filter((item) => typeof item === "string")
-    .map((item) => item.trim().normalize("NFC"))
-    .filter(Boolean);
-
-  return [...new Set(normalized)];
+  return [
+    ...new Set(
+      value
+        .filter((item) => typeof item === "string")
+        .map((item) => item.trim().normalize("NFC"))
+        .filter(Boolean)
+    )
+  ];
 }
 
-function normalizeLanguageCode(value) {
-  const language = cleanString(value, DEFAULTS.language)
+function normalizeEntryLanguage(value) {
+  const input = cleanString(value, DEFAULTS.language)
     .replace(/_/gu, "-");
 
-  if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/iu.test(language)) {
+  const normalized = normalizeLanguageCodeBase(input);
+
+  if (!normalized || normalized === "auto") {
     throw new TypeError(
       "Kodi i gjuhës nuk është i vlefshëm."
     );
   }
 
-  return language.toLowerCase();
+  const baseLanguage = getBaseLanguage(normalized);
+
+  if (
+    typeof baseLanguage !== "string" ||
+    !/^[a-z]{2,3}$/iu.test(baseLanguage)
+  ) {
+    throw new TypeError(
+      "Kodi i gjuhës nuk është i vlefshëm."
+    );
+  }
+
+  return normalized.toLowerCase();
 }
 
 function assertAllowed(value, allowed, label) {
-  if (!allowed.includes(value)) {
+  if (allowed.includes(value)) {
+    return;
+  }
+
+  if (label === "Fusha") {
     throw new TypeError(
-      `${label} "${value}" nuk është i vlefshëm.`
+      `Fusha "${value}" nuk njihet nga XSUS AI.`
     );
   }
+
+  if (label === "Niveli") {
+    throw new TypeError(
+      `Niveli "${value}" nuk është i vlefshëm.`
+    );
+  }
+
+  throw new TypeError(
+    `Statusi "${value}" nuk është i vlefshëm.`
+  );
 }
 
 /**
@@ -152,15 +186,7 @@ export function createKnowledgeEntry(input = {}) {
 
   assertAllowed(status, KNOWLEDGE_STATUSES, "Statusi");
 
-  const language = normalizeLanguageCode(input.language);
-
-  const keywords = Object.freeze(
-    normalizeList(input.keywords)
-  );
-
-  const tags = Object.freeze(
-    normalizeList(input.tags)
-  );
+  const language = normalizeEntryLanguage(input.language);
 
   return Object.freeze({
     id,
@@ -171,8 +197,8 @@ export function createKnowledgeEntry(input = {}) {
     language,
     difficulty,
     status,
-    keywords,
-    tags,
+    keywords: Object.freeze(normalizeList(input.keywords)),
+    tags: Object.freeze(normalizeList(input.tags)),
     source: cleanString(input.source, DEFAULTS.source),
     version: cleanString(input.version, DEFAULTS.version),
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION
