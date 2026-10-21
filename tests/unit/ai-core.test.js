@@ -91,7 +91,7 @@ describe("XSUS AI Core", () => {
     const result = await processAIRequest({
       query: "Çfarë është JavaScript?",
       language: "sq",
-      conversationId: "test-conversation",
+      conversationId: "test-context-integration",
       messages: [
         {
           role: "user",
@@ -107,9 +107,49 @@ describe("XSUS AI Core", () => {
     expect(result.answer).toBeTruthy();
     expect(result.metadata.context).toBeDefined();
     expect(result.metadata.context.conversationId).toBe(
-      "test-conversation"
+      "test-context-integration"
     );
     expect(result.metadata.context.historyMessageCount).toBe(2);
     expect(result.metadata.context.hasPreviousContext).toBe(true);
+  });
+
+  test("ruan historikun e bisedës për kërkesën pasuese", async () => {
+    const conversationId = "test-memory-persistence-integration";
+
+    const firstResult = await processAIRequest({
+      query: "Dua të mësoj programim.",
+      language: "sq",
+      conversationId
+    });
+
+    expect(firstResult.answer).toBeTruthy();
+
+    const secondResult = await processAIRequest({
+      query: "Cilin hap duhet të ndjek më pas?",
+      language: "sq",
+      conversationId
+    });
+
+    expect(secondResult.answer).toBeTruthy();
+    expect(secondResult.metadata.context).toBeDefined();
+    expect(secondResult.metadata.context.conversationId).toBe(
+      conversationId
+    );
+    expect(secondResult.metadata.context.hasPreviousContext).toBe(true);
+    expect(
+      secondResult.metadata.context.historyMessageCount
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  test("kthen metadata të vlefshme për një pyetje pa rezultate të njohurive", async () => {
+    const result = await processAIRequest({
+      query: "A ekziston një koncept me emrin XSUS-TEST-UNKNOWN-92841?",
+      language: "en"
+    });
+
+    expect(result.answer).toBeTruthy();
+    expect(result.metadata).toHaveProperty("knowledgeResults");
+    expect(result.metadata.knowledgeResults).toBeGreaterThanOrEqual(0);
+    expect(Array.isArray(result.metadata.sources)).toBe(true);
   });
 });
