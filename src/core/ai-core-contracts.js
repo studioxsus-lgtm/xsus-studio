@@ -4,6 +4,13 @@
  * Version: 1.0.0
  *
  * Kontrata standarde për kërkesat, përgjigjet dhe gabimet.
+ *
+ * Përgjegjësitë:
+ * - Validimi i kërkesave.
+ * - Standardizimi i përgjigjeve.
+ * - Normalizimi i gjuhëve.
+ * - Standardizimi i gabimeve.
+ * - Ruajtja e përputhshmërisë me modulet ekzistuese.
  */
 
 import { normalizeLanguageCode } from "../language/normalization.js";
@@ -34,6 +41,9 @@ export const AI_ERROR_CODES = Object.freeze({
   INTERNAL_ERROR: "INTERNAL_ERROR",
 });
 
+const DEFAULT_ERROR_MESSAGE =
+  "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.";
+
 function isPlainObject(value) {
   if (value === null || typeof value !== "object") {
     return false;
@@ -59,23 +69,33 @@ function normalizeLanguageOrThrow(
     throw new TypeError(errorMessage);
   }
 
-  const normalizedInput = language.trim();
+  const input = language.trim();
 
-  if (!normalizedInput) {
+  if (!input) {
     throw new TypeError(errorMessage);
   }
 
-  const normalizedLanguage =
-    normalizeLanguageCode(normalizedInput);
+  const normalized = normalizeLanguageCode(input);
 
-  if (
-    normalizedLanguage === "auto" &&
-    normalizedInput.toLowerCase() !== "auto"
-  ) {
+  if (typeof normalized !== "string" || !normalized.trim()) {
     throw new TypeError(errorMessage);
   }
 
-  return normalizedLanguage;
+  const languageCode = normalized.trim().toLowerCase();
+
+  if (languageCode === "auto") {
+    if (input.toLowerCase() !== "auto") {
+      throw new TypeError(errorMessage);
+    }
+
+    return "auto";
+  }
+
+  if (!SUPPORTED_LANGUAGES.includes(languageCode)) {
+    throw new TypeError(errorMessage);
+  }
+
+  return languageCode;
 }
 
 function createRequestId() {
@@ -113,6 +133,33 @@ function normalizeErrorCode(code) {
     : AI_ERROR_CODES.INTERNAL_ERROR;
 }
 
+function normalizeSource(source, fallback) {
+  if (typeof source !== "string" || !source.trim()) {
+    return fallback;
+  }
+
+  return source.trim();
+}
+
+function normalizeConfidence(confidence) {
+  if (confidence === null || confidence === undefined) {
+    return null;
+  }
+
+  if (
+    typeof confidence !== "number" ||
+    !Number.isFinite(confidence) ||
+    confidence < 0 ||
+    confidence > 1
+  ) {
+    throw new TypeError(
+      "Confidence duhet të jetë numër nga 0 deri në 1."
+    );
+  }
+
+  return confidence;
+}
+
 /**
  * Krijon një kërkesë të standardizuar.
  */
@@ -138,6 +185,26 @@ export function createAIRequest({
   if (!Object.values(REQUEST_TYPES).includes(type)) {
     throw new TypeError(
       "Lloji i kërkesës nuk njihet."
+    );
+  }
+
+  if (
+    context !== undefined &&
+    context !== null &&
+    !isPlainObject(context)
+  ) {
+    throw new TypeError(
+      "Konteksti i kërkesës nuk është i vlefshëm."
+    );
+  }
+
+  if (
+    metadata !== undefined &&
+    metadata !== null &&
+    !isPlainObject(metadata)
+  ) {
+    throw new TypeError(
+      "Metadata e kërkesës nuk është e vlefshme."
     );
   }
 
@@ -177,25 +244,16 @@ export function createAIResponse({
     "Gjuha e përgjigjes nuk është e vlefshme."
   );
 
-  if (typeof source !== "string" || !source.trim()) {
-    throw new TypeError(
-      "Burimi i përgjigjes nuk është i vlefshëm."
-    );
-  }
-
   const normalizedId = normalizeRequestId(requestId);
+  const normalizedConfidence = normalizeConfidence(confidence);
 
   if (
-    confidence !== null &&
-    (
-      typeof confidence !== "number" ||
-      !Number.isFinite(confidence) ||
-      confidence < 0 ||
-      confidence > 1
-    )
+    metadata !== undefined &&
+    metadata !== null &&
+    !isPlainObject(metadata)
   ) {
     throw new TypeError(
-      "Confidence duhet të jetë numër nga 0 deri në 1."
+      "Metadata e përgjigjes nuk është e vlefshme."
     );
   }
 
@@ -203,8 +261,8 @@ export function createAIResponse({
     requestId: normalizedId,
     answer: answer.trim(),
     language: normalizedLanguage,
-    source: source.trim(),
-    confidence,
+    source: normalizeSource(source, "xsus-core"),
+    confidence: normalizedConfidence,
     metadata: normalizeObject(metadata),
     timestamp: new Date().toISOString(),
     version: XSUS_CORE_VERSION,
@@ -213,11 +271,13 @@ export function createAIResponse({
 
 /**
  * Krijon një përgjigje gabimi të standardizuar.
- * Mesazhet publike nuk duhet të ekspozojnë detaje të brendshme.
+ *
+ * Mesazhet publike duhet të shmangin ekspozimin
+ * e detajeve të brendshme të sistemit.
  */
 export function createAIErrorResponse({
   requestId = null,
-  error = "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.",
+  error = DEFAULT_ERROR_MESSAGE,
   code = AI_ERROR_CODES.INTERNAL_ERROR,
   language = "auto",
   source = "xsus-ai-core",
@@ -233,12 +293,12 @@ export function createAIErrorResponse({
   const safeError =
     typeof error === "string" && error.trim()
       ? error.trim()
-      : "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.";
+      : DEFAULT_ERROR_MESSAGE;
 
-  const safeSource =
-    typeof source === "string" && source.trim()
-      ? source.trim()
-      : "xsus-ai-core";
+  const safeSource = normalizeSource(
+    source,
+    "xsus-ai-core"
+  );
 
   return {
     requestId: normalizedId,
