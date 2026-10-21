@@ -1,276 +1,240 @@
-
 /**
- * XSUS AI — Knowledge Entry Standard
- * Version: 1.2.1
+ * XSUS AI — Knowledge Domain Registry
+ * Version: 1.1.1
  *
- * Standard i përbashkët për njohuritë e të gjitha fushave.
- * Ofron validim, normalizim dhe hyrje të pandryshueshme.
+ * Regjistri qendror i fushave të njohurive.
+ * Mbështet kërkimin, validimin dhe regjistrimin dinamik
+ * të fushave të reja.
  */
 
-import {
-  hasKnowledgeDomain
-} from "./knowledge-domain-registry.js";
+export const KNOWLEDGE_DOMAIN_REGISTRY_VERSION = "1.1.1";
 
-import {
-  normalizeLanguageCode as normalizeLanguageCodeBase,
-  getBaseLanguage
-} from "../language/normalization.js";
-
-export const KNOWLEDGE_SCHEMA_VERSION = "1.2.1";
-
-/**
- * Fushat bazë për përputhshmëri me kodin ekzistues.
- * Për validim dinamik përdoret hasKnowledgeDomain().
- */
-export const KNOWLEDGE_DOMAINS = Object.freeze([
-  "general",
-  "programming",
-  "mathematics",
-  "science",
-  "technology",
-  "history",
-  "geography",
-  "economics",
-  "law",
-  "health",
-  "education",
-  "culture",
-  "language"
-]);
-
-export const KNOWLEDGE_DIFFICULTIES = Object.freeze([
-  "beginner",
-  "intermediate",
-  "advanced",
-  "expert"
-]);
-
-export const KNOWLEDGE_STATUSES = Object.freeze([
-  "draft",
-  "reviewed",
-  "verified"
-]);
-
-const DEFAULTS = Object.freeze({
-  domain: "general",
-  topic: "general",
-  language: "sq",
-  difficulty: "beginner",
-  status: "draft",
-  source: "xsus-knowledge",
-  version: "1.0.0"
-});
-
-function cleanString(value, fallback = "") {
-  if (typeof value !== "string") {
-    return fallback;
+const DOMAIN_DEFINITIONS = [
+  {
+    id: "general",
+    name: { sq: "Njohuri të përgjithshme", en: "General knowledge" },
+    description: "Njohuri të përgjithshme dhe pyetje të përditshme."
+  },
+  {
+    id: "programming",
+    name: { sq: "Programim", en: "Programming" },
+    description: "Gjuhë programimi, algoritme dhe arkitekturë software."
+  },
+  {
+    id: "mathematics",
+    name: { sq: "Matematikë", en: "Mathematics" },
+    description: "Algjebër, gjeometri, statistikë dhe logjikë."
+  },
+  {
+    id: "science",
+    name: { sq: "Shkencë", en: "Science" },
+    description: "Fizikë, kimi, biologji dhe metoda shkencore."
+  },
+  {
+    id: "technology",
+    name: { sq: "Teknologji", en: "Technology" },
+    description: "Sisteme kompjuterike dhe teknologji digjitale."
+  },
+  {
+    id: "history",
+    name: { sq: "Histori", en: "History" },
+    description: "Ngjarje, periudha dhe figura historike."
+  },
+  {
+    id: "geography",
+    name: { sq: "Gjeografi", en: "Geography" },
+    description: "Vende, rajone dhe mjedis."
+  },
+  {
+    id: "economics",
+    name: { sq: "Ekonomi", en: "Economics" },
+    description: "Ekonomi, tregje dhe koncepte financiare."
+  },
+  {
+    id: "law",
+    name: { sq: "Juridik", en: "Law" },
+    description: "Informacion juridik sipas juridiksionit."
+  },
+  {
+    id: "health",
+    name: { sq: "Shëndetësi", en: "Health" },
+    description: "Informacion shëndetësor dhe shkenca mjekësore."
+  },
+  {
+    id: "education",
+    name: { sq: "Arsim", en: "Education" },
+    description: "Mësimdhënie dhe materiale edukative."
+  },
+  {
+    id: "culture",
+    name: { sq: "Kulturë", en: "Culture" },
+    description: "Letërsi, art, tradita dhe kulturë."
+  },
+  {
+    id: "language",
+    name: { sq: "Gjuhësi", en: "Language" },
+    description: "Gjuhë, gramatikë dhe përkthim."
   }
+];
 
-  const result = value.trim();
-  return result || fallback;
+const BASE_DOMAIN_IDS = new Set(
+  DOMAIN_DEFINITIONS.map((domain) => domain.id)
+);
+
+const registry = new Map();
+
+function normalizeDomainId(value) {
+  return typeof value === "string"
+    ? value.trim().toLowerCase()
+    : "";
 }
 
-function normalizeList(value) {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return [
-    ...new Set(
-      value
-        .filter((item) => typeof item === "string")
-        .map((item) => item.trim().normalize("NFC"))
-        .filter(Boolean)
-    )
-  ];
-}
-
-function normalizeEntryLanguage(value) {
-  const input = cleanString(value, DEFAULTS.language)
-    .replace(/_/gu, "-");
-
-  const normalized = normalizeLanguageCodeBase(input);
-
-  if (!normalized || normalized === "auto") {
-    throw new TypeError(
-      "Kodi i gjuhës nuk është i vlefshëm."
-    );
-  }
-
-  const baseLanguage = getBaseLanguage(normalized);
-
-  if (
-    typeof baseLanguage !== "string" ||
-    !/^[a-z]{2,3}$/iu.test(baseLanguage)
-  ) {
-    throw new TypeError(
-      "Kodi i gjuhës nuk është i vlefshëm."
-    );
-  }
-
-  return normalized.toLowerCase();
-}
-
-function assertAllowed(value, allowed, label) {
-  if (allowed.includes(value)) {
-    return;
-  }
-
-  if (label === "Fusha") {
-    throw new TypeError(
-      `Fusha "${value}" nuk njihet nga XSUS AI.`
-    );
-  }
-
-  if (label === "Niveli") {
-    throw new TypeError(
-      `Niveli "${value}" nuk është i vlefshëm.`
-    );
-  }
-
-  throw new TypeError(
-    `Statusi "${value}" nuk është i vlefshëm.`
-  );
-}
-
-function validateDomainId(domain) {
-  if (!hasKnowledgeDomain(domain)) {
-    throw new TypeError(
-      `Fusha "${domain}" nuk njihet nga XSUS AI.`
-    );
-  }
-}
-
-/**
- * Krijon një hyrje të standardizuar të njohurive.
- */
-export function createKnowledgeEntry(input = {}) {
-  if (
-    input === null ||
-    typeof input !== "object" ||
-    Array.isArray(input)
-  ) {
-    throw new TypeError(
-      "Hyrja e njohurive duhet të jetë objekt."
-    );
-  }
-
-  const id = cleanString(input.id);
-  const title = cleanString(input.title);
-  const content = cleanString(input.content);
-
-  if (!id) {
-    throw new TypeError(
-      "Hyrja e njohurive duhet të ketë një ID."
-    );
-  }
-
-  if (!title) {
-    throw new TypeError(
-      "Hyrja e njohurive duhet të ketë një titull."
-    );
-  }
-
-  if (!content) {
-    throw new TypeError(
-      "Hyrja e njohurive duhet të ketë përmbajtje."
-    );
-  }
-
-  const domain = cleanString(
-    input.domain,
-    DEFAULTS.domain
-  ).toLowerCase();
-
-  // Regjistri qendror kontrollon edhe fushat dinamike.
-  validateDomainId(domain);
-
-  const difficulty = cleanString(
-    input.difficulty,
-    DEFAULTS.difficulty
-  ).toLowerCase();
-
-  assertAllowed(
-    difficulty,
-    KNOWLEDGE_DIFFICULTIES,
-    "Niveli"
-  );
-
-  const status = cleanString(
-    input.status,
-    DEFAULTS.status
-  ).toLowerCase();
-
-  assertAllowed(status, KNOWLEDGE_STATUSES, "Statusi");
-
-  const language = normalizeEntryLanguage(input.language);
-
+function createDomainSnapshot(domain) {
   return Object.freeze({
-    id,
-    title,
-    content,
-    domain,
-    topic: cleanString(input.topic, DEFAULTS.topic),
-    language,
-    difficulty,
-    status,
-    keywords: Object.freeze(normalizeList(input.keywords)),
-    tags: Object.freeze(normalizeList(input.tags)),
-    source: cleanString(input.source, DEFAULTS.source),
-    version: cleanString(input.version, DEFAULTS.version),
-    schemaVersion: KNOWLEDGE_SCHEMA_VERSION
+    id: domain.id,
+    name: Object.freeze({
+      sq: domain.name.sq,
+      en: domain.name.en
+    }),
+    description: domain.description
   });
 }
 
-/**
- * Kontrollon një hyrje pa ndërprerë programin.
- */
-export function validateKnowledgeEntry(input) {
-  try {
-    createKnowledgeEntry(input);
-
-    return {
-      valid: true,
-      errors: []
-    };
-  } catch (error) {
-    return {
-      valid: false,
-      errors: [
-        error instanceof Error
-          ? error.message
-          : "Hyrja e njohurive nuk është e vlefshme."
-      ]
-    };
-  }
-}
-
-/**
- * Krijon një koleksion hyrjesh të standardizuara.
- * ID-të duhet të jenë unike brenda koleksionit.
- */
-export function createKnowledgeCollection(entries = []) {
-  if (!Array.isArray(entries)) {
+function validateDomain(domain) {
+  if (
+    domain === null ||
+    typeof domain !== "object" ||
+    Array.isArray(domain)
+  ) {
     throw new TypeError(
-      "Koleksioni i njohurive duhet të jetë një varg."
+      "Fusha e njohurive duhet të jetë objekt."
     );
   }
 
-  const ids = new Set();
-  const collection = [];
+  const id = normalizeDomainId(domain.id);
 
-  for (const entry of entries) {
-    const normalized = createKnowledgeEntry(entry);
-
-    if (ids.has(normalized.id)) {
-      throw new Error(
-        `ID e përsëritur në koleksion: "${normalized.id}".`
-      );
-    }
-
-    ids.add(normalized.id);
-    collection.push(normalized);
+  if (!/^[a-z][a-z0-9-]*$/u.test(id)) {
+    throw new TypeError(
+      "ID e fushës nuk është e vlefshme."
+    );
   }
 
-  return Object.freeze(collection);
+  if (
+    domain.name === null ||
+    typeof domain.name !== "object" ||
+    Array.isArray(domain.name) ||
+    typeof domain.name.sq !== "string" ||
+    typeof domain.name.en !== "string"
+  ) {
+    throw new TypeError(
+      "Fusha duhet të ketë emra në shqip dhe anglisht."
+    );
+  }
+
+  const sq = domain.name.sq.trim();
+  const en = domain.name.en.trim();
+
+  if (!sq || !en) {
+    throw new TypeError(
+      "Emrat e fushës nuk mund të jenë bosh."
+    );
+  }
+
+  if (
+    domain.description !== undefined &&
+    typeof domain.description !== "string"
+  ) {
+    throw new TypeError(
+      "Përshkrimi i fushës duhet të jetë tekst."
+    );
+  }
+
+  return {
+    id,
+    name: { sq, en },
+    description:
+      typeof domain.description === "string"
+        ? domain.description.trim()
+        : ""
+  };
+}
+
+// Regjistrimi fillestar i fushave bazë.
+for (const definition of DOMAIN_DEFINITIONS) {
+  registry.set(
+    definition.id,
+    createDomainSnapshot(definition)
+  );
+}
+
+/**
+ * Kthen të gjitha fushat si kopje të sigurta.
+ */
+export function listKnowledgeDomains() {
+  return [...registry.values()].map(createDomainSnapshot);
+}
+
+/**
+ * Kthen një fushë sipas ID-së ose null.
+ */
+export function getKnowledgeDomain(domainId) {
+  const id = normalizeDomainId(domainId);
+
+  if (!id) {
+    return null;
+  }
+
+  const domain = registry.get(id);
+
+  return domain ? createDomainSnapshot(domain) : null;
+}
+
+/**
+ * Kontrollon nëse një fushë është e regjistruar.
+ */
+export function hasKnowledgeDomain(domainId) {
+  const id = normalizeDomainId(domainId);
+
+  return id !== "" && registry.has(id);
+}
+
+/**
+ * Regjistron një fushë të re.
+ * Kthen një funksion për çregjistrimin e saj.
+ */
+export function registerKnowledgeDomain(domain) {
+  const normalized = validateDomain(domain);
+  const { id } = normalized;
+
+  if (registry.has(id)) {
+    throw new Error(
+      `Fusha "${id}" ekziston tashmë.`
+    );
+  }
+
+  const snapshot = createDomainSnapshot(normalized);
+
+  registry.set(id, snapshot);
+
+  let unregistered = false;
+
+  return function unregisterKnowledgeDomain() {
+    if (unregistered) {
+      return false;
+    }
+
+    unregistered = true;
+
+    // Fushat bazë nuk mund të hiqen.
+    if (BASE_DOMAIN_IDS.has(id)) {
+      return false;
+    }
+
+    // Mos hiq një hyrje që është zëvendësuar.
+    if (registry.get(id) !== snapshot) {
+      return false;
+    }
+
+    return registry.delete(id);
+  };
 }
