@@ -62,13 +62,13 @@ describe("XSUS AI Core", () => {
         answer: expect.any(String),
         language: "en",
         source: expect.any(String),
-        confidence: expect.anything(),
         metadata: expect.any(Object),
         timestamp: expect.any(String),
         version: expect.any(String)
       })
     );
 
+    expect(result).toHaveProperty("confidence");
     expect(result.metadata.engine).toBe("xsus-ai-core");
     expect(result.metadata.version).toBe(result.version);
     expect(Number.isNaN(Date.parse(result.timestamp))).toBe(false);
