@@ -23,7 +23,8 @@ describe("XSUS AI Core", () => {
     expect(result.language).toBe("sq");
     expect(result.source).toBe("xsus-knowledge-service");
     expect(result.metadata.engine).toBe("xsus-ai-core");
-    expect(result.metadata.version).toBe(result.version);
+    expect(result.metadata.version).toBe("1.2.0");
+    expect(result.version).toBe("1.2.0");
   });
 
   test("përpunon një pyetje në anglisht", async () => {
@@ -61,16 +62,16 @@ describe("XSUS AI Core", () => {
         requestId: expect.any(String),
         answer: expect.any(String),
         language: "en",
-        source: expect.any(String),
+        source: "xsus-knowledge-service",
         metadata: expect.any(Object),
         timestamp: expect.any(String),
-        version: expect.any(String)
+        version: "1.2.0"
       })
     );
 
     expect(result).toHaveProperty("confidence");
     expect(result.metadata.engine).toBe("xsus-ai-core");
-    expect(result.metadata.version).toBe(result.version);
+    expect(result.metadata.version).toBe("1.2.0");
     expect(Number.isNaN(Date.parse(result.timestamp))).toBe(false);
   });
 
