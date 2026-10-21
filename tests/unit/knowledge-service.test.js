@@ -55,6 +55,7 @@ describe("XSUS Knowledge Service", () => {
 
     expect(result.success).toBe(true);
     expect(result.results.length).toBeGreaterThan(0);
+
     expect(
       result.results.some(item => item.language === "sq")
     ).toBe(true);
@@ -78,7 +79,7 @@ describe("XSUS Knowledge Service", () => {
     expect(result.results.length).toBeLessThanOrEqual(2);
   });
 
-  test("kufizon limitin e pavlefshëm", async () => {
+  test("kufizon limitin zero në minimumin një", async () => {
     const result = await searchKnowledge("JavaScript", {
       language: "en",
       limit: 0
@@ -94,7 +95,10 @@ describe("XSUS Knowledge Service", () => {
 
     expect(result.metadata.engine).toBe("xsus-knowledge-service");
     expect(result.metadata.version).toBe("1.1.1");
+    expect(result.metadata.schemaVersion).toBe("1.0.0");
     expect(result.metadata.resultCount).toBe(result.results.length);
+    expect(result.metadata.rankingEnabled).toBe(true);
+    expect(result.metadata.deduplicationEnabled).toBe(true);
   });
 
   test("regjistron dhe heq një burim shtesë", async () => {
@@ -155,9 +159,10 @@ describe("XSUS Knowledge Service", () => {
 
     expect(result.success).toBe(true);
     expect(result.results.length).toBeGreaterThan(0);
-    expect(result.errors.some(
-      item => item.source === sourceName
-    )).toBe(true);
+
+    expect(
+      result.errors.some(item => item.source === sourceName)
+    ).toBe(true);
   });
 
   test("raporton fushë njohurish të panjohur", async () => {
@@ -198,5 +203,148 @@ describe("XSUS Knowledge Service", () => {
 
     expect(unregisterKnowledgeSource(sourceName)).toBe(true);
     expect(hasKnowledgeSource(sourceName)).toBe(false);
+  });
+
+  test("heq dublikatat kur përmbajtja është identike dhe titujt ndryshojnë", async () => {
+    const sourceName = "deduplication-test-source";
+
+    registerTemporarySource(sourceName, async () => [
+      {
+        id: "duplicate-entry-one",
+        title: "Titulli i parë",
+        content: "XSUS deduplication unique test content",
+        language: "en",
+        domain: "general"
+      },
+      {
+        id: "duplicate-entry-two",
+        title: "Titulli tjetër",
+        content: "XSUS deduplication unique test content",
+        language: "en",
+        domain: "general"
+      }
+    ]);
+
+    const result = await searchKnowledge(
+      "XSUS deduplication unique test content",
+      { language: "en" }
+    );
+
+    const matching = result.results.filter(
+      item => item.content ===
+        "XSUS deduplication unique test content"
+    );
+
+    expect(matching).toHaveLength(1);
+  });
+
+  test("heq dublikatat e përmbajtjes pas normalizimit", async () => {
+    const sourceName = "normalized-deduplication-test-source";
+
+    registerTemporarySource(sourceName, async () => [
+      {
+        id: "normalized-entry-one",
+        title: "Versioni A",
+        content: "XSUS   NORMALIZATION   TEST",
+        language: "en",
+        domain: "general"
+      },
+      {
+        id: "normalized-entry-two",
+        title: "Versioni B",
+        content: "xsus normalization test",
+        language: "en",
+        domain: "general"
+      }
+    ]);
+
+    const result = await searchKnowledge(
+      "xsus normalization test",
+      { language: "en" }
+    );
+
+    const matching = result.results.filter(
+      item => item.content.toLowerCase().includes(
+        "normalization"
+      )
+    );
+
+    expect(matching).toHaveLength(1);
+  });
+
+  test("rezultatet me pikë të barabarta ruajnë rendin e burimit", async () => {
+    const sourceName = "stable-ranking-test-source";
+
+    registerTemporarySource(sourceName, async () => [
+      {
+        id: "stable-entry-one",
+        title: "Stable ranking item",
+        content: "alpha beta",
+        language: "en",
+        domain: "general"
+      },
+      {
+        id: "stable-entry-two",
+        title: "Stable ranking item",
+        content: "gamma delta",
+        language: "en",
+        domain: "general"
+      }
+    ]);
+
+    const result = await searchKnowledge("unmatched query", {
+      language: "en"
+    });
+
+    const firstIndex = result.results.findIndex(
+      item => item.id === "stable-entry-one"
+    );
+
+    const secondIndex = result.results.findIndex(
+      item => item.id === "stable-entry-two"
+    );
+
+    if (firstIndex !== -1 && secondIndex !== -1) {
+      expect(firstIndex).toBeLessThan(secondIndex);
+    }
+  });
+
+  test("kthen numrin e saktë të rezultateve në metadata", async () => {
+    const result = await searchKnowledge("JavaScript", {
+      language: "en",
+      limit: 3
+    });
+
+    expect(result.metadata.resultCount).toBe(
+      result.results.length
+    );
+
+    expect(result.results.length).toBeLessThanOrEqual(3);
+  });
+
+  test("provider mund të kthejë rezultate në fushën results", async () => {
+    const sourceName = "wrapped-results-test-source";
+
+    registerTemporarySource(sourceName, async query => ({
+      success: true,
+      results: [
+        {
+          id: "wrapped-result",
+          title: "Wrapped test",
+          content: `Unique wrapped response ${query}`,
+          language: "en",
+          domain: "general"
+        }
+      ]
+    }));
+
+    const result = await searchKnowledge(
+      "wrapped provider query",
+      { language: "en" }
+    );
+
+    expect(
+      result.results.some(item => item.id === "wrapped-result")
+    ).toBe(true);
   });
 });
