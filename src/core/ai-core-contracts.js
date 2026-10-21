@@ -1,6 +1,14 @@
+
 import { normalizeLanguageCode } from "../language/normalization.js";
 
-export const XSUS_CORE_VERSION = "1.0.0";
+/**
+ * XSUS AI Core — Contracts
+ * Version: 1.1.0
+ *
+ * Kontrata standarde për kërkesat, përgjigjet dhe gabimet.
+ */
+
+export const XSUS_CORE_VERSION = "1.1.0";
 
 export const SUPPORTED_LANGUAGES = Object.freeze([
   "sq",
@@ -15,6 +23,17 @@ export const REQUEST_TYPES = Object.freeze({
   SYSTEM: "system"
 });
 
+export const AI_ERROR_CODES = Object.freeze({
+  INVALID_REQUEST: "INVALID_REQUEST",
+  INVALID_QUERY: "INVALID_QUERY",
+  INVALID_LANGUAGE: "INVALID_LANGUAGE",
+  INVALID_REQUEST_TYPE: "INVALID_REQUEST_TYPE",
+  INVALID_CONTEXT: "INVALID_CONTEXT",
+  KNOWLEDGE_SERVICE_ERROR: "KNOWLEDGE_SERVICE_ERROR",
+  EMPTY_RESPONSE: "EMPTY_RESPONSE",
+  INTERNAL_ERROR: "INTERNAL_ERROR"
+});
+
 function isPlainObject(value) {
   if (value === null || typeof value !== "object") {
     return false;
@@ -22,7 +41,10 @@ function isPlainObject(value) {
 
   const prototype = Object.getPrototypeOf(value);
 
-  return prototype === Object.prototype || prototype === null;
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
 }
 
 function normalizeObject(value) {
@@ -40,7 +62,8 @@ function normalizeLanguageOrThrow(language, errorMessage) {
     throw new TypeError(errorMessage);
   }
 
-  const normalizedLanguage = normalizeLanguageCode(normalizedInput);
+  const normalizedLanguage =
+    normalizeLanguageCode(normalizedInput);
 
   if (
     normalizedLanguage === "auto" &&
@@ -53,13 +76,40 @@ function normalizeLanguageOrThrow(language, errorMessage) {
 }
 
 function createRequestId() {
-  if (typeof globalThis.crypto?.randomUUID === "function") {
+  if (
+    typeof globalThis.crypto?.randomUUID === "function"
+  ) {
     return globalThis.crypto.randomUUID();
   }
 
   return `xsus-${Date.now()}-${Math.random()
     .toString(36)
     .slice(2, 10)}`;
+}
+
+function normalizeRequestId(id) {
+  if (id === null || id === undefined) {
+    return null;
+  }
+
+  if (typeof id !== "string" || !id.trim()) {
+    throw new TypeError(
+      "ID-ja e kërkesës nuk është e vlefshme."
+    );
+  }
+
+  return id.trim();
+}
+
+function normalizeErrorCode(code) {
+  if (
+    typeof code === "string" &&
+    Object.values(AI_ERROR_CODES).includes(code)
+  ) {
+    return code;
+  }
+
+  return AI_ERROR_CODES.INTERNAL_ERROR;
 }
 
 export function createAIRequest({
@@ -71,7 +121,9 @@ export function createAIRequest({
   metadata = {}
 } = {}) {
   if (typeof query !== "string" || !query.trim()) {
-    throw new TypeError("Query duhet të jetë tekst jo bosh.");
+    throw new TypeError(
+      "Query duhet të jetë tekst jo bosh."
+    );
   }
 
   const normalizedLanguage = normalizeLanguageOrThrow(
@@ -80,20 +132,15 @@ export function createAIRequest({
   );
 
   if (!Object.values(REQUEST_TYPES).includes(type)) {
-    throw new TypeError("Lloji i kërkesës nuk njihet.");
-  }
-
-  if (
-    id !== null &&
-    (typeof id !== "string" || !id.trim())
-  ) {
     throw new TypeError(
-      "ID-ja e kërkesës nuk është e vlefshme."
+      "Lloji i kërkesës nuk njihet."
     );
   }
 
+  const normalizedId = normalizeRequestId(id);
+
   return {
-    id: id?.trim() || createRequestId(),
+    id: normalizedId || createRequestId(),
     query: query.trim(),
     language: normalizedLanguage,
     type,
@@ -129,14 +176,7 @@ export function createAIResponse({
     );
   }
 
-  if (
-    requestId !== null &&
-    (typeof requestId !== "string" || !requestId.trim())
-  ) {
-    throw new TypeError(
-      "ID-ja e përgjigjes nuk është e vlefshme."
-    );
-  }
+  const normalizedId = normalizeRequestId(requestId);
 
   if (
     confidence !== null &&
@@ -153,12 +193,58 @@ export function createAIResponse({
   }
 
   return {
-    requestId: requestId?.trim() || null,
+    requestId: normalizedId,
     answer: answer.trim(),
     language: normalizedLanguage,
     source: source.trim(),
     confidence,
     metadata: normalizeObject(metadata),
+    timestamp: new Date().toISOString(),
+    version: XSUS_CORE_VERSION
+  };
+}
+
+/**
+ * Krijon një përgjigje gabimi me strukturë të standardizuar.
+ * Mesazhi publik nuk duhet të përmbajë detaje të brendshme.
+ */
+export function createAIErrorResponse({
+  requestId = null,
+  error = "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.",
+  code = AI_ERROR_CODES.INTERNAL_ERROR,
+  language = "auto",
+  source = "xsus-ai-core",
+  metadata = {}
+} = {}) {
+  const normalizedId = normalizeRequestId(requestId);
+
+  const normalizedLanguage = normalizeLanguageOrThrow(
+    language,
+    "Gjuha e përgjigjes nuk është e vlefshme."
+  );
+
+  const safeError =
+    typeof error === "string" && error.trim()
+      ? error.trim()
+      : "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.";
+
+  const safeSource =
+    typeof source === "string" && source.trim()
+      ? source.trim()
+      : "xsus-ai-core";
+
+  return {
+    requestId: normalizedId,
+    answer: "",
+    language: normalizedLanguage,
+    source: safeSource,
+    confidence: null,
+    metadata: {
+      ...normalizeObject(metadata),
+      errorCode: normalizeErrorCode(code),
+      version: XSUS_CORE_VERSION
+    },
+    error: safeError,
     timestamp: new Date().toISOString(),
     version: XSUS_CORE_VERSION
   };
