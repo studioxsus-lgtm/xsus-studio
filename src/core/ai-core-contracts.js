@@ -68,10 +68,10 @@ function normalizeObject(value) {
  * sq       -> sq
  * sq-AL    -> sq-AL
  * en-us    -> en-US
- * fr_fr    -> fr-FR
+ * fr-FR    -> fr-FR
  * auto     -> auto
  *
- * Pranon vetëm gjuhët bazë të mbështetura.
+ * Kodet me nënvizë, si en_US, refuzohen.
  */
 function normalizeLanguageOrThrow(language, errorMessage) {
   if (typeof language !== "string" || !language.trim()) {
@@ -84,30 +84,35 @@ function normalizeLanguageOrThrow(language, errorMessage) {
     return "auto";
   }
 
-  // Normalizuesi ekzistues mund t'i kthejë kodet rajonale
-  // në kode bazë. Prandaj ruajmë edhe formën origjinale.
-  const normalized = normalizeLanguageCode(input);
-
-  if (typeof normalized !== "string" || !normalized.trim()) {
+  // Pranojmë vizën, jo nënvizën.
+  if (input.includes("_")) {
     throw new TypeError(errorMessage);
   }
 
-  const normalizedInput = input.replace(/_/g, "-");
-  const parts = normalizedInput.split("-");
-
+  const parts = input.split("-");
   const baseLanguage = parts[0].toLowerCase();
 
   if (!SUPPORTED_LANGUAGES.includes(baseLanguage)) {
     throw new TypeError(errorMessage);
   }
 
-  // Lejohet kodi bazë, p.sh. "en".
+  // Kontrollojmë që normalizuesi ekzistues ta njohë gjuhën bazë.
+  const normalizedBase = normalizeLanguageCode(baseLanguage);
+
+  if (
+    typeof normalizedBase !== "string" ||
+    !normalizedBase.trim() ||
+    normalizedBase.trim().toLowerCase() !== baseLanguage
+  ) {
+    throw new TypeError(errorMessage);
+  }
+
+  // Kod bazë: sq, en ose fr.
   if (parts.length === 1) {
     return baseLanguage;
   }
 
-  // Për këtë kontratë mbështesim kodin bazë plus rajonin,
-  // p.sh. en-US, fr-FR dhe sq-AL.
+  // Kod rajonal: en-US, fr-FR ose sq-AL.
   if (
     parts.length !== 2 ||
     !/^[a-zA-Z]{2}$/.test(parts[1])
