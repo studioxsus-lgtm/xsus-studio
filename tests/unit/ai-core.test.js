@@ -1,3 +1,4 @@
+
 import { describe, expect, test } from "vitest";
 import { processAIRequest } from "../../src/core/ai-core.js";
 
@@ -22,6 +23,7 @@ describe("XSUS AI Core", () => {
     expect(result.language).toBe("sq");
     expect(result.source).toBe("xsus-knowledge-service");
     expect(result.metadata.engine).toBe("xsus-ai-core");
+    expect(result.metadata.version).toBe(result.version);
   });
 
   test("përpunon një pyetje në anglisht", async () => {
@@ -33,6 +35,7 @@ describe("XSUS AI Core", () => {
     expect(result.answer).toBeTruthy();
     expect(result.language).toBe("en");
     expect(result.metadata).toHaveProperty("knowledgeResults");
+    expect(result.metadata.knowledgeResults).toBeGreaterThanOrEqual(0);
   });
 
   test("përpunon një pyetje në frëngjisht", async () => {
@@ -44,6 +47,7 @@ describe("XSUS AI Core", () => {
     expect(result.answer).toBeTruthy();
     expect(result.language).toBe("fr");
     expect(result.source).toBe("xsus-knowledge-service");
+    expect(result.metadata.engine).toBe("xsus-ai-core");
   });
 
   test("përgjigjja ka strukturën e pritshme", async () => {
@@ -52,13 +56,58 @@ describe("XSUS AI Core", () => {
       language: "en"
     });
 
-    expect(result).toHaveProperty("requestId");
-    expect(result).toHaveProperty("answer");
-    expect(result).toHaveProperty("language");
-    expect(result).toHaveProperty("source");
+    expect(result).toEqual(
+      expect.objectContaining({
+        requestId: expect.any(String),
+        answer: expect.any(String),
+        language: "en",
+        source: "xsus-knowledge-service",
+        metadata: expect.any(Object),
+        timestamp: expect.any(String),
+        version: expect.any(String)
+      })
+    );
+
     expect(result).toHaveProperty("confidence");
-    expect(result).toHaveProperty("metadata");
-    expect(result).toHaveProperty("timestamp");
-    expect(result).toHaveProperty("version");
+    expect(result.metadata).toHaveProperty("engine", "xsus-ai-core");
+    expect(result.metadata).toHaveProperty("version");
+    expect(Number.isNaN(Date.parse(result.timestamp))).toBe(false);
+  });
+
+  test("përgjigjja përmban metadata për njohuritë", async () => {
+    const result = await processAIRequest({
+      query: "What is programming?",
+      language: "en"
+    });
+
+    expect(result.metadata).toHaveProperty("knowledgeResults");
+    expect(result.metadata).toHaveProperty("sources");
+    expect(Array.isArray(result.metadata.sources)).toBe(true);
+  });
+
+  test("përgjigjja përfshin metadata të kontekstit", async () => {
+    const result = await processAIRequest({
+      query: "Çfarë është JavaScript?",
+      language: "sq",
+      conversationId: "test-conversation",
+      messages: [
+        {
+          role: "user",
+          content: "Dua të mësoj programim."
+        },
+        {
+          role: "assistant",
+          content: "Mund të fillosh me JavaScript."
+        }
+      ]
+    });
+
+    expect(result.answer).toBeTruthy();
+    expect(result.metadata.context).toBeDefined();
+    expect(result.metadata.context.conversationId).toBe(
+      "test-conversation"
+    );
+    expect(result.metadata.context.historyMessageCount).toBe(2);
+    expect(result.metadata.context.hasPreviousContext).toBe(true);
   });
 });
