@@ -10,7 +10,7 @@
  * - Standardizimi i përgjigjeve.
  * - Normalizimi i gjuhëve.
  * - Standardizimi i gabimeve.
- * - Ruajtja e përputhshmërisë me modulet ekzistuese.
+ * - Përputhshmëria me modulet ekzistuese.
  */
 
 import { normalizeLanguageCode } from "../language/normalization.js";
@@ -61,18 +61,19 @@ function normalizeObject(value) {
   return isPlainObject(value) ? { ...value } : {};
 }
 
-function normalizeLanguageOrThrow(
-  language,
-  errorMessage
-) {
-  if (typeof language !== "string") {
+/**
+ * Normalizon kodet gjuhësore, përfshirë kodet rajonale.
+ * Shembuj: sq-AL -> sq, en-US -> en, fr-FR -> fr.
+ */
+function normalizeLanguageOrThrow(language, errorMessage) {
+  if (typeof language !== "string" || !language.trim()) {
     throw new TypeError(errorMessage);
   }
 
   const input = language.trim();
 
-  if (!input) {
-    throw new TypeError(errorMessage);
+  if (input.toLowerCase() === "auto") {
+    return "auto";
   }
 
   const normalized = normalizeLanguageCode(input);
@@ -84,24 +85,22 @@ function normalizeLanguageOrThrow(
   const languageCode = normalized.trim().toLowerCase();
 
   if (languageCode === "auto") {
-    if (input.toLowerCase() !== "auto") {
-      throw new TypeError(errorMessage);
-    }
-
-    return "auto";
-  }
-
-  if (!SUPPORTED_LANGUAGES.includes(languageCode)) {
     throw new TypeError(errorMessage);
   }
 
-  return languageCode;
+  // Normalizuesi mund të kthejë kodin bazë ose kodin rajonal.
+  // Në rastin e dytë, nxjerrim kodin bazë nga prefiksi.
+  const baseLanguage = languageCode.split(/[-_]/)[0];
+
+  if (!SUPPORTED_LANGUAGES.includes(baseLanguage)) {
+    throw new TypeError(errorMessage);
+  }
+
+  return baseLanguage;
 }
 
 function createRequestId() {
-  if (
-    typeof globalThis.crypto?.randomUUID === "function"
-  ) {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
     return globalThis.crypto.randomUUID();
   }
 
@@ -134,11 +133,9 @@ function normalizeErrorCode(code) {
 }
 
 function normalizeSource(source, fallback) {
-  if (typeof source !== "string" || !source.trim()) {
-    return fallback;
-  }
-
-  return source.trim();
+  return typeof source === "string" && source.trim()
+    ? source.trim()
+    : fallback;
 }
 
 function normalizeConfidence(confidence) {
@@ -271,9 +268,6 @@ export function createAIResponse({
 
 /**
  * Krijon një përgjigje gabimi të standardizuar.
- *
- * Mesazhet publike duhet të shmangin ekspozimin
- * e detajeve të brendshme të sistemit.
  */
 export function createAIErrorResponse({
   requestId = null,
@@ -295,16 +289,11 @@ export function createAIErrorResponse({
       ? error.trim()
       : DEFAULT_ERROR_MESSAGE;
 
-  const safeSource = normalizeSource(
-    source,
-    "xsus-ai-core"
-  );
-
   return {
     requestId: normalizedId,
     answer: "",
     language: normalizedLanguage,
-    source: safeSource,
+    source: normalizeSource(source, "xsus-ai-core"),
     confidence: null,
     metadata: {
       ...normalizeObject(metadata),
