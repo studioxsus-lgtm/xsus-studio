@@ -1,26 +1,26 @@
 
-import { normalizeLanguageCode } from "../language/normalization.js";
-
 /**
  * XSUS AI Core — Contracts
- * Version: 1.1.0
+ * Version: 1.0.0
  *
  * Kontrata standarde për kërkesat, përgjigjet dhe gabimet.
  */
 
-export const XSUS_CORE_VERSION = "1.1.0";
+import { normalizeLanguageCode } from "../language/normalization.js";
+
+export const XSUS_CORE_VERSION = "1.0.0";
 
 export const SUPPORTED_LANGUAGES = Object.freeze([
   "sq",
   "en",
-  "fr"
+  "fr",
 ]);
 
 export const REQUEST_TYPES = Object.freeze({
   CHAT: "chat",
   KNOWLEDGE: "knowledge",
   TOOL: "tool",
-  SYSTEM: "system"
+  SYSTEM: "system",
 });
 
 export const AI_ERROR_CODES = Object.freeze({
@@ -31,7 +31,7 @@ export const AI_ERROR_CODES = Object.freeze({
   INVALID_CONTEXT: "INVALID_CONTEXT",
   KNOWLEDGE_SERVICE_ERROR: "KNOWLEDGE_SERVICE_ERROR",
   EMPTY_RESPONSE: "EMPTY_RESPONSE",
-  INTERNAL_ERROR: "INTERNAL_ERROR"
+  INTERNAL_ERROR: "INTERNAL_ERROR",
 });
 
 function isPlainObject(value) {
@@ -51,7 +51,10 @@ function normalizeObject(value) {
   return isPlainObject(value) ? { ...value } : {};
 }
 
-function normalizeLanguageOrThrow(language, errorMessage) {
+function normalizeLanguageOrThrow(
+  language,
+  errorMessage
+) {
   if (typeof language !== "string") {
     throw new TypeError(errorMessage);
   }
@@ -102,23 +105,24 @@ function normalizeRequestId(id) {
 }
 
 function normalizeErrorCode(code) {
-  if (
+  return (
     typeof code === "string" &&
     Object.values(AI_ERROR_CODES).includes(code)
-  ) {
-    return code;
-  }
-
-  return AI_ERROR_CODES.INTERNAL_ERROR;
+  )
+    ? code
+    : AI_ERROR_CODES.INTERNAL_ERROR;
 }
 
+/**
+ * Krijon një kërkesë të standardizuar.
+ */
 export function createAIRequest({
   id = null,
   query,
   language = "auto",
   type = REQUEST_TYPES.CHAT,
   context = {},
-  metadata = {}
+  metadata = {},
 } = {}) {
   if (typeof query !== "string" || !query.trim()) {
     throw new TypeError(
@@ -147,17 +151,20 @@ export function createAIRequest({
     context: normalizeObject(context),
     metadata: normalizeObject(metadata),
     timestamp: new Date().toISOString(),
-    version: XSUS_CORE_VERSION
+    version: XSUS_CORE_VERSION,
   };
 }
 
+/**
+ * Krijon një përgjigje normale të standardizuar.
+ */
 export function createAIResponse({
   requestId = null,
   answer,
   language = "auto",
   source = "xsus-core",
   confidence = null,
-  metadata = {}
+  metadata = {},
 } = {}) {
   if (typeof answer !== "string" || !answer.trim()) {
     throw new TypeError(
@@ -200,13 +207,13 @@ export function createAIResponse({
     confidence,
     metadata: normalizeObject(metadata),
     timestamp: new Date().toISOString(),
-    version: XSUS_CORE_VERSION
+    version: XSUS_CORE_VERSION,
   };
 }
 
 /**
- * Krijon një përgjigje gabimi me strukturë të standardizuar.
- * Mesazhi publik nuk duhet të përmbajë detaje të brendshme.
+ * Krijon një përgjigje gabimi të standardizuar.
+ * Mesazhet publike nuk duhet të ekspozojnë detaje të brendshme.
  */
 export function createAIErrorResponse({
   requestId = null,
@@ -214,7 +221,7 @@ export function createAIErrorResponse({
   code = AI_ERROR_CODES.INTERNAL_ERROR,
   language = "auto",
   source = "xsus-ai-core",
-  metadata = {}
+  metadata = {},
 } = {}) {
   const normalizedId = normalizeRequestId(requestId);
 
@@ -242,10 +249,10 @@ export function createAIErrorResponse({
     metadata: {
       ...normalizeObject(metadata),
       errorCode: normalizeErrorCode(code),
-      version: XSUS_CORE_VERSION
+      version: XSUS_CORE_VERSION,
     },
     error: safeError,
     timestamp: new Date().toISOString(),
-    version: XSUS_CORE_VERSION
+    version: XSUS_CORE_VERSION,
   };
 }
