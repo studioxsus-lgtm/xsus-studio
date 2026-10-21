@@ -1,16 +1,6 @@
 /**
  * XSUS AI Core — Request Orchestrator
  * Version: 1.2.0
- *
- * Përgjegjësitë:
- * - Validimi dhe përpunimi i kërkesave.
- * - Përcaktimi i gjuhës.
- * - Integrimi me Context Engine.
- * - Përdorimi i historikut të bisedës.
- * - Kërkimi në bazën e njohurive.
- * - Menaxhimi i memories së bisedës.
- * - Standardizimi i përgjigjeve.
- * - Menaxhimi i gabimeve.
  */
 
 import {
@@ -35,22 +25,11 @@ import {
   addMemoryMessage
 } from "./memory-engine.js";
 
-import {
-  searchKnowledge
-} from "../knowledge/knowledge-service.js";
+import { searchKnowledge } from "../knowledge/knowledge-service.js";
+import { detectLanguage } from "../language/language-engine.js";
 
-import {
-  detectLanguage
-} from "../language/language-engine.js";
-
-/**
- * Versioni zyrtar i XSUS AI Core.
- */
 export const AI_CORE_VERSION = "1.2.0";
 
-/**
- * Gjen gjuhën e kërkesës.
- */
 function detectRequestLanguage(query, requestedLanguage) {
   const requested = typeof requestedLanguage === "string"
     ? requestedLanguage.trim().toLowerCase()
@@ -62,7 +41,6 @@ function detectRequestLanguage(query, requestedLanguage) {
 
   try {
     const detected = detectLanguage(query);
-
     const language = typeof detected === "string"
       ? detected
       : detected?.language;
@@ -74,18 +52,15 @@ function detectRequestLanguage(query, requestedLanguage) {
       return language;
     }
   } catch {
-    // Nëse zbulimi dështon, përdoret gjuha rezervë.
+    // Përdor gjuhën rezervë.
   }
 
   return "sq";
 }
 
-/**
- * Përgjigje rezervë kur nuk gjendet njohuri e përshtatshme.
- */
 function getFallbackAnswer(language) {
   const answers = {
-    sq: "Nuk gjeta informacion të mjaftueshëm në bazën aktuale të njohurive për t'iu përgjigjur saktë. Mund ta riformulosh pyetjen ose të shtosh informacion për këtë temë.",
+    sq: "Nuk gjeta informacion të mjaftueshëm në bazën aktuale të njohurive për t'iu përgjigjur saktë. Provo ta riformulosh pyetjen ose shto njohuri për këtë temë.",
     en: "I could not find enough information in the current knowledge base to answer accurately. Please rephrase your question or add knowledge about this topic.",
     fr: "Je n’ai pas trouvé suffisamment d’informations dans la base de connaissances actuelle pour répondre avec précision. Veuillez reformuler votre question ou ajouter des connaissances sur ce sujet."
   };
@@ -93,23 +68,16 @@ function getFallbackAnswer(language) {
   return answers[language] || answers.sq;
 }
 
-/**
- * Ndërton një pyetje që përdor kontekstin e mëparshëm.
- */
 function buildContextualQuery(context) {
   const userMessage = String(context?.userMessage || "").trim();
 
-  if (!userMessage) {
-    return "";
-  }
+  if (!userMessage) return "";
 
   const history = Array.isArray(context?.messages)
     ? context.messages
     : [];
 
-  if (history.length === 0) {
-    return userMessage;
-  }
+  if (history.length === 0) return userMessage;
 
   const recentHistory = history
     .slice(-4)
@@ -124,24 +92,17 @@ function buildContextualQuery(context) {
     })
     .filter(Boolean);
 
-  if (recentHistory.length === 0) {
-    return userMessage;
-  }
+  if (recentHistory.length === 0) return userMessage;
 
   return [
-    "Konteksti i bisedës:",
+    "Conversation context:",
     ...recentHistory,
-    `Pyetja aktuale: ${userMessage}`
+    `Current question: ${userMessage}`
   ].join("\n");
 }
 
-/**
- * Kthen përmbajtjen e rezultateve të njohurive në një përgjigje.
- */
 function buildAnswer(results) {
-  if (!Array.isArray(results) || results.length === 0) {
-    return "";
-  }
+  if (!Array.isArray(results)) return "";
 
   const seen = new Set();
   const sections = [];
@@ -153,15 +114,11 @@ function buildAnswer(results) {
         ? result.content.trim()
         : "";
 
-    if (!content) {
-      continue;
-    }
+    if (!content) continue;
 
     const key = content.toLowerCase();
 
-    if (seen.has(key)) {
-      continue;
-    }
+    if (seen.has(key)) continue;
 
     seen.add(key);
     sections.push(content);
@@ -170,16 +127,7 @@ function buildAnswer(results) {
   return sections.join("\n\n");
 }
 
-/**
- * Lexon historikun e bisedës.
- *
- * Kur ekziston një sesion memorieje, ai ka përparësi
- * ndaj mesazheve të dhëna drejtpërdrejt.
- */
-function readConversationHistory(
-  conversationId,
-  suppliedMessages = []
-) {
+function readConversationHistory(conversationId, suppliedMessages = []) {
   if (
     typeof conversationId === "string" &&
     conversationId.trim() &&
@@ -193,9 +141,6 @@ function readConversationHistory(
     : [];
 }
 
-/**
- * Krijon sesionin e memories kur nevojitet.
- */
 function ensureMemorySession(conversationId, language) {
   if (
     typeof conversationId !== "string" ||
@@ -204,9 +149,7 @@ function ensureMemorySession(conversationId, language) {
     return false;
   }
 
-  if (hasMemorySession(conversationId)) {
-    return true;
-  }
+  if (hasMemorySession(conversationId)) return true;
 
   try {
     createMemorySession({
@@ -216,14 +159,10 @@ function ensureMemorySession(conversationId, language) {
 
     return true;
   } catch {
-    // Memoria nuk duhet ta ndërpresë përpunimin e kërkesës.
     return hasMemorySession(conversationId);
   }
 }
 
-/**
- * Ruajtja e një mesazhi në memorie.
- */
 function saveMemoryMessage(sessionId, role, content) {
   if (
     typeof sessionId !== "string" ||
@@ -248,38 +187,30 @@ function saveMemoryMessage(sessionId, role, content) {
   }
 }
 
-/**
- * Përgatit metadata standarde për përgjigjen.
- */
 function buildMetadata(
   language,
   results,
-  knowledge,
   context,
   requestId,
   conversationId,
   memoryEnabled
 ) {
-  const sources = Array.isArray(results)
-    ? [
-        ...new Set(
-          results
-            .map((item) => {
-              if (typeof item === "string") {
-                return "";
-              }
+  const sources = [
+    ...new Set(
+      (Array.isArray(results) ? results : [])
+        .map((item) => {
+          if (typeof item === "string") return "";
 
-              return (
-                item?.source ||
-                item?.metadata?.source ||
-                item?.id ||
-                ""
-              );
-            })
-            .filter(Boolean)
-        )
-      ]
-    : [];
+          return (
+            item?.source ||
+            item?.metadata?.source ||
+            item?.id ||
+            ""
+          );
+        })
+        .filter(Boolean)
+    )
+  ];
 
   const messages = Array.isArray(context?.messages)
     ? context.messages
@@ -312,24 +243,16 @@ function buildMetadata(
   };
 }
 
-/**
- * Krijon një përgjigje gabimi me version të standardizuar.
- */
-function createErrorResponse(
-  error,
-  requestId,
-  language = "sq"
-) {
+function createErrorResponse(error, requestId, language = "sq") {
   const message = error instanceof Error
     ? error.message
     : String(error || "Ndodhi një gabim i panjohur.");
 
-  const errorCode =
-    error?.code || AI_ERROR_CODES.INTERNAL_ERROR;
+  const code = error?.code || AI_ERROR_CODES.INTERNAL_ERROR;
 
   const response = createAIErrorResponse({
     requestId,
-    code: errorCode,
+    code,
     message,
     language
   });
@@ -337,28 +260,22 @@ function createErrorResponse(
   return {
     ...response,
     version: AI_CORE_VERSION,
+    timestamp: response?.timestamp || new Date().toISOString(),
     metadata: {
       ...(response?.metadata || {}),
+      requestId,
       engine: "xsus-ai-core",
-      version: AI_CORE_VERSION,
-      requestId
+      version: AI_CORE_VERSION
     }
   };
 }
 
-/**
- * Përpunon një kërkesë për XSUS AI Core.
- */
 export async function processAIRequest(input = {}) {
   let requestId = null;
   let language = "sq";
 
   try {
-    if (
-      !input ||
-      typeof input !== "object" ||
-      Array.isArray(input)
-    ) {
+    if (!input || typeof input !== "object" || Array.isArray(input)) {
       return createErrorResponse(
         new Error("Kërkesa duhet të jetë një objekt i vlefshëm."),
         requestId,
@@ -366,12 +283,11 @@ export async function processAIRequest(input = {}) {
       );
     }
 
-    const rawQuery =
-      typeof input.query === "string"
-        ? input.query
-        : typeof input.message === "string"
-          ? input.message
-          : "";
+    const rawQuery = typeof input.query === "string"
+      ? input.query
+      : typeof input.message === "string"
+        ? input.message
+        : "";
 
     if (!rawQuery.trim()) {
       return createErrorResponse(
@@ -382,17 +298,13 @@ export async function processAIRequest(input = {}) {
     }
 
     const request = createAIRequest(input);
-
     requestId = request?.requestId || null;
-
-    const requestedLanguage =
-      input.language ||
-      input.requestedLanguage ||
-      request?.language;
 
     language = detectRequestLanguage(
       rawQuery,
-      requestedLanguage
+      input.language ||
+      input.requestedLanguage ||
+      request?.language
     );
 
     const suppliedMessages = Array.isArray(input.messages)
@@ -403,14 +315,15 @@ export async function processAIRequest(input = {}) {
           ? request.context.messages
           : [];
 
-    const conversationId =
+    const conversationId = (
       typeof input.conversationId === "string"
-        ? input.conversationId.trim()
+        ? input.conversationId
         : typeof input.sessionId === "string"
-          ? input.sessionId.trim()
+          ? input.sessionId
           : typeof input.context?.conversationId === "string"
-            ? input.context.conversationId.trim()
-            : "";
+            ? input.context.conversationId
+            : ""
+    ).trim();
 
     const memoryEnabled = ensureMemorySession(
       conversationId,
@@ -454,19 +367,16 @@ export async function processAIRequest(input = {}) {
       );
     }
 
-    const knowledge = await searchKnowledge(
-      contextualQuery,
-      {
-        language,
-        limit: 5,
-        metadata: {
-          requestId,
-          moduleName: "xsus-ai-core",
-          conversationId: conversationId || null,
-          historyMessageCount: history.length
-        }
+    const knowledge = await searchKnowledge(contextualQuery, {
+      language,
+      limit: 5,
+      metadata: {
+        requestId,
+        moduleName: "xsus-ai-core",
+        conversationId: conversationId || null,
+        historyMessageCount: history.length
       }
-    );
+    });
 
     const results = Array.isArray(knowledge)
       ? knowledge
@@ -474,22 +384,15 @@ export async function processAIRequest(input = {}) {
         ? knowledge.results
         : [];
 
-    const answer =
-      buildAnswer(results) ||
-      getFallbackAnswer(language);
+    const answer = buildAnswer(results) || getFallbackAnswer(language);
 
     if (memoryEnabled && conversationId) {
-      saveMemoryMessage(
-        conversationId,
-        "assistant",
-        answer
-      );
+      saveMemoryMessage(conversationId, "assistant", answer);
     }
 
     const metadata = buildMetadata(
       language,
       results,
-      knowledge,
       context,
       requestId,
       conversationId,
@@ -500,7 +403,7 @@ export async function processAIRequest(input = {}) {
       requestId,
       answer,
       language,
-      source: "xsus-knowledge-service",
+      source: "xsus-service",
       confidence: null,
       metadata
     });
@@ -508,21 +411,18 @@ export async function processAIRequest(input = {}) {
     return {
       ...response,
       version: AI_CORE_VERSION,
+      timestamp: response?.timestamp || new Date().toISOString(),
       metadata: {
         ...(response?.metadata || {}),
         ...metadata,
-        engine: "xsus-ai-core",
         version: AI_CORE_VERSION,
+        engine: "xsus-ai-core",
         conversationId: conversationId || null,
         memoryEnabled: Boolean(memoryEnabled)
       }
     };
   } catch (error) {
-    return createErrorResponse(
-      error,
-      requestId,
-      language
-    );
+    return createErrorResponse(error, requestId, language);
   }
 }
 
