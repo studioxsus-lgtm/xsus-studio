@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI — Knowledge Entry Standard
- * Version: 1.1.1
+ * Version: 1.1.2
  *
  * Standard i përbashkët për njohuritë e të gjitha fushave.
  * Ofron validim, normalizim dhe hyrje të pandryshueshme.
@@ -12,7 +12,7 @@ import {
   getBaseLanguage
 } from "../language/normalization.js";
 
-export const KNOWLEDGE_SCHEMA_VERSION = "1.1.1";
+export const KNOWLEDGE_SCHEMA_VERSION = "1.1.2";
 
 export const KNOWLEDGE_DOMAINS = Object.freeze([
   "general",
