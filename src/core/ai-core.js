@@ -10,12 +10,14 @@
  * - Përdorimi i historikut për pyetjet pasuese.
  * - Kërkimi në bazën e njohurive.
  * - Normalizimi i përgjigjeve dhe metadata.
- * - Trajtimi i sigurt i gabimeve.
+ * - Trajtimi i standardizuar dhe i sigurt i gabimeve.
  */
 
 import {
   createAIRequest,
   createAIResponse,
+  createAIErrorResponse,
+  AI_ERROR_CODES,
   SUPPORTED_LANGUAGES,
 } from "./ai-core-contracts.js";
 
@@ -25,9 +27,7 @@ import {
 } from "./request-context.js";
 
 import { createContext } from "./context-engine.js";
-
 import { searchKnowledge } from "../knowledge/knowledge-service.js";
-
 import { detectLanguage } from "../language/language-engine.js";
 
 export const AI_CORE_VERSION = "1.2.0";
@@ -67,11 +67,6 @@ function getFallbackAnswer(language) {
   return answers[language] || answers.sq;
 }
 
-/**
- * Përgatit pyetjen për kërkim.
- * Pyetjet e plota mbeten të pandryshuara.
- * Pyetjet pasuese mund të përdorin historikun.
- */
 function buildContextualQuery(context) {
   const query = context.userMessage.trim();
 
@@ -158,20 +153,37 @@ function buildMetadata(language, results, knowledge, context) {
   };
 }
 
-function createErrorResponse(requestId, message, language = "auto") {
-  return {
-    requestId,
-    answer: "",
-    language,
+function createErrorResponse(
+  requestId,
+  message,
+  language = "auto",
+  code = AI_ERROR_CODES.INTERNAL_ERROR
+) {
+  const response = createAIErrorResponse({
+    requestId:
+      typeof requestId === "string" && requestId.trim()
+        ? requestId
+        : null,
+    error: message,
+    code,
+    language: SUPPORTED_LANGUAGES.includes(language)
+      ? language
+      : "auto",
     source: "xsus-ai-core",
-    confidence: null,
     metadata: {
       engine: "xsus-ai-core",
       version: AI_CORE_VERSION,
     },
-    error: message,
-    timestamp: new Date().toISOString(),
+  });
+
+  return {
+    ...response,
     version: AI_CORE_VERSION,
+    metadata: {
+      ...response.metadata,
+      engine: "xsus-ai-core",
+      version: AI_CORE_VERSION,
+    },
   };
 }
 
@@ -184,14 +196,18 @@ export async function processAIRequest(input = {}) {
     if (!input || typeof input !== "object" || Array.isArray(input)) {
       return createErrorResponse(
         null,
-        "Kërkesa duhet të jetë një objekt i vlefshëm."
+        "Kërkesa duhet të jetë një objekt i vlefshëm.",
+        "auto",
+        AI_ERROR_CODES.INVALID_REQUEST
       );
     }
 
     if (typeof input.query !== "string" || !input.query.trim()) {
       return createErrorResponse(
         typeof input.id === "string" ? input.id : null,
-        "Shkruaj një pyetje për XSUS AI."
+        "Shkruaj një pyetje për XSUS AI.",
+        "auto",
+        AI_ERROR_CODES.INVALID_QUERY
       );
     }
 
@@ -249,7 +265,8 @@ export async function processAIRequest(input = {}) {
       return createErrorResponse(
         requestId,
         "Konteksti i kërkesës nuk është i vlefshëm.",
-        language
+        language,
+        AI_ERROR_CODES.INVALID_CONTEXT
       );
     }
 
@@ -273,7 +290,8 @@ export async function processAIRequest(input = {}) {
         requestId,
         knowledge?.error ||
           "Kërkimi në bazën e njohurive dështoi.",
-        language
+        language,
+        AI_ERROR_CODES.KNOWLEDGE_SERVICE_ERROR
       );
     }
 
@@ -286,7 +304,7 @@ export async function processAIRequest(input = {}) {
 
     const answer = buildAnswer(results);
 
-    // 10. Krijimi i përgjigjes.
+    // 10. Krijimi i përgjigjes normale ose rezervë.
     const response = createAIResponse({
       requestId,
       answer: answer || getFallbackAnswer(language),
@@ -296,7 +314,7 @@ export async function processAIRequest(input = {}) {
       metadata: buildMetadata(language, results, knowledge, context),
     });
 
-    // 11. Një burim i vetëm për versionin e motorit.
+    // 11. Versioni i motorit është autoritativ për këtë modul.
     return {
       ...response,
       version: AI_CORE_VERSION,
@@ -306,12 +324,20 @@ export async function processAIRequest(input = {}) {
         version: AI_CORE_VERSION,
       },
     };
-  } catch {
-    // Mos ekspozo detaje të brendshme të gabimeve.
+  } catch (error) {
+    // Gabimet e brendshme nuk ekspozohen te përdoruesi.
+    // Gabimet e validimit mbajnë mesazhet e tyre të kontrolluara.
+    const isValidationError = error instanceof TypeError;
+
     return createErrorResponse(
       requestId,
-      "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.",
-      language
+      isValidationError
+        ? error.message
+        : "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.",
+      language,
+      isValidationError
+        ? AI_ERROR_CODES.INVALID_REQUEST
+        : AI_ERROR_CODES.INTERNAL_ERROR
     );
   }
 }
