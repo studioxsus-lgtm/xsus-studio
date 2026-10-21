@@ -1,8 +1,21 @@
+
 /**
  * XSUS AI — Memory Engine
  * Version: 1.0.0
  *
  * Menaxhon sesionet dhe historikun e bisedave në RAM.
+ *
+ * Karakteristikat:
+ * - Sesione të izoluara.
+ * - Kufizime për numrin e sesioneve dhe mesazheve.
+ * - Validim i mesazheve dhe roleve.
+ * - Kopje të të dhënave për të mbrojtur gjendjen e brendshme.
+ * - Historik kronologjik.
+ * - Pastrim dhe statistika të memories.
+ *
+ * Shënim:
+ * Memoria ruhet vetëm në RAM dhe humbet kur procesi
+ * përfundon ose moduli rivendoset.
  */
 
 export const MEMORY_ENGINE_VERSION = "1.0.0";
@@ -10,49 +23,116 @@ export const MEMORY_ENGINE_VERSION = "1.0.0";
 const MAX_SESSIONS = 1000;
 const MAX_MESSAGES_PER_SESSION = 100;
 const MAX_MESSAGE_LENGTH = 8000;
+const MAX_SESSION_ID_LENGTH = 128;
+
+const ALLOWED_ROLES = new Set([
+  "user",
+  "assistant",
+]);
 
 const sessions = new Map();
 
 function validateSessionId(sessionId) {
-  if (
-    typeof sessionId !== "string" ||
-    !sessionId.trim() ||
-    sessionId.length > 128
-  ) {
-    throw new Error("ID e sesionit nuk është e vlefshme.");
+  if (typeof sessionId !== "string") {
+    throw new Error(
+      "ID e sesionit nuk është e vlefshme."
+    );
   }
 
-  return sessionId.trim();
+  const normalizedId = sessionId.trim();
+
+  if (
+    !normalizedId ||
+    normalizedId.length > MAX_SESSION_ID_LENGTH
+  ) {
+    throw new Error(
+      "ID e sesionit nuk është e vlefshme."
+    );
+  }
+
+  return normalizedId;
 }
 
+/**
+ * Kthen sesionin e brendshëm ose null.
+ */
 function getSessionOrNull(sessionId) {
   if (typeof sessionId !== "string") {
     return null;
   }
 
-  return sessions.get(sessionId.trim()) || null;
+  const normalizedId = sessionId.trim();
+
+  if (!normalizedId) {
+    return null;
+  }
+
+  return sessions.get(normalizedId) || null;
 }
 
-function cloneMessage(message, includeMetadata = true) {
-  const copy = { ...message };
+/**
+ * Krijon kopje të metadata-s.
+ * Mbështet objekte të zakonshme dhe vlera primitive.
+ */
+function cloneMetadata(metadata) {
+  if (
+    !metadata ||
+    typeof metadata !== "object" ||
+    Array.isArray(metadata)
+  ) {
+    return {};
+  }
 
-  if (!includeMetadata) {
-    delete copy.metadata;
-  } else {
-    copy.metadata = { ...message.metadata };
+  return { ...metadata };
+}
+
+/**
+ * Krijon një kopje të mesazhit.
+ */
+function cloneMessage(message, includeMetadata = true) {
+  const copy = {
+    id: message.id,
+    role: message.role,
+    content: message.content,
+    timestamp: message.timestamp,
+  };
+
+  if (includeMetadata) {
+    copy.metadata = cloneMetadata(message.metadata);
   }
 
   return copy;
 }
 
+/**
+ * Krijon një kopje të sesionit.
+ */
 function cloneSession(session) {
   return {
-    ...session,
-    metadata: { ...session.metadata },
-    messages: session.messages.map((message) =>
+    sessionId: session.sessionId,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+    metadata: cloneMetadata(session.metadata),
+    messages: session.messages.map(message =>
       cloneMessage(message)
     ),
   };
+}
+
+/**
+ * Krijon një identifikues unik për mesazhin.
+ */
+function createMessageId() {
+  if (
+    typeof globalThis.crypto !== "undefined" &&
+    typeof globalThis.crypto.randomUUID === "function"
+  ) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
 }
 
 /**
@@ -65,18 +145,28 @@ export function createMemorySession(input) {
       ? { sessionId: input }
       : input;
 
-  if (!config || typeof config !== "object" || Array.isArray(config)) {
-    throw new Error("Konfigurimi i sesionit nuk është i vlefshëm.");
+  if (
+    !config ||
+    typeof config !== "object" ||
+    Array.isArray(config)
+  ) {
+    throw new Error(
+      "Konfigurimi i sesionit nuk është i vlefshëm."
+    );
   }
 
   const sessionId = validateSessionId(config.sessionId);
 
   if (sessions.has(sessionId)) {
-    throw new Error(`Sesioni ${sessionId} ekziston tashmë.`);
+    throw new Error(
+      `Sesioni ${sessionId} ekziston tashmë.`
+    );
   }
 
   if (sessions.size >= MAX_SESSIONS) {
-    throw new Error("Është arritur kufiri i sesioneve.");
+    throw new Error(
+      "Është arritur kufiri i sesioneve."
+    );
   }
 
   const now = new Date().toISOString();
@@ -85,12 +175,7 @@ export function createMemorySession(input) {
     sessionId,
     createdAt: now,
     updatedAt: now,
-    metadata:
-      config.metadata &&
-      typeof config.metadata === "object" &&
-      !Array.isArray(config.metadata)
-        ? { ...config.metadata }
-        : {},
+    metadata: cloneMetadata(config.metadata),
     messages: [],
   };
 
@@ -107,7 +192,7 @@ export function hasMemorySession(sessionId) {
 }
 
 /**
- * Kthen kopjen e sesionit ose null.
+ * Kthen një kopje të sesionit ose null.
  */
 export function getMemorySession(sessionId) {
   const session = getSessionOrNull(sessionId);
@@ -120,106 +205,166 @@ export function getMemorySession(sessionId) {
  * Rolet e lejuara: user dhe assistant.
  */
 export function addMemoryMessage(input) {
-  if (!input || typeof input !== "object" || Array.isArray(input)) {
-    throw new Error("Mesazhi nuk është i vlefshëm.");
+  if (
+    !input ||
+    typeof input !== "object" ||
+    Array.isArray(input)
+  ) {
+    throw new Error(
+      "Mesazhi nuk është i vlefshëm."
+    );
   }
 
   const sessionId = validateSessionId(input.sessionId);
   const session = sessions.get(sessionId);
 
   if (!session) {
-    throw new Error("Sesioni nuk ekziston.");
+    throw new Error(
+      "Sesioni nuk ekziston."
+    );
   }
 
-  if (!["user", "assistant"].includes(input.role)) {
-    throw new Error("Roli duhet të jetë user ose assistant.");
+  if (
+    typeof input.role !== "string" ||
+    !ALLOWED_ROLES.has(input.role)
+  ) {
+    throw new Error(
+      "Roli duhet të jetë user ose assistant."
+    );
   }
 
   if (
     typeof input.content !== "string" ||
     !input.content.trim()
   ) {
-    throw new Error("Mesazhi duhet të përmbajë tekst jo bosh.");
+    throw new Error(
+      "Mesazhi duhet të përmbajë tekst jo bosh."
+    );
   }
 
   const content = input.content.trim();
 
   if (content.length > MAX_MESSAGE_LENGTH) {
-    throw new Error("Mesazhi tejkalon gjatësinë e lejuar.");
+    throw new Error(
+      "Mesazhi tejkalon gjatësinë e lejuar."
+    );
   }
 
+  const timestamp = new Date().toISOString();
+
   const message = {
-    id:
-      typeof crypto !== "undefined" &&
-      typeof crypto.randomUUID === "function"
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    id: createMessageId(),
     role: input.role,
     content,
-    timestamp: new Date().toISOString(),
-    metadata:
-      input.metadata &&
-      typeof input.metadata === "object" &&
-      !Array.isArray(input.metadata)
-        ? { ...input.metadata }
-        : {},
+    timestamp,
+    metadata: cloneMetadata(input.metadata),
   };
 
   session.messages.push(message);
 
-  if (session.messages.length > MAX_MESSAGES_PER_SESSION) {
-    session.messages.splice(
-      0,
-      session.messages.length - MAX_MESSAGES_PER_SESSION
-    );
+  // Mbajmë vetëm mesazhet më të fundit.
+  if (
+    session.messages.length >
+    MAX_MESSAGES_PER_SESSION
+  ) {
+    const excess =
+      session.messages.length -
+      MAX_MESSAGES_PER_SESSION;
+
+    session.messages.splice(0, excess);
   }
 
-  session.updatedAt = message.timestamp;
+  session.updatedAt = timestamp;
 
   return cloneMessage(message);
 }
 
 /**
  * Merr historikun në rend kronologjik.
+ *
+ * options.limit:
+ * - Numër pozitiv: kthen mesazhet e fundit.
+ * - 0: kthen një listë bosh.
+ * - I pavlefshëm ose i munguar: përdor kufirin maksimal.
  */
-export function getMemoryHistory(sessionId, options = {}) {
+export function getMemoryHistory(
+  sessionId,
+  options = {}
+) {
   const session = getSessionOrNull(sessionId);
 
   if (!session) {
     return [];
   }
 
-  const limit =
-    Number.isInteger(options.limit) && options.limit >= 0
+  const requestedLimit = options &&
+    typeof options === "object" &&
+    !Array.isArray(options)
       ? options.limit
+      : undefined;
+
+  const limit =
+    Number.isInteger(requestedLimit) &&
+    requestedLimit >= 0
+      ? Math.min(
+          requestedLimit,
+          MAX_MESSAGES_PER_SESSION
+        )
       : MAX_MESSAGES_PER_SESSION;
+
+  if (limit === 0) {
+    return [];
+  }
 
   return session.messages
     .slice(-limit)
-    .map((message) => cloneMessage(message));
+    .map(message => cloneMessage(message));
 }
 
 /**
  * Kthen kontekstin e fundit pa metadata.
  */
-export function getRecentMemoryContext(sessionId, limit = 20) {
-  const history = getMemoryHistory(sessionId, { limit });
+export function getRecentMemoryContext(
+  sessionId,
+  limit = 20
+) {
+  const safeLimit =
+    Number.isInteger(limit) && limit >= 0
+      ? Math.min(limit, MAX_MESSAGES_PER_SESSION)
+      : 20;
 
-  return history.map((message) => cloneMessage(message, false));
+  if (safeLimit === 0) {
+    return [];
+  }
+
+  return getMemoryHistory(sessionId, {
+    limit: safeLimit,
+  }).map(message =>
+    cloneMessage(message, false)
+  );
 }
 
 /**
  * Përditëson metadata-n e sesionit.
  */
-export function updateMemorySessionMetadata(sessionId, metadata) {
+export function updateMemorySessionMetadata(
+  sessionId,
+  metadata
+) {
   const session = getSessionOrNull(sessionId);
 
   if (!session) {
     return null;
   }
 
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
-    throw new Error("Metadata duhet të jetë objekt.");
+  if (
+    !metadata ||
+    typeof metadata !== "object" ||
+    Array.isArray(metadata)
+  ) {
+    throw new Error(
+      "Metadata duhet të jetë objekt."
+    );
   }
 
   session.metadata = {
@@ -233,16 +378,21 @@ export function updateMemorySessionMetadata(sessionId, metadata) {
 }
 
 /**
- * Pastron historikun dhe raporton numrin e mesazheve të fshira.
+ * Pastron historikun dhe raporton numrin e mesazheve
+ * të fshira.
  */
 export function clearMemoryHistory(sessionId) {
   const session = getSessionOrNull(sessionId);
 
   if (!session) {
-    return { cleared: false, removedMessages: 0 };
+    return {
+      cleared: false,
+      removedMessages: 0,
+    };
   }
 
   const removedMessages = session.messages.length;
+
   session.messages = [];
   session.updatedAt = new Date().toISOString();
 
@@ -253,7 +403,7 @@ export function clearMemoryHistory(sessionId) {
 }
 
 /**
- * Fshin një sesion dhe raporton rezultatin.
+ * Fshin një sesion.
  */
 export function deleteMemorySession(sessionId) {
   const id = validateSessionId(sessionId);
@@ -263,7 +413,7 @@ export function deleteMemorySession(sessionId) {
 }
 
 /**
- * Kthen statistikat aktuale.
+ * Kthen statistikat aktuale të memories.
  */
 export function getMemoryStats() {
   let totalMessages = 0;
@@ -286,6 +436,7 @@ export function getMemoryStats() {
  */
 export function clearAllMemory() {
   const removedSessions = sessions.size;
+
   sessions.clear();
 
   return {
