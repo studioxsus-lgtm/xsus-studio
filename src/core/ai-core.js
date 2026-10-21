@@ -76,7 +76,7 @@ function normalizeLanguage(value) {
     return language;
   }
 
-  // Lejojmë kod rajonal vetëm kur gjuha bazë mbështetet.
+  // Lejo kodet rajonale vetëm për gjuhët e mbështetura.
   const match = language.match(/^([a-z]{2})-[a-z]{2}$/);
 
   if (match && SUPPORTED_LANGUAGES.includes(match[1])) {
@@ -106,7 +106,7 @@ function detectRequestLanguage(query, requestedLanguage) {
       return normalized;
     }
   } catch {
-    // Në rast gabimi, përdoret gjuha rezervë.
+    // Në rast gabimi përdoret gjuha rezervë.
   }
 
   return "sq";
@@ -270,13 +270,16 @@ function saveMemoryMessage(sessionId, role, content) {
   if (
     !sessionId ||
     typeof content !== "string" ||
-    !content.trim() ||
-    !hasMemorySession(sessionId)
+    !content.trim()
   ) {
     return false;
   }
 
   try {
+    if (!hasMemorySession(sessionId)) {
+      return false;
+    }
+
     addMemoryMessage({
       sessionId,
       role,
@@ -377,7 +380,11 @@ function buildMetadata({
     knowledgeResults: Array.isArray(results)
       ? results.length
       : 0,
-    sources: collectSources(results, knowledge, responseResult),
+    sources: collectSources(
+      results,
+      knowledge,
+      responseResult
+    ),
     conversationId: conversationId || null,
     memoryEnabled: Boolean(memoryEnabled),
     context: buildContextMetadata({
@@ -504,12 +511,15 @@ export async function processAIRequest(input = {}) {
 
     const suppliedMessages = resolveSuppliedMessages(input);
 
-    // Përputhje me kontratën: ajo pret "query" dhe "id".
+    // Kontrata përdor "query" dhe "id".
     const request = createAIRequest({
       ...input,
       id: input.id ?? input.requestId ?? null,
       query,
-      language: input.language ?? input.requestedLanguage ?? "auto"
+      language:
+        input.language ??
+        input.requestedLanguage ??
+        "auto"
     });
 
     requestId = request.id || createRequestIdFallback();
@@ -573,6 +583,7 @@ export async function processAIRequest(input = {}) {
         }
       });
     } catch {
+      // Gabimet e papritura nuk ekspozojnë detaje të brendshme.
       return createErrorResponse({
         message: GENERIC_ERROR_MESSAGE,
         requestId,
@@ -588,13 +599,19 @@ export async function processAIRequest(input = {}) {
       });
     }
 
+    // Korrigjim: ruhet mesazhi i kontrolluar nga shërbimi.
     if (knowledge?.success === false) {
+      const knowledgeError =
+        typeof knowledge.error === "string" &&
+        knowledge.error.trim()
+          ? knowledge.error.trim()
+          : GENERIC_ERROR_MESSAGE;
+
       return createErrorResponse({
-        message: GENERIC_ERROR_MESSAGE,
+        message: knowledgeError,
         requestId,
         language,
         code: AI_ERROR_CODES.KNOWLEDGE_SERVICE_ERROR,
-        exposeMessage: false,
         metadata: buildErrorMetadata({
           requestId,
           language,
@@ -619,9 +636,10 @@ export async function processAIRequest(input = {}) {
       conversationId: conversationId || null
     });
 
-    const answer = typeof standardizedResponse?.answer === "string"
-      ? standardizedResponse.answer.trim()
-      : "";
+    const answer =
+      typeof standardizedResponse?.answer === "string"
+        ? standardizedResponse.answer.trim()
+        : "";
 
     if (!answer) {
       return createErrorResponse({
@@ -636,13 +654,21 @@ export async function processAIRequest(input = {}) {
           conversationId,
           history,
           knowledgeResults: results.length,
-          sources: collectSources(results, knowledge, standardizedResponse)
+          sources: collectSources(
+            results,
+            knowledge,
+            standardizedResponse
+          )
         })
       });
     }
 
     if (memoryEnabled) {
-      saveMemoryMessage(conversationId, "assistant", answer);
+      saveMemoryMessage(
+        conversationId,
+        "assistant",
+        answer
+      );
     }
 
     const metadata = buildMetadata({
