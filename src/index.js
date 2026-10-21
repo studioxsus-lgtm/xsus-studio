@@ -1,32 +1,40 @@
-// XSUS AI Core — Public API
+
+/**
+ * XSUS AI Core — Public API
+ * Exports the supported public interfaces.
+ */
 
 export {
-  processAIRequest
+  processAIRequest,
+  AI_CORE_VERSION,
 } from "./core/ai-core.js";
 
 export {
   XSUS_CORE_VERSION,
   SUPPORTED_LANGUAGES,
   REQUEST_TYPES,
+  AI_ERROR_CODES,
   createAIRequest,
-  createAIResponse
+  createAIResponse,
+  createAIErrorResponse,
 } from "./core/ai-core-contracts.js";
 
 export {
   createRequestContext,
-  isValidRequestContext
+  isValidRequestContext,
+  REQUEST_CONTEXT_VERSION,
 } from "./core/request-context.js";
 
 export {
   analyzeLanguage,
   detectLanguage,
   getLanguageInfo,
-  getSupportedLanguages
+  getSupportedLanguages,
 } from "./language/language-engine.js";
 
 export {
   analyzeGrammar,
-  isGrammarEngineSupported
+  isGrammarEngineSupported,
 } from "./language/grammar-engine.js";
 
 export {
@@ -34,7 +42,7 @@ export {
   normalizeForSearch,
   tokenizeText,
   normalizeLanguageCode,
-  getBaseLanguage
+  getBaseLanguage,
 } from "./language/normalization.js";
 
 export {
@@ -42,11 +50,11 @@ export {
   registerKnowledgeSource,
   listKnowledgeSources,
   hasKnowledgeSource,
-  unregisterKnowledgeSource
+  unregisterKnowledgeSource,
 } from "./knowledge/knowledge-service.js";
 
 export {
-  routeAIRequest
+  routeAIRequest,
 } from "./runtime/router.js";
 
 export {
@@ -55,5 +63,5 @@ export {
   hasService,
   listServices,
   unregisterService,
-  clearServices
+  clearServices,
 } from "./runtime/service-registry.js";
