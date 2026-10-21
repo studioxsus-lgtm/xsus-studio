@@ -8,7 +8,7 @@
  * Përgjegjësitë:
  * - Validimi i kërkesave.
  * - Standardizimi i përgjigjeve.
- * - Normalizimi i gjuhëve.
+ * - Normalizimi i gjuhëve dhe kodeve rajonale.
  * - Standardizimi i gabimeve.
  * - Përputhshmëria me modulet ekzistuese.
  */
@@ -62,8 +62,16 @@ function normalizeObject(value) {
 }
 
 /**
- * Normalizon kodet gjuhësore, përfshirë kodet rajonale.
- * Shembuj: sq-AL -> sq, en-US -> en, fr-FR -> fr.
+ * Normalizon gjuhën dhe ruan kodin rajonal.
+ *
+ * Shembuj:
+ * sq       -> sq
+ * sq-AL    -> sq-AL
+ * en-us    -> en-US
+ * fr_fr    -> fr-FR
+ * auto     -> auto
+ *
+ * Pranon vetëm gjuhët bazë të mbështetura.
  */
 function normalizeLanguageOrThrow(language, errorMessage) {
   if (typeof language !== "string" || !language.trim()) {
@@ -76,27 +84,38 @@ function normalizeLanguageOrThrow(language, errorMessage) {
     return "auto";
   }
 
+  // Normalizuesi ekzistues mund t'i kthejë kodet rajonale
+  // në kode bazë. Prandaj ruajmë edhe formën origjinale.
   const normalized = normalizeLanguageCode(input);
 
   if (typeof normalized !== "string" || !normalized.trim()) {
     throw new TypeError(errorMessage);
   }
 
-  const languageCode = normalized.trim().toLowerCase();
+  const normalizedInput = input.replace(/_/g, "-");
+  const parts = normalizedInput.split("-");
 
-  if (languageCode === "auto") {
-    throw new TypeError(errorMessage);
-  }
-
-  // Normalizuesi mund të kthejë kodin bazë ose kodin rajonal.
-  // Në rastin e dytë, nxjerrim kodin bazë nga prefiksi.
-  const baseLanguage = languageCode.split(/[-_]/)[0];
+  const baseLanguage = parts[0].toLowerCase();
 
   if (!SUPPORTED_LANGUAGES.includes(baseLanguage)) {
     throw new TypeError(errorMessage);
   }
 
-  return baseLanguage;
+  // Lejohet kodi bazë, p.sh. "en".
+  if (parts.length === 1) {
+    return baseLanguage;
+  }
+
+  // Për këtë kontratë mbështesim kodin bazë plus rajonin,
+  // p.sh. en-US, fr-FR dhe sq-AL.
+  if (
+    parts.length !== 2 ||
+    !/^[a-zA-Z]{2}$/.test(parts[1])
+  ) {
+    throw new TypeError(errorMessage);
+  }
+
+  return `${baseLanguage}-${parts[1].toUpperCase()}`;
 }
 
 function createRequestId() {
