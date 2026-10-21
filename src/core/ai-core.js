@@ -1,13 +1,12 @@
-
 /**
  * XSUS AI Core — Request Orchestrator
- * Version: 1.2.0
+ * Version: 1.3.0
  *
  * Përgjegjësitë:
  * - Validimi dhe përpunimi i kërkesave.
  * - Përcaktimi i gjuhës.
  * - Integrimi me Context Engine.
- * - Përdorimi i historikut të bisedës.
+ * - Menaxhimi i historikut përmes Memory Engine.
  * - Kërkimi në bazën e njohurive.
  * - Standardizimi i përgjigjeve dhe gabimeve.
  * - Trajtimi i sigurt i dështimeve.
@@ -27,10 +26,18 @@ import {
 } from "./request-context.js";
 
 import { createContext } from "./context-engine.js";
+
+import {
+  createMemorySession,
+  hasMemorySession,
+  getMemoryHistory,
+  addMemoryMessage,
+} from "./memory-engine.js";
+
 import { searchKnowledge } from "../knowledge/knowledge-service.js";
 import { detectLanguage } from "../language/language-engine.js";
 
-export const AI_CORE_VERSION = "1.2.0";
+export const AI_CORE_VERSION = "1.3.0";
 
 const FOLLOW_UP_PATTERNS = [
   /^(po|dhe)\s+(ai|ajo|ata|ato|kjo|kjo pjesë)\b/i,
@@ -136,6 +143,67 @@ function buildAnswer(results) {
   return sections.join("\n\n");
 }
 
+/**
+ * Merr historikun nga Memory Engine.
+ * Nëse memoria nuk mund të lexohet, përdor historikun
+ * e dërguar nga kërkesa, pa ndërprerë procesimin.
+ */
+function readConversationHistory(conversationId, suppliedMessages) {
+  if (conversationId && hasMemorySession(conversationId)) {
+    const history = getMemoryHistory(conversationId);
+
+    if (Array.isArray(history)) {
+      return history;
+    }
+  }
+
+  return Array.isArray(suppliedMessages)
+    ? suppliedMessages
+    : [];
+}
+
+/**
+ * Krijon sesionin nëse nuk ekziston.
+ */
+function ensureMemorySession(conversationId, language) {
+  if (!conversationId) {
+    return null;
+  }
+
+  if (hasMemorySession(conversationId)) {
+    return conversationId;
+  }
+
+  createMemorySession({
+    sessionId: conversationId,
+    language,
+  });
+
+  return conversationId;
+}
+
+/**
+ * Regjistron mesazhin në Memory Engine.
+ * Gabimet e memories nuk duhet të rrëzojnë kërkesën AI.
+ */
+function saveMemoryMessage(sessionId, role, content) {
+  if (!sessionId || typeof content !== "string" || !content.trim()) {
+    return false;
+  }
+
+  try {
+    addMemoryMessage({
+      sessionId,
+      role,
+      content: content.trim(),
+    });
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function buildMetadata(language, results, knowledge, context) {
   return {
     language,
@@ -158,7 +226,6 @@ function buildMetadata(language, results, knowledge, context) {
 
 /**
  * Krijon një përgjigje gabimi të standardizuar.
- * Versioni i kontratave nuk zëvendëson versionin e motorit.
  */
 function createErrorResponse(
   requestId,
@@ -198,6 +265,15 @@ function createErrorResponse(
   };
 }
 
+/**
+ * Përpunon një kërkesë të XSUS AI.
+ *
+ * conversationId:
+ * Identifikuesi i qëndrueshëm i sesionit për historikun.
+ *
+ * messages:
+ * Historik opsional i dërguar nga klienti.
+ */
 export async function processAIRequest(input = {}) {
   let requestId = null;
   let language = "auto";
@@ -239,23 +315,38 @@ export async function processAIRequest(input = {}) {
       request.language
     );
 
-    // 4. Leximi i historikut.
+    // 4. Identifikimi i kontekstit të kërkesës.
     const requestContext = request.context || {};
 
-    const messages = Array.isArray(input.messages)
+    const suppliedMessages = Array.isArray(input.messages)
       ? input.messages
       : Array.isArray(requestContext.messages)
         ? requestContext.messages
         : [];
 
-    const conversationId =
-      typeof input.conversationId === "string"
-        ? input.conversationId
-        : typeof requestContext.conversationId === "string"
-          ? requestContext.conversationId
+    const requestedConversationId =
+      typeof input.conversationId === "string" &&
+      input.conversationId.trim()
+        ? input.conversationId.trim()
+        : typeof requestContext.conversationId === "string" &&
+            requestContext.conversationId.trim()
+          ? requestContext.conversationId.trim()
           : null;
 
-    // 5. Krijimi i kontekstit bisedor.
+    // 5. Krijimi ose rikthimi i sesionit të memories.
+    let conversationId = requestedConversationId;
+
+    if (conversationId) {
+      ensureMemorySession(conversationId, language);
+    }
+
+    // 6. Marrja e historikut.
+    const messages = readConversationHistory(
+      conversationId,
+      suppliedMessages
+    );
+
+    // 7. Krijimi i kontekstit bisedor.
     const context = createContext({
       messages,
       userMessage: request.query,
@@ -263,7 +354,7 @@ export async function processAIRequest(input = {}) {
       conversationId,
     });
 
-    // 6. Krijimi dhe validimi i kontekstit të kërkesës.
+    // 8. Validimi i kontekstit të kërkesës.
     const validatedContext = createRequestContext({
       id: request.id,
       query: context.userMessage,
@@ -288,10 +379,19 @@ export async function processAIRequest(input = {}) {
       );
     }
 
-    // 7. Përgatitja e pyetjes me kontekst.
+    // 9. Përgatitja e pyetjes me kontekst.
     const contextualQuery = buildContextualQuery(context);
 
-    // 8. Kërkimi në bazën e njohurive.
+    // 10. Ruajtja e pyetjes së përdoruesit.
+    if (conversationId) {
+      saveMemoryMessage(
+        conversationId,
+        "user",
+        request.query
+      );
+    }
+
+    // 11. Kërkimi në bazën e njohurive.
     const knowledge = await searchKnowledge(contextualQuery, {
       language: validatedContext.language,
       limit: 5,
@@ -313,19 +413,28 @@ export async function processAIRequest(input = {}) {
       );
     }
 
-    // 9. Normalizimi i rezultateve.
+    // 12. Normalizimi i rezultateve.
     const results = Array.isArray(knowledge)
       ? knowledge
       : Array.isArray(knowledge.results)
         ? knowledge.results
         : [];
 
-    const answer = buildAnswer(results);
+    const answer = buildAnswer(results) || getFallbackAnswer(language);
 
-    // 10. Krijimi i përgjigjes normale ose rezervë.
+    // 13. Ruajtja e përgjigjes së AI në histori.
+    if (conversationId) {
+      saveMemoryMessage(
+        conversationId,
+        "assistant",
+        answer
+      );
+    }
+
+    // 14. Krijimi i përgjigjes standarde.
     const response = createAIResponse({
       requestId,
-      answer: answer || getFallbackAnswer(language),
+      answer,
       language,
       source: "xsus-knowledge-service",
       confidence: null,
@@ -337,7 +446,7 @@ export async function processAIRequest(input = {}) {
       ),
     });
 
-    // 11. Versioni i motorit mbetet 1.2.0.
+    // 15. Versioni i motorit.
     return {
       ...response,
       version: AI_CORE_VERSION,
@@ -345,6 +454,8 @@ export async function processAIRequest(input = {}) {
         ...response.metadata,
         engine: "xsus-ai-core",
         version: AI_CORE_VERSION,
+        conversationId,
+        memoryEnabled: Boolean(conversationId),
       },
     };
   } catch {
