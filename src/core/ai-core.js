@@ -60,9 +60,9 @@ function detectRequestLanguage(query, requestedLanguage) {
 
 function getFallbackAnswer(language) {
   const answers = {
-    sq: "Nuk gjeta informacion të mjaftueshëm në bazën aktuale të njohurive për t'iu përgjigjur saktë. Provo ta riformulosh pyetjen ose shto njohuri për këtë temë.",
-    en: "I could not find enough information in the current knowledge base to answer accurately. Please rephrase your question or add knowledge about this topic.",
-    fr: "Je n’ai pas trouvé suffisamment d’informations dans la base de connaissances actuelle pour répondre avec précision. Veuillez reformuler votre question ou ajouter des connaissances sur ce sujet."
+    sq: "Nuk u gjetën rezultate të mjaftueshme në bazën e njohurive. Provo ta riformulosh pyetjen ose shto informacion për këtë temë.",
+    en: "No relevant results were found in the knowledge base. Please rephrase your question or add information about this topic.",
+    fr: "Aucun résultat pertinent n’a été trouvé dans la base de connaissances. Veuillez reformuler votre question ou ajouter des informations sur ce sujet."
   };
 
   return answers[language] || answers.sq;
@@ -130,7 +130,7 @@ function buildAnswer(results) {
 function readConversationHistory(conversationId, suppliedMessages = []) {
   if (
     typeof conversationId === "string" &&
-    conversationId.trim() &&
+    conversationId &&
     hasMemorySession(conversationId)
   ) {
     return getMemoryHistory(conversationId);
@@ -142,12 +142,7 @@ function readConversationHistory(conversationId, suppliedMessages = []) {
 }
 
 function ensureMemorySession(conversationId, language) {
-  if (
-    typeof conversationId !== "string" ||
-    !conversationId.trim()
-  ) {
-    return false;
-  }
+  if (!conversationId) return false;
 
   if (hasMemorySession(conversationId)) return true;
 
@@ -165,8 +160,7 @@ function ensureMemorySession(conversationId, language) {
 
 function saveMemoryMessage(sessionId, role, content) {
   if (
-    typeof sessionId !== "string" ||
-    !sessionId.trim() ||
+    !sessionId ||
     typeof content !== "string" ||
     !content.trim() ||
     !hasMemorySession(sessionId)
@@ -187,29 +181,34 @@ function saveMemoryMessage(sessionId, role, content) {
   }
 }
 
-function buildMetadata(
+function buildMetadata({
   language,
   results,
+  knowledge,
   context,
   requestId,
   conversationId,
   memoryEnabled
-) {
-  const sources = [
-    ...new Set(
-      (Array.isArray(results) ? results : [])
-        .map((item) => {
-          if (typeof item === "string") return "";
+}) {
+  const knowledgeSources = Array.isArray(knowledge?.sources)
+    ? knowledge.sources
+    : [];
 
-          return (
-            item?.source ||
-            item?.metadata?.source ||
-            item?.id ||
-            ""
-          );
-        })
-        .filter(Boolean)
-    )
+  const resultSources = (Array.isArray(results) ? results : [])
+    .map((item) => {
+      if (typeof item === "string") return "";
+
+      return (
+        item?.source ||
+        item?.metadata?.source ||
+        item?.id ||
+        ""
+      );
+    })
+    .filter(Boolean);
+
+  const sources = [
+    ...new Set([...knowledgeSources, ...resultSources])
   ];
 
   const messages = Array.isArray(context?.messages)
@@ -243,27 +242,38 @@ function buildMetadata(
   };
 }
 
-function createErrorResponse(error, requestId, language = "sq") {
-  const message = error instanceof Error
-    ? error.message
-    : String(error || "Ndodhi një gabim i panjohur.");
-
-  const code = error?.code || AI_ERROR_CODES.INTERNAL_ERROR;
+function createErrorResponse({
+  message,
+  requestId,
+  language = "sq",
+  code = AI_ERROR_CODES.INTERNAL_ERROR,
+  exposeMessage = true,
+  metadata = {}
+}) {
+  const safeMessage = exposeMessage
+    ? message
+    : "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.";
 
   const response = createAIErrorResponse({
     requestId,
     code,
-    message,
+    message: safeMessage,
     language
   });
 
   return {
     ...response,
+    requestId,
+    answer: "",
+    error: safeMessage,
+    language,
     version: AI_CORE_VERSION,
     timestamp: response?.timestamp || new Date().toISOString(),
     metadata: {
       ...(response?.metadata || {}),
+      ...metadata,
       requestId,
+      language,
       engine: "xsus-ai-core",
       version: AI_CORE_VERSION
     }
@@ -276,11 +286,11 @@ export async function processAIRequest(input = {}) {
 
   try {
     if (!input || typeof input !== "object" || Array.isArray(input)) {
-      return createErrorResponse(
-        new Error("Kërkesa duhet të jetë një objekt i vlefshëm."),
-        requestId,
-        language
-      );
+      return createErrorResponse({
+        message: "Kërkesa nuk përmban një pyetje të vlefshme.",
+        language,
+        code: AI_ERROR_CODES.INVALID_REQUEST
+      });
     }
 
     const rawQuery = typeof input.query === "string"
@@ -290,15 +300,30 @@ export async function processAIRequest(input = {}) {
         : "";
 
     if (!rawQuery.trim()) {
-      return createErrorResponse(
-        new Error("Pyetja nuk mund të jetë bosh."),
-        requestId,
-        language
-      );
+      return createErrorResponse({
+        message: "Pyetja nuk mund të jetë bosh.",
+        language: input.language || "sq",
+        code: AI_ERROR_CODES.INVALID_REQUEST,
+        metadata: {
+          knowledgeResults: 0,
+          sources: [],
+          context: {
+            conversationId: null,
+            historyMessageCount: 0,
+            hasPreviousContext: false,
+            totalHistoryCharacters: 0
+          }
+        }
+      });
     }
 
     const request = createAIRequest(input);
-    requestId = request?.requestId || null;
+    requestId = request?.requestId || input.requestId || null;
+
+    if (!requestId) {
+      requestId = globalThis.crypto?.randomUUID?.()
+        || `xsus-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
 
     language = detectRequestLanguage(
       rawQuery,
@@ -350,33 +375,79 @@ export async function processAIRequest(input = {}) {
     });
 
     if (!isValidRequestContext(requestContext)) {
-      return createErrorResponse(
-        new Error("Konteksti i kërkesës nuk është i vlefshëm."),
+      return createErrorResponse({
+        message: "Konteksti i kërkesës nuk është i vlefshëm.",
         requestId,
-        language
-      );
+        language,
+        code: AI_ERROR_CODES.INVALID_REQUEST
+      });
     }
 
     const contextualQuery = buildContextualQuery(context);
 
     if (memoryEnabled && conversationId) {
-      saveMemoryMessage(
-        conversationId,
-        "user",
-        rawQuery.trim()
-      );
+      saveMemoryMessage(conversationId, "user", rawQuery.trim());
     }
 
-    const knowledge = await searchKnowledge(contextualQuery, {
-      language,
-      limit: 5,
-      metadata: {
+    let knowledge;
+
+    try {
+      knowledge = await searchKnowledge(contextualQuery, {
+        language,
+        limit: 5,
+        metadata: {
+          requestId,
+          moduleName: "xsus-ai-core",
+          conversationId: conversationId || null,
+          historyMessageCount: history.length
+        }
+      });
+    } catch {
+      return createErrorResponse({
+        message: "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.",
         requestId,
-        moduleName: "xsus-ai-core",
-        conversationId: conversationId || null,
-        historyMessageCount: history.length
-      }
-    });
+        language,
+        exposeMessage: false,
+        metadata: {
+          knowledgeResults: 0,
+          sources: [],
+          context: {
+            conversationId: conversationId || null,
+            historyMessageCount: history.length,
+            hasPreviousContext: history.length > 0,
+            totalHistoryCharacters: history.reduce(
+              (total, item) =>
+                total + String(item?.content || "").length,
+              0
+            )
+          }
+        }
+      });
+    }
+
+    if (knowledge?.success === false) {
+      return createErrorResponse({
+        message: knowledge.error || "Gabim gjatë kërkimit të njohurive.",
+        requestId,
+        language,
+        metadata: {
+          knowledgeResults: 0,
+          sources: Array.isArray(knowledge.sources)
+            ? knowledge.sources
+            : [],
+          context: {
+            conversationId: conversationId || null,
+            historyMessageCount: history.length,
+            hasPreviousContext: history.length > 0,
+            totalHistoryCharacters: history.reduce(
+              (total, item) =>
+                total + String(item?.content || "").length,
+              0
+            )
+          }
+        }
+      });
+    }
 
     const results = Array.isArray(knowledge)
       ? knowledge
@@ -390,39 +461,48 @@ export async function processAIRequest(input = {}) {
       saveMemoryMessage(conversationId, "assistant", answer);
     }
 
-    const metadata = buildMetadata(
+    const metadata = buildMetadata({
       language,
       results,
+      knowledge,
       context,
       requestId,
       conversationId,
       memoryEnabled
-    );
+    });
 
     const response = createAIResponse({
       requestId,
       answer,
       language,
-      source: "xsus-service",
+      source: "xsus-knowledge-service",
       confidence: null,
       metadata
     });
 
     return {
       ...response,
+      requestId,
+      answer,
+      language,
+      source: "xsus-knowledge-service",
+      confidence: response?.confidence ?? null,
       version: AI_CORE_VERSION,
       timestamp: response?.timestamp || new Date().toISOString(),
       metadata: {
         ...(response?.metadata || {}),
         ...metadata,
-        version: AI_CORE_VERSION,
         engine: "xsus-ai-core",
-        conversationId: conversationId || null,
-        memoryEnabled: Boolean(memoryEnabled)
+        version: AI_CORE_VERSION
       }
     };
-  } catch (error) {
-    return createErrorResponse(error, requestId, language);
+  } catch {
+    return createErrorResponse({
+      message: "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.",
+      requestId,
+      language,
+      exposeMessage: false
+    });
   }
 }
 
