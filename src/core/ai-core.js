@@ -24,17 +24,11 @@ import {
   isValidRequestContext,
 } from "./request-context.js";
 
-import {
-  createContext,
-} from "./context-engine.js";
+import { createContext } from "./context-engine.js";
 
-import {
-  searchKnowledge,
-} from "../knowledge/knowledge-service.js";
+import { searchKnowledge } from "../knowledge/knowledge-service.js";
 
-import {
-  detectLanguage,
-} from "../language/language-engine.js";
+import { detectLanguage } from "../language/language-engine.js";
 
 export const AI_CORE_VERSION = "1.2.0";
 
@@ -75,10 +69,8 @@ function getFallbackAnswer(language) {
 
 /**
  * Përgatit pyetjen për kërkim.
- *
  * Pyetjet e plota mbeten të pandryshuara.
- * Pyetjet e shkurtra pasuese mund të përdorin
- * mesazhet e fundit të historikut.
+ * Pyetjet pasuese mund të përdorin historikun.
  */
 function buildContextualQuery(context) {
   const query = context.userMessage.trim();
@@ -99,9 +91,7 @@ function buildContextualQuery(context) {
     .slice(-4)
     .map((message) => {
       const role =
-        message.role === "assistant"
-          ? "XSUS AI"
-          : "Përdoruesi";
+        message.role === "assistant" ? "XSUS AI" : "Përdoruesi";
 
       return `${role}: ${message.content}`;
     })
@@ -135,9 +125,7 @@ function buildAnswer(results) {
       continue;
     }
 
-    const key = content
-      .normalize("NFC")
-      .toLocaleLowerCase();
+    const key = content.normalize("NFC").toLocaleLowerCase();
 
     if (seen.has(key)) {
       continue;
@@ -170,11 +158,7 @@ function buildMetadata(language, results, knowledge, context) {
   };
 }
 
-function createErrorResponse(
-  requestId,
-  message,
-  language = "auto"
-) {
+function createErrorResponse(requestId, message, language = "auto") {
   return {
     requestId,
     answer: "",
@@ -196,22 +180,15 @@ export async function processAIRequest(input = {}) {
   let language = "auto";
 
   try {
-    // 1. Validimi fillestar i kërkesës.
-    if (
-      !input ||
-      typeof input !== "object" ||
-      Array.isArray(input)
-    ) {
+    // 1. Validimi fillestar.
+    if (!input || typeof input !== "object" || Array.isArray(input)) {
       return createErrorResponse(
         null,
         "Kërkesa duhet të jetë një objekt i vlefshëm."
       );
     }
 
-    if (
-      typeof input.query !== "string" ||
-      !input.query.trim()
-    ) {
+    if (typeof input.query !== "string" || !input.query.trim()) {
       return createErrorResponse(
         typeof input.id === "string" ? input.id : null,
         "Shkruaj një pyetje për XSUS AI."
@@ -222,13 +199,13 @@ export async function processAIRequest(input = {}) {
     const request = createAIRequest(input);
     requestId = request.id;
 
-    // 3. Përcaktimi i gjuhës së kërkesës.
+    // 3. Përcaktimi i gjuhës.
     language = detectRequestLanguage(
       request.query,
       request.language
     );
 
-    // 4. Leximi i historikut nga hyrja ose konteksti.
+    // 4. Leximi i historikut.
     const requestContext = request.context || {};
 
     const messages = Array.isArray(input.messages)
@@ -252,7 +229,7 @@ export async function processAIRequest(input = {}) {
       conversationId,
     });
 
-    // 6. Krijimi dhe validimi i kontekstit standard.
+    // 6. Validimi i kontekstit të kërkesës.
     const validatedContext = createRequestContext({
       id: request.id,
       query: context.userMessage,
@@ -276,23 +253,20 @@ export async function processAIRequest(input = {}) {
       );
     }
 
-    // 7. Përdorimi i historikut për pyetje pasuese.
+    // 7. Përgatitja e pyetjes me kontekst.
     const contextualQuery = buildContextualQuery(context);
 
     // 8. Kërkimi në bazën e njohurive.
-    const knowledge = await searchKnowledge(
-      contextualQuery,
-      {
-        language: validatedContext.language,
-        limit: 5,
-        metadata: {
-          requestId: validatedContext.requestId,
-          moduleName: validatedContext.moduleName,
-          conversationId: context.conversationId,
-          historyMessageCount: context.history.length,
-        },
-      }
-    );
+    const knowledge = await searchKnowledge(contextualQuery, {
+      language: validatedContext.language,
+      limit: 5,
+      metadata: {
+        requestId: validatedContext.requestId,
+        moduleName: validatedContext.moduleName,
+        conversationId: context.conversationId,
+        historyMessageCount: context.history.length,
+      },
+    });
 
     if (!knowledge || knowledge.success === false) {
       return createErrorResponse(
@@ -312,20 +286,26 @@ export async function processAIRequest(input = {}) {
 
     const answer = buildAnswer(results);
 
-    // 10. Krijimi i përgjigjes standarde.
-    return createAIResponse({
+    // 10. Krijimi i përgjigjes.
+    const response = createAIResponse({
       requestId,
       answer: answer || getFallbackAnswer(language),
       language,
       source: "xsus-knowledge-service",
       confidence: null,
-      metadata: buildMetadata(
-        language,
-        results,
-        knowledge,
-        context
-      ),
+      metadata: buildMetadata(language, results, knowledge, context),
     });
+
+    // 11. Një burim i vetëm për versionin e motorit.
+    return {
+      ...response,
+      version: AI_CORE_VERSION,
+      metadata: {
+        ...response.metadata,
+        engine: "xsus-ai-core",
+        version: AI_CORE_VERSION,
+      },
+    };
   } catch {
     // Mos ekspozo detaje të brendshme të gabimeve.
     return createErrorResponse(
