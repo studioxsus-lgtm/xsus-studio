@@ -134,7 +134,12 @@ typeof conversationId === "string" &&
 conversationId &&
 hasMemorySession(conversationId)
 ) {
-return getMemoryHistory(conversationId);
+const memoryHistory = getMemoryHistory(conversationId);
+
+if (Array.isArray(memoryHistory) && memoryHistory.length > 0) {
+  return memoryHistory;
+}
+
 }
 
 return Array.isArray(suppliedMessages)
@@ -189,6 +194,7 @@ language,
 results = [],
 knowledge = {},
 context,
+history = [],
 requestId,
 conversationId,
 memoryEnabled
@@ -214,7 +220,9 @@ const sources = [
 ...new Set([...knowledgeSources, ...resultSources])
 ];
 
-const messages = Array.isArray(context?.messages)
+const messages = Array.isArray(history) && history.length > 0
+? history
+: Array.isArray(context?.messages)
 ? context.messages
 : [];
 
@@ -405,10 +413,6 @@ const context = createContext({
   conversationId: conversationId || null
 });
 
-// Mos e blloko kërkesën duke validuar një objekt konteksti
-// që mund të mos përputhet me kontratën e modulit.
-// Konteksti i bisedës krijohet dhe përdoret më sipër.
-
 const contextualQuery = buildContextualQuery(context);
 
 if (memoryEnabled && conversationId) {
@@ -486,6 +490,7 @@ const metadata = buildMetadata({
   results,
   knowledge,
   context,
+  history,
   requestId,
   conversationId,
   memoryEnabled
