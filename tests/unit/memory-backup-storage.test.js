@@ -75,8 +75,9 @@ describe("XSUS AI Core — Memory Backup Storage", () => {
 
   test("refuzon mbishkrimin pa autorizim", async () => {
     const { storage } = await createStorage();
+    const originalBackup = createBackup();
 
-    await storage.save("backup-1", createBackup());
+    await storage.save("backup-1", originalBackup);
 
     await expect(
       storage.save("backup-1", createBackup("session-2"))
@@ -84,21 +85,26 @@ describe("XSUS AI Core — Memory Backup Storage", () => {
       code: MEMORY_BACKUP_STORAGE_ERRORS.CONFLICT,
     });
 
-    await expect(storage.get("backup-1")).resolves.toEqual(createBackup());
+    // Krahasojmë me backup-in origjinal, jo me një backup të ri.
+    await expect(storage.get("backup-1")).resolves.toEqual(
+      originalBackup
+    );
   });
 
   test("lejon mbishkrimin kur autorizohet shprehimisht", async () => {
     const { storage } = await createStorage();
-
-    await storage.save("backup-1", createBackup());
-
+    const originalBackup = createBackup();
     const replacement = createBackup("session-2");
+
+    await storage.save("backup-1", originalBackup);
 
     await storage.save("backup-1", replacement, {
       overwrite: true,
     });
 
-    await expect(storage.get("backup-1")).resolves.toEqual(replacement);
+    await expect(storage.get("backup-1")).resolves.toEqual(
+      replacement
+    );
   });
 
   test("refuzon backup me checksum të pavlefshëm", async () => {
@@ -163,17 +169,19 @@ describe("XSUS AI Core — Memory Backup Storage", () => {
 
   test("fshin vetëm backup-in e kërkuar", async () => {
     const { storage } = await createStorage();
+    const backup1 = createBackup("session-1");
+    const backup2 = createBackup("session-2");
 
-    await storage.save("backup-1", createBackup("session-1"));
-    await storage.save("backup-2", createBackup("session-2"));
+    await storage.save("backup-1", backup1);
+    await storage.save("backup-2", backup2);
 
     await expect(storage.delete("backup-1")).resolves.toBe(true);
     await expect(storage.delete("backup-1")).resolves.toBe(false);
 
     await expect(storage.get("backup-1")).resolves.toBeNull();
-    await expect(storage.get("backup-2")).resolves.toEqual(
-      createBackup("session-2")
-    );
+
+    // Verifikojmë se backup-i tjetër mbetet i paprekur.
+    await expect(storage.get("backup-2")).resolves.toEqual(backup2);
   });
 
   test("rikthen backup pas krijimit të një instance të re", async () => {
@@ -184,21 +192,32 @@ describe("XSUS AI Core — Memory Backup Storage", () => {
 
     const restartedStorage = createMemoryBackupStorage({ filePath });
 
-    await expect(restartedStorage.get("backup-1")).resolves.toEqual(backup);
+    await expect(restartedStorage.get("backup-1")).resolves.toEqual(
+      backup
+    );
   });
 
   test("ruan backup-et nga shkrimet e njëpasnjëshme brenda një instance", async () => {
     const { storage } = await createStorage();
 
+    const backups = [
+      createBackup("session-1"),
+      createBackup("session-2"),
+      createBackup("session-3"),
+    ];
+
     await Promise.all([
-      storage.save("backup-1", createBackup("session-1")),
-      storage.save("backup-2", createBackup("session-2")),
-      storage.save("backup-3", createBackup("session-3")),
+      storage.save("backup-1", backups[0]),
+      storage.save("backup-2", backups[1]),
+      storage.save("backup-3", backups[2]),
     ]);
 
-    const backups = await storage.list();
+    const storedBackups = await storage.list();
 
-    expect(backups).toHaveLength(3);
+    expect(storedBackups).toHaveLength(3);
+    await expect(storage.get("backup-1")).resolves.toEqual(backups[0]);
+    await expect(storage.get("backup-2")).resolves.toEqual(backups[1]);
+    await expect(storage.get("backup-3")).resolves.toEqual(backups[2]);
   });
 
   test("kthen statistikat e storage-it", async () => {
