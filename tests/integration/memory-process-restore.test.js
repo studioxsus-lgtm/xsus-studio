@@ -36,7 +36,7 @@ describe("XSUS AI — Memory Process Restore", () => {
   let directory;
 
   afterEach(async () => {
-    await clearAllMemory();
+    clearAllMemory();
 
     if (directory) {
       await rm(directory, { recursive: true, force: true });
@@ -52,22 +52,27 @@ describe("XSUS AI — Memory Process Restore", () => {
     const filePath = path.join(directory, "backups.json");
     const sessionId = "process-restore-session";
 
-    createMemorySession(sessionId, {
-      language: "sq",
-      source: "process-recovery-test",
+    // Procesi i parë: krijojmë sesionin real.
+    createMemorySession({
+      sessionId,
+      metadata: {
+        language: "sq",
+        source: "process-recovery-test",
+      },
     });
 
-    // addMemoryMessage pret një varg mesazhesh.
-    addMemoryMessage(sessionId, [
-      {
-        role: "user",
-        content: "Përshëndetje XSUS AI",
-      },
-      {
-        role: "assistant",
-        content: "Përshëndetje! Si mund të të ndihmoj?",
-      },
-    ]);
+    // addMemoryMessage kërkon një objekt të vetëm.
+    addMemoryMessage({
+      sessionId,
+      role: "user",
+      content: "Përshëndetje XSUS AI",
+    });
+
+    addMemoryMessage({
+      sessionId,
+      role: "assistant",
+      content: "Përshëndetje! Si mund të të ndihmoj?",
+    });
 
     const snapshot = exportMemorySession(sessionId);
 
@@ -79,10 +84,10 @@ describe("XSUS AI — Memory Process Restore", () => {
 
     await storage.save(sessionId, backup);
 
-    // Simulojmë mbylljen e sesionit në procesin e parë.
-    await clearAllMemory();
+    // Pastrojmë RAM-in për të simuluar humbjen e procesit të parë.
+    clearAllMemory();
 
-    // Procesi i ri lexon backup-in dhe rikthen sesionin.
+    // Procesi i dytë: lexon backup-in dhe rikthen sesionin.
     const script = `
       import { createMemoryBackupStorage } from ${JSON.stringify(backupStorageUrl)};
       import { restoreMemoryBackup } from ${JSON.stringify(backupModuleUrl)};
@@ -154,7 +159,7 @@ describe("XSUS AI — Memory Process Restore", () => {
       "Përshëndetje! Si mund të të ndihmoj?"
     );
 
-    // Verifikojmë ruajtjen e ID-ve dhe kohëve origjinale.
+    // Kontrollojmë ruajtjen e ID-ve dhe kohëve origjinale.
     expect(result.messages[0].id).toBe(
       snapshot.session.messages[0].id
     );
