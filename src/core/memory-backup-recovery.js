@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI Core — Memory Backup Recovery
- * Version: 1.0.1
+ * Version: 1.0.0
  *
  * Përgjegjësitë:
  * - Gjetja e backup-it në ruajtjen persistente.
@@ -13,7 +13,7 @@
 
 import { restoreMemoryBackup } from "./memory-backup.js";
 
-export const MEMORY_BACKUP_RECOVERY_VERSION = "1.0.1";
+export const MEMORY_BACKUP_RECOVERY_VERSION = "1.0.0";
 
 export const MEMORY_BACKUP_RECOVERY_ERRORS = Object.freeze({
   INVALID_STORAGE: "MEMORY_BACKUP_RECOVERY_INVALID_STORAGE",
@@ -30,11 +30,12 @@ const INVALID_BACKUP_CODES = new Set([
   "MEMORY_BACKUP_SNAPSHOT_INVALID",
   "MEMORY_BACKUP_CHECKSUM_MISMATCH",
   "MEMORY_BACKUP_UNSUPPORTED_VERSION",
+  "MEMORY_BACKUP_RECOVERY_INVALID_BACKUP",
 ]);
 
 const CONFLICT_CODES = new Set([
   "MEMORY_BACKUP_SESSION_CONFLICT",
-  MEMORY_BACKUP_RECOVERY_ERRORS.SESSION_CONFLICT,
+  "MEMORY_BACKUP_RECOVERY_SESSION_CONFLICT",
 ]);
 
 function createRecoveryError(code, message, cause) {
@@ -91,9 +92,7 @@ function getErrorChain(error) {
 function classifyRecoveryError(error) {
   const chain = getErrorChain(error);
 
-  if (
-    chain.some((item) => CONFLICT_CODES.has(item.code))
-  ) {
+  if (chain.some((item) => CONFLICT_CODES.has(item.code))) {
     return MEMORY_BACKUP_RECOVERY_ERRORS.SESSION_CONFLICT;
   }
 
@@ -129,16 +128,15 @@ function classifyRecoveryError(error) {
 }
 
 function recoveryErrorMessage(code, backupId) {
-  switch (code) {
-    case MEMORY_BACKUP_RECOVERY_ERRORS.INVALID_BACKUP:
-      return `Backup-i "${backupId}" nuk kaloi verifikimin.`;
-
-    case MEMORY_BACKUP_RECOVERY_ERRORS.SESSION_CONFLICT:
-      return `Sesioni i backup-it "${backupId}" ekziston tashmë.`;
-
-    default:
-      return `Rikthimi i backup-it "${backupId}" dështoi.`;
+  if (code === MEMORY_BACKUP_RECOVERY_ERRORS.INVALID_BACKUP) {
+    return `Backup-i "${backupId}" nuk kaloi verifikimin.`;
   }
+
+  if (code === MEMORY_BACKUP_RECOVERY_ERRORS.SESSION_CONFLICT) {
+    return `Sesioni i backup-it "${backupId}" ekziston tashmë.`;
+  }
+
+  return `Rikthimi i backup-it "${backupId}" dështoi.`;
 }
 
 export function createMemoryBackupRecovery({
@@ -172,7 +170,6 @@ export function createMemoryBackupRecovery({
 
   async function inspect(backupId) {
     const id = normalizeBackupId(backupId);
-
     let backup;
 
     try {
@@ -268,15 +265,13 @@ export function createMemoryBackupRecovery({
 
     try {
       const result = await restoreMemoryBackup(backup, {
-        restoreSnapshot: async (snapshot, metadata) => {
-          return restoreSnapshot(snapshot, {
+        restoreSnapshot: async (snapshot, metadata) =>
+          restoreSnapshot(snapshot, {
             ...metadata,
             backupId: id,
-          });
-        },
+          }),
 
         sessionExists,
-
         allowOverwrite: allowOverwrite === true,
       });
 
