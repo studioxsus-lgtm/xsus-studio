@@ -63,19 +63,17 @@ const MAX_CONVERSATION_ID_LENGTH = 200;
 const MAX_SUPPLIED_HISTORY = 20;
 const MAX_CONTEXT_MESSAGES = 4;
 
-/*
- * Një instancë për gjithë procesin.
- * Nëse storage nuk është i disponueshëm, motori vazhdon
- * të përdorë memorien RAM.
- */
-let memoryPersistence;
+let memoryPersistenceInstance = null;
 
+/**
+ * Krijon një instancë të vetme të persistent memory.
+ */
 function getMemoryPersistence() {
-  if (!memoryPersistence) {
-    memoryPersistence = createMemoryPersistence();
+  if (!memoryPersistenceInstance) {
+    memoryPersistenceInstance = createMemoryPersistence();
   }
 
-  return memoryPersistence;
+  return memoryPersistenceInstance;
 }
 
 function isPlainObject(value) {
@@ -176,25 +174,38 @@ function resolveConversationId(input) {
 }
 
 function resolveSuppliedMessages(input) {
+  let messages = [];
+
   if (Array.isArray(input.messages)) {
-    return input.messages.slice(-MAX_SUPPLIED_HISTORY);
+    messages = input.messages;
+  } else if (Array.isArray(input.context?.messages)) {
+    messages = input.context.messages;
+  } else if (Array.isArray(input.context?.history)) {
+    messages = input.context.history;
   }
 
-  if (Array.isArray(input.context?.messages)) {
-    return input.context.messages.slice(-MAX_SUPPLIED_HISTORY);
-  }
-
-  if (Array.isArray(input.context?.history)) {
-    return input.context.history.slice(-MAX_SUPPLIED_HISTORY);
-  }
-
-  return [];
+  return messages
+    .filter(message =>
+      message &&
+      typeof message === "object" &&
+      typeof message.content === "string" &&
+      ["user", "assistant", "system"].includes(message.role)
+    )
+    .slice(-MAX_SUPPLIED_HISTORY)
+    .map(message => ({
+      role: message.role,
+      content: message.content
+    }));
 }
 
+/**
+ * Ndërton pyetjen për kërkimin e njohurive.
+ */
 function buildContextualQuery(context) {
-  const userMessage = typeof context?.userMessage === "string"
-    ? context.userMessage.trim()
-    : "";
+  const userMessage =
+    typeof context?.userMessage === "string"
+      ? context.userMessage.trim()
+      : "";
 
   if (!userMessage) {
     return "";
@@ -213,11 +224,14 @@ function buildContextualQuery(context) {
     .map(message => {
       const role = message?.role === "assistant"
         ? "Assistant"
-        : "User";
+        : message?.role === "system"
+          ? "System"
+          : "User";
 
-      const content = typeof message?.content === "string"
-        ? message.content.trim()
-        : "";
+      const content =
+        typeof message?.content === "string"
+          ? message.content.trim()
+          : "";
 
       return content ? `${role}: ${content}` : "";
     })
@@ -234,6 +248,10 @@ function buildContextualQuery(context) {
   ].join("\n");
 }
 
+/**
+ * Lexon historikun aktiv nga RAM.
+ * Nëse nuk ekziston, përdor historikun e dërguar nga klienti.
+ */
 function readConversationHistory(
   conversationId,
   suppliedMessages = []
@@ -243,12 +261,15 @@ function readConversationHistory(
       if (hasMemorySession(conversationId)) {
         const memoryHistory = getMemoryHistory(conversationId);
 
-        if (Array.isArray(memoryHistory)) {
+        if (
+          Array.isArray(memoryHistory) &&
+          memoryHistory.length > 0
+        ) {
           return memoryHistory.slice(-MAX_SUPPLIED_HISTORY);
         }
       }
     } catch {
-      // Përdoret historiku i dhënë.
+      // Përdoret historiku i dërguar nga klienti.
     }
   }
 
@@ -258,8 +279,7 @@ function readConversationHistory(
 }
 
 /**
- * Përpiqet fillimisht ta rikthejë sesionin nga storage.
- * Nëse nuk ekziston ose storage dështon, krijon sesion RAM.
+ * Rikthen sesionin nga storage kur nuk ekziston në RAM.
  */
 async function ensureMemorySession(conversationId, language) {
   if (!conversationId) {
@@ -271,7 +291,7 @@ async function ensureMemorySession(conversationId, language) {
       return true;
     }
   } catch {
-    // Vazhdohet me përpjekjen për rikthim.
+    // Vazhdohet me rikthimin.
   }
 
   try {
@@ -279,7 +299,7 @@ async function ensureMemorySession(conversationId, language) {
 
     await persistence.restoreSession(conversationId);
   } catch {
-    // Rikthimi nuk duhet të bllokojë kërkesën.
+    // Dështimi i storage nuk e ndalon përpunimin.
   }
 
   try {
@@ -307,8 +327,7 @@ async function ensureMemorySession(conversationId, language) {
 }
 
 /**
- * Ruajtja në storage është best-effort.
- * Dështimi nuk duhet të ndikojë te përgjigjja e përdoruesit.
+ * Ruajtje best-effort e sesionit në storage.
  */
 async function persistMemorySession(sessionId) {
   if (!sessionId) {
@@ -402,9 +421,10 @@ function buildContextMetadata({
     hasPreviousContext: messages.length > 0,
     totalHistoryCharacters: messages.reduce(
       (total, message) => {
-        const content = typeof message?.content === "string"
-          ? message.content
-          : "";
+        const content =
+          typeof message?.content === "string"
+            ? message.content
+            : "";
 
         return total + content.length;
       },
@@ -424,12 +444,15 @@ function buildMetadata({
   memoryEnabled,
   responseResult
 }) {
-  const messages =
-    Array.isArray(history) && history.length > 0
-      ? history
-      : Array.isArray(context?.messages)
-        ? context.messages
-        : [];
+  /*
+   * Historia e kaluar këtu duhet të jetë historiku paraprak,
+   * jo mesazhi aktual që sapo u ruajt në RAM.
+   */
+  const messages = Array.isArray(history)
+    ? history
+    : Array.isArray(context?.messages)
+      ? context.messages
+      : [];
 
   return {
     requestId,
@@ -547,13 +570,16 @@ export async function processAIRequest(input = {}) {
     const query = rawQuery.trim();
 
     if (!query) {
+      const requestedLanguage =
+        normalizeLanguage(input.language) || "sq";
+
       return createErrorResponse({
         message: "Gabim: pyetje nuk mund të jetë bosh.",
-        language: normalizeLanguage(input.language) || "sq",
+        language: requestedLanguage,
         code: AI_ERROR_CODES.INVALID_REQUEST,
         metadata: buildErrorMetadata({
           requestId: input.requestId || null,
-          language: normalizeLanguage(input.language) || "sq"
+          language: requestedLanguage
         })
       });
     }
@@ -624,6 +650,13 @@ export async function processAIRequest(input = {}) {
       language
     );
 
+    /*
+     * Përcakto historikun paraprak para se të shtohet
+     * mesazhi aktual i përdoruesit.
+     *
+     * Nëse ekziston historik në RAM, ai ka përparësi.
+     * Përndryshe përdoren mesazhet e kërkesës.
+     */
     history = readConversationHistory(
       conversationId,
       suppliedMessages
@@ -765,11 +798,22 @@ export async function processAIRequest(input = {}) {
       await persistMemorySession(conversationId);
     }
 
+    /*
+     * KORRIGJIMI KRYESOR:
+     * Metadata përdor historikun paraprak të kapur përpara
+     * shtimit të mesazhit aktual.
+     *
+     * Kjo ruan pritshmërinë e testeve që dërgojnë dy mesazhe
+     * në input dhe presin historyMessageCount === 2.
+     */
     const metadata = buildMetadata({
       language,
       results,
       knowledge,
-      context,
+      context: {
+        ...context,
+        messages: history
+      },
       history,
       requestId,
       conversationId,
