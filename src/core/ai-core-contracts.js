@@ -1,21 +1,21 @@
 
 /**
  * XSUS AI Core — Contracts
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Kontrata standarde për kërkesat, përgjigjet dhe gabimet.
  *
  * Përgjegjësitë:
- * - Validimi i kërkesave.
- * - Standardizimi i përgjigjeve.
+ * - Validimi i kërkesave dhe përgjigjeve.
  * - Normalizimi i gjuhëve dhe kodeve rajonale.
  * - Standardizimi i gabimeve.
- * - Përputhshmëria me modulet ekzistuese.
+ * - Izolimi i të dhënave të hyrjes.
+ * - Ruajtja e përputhshmërisë me modulet ekzistuese.
  */
 
 import { normalizeLanguageCode } from "../language/normalization.js";
 
-export const XSUS_CORE_VERSION = "1.0.0";
+export const XSUS_CORE_VERSION = "1.1.0";
 
 export const SUPPORTED_LANGUAGES = Object.freeze([
   "sq",
@@ -44,35 +44,45 @@ export const AI_ERROR_CODES = Object.freeze({
 const DEFAULT_ERROR_MESSAGE =
   "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.";
 
+const DEFAULT_SOURCE = "xsus-ai-core";
+
 function isPlainObject(value) {
   if (value === null || typeof value !== "object") {
     return false;
   }
 
-  const prototype = Object.getPrototypeOf(value);
+  try {
+    const prototype = Object.getPrototypeOf(value);
 
-  return (
-    prototype === Object.prototype ||
-    prototype === null
-  );
-}
-
-function normalizeObject(value) {
-  return isPlainObject(value) ? { ...value } : {};
+    return (
+      prototype === Object.prototype ||
+      prototype === null
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Normalizon gjuhën dhe ruan kodin rajonal.
- *
- * Shembuj:
- * sq       -> sq
- * sq-AL    -> sq-AL
- * en-us    -> en-US
- * fr-FR    -> fr-FR
- * auto     -> auto
- *
- * Kodet me nënvizë, si en_US, refuzohen.
+ * Krijon një kopje të izoluar të një objekti të thjeshtë.
+ * Nuk lejon që gabimet e kopjimit të përhapen te motori.
  */
+function normalizeObject(value, errorMessage) {
+  if (value === undefined || value === null) {
+    return {};
+  }
+
+  if (!isPlainObject(value)) {
+    throw new TypeError(errorMessage);
+  }
+
+  try {
+    return { ...value };
+  } catch {
+    throw new TypeError(errorMessage);
+  }
+}
+
 function normalizeLanguageOrThrow(language, errorMessage) {
   if (typeof language !== "string" || !language.trim()) {
     throw new TypeError(errorMessage);
@@ -84,7 +94,7 @@ function normalizeLanguageOrThrow(language, errorMessage) {
     return "auto";
   }
 
-  // Pranojmë vizën, jo nënvizën.
+  // Pranojmë vetëm vizën, jo nënvizën.
   if (input.includes("_")) {
     throw new TypeError(errorMessage);
   }
@@ -96,23 +106,27 @@ function normalizeLanguageOrThrow(language, errorMessage) {
     throw new TypeError(errorMessage);
   }
 
-  // Kontrollojmë që normalizuesi ekzistues ta njohë gjuhën bazë.
-  const normalizedBase = normalizeLanguageCode(baseLanguage);
+  // Verifikojmë përputhshmërinë me normalizuesin ekzistues.
+  let normalizedBase;
+
+  try {
+    normalizedBase = normalizeLanguageCode(baseLanguage);
+  } catch {
+    throw new TypeError(errorMessage);
+  }
 
   if (
     typeof normalizedBase !== "string" ||
-    !normalizedBase.trim() ||
     normalizedBase.trim().toLowerCase() !== baseLanguage
   ) {
     throw new TypeError(errorMessage);
   }
 
-  // Kod bazë: sq, en ose fr.
   if (parts.length === 1) {
     return baseLanguage;
   }
 
-  // Kod rajonal: en-US, fr-FR ose sq-AL.
+  // Formati rajonal: sq-AL, en-US, fr-FR.
   if (
     parts.length !== 2 ||
     !/^[a-zA-Z]{2}$/.test(parts[1])
@@ -124,8 +138,14 @@ function normalizeLanguageOrThrow(language, errorMessage) {
 }
 
 function createRequestId() {
-  if (typeof globalThis.crypto?.randomUUID === "function") {
-    return globalThis.crypto.randomUUID();
+  try {
+    if (
+      typeof globalThis.crypto?.randomUUID === "function"
+    ) {
+      return globalThis.crypto.randomUUID();
+    }
+  } catch {
+    // Përdorim alternativën nëse randomUUID nuk është i disponueshëm.
   }
 
   return `xsus-${Date.now()}-${Math.random()
@@ -181,17 +201,30 @@ function normalizeConfidence(confidence) {
   return confidence;
 }
 
+function validateInputObject(input, errorMessage) {
+  if (!isPlainObject(input)) {
+    throw new TypeError(errorMessage);
+  }
+}
+
 /**
  * Krijon një kërkesë të standardizuar.
  */
-export function createAIRequest({
-  id = null,
-  query,
-  language = "auto",
-  type = REQUEST_TYPES.CHAT,
-  context = {},
-  metadata = {},
-} = {}) {
+export function createAIRequest(input = {}) {
+  validateInputObject(
+    input,
+    "Kërkesa duhet të jetë një objekt i vlefshëm."
+  );
+
+  const {
+    id = null,
+    query,
+    language = "auto",
+    type = REQUEST_TYPES.CHAT,
+    context = {},
+    metadata = {},
+  } = input;
+
   if (typeof query !== "string" || !query.trim()) {
     throw new TypeError(
       "Query duhet të jetë tekst jo bosh."
@@ -209,25 +242,15 @@ export function createAIRequest({
     );
   }
 
-  if (
-    context !== undefined &&
-    context !== null &&
-    !isPlainObject(context)
-  ) {
-    throw new TypeError(
-      "Konteksti i kërkesës nuk është i vlefshëm."
-    );
-  }
+  const normalizedContext = normalizeObject(
+    context,
+    "Konteksti i kërkesës nuk është i vlefshëm."
+  );
 
-  if (
-    metadata !== undefined &&
-    metadata !== null &&
-    !isPlainObject(metadata)
-  ) {
-    throw new TypeError(
-      "Metadata e kërkesës nuk është e vlefshme."
-    );
-  }
+  const normalizedMetadata = normalizeObject(
+    metadata,
+    "Metadata e kërkesës nuk është e vlefshme."
+  );
 
   const normalizedId = normalizeRequestId(id);
 
@@ -236,8 +259,8 @@ export function createAIRequest({
     query: query.trim(),
     language: normalizedLanguage,
     type,
-    context: normalizeObject(context),
-    metadata: normalizeObject(metadata),
+    context: normalizedContext,
+    metadata: normalizedMetadata,
     timestamp: new Date().toISOString(),
     version: XSUS_CORE_VERSION,
   };
@@ -246,14 +269,21 @@ export function createAIRequest({
 /**
  * Krijon një përgjigje normale të standardizuar.
  */
-export function createAIResponse({
-  requestId = null,
-  answer,
-  language = "auto",
-  source = "xsus-core",
-  confidence = null,
-  metadata = {},
-} = {}) {
+export function createAIResponse(input = {}) {
+  validateInputObject(
+    input,
+    "Përgjigjja duhet të jetë një objekt i vlefshëm."
+  );
+
+  const {
+    requestId = null,
+    answer,
+    language = "auto",
+    source = "xsus-core",
+    confidence = null,
+    metadata = {},
+  } = input;
+
   if (typeof answer !== "string" || !answer.trim()) {
     throw new TypeError(
       "Answer duhet të jetë tekst jo bosh."
@@ -268,15 +298,10 @@ export function createAIResponse({
   const normalizedId = normalizeRequestId(requestId);
   const normalizedConfidence = normalizeConfidence(confidence);
 
-  if (
-    metadata !== undefined &&
-    metadata !== null &&
-    !isPlainObject(metadata)
-  ) {
-    throw new TypeError(
-      "Metadata e përgjigjes nuk është e vlefshme."
-    );
-  }
+  const normalizedMetadata = normalizeObject(
+    metadata,
+    "Metadata e përgjigjes nuk është e vlefshme."
+  );
 
   return {
     requestId: normalizedId,
@@ -284,7 +309,7 @@ export function createAIResponse({
     language: normalizedLanguage,
     source: normalizeSource(source, "xsus-core"),
     confidence: normalizedConfidence,
-    metadata: normalizeObject(metadata),
+    metadata: normalizedMetadata,
     timestamp: new Date().toISOString(),
     version: XSUS_CORE_VERSION,
   };
@@ -293,19 +318,31 @@ export function createAIResponse({
 /**
  * Krijon një përgjigje gabimi të standardizuar.
  */
-export function createAIErrorResponse({
-  requestId = null,
-  error = DEFAULT_ERROR_MESSAGE,
-  code = AI_ERROR_CODES.INTERNAL_ERROR,
-  language = "auto",
-  source = "xsus-ai-core",
-  metadata = {},
-} = {}) {
+export function createAIErrorResponse(input = {}) {
+  validateInputObject(
+    input,
+    "Përgjigjja e gabimit duhet të jetë një objekt i vlefshëm."
+  );
+
+  const {
+    requestId = null,
+    error = DEFAULT_ERROR_MESSAGE,
+    code = AI_ERROR_CODES.INTERNAL_ERROR,
+    language = "auto",
+    source = DEFAULT_SOURCE,
+    metadata = {},
+  } = input;
+
   const normalizedId = normalizeRequestId(requestId);
 
   const normalizedLanguage = normalizeLanguageOrThrow(
     language,
     "Gjuha e përgjigjes nuk është e vlefshme."
+  );
+
+  const normalizedMetadata = normalizeObject(
+    metadata,
+    "Metadata e gabimit nuk është e vlefshme."
   );
 
   const safeError =
@@ -317,10 +354,10 @@ export function createAIErrorResponse({
     requestId: normalizedId,
     answer: "",
     language: normalizedLanguage,
-    source: normalizeSource(source, "xsus-ai-core"),
+    source: normalizeSource(source, DEFAULT_SOURCE),
     confidence: null,
     metadata: {
-      ...normalizeObject(metadata),
+      ...normalizedMetadata,
       errorCode: normalizeErrorCode(code),
       version: XSUS_CORE_VERSION,
     },
