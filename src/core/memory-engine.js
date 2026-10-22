@@ -1,27 +1,28 @@
-
 /**
  * XSUS AI — Memory Engine
- * Version: 1.2.0
+ * Version: 1.3.0
  *
- * Menaxhon sesionet dhe historikun e bisedave në RAM.
+ * Menaxhon sesionet, historikun dhe eksportimin/rikthimin
+ * e bisedave në RAM.
  *
  * Karakteristikat:
  * - Sesione të izoluara.
- * - Kufizime për numrin e sesioneve dhe mesazheve.
- * - Validim i mesazheve dhe roleve.
+ * - Kufizime për sesionet dhe mesazhet.
+ * - Validim i të dhënave.
  * - Kopje të pavarura të të dhënave.
  * - Metadata me kopjim rekursiv.
  * - Historik kronologjik.
+ * - Eksportim dhe rikthim i sesioneve.
  * - Pastrim dhe statistika të memories.
  * - Gjurmim i aktivitetit të fundit.
  * - Pastrim i sesioneve joaktive.
  *
  * Shënim:
- * Memoria ruhet vetëm në RAM dhe humbet kur procesi
- * përfundon ose moduli rivendoset.
+ * Ky modul ruan të dhënat aktive në RAM.
+ * Ruajtja në disk realizohet nga persistent-memory.js.
  */
 
-export const MEMORY_ENGINE_VERSION = "1.2.0";
+export const MEMORY_ENGINE_VERSION = "1.3.0";
 
 const MAX_SESSIONS = 1000;
 const MAX_MESSAGES_PER_SESSION = 100;
@@ -35,14 +36,9 @@ const ALLOWED_ROLES = new Set([
 
 const sessions = new Map();
 
-/**
- * Kontrollon dhe normalizon ID-në e sesionit.
- */
 function validateSessionId(sessionId) {
   if (typeof sessionId !== "string") {
-    throw new Error(
-      "ID e sesionit nuk është e vlefshme."
-    );
+    throw new Error("ID e sesionit nuk është e vlefshme.");
   }
 
   const normalizedId = sessionId.trim();
@@ -51,17 +47,12 @@ function validateSessionId(sessionId) {
     !normalizedId ||
     normalizedId.length > MAX_SESSION_ID_LENGTH
   ) {
-    throw new Error(
-      "ID e sesionit nuk është e vlefshme."
-    );
+    throw new Error("ID e sesionit nuk është e vlefshme.");
   }
 
   return normalizedId;
 }
 
-/**
- * Kthen sesionin e brendshëm ose null.
- */
 function getSessionOrNull(sessionId) {
   if (typeof sessionId !== "string") {
     return null;
@@ -76,18 +67,13 @@ function getSessionOrNull(sessionId) {
   return sessions.get(normalizedId) || null;
 }
 
-/**
- * Përditëson kohën e aktivitetit të fundit.
- */
 function updateLastAccessedAt(session) {
   session.lastAccessedAt = new Date().toISOString();
 }
 
 /**
- * Krijon një kopje të pavarur të metadata-s.
- *
- * Mbështet vlera primitive, objekte të zakonshme,
- * vargje dhe referenca ciklike.
+ * Kopjon metadata-n, duke mbështetur objektet e zakonshme,
+ * vargjet dhe referencat ciklike.
  */
 function cloneMetadata(metadata) {
   if (
@@ -109,7 +95,6 @@ function cloneMetadata(metadata) {
 
     if (Array.isArray(value)) {
       const copy = [];
-
       seen.set(value, copy);
 
       for (const item of value) {
@@ -129,7 +114,6 @@ function cloneMetadata(metadata) {
     }
 
     const copy = {};
-
     seen.set(value, copy);
 
     for (const key of Object.keys(value)) {
@@ -148,7 +132,7 @@ function cloneMetadata(metadata) {
 }
 
 /**
- * Krijon një kopje të mesazhit.
+ * Krijon kopje të pavarur të mesazhit.
  */
 function cloneMessage(message, includeMetadata = true) {
   const copy = {
@@ -165,9 +149,6 @@ function cloneMessage(message, includeMetadata = true) {
   return copy;
 }
 
-/**
- * Krijon një kopje të plotë të sesionit.
- */
 function cloneSession(session) {
   return {
     sessionId: session.sessionId,
@@ -178,15 +159,12 @@ function cloneSession(session) {
       session.updatedAt ??
       session.createdAt,
     metadata: cloneMetadata(session.metadata),
-    messages: session.messages.map(message =>
+    messages: session.messages.map((message) =>
       cloneMessage(message)
     ),
   };
 }
 
-/**
- * Krijon një identifikues unik për mesazhin.
- */
 function createMessageId() {
   if (
     typeof globalThis.crypto !== "undefined" &&
@@ -200,11 +178,66 @@ function createMessageId() {
     .slice(2)}`;
 }
 
+function isValidTimestamp(value) {
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    Number.isFinite(Date.parse(value))
+  );
+}
+
+/**
+ * Valido dhe normalizon një mesazh nga snapshot-i.
+ * ID-ja dhe timestamp-i origjinal ruhen.
+ */
+function validateSnapshotMessage(message) {
+  if (
+    !message ||
+    typeof message !== "object" ||
+    Array.isArray(message)
+  ) {
+    throw new Error("Mesazh i pavlefshëm në snapshot.");
+  }
+
+  if (
+    typeof message.id !== "string" ||
+    !message.id.trim() ||
+    message.id.length > 256
+  ) {
+    throw new Error("ID e mesazhit në snapshot nuk është e vlefshme.");
+  }
+
+  if (
+    typeof message.role !== "string" ||
+    !ALLOWED_ROLES.has(message.role)
+  ) {
+    throw new Error("Roli i mesazhit në snapshot nuk është i vlefshëm.");
+  }
+
+  if (
+    typeof message.content !== "string" ||
+    !message.content.trim() ||
+    message.content.length > MAX_MESSAGE_LENGTH
+  ) {
+    throw new Error("Përmbajtja e mesazhit në snapshot nuk është e vlefshme.");
+  }
+
+  if (!isValidTimestamp(message.timestamp)) {
+    throw new Error("Koha e mesazhit në snapshot nuk është e vlefshme.");
+  }
+
+  return {
+    id: message.id,
+    role: message.role,
+    content: message.content,
+    timestamp: message.timestamp,
+    metadata: cloneMetadata(message.metadata),
+  };
+}
+
 /**
  * Krijon një sesion të ri.
- *
- * Pranon një ID tekstuale ose një objekt konfigurimi.
- * Refuzon ID-të e përsëritura.
+ * Pranon një ID tekstuale ose objekt konfigurimi.
  */
 export function createMemorySession(input) {
   const config =
@@ -217,23 +250,17 @@ export function createMemorySession(input) {
     typeof config !== "object" ||
     Array.isArray(config)
   ) {
-    throw new Error(
-      "Konfigurimi i sesionit nuk është i vlefshëm."
-    );
+    throw new Error("Konfigurimi i sesionit nuk është i vlefshëm.");
   }
 
   const sessionId = validateSessionId(config.sessionId);
 
   if (sessions.has(sessionId)) {
-    throw new Error(
-      `Sesioni ${sessionId} ekziston tashmë.`
-    );
+    throw new Error(`Sesioni ${sessionId} ekziston tashmë.`);
   }
 
   if (sessions.size >= MAX_SESSIONS) {
-    throw new Error(
-      "Është arritur kufiri i sesioneve."
-    );
+    throw new Error("Është arritur kufiri i sesioneve.");
   }
 
   const now = new Date().toISOString();
@@ -254,14 +281,13 @@ export function createMemorySession(input) {
 
 /**
  * Kontrollon nëse ekziston sesioni.
- * Ky kontroll nuk e ndryshon aktivitetin e sesionit.
  */
 export function hasMemorySession(sessionId) {
   return getSessionOrNull(sessionId) !== null;
 }
 
 /**
- * Kthen një kopje të sesionit dhe regjistron aktivitetin.
+ * Kthen kopjen e sesionit dhe regjistron aktivitetin.
  */
 export function getMemorySession(sessionId) {
   const session = getSessionOrNull(sessionId);
@@ -276,10 +302,7 @@ export function getMemorySession(sessionId) {
 }
 
 /**
- * Regjistron aktivitetin e fundit të sesionit.
- *
- * Nuk ndryshon updatedAt, sepse nuk ndryshon
- * përmbajtjen ose metadata-n e sesionit.
+ * Regjistron aktivitet pa ndryshuar updatedAt.
  */
 export function touchMemorySession(sessionId) {
   const session = getSessionOrNull(sessionId);
@@ -295,8 +318,6 @@ export function touchMemorySession(sessionId) {
 
 /**
  * Shton një mesazh në historik.
- *
- * Rolet e lejuara: user, assistant.
  */
 export function addMemoryMessage(input) {
   if (
@@ -304,44 +325,34 @@ export function addMemoryMessage(input) {
     typeof input !== "object" ||
     Array.isArray(input)
   ) {
-    throw new Error(
-      "Mesazhi nuk është i vlefshëm."
-    );
+    throw new Error("Mesazhi nuk është i vlefshëm.");
   }
 
   const sessionId = validateSessionId(input.sessionId);
   const session = sessions.get(sessionId);
 
   if (!session) {
-    throw new Error(
-      "Sesioni nuk ekziston."
-    );
+    throw new Error("Sesioni nuk ekziston.");
   }
 
   if (
     typeof input.role !== "string" ||
     !ALLOWED_ROLES.has(input.role)
   ) {
-    throw new Error(
-      "Roli duhet të jetë user ose assistant."
-    );
+    throw new Error("Roli duhet të jetë user ose assistant.");
   }
 
   if (
     typeof input.content !== "string" ||
     !input.content.trim()
   ) {
-    throw new Error(
-      "Mesazhi duhet të përmbajë tekst jo bosh."
-    );
+    throw new Error("Mesazhi duhet të përmbajë tekst jo bosh.");
   }
 
   const content = input.content.trim();
 
   if (content.length > MAX_MESSAGE_LENGTH) {
-    throw new Error(
-      "Mesazhi tejkalon gjatësinë e lejuar."
-    );
+    throw new Error("Mesazhi tejkalon gjatësinë e lejuar.");
   }
 
   const timestamp = new Date().toISOString();
@@ -356,13 +367,9 @@ export function addMemoryMessage(input) {
 
   session.messages.push(message);
 
-  if (
-    session.messages.length >
-    MAX_MESSAGES_PER_SESSION
-  ) {
+  if (session.messages.length > MAX_MESSAGES_PER_SESSION) {
     const excess =
-      session.messages.length -
-      MAX_MESSAGES_PER_SESSION;
+      session.messages.length - MAX_MESSAGES_PER_SESSION;
 
     session.messages.splice(0, excess);
   }
@@ -375,12 +382,8 @@ export function addMemoryMessage(input) {
 
 /**
  * Merr historikun në rend kronologjik.
- * Leximi regjistrohet si aktivitet për sesionin.
  */
-export function getMemoryHistory(
-  sessionId,
-  options = {}
-) {
+export function getMemoryHistory(sessionId, options = {}) {
   const session = getSessionOrNull(sessionId);
 
   if (!session) {
@@ -397,12 +400,8 @@ export function getMemoryHistory(
       : undefined;
 
   const limit =
-    Number.isInteger(requestedLimit) &&
-    requestedLimit >= 0
-      ? Math.min(
-          requestedLimit,
-          MAX_MESSAGES_PER_SESSION
-        )
+    Number.isInteger(requestedLimit) && requestedLimit >= 0
+      ? Math.min(requestedLimit, MAX_MESSAGES_PER_SESSION)
       : MAX_MESSAGES_PER_SESSION;
 
   if (limit === 0) {
@@ -411,22 +410,16 @@ export function getMemoryHistory(
 
   return session.messages
     .slice(-limit)
-    .map(message => cloneMessage(message));
+    .map((message) => cloneMessage(message));
 }
 
 /**
- * Kthen kontekstin e fundit pa metadata.
+ * Kthen kontekstin e fundit pa metadata të mesazheve.
  */
-export function getRecentMemoryContext(
-  sessionId,
-  limit = 20
-) {
+export function getRecentMemoryContext(sessionId, limit = 20) {
   const safeLimit =
     Number.isInteger(limit) && limit >= 0
-      ? Math.min(
-          limit,
-          MAX_MESSAGES_PER_SESSION
-        )
+      ? Math.min(limit, MAX_MESSAGES_PER_SESSION)
       : 20;
 
   if (safeLimit === 0) {
@@ -435,18 +428,13 @@ export function getRecentMemoryContext(
 
   return getMemoryHistory(sessionId, {
     limit: safeLimit,
-  }).map(message =>
-    cloneMessage(message, false)
-  );
+  }).map((message) => cloneMessage(message, false));
 }
 
 /**
  * Përditëson metadata-n e sesionit.
  */
-export function updateMemorySessionMetadata(
-  sessionId,
-  metadata
-) {
+export function updateMemorySessionMetadata(sessionId, metadata) {
   const session = getSessionOrNull(sessionId);
 
   if (!session) {
@@ -458,9 +446,7 @@ export function updateMemorySessionMetadata(
     typeof metadata !== "object" ||
     Array.isArray(metadata)
   ) {
-    throw new Error(
-      "Metadata duhet të jetë objekt."
-    );
+    throw new Error("Metadata duhet të jetë objekt.");
   }
 
   session.metadata = cloneMetadata({
@@ -505,7 +491,7 @@ export function clearMemoryHistory(sessionId) {
 }
 
 /**
- * Fshin një sesion.
+ * Fshin një sesion nga RAM.
  */
 export function deleteMemorySession(sessionId) {
   const id = validateSessionId(sessionId);
@@ -515,31 +501,132 @@ export function deleteMemorySession(sessionId) {
 }
 
 /**
+ * Eksporton një snapshot të plotë të sesionit.
+ *
+ * Snapshot-i është kopje e pavarur dhe nuk përmban
+ * referenca të drejtpërdrejta te të dhënat e brendshme.
+ */
+export function exportMemorySession(sessionId) {
+  const session = getSessionOrNull(sessionId);
+
+  if (!session) {
+    return null;
+  }
+
+  updateLastAccessedAt(session);
+
+  return {
+    schemaVersion: 1,
+    engineVersion: MEMORY_ENGINE_VERSION,
+    exportedAt: new Date().toISOString(),
+    session: cloneSession(session),
+  };
+}
+
+/**
+ * Rikthen një snapshot të eksportuar më parë.
+ *
+ * - Nuk mbishkruan sesionet ekzistuese.
+ * - Ruajt ID-të dhe timestamp-et origjinale.
+ * - Validoi mesazhet dhe kufijtë përpara regjistrimit.
+ * - Pranon snapshot-in e krijuar nga exportMemorySession().
+ */
+export function restoreMemorySession(sessionId, snapshot) {
+  const normalizedId = validateSessionId(sessionId);
+
+  if (sessions.has(normalizedId)) {
+    throw new Error(`Sesioni ${normalizedId} ekziston tashmë.`);
+  }
+
+  if (sessions.size >= MAX_SESSIONS) {
+    throw new Error("Është arritur kufiri i sesioneve.");
+  }
+
+  if (
+    !snapshot ||
+    typeof snapshot !== "object" ||
+    Array.isArray(snapshot) ||
+    snapshot.schemaVersion !== 1 ||
+    !snapshot.session ||
+    typeof snapshot.session !== "object" ||
+    Array.isArray(snapshot.session)
+  ) {
+    throw new Error("Snapshot-i i sesionit nuk është i vlefshëm.");
+  }
+
+  const source = snapshot.session;
+
+  if (
+    typeof source.sessionId !== "string" ||
+    source.sessionId.trim() !== normalizedId
+  ) {
+    throw new Error("ID-ja në snapshot nuk përputhet me sesionin.");
+  }
+
+  if (
+    !isValidTimestamp(source.createdAt) ||
+    !isValidTimestamp(source.updatedAt) ||
+    !isValidTimestamp(source.lastAccessedAt ?? source.updatedAt)
+  ) {
+    throw new Error("Kohët e sesionit në snapshot nuk janë të vlefshme.");
+  }
+
+  if (!Array.isArray(source.messages)) {
+    throw new Error("Historiku në snapshot nuk është i vlefshëm.");
+  }
+
+  if (source.messages.length > MAX_MESSAGES_PER_SESSION) {
+    throw new Error("Snapshot-i tejkalon numrin maksimal të mesazheve.");
+  }
+
+  const metadata =
+    source.metadata &&
+    typeof source.metadata === "object" &&
+    !Array.isArray(source.metadata)
+      ? cloneMetadata(source.metadata)
+      : {};
+
+  const messages = source.messages.map(validateSnapshotMessage);
+
+  const messageIds = new Set();
+
+  for (const message of messages) {
+    if (messageIds.has(message.id)) {
+      throw new Error("Snapshot-i përmban ID të përsëritura mesazhesh.");
+    }
+
+    messageIds.add(message.id);
+  }
+
+  const restoredSession = {
+    sessionId: normalizedId,
+    createdAt: source.createdAt,
+    updatedAt: source.updatedAt,
+    lastAccessedAt:
+      source.lastAccessedAt ?? source.updatedAt,
+    metadata,
+    messages,
+  };
+
+  // Regjistrohet vetëm pasi të gjitha të dhënat janë validuar.
+  sessions.set(normalizedId, restoredSession);
+
+  return cloneSession(restoredSession);
+}
+
+/**
  * Pastron sesionet joaktive.
- *
- * maxIdleMs: periudha maksimale e pasivitetit.
- * now: koha aktuale në milisekonda; përdoret në teste.
- *
- * Sesionet me aktivitet të pavlefshëm nuk fshihen
- * automatikisht.
  */
 export function cleanupExpiredMemorySessions({
   maxIdleMs,
   now = Date.now(),
 } = {}) {
-  if (
-    !Number.isFinite(maxIdleMs) ||
-    maxIdleMs < 0
-  ) {
-    throw new TypeError(
-      "maxIdleMs duhet të jetë numër jo negativ."
-    );
+  if (!Number.isFinite(maxIdleMs) || maxIdleMs < 0) {
+    throw new TypeError("maxIdleMs duhet të jetë numër jo negativ.");
   }
 
   if (!Number.isFinite(now)) {
-    throw new TypeError(
-      "now duhet të jetë kohë e vlefshme."
-    );
+    throw new TypeError("now duhet të jetë kohë e vlefshme.");
   }
 
   let removed = 0;
@@ -557,10 +644,7 @@ export function cleanupExpiredMemorySessions({
 
     const idleTime = now - lastActivity;
 
-    if (
-      idleTime >= maxIdleMs &&
-      idleTime >= 0
-    ) {
+    if (idleTime >= maxIdleMs && idleTime >= 0) {
       sessions.delete(sessionId);
       removed += 1;
     }
