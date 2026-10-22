@@ -347,4 +347,99 @@ describe("XSUS Knowledge Service", () => {
       result.results.some(item => item.id === "wrapped-result")
     ).toBe(true);
   });
+
+  // Regression test 1:
+  // Një hyrje me ID dhe titull, por me domain të pavlefshëm,
+  // nuk duhet të pranohet në rezultatet e standardizuara.
+  test("refuzon hyrjen standarde me fushë të pavlefshme", async () => {
+    const sourceName = "invalid-domain-entry-test-source";
+
+    registerTemporarySource(sourceName, async () => [
+      {
+        id: "invalid-domain-entry",
+        title: "Invalid domain entry",
+        content: "XSUS invalid domain validation unique content",
+        language: "en",
+        domain: "unknown-domain-for-entry-test"
+      }
+    ]);
+
+    const result = await searchKnowledge(
+      "XSUS invalid domain validation unique content",
+      { language: "en" }
+    );
+
+    expect(
+      result.results.some(
+        item => item.id === "invalid-domain-entry"
+      )
+    ).toBe(false);
+  });
+
+  // Regression test 2:
+  // Një hyrje e deklaruar anglisht nuk duhet të kalojë
+  // filtrin e kërkimit në shqip.
+  test("filtron rezultatet sipas gjuhës së deklaruar", async () => {
+    const sourceName = "language-isolation-test-source";
+
+    registerTemporarySource(sourceName, async () => [
+      {
+        id: "english-only-isolation-entry",
+        title: "English only isolation test",
+        content: "XSUS language isolation unique content",
+        language: "en",
+        domain: "general"
+      }
+    ]);
+
+    const result = await searchKnowledge(
+      "XSUS language isolation unique content",
+      { language: "sq" }
+    );
+
+    expect(
+      result.results.some(
+        item => item.id === "english-only-isolation-entry"
+      )
+    ).toBe(false);
+  });
+
+  // Regression test 3:
+  // Kur përmbajtja dhe titulli janë të njëjta, hyrja verified
+  // duhet të fitojë ndaj hyrjes reviewed gjatë deduplikimit.
+  test("preferon statusin verified kur cilësia tjetër është e barabartë", async () => {
+    const sourceName = "verified-quality-test-source";
+
+    registerTemporarySource(sourceName, async () => [
+      {
+        id: "reviewed-quality-entry",
+        title: "XSUS quality verification",
+        content: "XSUS quality verification unique content",
+        language: "en",
+        domain: "general",
+        status: "reviewed"
+      },
+      {
+        id: "verified-quality-entry",
+        title: "XSUS quality verification",
+        content: "XSUS quality verification unique content",
+        language: "en",
+        domain: "general",
+        status: "verified"
+      }
+    ]);
+
+    const result = await searchKnowledge(
+      "XSUS quality verification unique content",
+      { language: "en" }
+    );
+
+    const matching = result.results.filter(
+      item => item.content ===
+        "XSUS quality verification unique content"
+    );
+
+    expect(matching).toHaveLength(1);
+    expect(matching[0].id).toBe("verified-quality-entry");
+  });
 });
