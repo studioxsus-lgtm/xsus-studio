@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI — Memory Engine
- * Version: 1.0.1
+ * Version: 1.0.0
  *
  * Menaxhon sesionet dhe historikun e bisedave në RAM.
  *
@@ -19,7 +19,7 @@
  * përfundon ose moduli rivendoset.
  */
 
-export const MEMORY_ENGINE_VERSION = "1.0.1";
+export const MEMORY_ENGINE_VERSION = "1.0.0";
 
 const MAX_SESSIONS = 1000;
 const MAX_MESSAGES_PER_SESSION = 100;
@@ -83,8 +83,8 @@ function getSessionOrNull(sessionId) {
  * - Vargje.
  * - Referenca ciklike.
  *
- * Objektet me prototipe të posaçme nuk kopjohen
- * automatikisht, për të shmangur sjellje të papritura.
+ * Objektet me prototipe të posaçme nuk klonohen
+ * automatikisht.
  */
 function cloneMetadata(metadata) {
   if (
@@ -122,7 +122,6 @@ function cloneMetadata(metadata) {
       prototype !== Object.prototype &&
       prototype !== null
     ) {
-      // Nuk ndajmë automatikisht prototipe të posaçme.
       return value;
     }
 
