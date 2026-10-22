@@ -18,13 +18,29 @@ import {
   normalizeLanguageCode
 } from "../language/normalization.js";
 
-import { validateKnowledgeEntry } from "./knowledge-entry.js";
-import { hasKnowledgeDomain } from "./knowledge-domain-registry.js";
+import {
+  validateKnowledgeEntry
+} from "./knowledge-entry.js";
 
-import { searchAlbanianKnowledge } from "./sq-knowledge.js";
-import { searchEnglishKnowledge } from "./en-knowledge.js";
-import { searchFrenchKnowledge } from "./fr-knowledge.js";
-import { searchJavaScriptKnowledge } from "./javascript-master-knowledge.js";
+import {
+  hasKnowledgeDomain
+} from "./knowledge-domain-registry.js";
+
+import {
+  searchAlbanianKnowledge
+} from "./sq-knowledge.js";
+
+import {
+  searchEnglishKnowledge
+} from "./en-knowledge.js";
+
+import {
+  searchFrenchKnowledge
+} from "./fr-knowledge.js";
+
+import {
+  searchJavaScriptKnowledge
+} from "./javascript-master-knowledge.js";
 
 const knowledgeSources = new Map();
 
@@ -69,13 +85,16 @@ function getBaseLanguage(language) {
     return "auto";
   }
 
-  const normalized = language.trim().toLowerCase();
+  const normalized = language
+    .trim()
+    .toLowerCase()
+    .replace(/_/gu, "-");
 
   if (normalized === "auto") {
     return "auto";
   }
 
-  return normalized.split(/[-_]/u)[0] || "auto";
+  return normalized.split("-")[0] || "auto";
 }
 
 function normalizeLimit(value) {
@@ -106,9 +125,12 @@ function normalizeMetadata(metadata) {
 }
 
 function normalizeResult(item, fallbackSource) {
-  if (typeof item === "string" && item.trim()) {
+  if (
+    typeof item === "string" &&
+    item.trim()
+  ) {
     return {
-      content: item.trim(),
+      content: item.normalize("NFC").trim(),
       title: "",
       source: fallbackSource
     };
@@ -126,13 +148,13 @@ function normalizeResult(item, fallbackSource) {
     ...item,
     title:
       typeof item.title === "string"
-        ? item.title.trim()
+        ? item.title.normalize("NFC").trim()
         : "",
-    content: item.content.trim(),
+    content: item.content.normalize("NFC").trim(),
     source:
       typeof item.source === "string" &&
       item.source.trim()
-        ? item.source.trim()
+        ? item.source.normalize("NFC").trim()
         : fallbackSource
   };
 
@@ -144,32 +166,53 @@ function normalizeResult(item, fallbackSource) {
     result.language = result.language
       .trim()
       .toLowerCase()
-      .replace(/_/g, "-");
+      .replace(/_/gu, "-");
   }
 
   if (typeof result.domain === "string") {
-    result.domain = result.domain.trim().toLowerCase();
+    result.domain = result.domain
+      .trim()
+      .toLowerCase();
   }
 
   if (typeof result.status === "string") {
-    result.status = result.status.trim().toLowerCase();
+    result.status = result.status
+      .trim()
+      .toLowerCase();
   }
 
   return result;
 }
 
 /**
- * Kontroll minimal i strukturës së rezultatit.
+ * Kontrollon strukturën bazë të një rezultati.
  *
- * Validimi i plotë i hyrjeve mbetet përgjegjësi
- * e modulit knowledge-entry.js.
+ * Rezultatet e vjetra lejohen për pajtueshmëri.
+ * Hyrjet që deklarojnë ID dhe titull kontrollohen
+ * gjithashtu kundrejt standardit të përbashkët.
  */
 function isValidKnowledgeResult(item) {
-  return (
-    isPlainObject(item) &&
-    typeof item.content === "string" &&
-    item.content.trim().length > 0
-  );
+  if (
+    !isPlainObject(item) ||
+    typeof item.content !== "string" ||
+    !item.content.trim()
+  ) {
+    return false;
+  }
+
+  const hasStandardIdentity =
+    typeof item.id === "string" &&
+    item.id.trim().length > 0 &&
+    typeof item.title === "string" &&
+    item.title.trim().length > 0;
+
+  // Burimet e vjetra mund të mos kenë ende
+  // të gjitha fushat e standardit të ri.
+  if (!hasStandardIdentity) {
+    return true;
+  }
+
+  return validateKnowledgeEntry(item).valid;
 }
 
 function matchesKnowledgeDomain(item, requestedDomain) {
@@ -185,7 +228,7 @@ function matchesKnowledgeDomain(item, requestedDomain) {
 
 /**
  * Rezultatet pa gjuhë të deklaruar pranohen për
- * përputhshmëri me burimet e vjetra.
+ * pajtueshmëri me burimet e vjetra.
  */
 function matchesKnowledgeLanguage(item, requestedLanguage) {
   const targetLanguage = getBaseLanguage(requestedLanguage);
@@ -238,13 +281,6 @@ function getResultKey(item) {
 
 /**
  * Vlerëson përputhjen e një rezultati me pyetjen.
- *
- * Pikët më të larta jepen për:
- * - titullin që përputhet saktësisht;
- * - frazën e plotë në titull ose përmbajtje;
- * - fjalët e pyetjes në titull;
- * - mbulimin e plotë të fjalëve të pyetjes;
- * - statusin verified ose reviewed.
  */
 function scoreResult(item, query) {
   const title = normalizeForSearch(item.title || "");
@@ -277,14 +313,12 @@ function scoreResult(item, query) {
   let matchedTitleTokens = 0;
   let matchedContentTokens = 0;
 
-  // Përputhja e plotë e titullit.
   if (title === normalizedQuery) {
     score += 20;
   } else if (title.includes(normalizedQuery)) {
     score += 12;
   }
 
-  // Përputhja e frazës së plotë në përmbajtje.
   if (content === normalizedQuery) {
     score += 15;
   } else if (content.includes(normalizedQuery)) {
@@ -301,7 +335,6 @@ function scoreResult(item, query) {
     }
   }
 
-  // Titulli është sinjal më i fortë se teksti i përgjithshëm.
   score += matchedTitleTokens * 4;
   score += matchedContentTokens;
 
@@ -311,8 +344,6 @@ function scoreResult(item, query) {
   const contentCoverage =
     matchedContentTokens / queryTokens.length;
 
-  // Shpërblen titujt që mbulojnë pjesën më të madhe
-  // të fjalëve të pyetjes.
   score += Math.round(titleCoverage * 4);
   score += Math.round(contentCoverage * 2);
 
@@ -330,8 +361,6 @@ function scoreResult(item, query) {
     score += 4;
   }
 
-  // Cilësia e verifikuar është sinjal shtesë,
-  // jo zëvendësim për relevancën.
   if (item.status === "verified") {
     score += 2;
   } else if (item.status === "reviewed") {
@@ -342,9 +371,7 @@ function scoreResult(item, query) {
 }
 
 /**
- * Përdoret kur disa burime japin të njëjtën përmbajtje.
- * Relevanca është kriteri kryesor; statusi dhe plotësia
- * e titullit shërbejnë si kritere dytësore.
+ * Zgjedh kopjen më cilësore kur ka dublikata.
  */
 function compareDuplicateQuality(a, b, query) {
   const scoreDifference =
@@ -380,8 +407,7 @@ function compareDuplicateQuality(a, b, query) {
 }
 
 /**
- * Deduplikon rezultatet duke ruajtur kopjen më cilësore.
- * Kur cilësia është e barabartë, kopja e parë fiton.
+ * Deduplikon rezultatet sipas përmbajtjes së normalizuar.
  */
 function deduplicateResults(results, query = "") {
   const uniqueResults = [];
@@ -430,8 +456,7 @@ function safelySearchBuiltIn(
       .map(item => normalizeResult(item, source))
       .filter(isValidKnowledgeResult);
   } catch {
-    // Një burim i integruar që dështon nuk duhet
-    // të ndalojë kërkimin në burimet e tjera.
+    // Dështimi i një burimi nuk ndalon burimet e tjera.
     return [];
   }
 }
@@ -473,7 +498,8 @@ function getBuiltInResults(query, language, limit) {
     );
   }
 
-  // Njohuritë për JavaScript kërkohen në çdo gjuhë.
+  // Njohuritë e JavaScript janë të disponueshme
+  // për kërkime në çdo gjuhë.
   results.push(
     ...safelySearchBuiltIn(
       searchJavaScriptKnowledge,
@@ -522,7 +548,10 @@ function normalizeProviderError(error) {
 }
 
 function normalizeProviderFailure(response) {
-  if (typeof response?.error === "string" && response.error.trim()) {
+  if (
+    typeof response?.error === "string" &&
+    response.error.trim()
+  ) {
     return response.error
       .trim()
       .slice(0, MAX_PROVIDER_ERROR_LENGTH);
@@ -633,6 +662,7 @@ export async function searchKnowledge(query, options = {}) {
   );
 
   const errors = [];
+
   const providerMetadata = normalizeMetadata(
     safeOptions.metadata
   );
@@ -677,19 +707,16 @@ export async function searchKnowledge(query, options = {}) {
     }
   }
 
-  // Filtrimi kryhet përpara deduplikimit.
-  // Kjo shmang që një rezultat jashtë gjuhës ose fushës
-  // të fshehë një rezultat të vlefshëm nga një burim tjetër.
+  // Filtrimi sipas gjuhës kryhet përpara deduplikimit.
   const languageMatchedResults = results.filter(item =>
     matchesKnowledgeLanguage(item, language)
   );
 
+  // Filtrimi sipas fushës kryhet pas filtrimit të gjuhës.
   const domainMatchedResults = languageMatchedResults.filter(item =>
     matchesKnowledgeDomain(item, requestedDomain)
   );
 
-  // Metadata ruan numrin e rezultateve unike të mbledhura
-  // nga të gjitha burimet, para filtrimit të gjuhës dhe fushës.
   const uniqueResults = deduplicateResults(
     results,
     normalizedQuery
@@ -711,7 +738,6 @@ export async function searchKnowledge(query, options = {}) {
         return b.score - a.score;
       }
 
-      // Renditje e qëndrueshme kur pikët janë të barabarta.
       return a.index - b.index;
     })
     .map(entry => entry.item);
