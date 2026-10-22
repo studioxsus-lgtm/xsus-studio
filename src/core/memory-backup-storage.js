@@ -1,16 +1,19 @@
 
 /**
  * XSUS AI Core — Persistent Memory Backup Storage
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Përgjegjësitë:
  * - Ruajtja e backup-eve në skedar JSON.
  * - Leximi dhe listimi i backup-eve.
- * - Fshirja e një backup-i të caktuar.
- * - Verifikimi i integritetit të backup-it.
- * - Shkrimi atomik për të zvogëluar rrezikun e dëmtimit të skedarit.
+ * - Fshirja dhe verifikimi i backup-eve.
+ * - Shkrimi atomik për të zvogëluar rrezikun e dëmtimit.
  * - Parandalimi i mbishkrimit pa leje.
- * - Serializimi i operacioneve për të shmangur konfliktet lokale.
+ * - Serializimi i operacioneve mes instancave në të njëjtin proces.
+ *
+ * Kufizim:
+ * Koordinimi është brenda një procesi Node.js.
+ * Nuk ofrohet bllokim ndërprocesor.
  */
 
 import { randomUUID } from "node:crypto";
@@ -21,11 +24,11 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 
 import { verifyMemoryBackup } from "./memory-backup.js";
 
-export const MEMORY_BACKUP_STORAGE_VERSION = "1.0.0";
+export const MEMORY_BACKUP_STORAGE_VERSION = "1.1.0";
 
 export const MEMORY_BACKUP_STORAGE_ERRORS = Object.freeze({
   INVALID_ID: "MEMORY_BACKUP_STORAGE_INVALID_ID",
@@ -35,10 +38,37 @@ export const MEMORY_BACKUP_STORAGE_ERRORS = Object.freeze({
   IO_FAILED: "MEMORY_BACKUP_STORAGE_IO_FAILED",
 });
 
+// Radha ndahet mes të gjitha instancave të këtij moduli.
+const operationQueues = new Map();
+
 function createStorageError(code, message, cause) {
-  const error = new Error(message, cause ? { cause } : undefined);
+  const error = new Error(
+    message,
+    cause ? { cause } : undefined
+  );
   error.code = code;
   return error;
+}
+
+function serializeForPath(filePath, operation) {
+  const previous =
+    operationQueues.get(filePath) ?? Promise.resolve();
+
+  const result = previous.then(operation, operation);
+
+  // Radha vazhdon edhe kur një operacion dështon.
+  const queueTail = result.catch(() => {});
+
+  operationQueues.set(filePath, queueTail);
+
+  // Hiq hyrjen vetëm nëse kjo është ende radha e fundit.
+  queueTail.then(() => {
+    if (operationQueues.get(filePath) === queueTail) {
+      operationQueues.delete(filePath);
+    }
+  });
+
+  return result;
 }
 
 function validateBackupId(backupId) {
@@ -65,7 +95,32 @@ function isPlainObject(value) {
   }
 
   const prototype = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
+
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
+}
+
+function isValidVerification(result) {
+  return (
+    result === true ||
+    result?.valid === true ||
+    result?.isValid === true ||
+    result?.ok === true
+  );
+}
+
+function validationIssues(result) {
+  if (Array.isArray(result?.issues)) {
+    return result.issues;
+  }
+
+  if (Array.isArray(result?.errors)) {
+    return result.errors;
+  }
+
+  return [];
 }
 
 function validateBackup(backup) {
@@ -88,22 +143,20 @@ function validateBackup(backup) {
     );
   }
 
-  // Përputhshmëri me rezultatet e zakonshme të verifikimit.
-  const valid =
-    result === true ||
-    result?.valid === true ||
-    result?.isValid === true ||
-    result?.ok === true;
-
-  if (!valid) {
-    const details =
-      Array.isArray(result?.errors) && result.errors.length > 0
-        ? ` Detaje: ${result.errors.join("; ")}`
-        : "";
+  if (!isValidVerification(result)) {
+    const details = validationIssues(result)
+      .map((issue) =>
+        typeof issue === "string"
+          ? issue
+          : JSON.stringify(issue)
+      )
+      .join("; ");
 
     throw createStorageError(
       MEMORY_BACKUP_STORAGE_ERRORS.INVALID_BACKUP,
-      `Backup-i nuk kaloi verifikimin.${details}`
+      `Backup-i nuk kaloi verifikimin.${
+        details ? ` Detaje: ${details}` : ""
+      }`
     );
   }
 }
@@ -111,20 +164,20 @@ function validateBackup(backup) {
 export function createMemoryBackupStorage({
   filePath = "data/xsus-memory-backups.json",
 } = {}) {
-  if (typeof filePath !== "string" || filePath.trim() === "") {
-    throw new TypeError("filePath duhet të jetë një tekst jo bosh.");
+  if (
+    typeof filePath !== "string" ||
+    filePath.trim() === ""
+  ) {
+    throw new TypeError(
+      "filePath duhet të jetë një tekst jo bosh."
+    );
   }
 
-  const resolvedPath = filePath;
-  let operationQueue = Promise.resolve();
+  // Rrugë absolute dhe e normalizuar për të gjitha instancat.
+  const resolvedPath = resolve(filePath);
 
   function serialize(operation) {
-    const result = operationQueue.then(operation, operation);
-
-    // Një gabim nuk duhet ta bllokojë radhën e operacioneve të ardhshme.
-    operationQueue = result.catch(() => {});
-
-    return result;
+    return serializeForPath(resolvedPath, operation);
   }
 
   async function readAll() {
@@ -148,11 +201,11 @@ export function createMemoryBackupStorage({
 
     try {
       parsed = JSON.parse(raw);
-    } catch (error) {
+    } catch (cause) {
       throw createStorageError(
         MEMORY_BACKUP_STORAGE_ERRORS.CORRUPTED,
         "Skedari i backup-eve përmban JSON të pavlefshëm.",
-        error
+        cause
       );
     }
 
@@ -177,7 +230,8 @@ export function createMemoryBackupStorage({
 
   async function writeAll(data) {
     const directory = dirname(resolvedPath);
-    const temporaryPath = `${resolvedPath}.${randomUUID()}.tmp`;
+    const temporaryPath =
+      `${resolvedPath}.${randomUUID()}.tmp`;
 
     try {
       await mkdir(directory, { recursive: true });
@@ -189,17 +243,17 @@ export function createMemoryBackupStorage({
       );
 
       await rename(temporaryPath, resolvedPath);
-    } catch (error) {
+    } catch (cause) {
       try {
         await rm(temporaryPath, { force: true });
       } catch {
-        // Ruajmë gabimin origjinal të shkrimit.
+        // Ruajmë gabimin origjinal.
       }
 
       throw createStorageError(
         MEMORY_BACKUP_STORAGE_ERRORS.IO_FAILED,
         "Nuk mund të ruhet skedari i backup-eve.",
-        error
+        cause
       );
     }
   }
@@ -210,7 +264,22 @@ export function createMemoryBackupStorage({
     async save(backupId, backup, { overwrite = false } = {}) {
       return serialize(async () => {
         const id = validateBackupId(backupId);
-        validateBackup(backup);
+
+        // Klono para shkrimit që vlerat e papërshtatshme
+        // të mos ndryshojnë gjendjen ekzistuese.
+        let backupCopy;
+
+        try {
+          backupCopy = cloneJSON(backup);
+        } catch (cause) {
+          throw createStorageError(
+            MEMORY_BACKUP_STORAGE_ERRORS.INVALID_BACKUP,
+            "Backup-i nuk mund të serializohet si JSON.",
+            cause
+          );
+        }
+
+        validateBackup(backupCopy);
 
         const data = await readAll();
 
@@ -224,7 +293,8 @@ export function createMemoryBackupStorage({
           );
         }
 
-        data[id] = cloneJSON(backup);
+        data[id] = backupCopy;
+
         await writeAll(data);
 
         return {
@@ -248,46 +318,43 @@ export function createMemoryBackupStorage({
     },
 
     async verify(backupId) {
-      const backup = await this.get(backupId);
+      // Nuk përdorim this.get(), sepse metoda mund të shkëputet
+      // nga objekti storage.
+      const id = validateBackupId(backupId);
 
-      if (backup === null) {
-        return {
-          valid: false,
-          exists: false,
-          backupId: validateBackupId(backupId),
-        };
-      }
+      return serialize(async () => {
+        const data = await readAll();
 
-      try {
-        const result = verifyMemoryBackup(backup);
-
-        if (
-          result === true ||
-          result?.valid === true ||
-          result?.isValid === true ||
-          result?.ok === true
-        ) {
+        if (!Object.prototype.hasOwnProperty.call(data, id)) {
           return {
-            valid: true,
-            exists: true,
-            backupId: validateBackupId(backupId),
+            valid: false,
+            exists: false,
+            backupId: id,
           };
         }
 
-        return {
-          valid: false,
-          exists: true,
-          backupId: validateBackupId(backupId),
-          errors: result?.errors ?? [],
-        };
-      } catch (error) {
-        return {
-          valid: false,
-          exists: true,
-          backupId: validateBackupId(backupId),
-          errors: [error.message],
-        };
-      }
+        try {
+          const result = verifyMemoryBackup(data[id]);
+
+          return {
+            valid: isValidVerification(result),
+            exists: true,
+            backupId: id,
+            ...(
+              isValidVerification(result)
+                ? {}
+                : { errors: validationIssues(result) }
+            ),
+          };
+        } catch (error) {
+          return {
+            valid: false,
+            exists: true,
+            backupId: id,
+            errors: [error.message],
+          };
+        }
+      });
     },
 
     async delete(backupId) {
@@ -300,6 +367,7 @@ export function createMemoryBackupStorage({
         }
 
         delete data[id];
+
         await writeAll(data);
 
         return true;
