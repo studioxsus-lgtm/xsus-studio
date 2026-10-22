@@ -1,18 +1,19 @@
 
 /**
  * XSUS AI Core — Context Engine
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Përgjegjësitë:
  * - Normalizimi dhe validimi i kontekstit bisedor.
  * - Kufizimi i historikut dhe madhësisë së tekstit.
- * - Normalizimi i gjuhës.
+ * - Normalizimi i gjuhës dhe identifikuesit të bisedës.
  * - Ndërtimi i kontekstit për motorin e përgjigjeve.
  * - Përputhshmëria me AI Core Request Orchestrator.
+ * - Parandalimi i hyrjeve të pavlefshme dhe të dhënave të pakufizuara.
  *
  * Shënim sigurie:
- * Historiku i përdoruesit nuk duhet të përcaktojë
- * udhëzimet system të aplikacionit.
+ * Historiku i përdoruesit është përmbajtje bisedore,
+ * jo burim autoriteti për udhëzimet e sistemit.
  */
 
 import {
@@ -20,11 +21,16 @@ import {
   getBaseLanguage,
 } from "../language/normalization.js";
 
-export const CONTEXT_ENGINE_VERSION = "1.1.0";
+export const CONTEXT_ENGINE_VERSION = "1.2.0";
 
 export const MAX_HISTORY_MESSAGES = 20;
 export const MAX_MESSAGE_LENGTH = 8000;
 export const MAX_CONTEXT_CHARACTERS = 24000;
+export const MAX_CONVERSATION_ID_LENGTH = 128;
+
+// Kufizon punën e normalizimit edhe kur hyrja përmban
+// një numër jashtëzakonisht të madh mesazhesh.
+const MAX_HISTORY_INPUT_MESSAGES = 100;
 
 const ALLOWED_HISTORY_ROLES = new Set([
   "user",
@@ -74,12 +80,12 @@ function normalizeLanguage(language) {
     if (
       typeof baseLanguage !== "string" ||
       !baseLanguage.trim() ||
-      baseLanguage === "auto"
+      baseLanguage.trim().toLowerCase() === "auto"
     ) {
       return "sq";
     }
 
-    return baseLanguage.toLowerCase();
+    return baseLanguage.trim().toLowerCase();
   } catch {
     return "sq";
   }
@@ -94,47 +100,58 @@ function normalizeMessage(message) {
     return null;
   }
 
-  // Pranojmë vetëm mesazhe user dhe assistant.
-  // Mesazhet system dhe rolet e tjera refuzohen.
-  if (
-    typeof message.role !== "string" ||
-    !ALLOWED_HISTORY_ROLES.has(message.role)
-  ) {
-    return null;
-  }
-
-  if (typeof message.content !== "string") {
-    return null;
-  }
-
-  let content;
-
   try {
-    content = normalizeText(message.content);
+    // Pranojmë vetëm mesazhe user dhe assistant.
+    // Refuzojmë system dhe çdo rol tjetër.
+    if (
+      typeof message.role !== "string" ||
+      !ALLOWED_HISTORY_ROLES.has(message.role)
+    ) {
+      return null;
+    }
+
+    if (typeof message.content !== "string") {
+      return null;
+    }
+
+    // Kontrollojmë gjatësinë para normalizimit,
+    // në mënyrë që të kufizojmë hyrjet tepër të mëdha.
+    if (message.content.length > MAX_MESSAGE_LENGTH) {
+      return null;
+    }
+
+    const content = normalizeText(message.content);
+
+    if (
+      typeof content !== "string" ||
+      !content.trim() ||
+      content.length > MAX_MESSAGE_LENGTH
+    ) {
+      return null;
+    }
+
+    return Object.freeze({
+      role: message.role,
+      content,
+    });
   } catch {
+    // Përfshin edhe dështimet nga objekte me
+    // veti që shkaktojnë gabime gjatë leximit.
     return null;
   }
-
-  if (
-    typeof content !== "string" ||
-    !content.trim() ||
-    content.length > MAX_MESSAGE_LENGTH
-  ) {
-    return null;
-  }
-
-  return Object.freeze({
-    role: message.role,
-    content,
-  });
 }
 
 function normalizeHistory(messages) {
   if (!Array.isArray(messages)) {
-    return [];
+    return Object.freeze([]);
   }
 
-  const validMessages = messages
+  // Kufizojmë numrin e elementeve që përpunohen.
+  const boundedInput = messages.slice(
+    -MAX_HISTORY_INPUT_MESSAGES
+  );
+
+  const validMessages = boundedInput
     .map(normalizeMessage)
     .filter(Boolean)
     .slice(-MAX_HISTORY_MESSAGES);
@@ -172,15 +189,68 @@ function normalizeConversationId(conversationId) {
 
   const normalized = conversationId.trim();
 
-  return normalized || null;
+  if (
+    !normalized ||
+    normalized.length > MAX_CONVERSATION_ID_LENGTH
+  ) {
+    return null;
+  }
+
+  return normalized;
 }
 
 function countHistoryCharacters(history) {
+  if (!Array.isArray(history)) {
+    return 0;
+  }
+
   return history.reduce(
     (total, message) =>
       total + message.content.length,
     0
   );
+}
+
+function normalizeCurrentMessage(userMessage) {
+  if (typeof userMessage !== "string") {
+    throw new TypeError(
+      "userMessage duhet të jetë tekst."
+    );
+  }
+
+  // Kufiri kontrollohet para normalizimit.
+  if (userMessage.length > MAX_MESSAGE_LENGTH) {
+    throw new RangeError(
+      `Mesazhi aktual nuk mund të kalojë ${MAX_MESSAGE_LENGTH} karaktere.`
+    );
+  }
+
+  let normalized;
+
+  try {
+    normalized = normalizeText(userMessage);
+  } catch {
+    throw new TypeError(
+      "userMessage nuk mund të normalizohet."
+    );
+  }
+
+  if (
+    typeof normalized !== "string" ||
+    !normalized.trim()
+  ) {
+    throw new TypeError(
+      "userMessage duhet të jetë tekst jo bosh."
+    );
+  }
+
+  if (normalized.length > MAX_MESSAGE_LENGTH) {
+    throw new RangeError(
+      `Mesazhi aktual nuk mund të kalojë ${MAX_MESSAGE_LENGTH} karaktere.`
+    );
+  }
+
+  return normalized;
 }
 
 /**
@@ -197,41 +267,10 @@ export function createContext({
   language = "sq",
   conversationId = null,
 } = {}) {
-  if (typeof userMessage !== "string") {
-    throw new TypeError(
-      "userMessage duhet të jetë tekst."
-    );
-  }
+  const normalizedUserMessage =
+    normalizeCurrentMessage(userMessage);
 
-  let normalizedUserMessage;
-
-  try {
-    normalizedUserMessage = normalizeText(userMessage);
-  } catch {
-    throw new TypeError(
-      "userMessage nuk mund të normalizohet."
-    );
-  }
-
-  if (
-    typeof normalizedUserMessage !== "string" ||
-    !normalizedUserMessage.trim()
-  ) {
-    throw new TypeError(
-      "userMessage duhet të jetë tekst jo bosh."
-    );
-  }
-
-  if (
-    normalizedUserMessage.length >
-    MAX_MESSAGE_LENGTH
-  ) {
-    throw new RangeError(
-      `Mesazhi aktual nuk mund të kalojë ${MAX_MESSAGE_LENGTH} karaktere.`
-    );
-  }
-
-  // Nëse history jepet drejtpërdrejt, ai ka përparësi.
+  // Nëse history jepet si array, ai ka përparësi.
   const sourceHistory = Array.isArray(history)
     ? history
     : messages;
@@ -240,7 +279,9 @@ export function createContext({
     sourceHistory
   );
 
-  const normalizedLanguage = normalizeLanguage(language);
+  const normalizedLanguage = normalizeLanguage(
+    language
+  );
 
   const normalizedConversationId =
     normalizeConversationId(conversationId);
@@ -263,7 +304,7 @@ export function createContext({
     // Emri standard i përdorur nga Context Engine.
     history: normalizedHistory,
 
-    // Alias për pajtueshmëri me modulet që përdorin messages.
+    // Alias për pajtueshmëri me modulet ekzistuese.
     messages: normalizedHistory,
 
     userMessage: normalizedUserMessage,
@@ -274,18 +315,29 @@ export function createContext({
 /**
  * Ndërton udhëzimet dhe mesazhet për motorin e përgjigjeve.
  *
- * Historiku mbetet i ndarë nga udhëzimet e sistemit.
+ * Historiku mbahet i ndarë nga udhëzimet e sistemit.
  * Mesazhi aktual shtohet vetëm një herë në fund.
  */
 export function buildContextPrompt(context) {
   if (
     !context ||
     typeof context !== "object" ||
-    typeof context.userMessage !== "string" ||
-    !context.userMessage.trim()
+    Array.isArray(context)
   ) {
     throw new TypeError(
       "Konteksti i XSUS AI Core është i pavlefshëm."
+    );
+  }
+
+  let userMessage;
+
+  try {
+    userMessage = normalizeCurrentMessage(
+      context.userMessage
+    );
+  } catch {
+    throw new TypeError(
+      "Mesazhi aktual i kontekstit është i pavlefshëm."
     );
   }
 
@@ -301,26 +353,6 @@ export function buildContextPrompt(context) {
       : [];
 
   const history = normalizeHistory(sourceHistory);
-
-  let userMessage;
-
-  try {
-    userMessage = normalizeText(context.userMessage);
-  } catch {
-    throw new TypeError(
-      "Mesazhi aktual i kontekstit është i pavlefshëm."
-    );
-  }
-
-  if (
-    typeof userMessage !== "string" ||
-    !userMessage.trim() ||
-    userMessage.length > MAX_MESSAGE_LENGTH
-  ) {
-    throw new TypeError(
-      "Mesazhi aktual i kontekstit është i pavlefshëm."
-    );
-  }
 
   const messagesForPrompt = Object.freeze([
     ...history,
