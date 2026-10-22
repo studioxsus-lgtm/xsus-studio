@@ -11,7 +11,7 @@
  * - Përdorimi dhe kufizimi i historikut të bisedës.
  * - Kërkimi në bazën e njohurive.
  * - Standardizimi i përgjigjeve.
- * - Menaxhimi i memories së sesionit.
+ * - Menaxhimi i memories RAM dhe persistent memory.
  * - Metadata dhe trajtimi i sigurt i gabimeve.
  */
 
@@ -38,6 +38,10 @@ import {
 } from "./memory-engine.js";
 
 import {
+  createMemoryPersistence
+} from "./memory-persistence-integration.js";
+
+import {
   searchKnowledge
 } from "../knowledge/knowledge-service.js";
 
@@ -58,6 +62,21 @@ const MAX_QUERY_LENGTH = 8000;
 const MAX_CONVERSATION_ID_LENGTH = 200;
 const MAX_SUPPLIED_HISTORY = 20;
 const MAX_CONTEXT_MESSAGES = 4;
+
+/*
+ * Një instancë për gjithë procesin.
+ * Nëse storage nuk është i disponueshëm, motori vazhdon
+ * të përdorë memorien RAM.
+ */
+let memoryPersistence;
+
+function getMemoryPersistence() {
+  if (!memoryPersistence) {
+    memoryPersistence = createMemoryPersistence();
+  }
+
+  return memoryPersistence;
+}
 
 function isPlainObject(value) {
   if (value === null || typeof value !== "object") {
@@ -83,7 +102,6 @@ function normalizeLanguage(value) {
     return language;
   }
 
-  // Prano kodet rajonale vetëm për gjuhët e mbështetura.
   const match = language.match(/^([a-z]{2})-[a-z]{2}$/);
 
   if (match && SUPPORTED_LANGUAGES.includes(match[1])) {
@@ -113,7 +131,7 @@ function detectRequestLanguage(query, requestedLanguage) {
       return normalized;
     }
   } catch {
-    // Në rast gabimi përdoret gjuha rezervë.
+    // Përdoret gjuha rezervë.
   }
 
   return "sq";
@@ -173,10 +191,6 @@ function resolveSuppliedMessages(input) {
   return [];
 }
 
-/**
- * Ndërton pyetjen për kërkimin e njohurive.
- * Pyetja aktuale përfshihet gjithmonë.
- */
 function buildContextualQuery(context) {
   const userMessage = typeof context?.userMessage === "string"
     ? context.userMessage.trim()
@@ -229,15 +243,12 @@ function readConversationHistory(
       if (hasMemorySession(conversationId)) {
         const memoryHistory = getMemoryHistory(conversationId);
 
-        if (
-          Array.isArray(memoryHistory) &&
-          memoryHistory.length > 0
-        ) {
+        if (Array.isArray(memoryHistory)) {
           return memoryHistory.slice(-MAX_SUPPLIED_HISTORY);
         }
       }
     } catch {
-      // Nëse memoria dështon, përdoret historiku i dhënë.
+      // Përdoret historiku i dhënë.
     }
   }
 
@@ -246,7 +257,11 @@ function readConversationHistory(
     : [];
 }
 
-function ensureMemorySession(conversationId, language) {
+/**
+ * Përpiqet fillimisht ta rikthejë sesionin nga storage.
+ * Nëse nuk ekziston ose storage dështon, krijon sesion RAM.
+ */
+async function ensureMemorySession(conversationId, language) {
   if (!conversationId) {
     return false;
   }
@@ -255,7 +270,27 @@ function ensureMemorySession(conversationId, language) {
     if (hasMemorySession(conversationId)) {
       return true;
     }
+  } catch {
+    // Vazhdohet me përpjekjen për rikthim.
+  }
 
+  try {
+    const persistence = getMemoryPersistence();
+
+    await persistence.restoreSession(conversationId);
+  } catch {
+    // Rikthimi nuk duhet të bllokojë kërkesën.
+  }
+
+  try {
+    if (hasMemorySession(conversationId)) {
+      return true;
+    }
+  } catch {
+    // Vazhdohet me krijimin e sesionit.
+  }
+
+  try {
     createMemorySession({
       sessionId: conversationId,
       language
@@ -268,6 +303,25 @@ function ensureMemorySession(conversationId, language) {
     } catch {
       return false;
     }
+  }
+}
+
+/**
+ * Ruajtja në storage është best-effort.
+ * Dështimi nuk duhet të ndikojë te përgjigjja e përdoruesit.
+ */
+async function persistMemorySession(sessionId) {
+  if (!sessionId) {
+    return false;
+  }
+
+  try {
+    const persistence = getMemoryPersistence();
+    const result = await persistence.saveSession(sessionId);
+
+    return result?.success !== false;
+  } catch {
+    return false;
   }
 }
 
@@ -517,7 +571,6 @@ export async function processAIRequest(input = {}) {
 
     const suppliedMessages = resolveSuppliedMessages(input);
 
-    // Kontrata e kërkesës përdor fushat "id", "query" dhe "language".
     const request = createAIRequest({
       ...input,
       id: input.id ?? input.requestId ?? null,
@@ -537,11 +590,6 @@ export async function processAIRequest(input = {}) {
       request.language
     );
 
-    /*
-     * Request Context:
-     * standardizon dhe validon të dhënat para integrimit
-     * me Context Engine dhe Knowledge Service.
-     */
     const requestContext = createRequestContext({
       id: requestId,
       query,
@@ -568,11 +616,10 @@ export async function processAIRequest(input = {}) {
       });
     }
 
-    // Përdoren të dhënat e standardizuara të Request Context.
     requestId = requestContext.requestId;
     language = requestContext.language;
 
-    const memoryEnabled = ensureMemorySession(
+    const memoryEnabled = await ensureMemorySession(
       conversationId,
       language
     );
@@ -612,6 +659,8 @@ export async function processAIRequest(input = {}) {
         "user",
         requestContext.query
       );
+
+      await persistMemorySession(conversationId);
     }
 
     let knowledge;
@@ -628,7 +677,6 @@ export async function processAIRequest(input = {}) {
         }
       });
     } catch {
-      // Gabimet e papritura nuk ekspozojnë detaje të brendshme.
       return createErrorResponse({
         message: GENERIC_ERROR_MESSAGE,
         requestId,
@@ -644,7 +692,6 @@ export async function processAIRequest(input = {}) {
       });
     }
 
-    // Ruaj mesazhin e gabimit të kontrolluar nga Knowledge Service.
     if (knowledge?.success === false) {
       const knowledgeError =
         typeof knowledge.error === "string" &&
@@ -714,6 +761,8 @@ export async function processAIRequest(input = {}) {
         "assistant",
         answer
       );
+
+      await persistMemorySession(conversationId);
     }
 
     const metadata = buildMetadata({
