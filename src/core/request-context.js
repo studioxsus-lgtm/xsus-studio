@@ -1,24 +1,27 @@
 
 /**
  * XSUS AI Core — Request Context
- * Version: 1.3.0
+ * Version: 1.4.0
  *
  * Përgjegjësitë:
  * - Normalizimi i kontekstit të kërkesës.
  * - Validimi i identifikuesit, pyetjes dhe gjuhës.
- * - Kontrolli i metadata-s.
+ * - Kontrolli dhe kufizimi i metadata-s.
  * - Krijimi i një konteksti të pandryshueshëm.
  * - Ruajtja e përputhshmërisë me AI Core.
  */
 
 import { SUPPORTED_LANGUAGES } from "./ai-core-contracts.js";
 
-export const REQUEST_CONTEXT_VERSION = "1.3.0";
+export const REQUEST_CONTEXT_VERSION = "1.4.0";
 
 export const MAX_REQUEST_ID_LENGTH = 128;
 export const MAX_REQUEST_QUERY_LENGTH = 8000;
 export const MAX_MODULE_NAME_LENGTH = 100;
 export const MAX_METADATA_ENTRIES = 50;
+export const MAX_METADATA_KEY_LENGTH = 100;
+export const MAX_METADATA_STRING_LENGTH = 2000;
+export const MAX_METADATA_TOTAL_STRING_LENGTH = 8000;
 
 const ALLOWED_METADATA_VALUE_TYPES = new Set([
   "string",
@@ -26,8 +29,37 @@ const ALLOWED_METADATA_VALUE_TYPES = new Set([
   "boolean",
 ]);
 
+const RESERVED_METADATA_KEYS = new Set([
+  "__proto__",
+  "prototype",
+  "constructor",
+]);
+
+function isPlainObject(value) {
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return false;
+  }
+
+  try {
+    const prototype = Object.getPrototypeOf(value);
+
+    return (
+      prototype === Object.prototype ||
+      prototype === null
+    );
+  } catch {
+    return false;
+  }
+}
+
 function normalizeString(value) {
-  return typeof value === "string" ? value.trim() : "";
+  return typeof value === "string"
+    ? value.trim()
+    : "";
 }
 
 function normalizeLanguageCode(value) {
@@ -42,38 +74,73 @@ function normalizeLanguageCode(value) {
 }
 
 function normalizeMetadata(metadata) {
-  if (
-    !metadata ||
-    typeof metadata !== "object" ||
-    Array.isArray(metadata)
-  ) {
+  if (!isPlainObject(metadata)) {
     return Object.freeze({});
   }
 
-  const entries = Object.entries(metadata).slice(
-    0,
-    MAX_METADATA_ENTRIES
-  );
+  let entries;
 
-  const normalized = {};
+  try {
+    entries = Object.entries(metadata).slice(
+      0,
+      MAX_METADATA_ENTRIES
+    );
+  } catch {
+    return Object.freeze({});
+  }
+
+  const normalized = Object.create(null);
+  let totalStringLength = 0;
+  let acceptedEntries = 0;
 
   for (const [key, value] of entries) {
     const normalizedKey = normalizeString(key);
 
-    if (!normalizedKey || normalizedKey.length > 100) {
+    if (
+      !normalizedKey ||
+      normalizedKey.length > MAX_METADATA_KEY_LENGTH ||
+      RESERVED_METADATA_KEYS.has(normalizedKey)
+    ) {
       continue;
     }
 
     if (
-      value === null ||
-      ALLOWED_METADATA_VALUE_TYPES.has(typeof value)
+      value !== null &&
+      !ALLOWED_METADATA_VALUE_TYPES.has(typeof value)
     ) {
-      if (
-        typeof value !== "number" ||
-        Number.isFinite(value)
-      ) {
-        normalized[normalizedKey] = value;
-      }
+      continue;
+    }
+
+    if (
+      typeof value === "number" &&
+      !Number.isFinite(value)
+    ) {
+      continue;
+    }
+
+    if (
+      typeof value === "string" &&
+      value.length > MAX_METADATA_STRING_LENGTH
+    ) {
+      continue;
+    }
+
+    const stringLength =
+      typeof value === "string" ? value.length : 0;
+
+    if (
+      totalStringLength + stringLength >
+      MAX_METADATA_TOTAL_STRING_LENGTH
+    ) {
+      continue;
+    }
+
+    normalized[normalizedKey] = value;
+    totalStringLength += stringLength;
+    acceptedEntries += 1;
+
+    if (acceptedEntries >= MAX_METADATA_ENTRIES) {
+      break;
     }
   }
 
@@ -82,13 +149,12 @@ function normalizeMetadata(metadata) {
 
 /**
  * Krijon një kontekst të normalizuar.
- * Vlerat e pavlefshme mbeten bosh dhe refuzohen nga validimi.
+ *
+ * Vlerat e pavlefshme normalizohen në vlera bosh
+ * dhe refuzohen nga isValidRequestContext().
  */
 export function createRequestContext(input = {}) {
-  const source =
-    input && typeof input === "object" && !Array.isArray(input)
-      ? input
-      : {};
+  const source = isPlainObject(input) ? input : {};
 
   const id = normalizeString(source.id).slice(
     0,
@@ -100,10 +166,19 @@ export function createRequestContext(input = {}) {
     MAX_REQUEST_QUERY_LENGTH
   );
 
-  const language = normalizeLanguageCode(source.language);
+  const language = normalizeLanguageCode(
+    source.language
+  );
+
+  const moduleInput =
+    source.moduleName === undefined ||
+    source.moduleName === null ||
+    source.moduleName === ""
+      ? "xsus-ai"
+      : source.moduleName;
 
   const moduleName = normalizeString(
-    source.moduleName || "xsus-ai"
+    moduleInput
   ).slice(0, MAX_MODULE_NAME_LENGTH);
 
   const metadata = normalizeMetadata(source.metadata);
@@ -119,14 +194,10 @@ export function createRequestContext(input = {}) {
 }
 
 /**
- * Kontrollon nëse konteksti plotëson kontratën bazë.
+ * Kontrollon nëse konteksti plotëson kontratën.
  */
 export function isValidRequestContext(context) {
-  if (
-    !context ||
-    typeof context !== "object" ||
-    Array.isArray(context)
-  ) {
+  if (!isPlainObject(context)) {
     return false;
   }
 
@@ -161,12 +232,64 @@ export function isValidRequestContext(context) {
     return false;
   }
 
-  if (
-    !context.metadata ||
-    typeof context.metadata !== "object" ||
-    Array.isArray(context.metadata)
-  ) {
+  if (!isPlainObject(context.metadata)) {
     return false;
+  }
+
+  let entries;
+
+  try {
+    entries = Object.entries(context.metadata);
+  } catch {
+    return false;
+  }
+
+  if (entries.length > MAX_METADATA_ENTRIES) {
+    return false;
+  }
+
+  let totalStringLength = 0;
+
+  for (const [key, value] of entries) {
+    if (
+      !key.trim() ||
+      key.length > MAX_METADATA_KEY_LENGTH ||
+      RESERVED_METADATA_KEYS.has(key)
+    ) {
+      return false;
+    }
+
+    if (
+      value !== null &&
+      !ALLOWED_METADATA_VALUE_TYPES.has(typeof value)
+    ) {
+      return false;
+    }
+
+    if (
+      typeof value === "number" &&
+      !Number.isFinite(value)
+    ) {
+      return false;
+    }
+
+    if (
+      typeof value === "string" &&
+      value.length > MAX_METADATA_STRING_LENGTH
+    ) {
+      return false;
+    }
+
+    if (typeof value === "string") {
+      totalStringLength += value.length;
+    }
+
+    if (
+      totalStringLength >
+      MAX_METADATA_TOTAL_STRING_LENGTH
+    ) {
+      return false;
+    }
   }
 
   return true;
