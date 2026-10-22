@@ -60,6 +60,12 @@ const BUILT_IN_LANGUAGES = Object.freeze([
   "fr"
 ]);
 
+const STATUS_RANK = Object.freeze({
+  verified: 3,
+  reviewed: 2,
+  draft: 1
+});
+
 function isPlainObject(value) {
   if (
     value === null ||
@@ -170,27 +176,16 @@ function normalizeResult(item, fallbackSource) {
   }
 
   if (typeof result.domain === "string") {
-    result.domain = result.domain
-      .trim()
-      .toLowerCase();
+    result.domain = result.domain.trim().toLowerCase();
   }
 
   if (typeof result.status === "string") {
-    result.status = result.status
-      .trim()
-      .toLowerCase();
+    result.status = result.status.trim().toLowerCase();
   }
 
   return result;
 }
 
-/**
- * Kontrollon strukturën bazë të një rezultati.
- *
- * Rezultatet e vjetra lejohen për pajtueshmëri.
- * Hyrjet që deklarojnë ID dhe titull kontrollohen
- * gjithashtu kundrejt standardit të përbashkët.
- */
 function isValidKnowledgeResult(item) {
   if (
     !isPlainObject(item) ||
@@ -206,8 +201,7 @@ function isValidKnowledgeResult(item) {
     typeof item.title === "string" &&
     item.title.trim().length > 0;
 
-  // Burimet e vjetra mund të mos kenë ende
-  // të gjitha fushat e standardit të ri.
+  // Ruajmë pajtueshmërinë me burimet e vjetra.
   if (!hasStandardIdentity) {
     return true;
   }
@@ -226,10 +220,6 @@ function matchesKnowledgeDomain(item, requestedDomain) {
   );
 }
 
-/**
- * Rezultatet pa gjuhë të deklaruar pranohen për
- * pajtueshmëri me burimet e vjetra.
- */
 function matchesKnowledgeLanguage(item, requestedLanguage) {
   const targetLanguage = getBaseLanguage(requestedLanguage);
 
@@ -239,6 +229,7 @@ function matchesKnowledgeLanguage(item, requestedLanguage) {
     typeof item.language !== "string" ||
     !item.language.trim()
   ) {
+    // Burimet e vjetra pa gjuhë të deklaruar lejohen.
     return true;
   }
 
@@ -279,8 +270,15 @@ function getResultKey(item) {
   return id ? `id:${source}:${id}` : "";
 }
 
+function getTokens(value) {
+  return normalizeForSearch(value || "")
+    .split(/\s+/u)
+    .filter(Boolean);
+}
+
 /**
- * Vlerëson përputhjen e një rezultati me pyetjen.
+ * Vlerëson relevancën dhe cilësinë e një rezultati.
+ * Rezultatet me përputhje më të fortë marrin më shumë pikë.
  */
 function scoreResult(item, query) {
   const title = normalizeForSearch(item.title || "");
@@ -291,28 +289,20 @@ function scoreResult(item, query) {
     return 0;
   }
 
-  const queryTokens = [
-    ...new Set(
-      normalizedQuery.split(/\s+/u).filter(Boolean)
-    )
-  ];
+  const queryTokens = [...new Set(getTokens(normalizedQuery))];
 
   if (queryTokens.length === 0) {
     return 0;
   }
 
-  const titleTokens = new Set(
-    title.split(/\s+/u).filter(Boolean)
-  );
-
-  const contentTokens = new Set(
-    content.split(/\s+/u).filter(Boolean)
-  );
+  const titleTokens = new Set(getTokens(title));
+  const contentTokens = new Set(getTokens(content));
 
   let score = 0;
   let matchedTitleTokens = 0;
   let matchedContentTokens = 0;
 
+  // Përputhja e frazës së plotë.
   if (title === normalizedQuery) {
     score += 20;
   } else if (title.includes(normalizedQuery)) {
@@ -325,6 +315,7 @@ function scoreResult(item, query) {
     score += 8;
   }
 
+  // Përputhja e fjalëve individuale.
   for (const token of queryTokens) {
     if (titleTokens.has(token)) {
       matchedTitleTokens += 1;
@@ -361,6 +352,7 @@ function scoreResult(item, query) {
     score += 4;
   }
 
+  // Cilësia e burimit ndikon në renditje.
   if (item.status === "verified") {
     score += 2;
   } else if (item.status === "reviewed") {
@@ -371,7 +363,8 @@ function scoreResult(item, query) {
 }
 
 /**
- * Zgjedh kopjen më cilësore kur ka dublikata.
+ * Krahasimi i kopjeve të së njëjtës njohuri.
+ * Kthimi negativ do të thotë se "a" duhet të zëvendësojë "b".
  */
 function compareDuplicateQuality(a, b, query) {
   const scoreDifference =
@@ -381,13 +374,8 @@ function compareDuplicateQuality(a, b, query) {
     return scoreDifference;
   }
 
-  const statusRank = {
-    verified: 3,
-    reviewed: 2
-  };
-
-  const aStatus = statusRank[a.status] || 0;
-  const bStatus = statusRank[b.status] || 0;
+  const aStatus = STATUS_RANK[a.status] || 0;
+  const bStatus = STATUS_RANK[b.status] || 0;
 
   if (aStatus !== bStatus) {
     return bStatus - aStatus;
@@ -403,11 +391,13 @@ function compareDuplicateQuality(a, b, query) {
     return bTitleLength - aTitleLength;
   }
 
+  // Në barazi të plotë, ruajmë kopjen që erdhi e para.
   return 0;
 }
 
 /**
- * Deduplikon rezultatet sipas përmbajtjes së normalizuar.
+ * Deduplikon rezultatet duke ruajtur rendin e parë
+ * dhe duke zëvendësuar kopjen me cilësi më të ulët.
  */
 function deduplicateResults(results, query = "") {
   const uniqueResults = [];
@@ -498,8 +488,6 @@ function getBuiltInResults(query, language, limit) {
     );
   }
 
-  // Njohuritë e JavaScript janë të disponueshme
-  // për kërkime në çdo gjuhë.
   results.push(
     ...safelySearchBuiltIn(
       searchJavaScriptKnowledge,
@@ -707,27 +695,25 @@ export async function searchKnowledge(query, options = {}) {
     }
   }
 
-  // Filtrimi sipas gjuhës kryhet përpara deduplikimit.
-  const languageMatchedResults = results.filter(item =>
-    matchesKnowledgeLanguage(item, language)
-  );
+  // Së pari filtrojmë sipas gjuhës dhe fushës.
+  const filteredResults = results
+    .filter(item =>
+      matchesKnowledgeLanguage(item, language)
+    )
+    .filter(item =>
+      matchesKnowledgeDomain(item, requestedDomain)
+    );
 
-  // Filtrimi sipas fushës kryhet pas filtrimit të gjuhës.
-  const domainMatchedResults = languageMatchedResults.filter(item =>
-    matchesKnowledgeDomain(item, requestedDomain)
-  );
-
+  // Deduplikimi kryhet vetëm mbi rezultatet e vlefshme
+  // për filtrat e kërkimit aktual.
   const uniqueResults = deduplicateResults(
-    results,
+    filteredResults,
     normalizedQuery
   );
 
-  const domainResults = deduplicateResults(
-    domainMatchedResults,
-    normalizedQuery
-  );
-
-  const rankedResults = domainResults
+  // Renditja është e qëndrueshme: në barazi të pikëve,
+  // ruhet rendi që rezultati ka pasur pas deduplikimit.
+  const rankedResults = uniqueResults
     .map((item, index) => ({
       item,
       index,
@@ -765,7 +751,7 @@ export async function searchKnowledge(query, options = {}) {
       builtInLanguages: [...BUILT_IN_LANGUAGES],
       registeredSources: knowledgeSources.size,
       totalUniqueResults: uniqueResults.length,
-      domainResultCount: domainResults.length,
+      domainResultCount: uniqueResults.length,
       resultCount: finalResults.length,
       rankingEnabled: true,
       deduplicationEnabled: true,
