@@ -106,7 +106,7 @@ expect(
 
 });
 
-test("kthen përgjigje me strukturë të vlefshme edhe pa rezultate njohurish", async () => {
+test("kthen metadata të vlefshme edhe pa rezultate njohurish", async () => {
 const result = await processAIRequest({
 query: "A ekziston XSUS-TEST-UNKNOWN-92841?",
 language: "en"
@@ -123,6 +123,43 @@ expect(Array.isArray(result.metadata.sources)).toBe(true);
 expect(result.version).toBe("1.2.0");
 expect(result.metadata.version).toBe("1.2.0");
 expect(Number.isNaN(Date.parse(result.timestamp))).toBe(false);
+
+});
+
+test("refuzon pyetjet që tejkalojnë kufirin prej 8000 karakteresh", async () => {
+const result = await processAIRequest({
+query: "A".repeat(8001),
+language: "sq"
+});
+
+expect(result).toHaveProperty("error");
+expect(result.answer).toBe("");
+expect(result.error).toContain("8000");
+expect(result.metadata.engine).toBe("xsus-ai-core");
+expect(result.metadata.version).toBe("1.2.0");
+
+});
+
+test("trajton kërkesat me objekt të pavlefshëm", async () => {
+const result = await processAIRequest(null);
+
+expect(result).toHaveProperty("error");
+expect(result.answer).toBe("");
+expect(result.metadata.engine).toBe("xsus-ai-core");
+expect(result.metadata.version).toBe("1.2.0");
+
+});
+
+test("nuk ekspozon gabime të brendshme në përgjigjet e suksesshme", async () => {
+const result = await processAIRequest({
+query: "Çfarë është programimi?",
+language: "sq"
+});
+
+expect(result.answer).toBeTruthy();
+expect(result.error).toBeUndefined();
+expect(result.metadata.engine).toBe("xsus-ai-core");
+expect(result.metadata.version).toBe("1.2.0");
 
 });
 });
