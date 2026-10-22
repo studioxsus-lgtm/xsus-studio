@@ -1,3 +1,4 @@
+
 import { afterEach, describe, expect, test } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -85,7 +86,6 @@ describe("XSUS AI Core — Memory Backup Storage", () => {
       code: MEMORY_BACKUP_STORAGE_ERRORS.CONFLICT,
     });
 
-    // Krahasojmë me backup-in origjinal, jo me një backup të ri.
     await expect(storage.get("backup-1")).resolves.toEqual(
       originalBackup
     );
@@ -179,8 +179,6 @@ describe("XSUS AI Core — Memory Backup Storage", () => {
     await expect(storage.delete("backup-1")).resolves.toBe(false);
 
     await expect(storage.get("backup-1")).resolves.toBeNull();
-
-    // Verifikojmë se backup-i tjetër mbetet i paprekur.
     await expect(storage.get("backup-2")).resolves.toEqual(backup2);
   });
 
@@ -226,7 +224,7 @@ describe("XSUS AI Core — Memory Backup Storage", () => {
     await storage.save("backup-1", createBackup());
 
     await expect(storage.getStats()).resolves.toMatchObject({
-      version: "1.0.0",
+      version: "1.1.0",
       entries: 1,
       filePath,
     });
