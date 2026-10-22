@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI Core — Request Context
- * Version: 1.4.0
+ * Version: 1.3.0
  *
  * Përgjegjësitë:
  * - Normalizimi i kontekstit të kërkesës.
@@ -13,7 +13,7 @@
 
 import { SUPPORTED_LANGUAGES } from "./ai-core-contracts.js";
 
-export const REQUEST_CONTEXT_VERSION = "1.4.0";
+export const REQUEST_CONTEXT_VERSION = "1.3.0";
 
 export const MAX_REQUEST_ID_LENGTH = 128;
 export const MAX_REQUEST_QUERY_LENGTH = 8000;
@@ -91,7 +91,6 @@ function normalizeMetadata(metadata) {
 
   const normalized = Object.create(null);
   let totalStringLength = 0;
-  let acceptedEntries = 0;
 
   for (const [key, value] of entries) {
     const normalizedKey = normalizeString(key);
@@ -137,11 +136,6 @@ function normalizeMetadata(metadata) {
 
     normalized[normalizedKey] = value;
     totalStringLength += stringLength;
-    acceptedEntries += 1;
-
-    if (acceptedEntries >= MAX_METADATA_ENTRIES) {
-      break;
-    }
   }
 
   return Object.freeze(normalized);
@@ -228,6 +222,12 @@ export function isValidRequestContext(context) {
     typeof context.moduleName !== "string" ||
     !context.moduleName.trim() ||
     context.moduleName.length > MAX_MODULE_NAME_LENGTH
+  ) {
+    return false;
+  }
+
+  if (
+    context.version !== REQUEST_CONTEXT_VERSION
   ) {
     return false;
   }
