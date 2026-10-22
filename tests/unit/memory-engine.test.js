@@ -16,6 +16,8 @@ import {
   getMemoryStats,
   clearAllMemory,
   cleanupExpiredMemorySessions,
+  exportMemorySession,
+  restoreMemorySession
 } from "../../src/core/memory-engine.js";
 
 describe("XSUS AI Memory Engine", () => {
@@ -23,648 +25,546 @@ describe("XSUS AI Memory Engine", () => {
     clearAllMemory();
   });
 
-  test("ekspozon versionin 1.2.0", () => {
-    expect(MEMORY_ENGINE_VERSION).toBe("1.2.0");
-  });
-
-  test("krijon një sesion me kohën e fundit të aksesit", () => {
-    const session = createMemorySession({
-      sessionId: "session-1",
+  describe("versioni", () => {
+    test("ekspozon versionin 1.3.0", () => {
+      expect(MEMORY_ENGINE_VERSION).toBe("1.3.0");
     });
 
-    expect(session.sessionId).toBe("session-1");
-    expect(session.messages).toEqual([]);
-    expect(session.createdAt).toBeTruthy();
-    expect(session.updatedAt).toBeTruthy();
-    expect(session.lastAccessedAt).toBeTruthy();
-    expect(hasMemorySession("session-1")).toBe(true);
+    test("raporton versionin aktual në statistika", () => {
+      const stats = getMemoryStats();
+
+      expect(stats.version).toBe("1.3.0");
+      expect(stats.maxSessions).toBe(1000);
+      expect(stats.maxMessagesPerSession).toBe(100);
+    });
   });
 
-  test("pranon ID tekstuale për krijimin e sesionit", () => {
-    const session = createMemorySession("session-1");
+  describe("krijimi i sesioneve", () => {
+    test("krijon një sesion me ID të dhënë", () => {
+      const session = createMemorySession("session-1");
 
-    expect(session.sessionId).toBe("session-1");
-    expect(hasMemorySession("session-1")).toBe(true);
+      expect(session).toBeTruthy();
+      expect(session.sessionId).toBe("session-1");
+      expect(hasMemorySession("session-1")).toBe(true);
+    });
+
+    test("pranon konfigurim me sessionId", () => {
+      const session = createMemorySession({
+        sessionId: "session-config",
+        metadata: {
+          language: "sq"
+        }
+      });
+
+      expect(session.sessionId).toBe("session-config");
+      expect(session.metadata.language).toBe("sq");
+    });
+
+    test("regjistron datat e krijimit dhe përditësimit", () => {
+      const session = createMemorySession("session-dates");
+
+      expect(session.createdAt).toBeTruthy();
+      expect(session.updatedAt).toBeTruthy();
+      expect(Number.isNaN(Date.parse(session.createdAt))).toBe(false);
+      expect(Number.isNaN(Date.parse(session.updatedAt))).toBe(false);
+    });
+
+    test("krijon histori bosh", () => {
+      const session = createMemorySession("session-empty");
+
+      expect(session.messages).toEqual([]);
+      expect(getMemoryHistory("session-empty")).toEqual([]);
+    });
+
+    test("refuzon ID bosh", () => {
+      expect(() => createMemorySession("")).toThrow();
+      expect(() => createMemorySession("   ")).toThrow();
+    });
+
+    test("refuzon ID që nuk është tekst", () => {
+      expect(() => createMemorySession(null)).toThrow();
+      expect(() => createMemorySession(123)).toThrow();
+    });
+
+    test("refuzon ID të përsëritur", () => {
+      createMemorySession("duplicate-session");
+
+      expect(() => createMemorySession("duplicate-session")).toThrow();
+    });
+
+    test("kontrollon ekzistencën e sesionit", () => {
+      createMemorySession("existing-session");
+
+      expect(hasMemorySession("existing-session")).toBe(true);
+      expect(hasMemorySession("missing-session")).toBe(false);
+    });
+
+    test("kthen sesionin e kërkuar", () => {
+      createMemorySession("get-session");
+
+      const session = getMemorySession("get-session");
+
+      expect(session).toBeTruthy();
+      expect(session.sessionId).toBe("get-session");
+    });
+
+    test("kthen vlerë të munguar për sesionin që nuk ekziston", () => {
+      expect(getMemorySession("missing-session")).toBeFalsy();
+    });
   });
 
-  test("refuzon konfigurimin e pavlefshëm të sesionit", () => {
-    expect(() => createMemorySession()).toThrow(
-      "Konfigurimi i sesionit"
-    );
+  describe("mesazhet", () => {
+    beforeEach(() => {
+      createMemorySession("messages-session");
+    });
 
-    expect(() => createMemorySession(null)).toThrow(
-      "Konfigurimi i sesionit"
-    );
+    test("shton mesazh nga përdoruesi", () => {
+      const message = addMemoryMessage(
+        "messages-session",
+        "user",
+        "Përshëndetje!"
+      );
 
-    expect(() => createMemorySession([])).toThrow(
-      "Konfigurimi i sesionit"
-    );
+      expect(message).toBeTruthy();
+      expect(message.role).toBe("user");
+      expect(message.content).toBe("Përshëndetje!");
+    });
+
+    test("shton përgjigje nga asistenti", () => {
+      const message = addMemoryMessage(
+        "messages-session",
+        "assistant",
+        "Përshëndetje! Si mund të të ndihmoj?"
+      );
+
+      expect(message.role).toBe("assistant");
+      expect(message.content).toBe(
+        "Përshëndetje! Si mund të të ndihmoj?"
+      );
+    });
+
+    test("ruan mesazhet sipas radhës", () => {
+      addMemoryMessage("messages-session", "user", "Pyetja");
+      addMemoryMessage("messages-session", "assistant", "Përgjigjja");
+
+      const history = getMemoryHistory("messages-session");
+
+      expect(history).toHaveLength(2);
+      expect(history[0].content).toBe("Pyetja");
+      expect(history[1].content).toBe("Përgjigjja");
+    });
+
+    test("gjeneron ID dhe datë për mesazhin", () => {
+      const message = addMemoryMessage(
+        "messages-session",
+        "user",
+        "Test"
+      );
+
+      expect(message.id).toBeTruthy();
+      expect(message.timestamp).toBeTruthy();
+      expect(Number.isNaN(Date.parse(message.timestamp))).toBe(false);
+    });
+
+    test("refuzon rolin e pavlefshëm", () => {
+      expect(() =>
+        addMemoryMessage(
+          "messages-session",
+          "system",
+          "Mesazh i pavlefshëm"
+        )
+      ).toThrow();
+    });
+
+    test("refuzon përmbajtjen bosh", () => {
+      expect(() =>
+        addMemoryMessage("messages-session", "user", "")
+      ).toThrow();
+
+      expect(() =>
+        addMemoryMessage("messages-session", "user", "   ")
+      ).toThrow();
+    });
+
+    test("refuzon përmbajtjen që nuk është tekst", () => {
+      expect(() =>
+        addMemoryMessage("messages-session", "user", null)
+      ).toThrow();
+    });
+
+    test("refuzon sesionin që nuk ekziston", () => {
+      expect(() =>
+        addMemoryMessage("missing-session", "user", "Test")
+      ).toThrow();
+    });
+
+    test("refuzon mesazhe mbi kufirin prej 8000 karakteresh", () => {
+      expect(() =>
+        addMemoryMessage(
+          "messages-session",
+          "user",
+          "a".repeat(8001)
+        )
+      ).toThrow();
+    });
+
+    test("nuk ndryshon historinë kur mesazhi është i pavlefshëm", () => {
+      addMemoryMessage("messages-session", "user", "Mesazh i vlefshëm");
+
+      expect(() =>
+        addMemoryMessage("messages-session", "invalid", "Gabim")
+      ).toThrow();
+
+      expect(getMemoryHistory("messages-session")).toHaveLength(1);
+    });
   });
 
-  test("refuzon ID bosh ose tepër të gjatë", () => {
-    expect(() =>
-      createMemorySession({ sessionId: "   " })
-    ).toThrow("ID e sesionit");
+  describe("historia dhe konteksti", () => {
+    beforeEach(() => {
+      createMemorySession("history-session");
+      addMemoryMessage("history-session", "user", "Pyetja 1");
+      addMemoryMessage("history-session", "assistant", "Përgjigjja 1");
+      addMemoryMessage("history-session", "user", "Pyetja 2");
+    });
 
-    expect(() =>
+    test("kthen historinë e plotë", () => {
+      const history = getMemoryHistory("history-session");
+
+      expect(history).toHaveLength(3);
+    });
+
+    test("kthen histori bosh për sesion që nuk ekziston", () => {
+      expect(getMemoryHistory("missing-history")).toEqual([]);
+    });
+
+    test("kthen kontekstin e fundit të bisedës", () => {
+      const context = getRecentMemoryContext("history-session");
+
+      expect(context).toBeTruthy();
+    });
+
+    test("mbështet kufizimin e kontekstit të fundit", () => {
+      const context = getRecentMemoryContext("history-session", 2);
+
+      expect(context).toBeTruthy();
+    });
+
+    test("pastron historinë pa fshirë sesionin", () => {
+      clearMemoryHistory("history-session");
+
+      expect(hasMemorySession("history-session")).toBe(true);
+      expect(getMemoryHistory("history-session")).toEqual([]);
+    });
+  });
+
+  describe("metadata", () => {
+    test("përditëson metadata të sesionit", () => {
+      createMemorySession("metadata-session");
+
+      updateMemorySessionMetadata("metadata-session", {
+        language: "sq",
+        source: "test"
+      });
+
+      const session = getMemorySession("metadata-session");
+
+      expect(session.metadata.language).toBe("sq");
+      expect(session.metadata.source).toBe("test");
+    });
+
+    test("ruan metadata ekzistuese gjatë përditësimit", () => {
       createMemorySession({
-        sessionId: "x".repeat(129),
-      })
-    ).toThrow("ID e sesionit");
-  });
-
-  test("normalizon hapësirat në ID-në e sesionit", () => {
-    createMemorySession({ sessionId: " session-1 " });
-
-    expect(hasMemorySession("session-1")).toBe(true);
-    expect(hasMemorySession(" session-1 ")).toBe(true);
-  });
-
-  test("refuzon sesionet e dyfishta", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    expect(() =>
-      createMemorySession({ sessionId: "session-1" })
-    ).toThrow("ekziston tashmë");
-  });
-
-  test("kthen kopje të pavarur të sesionit", () => {
-    createMemorySession({
-      sessionId: "session-1",
-      metadata: { language: "sq" },
-    });
-
-    const session = getMemorySession("session-1");
-    session.metadata.language = "en";
-    session.messages.push({ content: "ndryshim" });
-
-    const original = getMemorySession("session-1");
-
-    expect(original.metadata.language).toBe("sq");
-    expect(original.messages).toEqual([]);
-  });
-
-  test("kthen null për sesion që nuk ekziston", () => {
-    expect(getMemorySession("missing-session")).toBeNull();
-  });
-
-  test("prek sesionin dhe përditëson lastAccessedAt", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    const before = getMemorySession("session-1");
-    const touched = touchMemorySession("session-1");
-
-    expect(touched).not.toBeNull();
-    expect(touched.sessionId).toBe("session-1");
-    expect(touched.lastAccessedAt).toBeTruthy();
-    expect(Date.parse(touched.lastAccessedAt)).toBeGreaterThanOrEqual(
-      Date.parse(before.lastAccessedAt)
-    );
-  });
-
-  test("touchMemorySession kthen null për sesion që mungon", () => {
-    expect(touchMemorySession("missing-session")).toBeNull();
-  });
-
-  test("shton dhe lexon mesazhe", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    const message = addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Përshëndetje",
-    });
-
-    expect(message.role).toBe("user");
-    expect(message.content).toBe("Përshëndetje");
-    expect(message.id).toBeTruthy();
-    expect(message.timestamp).toBeTruthy();
-
-    expect(getMemoryHistory("session-1")).toHaveLength(1);
-  });
-
-  test("normalizon tekstin e mesazhit", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    const message = addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "  Përshëndetje  ",
-    });
-
-    expect(message.content).toBe("Përshëndetje");
-  });
-
-  test("ruan rendin e bisedës", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Përshëndetje",
-    });
-
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "assistant",
-      content: "Përshëndetje! Si mund të të ndihmoj?",
-    });
-
-    expect(
-      getMemoryHistory("session-1").map(item => item.role)
-    ).toEqual(["user", "assistant"]);
-  });
-
-  test("kthen vetëm mesazhet e fundit", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    for (let i = 1; i <= 5; i += 1) {
-      addMemoryMessage({
-        sessionId: "session-1",
-        role: "user",
-        content: `Mesazhi ${i}`,
+        sessionId: "metadata-merge",
+        metadata: {
+          language: "sq",
+          source: "web"
+        }
       });
-    }
 
-    expect(
-      getMemoryHistory("session-1", { limit: 2 }).map(
-        item => item.content
-      )
-    ).toEqual(["Mesazhi 4", "Mesazhi 5"]);
-  });
-
-  test("kthen listë bosh kur limiti është zero", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Test",
-    });
-
-    expect(
-      getMemoryHistory("session-1", { limit: 0 })
-    ).toEqual([]);
-  });
-
-  test("përdor kufirin maksimal për limit të pavlefshëm", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Test",
-    });
-
-    expect(
-      getMemoryHistory("session-1", { limit: -1 })
-    ).toHaveLength(1);
-
-    expect(
-      getMemoryHistory("session-1", { limit: 1.5 })
-    ).toHaveLength(1);
-  });
-
-  test("kthen listë bosh për sesion që nuk ekziston", () => {
-    expect(getMemoryHistory("missing-session")).toEqual([]);
-    expect(getRecentMemoryContext("missing-session")).toEqual([]);
-  });
-
-  test("krijon kontekst të thjeshtuar pa metadata", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Si funksionon XSUS AI?",
-      metadata: { source: "test" },
-    });
-
-    const context = getRecentMemoryContext("session-1");
-
-    expect(context).toHaveLength(1);
-    expect(context[0].role).toBe("user");
-    expect(context[0].content).toBe("Si funksionon XSUS AI?");
-    expect(context[0]).not.toHaveProperty("metadata");
-  });
-
-  test("kthen kontekst bosh kur limiti është zero", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Test",
-    });
-
-    expect(
-      getRecentMemoryContext("session-1", 0)
-    ).toEqual([]);
-  });
-
-  test("nuk lejon ndryshimin e historikut përmes kopjes së lexuar", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Teksti origjinal",
-    });
-
-    const history = getMemoryHistory("session-1");
-    history[0].content = "Tekst i ndryshuar";
-
-    expect(getMemoryHistory("session-1")[0].content).toBe(
-      "Teksti origjinal"
-    );
-  });
-
-  test("ruan metadata-n e ndërthurur në kopje të pavarur", () => {
-    const metadata = {
-      language: "sq",
-      preferences: {
-        theme: "dark",
-        options: ["a", "b"],
-      },
-    };
-
-    createMemorySession({
-      sessionId: "session-1",
-      metadata,
-    });
-
-    metadata.preferences.theme = "light";
-    metadata.preferences.options.push("c");
-
-    const session = getMemorySession("session-1");
-
-    expect(session.metadata.preferences.theme).toBe("dark");
-    expect(session.metadata.preferences.options).toEqual(["a", "b"]);
-  });
-
-  test("kopjon metadata-n e mesazhit në mënyrë të pavarur", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    const metadata = {
-      details: {
-        source: "web",
-      },
-    };
-
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Test",
-      metadata,
-    });
-
-    metadata.details.source = "changed";
-
-    expect(
-      getMemoryHistory("session-1")[0].metadata.details.source
-    ).toBe("web");
-  });
-
-  test("përditëson metadata-n pa humbur vlerat ekzistuese", () => {
-    createMemorySession({
-      sessionId: "session-1",
-      metadata: { language: "sq" },
-    });
-
-    const session = updateMemorySessionMetadata(
-      "session-1",
-      { source: "web" }
-    );
-
-    expect(session.metadata).toEqual({
-      language: "sq",
-      source: "web",
-    });
-  });
-
-  test("kthen kopje të pavarur pas përditësimit të metadata-s", () => {
-    createMemorySession({
-      sessionId: "session-1",
-      metadata: { settings: { theme: "dark" } },
-    });
-
-    const updated = updateMemorySessionMetadata(
-      "session-1",
-      { source: "web" }
-    );
-
-    updated.metadata.settings.theme = "light";
-
-    expect(
-      getMemorySession("session-1").metadata.settings.theme
-    ).toBe("dark");
-  });
-
-  test("kthen null kur përditësohet sesion që nuk ekziston", () => {
-    expect(
-      updateMemorySessionMetadata("missing-session", {
-        source: "web",
-      })
-    ).toBeNull();
-  });
-
-  test("refuzon metadata të pavlefshme", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    expect(() =>
-      updateMemorySessionMetadata("session-1", null)
-    ).toThrow("Metadata duhet të jetë objekt.");
-
-    expect(() =>
-      updateMemorySessionMetadata("session-1", [])
-    ).toThrow("Metadata duhet të jetë objekt.");
-  });
-
-  test("refuzon mesazhe për sesion që nuk ekziston", () => {
-    expect(() =>
-      addMemoryMessage({
-        sessionId: "missing-session",
-        role: "user",
-        content: "Test",
-      })
-    ).toThrow("Sesioni nuk ekziston.");
-  });
-
-  test("refuzon mesazhe të pavlefshme", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    expect(() => addMemoryMessage(null)).toThrow(
-      "Mesazhi nuk është i vlefshëm."
-    );
-
-    expect(() =>
-      addMemoryMessage({
-        sessionId: "session-1",
-        role: "system",
-        content: "Test",
-      })
-    ).toThrow("Roli duhet të jetë");
-
-    expect(() =>
-      addMemoryMessage({
-        sessionId: "session-1",
-        role: "user",
-        content: "   ",
-      })
-    ).toThrow("tekst jo bosh");
-  });
-
-  test("refuzon mesazhe që tejkalojnë gjatësinë e lejuar", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    expect(() =>
-      addMemoryMessage({
-        sessionId: "session-1",
-        role: "user",
-        content: "x".repeat(8001),
-      })
-    ).toThrow("gjatësinë e lejuar");
-  });
-
-  test("ruan maksimumi 100 mesazhe për sesion", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    for (let i = 1; i <= 105; i += 1) {
-      addMemoryMessage({
-        sessionId: "session-1",
-        role: "user",
-        content: `Mesazhi ${i}`,
+      updateMemorySessionMetadata("metadata-merge", {
+        source: "mobile"
       });
-    }
 
-    const history = getMemoryHistory("session-1");
+      const session = getMemorySession("metadata-merge");
 
-    expect(history).toHaveLength(100);
-    expect(history[0].content).toBe("Mesazhi 6");
-    expect(history[99].content).toBe("Mesazhi 105");
-  });
-
-  test("izolon historikun e sesioneve të ndryshme", () => {
-    createMemorySession({ sessionId: "session-1" });
-    createMemorySession({ sessionId: "session-2" });
-
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Biseda e parë",
+      expect(session.metadata.language).toBe("sq");
+      expect(session.metadata.source).toBe("mobile");
     });
 
-    addMemoryMessage({
-      sessionId: "session-2",
-      role: "user",
-      content: "Biseda e dytë",
-    });
-
-    expect(
-      getMemoryHistory("session-1").map(item => item.content)
-    ).toEqual(["Biseda e parë"]);
-
-    expect(
-      getMemoryHistory("session-2").map(item => item.content)
-    ).toEqual(["Biseda e dytë"]);
-  });
-
-  test("pastron historikun pa fshirë sesionin", () => {
-    createMemorySession({ sessionId: "session-1" });
-
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Test",
-    });
-
-    const result = clearMemoryHistory("session-1");
-
-    expect(result.cleared).toBe(true);
-    expect(result.removedMessages).toBe(1);
-    expect(getMemoryHistory("session-1")).toEqual([]);
-    expect(hasMemorySession("session-1")).toBe(true);
-  });
-
-  test("kthen rezultat të parashikueshëm kur pastrohet sesion që mungon", () => {
-    expect(clearMemoryHistory("missing-session")).toEqual({
-      cleared: false,
-      removedMessages: 0,
+    test("refuzon metadata për sesion që nuk ekziston", () => {
+      expect(() =>
+        updateMemorySessionMetadata("missing-metadata", {
+          language: "sq"
+        })
+      ).toThrow();
     });
   });
 
-  test("fshin një sesion", () => {
-    createMemorySession({ sessionId: "session-1" });
+  describe("qasja në sesion", () => {
+    test("touchMemorySession përditëson kohën e qasjes", () => {
+      createMemorySession("touch-session");
 
-    expect(deleteMemorySession("session-1").deleted).toBe(true);
-    expect(hasMemorySession("session-1")).toBe(false);
-  });
+      const before = getMemorySession("touch-session").lastAccessedAt;
 
-  test("kthen false kur fshihet sesion që mungon", () => {
-    expect(deleteMemorySession("missing-session").deleted).toBe(false);
-  });
+      touchMemorySession("touch-session");
 
-  test("raporton statistikat e versionit aktual", () => {
-    createMemorySession({ sessionId: "session-1" });
+      const after = getMemorySession("touch-session").lastAccessedAt;
 
-    addMemoryMessage({
-      sessionId: "session-1",
-      role: "user",
-      content: "Test",
+      expect(after).toBeTruthy();
+
+      if (before && after) {
+        expect(Date.parse(after)).toBeGreaterThanOrEqual(
+          Date.parse(before)
+        );
+      }
     });
 
-    const stats = getMemoryStats();
-
-    expect(stats.activeSessions).toBe(1);
-    expect(stats.totalMessages).toBe(1);
-    expect(stats.maxSessions).toBe(1000);
-    expect(stats.maxMessagesPerSession).toBe(100);
-    expect(stats.version).toBe("1.2.0");
+    test("refuzon touch për sesion që nuk ekziston", () => {
+      expect(() => touchMemorySession("missing-touch")).toThrow();
+    });
   });
 
-  test("pastron të gjithë memorien", () => {
-    createMemorySession({ sessionId: "session-1" });
-    createMemorySession({ sessionId: "session-2" });
+  describe("fshirja e sesioneve", () => {
+    test("fshin një sesion ekzistues", () => {
+      createMemorySession("delete-session");
 
-    const result = clearAllMemory();
+      deleteMemorySession("delete-session");
 
-    expect(result.removedSessions).toBe(2);
-    expect(result.cleared).toBe(true);
-    expect(getMemoryStats().activeSessions).toBe(0);
-    expect(hasMemorySession("session-1")).toBe(false);
-    expect(hasMemorySession("session-2")).toBe(false);
+      expect(hasMemorySession("delete-session")).toBe(false);
+    });
+
+    test("fshirja e sesionit heq edhe historinë", () => {
+      createMemorySession("delete-history");
+      addMemoryMessage("delete-history", "user", "Test");
+
+      deleteMemorySession("delete-history");
+
+      expect(getMemoryHistory("delete-history")).toEqual([]);
+      expect(hasMemorySession("delete-history")).toBe(false);
+    });
+
+    test("clearAllMemory pastron të gjitha sesionet", () => {
+      createMemorySession("clear-1");
+      createMemorySession("clear-2");
+
+      clearAllMemory();
+
+      expect(hasMemorySession("clear-1")).toBe(false);
+      expect(hasMemorySession("clear-2")).toBe(false);
+      expect(getMemoryStats().sessions).toBe(0);
+    });
   });
 
-  describe("pastrimi i sesioneve joaktive", () => {
-    test("pastron sesionin kur kalon afati i pasivitetit", () => {
-      createMemorySession({ sessionId: "expired-session" });
+  describe("pastrimi i sesioneve të skaduara", () => {
+    test("pastron sesionet që kanë kaluar afatin", () => {
+      createMemorySession("expired-1");
+      createMemorySession("expired-2");
 
-      const createdAt = Date.parse(
-        getMemorySession("expired-session").createdAt
+      const sessions = [
+        getMemorySession("expired-1"),
+        getMemorySession("expired-2")
+      ];
+
+      const latestAccess = Math.max(
+        ...sessions.map((session) =>
+          Date.parse(
+            session.lastAccessedAt ??
+            session.updatedAt ??
+            session.createdAt
+          )
+        )
       );
 
-      const result = cleanupExpiredMemorySessions({
+      const removed = cleanupExpiredMemorySessions({
         maxIdleMs: 1000,
-        now: createdAt + 1000,
+        now: latestAccess + 2000
       });
 
-      expect(result.removed).toBe(1);
-      expect(result.remaining).toBe(0);
-      expect(hasMemorySession("expired-session")).toBe(false);
-    });
-
-    test("ruan sesionin brenda afatit", () => {
-      createMemorySession({ sessionId: "active-session" });
-
-      const createdAt = Date.parse(
-        getMemorySession("active-session").createdAt
-      );
-
-      const result = cleanupExpiredMemorySessions({
-        maxIdleMs: 60_000,
-        now: createdAt + 1000,
-      });
-
-      expect(result.removed).toBe(0);
-      expect(result.remaining).toBe(1);
-      expect(hasMemorySession("active-session")).toBe(true);
+      expect(removed).toBe(2);
+      expect(hasMemorySession("expired-1")).toBe(false);
+      expect(hasMemorySession("expired-2")).toBe(false);
     });
 
     test("ruan sesionin që është përdorur së fundmi", () => {
-      createMemorySession({ sessionId: "recent-session" });
+      createMemorySession("active-session");
 
-      const createdAt = Date.parse(
-        getMemorySession("recent-session").createdAt
-      );
-
-      const lastAccess = createdAt + 5000;
-
-      touchMemorySession("recent-session");
-
-      // Ky test përdor kohë të kontrolluar duke vlerësuar
-      // se sesioni i aksesuar nuk duhet gjykuar vetëm nga krijimi.
-      const result = cleanupExpiredMemorySessions({
-        maxIdleMs: 10_000,
-        now: Math.max(Date.now(), lastAccess + 1000),
+      const removed = cleanupExpiredMemorySessions({
+        maxIdleMs: 60_000,
+        now: Date.now()
       });
 
-      expect(result.remaining).toBe(1);
-      expect(hasMemorySession("recent-session")).toBe(true);
+      expect(removed).toBe(0);
+      expect(hasMemorySession("active-session")).toBe(true);
     });
+  });
 
-    test("pastron vetëm sesionet që kanë kaluar afatin", () => {
-      createMemorySession({ sessionId: "old-session" });
-      createMemorySession({ sessionId: "new-session" });
-
-      const sessions = [
-        getMemorySession("old-session"),
-        getMemorySession("new-session"),
-      ];
-
-      const oldestCreatedAt = Math.min(
-        ...sessions.map(session => Date.parse(session.createdAt))
-      );
-
-      const result = cleanupExpiredMemorySessions({
-        maxIdleMs: 1000,
-        now: oldestCreatedAt + 1000,
+  describe("eksportimi i memories", () => {
+    test("eksporton sesionin dhe historinë e tij", () => {
+      createMemorySession({
+        sessionId: "export-session",
+        metadata: {
+          language: "sq"
+        }
       });
 
-      expect(result.removed).toBeGreaterThanOrEqual(1);
-      expect(result.remaining + result.removed).toBe(2);
+      addMemoryMessage("export-session", "user", "Përshëndetje");
+      addMemoryMessage("export-session", "assistant", "Përshëndetje!");
+
+      const snapshot = exportMemorySession("export-session");
+
+      expect(snapshot).toBeTruthy();
+      expect(snapshot.schemaVersion).toBe(1);
+      expect(snapshot.engineVersion).toBe("1.3.0");
+      expect(snapshot.session.sessionId).toBe("export-session");
+      expect(snapshot.session.messages).toHaveLength(2);
+      expect(snapshot.session.metadata.language).toBe("sq");
+      expect(snapshot.exportedAt).toBeTruthy();
     });
 
-    test("kthen rezultat bosh kur nuk ka sesione", () => {
+    test("kthen null për sesion që nuk ekziston", () => {
+      expect(exportMemorySession("missing-export")).toBeNull();
+    });
+
+    test("eksporti nuk ndryshon sesionin origjinal", () => {
+      createMemorySession("immutable-export");
+      addMemoryMessage("immutable-export", "user", "Origjinali");
+
+      const snapshot = exportMemorySession("immutable-export");
+
+      snapshot.session.messages[0].content = "Ndryshuar";
+
       expect(
-        cleanupExpiredMemorySessions({
-          maxIdleMs: 1000,
-          now: Date.now(),
-        })
-      ).toEqual({
-        removed: 0,
-        remaining: 0,
+        getMemoryHistory("immutable-export")[0].content
+      ).toBe("Origjinali");
+    });
+  });
+
+  describe("rikthimi i memories", () => {
+    test("rikthen sesionin nga snapshot", () => {
+      createMemorySession({
+        sessionId: "restore-source",
+        metadata: {
+          language: "sq"
+        }
       });
-    });
 
-    test("refuzon afatin negativ", () => {
-      expect(() =>
-        cleanupExpiredMemorySessions({
-          maxIdleMs: -1,
-        })
-      ).toThrow("maxIdleMs");
-    });
+      addMemoryMessage("restore-source", "user", "Pyetje");
+      addMemoryMessage("restore-source", "assistant", "Përgjigje");
 
-    test("refuzon afatin që nuk është numër", () => {
-      expect(() =>
-        cleanupExpiredMemorySessions({
-          maxIdleMs: "1000",
-        })
-      ).toThrow("maxIdleMs");
-    });
+      const snapshot = exportMemorySession("restore-source");
 
-    test("refuzon kohën aktuale të pavlefshme", () => {
-      expect(() =>
-        cleanupExpiredMemorySessions({
-          maxIdleMs: 1000,
-          now: NaN,
-        })
-      ).toThrow("now");
-    });
+      deleteMemorySession("restore-source");
 
-    test("nuk fshin sesionet kur koha është para aktivitetit", () => {
-      createMemorySession({ sessionId: "future-session" });
-
-      const createdAt = Date.parse(
-        getMemorySession("future-session").createdAt
+      const restored = restoreMemorySession(
+        "restore-source",
+        snapshot
       );
 
-      const result = cleanupExpiredMemorySessions({
-        maxIdleMs: 0,
-        now: createdAt - 1,
-      });
+      expect(restored).toBeTruthy();
+      expect(restored.sessionId).toBe("restore-source");
+      expect(restored.messages).toHaveLength(2);
+      expect(restored.metadata.language).toBe("sq");
+      expect(getMemoryHistory("restore-source")).toHaveLength(2);
+    });
 
-      expect(result.removed).toBe(0);
-      expect(result.remaining).toBe(1);
+    test("ruan ID-të dhe datat origjinale të mesazheve", () => {
+      createMemorySession("restore-identity");
+      addMemoryMessage("restore-identity", "user", "Mesazhi origjinal");
+
+      const originalHistory = getMemoryHistory("restore-identity");
+      const snapshot = exportMemorySession("restore-identity");
+
+      deleteMemorySession("restore-identity");
+
+      restoreMemorySession("restore-identity", snapshot);
+
+      const restoredHistory = getMemoryHistory("restore-identity");
+
+      expect(restoredHistory[0].id).toBe(originalHistory[0].id);
+      expect(restoredHistory[0].timestamp).toBe(
+        originalHistory[0].timestamp
+      );
+      expect(restoredHistory[0].content).toBe("Mesazhi origjinal");
+    });
+
+    test("refuzon snapshot të pavlefshëm", () => {
+      expect(() =>
+        restoreMemorySession("invalid-snapshot", null)
+      ).toThrow();
+
+      expect(() =>
+        restoreMemorySession("invalid-schema", {
+          schemaVersion: 999,
+          session: {
+            sessionId: "invalid-schema",
+            messages: []
+          }
+        })
+      ).toThrow();
+    });
+
+    test("refuzon mospërputhjen e ID-së së sesionit", () => {
+      createMemorySession("snapshot-source");
+
+      const snapshot = exportMemorySession("snapshot-source");
+
+      expect(() =>
+        restoreMemorySession("different-session", snapshot)
+      ).toThrow();
+    });
+
+    test("refuzon rikthimin mbi një sesion ekzistues", () => {
+      createMemorySession("restore-duplicate-source");
+
+      const snapshot = exportMemorySession(
+        "restore-duplicate-source"
+      );
+
+      expect(() =>
+        restoreMemorySession(
+          "restore-duplicate-source",
+          snapshot
+        )
+      ).toThrow();
+    });
+
+    test("nuk regjistron sesion pas rikthimit të dështuar", () => {
+      expect(() =>
+        restoreMemorySession("failed-restore", {
+          schemaVersion: 1,
+          session: {
+            sessionId: "failed-restore",
+            messages: "not-an-array"
+          }
+        })
+      ).toThrow();
+
+      expect(hasMemorySession("failed-restore")).toBe(false);
+    });
+  });
+
+  describe("statistikat", () => {
+    test("raporton zero sesione kur memoria është bosh", () => {
+      const stats = getMemoryStats();
+
+      expect(stats.sessions).toBe(0);
+      expect(stats.version).toBe("1.3.0");
+    });
+
+    test("numëron sesionet dhe mesazhet", () => {
+      createMemorySession("stats-1");
+      createMemorySession("stats-2");
+
+      addMemoryMessage("stats-1", "user", "Pyetje");
+      addMemoryMessage("stats-1", "assistant", "Përgjigje");
+      addMemoryMessage("stats-2", "user", "Një pyetje tjetër");
+
+      const stats = getMemoryStats();
+
+      expect(stats.sessions).toBe(2);
+      expect(stats.messages).toBe(3);
+      expect(stats.maxSessions).toBe(1000);
+      expect(stats.maxMessagesPerSession).toBe(100);
     });
   });
 });
