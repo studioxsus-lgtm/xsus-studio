@@ -19,17 +19,13 @@ import {
 } from "../../src/core/memory-storage.js";
 
 describe("XSUS AI Core — Memory Recovery & Integrity", () => {
-  let persistence;
-
   function createTestPersistence() {
     const storage = createMemoryStorageAdapter();
 
-    persistence = createMemoryPersistence({
+    return createMemoryPersistence({
       storage,
       prefix: "xsus-test:"
     });
-
-    return persistence;
   }
 
   afterEach(() => {
@@ -131,16 +127,15 @@ describe("XSUS AI Core — Memory Recovery & Integrity", () => {
 
   test("nuk rikthen një sesion që nuk është ruajtur", async () => {
     const memory = createTestPersistence();
+    const sessionId = "missing-session-92841";
 
-    const result = await memory.restoreSession(
-      "missing-session-92841"
-    );
+    const result = await memory.restoreSession(sessionId);
 
     expect(result.success).toBe(false);
-    expect(hasMemorySession("missing-session-92841")).toBe(false);
+    expect(hasMemorySession(sessionId)).toBe(false);
   });
 
-  test("nuk lejon rikthim të dyfishtë të të njëjtit sesion aktiv", async () => {
+  test("refuzon rikthimin e një sesioni që është aktiv", async () => {
     const memory = createTestPersistence();
     const sessionId = "duplicate-restore-session";
 
@@ -159,16 +154,21 @@ describe("XSUS AI Core — Memory Recovery & Integrity", () => {
 
     expect(saved.success).toBe(true);
 
-    const firstRestore = await memory.restoreSession(sessionId);
+    await expect(
+      memory.restoreSession(sessionId)
+    ).rejects.toMatchObject({
+      code: "SESSION_RESTORE_FAILED"
+    });
 
-    // Sesioni ekziston tashmë në RAM; rikthimi i dytë
-    // nuk duhet të shtojë kopje të mesazheve.
-    expect(firstRestore.success).toBe(false);
+    expect(hasMemorySession(sessionId)).toBe(true);
 
-    expect(getMemoryHistory(sessionId)).toHaveLength(1);
+    const history = getMemoryHistory(sessionId);
+
+    expect(history).toHaveLength(1);
+    expect(history[0].content).toBe("Mesazh fillestar.");
   });
 
-  test("ruan numrin e mesazheve pas disa cikleve ruajtje-rikthim", async () => {
+  test("ruan historikun pa dublikuar mesazhet pas disa cikleve", async () => {
     const memory = createTestPersistence();
     const sessionId = "round-trip-session";
 
@@ -184,6 +184,7 @@ describe("XSUS AI Core — Memory Recovery & Integrity", () => {
     });
 
     await memory.saveSession(sessionId);
+
     deleteMemorySession(sessionId);
 
     const restored = await memory.restoreSession(sessionId);
@@ -198,6 +199,7 @@ describe("XSUS AI Core — Memory Recovery & Integrity", () => {
     });
 
     await memory.saveSession(sessionId);
+
     deleteMemorySession(sessionId);
 
     const restoredAgain = await memory.restoreSession(sessionId);
@@ -213,7 +215,7 @@ describe("XSUS AI Core — Memory Recovery & Integrity", () => {
     ]);
   });
 
-  test("fshirja e sesionit aktiv nuk ndikon në sesionin tjetër", () => {
+  test("fshirja e një sesioni nuk ndikon në tjetrin", () => {
     const firstId = "delete-isolation-A";
     const secondId = "delete-isolation-B";
 
@@ -244,8 +246,10 @@ describe("XSUS AI Core — Memory Recovery & Integrity", () => {
     expect(hasMemorySession(firstId)).toBe(false);
     expect(hasMemorySession(secondId)).toBe(true);
 
-    expect(getMemoryHistory(secondId)).toHaveLength(1);
-    expect(getMemoryHistory(secondId)[0].content).toBe(
+    const remainingHistory = getMemoryHistory(secondId);
+
+    expect(remainingHistory).toHaveLength(1);
+    expect(remainingHistory[0].content).toBe(
       "Biseda që duhet të mbetet."
     );
   });
