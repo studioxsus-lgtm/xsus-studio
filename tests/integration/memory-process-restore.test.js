@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { fileURLToPath } from "node:url";
 
 import { createMemoryBackup } from "../../src/core/memory-backup.js";
 import { createMemoryBackupStorage } from "../../src/core/memory-backup-storage.js";
@@ -53,21 +52,22 @@ describe("XSUS AI — Memory Process Restore", () => {
     const filePath = path.join(directory, "backups.json");
     const sessionId = "process-restore-session";
 
-    // Procesi i parë krijon një sesion real dhe historikun e tij.
     createMemorySession(sessionId, {
       language: "sq",
       source: "process-recovery-test",
     });
 
-    addMemoryMessage(sessionId, {
-      role: "user",
-      content: "Përshëndetje XSUS AI",
-    });
-
-    addMemoryMessage(sessionId, {
-      role: "assistant",
-      content: "Përshëndetje! Si mund të të ndihmoj?",
-    });
+    // addMemoryMessage pret një varg mesazhesh.
+    addMemoryMessage(sessionId, [
+      {
+        role: "user",
+        content: "Përshëndetje XSUS AI",
+      },
+      {
+        role: "assistant",
+        content: "Përshëndetje! Si mund të të ndihmoj?",
+      },
+    ]);
 
     const snapshot = exportMemorySession(sessionId);
 
@@ -79,10 +79,10 @@ describe("XSUS AI — Memory Process Restore", () => {
 
     await storage.save(sessionId, backup);
 
-    // Sigurohemi që sesioni nuk mbetet aktiv në procesin testues.
+    // Simulojmë mbylljen e sesionit në procesin e parë.
     await clearAllMemory();
 
-    // Procesi i dytë lexon backup-in dhe rikthen sesionin real.
+    // Procesi i ri lexon backup-in dhe rikthen sesionin.
     const script = `
       import { createMemoryBackupStorage } from ${JSON.stringify(backupStorageUrl)};
       import { restoreMemoryBackup } from ${JSON.stringify(backupModuleUrl)};
@@ -154,9 +154,14 @@ describe("XSUS AI — Memory Process Restore", () => {
       "Përshëndetje! Si mund të të ndihmoj?"
     );
 
-    // ID-të dhe kohët origjinale duhet të ruhen.
-    expect(result.messages[0].id).toBe(snapshot.session.messages[0].id);
-    expect(result.messages[1].id).toBe(snapshot.session.messages[1].id);
+    // Verifikojmë ruajtjen e ID-ve dhe kohëve origjinale.
+    expect(result.messages[0].id).toBe(
+      snapshot.session.messages[0].id
+    );
+    expect(result.messages[1].id).toBe(
+      snapshot.session.messages[1].id
+    );
+
     expect(result.messages[0].timestamp).toBe(
       snapshot.session.messages[0].timestamp
     );
