@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI — Memory Engine
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Menaxhon sesionet dhe historikun e bisedave në RAM.
  *
@@ -13,6 +13,7 @@
  * - Metadata me kopjim rekursiv.
  * - Historik kronologjik.
  * - Pastrim dhe statistika të memories.
+ * - Gjurmim i aktivitetit të fundit.
  * - Pastrim i sesioneve joaktive.
  *
  * Shënim:
@@ -20,7 +21,7 @@
  * përfundon ose moduli rivendoset.
  */
 
-export const MEMORY_ENGINE_VERSION = "1.1.0";
+export const MEMORY_ENGINE_VERSION = "1.2.0";
 
 const MAX_SESSIONS = 1000;
 const MAX_MESSAGES_PER_SESSION = 100;
@@ -34,6 +35,9 @@ const ALLOWED_ROLES = new Set([
 
 const sessions = new Map();
 
+/**
+ * Kontrollon dhe normalizon ID-në e sesionit.
+ */
 function validateSessionId(sessionId) {
   if (typeof sessionId !== "string") {
     throw new Error(
@@ -55,6 +59,9 @@ function validateSessionId(sessionId) {
   return normalizedId;
 }
 
+/**
+ * Kthen sesionin e brendshëm ose null.
+ */
 function getSessionOrNull(sessionId) {
   if (typeof sessionId !== "string") {
     return null;
@@ -69,6 +76,19 @@ function getSessionOrNull(sessionId) {
   return sessions.get(normalizedId) || null;
 }
 
+/**
+ * Përditëson kohën e aktivitetit të fundit.
+ */
+function updateLastAccessedAt(session) {
+  session.lastAccessedAt = new Date().toISOString();
+}
+
+/**
+ * Krijon një kopje të pavarur të metadata-s.
+ *
+ * Mbështet vlera primitive, objekte të zakonshme,
+ * vargje dhe referenca ciklike.
+ */
 function cloneMetadata(metadata) {
   if (
     !metadata ||
@@ -127,6 +147,9 @@ function cloneMetadata(metadata) {
   return cloneValue(metadata);
 }
 
+/**
+ * Krijon një kopje të mesazhit.
+ */
 function cloneMessage(message, includeMetadata = true) {
   const copy = {
     id: message.id,
@@ -142,11 +165,18 @@ function cloneMessage(message, includeMetadata = true) {
   return copy;
 }
 
+/**
+ * Krijon një kopje të plotë të sesionit.
+ */
 function cloneSession(session) {
   return {
     sessionId: session.sessionId,
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,
+    lastAccessedAt:
+      session.lastAccessedAt ??
+      session.updatedAt ??
+      session.createdAt,
     metadata: cloneMetadata(session.metadata),
     messages: session.messages.map(message =>
       cloneMessage(message)
@@ -154,6 +184,9 @@ function cloneSession(session) {
   };
 }
 
+/**
+ * Krijon një identifikues unik për mesazhin.
+ */
 function createMessageId() {
   if (
     typeof globalThis.crypto !== "undefined" &&
@@ -169,6 +202,9 @@ function createMessageId() {
 
 /**
  * Krijon një sesion të ri.
+ *
+ * Pranon një ID tekstuale ose një objekt konfigurimi.
+ * Refuzon ID-të e përsëritura.
  */
 export function createMemorySession(input) {
   const config =
@@ -206,6 +242,7 @@ export function createMemorySession(input) {
     sessionId,
     createdAt: now,
     updatedAt: now,
+    lastAccessedAt: now,
     metadata: cloneMetadata(config.metadata),
     messages: [],
   };
@@ -215,18 +252,51 @@ export function createMemorySession(input) {
   return cloneSession(session);
 }
 
+/**
+ * Kontrollon nëse ekziston sesioni.
+ * Ky kontroll nuk e ndryshon aktivitetin e sesionit.
+ */
 export function hasMemorySession(sessionId) {
   return getSessionOrNull(sessionId) !== null;
 }
 
+/**
+ * Kthen një kopje të sesionit dhe regjistron aktivitetin.
+ */
 export function getMemorySession(sessionId) {
   const session = getSessionOrNull(sessionId);
 
-  return session ? cloneSession(session) : null;
+  if (!session) {
+    return null;
+  }
+
+  updateLastAccessedAt(session);
+
+  return cloneSession(session);
+}
+
+/**
+ * Regjistron aktivitetin e fundit të sesionit.
+ *
+ * Nuk ndryshon updatedAt, sepse nuk ndryshon
+ * përmbajtjen ose metadata-n e sesionit.
+ */
+export function touchMemorySession(sessionId) {
+  const session = getSessionOrNull(sessionId);
+
+  if (!session) {
+    return null;
+  }
+
+  updateLastAccessedAt(session);
+
+  return cloneSession(session);
 }
 
 /**
  * Shton një mesazh në historik.
+ *
+ * Rolet e lejuara: user, assistant.
  */
 export function addMemoryMessage(input) {
   if (
@@ -243,7 +313,9 @@ export function addMemoryMessage(input) {
   const session = sessions.get(sessionId);
 
   if (!session) {
-    throw new Error("Sesioni nuk ekziston.");
+    throw new Error(
+      "Sesioni nuk ekziston."
+    );
   }
 
   if (
@@ -296,12 +368,14 @@ export function addMemoryMessage(input) {
   }
 
   session.updatedAt = timestamp;
+  session.lastAccessedAt = timestamp;
 
   return cloneMessage(message);
 }
 
 /**
  * Merr historikun në rend kronologjik.
+ * Leximi regjistrohet si aktivitet për sesionin.
  */
 export function getMemoryHistory(
   sessionId,
@@ -312,6 +386,8 @@ export function getMemoryHistory(
   if (!session) {
     return [];
   }
+
+  updateLastAccessedAt(session);
 
   const requestedLimit =
     options &&
@@ -392,13 +468,16 @@ export function updateMemorySessionMetadata(
     ...metadata,
   });
 
-  session.updatedAt = new Date().toISOString();
+  const now = new Date().toISOString();
+
+  session.updatedAt = now;
+  session.lastAccessedAt = now;
 
   return cloneSession(session);
 }
 
 /**
- * Pastron historikun e një sesioni.
+ * Pastron historikun pa fshirë sesionin.
  */
 export function clearMemoryHistory(sessionId) {
   const session = getSessionOrNull(sessionId);
@@ -413,7 +492,11 @@ export function clearMemoryHistory(sessionId) {
   const removedMessages = session.messages.length;
 
   session.messages = [];
-  session.updatedAt = new Date().toISOString();
+
+  const now = new Date().toISOString();
+
+  session.updatedAt = now;
+  session.lastAccessedAt = now;
 
   return {
     cleared: true,
@@ -432,15 +515,13 @@ export function deleteMemorySession(sessionId) {
 }
 
 /**
- * Pastron sesionet që nuk janë përditësuar
- * brenda intervalit maxIdleMs.
+ * Pastron sesionet joaktive.
  *
- * now mund të jepet nga testet për rezultate
- * të përsëritshme.
+ * maxIdleMs: periudha maksimale e pasivitetit.
+ * now: koha aktuale në milisekonda; përdoret në teste.
  *
- * Kujdes: ky pastrim përdor updatedAt si tregues
- * të aktivitetit. Leximi i historikut nuk e
- * përditëson updatedAt në këtë version.
+ * Sesionet me aktivitet të pavlefshëm nuk fshihen
+ * automatikisht.
  */
 export function cleanupExpiredMemorySessions({
   maxIdleMs,
@@ -465,7 +546,9 @@ export function cleanupExpiredMemorySessions({
 
   for (const [sessionId, session] of sessions.entries()) {
     const lastActivity = Date.parse(
-      session.updatedAt || session.createdAt
+      session.lastAccessedAt ??
+      session.updatedAt ??
+      session.createdAt
     );
 
     if (!Number.isFinite(lastActivity)) {
