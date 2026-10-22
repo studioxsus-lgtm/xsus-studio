@@ -16,21 +16,21 @@ import {
 } from "../../src/core/memory-backup-storage.js";
 
 describe("XSUS Persistent Memory Backup Storage", () => {
-  let temporaryDirectory;
+  let temporaryDirectories = [];
 
   async function createTestStorage() {
-    temporaryDirectory = await mkdtemp(
+    const temporaryDirectory = await mkdtemp(
       join(tmpdir(), "xsus-backup-storage-")
     );
 
-    const filePath = join(
-      temporaryDirectory,
-      "backups.json"
-    );
+    temporaryDirectories.push(temporaryDirectory);
+
+    const filePath = join(temporaryDirectory, "backups.json");
 
     return {
       filePath,
       storage: createMemoryBackupStorage({ filePath }),
+      storageFactory: () => createMemoryBackupStorage({ filePath }),
     };
   }
 
@@ -48,14 +48,13 @@ describe("XSUS Persistent Memory Backup Storage", () => {
   }
 
   afterEach(async () => {
-    if (temporaryDirectory) {
-      await rm(temporaryDirectory, {
-        recursive: true,
-        force: true,
-      });
+    await Promise.all(
+      temporaryDirectories.map((directory) =>
+        rm(directory, { recursive: true, force: true })
+      )
+    );
 
-      temporaryDirectory = undefined;
-    }
+    temporaryDirectories = [];
   });
 
   test("ruan backup-in në skedar JSON", async () => {
@@ -82,9 +81,8 @@ describe("XSUS Persistent Memory Backup Storage", () => {
     await storage.save("recovery-001", backup);
 
     const newStorage = createMemoryBackupStorage({ filePath });
-    const restored = await newStorage.get("recovery-001");
 
-    expect(restored).toEqual(backup);
+    await expect(newStorage.get("recovery-001")).resolves.toEqual(backup);
   });
 
   test("kthen null kur backup-i nuk ekziston", async () => {
@@ -95,17 +93,17 @@ describe("XSUS Persistent Memory Backup Storage", () => {
 
   test("refuzon mbishkrimin pa leje", async () => {
     const { storage } = await createTestStorage();
+    const original = createTestBackup("session-original");
 
-    await storage.save("backup-001", createTestBackup());
+    await storage.save("backup-001", original);
 
     await expect(
-      storage.save(
-        "backup-001",
-        createTestBackup("session-002")
-      )
+      storage.save("backup-001", createTestBackup("session-002"))
     ).rejects.toMatchObject({
       code: MEMORY_BACKUP_STORAGE_ERRORS.CONFLICT,
     });
+
+    await expect(storage.get("backup-001")).resolves.toEqual(original);
   });
 
   test("lejon mbishkrimin vetëm kur kërkohet shprehimisht", async () => {
@@ -119,9 +117,7 @@ describe("XSUS Persistent Memory Backup Storage", () => {
       overwrite: true,
     });
 
-    await expect(storage.get("backup-001")).resolves.toEqual(
-      replacement
-    );
+    await expect(storage.get("backup-001")).resolves.toEqual(replacement);
   });
 
   test("liston backup-et dhe statistikat", async () => {
@@ -140,7 +136,7 @@ describe("XSUS Persistent Memory Backup Storage", () => {
     ]);
 
     expect(stats.entries).toBe(2);
-    expect(stats.version).toBe("1.0.0");
+    expect(stats.version).toBe("1.1.0");
   });
 
   test("fshin vetëm backup-in e kërkuar", async () => {
@@ -159,7 +155,6 @@ describe("XSUS Persistent Memory Backup Storage", () => {
     const { storage } = await createTestStorage();
     const backup = createTestBackup();
 
-    // Ndryshojmë payload-in pa përditësuar checksum-in.
     backup.payload.messages[0].content = "Përmbajtje e ndryshuar";
 
     await expect(
@@ -171,8 +166,9 @@ describe("XSUS Persistent Memory Backup Storage", () => {
 
   test("nuk e mbishkruan skedarin kur JSON ekzistues është i dëmtuar", async () => {
     const { filePath, storage } = await createTestStorage();
+    const corruptedJSON = "{ JSON i pavlefshëm";
 
-    await writeFile(filePath, "{ JSON i pavlefshëm", "utf8");
+    await writeFile(filePath, corruptedJSON, "utf8");
 
     await expect(storage.list()).rejects.toMatchObject({
       code: MEMORY_BACKUP_STORAGE_ERRORS.CORRUPTED,
@@ -184,24 +180,53 @@ describe("XSUS Persistent Memory Backup Storage", () => {
       code: MEMORY_BACKUP_STORAGE_ERRORS.CORRUPTED,
     });
 
-    const raw = await readFile(filePath, "utf8");
-    expect(raw).toBe("{ JSON i pavlefshëm");
+    await expect(readFile(filePath, "utf8")).resolves.toBe(corruptedJSON);
   });
 
-  test("ruan disa backup-e të krijuara njëkohësisht", async () => {
+  test("ruan disa backup-e të krijuara njëkohësisht në të njëjtën instancë", async () => {
     const { storage } = await createTestStorage();
 
+    const backups = Array.from({ length: 10 }, (_, index) => ({
+      id: `backup-${index}`,
+      value: createTestBackup(`session-${index}`),
+    }));
+
     await Promise.all(
-      Array.from({ length: 10 }, (_, index) =>
-        storage.save(
-          `backup-${index}`,
-          createTestBackup(`session-${index}`)
-        )
-      )
+      backups.map(({ id, value }) => storage.save(id, value))
     );
 
     const stats = await storage.getStats();
+
     expect(stats.entries).toBe(10);
+
+    for (const { id, value } of backups) {
+      await expect(storage.get(id)).resolves.toEqual(value);
+    }
+  });
+
+  test("ruan backup-et kur dy instanca shkruajnë njëkohësisht në të njëjtin skedar", async () => {
+    const { storage, storageFactory } = await createTestStorage();
+
+    const storageA = storage;
+    const storageB = storageFactory();
+
+    const backupA = createTestBackup("concurrent-session-A");
+    const backupB = createTestBackup("concurrent-session-B");
+
+    await Promise.all([
+      storageA.save("backup-A", backupA),
+      storageB.save("backup-B", backupB),
+    ]);
+
+    const reader = storageFactory();
+
+    await expect(reader.get("backup-A")).resolves.toEqual(backupA);
+    await expect(reader.get("backup-B")).resolves.toEqual(backupB);
+
+    const stats = await reader.getStats();
+
+    expect(stats.entries).toBe(2);
+    expect(stats.version).toBe("1.1.0");
   });
 
   test("refuzon ID bosh", async () => {
