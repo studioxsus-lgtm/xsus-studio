@@ -1,13 +1,13 @@
-
 /**
  * XSUS AI Core — Response Engine
  * Version: 1.3.0
  *
  * Përgjegjësitë:
  * - Standardizimi i përgjigjeve.
- * - Pastrimi dhe deduplikimi i rezultateve.
+ * - Validimi dhe pastrimi i rezultateve.
+ * - Deduplikimi i përmbajtjes.
  * - Mbështetja për sq, en dhe fr.
- * - Vlerësimi bazë i mbështetjes nga burimet.
+ * - Vlerësimi heuristik i mbështetjes nga burimet.
  * - Krijimi i metadata-s së përgjigjes.
  */
 
@@ -24,6 +24,23 @@ const FALLBACK_MESSAGES = Object.freeze({
   en: "Not enough information was found to answer the question. Please rephrase it or provide more context.",
   fr: "Les informations trouvées ne suffisent pas pour répondre à la question. Veuillez reformuler votre demande ou fournir davantage de contexte.",
 });
+
+function isPlainObject(value) {
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
+}
 
 function normalizeLanguage(language) {
   if (
@@ -50,8 +67,10 @@ function normalizeContent(value) {
   }
 
   return value
+    .normalize("NFC")
     .replace(/\r\n?/g, "\n")
-    .replace(/[ \t]+\n/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/ *\n */g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -61,11 +80,7 @@ function extractContent(item) {
     return normalizeContent(item);
   }
 
-  if (
-    !item ||
-    typeof item !== "object" ||
-    Array.isArray(item)
-  ) {
+  if (!isPlainObject(item)) {
     return "";
   }
 
@@ -76,12 +91,14 @@ function extractContent(item) {
   ];
 
   for (const candidate of candidates) {
-    if (typeof candidate === "string") {
-      const content = normalizeContent(candidate);
+    if (typeof candidate !== "string") {
+      continue;
+    }
 
-      if (content) {
-        return content;
-      }
+    const content = normalizeContent(candidate);
+
+    if (content) {
+      return content;
     }
   }
 
@@ -89,17 +106,15 @@ function extractContent(item) {
 }
 
 function extractSource(item) {
-  if (
-    !item ||
-    typeof item !== "object" ||
-    Array.isArray(item)
-  ) {
+  if (!isPlainObject(item)) {
     return null;
   }
 
   const candidates = [
     item.source,
-    item.metadata?.source,
+    isPlainObject(item.metadata)
+      ? item.metadata.source
+      : null,
     item.id,
   ];
 
@@ -116,9 +131,23 @@ function extractSource(item) {
 }
 
 function createResultKey(content) {
-  return content
-    .normalize("NFC")
-    .toLocaleLowerCase();
+  return normalizeContent(content)
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function normalizeIdentifier(value, maxLength = 200) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized.slice(0, maxLength);
 }
 
 /**
@@ -142,7 +171,7 @@ export function normalizeResponseResults(results = []) {
 
     const key = createResultKey(content);
 
-    if (seen.has(key)) {
+    if (!key || seen.has(key)) {
       continue;
     }
 
@@ -158,10 +187,11 @@ export function normalizeResponseResults(results = []) {
 }
 
 /**
- * Llogarit një tregues bazë të mbështetjes së përgjigjes.
+ * Llogarit një tregues heuristik të mbështetjes
+ * së përgjigjes nga rezultatet e disponueshme.
  *
  * Ky tregues nuk është probabilitet i kalibruar
-  * dhe nuk garanton vërtetësinë e përmbajtjes.
+ * dhe nuk garanton vërtetësinë e përmbajtjes.
  */
 export function calculateResponseConfidence(results = []) {
   const normalized = normalizeResponseResults(results);
@@ -215,8 +245,8 @@ export function createResponseMetadata({
     engine: "xsus-response-engine",
     version: RESPONSE_ENGINE_VERSION,
     language: normalizedLanguage,
-    requestId,
-    conversationId,
+    requestId: normalizeIdentifier(requestId),
+    conversationId: normalizeIdentifier(conversationId),
     resultCount: normalizedResults.length,
     sources,
   };
