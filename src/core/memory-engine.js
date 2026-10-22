@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI — Memory Engine
- * Version: 1.0.0
+ * Version: 1.0.1
  *
  * Menaxhon sesionet dhe historikun e bisedave në RAM.
  *
@@ -9,7 +9,8 @@
  * - Sesione të izoluara.
  * - Kufizime për numrin e sesioneve dhe mesazheve.
  * - Validim i mesazheve dhe roleve.
- * - Kopje të të dhënave për të mbrojtur gjendjen e brendshme.
+ * - Kopje të pavarura të të dhënave.
+ * - Metadata me kopjim rekursiv.
  * - Historik kronologjik.
  * - Pastrim dhe statistika të memories.
  *
@@ -18,7 +19,7 @@
  * përfundon ose moduli rivendoset.
  */
 
-export const MEMORY_ENGINE_VERSION = "1.0.0";
+export const MEMORY_ENGINE_VERSION = "1.0.1";
 
 const MAX_SESSIONS = 1000;
 const MAX_MESSAGES_PER_SESSION = 100;
@@ -32,6 +33,9 @@ const ALLOWED_ROLES = new Set([
 
 const sessions = new Map();
 
+/**
+ * Kontrollon dhe normalizon ID-në e sesionit.
+ */
 function validateSessionId(sessionId) {
   if (typeof sessionId !== "string") {
     throw new Error(
@@ -71,8 +75,16 @@ function getSessionOrNull(sessionId) {
 }
 
 /**
- * Krijon kopje të metadata-s.
- * Mbështet objekte të zakonshme dhe vlera primitive.
+ * Krijon një kopje të pavarur të metadata-s.
+ *
+ * Mbështet:
+ * - Vlera primitive.
+ * - Objekte të zakonshme.
+ * - Vargje.
+ * - Referenca ciklike.
+ *
+ * Objektet me prototipe të posaçme nuk kopjohen
+ * automatikisht, për të shmangur sjellje të papritura.
  */
 function cloneMetadata(metadata) {
   if (
@@ -83,7 +95,54 @@ function cloneMetadata(metadata) {
     return {};
   }
 
-  return { ...metadata };
+  function cloneValue(value, seen = new WeakMap()) {
+    if (value === null || typeof value !== "object") {
+      return value;
+    }
+
+    if (seen.has(value)) {
+      return seen.get(value);
+    }
+
+    if (Array.isArray(value)) {
+      const copy = [];
+
+      seen.set(value, copy);
+
+      for (const item of value) {
+        copy.push(cloneValue(item, seen));
+      }
+
+      return copy;
+    }
+
+    const prototype = Object.getPrototypeOf(value);
+
+    if (
+      prototype !== Object.prototype &&
+      prototype !== null
+    ) {
+      // Nuk ndajmë automatikisht prototipe të posaçme.
+      return value;
+    }
+
+    const copy = {};
+
+    seen.set(value, copy);
+
+    for (const key of Object.keys(value)) {
+      Object.defineProperty(copy, key, {
+        value: cloneValue(value[key], seen),
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      });
+    }
+
+    return copy;
+  }
+
+  return cloneValue(metadata);
 }
 
 /**
@@ -105,7 +164,7 @@ function cloneMessage(message, includeMetadata = true) {
 }
 
 /**
- * Krijon një kopje të sesionit.
+ * Krijon një kopje të plotë të sesionit.
  */
 function cloneSession(session) {
   return {
@@ -137,6 +196,11 @@ function createMessageId() {
 
 /**
  * Krijon një sesion të ri.
+ *
+ * Pranon:
+ * - Një ID tekstuale.
+ * - Një objekt konfigurimi me sessionId.
+ *
  * Refuzon ID-të e përsëritura.
  */
 export function createMemorySession(input) {
@@ -202,7 +266,10 @@ export function getMemorySession(sessionId) {
 
 /**
  * Shton një mesazh në historik.
- * Rolet e lejuara: user dhe assistant.
+ *
+ * Rolet e lejuara:
+ * - user
+ * - assistant
  */
 export function addMemoryMessage(input) {
   if (
@@ -284,7 +351,7 @@ export function addMemoryMessage(input) {
  *
  * options.limit:
  * - Numër pozitiv: kthen mesazhet e fundit.
- * - 0: kthen një listë bosh.
+ * - 0: kthen listë bosh.
  * - I pavlefshëm ose i munguar: përdor kufirin maksimal.
  */
 export function getMemoryHistory(
@@ -297,7 +364,8 @@ export function getMemoryHistory(
     return [];
   }
 
-  const requestedLimit = options &&
+  const requestedLimit =
+    options &&
     typeof options === "object" &&
     !Array.isArray(options)
       ? options.limit
@@ -330,7 +398,10 @@ export function getRecentMemoryContext(
 ) {
   const safeLimit =
     Number.isInteger(limit) && limit >= 0
-      ? Math.min(limit, MAX_MESSAGES_PER_SESSION)
+      ? Math.min(
+          limit,
+          MAX_MESSAGES_PER_SESSION
+        )
       : 20;
 
   if (safeLimit === 0) {
@@ -367,10 +438,10 @@ export function updateMemorySessionMetadata(
     );
   }
 
-  session.metadata = {
+  session.metadata = cloneMetadata({
     ...session.metadata,
     ...metadata,
-  };
+  });
 
   session.updatedAt = new Date().toISOString();
 
