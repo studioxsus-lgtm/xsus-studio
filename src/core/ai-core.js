@@ -6,8 +6,9 @@
  * Përgjegjësitë:
  * - Validimi dhe përpunimi i kërkesave.
  * - Përcaktimi i gjuhës.
+ * - Validimi i Request Context.
  * - Integrimi me Context Engine.
- * - Përdorimi i historikut të bisedës.
+ * - Përdorimi dhe kufizimi i historikut të bisedës.
  * - Kërkimi në bazën e njohurive.
  * - Standardizimi i përgjigjeve.
  * - Menaxhimi i memories së sesionit.
@@ -21,6 +22,11 @@ import {
   AI_ERROR_CODES,
   SUPPORTED_LANGUAGES
 } from "./ai-core-contracts.js";
+
+import {
+  createRequestContext,
+  isValidRequestContext
+} from "./request-context.js";
 
 import { createContext } from "./context-engine.js";
 
@@ -51,6 +57,7 @@ const GENERIC_ERROR_MESSAGE =
 const MAX_QUERY_LENGTH = 8000;
 const MAX_CONVERSATION_ID_LENGTH = 200;
 const MAX_SUPPLIED_HISTORY = 20;
+const MAX_CONTEXT_MESSAGES = 4;
 
 function isPlainObject(value) {
   if (value === null || typeof value !== "object") {
@@ -76,7 +83,7 @@ function normalizeLanguage(value) {
     return language;
   }
 
-  // Lejo kodet rajonale vetëm për gjuhët e mbështetura.
+  // Prano kodet rajonale vetëm për gjuhët e mbështetura.
   const match = language.match(/^([a-z]{2})-[a-z]{2}$/);
 
   if (match && SUPPORTED_LANGUAGES.includes(match[1])) {
@@ -171,9 +178,9 @@ function resolveSuppliedMessages(input) {
  * Pyetja aktuale përfshihet gjithmonë.
  */
 function buildContextualQuery(context) {
-  const userMessage = String(
-    context?.userMessage || ""
-  ).trim();
+  const userMessage = typeof context?.userMessage === "string"
+    ? context.userMessage.trim()
+    : "";
 
   if (!userMessage) {
     return "";
@@ -188,7 +195,7 @@ function buildContextualQuery(context) {
   }
 
   const recentHistory = history
-    .slice(-4)
+    .slice(-MAX_CONTEXT_MESSAGES)
     .map(message => {
       const role = message?.role === "assistant"
         ? "Assistant"
@@ -217,22 +224,20 @@ function readConversationHistory(
   conversationId,
   suppliedMessages = []
 ) {
-  if (
-    typeof conversationId === "string" &&
-    conversationId &&
-    hasMemorySession(conversationId)
-  ) {
+  if (conversationId) {
     try {
-      const memoryHistory = getMemoryHistory(conversationId);
+      if (hasMemorySession(conversationId)) {
+        const memoryHistory = getMemoryHistory(conversationId);
 
-      if (
-        Array.isArray(memoryHistory) &&
-        memoryHistory.length > 0
-      ) {
-        return memoryHistory.slice(-MAX_SUPPLIED_HISTORY);
+        if (
+          Array.isArray(memoryHistory) &&
+          memoryHistory.length > 0
+        ) {
+          return memoryHistory.slice(-MAX_SUPPLIED_HISTORY);
+        }
       }
     } catch {
-      // Nëse memoria dështon, provohet historiku i dhënë.
+      // Nëse memoria dështon, përdoret historiku i dhënë.
     }
   }
 
@@ -365,11 +370,12 @@ function buildMetadata({
   memoryEnabled,
   responseResult
 }) {
-  const messages = Array.isArray(history) && history.length > 0
-    ? history
-    : Array.isArray(context?.messages)
-      ? context.messages
-      : [];
+  const messages =
+    Array.isArray(history) && history.length > 0
+      ? history
+      : Array.isArray(context?.messages)
+        ? context.messages
+        : [];
 
   return {
     requestId,
@@ -511,7 +517,7 @@ export async function processAIRequest(input = {}) {
 
     const suppliedMessages = resolveSuppliedMessages(input);
 
-    // Kontrata përdor "query" dhe "id".
+    // Kontrata e kërkesës përdor fushat "id", "query" dhe "language".
     const request = createAIRequest({
       ...input,
       id: input.id ?? input.requestId ?? null,
@@ -531,6 +537,41 @@ export async function processAIRequest(input = {}) {
       request.language
     );
 
+    /*
+     * Request Context:
+     * standardizon dhe validon të dhënat para integrimit
+     * me Context Engine dhe Knowledge Service.
+     */
+    const requestContext = createRequestContext({
+      id: requestId,
+      query,
+      language,
+      moduleName: "xsus-ai-core",
+      metadata: {
+        conversationId: conversationId || "",
+        historyMessageCount: suppliedMessages.length
+      }
+    });
+
+    if (!isValidRequestContext(requestContext)) {
+      return createErrorResponse({
+        message: GENERIC_ERROR_MESSAGE,
+        requestId,
+        language,
+        code: AI_ERROR_CODES.INVALID_REQUEST,
+        exposeMessage: false,
+        metadata: buildErrorMetadata({
+          requestId,
+          language,
+          conversationId
+        })
+      });
+    }
+
+    // Përdoren të dhënat e standardizuara të Request Context.
+    requestId = requestContext.requestId;
+    language = requestContext.language;
+
     const memoryEnabled = ensureMemorySession(
       conversationId,
       language
@@ -543,8 +584,8 @@ export async function processAIRequest(input = {}) {
 
     const context = createContext({
       messages: history,
-      userMessage: query,
-      language,
+      userMessage: requestContext.query,
+      language: requestContext.language,
       conversationId: conversationId || null
     });
 
@@ -566,18 +607,22 @@ export async function processAIRequest(input = {}) {
     }
 
     if (memoryEnabled) {
-      saveMemoryMessage(conversationId, "user", query);
+      saveMemoryMessage(
+        conversationId,
+        "user",
+        requestContext.query
+      );
     }
 
     let knowledge;
 
     try {
       knowledge = await searchKnowledge(contextualQuery, {
-        language,
+        language: requestContext.language,
         limit: 5,
         metadata: {
-          requestId,
-          moduleName: "xsus-ai-core",
+          requestId: requestContext.requestId,
+          moduleName: requestContext.moduleName,
           conversationId: conversationId || null,
           historyMessageCount: history.length
         }
@@ -599,7 +644,7 @@ export async function processAIRequest(input = {}) {
       });
     }
 
-    // Korrigjim: ruhet mesazhi i kontrolluar nga shërbimi.
+    // Ruaj mesazhin e gabimit të kontrolluar nga Knowledge Service.
     if (knowledge?.success === false) {
       const knowledgeError =
         typeof knowledge.error === "string" &&
