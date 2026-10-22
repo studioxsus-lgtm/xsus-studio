@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI — Knowledge Entry Standard
- * Version: 1.2.1
+ * Version: 1.3.0
  *
  * Standard i përbashkët për njohuritë e të gjitha fushave.
  * Ofron validim, normalizim dhe hyrje të pandryshueshme.
@@ -16,12 +16,8 @@ import {
   getBaseLanguage
 } from "../language/normalization.js";
 
-export const KNOWLEDGE_SCHEMA_VERSION = "1.2.1";
+export const KNOWLEDGE_SCHEMA_VERSION = "1.3.0";
 
-/**
- * Fushat bazë për përputhshmëri me kodin ekzistues.
- * Për validim dinamik përdoret hasKnowledgeDomain().
- */
 export const KNOWLEDGE_DOMAINS = Object.freeze([
   "general",
   "programming",
@@ -61,12 +57,18 @@ const DEFAULTS = Object.freeze({
   version: "1.0.0"
 });
 
+const LANGUAGE_CODE_PATTERN =
+  /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/iu;
+
 function cleanString(value, fallback = "") {
   if (typeof value !== "string") {
     return fallback;
   }
 
-  const result = value.trim();
+  const result = value
+    .normalize("NFC")
+    .trim();
+
   return result || fallback;
 }
 
@@ -75,40 +77,66 @@ function normalizeList(value) {
     return [];
   }
 
-  return [
-    ...new Set(
-      value
-        .filter((item) => typeof item === "string")
-        .map((item) => item.trim().normalize("NFC"))
-        .filter(Boolean)
-    )
-  ];
+  const normalized = [];
+
+  for (const item of value) {
+    if (typeof item !== "string") {
+      continue;
+    }
+
+    const entry = item
+      .normalize("NFC")
+      .trim();
+
+    if (entry && !normalized.includes(entry)) {
+      normalized.push(entry);
+    }
+  }
+
+  return normalized;
 }
 
 function normalizeEntryLanguage(value) {
-  const input = cleanString(value, DEFAULTS.language)
-    .replace(/_/gu, "-");
+  const input = cleanString(
+    value,
+    DEFAULTS.language
+  ).replace(/_/gu, "-");
 
   const normalized = normalizeLanguageCodeBase(input);
 
-  if (!normalized || normalized === "auto") {
-    throw new TypeError(
-      "Kodi i gjuhës nuk është i vlefshëm."
-    );
-  }
-
-  const baseLanguage = getBaseLanguage(normalized);
-
   if (
-    typeof baseLanguage !== "string" ||
-    !/^[a-z]{2,3}$/iu.test(baseLanguage)
+    typeof normalized !== "string" ||
+    !normalized ||
+    normalized === "auto"
   ) {
     throw new TypeError(
       "Kodi i gjuhës nuk është i vlefshëm."
     );
   }
 
-  return normalized.toLowerCase();
+  const languageCode = normalized
+    .trim()
+    .replace(/_/gu, "-")
+    .toLowerCase();
+
+  if (!LANGUAGE_CODE_PATTERN.test(languageCode)) {
+    throw new TypeError(
+      "Kodi i gjuhës nuk është i vlefshëm."
+    );
+  }
+
+  const baseLanguage = getBaseLanguage(languageCode);
+
+  if (
+    typeof baseLanguage !== "string" ||
+    !/^[a-z]{2,3}$/iu.test(baseLanguage)
+  ) {
+    throw new TypeError(
+      "Kodi bazë i gjuhës nuk është i vlefshëm."
+    );
+  }
+
+  return languageCode;
 }
 
 function assertAllowed(value, allowed, label) {
@@ -182,7 +210,6 @@ export function createKnowledgeEntry(input = {}) {
     DEFAULTS.domain
   ).toLowerCase();
 
-  // Regjistri qendror kontrollon edhe fushat dinamike.
   validateDomainId(domain);
 
   const difficulty = cleanString(
@@ -201,23 +228,42 @@ export function createKnowledgeEntry(input = {}) {
     DEFAULTS.status
   ).toLowerCase();
 
-  assertAllowed(status, KNOWLEDGE_STATUSES, "Statusi");
+  assertAllowed(
+    status,
+    KNOWLEDGE_STATUSES,
+    "Statusi"
+  );
 
-  const language = normalizeEntryLanguage(input.language);
+  const language = normalizeEntryLanguage(
+    input.language
+  );
 
   return Object.freeze({
     id,
     title,
     content,
     domain,
-    topic: cleanString(input.topic, DEFAULTS.topic),
+    topic: cleanString(
+      input.topic,
+      DEFAULTS.topic
+    ),
     language,
     difficulty,
     status,
-    keywords: Object.freeze(normalizeList(input.keywords)),
-    tags: Object.freeze(normalizeList(input.tags)),
-    source: cleanString(input.source, DEFAULTS.source),
-    version: cleanString(input.version, DEFAULTS.version),
+    keywords: Object.freeze(
+      normalizeList(input.keywords)
+    ),
+    tags: Object.freeze(
+      normalizeList(input.tags)
+    ),
+    source: cleanString(
+      input.source,
+      DEFAULTS.source
+    ),
+    version: cleanString(
+      input.version,
+      DEFAULTS.version
+    ),
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION
   });
 }
