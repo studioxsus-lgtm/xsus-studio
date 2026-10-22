@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI Core — Contracts
- * Version: 1.1.0
+ * Version: 1.0.0
  *
  * Kontrata standarde për kërkesat, përgjigjet dhe gabimet.
  *
@@ -15,7 +15,7 @@
 
 import { normalizeLanguageCode } from "../language/normalization.js";
 
-export const XSUS_CORE_VERSION = "1.1.0";
+export const XSUS_CORE_VERSION = "1.0.0";
 
 export const SUPPORTED_LANGUAGES = Object.freeze([
   "sq",
@@ -64,8 +64,7 @@ function isPlainObject(value) {
 }
 
 /**
- * Krijon një kopje të izoluar të një objekti të thjeshtë.
- * Nuk lejon që gabimet e kopjimit të përhapen te motori.
+ * Krijon një kopje të re të objektit dhe kontrollon strukturën e tij.
  */
 function normalizeObject(value, errorMessage) {
   if (value === undefined || value === null) {
@@ -83,6 +82,17 @@ function normalizeObject(value, errorMessage) {
   }
 }
 
+/**
+ * Normalizon gjuhën dhe kodet rajonale.
+ *
+ * sq       -> sq
+ * sq-AL    -> sq-AL
+ * en-us    -> en-US
+ * fr-FR    -> fr-FR
+ * auto     -> auto
+ *
+ * Kodet me nënvizë, si en_US, refuzohen.
+ */
 function normalizeLanguageOrThrow(language, errorMessage) {
   if (typeof language !== "string" || !language.trim()) {
     throw new TypeError(errorMessage);
@@ -94,7 +104,6 @@ function normalizeLanguageOrThrow(language, errorMessage) {
     return "auto";
   }
 
-  // Pranojmë vetëm vizën, jo nënvizën.
   if (input.includes("_")) {
     throw new TypeError(errorMessage);
   }
@@ -106,7 +115,6 @@ function normalizeLanguageOrThrow(language, errorMessage) {
     throw new TypeError(errorMessage);
   }
 
-  // Verifikojmë përputhshmërinë me normalizuesin ekzistues.
   let normalizedBase;
 
   try {
@@ -126,7 +134,6 @@ function normalizeLanguageOrThrow(language, errorMessage) {
     return baseLanguage;
   }
 
-  // Formati rajonal: sq-AL, en-US, fr-FR.
   if (
     parts.length !== 2 ||
     !/^[a-zA-Z]{2}$/.test(parts[1])
