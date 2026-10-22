@@ -14,6 +14,7 @@ import {
   deleteMemorySession,
   getMemoryStats,
   clearAllMemory,
+  cleanupExpiredMemorySessions,
 } from "../../src/core/memory-engine.js";
 
 describe("XSUS AI Memory Engine", () => {
@@ -22,7 +23,7 @@ describe("XSUS AI Memory Engine", () => {
   });
 
   test("ekspozon versionin", () => {
-    expect(MEMORY_ENGINE_VERSION).toBe("1.0.0");
+    expect(MEMORY_ENGINE_VERSION).toBe("1.1.0");
   });
 
   test("krijon një sesion", () => {
@@ -494,7 +495,7 @@ describe("XSUS AI Memory Engine", () => {
     expect(stats.totalMessages).toBe(1);
     expect(stats.maxSessions).toBe(1000);
     expect(stats.maxMessagesPerSession).toBe(100);
-    expect(stats.version).toBe("1.0.0");
+    expect(stats.version).toBe("1.1.0");
   });
 
   test("pastron të gjithë memorien", () => {
@@ -508,5 +509,115 @@ describe("XSUS AI Memory Engine", () => {
     expect(getMemoryStats().activeSessions).toBe(0);
     expect(hasMemorySession("session-1")).toBe(false);
     expect(hasMemorySession("session-2")).toBe(false);
+  });
+
+  describe("pastrimi i sesioneve joaktive", () => {
+    test("pastron sesionin që ka kaluar afatin", () => {
+      createMemorySession({ sessionId: "expired-session" });
+
+      const createdAt = Date.parse(
+        getMemorySession("expired-session").updatedAt
+      );
+
+      const result = cleanupExpiredMemorySessions({
+        maxIdleMs: 1000,
+        now: createdAt + 1000,
+      });
+
+      expect(result.removed).toBe(1);
+      expect(result.remaining).toBe(0);
+      expect(hasMemorySession("expired-session")).toBe(false);
+    });
+
+    test("ruan sesionin brenda afatit", () => {
+      createMemorySession({ sessionId: "active-session" });
+
+      const createdAt = Date.parse(
+        getMemorySession("active-session").updatedAt
+      );
+
+      const result = cleanupExpiredMemorySessions({
+        maxIdleMs: 60_000,
+        now: createdAt + 1000,
+      });
+
+      expect(result.removed).toBe(0);
+      expect(result.remaining).toBe(1);
+      expect(hasMemorySession("active-session")).toBe(true);
+    });
+
+    test("pastron vetëm sesionet që kanë kaluar afatin", () => {
+      createMemorySession({ sessionId: "old-session" });
+      createMemorySession({ sessionId: "new-session" });
+
+      const oldCreatedAt = Date.parse(
+        getMemorySession("old-session").createdAt
+      );
+
+      const newCreatedAt = Date.parse(
+        getMemorySession("new-session").createdAt
+      );
+
+      const result = cleanupExpiredMemorySessions({
+        maxIdleMs: 1000,
+        now: Math.max(oldCreatedAt, newCreatedAt) + 1000,
+      });
+
+      expect(result.removed).toBe(2);
+      expect(result.remaining).toBe(0);
+    });
+
+    test("kthen rezultat bosh kur nuk ka sesione", () => {
+      expect(
+        cleanupExpiredMemorySessions({
+          maxIdleMs: 1000,
+          now: Date.now(),
+        })
+      ).toEqual({
+        removed: 0,
+        remaining: 0,
+      });
+    });
+
+    test("refuzon afatin negativ", () => {
+      expect(() =>
+        cleanupExpiredMemorySessions({
+          maxIdleMs: -1,
+        })
+      ).toThrow("maxIdleMs");
+    });
+
+    test("refuzon afatin që nuk është numër", () => {
+      expect(() =>
+        cleanupExpiredMemorySessions({
+          maxIdleMs: "1000",
+        })
+      ).toThrow("maxIdleMs");
+    });
+
+    test("refuzon kohën aktuale të pavlefshme", () => {
+      expect(() =>
+        cleanupExpiredMemorySessions({
+          maxIdleMs: 1000,
+          now: NaN,
+        })
+      ).toThrow("now");
+    });
+
+    test("nuk fshin sesionet kur koha e dhënë është para aktivitetit", () => {
+      createMemorySession({ sessionId: "future-session" });
+
+      const createdAt = Date.parse(
+        getMemorySession("future-session").createdAt
+      );
+
+      const result = cleanupExpiredMemorySessions({
+        maxIdleMs: 0,
+        now: createdAt - 1,
+      });
+
+      expect(result.removed).toBe(0);
+      expect(result.remaining).toBe(1);
+    });
   });
 });
