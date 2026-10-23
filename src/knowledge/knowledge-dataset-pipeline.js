@@ -1,16 +1,14 @@
 
 /**
  * XSUS AI Core — Knowledge Dataset Pipeline
- * Version: 1.0.0
+ * Version: 1.1.0
  *
- * Përgjegjësitë:
- * - Orkestrimi i regjistrimit dhe validimit të dataset-eve.
- * - Kërkimi në dataset-et e regjistruara.
- * - Ruajtja dhe rikthimi i dataset-eve.
- * - Kontrolli i ciklit të jetës së pipeline-it.
- * - Metadata të standardizuara.
- *
- * Përdor modulet ekzistuese pa ndryshuar API-të e tyre.
+ * Përmirësime:
+ * - Serializimi i operacioneve që ndryshojnë gjendjen.
+ * - Ruajtja e rendit të regjistrimeve, heqjeve dhe save().
+ * - Rikthimi i gjendjes në memorie kur ruajtja dështon.
+ * - Mbyllja pas përfundimit të operacioneve në pritje.
+ * - Ruajtja e API-së publike ekzistuese.
  */
 
 import {
@@ -22,7 +20,7 @@ import {
 } from "./knowledge-dataset-search-adapter.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-pipeline";
-const ENGINE_VERSION = "1.0.0";
+const ENGINE_VERSION = "1.1.0";
 
 function isPlainObject(value) {
   if (
@@ -53,12 +51,20 @@ function createError(message, extra = {}) {
   };
 }
 
-/**
- * Krijon dhe inicializon pipeline-in e dataset-eve.
- *
- * filePath është i detyrueshëm dhe përcakton
- * skedarin JSON që përdoret nga storage ekzistues.
- */
+function getErrorMessage(error, fallback) {
+  return error instanceof Error && error.message
+    ? error.message
+    : fallback;
+}
+
+function createSuccessMetadata(extra = {}) {
+  return {
+    engine: ENGINE_NAME,
+    version: ENGINE_VERSION,
+    ...extra
+  };
+}
+
 export async function createKnowledgeDatasetPipeline({
   filePath
 } = {}) {
@@ -77,99 +83,147 @@ export async function createKnowledgeDatasetPipeline({
 
   const registry = bootstrap.registry;
 
-  const searchAdapter = createKnowledgeDatasetSearchAdapter({
-    registry
-  });
+  let searchAdapter;
+
+  try {
+    searchAdapter = createKnowledgeDatasetSearchAdapter({
+      registry
+    });
+  } catch (error) {
+    bootstrap.close();
+
+    throw error;
+  }
 
   let closed = false;
+  let closing = false;
+
+  // Radha e përbashkët për operacionet që ndryshojnë gjendjen.
+  let operationQueue = Promise.resolve();
 
   function assertOpen() {
-    if (closed) {
+    if (closed || closing) {
       throw new Error(
-        "Knowledge Dataset Pipeline është mbyllur."
+        "Knowledge Dataset Pipeline është mbyllur ose po mbyllet."
       );
     }
   }
 
-  /**
-   * Regjistron dataset dhe e ruan gjendjen në JSON.
-   * Nëse ruajtja dështon, përpiqet të rikthejë
-   * regjistrin në gjendjen e mëparshme.
-   */
-  async function registerDataset(datasetId, entries) {
+  function enqueueOperation(operation) {
     assertOpen();
 
-    const registration = registry.registerDataset(
+    const task = operationQueue.then(async () => {
+      if (closed) {
+        throw new Error(
+          "Knowledge Dataset Pipeline është mbyllur."
+        );
+      }
+
+      return operation();
+    });
+
+    // Një dështim nuk duhet të bllokojë operacionet pasuese.
+    operationQueue = task.then(
+      () => undefined,
+      () => undefined
+    );
+
+    return task;
+  }
+
+  async function saveInternal() {
+    const result = await bootstrap.save();
+
+    if (result?.success === false) {
+      throw new Error(
+        result.error || "Ruajtja e dataset-eve dështoi."
+      );
+    }
+
+    return result;
+  }
+
+  function registerInMemory(datasetId, entries) {
+    const result = registry.registerDataset(
       datasetId,
       entries
     );
 
-    if (!registration.success) {
-      return {
-        ...registration,
-        metadata: {
-          engine: ENGINE_NAME,
-          version: ENGINE_VERSION
-        }
-      };
+    if (!result.success) {
+      return result;
     }
 
+    return result;
+  }
+
+  async function registerDataset(datasetId, entries) {
     try {
-      const saveResult = await bootstrap.save();
-
-      if (saveResult?.success === false) {
-        throw new Error(
-          saveResult.error ||
-            "Ruajtja e dataset-it dështoi."
+      return await enqueueOperation(async () => {
+        const registration = registerInMemory(
+          datasetId,
+          entries
         );
-      }
 
-      return {
-        success: true,
-        datasetId: registration.datasetId,
-        dataset: registration.dataset,
-        metadata: {
-          engine: ENGINE_NAME,
-          version: ENGINE_VERSION,
-          persisted: true
+        if (!registration.success) {
+          return {
+            ...registration,
+            metadata: createSuccessMetadata()
+          };
         }
-      };
+
+        try {
+          await saveInternal();
+
+          return {
+            success: true,
+            datasetId: registration.datasetId,
+            dataset: registration.dataset,
+            metadata: createSuccessMetadata({
+              persisted: true
+            })
+          };
+        } catch (error) {
+          // Heq vetëm dataset-in e saporegjistruar.
+          registry.removeDataset(registration.datasetId);
+
+          let rollbackSucceeded = true;
+          let rollbackError = null;
+
+          try {
+            // Rikthen skedarin në gjendjen pa dataset-in e ri.
+            await saveInternal();
+          } catch (rollbackFailure) {
+            rollbackSucceeded = false;
+            rollbackError = getErrorMessage(
+              rollbackFailure,
+              "Rikthimi i storage-it dështoi."
+            );
+          }
+
+          return createError(
+            getErrorMessage(
+              error,
+              "Regjistrimi i dataset-it dështoi."
+            ),
+            {
+              datasetId: registration.datasetId,
+              rollbackSucceeded,
+              rollbackError
+            }
+          );
+        }
+      });
     } catch (error) {
-      registry.removeDataset(registration.datasetId);
-
-      let rollbackError = null;
-
-      try {
-        const rollbackResult = await bootstrap.save();
-
-        if (rollbackResult?.success === false) {
-          rollbackError =
-            rollbackResult.error ||
-            "Ruajtja e gjendjes së rikthyer dështoi.";
-        }
-      } catch (rollbackFailure) {
-        rollbackError =
-          rollbackFailure instanceof Error
-            ? rollbackFailure.message
-            : "Rikthimi pas dështimit të ruajtjes dështoi.";
-      }
-
       return createError(
-        error instanceof Error
-          ? error.message
-          : "Regjistrimi i dataset-it dështoi.",
-        {
-          datasetId: registration.datasetId,
-          rollbackSucceeded: rollbackError === null,
-          rollbackError
-        }
+        getErrorMessage(
+          error,
+          "Regjistrimi i dataset-it dështoi."
+        ),
+        { datasetId: null }
       );
     }
   }
 
-  /**
-   * Kërkon vetëm në dataset-et e këtij pipeline-i.
-   */
   function search(query, options = {}) {
     assertOpen();
 
@@ -183,116 +237,126 @@ export async function createKnowledgeDatasetPipeline({
     return searchAdapter.search(query, options);
   }
 
-  /**
-   * Kthen një dataset sipas ID-së.
-   */
   function getDataset(datasetId) {
     assertOpen();
     return registry.getDataset(datasetId);
   }
 
-  /**
-   * Kthen përmbledhjen e dataset-eve të regjistruara.
-   */
   function listDatasets() {
     assertOpen();
     return registry.listDatasets();
   }
 
-  /**
-   * Heq dataset dhe ruan ndryshimin.
-   */
   async function removeDataset(datasetId) {
-    assertOpen();
+    try {
+      return await enqueueOperation(async () => {
+        const existingDataset = registry.getDataset(
+          datasetId
+        );
 
-    const existingDataset = registry.getDataset(datasetId);
+        if (!existingDataset) {
+          return createError(
+            "Dataset-i nuk u gjet.",
+            {
+              datasetId,
+              removed: false
+            }
+          );
+        }
 
-    if (!existingDataset) {
+        const removal = registry.removeDataset(datasetId);
+
+        if (!removal.success) {
+          return {
+            ...removal,
+            metadata: createSuccessMetadata()
+          };
+        }
+
+        try {
+          await saveInternal();
+
+          return {
+            success: true,
+            datasetId: removal.datasetId,
+            removed: true,
+            metadata: createSuccessMetadata({
+              persisted: true
+            })
+          };
+        } catch (error) {
+          // Rikrijon dataset-in në memorie nëse shkrimi dështon.
+          const restoration = registry.registerDataset(
+            existingDataset.id,
+            existingDataset.collection
+          );
+
+          let rollbackSucceeded = restoration.success;
+          let rollbackError = restoration.success
+            ? null
+            : restoration.error ||
+              "Rikthimi i dataset-it në memorie dështoi.";
+
+          // Përpiqet të rivendosë edhe snapshot-in në disk.
+          try {
+            await saveInternal();
+          } catch (rollbackFailure) {
+            rollbackSucceeded = false;
+            rollbackError = getErrorMessage(
+              rollbackFailure,
+              "Rikthimi i storage-it dështoi."
+            );
+          }
+
+          return createError(
+            getErrorMessage(
+              error,
+              "Heqja e dataset-it nuk mund të ruhej."
+            ),
+            {
+              datasetId: removal.datasetId,
+              removed: false,
+              rollbackSucceeded,
+              rollbackError
+            }
+          );
+        }
+      });
+    } catch (error) {
       return createError(
-        "Dataset-i nuk u gjet.",
+        getErrorMessage(
+          error,
+          "Heqja e dataset-it dështoi."
+        ),
         {
           datasetId,
           removed: false
         }
       );
     }
-
-    const removal = registry.removeDataset(datasetId);
-
-    if (!removal.success) {
-      return {
-        ...removal,
-        metadata: {
-          engine: ENGINE_NAME,
-          version: ENGINE_VERSION
-        }
-      };
-    }
-
-    try {
-      const saveResult = await bootstrap.save();
-
-      if (saveResult?.success === false) {
-        throw new Error(
-          saveResult.error ||
-            "Ruajtja pas heqjes së dataset-it dështoi."
-        );
-      }
-
-      return {
-        success: true,
-        datasetId: removal.datasetId,
-        removed: true,
-        metadata: {
-          engine: ENGINE_NAME,
-          version: ENGINE_VERSION,
-          persisted: true
-        }
-      };
-    } catch (error) {
-      // Rivendos dataset-in në regjistër nëse ruajtja dështon.
-      const restoration = registry.registerDataset(
-        existingDataset.id,
-        existingDataset.collection
-      );
-
-      return createError(
-        error instanceof Error
-          ? error.message
-          : "Heqja e dataset-it nuk mund të ruhej.",
-        {
-          datasetId: removal.datasetId,
-          removed: false,
-          rollbackSucceeded: restoration.success
-        }
-      );
-    }
   }
 
-  /**
-   * Ruajtje e qartë e gjendjes aktuale.
-   */
   async function save() {
-    assertOpen();
-
     try {
-      const result = await bootstrap.save();
+      return await enqueueOperation(async () => {
+        const result = await saveInternal();
 
-      return {
-        ...result,
-        metadata: {
-          engine: ENGINE_NAME,
-          version: ENGINE_VERSION,
-          ...(isPlainObject(result?.metadata)
-            ? result.metadata
-            : {})
-        }
-      };
+        return {
+          ...(isPlainObject(result) ? result : {}),
+          success: true,
+          metadata: createSuccessMetadata(
+            isPlainObject(result?.metadata)
+              ? result.metadata
+              : {}
+          )
+        };
+      });
     } catch (error) {
       return createError(
-        error instanceof Error
-          ? error.message
-          : "Ruajtja e dataset-eve dështoi."
+        getErrorMessage(
+          error,
+          "Ruajtja e dataset-eve dështoi."
+        )
       );
     }
   }
@@ -305,18 +369,20 @@ export async function createKnowledgeDatasetPipeline({
       searchEngine: searchAdapter.getMetadata().engine,
       storageEnabled: true,
       persistenceEnabled: true,
+      serializedOperations: true,
       closed
     });
   }
 
-  /**
-   * Mbyll pipeline-in dhe çregjistron integrimin
-   * e krijuar nga bootstrap-i.
-   */
-  function close() {
-    if (closed) {
+  async function close() {
+    if (closed || closing) {
       return false;
     }
+
+    closing = true;
+
+    // Prit operacionet e pranuara përpara mbylljes.
+    await operationQueue;
 
     closed = true;
     bootstrap.close();
