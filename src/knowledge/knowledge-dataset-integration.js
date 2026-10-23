@@ -1,10 +1,7 @@
 
 /**
  * XSUS AI Core — Knowledge Dataset Integration
- * Version: 1.0.0
- *
- * Lidh dataset-et e regjistruara me knowledge-service.js.
- * Nuk zëvendëson kërkimin ekzistues dhe nuk ndryshon registry-n.
+ * Version: 1.0.1
  */
 
 import {
@@ -17,13 +14,6 @@ import {
 
 const SOURCE_NAME = "xsus-knowledge-datasets";
 
-/**
- * Regjistron dataset-et si burim shtesë njohurish.
- *
- * @param {object} options
- * @param {object} options.registry Registry i dataset-eve.
- * @returns {{success: boolean, source: string, unregister: Function}}
- */
 export function registerKnowledgeDatasetIntegration({
   registry
 } = {}) {
@@ -41,12 +31,16 @@ export function registerKnowledgeDatasetIntegration({
       });
 
       if (!result.success) {
-        throw new Error(
-          result.error || "Kërkimi në dataset dështoi."
-        );
+        return {
+          success: false,
+          results: [],
+          error: result.error || "Kërkimi në dataset dështoi.",
+          metadata: result.metadata
+        };
       }
 
       return {
+        success: true,
         results: result.results,
         metadata: result.metadata
       };
