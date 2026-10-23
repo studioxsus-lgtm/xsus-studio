@@ -13,6 +13,7 @@ import {
   addMemoryMessage,
   deleteMemorySession,
   hasMemorySession,
+  getMemoryHistory,
 } from "../../src/core/memory-engine.js";
 
 describe("XSUS AI Core - Memory Lifecycle Integration", () => {
@@ -128,11 +129,22 @@ describe("XSUS AI Core - Memory Lifecycle Integration", () => {
 
     expect(backups).toHaveLength(1);
 
-    await expect(
-      lifecycle.recoverAndApply(backups[0].backupId)
-    ).rejects.toThrow(/ekziston|konflikt/i);
+    const result = await lifecycle.recoverAndApply(
+      backups[0].backupId
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.error.code).toBe("APPLY_FAILED");
+    expect(result.error.message).toMatch(
+      /ekziston tashmë|Rikuperimi u ndal/i
+    );
 
     expect(hasMemorySession(sessionId)).toBe(true);
+
+    const history = getMemoryHistory(sessionId);
+
+    expect(history).toHaveLength(1);
+    expect(history[0].content).toBe("Mesazhi origjinal");
   });
 
   test("refuzon backup për sesion që nuk ekziston", async () => {
@@ -178,5 +190,11 @@ describe("XSUS AI Core - Memory Lifecycle Integration", () => {
 
     expect(result).toBeDefined();
     expect(hasMemorySession(sessionId)).toBe(true);
+
+    const history = getMemoryHistory(sessionId);
+
+    expect(history).toHaveLength(2);
+    expect(history[0].content).toBe("Mesazh për rikuperim");
+    expect(history[1].content).toBe("Përgjigje për rikuperim");
   });
 });
