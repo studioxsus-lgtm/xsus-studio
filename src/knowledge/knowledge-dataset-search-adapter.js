@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI Core — Knowledge Dataset Search Adapter
- * Version: 1.0.1
+ * Version: 1.0.0
  *
  * Përgjegjësitë:
  * - Kërkimi në dataset-et e regjistruara.
@@ -19,7 +19,7 @@ import {
 } from "../language/normalization.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-search-adapter";
-const ENGINE_VERSION = "1.0.1";
+const ENGINE_VERSION = "1.0.0";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
@@ -98,11 +98,15 @@ function normalizeLimit(value) {
 }
 
 /**
- * Mbështet formatet e njohura të dataset-it:
- * - dataset.entries
- * - dataset.collection si array
- * - dataset.collection.entries
- * - dataset.collection.collection.entries
+ * Dataset Registry ruan:
+ * {
+ *   id,
+ *   collection: [...entries],
+ *   entryCount,
+ *   schemaVersion
+ * }
+ *
+ * Mbështeten edhe formatet e tjera të zakonshme.
  */
 function getDatasetEntries(dataset) {
   if (!dataset || typeof dataset !== "object") {
@@ -178,17 +182,9 @@ function scoreEntry(entry, query, queryTerms) {
     score += 25;
   }
 
-  if (keywords.includes(query)) {
-    score += 35;
-  }
-
-  if (tags.includes(query)) {
-    score += 20;
-  }
-
-  if (content.includes(query)) {
-    score += 15;
-  }
+  if (keywords.includes(query)) score += 35;
+  if (tags.includes(query)) score += 20;
+  if (content.includes(query)) score += 15;
 
   for (const term of queryTerms) {
     if (!term) {
@@ -319,7 +315,7 @@ export function createKnowledgeDatasetSearchAdapter({
     }
 
     const matches = [];
-    const seenEntryIds = new Set();
+    const seenEntries = new Set();
 
     for (const summary of datasetSummaries) {
       if (
@@ -394,19 +390,18 @@ export function createKnowledgeDatasetSearchAdapter({
           continue;
         }
 
-        const datasetId = summary.id;
-        const uniqueKey = `${datasetId}:${entry.id}`;
+        const uniqueKey = `${summary.id}:${entry.id}`;
 
-        if (seenEntryIds.has(uniqueKey)) {
+        if (seenEntries.has(uniqueKey)) {
           continue;
         }
 
-        seenEntryIds.add(uniqueKey);
+        seenEntries.add(uniqueKey);
 
         matches.push({
           entry,
           score,
-          datasetId
+          datasetId: summary.id
         });
       }
     }
