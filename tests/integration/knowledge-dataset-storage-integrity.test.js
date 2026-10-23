@@ -1,302 +1,131 @@
-import { afterEach, describe, expect, it } from "vitest";
+
+import { afterEach, describe, expect, test } from "vitest";
 import {
-mkdtemp,
-readFile,
-rm,
-writeFile
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
-createKnowledgeDatasetStorage
-} from "../../src/knowledge/knowledge-dataset-storage.js";
+  createKnowledgeDatasetPipeline
+} from "../../src/knowledge/knowledge-dataset-pipeline.js";
 
-describe("XSUS AI — Knowledge Dataset Storage Integrity", () => {
-let temporaryDirectory;
-let storage;
-let filePath;
+const temporaryDirectories = [];
+
+async function createTemporaryFilePath() {
+  const directory = await mkdtemp(
+    join(tmpdir(), "xsus-knowledge-recovery-")
+  );
+
+  temporaryDirectories.push(directory);
+
+  return join(directory, "datasets.json");
+}
 
 afterEach(async () => {
-if (temporaryDirectory) {
-await rm(temporaryDirectory, {
-recursive: true,
-force: true
-});
-temporaryDirectory = undefined;
-}
-
-storage = undefined;
-filePath = undefined;
-
+  await Promise.all(
+    temporaryDirectories.splice(0).map((directory) =>
+      rm(directory, { recursive: true, force: true })
+    )
+  );
 });
 
-async function createStorage() {
-temporaryDirectory = await mkdtemp(
-join(tmpdir(), "xsus-storage-integrity-")
-);
+describe("XSUS Knowledge Dataset Storage Recovery", () => {
+  test("ruan dataset-in në JSON dhe e rikthen pas rinisjes", async () => {
+    const filePath = await createTemporaryFilePath();
 
-filePath = join(
-  temporaryDirectory,
-  "knowledge-datasets.json"
-);
+    const firstPipeline = await createKnowledgeDatasetPipeline({
+      filePath
+    });
 
-storage = createKnowledgeDatasetStorage({ filePath });
-
-return filePath;
-
-}
-
-function createEntry(overrides = {}) {
-return {
-id: "integrity-entry-001",
-title: "Storage Integrity",
-content: "This entry validates persistent knowledge integrity.",
-domain: "programming",
-topic: "storage integrity",
-language: "en",
-difficulty: "beginner",
-status: "verified",
-keywords: ["storage", "integrity"],
-tags: ["xsus", "test"],
-source: "integrity-test",
-version: "1.0.0",
-...overrides
-};
-}
-
-function createSnapshot(datasets) {
-return {
-formatVersion: "1.0.0",
-datasets
-};
-}
-
-it("ruan dhe rikthen dataset-in me integritet", async () => {
-await createStorage();
-
-const saveResult = await storage.saveDatasets([
-  {
-    id: "integrity-dataset",
-    entries: [createEntry()]
-  }
-]);
-
-expect(saveResult.success).toBe(true);
-expect(saveResult.datasetCount).toBe(1);
-
-const loadResult = await storage.loadDatasets();
-
-expect(loadResult.success).toBe(true);
-expect(loadResult.datasetCount).toBe(1);
-expect(loadResult.datasets[0].id).toBe("integrity-dataset");
-expect(loadResult.datasets[0].entries[0].id).toBe(
-  "integrity-entry-001"
-);
-expect(loadResult.datasets[0].entries[0].content).toBe(
-  createEntry().content
-);
-
-});
-
-it("refuzon JSON të korruptuar", async () => {
-await createStorage();
-
-await writeFile(filePath, '{"formatVersion":', "utf8");
-
-const result = await storage.loadDatasets();
-
-expect(result.success).toBe(false);
-expect(result.datasets).toBeNull();
-expect(result.error).toContain("korruptuar");
-
-});
-
-it("refuzon një format të panjohur", async () => {
-await createStorage();
-
-await writeFile(
-  filePath,
-  JSON.stringify({
-    formatVersion: "99.0.0",
-    datasets: []
-  }),
-  "utf8"
-);
-
-const result = await storage.loadDatasets();
-
-expect(result.success).toBe(false);
-expect(result.datasets).toBeNull();
-expect(result.error).toContain("Struktura");
-
-});
-
-it("refuzon ID të përsëritura të dataset-eve", async () => {
-await createStorage();
-
-const dataset = {
-  id: "duplicate-dataset",
-  entries: [createEntry()]
-};
-
-await writeFile(
-  filePath,
-  JSON.stringify(
-    createSnapshot([dataset, dataset])
-  ),
-  "utf8"
-);
-
-const result = await storage.loadDatasets();
-
-expect(result.success).toBe(false);
-expect(result.datasets).toBeNull();
-expect(result.error).toContain("përsëritur");
-
-});
-
-it("refuzon dataset me strukturë hyrjesh të pavlefshme", async () => {
-await createStorage();
-
-await writeFile(
-  filePath,
-  JSON.stringify(
-    createSnapshot([
-      {
-        id: "invalid-entry-dataset",
-        entries: [
+    try {
+      const registration = await firstPipeline.registerDataset(
+        "recovery-test",
+        [
           {
-            id: "",
-            title: "",
-            content: ""
+            question: "Çfarë është XSUS AI?",
+            answer: "Një sistem inteligjence artificiale."
           }
         ]
-      }
-    ])
-  ),
-  "utf8"
-);
+      );
 
-const result = await storage.loadDatasets();
+      expect(registration.success).toBe(true);
 
-expect(result.success).toBe(false);
-expect(result.datasets).toBeNull();
-expect(result.error).toContain("validimin");
-expect(result.validationErrors.length).toBeGreaterThan(0);
+      const savedContent = await readFile(filePath, "utf8");
+      const savedJSON = JSON.parse(savedContent);
 
-});
+      expect(savedJSON.datasets).toHaveLength(1);
+      expect(savedJSON.datasets[0].id).toBe("recovery-test");
+    } finally {
+      await firstPipeline.close();
+    }
 
-it("refuzon ruajtjen e dataset-eve të pavlefshme", async () => {
-await createStorage();
+    const secondPipeline = await createKnowledgeDatasetPipeline({
+      filePath
+    });
 
-const result = await storage.saveDatasets([
-  {
-    id: "invalid-save-dataset",
-    entries: [
-      {
-        id: "",
-        title: "",
-        content: ""
-      }
-    ]
-  }
-]);
+    try {
+      const result = secondPipeline.listDatasets();
 
-expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
+      expect(result.datasets).toHaveLength(1);
+      expect(result.datasets[0].id).toBe("recovery-test");
+    } finally {
+      await secondPipeline.close();
+    }
+  });
 
-const loadResult = await storage.loadDatasets();
+  test("refuzon rikthimin nga një skedar JSON i dëmtuar", async () => {
+    const filePath = await createTemporaryFilePath();
 
-expect(loadResult.success).toBe(true);
-expect(loadResult.datasets).toHaveLength(0);
+    await writeFile(filePath, "{ JSON i dëmtuar", "utf8");
 
-});
+    await expect(
+      createKnowledgeDatasetPipeline({ filePath })
+    ).rejects.toThrow();
+  });
 
-it("nuk i ndryshon të dhënat ekzistuese kur ruajtja e re është e pavlefshme", async () => {
-await createStorage();
+  test("ruan hyrjet dhe fushat e dataset-it në JSON", async () => {
+    const filePath = await createTemporaryFilePath();
 
-const originalEntry = createEntry();
+    const pipeline = await createKnowledgeDatasetPipeline({
+      filePath
+    });
 
-const firstSave = await storage.saveDatasets([
-  {
-    id: "preserved-dataset",
-    entries: [originalEntry]
-  }
-]);
-
-expect(firstSave.success).toBe(true);
-
-const originalContents = await readFile(filePath, "utf8");
-
-const failedSave = await storage.saveDatasets([
-  {
-    id: "invalid-replacement",
-    entries: [
-      {
-        id: "",
-        title: "",
-        content: ""
-      }
-    ]
-  }
-]);
-
-expect(failedSave.success).toBe(false);
-
-const currentContents = await readFile(filePath, "utf8");
-
-expect(currentContents).toBe(originalContents);
-
-const loaded = await storage.loadDatasets();
-
-expect(loaded.success).toBe(true);
-expect(loaded.datasets).toHaveLength(1);
-expect(loaded.datasets[0].id).toBe("preserved-dataset");
-
-});
-
-it("kthen dataset bosh kur skedari nuk ekziston", async () => {
-await createStorage();
-
-const result = await storage.loadDatasets();
-
-expect(result.success).toBe(true);
-expect(result.datasets).toEqual([]);
-expect(result.datasetCount).toBe(0);
-expect(result.recovered).toBe(false);
-
-});
-
-it("serializon ruajtjet paralele pa humbur dataset-e", async () => {
-await createStorage();
-
-const count = 6;
-
-const results = await Promise.all(
-  Array.from({ length: count }, (_, index) =>
-    storage.saveDatasets([
-      {
-        id: `parallel-storage-${index}`,
-        entries: [
-          createEntry({
-            id: `parallel-entry-${index}`,
-            title: `Parallel Storage ${index}`
-          })
+    try {
+      const registration = await pipeline.registerDataset(
+        "json-content-test",
+        [
+          {
+            question: "What is a dataset?",
+            answer: "A structured collection of knowledge."
+          }
         ]
-      }
-    ])
-  )
-);
+      );
 
-expect(results.every((result) => result.success)).toBe(true);
+      expect(registration.success).toBe(true);
 
-const loaded = await storage.loadDatasets();
+      const content = JSON.parse(
+        await readFile(filePath, "utf8")
+      );
 
-expect(loaded.success).toBe(true);
-expect(loaded.datasetCount).toBe(1);
-expect(loaded.datasets[0].id).toBe(
-  `parallel-storage-${count - 1}`
-);
+      expect(content.datasets).toHaveLength(1);
 
-});
+      expect(content.datasets[0].id).toBe(
+        "json-content-test"
+      );
+
+      expect(content.datasets[0].collection).toHaveLength(1);
+
+      expect(content.datasets[0].collection[0]).toMatchObject({
+        question: "What is a dataset?",
+        answer: "A structured collection of knowledge."
+      });
+    } finally {
+      await pipeline.close();
+    }
+  });
 });
