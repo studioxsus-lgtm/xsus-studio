@@ -53,7 +53,7 @@ jobs:
           npm config set fund false
 
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
         env:
           npm_config_fetch_retries: 5
           npm_config_fetch_retry_mintimeout: 20000
