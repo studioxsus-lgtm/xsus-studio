@@ -1,13 +1,25 @@
 /**
 
 * XSUS AI — Knowledge Dataset Storage
-* Version: 1.0.0
+* Version: 1.1.0
 * 
-* Ruajtje dhe rikuperim i dataset-eve përmes JSON.
-* Çdo dataset validohet para ruajtjes dhe pas ngarkimit.
-  */
+* Përmirësime:
+* - Validim i plotë para ruajtjes dhe pas ngarkimit.
+* - Shkrim në skedar të përkohshëm me flush të të dhënave.
+* - Zëvendësim atomik përmes rename().
+* - Pastrim i skedarëve të përkohshëm pas dështimit.
+* - Refuzim i JSON-it të korruptuar pa e trajtuar si bosh.
+* - Serializim i operacioneve brenda instancës.
+    */
 
-import { readFile, writeFile, rename, mkdir, rm } from "node:fs/promises";
+import {
+readFile,
+open,
+rename,
+mkdir,
+rm
+} from "node:fs/promises";
+
 import { dirname } from "node:path";
 
 import {
@@ -15,7 +27,7 @@ validateKnowledgeDataset
 } from "./knowledge-dataset-validator.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-storage";
-const ENGINE_VERSION = "1.0.0";
+const ENGINE_VERSION = "1.1.0";
 const STORAGE_FORMAT_VERSION = "1.0.0";
 
 function isPlainObject(value) {
@@ -25,7 +37,10 @@ return false;
 
 const prototype = Object.getPrototypeOf(value);
 
-return prototype === Object.prototype || prototype === null;
+return (
+prototype === Object.prototype ||
+prototype === null
+);
 }
 
 function normalizeDatasetId(value) {
@@ -69,7 +84,11 @@ error: "Struktura e skedarit JSON nuk është e vlefshme."
 const ids = new Set();
 const datasets = [];
 
-for (let index = 0; index < snapshot.datasets.length; index += 1) {
+for (
+let index = 0;
+index < snapshot.datasets.length;
+index += 1
+) {
 const dataset = snapshot.datasets[index];
 
 if (!isPlainObject(dataset)) {
@@ -102,13 +121,15 @@ if (!Array.isArray(dataset.entries)) {
   };
 }
 
-const validation = validateKnowledgeDataset(dataset.entries);
+const validation = validateKnowledgeDataset(
+  dataset.entries
+);
 
 if (!validation.valid) {
   return {
     valid: false,
     error: `Dataset-i "${id}" nuk kaloi validimin.`,
-    validationErrors: validation.errors
+    validationErrors: validation.errors ?? []
   };
 }
 
@@ -129,28 +150,60 @@ datasets
 
 /**
 
+* Shkruan të dhënat në një skedar të përkohshëm.
+* sync() kërkon që të dhënat e skedarit të dërgohen
+* në sistemin e skedarëve para zëvendësimit.
+  */
+  async function writeTemporaryFile(
+  temporaryPath,
+  serialized
+  ) {
+  const handle = await open(
+  temporaryPath,
+  "wx",
+  0o600
+  );
+
+try {
+await handle.writeFile(serialized, "utf8");
+await handle.sync();
+} finally {
+await handle.close();
+}
+}
+
+/**
+
 * Krijon një adapter ruajtjeje për një skedar JSON.
 * 
 * saveDatasets pranon:
 * [{ id: "sq-general", entries: [...] }]
 * 
-* loadDatasets kthen dataset-et vetëm nëse i gjithë
+* loadDatasets kthen dataset-et vetëm kur i gjithë
 * skedari dhe çdo dataset janë të vlefshëm.
   */
   export function createKnowledgeDatasetStorage(options = {}) {
-  const filePath = options.filePath;
+  const suppliedPath = options.filePath;
 
-if (typeof filePath !== "string" || !filePath.trim()) {
+if (
+typeof suppliedPath !== "string" ||
+!suppliedPath.trim()
+) {
 throw new TypeError(
 "Duhet të jepet rruga e skedarit JSON."
 );
 }
 
+const filePath = suppliedPath.trim();
+
 let operationQueue = Promise.resolve();
 let temporaryFileCounter = 0;
 
 function serializeOperation(operation) {
-const result = operationQueue.then(operation, operation);
+const result = operationQueue.then(
+operation,
+operation
+);
 
 operationQueue = result.then(
   () => undefined,
@@ -173,41 +226,60 @@ datasets
   if (!validation.valid) {
     return createResult(false, {
       error: validation.error,
-      validationErrors: validation.validationErrors ?? []
+      validationErrors:
+        validation.validationErrors ?? []
     });
   }
 
   const normalizedSnapshot = {
     formatVersion: STORAGE_FORMAT_VERSION,
-    datasets: validation.datasets.map(dataset => ({
+    datasets: validation.datasets.map((dataset) => ({
       id: dataset.id,
       entries: dataset.entries
     }))
   };
 
-  const serialized = `${JSON.stringify(normalizedSnapshot, null, 2)}\n`;
+  let serialized;
+
+  try {
+    serialized =
+      `${JSON.stringify(normalizedSnapshot, null, 2)}\n`;
+  } catch {
+    return createResult(false, {
+      error: "Dataset-et nuk mund të serializoheshin në JSON."
+    });
+  }
+
   const directory = dirname(filePath);
 
   const temporaryPath =
     `${filePath}.tmp-${process.pid}-${++temporaryFileCounter}`;
 
   try {
-    await mkdir(directory, { recursive: true });
-    await writeFile(temporaryPath, serialized, {
-      encoding: "utf8",
-      flag: "wx"
+    await mkdir(directory, {
+      recursive: true
     });
 
-    await rename(temporaryPath, filePath);
+    await writeTemporaryFile(
+      temporaryPath,
+      serialized
+    );
+
+    await rename(
+      temporaryPath,
+      filePath
+    );
 
     return createResult(true, {
       datasetCount: normalizedSnapshot.datasets.length
     });
   } catch {
     try {
-      await rm(temporaryPath, { force: true });
+      await rm(temporaryPath, {
+        force: true
+      });
     } catch {
-      // Ruajmë gabimin kryesor të operacionit.
+      // Ruajmë rezultatin e dështimit kryesor.
     }
 
     return createResult(false, {
@@ -223,7 +295,10 @@ return serializeOperation(async () => {
 let contents;
 
   try {
-    contents = await readFile(filePath, "utf8");
+    contents = await readFile(
+      filePath,
+      "utf8"
+    );
   } catch (error) {
     if (error?.code === "ENOENT") {
       return createResult(true, {
@@ -256,7 +331,8 @@ let contents;
     return createResult(false, {
       datasets: null,
       error: validation.error,
-      validationErrors: validation.validationErrors ?? []
+      validationErrors:
+        validation.validationErrors ?? []
     });
   }
 
@@ -274,3 +350,5 @@ saveDatasets,
 loadDatasets
 });
 }
+
+export default createKnowledgeDatasetStorage;
