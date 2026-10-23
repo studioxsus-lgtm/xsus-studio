@@ -25,6 +25,28 @@ async function createTemporaryFilePath() {
   return join(directory, "datasets.json");
 }
 
+function createTestEntries() {
+  return [
+    {
+      id: "xsus-entry-1",
+      title: "XSUS AI",
+      content: "Një sistem inteligjence artificiale.",
+      language: "sq"
+    }
+  ];
+}
+
+function expectSuccessfulRegistration(registration) {
+  if (registration?.success !== true) {
+    console.error(
+      "XSUS DATASET REGISTRATION ERROR:",
+      JSON.stringify(registration, null, 2)
+    );
+  }
+
+  expect(registration?.success).toBe(true);
+}
+
 afterEach(async () => {
   await Promise.all(
     temporaryDirectories.splice(0).map((directory) =>
@@ -44,21 +66,25 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
     try {
       const registration = await firstPipeline.registerDataset(
         "recovery-test",
-        [
-          {
-            question: "Çfarë është XSUS AI?",
-            answer: "Një sistem inteligjence artificiale."
-          }
-        ]
+        createTestEntries()
       );
 
-      expect(registration.success).toBe(true);
+      expectSuccessfulRegistration(registration);
 
-      const savedContent = await readFile(filePath, "utf8");
-      const savedJSON = JSON.parse(savedContent);
+      const savedJSON = JSON.parse(
+        await readFile(filePath, "utf8")
+      );
 
+      expect(savedJSON.formatVersion).toBe("1.0.0");
       expect(savedJSON.datasets).toHaveLength(1);
       expect(savedJSON.datasets[0].id).toBe("recovery-test");
+      expect(savedJSON.datasets[0].entries).toHaveLength(1);
+
+      expect(savedJSON.datasets[0].entries[0]).toMatchObject({
+        id: "xsus-entry-1",
+        title: "XSUS AI",
+        content: "Një sistem inteligjence artificiale."
+      });
     } finally {
       await firstPipeline.close();
     }
@@ -68,11 +94,22 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
     });
 
     try {
-      const result = secondPipeline.listDatasets();
+      const datasets = secondPipeline.listDatasets();
 
-      expect(result.success).toBe(true);
-      expect(result.datasets).toHaveLength(1);
-      expect(result.datasets[0].id).toBe("recovery-test");
+      expect(Array.isArray(datasets)).toBe(true);
+      expect(datasets).toHaveLength(1);
+      expect(datasets[0].id).toBe("recovery-test");
+      expect(datasets[0].entryCount).toBe(1);
+
+      const restored = secondPipeline.getDataset("recovery-test");
+
+      expect(restored).not.toBeNull();
+      expect(restored.collection).toHaveLength(1);
+      expect(restored.collection[0]).toMatchObject({
+        id: "xsus-entry-1",
+        title: "XSUS AI",
+        content: "Një sistem inteligjence artificiale."
+      });
     } finally {
       await secondPipeline.close();
     }
@@ -100,29 +137,37 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
         "json-content-test",
         [
           {
-            question: "What is a dataset?",
-            answer: "A structured collection of knowledge."
+            id: "entry-en-1",
+            title: "Knowledge Dataset",
+            content: "A structured collection of knowledge.",
+            language: "en",
+            domain: "general",
+            topic: "datasets",
+            keywords: ["knowledge", "dataset"],
+            tags: ["test"]
           }
         ]
       );
 
-      expect(registration.success).toBe(true);
+      expectSuccessfulRegistration(registration);
 
       const content = JSON.parse(
         await readFile(filePath, "utf8")
       );
 
       expect(content.datasets).toHaveLength(1);
+      expect(content.datasets[0].id).toBe("json-content-test");
+      expect(content.datasets[0].entries).toHaveLength(1);
 
-      expect(content.datasets[0].id).toBe(
-        "json-content-test"
-      );
-
-      expect(content.datasets[0].collection).toHaveLength(1);
-
-      expect(content.datasets[0].collection[0]).toMatchObject({
-        question: "What is a dataset?",
-        answer: "A structured collection of knowledge."
+      expect(content.datasets[0].entries[0]).toMatchObject({
+        id: "entry-en-1",
+        title: "Knowledge Dataset",
+        content: "A structured collection of knowledge.",
+        language: "en",
+        domain: "general",
+        topic: "datasets",
+        keywords: ["knowledge", "dataset"],
+        tags: ["test"]
       });
     } finally {
       await pipeline.close();
