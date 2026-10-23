@@ -32,7 +32,10 @@ function isPlainObject(value) {
 
   const prototype = Object.getPrototypeOf(value);
 
-  return prototype === Object.prototype || prototype === null;
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
 }
 
 function normalizeText(value) {
@@ -63,8 +66,6 @@ function matchesLanguage(entryLanguage, requestedLanguage) {
     return false;
   }
 
-  // Për shembull, sq dhe sq-AL mund të trajtohen
-  // si variante të së njëjtës gjuhë bazë.
   return (
     entry === requested ||
     entry.split("-")[0] === requested.split("-")[0]
@@ -88,6 +89,34 @@ function normalizeLimit(value) {
   );
 }
 
+/**
+ * Merr hyrjet nga formatet e mbështetura të dataset-it.
+ *
+ * Registry mund t'i ruajë hyrjet te:
+ * - dataset.entries
+ * - dataset.collection
+ * - dataset.collection.entries
+ */
+function getDatasetEntries(dataset) {
+  if (!dataset || typeof dataset !== "object") {
+    return null;
+  }
+
+  if (Array.isArray(dataset.entries)) {
+    return dataset.entries;
+  }
+
+  if (Array.isArray(dataset.collection)) {
+    return dataset.collection;
+  }
+
+  if (Array.isArray(dataset.collection?.entries)) {
+    return dataset.collection.entries;
+  }
+
+  return null;
+}
+
 function getSearchableText(entry) {
   const values = [
     entry.title,
@@ -109,11 +138,13 @@ function scoreEntry(entry, query, queryTerms) {
   const title = normalizeText(entry.title);
   const content = normalizeText(entry.content);
   const topic = normalizeText(entry.topic);
+
   const keywords = normalizeText(
     Array.isArray(entry.keywords)
       ? entry.keywords.join(" ")
       : ""
   );
+
   const tags = normalizeText(
     Array.isArray(entry.tags)
       ? entry.tags.join(" ")
@@ -122,11 +153,17 @@ function scoreEntry(entry, query, queryTerms) {
 
   let score = 0;
 
-  if (title === query) score += 100;
-  else if (title.includes(query)) score += 60;
+  if (title === query) {
+    score += 100;
+  } else if (title.includes(query)) {
+    score += 60;
+  }
 
-  if (topic === query) score += 40;
-  else if (topic.includes(query)) score += 25;
+  if (topic === query) {
+    score += 40;
+  } else if (topic.includes(query)) {
+    score += 25;
+  }
 
   if (keywords.includes(query)) score += 35;
   if (tags.includes(query)) score += 20;
@@ -161,8 +198,12 @@ function scoreEntry(entry, query, queryTerms) {
 function createResult(entry, score) {
   return Object.freeze({
     ...entry,
-    keywords: Object.freeze([...(entry.keywords ?? [])]),
-    tags: Object.freeze([...(entry.tags ?? [])]),
+    keywords: Object.freeze([
+      ...(Array.isArray(entry.keywords) ? entry.keywords : [])
+    ]),
+    tags: Object.freeze([
+      ...(Array.isArray(entry.tags) ? entry.tags : [])
+    ]),
     searchScore: score,
     searchSource: ENGINE_NAME
   });
@@ -188,7 +229,9 @@ function createError(message) {
  * - listDatasets()
  * - getDataset(datasetId)
  */
-export function createKnowledgeDatasetSearchAdapter({ registry } = {}) {
+export function createKnowledgeDatasetSearchAdapter({
+  registry
+} = {}) {
   if (
     !registry ||
     typeof registry.listDatasets !== "function" ||
@@ -201,21 +244,29 @@ export function createKnowledgeDatasetSearchAdapter({ registry } = {}) {
 
   function search(query, options = {}) {
     if (typeof query !== "string" || !query.trim()) {
-      return createError("Pyetja e kërkimit është bosh ose e pavlefshme.");
+      return createError(
+        "Pyetja e kërkimit është bosh ose e pavlefshme."
+      );
     }
 
     if (query.length > MAX_QUERY_LENGTH) {
-      return createError("Pyetja e kërkimit është tepër e gjatë.");
+      return createError(
+        "Pyetja e kërkimit është tepër e gjatë."
+      );
     }
 
     if (!isPlainObject(options)) {
-      return createError("Opsionet e kërkimit janë të pavlefshme.");
+      return createError(
+        "Opsionet e kërkimit janë të pavlefshme."
+      );
     }
 
     const normalizedQuery = normalizeText(query.trim());
 
     if (!normalizedQuery) {
-      return createError("Pyetja nuk përmban tekst të kërkueshëm.");
+      return createError(
+        "Pyetja nuk përmban tekst të kërkueshëm."
+      );
     }
 
     const requestedLanguage = normalizeLanguage(
@@ -273,11 +324,13 @@ export function createKnowledgeDatasetSearchAdapter({ registry } = {}) {
         continue;
       }
 
-      if (!dataset || !Array.isArray(dataset.entries)) {
+      const entries = getDatasetEntries(dataset);
+
+      if (!entries) {
         continue;
       }
 
-      for (const entry of dataset.entries) {
+      for (const entry of entries) {
         if (!isPlainObject(entry)) {
           continue;
         }
@@ -307,19 +360,16 @@ export function createKnowledgeDatasetSearchAdapter({ registry } = {}) {
 
         const searchableText = getSearchableText(entry);
 
-        if (!searchableText.includes(normalizedQuery)) {
-          const hasTerm = queryTerms.some((term) =>
+        const hasQueryMatch =
+          searchableText.includes(normalizedQuery) ||
+          queryTerms.some((term) =>
             searchableText.includes(term)
           );
 
-          if (!hasTerm) {
-            continue;
-          }
+        if (!hasQueryMatch) {
+          continue;
         }
 
-        // Dataset-et mund të përmbajnë ID të njëjta.
-        // Për të mos krijuar rezultate të dyfishta,
-        // mbajmë rezultatin e parë me atë ID.
         if (seenEntryIds.has(entry.id)) {
           continue;
         }
@@ -383,6 +433,7 @@ export function createKnowledgeDatasetSearchAdapter({ registry } = {}) {
 
   return Object.freeze({
     search,
+
     getMetadata() {
       return Object.freeze({
         engine: ENGINE_NAME,
