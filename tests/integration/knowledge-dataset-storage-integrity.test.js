@@ -25,10 +25,10 @@ async function createTemporaryFilePath() {
   return join(directory, "datasets.json");
 }
 
-function createTestEntries() {
+function createTestEntries(prefix = "xsus-entry") {
   return [
     {
-      id: "xsus-entry-1",
+      id: `${prefix}-1`,
       title: "XSUS AI",
       content: "Një sistem inteligjence artificiale.",
       language: "sq"
@@ -171,6 +171,104 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
       });
     } finally {
       await pipeline.close();
+    }
+  });
+
+  test("rikthen disa dataset-e me përmbajtjen e saktë pas rinisjes", async () => {
+    const filePath = await createTemporaryFilePath();
+
+    const firstPipeline = await createKnowledgeDatasetPipeline({
+      filePath
+    });
+
+    try {
+      const albanianRegistration =
+        await firstPipeline.registerDataset(
+          "recovery-albanian",
+          createTestEntries("sq-entry")
+        );
+
+      expectSuccessfulRegistration(albanianRegistration);
+
+      const englishRegistration =
+        await firstPipeline.registerDataset(
+          "recovery-english",
+          [
+            {
+              id: "en-entry-1",
+              title: "Knowledge Engine",
+              content: "A structured knowledge engine.",
+              language: "en",
+              domain: "general",
+              topic: "knowledge",
+              keywords: ["engine", "knowledge"],
+              tags: ["recovery"]
+            }
+          ]
+        );
+
+      expectSuccessfulRegistration(englishRegistration);
+
+      const savedJSON = JSON.parse(
+        await readFile(filePath, "utf8")
+      );
+
+      expect(savedJSON.datasets).toHaveLength(2);
+
+      const savedIds = savedJSON.datasets
+        .map((dataset) => dataset.id)
+        .sort();
+
+      expect(savedIds).toEqual([
+        "recovery-albanian",
+        "recovery-english"
+      ]);
+    } finally {
+      await firstPipeline.close();
+    }
+
+    const restoredPipeline = await createKnowledgeDatasetPipeline({
+      filePath
+    });
+
+    try {
+      const datasets = restoredPipeline.listDatasets();
+
+      expect(datasets).toHaveLength(2);
+
+      const albanianDataset = restoredPipeline.getDataset(
+        "recovery-albanian"
+      );
+
+      const englishDataset = restoredPipeline.getDataset(
+        "recovery-english"
+      );
+
+      expect(albanianDataset).not.toBeNull();
+      expect(englishDataset).not.toBeNull();
+
+      expect(albanianDataset.collection).toHaveLength(1);
+      expect(albanianDataset.collection[0]).toMatchObject({
+        id: "sq-entry-1",
+        title: "XSUS AI",
+        language: "sq"
+      });
+
+      expect(englishDataset.collection).toHaveLength(1);
+      expect(englishDataset.collection[0]).toMatchObject({
+        id: "en-entry-1",
+        title: "Knowledge Engine",
+        content: "A structured knowledge engine.",
+        language: "en",
+        keywords: ["engine", "knowledge"],
+        tags: ["recovery"]
+      });
+
+      expect(
+        restoredPipeline.getDataset("dataset-that-does-not-exist")
+      ).toBeNull();
+    } finally {
+      await restoredPipeline.close();
     }
   });
 });
