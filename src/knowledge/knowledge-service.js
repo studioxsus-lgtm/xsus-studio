@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI — Knowledge Service
  * Version: 1.1.1
@@ -19,7 +18,8 @@ import {
 } from "../language/normalization.js";
 
 import {
-  validateKnowledgeEntry
+  validateKnowledgeEntry,
+  KNOWLEDGE_SCHEMA_VERSION
 } from "./knowledge-entry.js";
 
 import {
@@ -48,11 +48,10 @@ const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 const MAX_QUERY_LENGTH = 8000;
 const MAX_SOURCE_NAME_LENGTH = 100;
-const MAX_PROVIDER_ERROR_LENGTH = 1000;
 
 const ENGINE_NAME = "xsus-knowledge-service";
 const ENGINE_VERSION = "1.1.1";
-const SCHEMA_VERSION = "1.0.0";
+const SCHEMA_VERSION = KNOWLEDGE_SCHEMA_VERSION;
 
 const BUILT_IN_LANGUAGES = Object.freeze([
   "sq",
@@ -176,11 +175,15 @@ function normalizeResult(item, fallbackSource) {
   }
 
   if (typeof result.domain === "string") {
-    result.domain = result.domain.trim().toLowerCase();
+    result.domain = result.domain
+      .trim()
+      .toLowerCase();
   }
 
   if (typeof result.status === "string") {
-    result.status = result.status.trim().toLowerCase();
+    result.status = result.status
+      .trim()
+      .toLowerCase();
   }
 
   return result;
@@ -202,6 +205,7 @@ function isValidKnowledgeResult(item) {
     item.title.trim().length > 0;
 
   // Ruajmë pajtueshmërinë me burimet e vjetra.
+  // Hyrjet standarde kalojnë validimin e plotë.
   if (!hasStandardIdentity) {
     return true;
   }
@@ -229,7 +233,8 @@ function matchesKnowledgeLanguage(item, requestedLanguage) {
     typeof item.language !== "string" ||
     !item.language.trim()
   ) {
-    // Burimet e vjetra pa gjuhë të deklaruar lejohen.
+    // Ruajmë përputhshmërinë me burimet e vjetra
+    // që nuk kanë gjuhë të deklaruar.
     return true;
   }
 
@@ -278,7 +283,6 @@ function getTokens(value) {
 
 /**
  * Vlerëson relevancën dhe cilësinë e një rezultati.
- * Rezultatet me përputhje më të fortë marrin më shumë pikë.
  */
 function scoreResult(item, query) {
   const title = normalizeForSearch(item.title || "");
@@ -289,7 +293,9 @@ function scoreResult(item, query) {
     return 0;
   }
 
-  const queryTokens = [...new Set(getTokens(normalizedQuery))];
+  const queryTokens = [
+    ...new Set(getTokens(normalizedQuery))
+  ];
 
   if (queryTokens.length === 0) {
     return 0;
@@ -352,7 +358,7 @@ function scoreResult(item, query) {
     score += 4;
   }
 
-  // Cilësia e burimit ndikon në renditje.
+  // Statusi ndikon në renditjen e rezultateve.
   if (item.status === "verified") {
     score += 2;
   } else if (item.status === "reviewed") {
@@ -363,8 +369,8 @@ function scoreResult(item, query) {
 }
 
 /**
- * Krahasimi i kopjeve të së njëjtës njohuri.
- * Kthimi negativ do të thotë se "a" duhet të zëvendësojë "b".
+ * Krahason cilësinë e dy kopjeve të së njëjtës njohuri.
+ * Kthimi negativ do të thotë se "a" është më e mirë se "b".
  */
 function compareDuplicateQuality(a, b, query) {
   const scoreDifference =
@@ -391,13 +397,13 @@ function compareDuplicateQuality(a, b, query) {
     return bTitleLength - aTitleLength;
   }
 
-  // Në barazi të plotë, ruajmë kopjen që erdhi e para.
+  // Në barazi të plotë ruajmë hyrjen e parë.
   return 0;
 }
 
 /**
- * Deduplikon rezultatet duke ruajtur rendin e parë
- * dhe duke zëvendësuar kopjen me cilësi më të ulët.
+ * Heq dublikatat duke ruajtur pozicionin e parë
+ * dhe duke preferuar kopjen me cilësi më të lartë.
  */
 function deduplicateResults(results, query = "") {
   const uniqueResults = [];
@@ -446,7 +452,8 @@ function safelySearchBuiltIn(
       .map(item => normalizeResult(item, source))
       .filter(isValidKnowledgeResult);
   } catch {
-    // Dështimi i një burimi nuk ndalon burimet e tjera.
+    // Dështimi i një burimi të integruar
+    // nuk duhet të ndalojë burimet e tjera.
     return [];
   }
 }
@@ -488,6 +495,8 @@ function getBuiltInResults(query, language, limit) {
     );
   }
 
+  // Njohuritë për JavaScript mbeten të disponueshme
+  // dhe filtrohen më pas sipas gjuhës së deklaruar.
   results.push(
     ...safelySearchBuiltIn(
       searchJavaScriptKnowledge,
@@ -521,31 +530,16 @@ function createFailureResult(query, language, error) {
   };
 }
 
-function normalizeProviderError(error) {
-  if (
-    error instanceof Error &&
-    typeof error.message === "string" &&
-    error.message.trim()
-  ) {
-    return error.message
-      .trim()
-      .slice(0, MAX_PROVIDER_ERROR_LENGTH);
-  }
-
-  return "Gabim gjatë kërkimit në burimin shtesë.";
+/**
+ * Mesazhet publike të gabimeve nuk përmbajnë
+ * detaje të brendshme të provider-it.
+ */
+function normalizeProviderError() {
+  return "Burimi shtesë nuk mundi të përpunojë kërkesën.";
 }
 
-function normalizeProviderFailure(response) {
-  if (
-    typeof response?.error === "string" &&
-    response.error.trim()
-  ) {
-    return response.error
-      .trim()
-      .slice(0, MAX_PROVIDER_ERROR_LENGTH);
-  }
-
-  return "Burimi raportoi dështim gjatë kërkimit.";
+function normalizeProviderFailure() {
+  return "Burimi shtesë raportoi një dështim.";
 }
 
 export function registerKnowledgeSource(name, provider) {
@@ -560,7 +554,9 @@ export function registerKnowledgeSource(name, provider) {
   }
 
   if (typeof provider !== "function") {
-    throw new TypeError("Burimi duhet të jetë funksion.");
+    throw new TypeError(
+      "Burimi duhet të jetë funksion."
+    );
   }
 
   const key = name.trim();
@@ -574,6 +570,8 @@ export function registerKnowledgeSource(name, provider) {
   knowledgeSources.set(key, provider);
 
   return () => {
+    // Mos hiq një provider të ri që mund të jetë regjistruar
+    // pasi ky funksion i çregjistrimit është krijuar.
     if (knowledgeSources.get(key) === provider) {
       knowledgeSources.delete(key);
     }
@@ -603,19 +601,29 @@ export async function searchKnowledge(query, options = {}) {
     ? options
     : {};
 
-  const rawQuery =
-    typeof query === "string"
-      ? query.trim().slice(0, MAX_QUERY_LENGTH)
-      : "";
-
-  const normalizedQuery = normalizeForSearch(rawQuery);
-
   const language = normalizeLanguageCode(
     typeof safeOptions.language === "string" &&
     safeOptions.language.trim()
       ? safeOptions.language
       : "auto"
   );
+
+  const originalQuery =
+    typeof query === "string"
+      ? query.trim()
+      : "";
+
+  // Mos e shkurto pyetjen në heshtje:
+  // refuzo kërkesat që kalojnë kufirin e lejuar.
+  if (originalQuery.length > MAX_QUERY_LENGTH) {
+    return createFailureResult(
+      "",
+      language,
+      `Pyetja nuk mund të kalojë ${MAX_QUERY_LENGTH} karaktere.`
+    );
+  }
+
+  const normalizedQuery = normalizeForSearch(originalQuery);
 
   if (!normalizedQuery) {
     return createFailureResult(
@@ -655,6 +663,8 @@ export async function searchKnowledge(query, options = {}) {
     safeOptions.metadata
   );
 
+  // Çdo provider trajtohet veçmas, në mënyrë që
+  // një dështim të mos ndërpresë kërkimin te të tjerët.
   for (const [sourceName, provider] of knowledgeSources) {
     try {
       const response = await provider(normalizedQuery, {
@@ -684,18 +694,18 @@ export async function searchKnowledge(query, options = {}) {
       if (response?.success === false) {
         errors.push({
           source: sourceName,
-          error: normalizeProviderFailure(response)
+          error: normalizeProviderFailure()
         });
       }
-    } catch (error) {
+    } catch {
       errors.push({
         source: sourceName,
-        error: normalizeProviderError(error)
+        error: normalizeProviderError()
       });
     }
   }
 
-  // Së pari filtrojmë sipas gjuhës dhe fushës.
+  // Filtrimi kryhet përpara deduplikimit.
   const filteredResults = results
     .filter(item =>
       matchesKnowledgeLanguage(item, language)
@@ -704,15 +714,13 @@ export async function searchKnowledge(query, options = {}) {
       matchesKnowledgeDomain(item, requestedDomain)
     );
 
-  // Deduplikimi kryhet vetëm mbi rezultatet e vlefshme
-  // për filtrat e kërkimit aktual.
   const uniqueResults = deduplicateResults(
     filteredResults,
     normalizedQuery
   );
 
-  // Renditja është e qëndrueshme: në barazi të pikëve,
-  // ruhet rendi që rezultati ka pasur pas deduplikimit.
+  // Renditje e qëndrueshme: në barazi pikësh,
+  // ruhet rendi pas deduplikimit.
   const rankedResults = uniqueResults
     .map((item, index) => ({
       item,
