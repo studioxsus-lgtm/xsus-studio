@@ -1,4 +1,3 @@
-
 import { afterEach, describe, expect, test } from "vitest";
 import {
   mkdtemp,
@@ -136,7 +135,7 @@ describe("XSUS Persistent Memory Backup Storage", () => {
     ]);
 
     expect(stats.entries).toBe(2);
-    expect(stats.version).toBe("1.1.0");
+    expect(stats.version).toBe("1.2.0");
   });
 
   test("fshin vetëm backup-in e kërkuar", async () => {
@@ -226,7 +225,7 @@ describe("XSUS Persistent Memory Backup Storage", () => {
     const stats = await reader.getStats();
 
     expect(stats.entries).toBe(2);
-    expect(stats.version).toBe("1.1.0");
+    expect(stats.version).toBe("1.2.0");
   });
 
   test("refuzon ID bosh", async () => {
