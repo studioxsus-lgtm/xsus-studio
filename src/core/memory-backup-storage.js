@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI Core — Persistent Memory Backup Storage
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Përgjegjësitë:
  * - Ruajtja e backup-eve në skedar JSON.
@@ -9,26 +9,30 @@
  * - Fshirja dhe verifikimi i backup-eve.
  * - Shkrimi atomik për të zvogëluar rrezikun e dëmtimit.
  * - Parandalimi i mbishkrimit pa leje.
- * - Serializimi i operacioneve mes instancave në të njëjtin proces.
+ * - Serializimi brenda procesit dhe kyçja ndërmjet proceseve.
+ * - Rikuperimi i kujdesshëm i kyçjeve të vjetruara.
  *
- * Kufizim:
- * Koordinimi është brenda një procesi Node.js.
- * Nuk ofrohet bllokim ndërprocesor.
+ * Shënim:
+ * Ky mekanizëm koordinon proceset që respektojnë të njëjtin
+ * protokoll lock. Për sisteme me shumë serverë ose filesystem
+ * të shpërndarë, kërkohet një mekanizëm koordinimi i përshtatshëm.
  */
 
 import { randomUUID } from "node:crypto";
 import {
   mkdir,
+  open,
   readFile,
   rename,
   rm,
+  stat,
   writeFile,
 } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 import { verifyMemoryBackup } from "./memory-backup.js";
 
-export const MEMORY_BACKUP_STORAGE_VERSION = "1.1.0";
+export const MEMORY_BACKUP_STORAGE_VERSION = "1.2.0";
 
 export const MEMORY_BACKUP_STORAGE_ERRORS = Object.freeze({
   INVALID_ID: "MEMORY_BACKUP_STORAGE_INVALID_ID",
@@ -36,16 +40,22 @@ export const MEMORY_BACKUP_STORAGE_ERRORS = Object.freeze({
   CONFLICT: "MEMORY_BACKUP_STORAGE_CONFLICT",
   CORRUPTED: "MEMORY_BACKUP_STORAGE_CORRUPTED",
   IO_FAILED: "MEMORY_BACKUP_STORAGE_IO_FAILED",
+  LOCK_TIMEOUT: "MEMORY_BACKUP_STORAGE_LOCK_TIMEOUT",
 });
 
-// Radha ndahet mes të gjitha instancave të këtij moduli.
 const operationQueues = new Map();
+
+const DEFAULT_LOCK_TIMEOUT_MS = 15_000;
+const DEFAULT_LOCK_STALE_MS = 60_000;
+const LOCK_RETRY_MIN_MS = 20;
+const LOCK_RETRY_MAX_MS = 100;
 
 function createStorageError(code, message, cause) {
   const error = new Error(
     message,
     cause ? { cause } : undefined
   );
+
   error.code = code;
   return error;
 }
@@ -55,13 +65,10 @@ function serializeForPath(filePath, operation) {
     operationQueues.get(filePath) ?? Promise.resolve();
 
   const result = previous.then(operation, operation);
-
-  // Radha vazhdon edhe kur një operacion dështon.
   const queueTail = result.catch(() => {});
 
   operationQueues.set(filePath, queueTail);
 
-  // Hiq hyrjen vetëm nëse kjo është ende radha e fundit.
   queueTail.then(() => {
     if (operationQueues.get(filePath) === queueTail) {
       operationQueues.delete(filePath);
@@ -161,8 +168,151 @@ function validateBackup(backup) {
   }
 }
 
+function sleep(milliseconds) {
+  return new Promise((resolvePromise) => {
+    setTimeout(resolvePromise, milliseconds);
+  });
+}
+
+/**
+ * Kyçje ndërprocesore përmes krijimit ekskluziv të një skedari.
+ *
+ * Çdo proces duhet të përdorë të njëjtin lockPath.
+ * Token-i unik parandalon një proces nga fshirja e kyçjes
+ * që i përket një procesi tjetër.
+ */
+async function acquireFileLock({
+  lockPath,
+  timeoutMs,
+  staleMs,
+}) {
+  const startedAt = Date.now();
+  const token = randomUUID();
+
+  let retryCount = 0;
+
+  while (true) {
+    let handle;
+
+    try {
+      handle = await open(lockPath, "wx", 0o600);
+
+      try {
+        await handle.writeFile(
+          JSON.stringify({
+            token,
+            pid: process.pid,
+            createdAt: new Date().toISOString(),
+          }),
+          "utf8"
+        );
+
+        await handle.sync();
+      } catch (error) {
+        await handle.close().catch(() => {});
+        handle = undefined;
+
+        // Hiqe vetëm nëse skedari ende përmban token-in tonë.
+        await removeLockIfOwned(lockPath, token);
+        throw error;
+      }
+
+      return {
+        async release() {
+          await handle.close().catch(() => {});
+          await removeLockIfOwned(lockPath, token);
+        },
+      };
+    } catch (error) {
+      if (error.code !== "EEXIST") {
+        throw createStorageError(
+          MEMORY_BACKUP_STORAGE_ERRORS.IO_FAILED,
+          "Nuk mund të krijohet kyçja e backup storage-it.",
+          error
+        );
+      }
+    }
+
+    try {
+      const lockInfo = await stat(lockPath);
+      const lockAge = Date.now() - lockInfo.mtimeMs;
+
+      if (lockAge > staleMs) {
+        // Rename-i është operacion atomik në të njëjtin filesystem.
+        // Vetëm një proces mund ta zhvendosë kyçjen origjinale.
+        const stalePath =
+          `${lockPath}.stale-${randomUUID()}`;
+
+        try {
+          await rename(lockPath, stalePath);
+
+          await rm(stalePath, { force: true });
+          continue;
+        } catch (error) {
+          if (
+            error.code === "ENOENT" ||
+            error.code === "EEXIST"
+          ) {
+            continue;
+          }
+
+          // Nëse kyçja nuk mund të rikuperohet, mos e fshi
+          // verbërisht. Vazhdo pritjen ose përfundo me timeout.
+        }
+      }
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        continue;
+      }
+
+      if (
+        error.code === MEMORY_BACKUP_STORAGE_ERRORS.IO_FAILED
+      ) {
+        throw error;
+      }
+    }
+
+    if (Date.now() - startedAt >= timeoutMs) {
+      throw createStorageError(
+        MEMORY_BACKUP_STORAGE_ERRORS.LOCK_TIMEOUT,
+        `Pritja për kyçjen e storage-it tejkaloi ${timeoutMs} ms.`
+      );
+    }
+
+    const delay = Math.min(
+      LOCK_RETRY_MIN_MS * 2 ** Math.min(retryCount, 3),
+      LOCK_RETRY_MAX_MS
+    );
+
+    retryCount += 1;
+
+    await sleep(delay + Math.floor(Math.random() * 15));
+  }
+}
+
+async function removeLockIfOwned(lockPath, token) {
+  try {
+    const content = await readFile(lockPath, "utf8");
+    const lock = JSON.parse(content);
+
+    if (lock?.token === token) {
+      await rm(lockPath, { force: true });
+    }
+  } catch (error) {
+    if (error.code !== "ENOENT" && !(error instanceof SyntaxError)) {
+      throw createStorageError(
+        MEMORY_BACKUP_STORAGE_ERRORS.IO_FAILED,
+        "Nuk mund të lirohet kyçja e storage-it.",
+        error
+      );
+    }
+  }
+}
+
 export function createMemoryBackupStorage({
   filePath = "data/xsus-memory-backups.json",
+  lockTimeoutMs = DEFAULT_LOCK_TIMEOUT_MS,
+  lockStaleMs = DEFAULT_LOCK_STALE_MS,
 } = {}) {
   if (
     typeof filePath !== "string" ||
@@ -173,11 +323,45 @@ export function createMemoryBackupStorage({
     );
   }
 
-  // Rrugë absolute dhe e normalizuar për të gjitha instancat.
+  if (
+    !Number.isFinite(lockTimeoutMs) ||
+    lockTimeoutMs <= 0
+  ) {
+    throw new TypeError(
+      "lockTimeoutMs duhet të jetë numër pozitiv."
+    );
+  }
+
+  if (
+    !Number.isFinite(lockStaleMs) ||
+    lockStaleMs <= 0
+  ) {
+    throw new TypeError(
+      "lockStaleMs duhet të jetë numër pozitiv."
+    );
+  }
+
   const resolvedPath = resolve(filePath);
+  const lockPath = `${resolvedPath}.lock`;
 
   function serialize(operation) {
-    return serializeForPath(resolvedPath, operation);
+    return serializeForPath(resolvedPath, async () => {
+      await mkdir(dirname(resolvedPath), {
+        recursive: true,
+      });
+
+      const lock = await acquireFileLock({
+        lockPath,
+        timeoutMs: lockTimeoutMs,
+        staleMs: lockStaleMs,
+      });
+
+      try {
+        return await operation();
+      } finally {
+        await lock.release();
+      }
+    });
   }
 
   async function readAll() {
@@ -229,26 +413,19 @@ export function createMemoryBackupStorage({
   }
 
   async function writeAll(data) {
-    const directory = dirname(resolvedPath);
     const temporaryPath =
       `${resolvedPath}.${randomUUID()}.tmp`;
 
     try {
-      await mkdir(directory, { recursive: true });
-
       await writeFile(
         temporaryPath,
         JSON.stringify(data, null, 2),
-        { encoding: "utf8", flag: "wx" }
+        { encoding: "utf8", flag: "wx", mode: 0o600 }
       );
 
       await rename(temporaryPath, resolvedPath);
     } catch (cause) {
-      try {
-        await rm(temporaryPath, { force: true });
-      } catch {
-        // Ruajmë gabimin origjinal.
-      }
+      await rm(temporaryPath, { force: true }).catch(() => {});
 
       throw createStorageError(
         MEMORY_BACKUP_STORAGE_ERRORS.IO_FAILED,
@@ -265,8 +442,6 @@ export function createMemoryBackupStorage({
       return serialize(async () => {
         const id = validateBackupId(backupId);
 
-        // Klono para shkrimit që vlerat e papërshtatshme
-        // të mos ndryshojnë gjendjen ekzistuese.
         let backupCopy;
 
         try {
@@ -318,8 +493,6 @@ export function createMemoryBackupStorage({
     },
 
     async verify(backupId) {
-      // Nuk përdorim this.get(), sepse metoda mund të shkëputet
-      // nga objekti storage.
       const id = validateBackupId(backupId);
 
       return serialize(async () => {
@@ -335,16 +508,15 @@ export function createMemoryBackupStorage({
 
         try {
           const result = verifyMemoryBackup(data[id]);
+          const valid = isValidVerification(result);
 
           return {
-            valid: isValidVerification(result),
+            valid,
             exists: true,
             backupId: id,
-            ...(
-              isValidVerification(result)
-                ? {}
-                : { errors: validationIssues(result) }
-            ),
+            ...(valid
+              ? {}
+              : { errors: validationIssues(result) }),
           };
         } catch (error) {
           return {
