@@ -15,7 +15,7 @@ import {
   hasMemorySession,
 } from "../../src/core/memory-engine.js";
 
-describe("XSUS AI Core — Memory Lifecycle Integration", () => {
+describe("XSUS AI Core - Memory Lifecycle Integration", () => {
   let directory;
   const sessionIds = [];
 
@@ -25,7 +25,11 @@ describe("XSUS AI Core — Memory Lifecycle Integration", () => {
     }
 
     if (directory) {
-      await rm(directory, { recursive: true, force: true });
+      await rm(directory, {
+        recursive: true,
+        force: true,
+      });
+
       directory = undefined;
     }
   });
@@ -41,9 +45,17 @@ describe("XSUS AI Core — Memory Lifecycle Integration", () => {
   }
 
   function createSessionId() {
-    const id = `test-${randomUUID()}`;
-    sessionIds.push(id);
-    return id;
+    const sessionId = `test-${randomUUID()}`;
+    sessionIds.push(sessionId);
+    return sessionId;
+  }
+
+  function addMessage(sessionId, role, content) {
+    return addMemoryMessage({
+      sessionId,
+      role,
+      content,
+    });
   }
 
   test("krijon dhe liston një backup të vlefshëm", async () => {
@@ -52,16 +64,23 @@ describe("XSUS AI Core — Memory Lifecycle Integration", () => {
 
     lifecycle.createSession(sessionId);
 
-    addMemoryMessage(sessionId, "user", "Përshëndetje XSUS AI");
-    addMemoryMessage(sessionId, "assistant", "Përshëndetje!");
+    addMessage(
+      sessionId,
+      "user",
+      "Përshëndetje XSUS AI"
+    );
 
-    const result = await lifecycle.createBackup(sessionId);
+    addMessage(
+      sessionId,
+      "assistant",
+      "Përshëndetje!"
+    );
 
-    expect(result).toBeDefined();
+    await lifecycle.createBackup(sessionId);
 
     const backups = await lifecycle.listBackups();
 
-    expect(backups.length).toBe(1);
+    expect(backups).toHaveLength(1);
     expect(backups[0].sessionId).toBe(sessionId);
   });
 
@@ -70,11 +89,19 @@ describe("XSUS AI Core — Memory Lifecycle Integration", () => {
     const sessionId = createSessionId();
 
     lifecycle.createSession(sessionId);
-    addMemoryMessage(sessionId, "user", "Test integriteti");
+
+    addMessage(
+      sessionId,
+      "user",
+      "Test integriteti"
+    );
 
     await lifecycle.createBackup(sessionId);
 
     const backups = await lifecycle.listBackups();
+
+    expect(backups).toHaveLength(1);
+
     const result = await lifecycle.verifyBackup(
       backups[0].backupId
     );
@@ -88,11 +115,18 @@ describe("XSUS AI Core — Memory Lifecycle Integration", () => {
     const sessionId = createSessionId();
 
     lifecycle.createSession(sessionId);
-    addMemoryMessage(sessionId, "user", "Mesazhi origjinal");
+
+    addMessage(
+      sessionId,
+      "user",
+      "Mesazhi origjinal"
+    );
 
     await lifecycle.createBackup(sessionId);
 
     const backups = await lifecycle.listBackups();
+
+    expect(backups).toHaveLength(1);
 
     await expect(
       lifecycle.recoverAndApply(backups[0].backupId)
@@ -103,9 +137,10 @@ describe("XSUS AI Core — Memory Lifecycle Integration", () => {
 
   test("refuzon backup për sesion që nuk ekziston", async () => {
     const lifecycle = await setup();
+    const sessionId = `missing-${randomUUID()}`;
 
     await expect(
-      lifecycle.createBackup(`missing-${randomUUID()}`)
+      lifecycle.createBackup(sessionId)
     ).rejects.toThrow(/nuk ekziston/i);
   });
 
@@ -114,11 +149,24 @@ describe("XSUS AI Core — Memory Lifecycle Integration", () => {
     const sessionId = createSessionId();
 
     lifecycle.createSession(sessionId);
-    addMemoryMessage(sessionId, "user", "Mesazh për rikuperim");
+
+    addMessage(
+      sessionId,
+      "user",
+      "Mesazh për rikuperim"
+    );
+
+    addMessage(
+      sessionId,
+      "assistant",
+      "Përgjigje për rikuperim"
+    );
 
     await lifecycle.createBackup(sessionId);
 
     const backups = await lifecycle.listBackups();
+
+    expect(backups).toHaveLength(1);
 
     deleteMemorySession(sessionId);
 
