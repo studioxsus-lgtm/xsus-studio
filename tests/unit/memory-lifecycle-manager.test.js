@@ -1,26 +1,61 @@
 
 import { describe, expect, test, vi } from "vitest";
-
 import {
   createMemoryLifecycleManager,
   MEMORY_LIFECYCLE_MANAGER_VERSION
 } from "../../src/core/memory-lifecycle-manager.js";
+import { createMemoryBackup } from "../../src/core/memory-backup.js";
 
 function createDependencies(overrides = {}) {
-  const backup = {
-    version: "1.0.0",
-    createdAt: 1_800_000_000_000,
-    data: {
-      messages: ["Përshëndetje"]
-    }
-  };
+  const backup = createMemoryBackup(
+    {
+      schemaVersion: "1.0.0",
+      session: {
+        sessionId: "session-123",
+        messages: [
+          {
+            role: "user",
+            content: "Përshëndetje"
+          }
+        ]
+      }
+    },
+    { sessionId: "session-123" }
+  );
+
+  const storedBackups = new Map([
+    ["backup-123", backup]
+  ]);
 
   const storage = {
-    save: vi.fn().mockResolvedValue({ success: true }),
-    list: vi.fn().mockResolvedValue([]),
-    get: vi.fn().mockResolvedValue(backup),
-    verify: vi.fn().mockResolvedValue({ valid: true }),
-    delete: vi.fn().mockResolvedValue({ success: true }),
+    save: vi.fn(async (backupId, value) => {
+      storedBackups.set(backupId, value);
+      return { backupId, saved: true };
+    }),
+
+    list: vi.fn(async () =>
+      [...storedBackups.entries()].map(([backupId, value]) => ({
+        backupId,
+        createdAt: value.createdAt,
+        sessionId: value.sessionId,
+        version: value.version
+      }))
+    ),
+
+    get: vi.fn(async (backupId) =>
+      storedBackups.get(backupId) ?? null
+    ),
+
+    verify: vi.fn(async (backupId) => ({
+      valid: storedBackups.has(backupId),
+      exists: storedBackups.has(backupId),
+      backupId
+    })),
+
+    delete: vi.fn(async (backupId) =>
+      storedBackups.delete(backupId)
+    ),
+
     ...overrides.storage
   };
 
@@ -28,28 +63,36 @@ function createDependencies(overrides = {}) {
     inspect: vi.fn().mockResolvedValue({
       total: 1,
       valid: 1,
-      invalid: 0
+      invalid: 0,
+      backups: []
     }),
+
     recover: vi.fn().mockResolvedValue({
       status: "recovered",
-      backup
+      recovered: true,
+      backupId: "backup-123",
+      backup,
+      errors: []
     }),
+
     ...overrides.recoveryEngine
   };
 
   const createBackup = vi.fn().mockResolvedValue(backup);
+
+  const manager = createMemoryLifecycleManager({
+    storage,
+    recoveryEngine,
+    createBackup,
+    ...overrides.manager
+  });
 
   return {
     backup,
     storage,
     recoveryEngine,
     createBackup,
-    manager: createMemoryLifecycleManager({
-      storage,
-      recoveryEngine,
-      createBackup,
-      ...overrides.manager
-    })
+    manager
   };
 }
 
@@ -60,7 +103,6 @@ describe("Memory Lifecycle Manager", () => {
     expect(manager.version).toBe(
       MEMORY_LIFECYCLE_MANAGER_VERSION
     );
-
     expect(manager.version).toBe("1.0.0");
   });
 
@@ -70,13 +112,9 @@ describe("Memory Lifecycle Manager", () => {
     ).toThrow(TypeError);
   });
 
-  test("krijon dhe ruan një kopje rezervë", async () => {
-    const {
-      manager,
-      storage,
-      createBackup,
-      backup
-    } = createDependencies();
+  test("krijon dhe ruan një backup", async () => {
+    const { manager, storage, createBackup, backup } =
+      createDependencies();
 
     const result = await manager.createAndSaveBackup();
 
@@ -86,40 +124,20 @@ describe("Memory Lifecycle Manager", () => {
     expect(result.backupId).toEqual(expect.any(String));
 
     expect(createBackup).toHaveBeenCalledTimes(1);
-    expect(storage.verify).toHaveBeenCalledWith(backup);
     expect(storage.save).toHaveBeenCalledWith(
       result.backupId,
       backup,
       { overwrite: false }
     );
+
+    expect(storage.verify).toHaveBeenCalledWith(
+      result.backupId
+    );
   });
 
-  test("raporton gabimin kur krijimi i backup-it dështon", async () => {
-    const { manager, storage } = createDependencies();
-
-    const result = await manager.createAndSaveBackup();
-
-    // Sigurohemi që ruajtja nuk ndodh nëse krijimi dështon.
-    expect(result.success).toBe(true);
-    expect(storage.save).toHaveBeenCalledTimes(1);
-  });
-
-  test("nuk ruan backup që dështon në verifikim", async () => {
-    const { manager, storage } = createDependencies({
-      storage: {
-        verify: vi.fn().mockResolvedValue({ valid: false })
-      }
-    });
-
-    const result = await manager.createAndSaveBackup();
-
-    expect(result.success).toBe(false);
-    expect(result.error.code).toBe("BACKUP_CREATION_FAILED");
-    expect(storage.save).not.toHaveBeenCalled();
-  });
-
-  test("kthen gabim kur krijimi i backup-it dështon", async () => {
-    const { manager, storage, createBackup } = createDependencies();
+  test("raporton dështimin gjatë krijimit të backup-it", async () => {
+    const { manager, storage, createBackup } =
+      createDependencies();
 
     createBackup.mockRejectedValue(
       new Error("Dështoi krijimi")
@@ -132,7 +150,56 @@ describe("Memory Lifecycle Manager", () => {
     expect(storage.save).not.toHaveBeenCalled();
   });
 
-  test("inspekton kopjet rezervë", async () => {
+  test("nuk ruan backup të pavlefshëm", async () => {
+    const { manager, storage, createBackup } =
+      createDependencies();
+
+    createBackup.mockResolvedValue({
+      format: "format-i-gabuar",
+      version: "1.0.0",
+      createdAt: new Date().toISOString(),
+      sessionId: null,
+      checksum: "gabim",
+      payload: {}
+    });
+
+    const result = await manager.createAndSaveBackup();
+
+    expect(result.success).toBe(false);
+    expect(storage.save).not.toHaveBeenCalled();
+  });
+
+  test("raporton dështimin e ruajtjes", async () => {
+    const { manager, storage } = createDependencies({
+      storage: {
+        save: vi.fn().mockRejectedValue(
+          new Error("Dështoi ruajtja")
+        )
+      }
+    });
+
+    const result = await manager.createAndSaveBackup();
+
+    expect(result.success).toBe(false);
+    expect(result.error.code).toBe("BACKUP_SAVE_FAILED");
+  });
+
+  test("nuk e pranon backup-in nëse verifikimi pas ruajtjes dështon", async () => {
+    const { manager } = createDependencies({
+      storage: {
+        verify: vi.fn().mockResolvedValue({
+          valid: false,
+          exists: true
+        })
+      }
+    });
+
+    const result = await manager.createAndSaveBackup();
+
+    expect(result.success).toBe(false);
+  });
+
+  test("inspekton backup-et", async () => {
     const { manager, recoveryEngine } = createDependencies();
 
     const result = await manager.inspect();
@@ -164,7 +231,7 @@ describe("Memory Lifecycle Manager", () => {
     expect(recoveryEngine.recover).not.toHaveBeenCalled();
   });
 
-  test("nuk aplikon rikuperimin pa funksionin e dedikuar", async () => {
+  test("refuzon aplikimin pa funksion të dedikuar", async () => {
     const { manager, recoveryEngine } = createDependencies();
 
     const result = await manager.recoverAndApply("backup-123");
@@ -174,7 +241,7 @@ describe("Memory Lifecycle Manager", () => {
     expect(recoveryEngine.recover).not.toHaveBeenCalled();
   });
 
-  test("aplikon backup vetëm kur kërkohet shprehimisht", async () => {
+  test("aplikon backup-in vetëm kur kërkohet shprehimisht", async () => {
     const applyRecoveredMemory = vi.fn().mockResolvedValue(undefined);
 
     const {
@@ -203,7 +270,7 @@ describe("Memory Lifecycle Manager", () => {
     expect(recoveryEngine.recover).toHaveBeenCalledTimes(1);
   });
 
-  test("raporton dështimin e aplikimit të memories", async () => {
+  test("raporton dështimin e aplikimit", async () => {
     const applyRecoveredMemory = vi.fn().mockRejectedValue(
       new Error("Aplikimi dështoi")
     );
@@ -224,11 +291,11 @@ describe("Memory Lifecycle Manager", () => {
         list: vi.fn().mockResolvedValue([
           {
             backupId: "backup-new",
-            createdAt: 200
+            createdAt: "2026-10-21T12:00:00.000Z"
           },
           {
             backupId: "backup-old",
-            createdAt: 100
+            createdAt: "2026-10-20T12:00:00.000Z"
           }
         ])
       }
@@ -254,27 +321,26 @@ describe("Memory Lifecycle Manager", () => {
 
   test("serializon krijimet e backup-eve në të njëjtin manager", async () => {
     const order = [];
-
     const { manager, createBackup } = createDependencies();
+
+    const firstBackup = createMemoryBackup({
+      example: "first"
+    });
+
+    const secondBackup = createMemoryBackup({
+      example: "second"
+    });
 
     createBackup
       .mockImplementationOnce(async () => {
         order.push("first-start");
         await Promise.resolve();
         order.push("first-end");
-
-        return {
-          version: "1.0.0",
-          createdAt: 1
-        };
+        return firstBackup;
       })
       .mockImplementationOnce(async () => {
         order.push("second-start");
-
-        return {
-          version: "1.0.0",
-          createdAt: 2
-        };
+        return secondBackup;
       });
 
     const [first, second] = await Promise.all([
