@@ -28,7 +28,7 @@ import {
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 
-export const JSON_MEMORY_STORAGE_VERSION = "1.1.0";
+export const JSON_MEMORY_STORAGE_VERSION = "1.0.0";
 
 /**
  * Radhë e përbashkët për çdo rrugë skedari.
