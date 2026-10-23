@@ -12,6 +12,7 @@
  * - Kërkimi në bazën e njohurive.
  * - Standardizimi i përgjigjeve.
  * - Menaxhimi i memories RAM dhe persistent memory.
+ * - Konfigurimi i memories për integrime dhe teste.
  * - Metadata dhe trajtimi i sigurt i gabimeve.
  */
 
@@ -66,7 +67,41 @@ const MAX_CONTEXT_MESSAGES = 4;
 let memoryPersistenceInstance = null;
 
 /**
- * Krijon një instancë të vetme të persistent memory.
+ * Konfiguron persistent memory për integrime dhe teste.
+ *
+ * Instance duhet të ofrojë:
+ * - saveSession(sessionId)
+ * - restoreSession(sessionId)
+ *
+ * Kalimi i null rikthen krijimin automatik të instancës
+ * së parazgjedhur.
+ *
+ * Kujdes:
+ * Ky konfigurim ndryshon instancën e memories në nivel moduli.
+ * Mos e përdor për konfigurime të ndryshme të përdoruesve
+ * në të njëjtin proces pa izolim të përshtatshëm.
+ */
+export function configureAICoreMemoryPersistence(
+  instance = null
+) {
+  if (
+    instance !== null &&
+    (
+      typeof instance !== "object" ||
+      typeof instance.saveSession !== "function" ||
+      typeof instance.restoreSession !== "function"
+    )
+  ) {
+    throw new TypeError(
+      "Instanca e memories duhet të ofrojë saveSession dhe restoreSession."
+    );
+  }
+
+  memoryPersistenceInstance = instance;
+}
+
+/**
+ * Krijon ose kthen instancën aktive të persistent memory.
  */
 function getMemoryPersistence() {
   if (!memoryPersistenceInstance) {
@@ -445,7 +480,7 @@ function buildMetadata({
   responseResult
 }) {
   /*
-   * Historia e kaluar këtu duhet të jetë historiku paraprak,
+   * Historia e kaluar këtu është historiku paraprak,
    * jo mesazhi aktual që sapo u ruajt në RAM.
    */
   const messages = Array.isArray(history)
@@ -653,9 +688,6 @@ export async function processAIRequest(input = {}) {
     /*
      * Përcakto historikun paraprak para se të shtohet
      * mesazhi aktual i përdoruesit.
-     *
-     * Nëse ekziston historik në RAM, ai ka përparësi.
-     * Përndryshe përdoren mesazhet e kërkesës.
      */
     history = readConversationHistory(
       conversationId,
@@ -799,12 +831,8 @@ export async function processAIRequest(input = {}) {
     }
 
     /*
-     * KORRIGJIMI KRYESOR:
-     * Metadata përdor historikun paraprak të kapur përpara
-     * shtimit të mesazhit aktual.
-     *
-     * Kjo ruan pritshmërinë e testeve që dërgojnë dy mesazhe
-     * në input dhe presin historyMessageCount === 2.
+     * Metadata përdor historikun paraprak, para mesazhit
+     * aktual, për të ruajtur kontratën ekzistuese të testeve.
      */
     const metadata = buildMetadata({
       language,
