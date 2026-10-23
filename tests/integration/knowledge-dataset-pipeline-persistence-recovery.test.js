@@ -1,4 +1,3 @@
-
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   mkdtemp,
@@ -127,7 +126,7 @@ describe("XSUS AI — Pipeline Persistence Recovery", () => {
 
     expect(storage.getSaveCallCount()).toBe(2);
     expect(storage.savedSnapshots).toHaveLength(1);
-    expect(storage.savedSnapshots[0].datasets).toHaveLength(0);
+    expect(storage.savedSnapshots[0]).toHaveLength(0);
 
     const metadata = pipeline.getMetadata();
 
@@ -200,8 +199,8 @@ describe("XSUS AI — Pipeline Persistence Recovery", () => {
     const finalSnapshot =
       storage.savedSnapshots[storage.savedSnapshots.length - 1];
 
-    expect(finalSnapshot.datasets).toHaveLength(1);
-    expect(finalSnapshot.datasets[0].id).toBe("remove-recovery");
+    expect(finalSnapshot).toHaveLength(1);
+    expect(finalSnapshot[0].id).toBe("remove-recovery");
 
     const metadata = pipeline.getMetadata();
 
@@ -239,7 +238,7 @@ describe("XSUS AI — Pipeline Persistence Recovery", () => {
     const finalSnapshot =
       storage.savedSnapshots[storage.savedSnapshots.length - 1];
 
-    expect(finalSnapshot.datasets).toHaveLength(1);
-    expect(finalSnapshot.datasets[0].id).toBe("second-dataset");
+    expect(finalSnapshot).toHaveLength(1);
+    expect(finalSnapshot[0].id).toBe("second-dataset");
   });
 });
