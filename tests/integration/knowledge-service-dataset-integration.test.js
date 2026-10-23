@@ -1,5 +1,10 @@
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+
+import {
+  searchKnowledge,
+  unregisterKnowledgeSource
+} from "../../src/knowledge/knowledge-service.js";
 
 import {
   createKnowledgeDatasetRegistry
@@ -9,43 +14,53 @@ import {
   registerKnowledgeDatasetIntegration
 } from "../../src/knowledge/knowledge-dataset-integration.js";
 
-import {
-  searchKnowledge,
-  unregisterKnowledgeSource
-} from "../../src/knowledge/knowledge-service.js";
-
 const SOURCE_NAME = "xsus-knowledge-datasets";
 
 describe("XSUS AI — Knowledge Service Dataset Integration", () => {
   let integration;
 
   afterEach(() => {
-    if (integration) {
+    if (integration?.unregister) {
       integration.unregister();
       integration = undefined;
-    } else {
-      unregisterKnowledgeSource(SOURCE_NAME);
     }
+
+    // Pastron burimin edhe nëse një test dështon.
+    unregisterKnowledgeSource(SOURCE_NAME);
   });
 
-  test("searchKnowledge gjen njohuri nga dataset-i i regjistruar", async () => {
+  it("searchKnowledge gjen njohuri nga dataset-i i regjistruar", async () => {
     const registry = createKnowledgeDatasetRegistry();
 
-    registry.registerDataset("orion-integration-fixture", [
-      {
-        id: "orion-fixture-entry",
-        title: "Orion Fixture Integration",
-        content:
-          "Orion fixture documents a custom XSUS programming integration.",
-        language: "en",
-        domain: "programming",
-        difficulty: "beginner",
-        status: "published",
-        tags: ["orion", "fixture", "integration"]
-      }
-    ]);
+    const registration = registry.registerDataset(
+      "orion-integration-dataset",
+      [
+        {
+          id: "orion-fixture-entry",
+          title: "Orion Fixture Integration",
+          content:
+            "Orion fixture explains a custom XSUS programming integration.",
+          domain: "programming",
+          topic: "dataset integration",
+          language: "en",
+          difficulty: "beginner",
+          status: "verified",
+          keywords: ["orion", "fixture", "integration"],
+          tags: ["xsus", "testing"],
+          source: "orion-test-dataset",
+          version: "1.0.0"
+        }
+      ]
+    );
 
-    integration = registerKnowledgeDatasetIntegration({ registry });
+    expect(registration.success).toBe(true);
+
+    integration = registerKnowledgeDatasetIntegration({
+      registry
+    });
+
+    expect(integration.success).toBe(true);
+    expect(integration.source).toBe(SOURCE_NAME);
 
     const result = await searchKnowledge("orion fixture", {
       language: "en",
@@ -62,5 +77,14 @@ describe("XSUS AI — Knowledge Service Dataset Integration", () => {
     ).toBe(true);
 
     expect(result.sources).toContain(SOURCE_NAME);
+
+    const datasetEntry = result.results.find(
+      (entry) => entry.id === "orion-fixture-entry"
+    );
+
+    expect(datasetEntry).toBeDefined();
+    expect(datasetEntry.content).toContain("Orion fixture");
+    expect(datasetEntry.domain).toBe("programming");
+    expect(datasetEntry.language).toBe("en");
   });
 });
