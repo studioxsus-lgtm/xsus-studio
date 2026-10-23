@@ -110,7 +110,9 @@ expect(await pipeline.close()).toBe(true);
 expect(await pipeline.close()).toBe(false);
 pipeline = undefined;
 
-pipeline = await createKnowledgeDatasetPipeline({ filePath });
+pipeline = await createKnowledgeDatasetPipeline({
+  filePath
+});
 
 const restoredDataset = pipeline.getDataset(
   "pipeline-recovery-dataset"
@@ -125,6 +127,7 @@ const searchResult = pipeline.search("orion pipeline", {
 });
 
 expect(searchResult.success).toBe(true);
+
 expect(
   searchResult.results.some(
     (entry) => entry.id === "pipeline-orion-entry"
@@ -168,6 +171,7 @@ const removal = await pipeline.removeDataset(
 
 expect(removal.success).toBe(true);
 expect(removal.removed).toBe(true);
+
 expect(
   pipeline.getDataset("pipeline-removal-dataset")
 ).toBeNull();
@@ -175,7 +179,9 @@ expect(
 expect(await pipeline.close()).toBe(true);
 pipeline = undefined;
 
-pipeline = await createKnowledgeDatasetPipeline({ filePath });
+pipeline = await createKnowledgeDatasetPipeline({
+  filePath
+});
 
 expect(
   pipeline.getDataset("pipeline-removal-dataset")
@@ -192,10 +198,12 @@ expect(metadata.engine).toBe(
   "xsus-knowledge-dataset-pipeline"
 );
 
-expect(metadata.version).toBe("1.1.0");
+expect(metadata.version).toBe("1.2.0");
 expect(metadata.storageEnabled).toBe(true);
 expect(metadata.persistenceEnabled).toBe(true);
 expect(metadata.serializedOperations).toBe(true);
+expect(metadata.persistenceConsistent).toBe(true);
+expect(metadata.lastPersistenceError).toBeNull();
 expect(metadata.datasetCount).toBe(0);
 expect(metadata.closed).toBe(false);
 
@@ -204,14 +212,20 @@ expect(metadata.closed).toBe(false);
 it("ruan të gjitha regjistrimet e nisura paralelisht", async () => {
 await createPipeline();
 
-const entries = Array.from({ length: 8 }, (_, index) =>
-  createEntry({
-    id: `parallel-entry-${index}`,
-    title: `Parallel Fixture ${index}`,
-    content: `Parallel persistence fixture number ${index}.`,
-    topic: "parallel testing",
-    keywords: ["parallel", "persistence", `fixture-${index}`]
-  })
+const entries = Array.from(
+  { length: 8 },
+  (_, index) =>
+    createEntry({
+      id: `parallel-entry-${index}`,
+      title: `Parallel Fixture ${index}`,
+      content: `Parallel persistence fixture number ${index}.`,
+      topic: "parallel testing",
+      keywords: [
+        "parallel",
+        "persistence",
+        `fixture-${index}`
+      ]
+    })
 );
 
 const results = await Promise.all(
@@ -223,7 +237,10 @@ const results = await Promise.all(
   )
 );
 
-expect(results.every((result) => result.success)).toBe(true);
+expect(
+  results.every((result) => result.success)
+).toBe(true);
+
 expect(pipeline.listDatasets()).toHaveLength(8);
 expect(pipeline.getMetadata().datasetCount).toBe(8);
 
@@ -234,6 +251,7 @@ for (let index = 0; index < entries.length; index += 1) {
 
   expect(dataset).not.toBeNull();
   expect(dataset.entryCount).toBe(1);
+
   expect(
     dataset.collection.some(
       (entry) => entry.id === `parallel-entry-${index}`
@@ -266,6 +284,7 @@ const registrations = await Promise.all(
 expect(
   registrations.every((result) => result.success)
 ).toBe(true);
+
 expect(pipeline.listDatasets()).toHaveLength(count);
 
 const removals = await Promise.all(
@@ -276,8 +295,14 @@ const removals = await Promise.all(
   )
 );
 
-expect(removals.every((result) => result.success)).toBe(true);
-expect(removals.every((result) => result.removed)).toBe(true);
+expect(
+  removals.every((result) => result.success)
+).toBe(true);
+
+expect(
+  removals.every((result) => result.removed)
+).toBe(true);
+
 expect(pipeline.listDatasets()).toHaveLength(0);
 expect(pipeline.getMetadata().datasetCount).toBe(0);
 
@@ -303,7 +328,9 @@ const results = await Promise.all(
   )
 );
 
-expect(results.every((result) => result.success)).toBe(true);
+expect(
+  results.every((result) => result.success)
+).toBe(true);
 
 const rawStorage = await readFile(filePath, "utf8");
 const savedData = JSON.parse(rawStorage);
@@ -365,7 +392,10 @@ const closeResult = await pipeline.close();
 expect(closeResult).toBe(true);
 
 const results = await registrations;
-expect(results.every((result) => result.success)).toBe(true);
+
+expect(
+  results.every((result) => result.success)
+).toBe(true);
 
 pipeline = undefined;
 
