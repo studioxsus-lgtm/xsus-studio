@@ -99,18 +99,12 @@ describe("XSUS AI Core — Memory Backup Fault Tolerance", () => {
     const reader = createMemoryBackupStorage({ filePath });
     const recoveredBackup = await reader.get("recovered-backup");
 
-    expect(recoveredBackup).not.toBeNull();
     expect(recoveredBackup).toEqual(backup);
-    expect(recoveredBackup.format).toBe("xsus-memory-backup");
 
-    // Verifikon që backup-i i ruajtur është i vlefshëm.
     await expect(
       reader.verify("recovered-backup")
-    ).resolves.toMatchObject({
-      valid: true,
-    });
+    ).resolves.toMatchObject({ valid: true });
 
-    // Kyçja duhet të jetë liruar pas operacionit.
     await expect(stat(lockPath)).rejects.toMatchObject({
       code: "ENOENT",
     });
@@ -138,7 +132,6 @@ describe("XSUS AI Core — Memory Backup Fault Tolerance", () => {
       code: MEMORY_BACKUP_STORAGE_ERRORS.LOCK_TIMEOUT,
     });
 
-    // Procesi ynë nuk duhet të fshijë kyçjen e tjetrit.
     const lockContent = JSON.parse(
       await readFile(lockPath, "utf8")
     );
@@ -177,15 +170,76 @@ describe("XSUS AI Core — Memory Backup Fault Tolerance", () => {
       code: MEMORY_BACKUP_STORAGE_ERRORS.CONFLICT,
     });
 
-    // Operacioni i dështuar duhet ta lirojë kyçjen.
     await expect(stat(lockPath)).rejects.toMatchObject({
       code: "ENOENT",
     });
 
-    // Backup-i origjinal duhet të mbetet i ruajtur.
     const originalBackup = await storage.get("backup-1");
 
     expect(originalBackup).not.toBeNull();
     expect(originalBackup.payload.sessionId).toBe("fault-session");
+  });
+
+  test("injoron skedarët e përkohshëm të mbetur pas ndërprerjes", async () => {
+    const { filePath, storage } = await createEnvironment();
+
+    const originalBackup = createBackup("crash-recovery-session");
+
+    await storage.save("stable-backup", originalBackup);
+
+    // Simulon një skedar të paplotë të mbetur pas ndërprerjes.
+    const temporaryPath = `${filePath}.tmp-crash-test`;
+
+    await writeFile(
+      temporaryPath,
+      '{"partial":',
+      "utf8"
+    );
+
+    const recovered = await storage.get("stable-backup");
+
+    expect(recovered).toEqual(originalBackup);
+
+    await expect(
+      storage.save("new-backup", createBackup("new-session"))
+    ).resolves.toEqual({
+      backupId: "new-backup",
+      saved: true,
+    });
+
+    expect(await storage.get("stable-backup")).toEqual(
+      originalBackup
+    );
+
+    expect(await storage.get("new-backup")).not.toBeNull();
+
+    // Skedari i përkohshëm nuk duhet të interpretohet si backup.
+    await expect(
+      storage.get("crash-test")
+    ).resolves.toBeNull();
+  });
+
+  test("ruan backup-in ekzistues kur mbetet një skedar i përkohshëm i dëmtuar", async () => {
+    const { filePath, storage } = await createEnvironment();
+
+    const originalBackup = createBackup("preserved-session");
+
+    await storage.save("preserved-backup", originalBackup);
+
+    await writeFile(
+      `${filePath}.tmp-incomplete`,
+      '{"format":"xsus-memory-backup","payload":',
+      "utf8"
+    );
+
+    const storedBackup = await storage.get("preserved-backup");
+
+    expect(storedBackup).toEqual(originalBackup);
+
+    await expect(
+      storage.verify("preserved-backup")
+    ).resolves.toMatchObject({
+      valid: true,
+    });
   });
 });
