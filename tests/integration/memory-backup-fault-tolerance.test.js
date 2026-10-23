@@ -74,6 +74,8 @@ describe("XSUS AI Core — Memory Backup Fault Tolerance", () => {
         lockStaleMs: 100,
       });
 
+    const backup = createBackup("stale-lock-session");
+
     await writeFile(
       lockPath,
       JSON.stringify({
@@ -85,21 +87,28 @@ describe("XSUS AI Core — Memory Backup Fault Tolerance", () => {
     );
 
     const oldTime = new Date(Date.now() - 5000);
-
     await utimes(lockPath, oldTime, oldTime);
 
     await expect(
-      storage.save("recovered-backup", createBackup())
+      storage.save("recovered-backup", backup)
     ).resolves.toEqual({
       backupId: "recovered-backup",
       saved: true,
     });
 
     const reader = createMemoryBackupStorage({ filePath });
+    const recoveredBackup = await reader.get("recovered-backup");
 
+    expect(recoveredBackup).not.toBeNull();
+    expect(recoveredBackup).toEqual(backup);
+    expect(recoveredBackup.format).toBe("xsus-memory-backup");
+
+    // Verifikon që backup-i i ruajtur është i vlefshëm.
     await expect(
-      reader.get("recovered-backup")
-    ).resolves.toEqual(createBackup());
+      reader.verify("recovered-backup")
+    ).resolves.toMatchObject({
+      valid: true,
+    });
 
     // Kyçja duhet të jetë liruar pas operacionit.
     await expect(stat(lockPath)).rejects.toMatchObject({
@@ -143,14 +152,15 @@ describe("XSUS AI Core — Memory Backup Fault Tolerance", () => {
 
     await writeFile(filePath, corruptedJSON, "utf8");
 
-    await expect(storage.save("backup-1", createBackup()))
-      .rejects.toMatchObject({
-        code: MEMORY_BACKUP_STORAGE_ERRORS.CORRUPTED,
-      });
+    await expect(
+      storage.save("backup-1", createBackup())
+    ).rejects.toMatchObject({
+      code: MEMORY_BACKUP_STORAGE_ERRORS.CORRUPTED,
+    });
 
-    await expect(readFile(filePath, "utf8")).resolves.toBe(
-      corruptedJSON
-    );
+    await expect(
+      readFile(filePath, "utf8")
+    ).resolves.toBe(corruptedJSON);
   });
 
   test("liron kyçjen pas një konflikti të backup-it", async () => {
@@ -159,15 +169,23 @@ describe("XSUS AI Core — Memory Backup Fault Tolerance", () => {
     await storage.save("backup-1", createBackup());
 
     await expect(
-      storage.save("backup-1", createBackup("different-session"))
+      storage.save(
+        "backup-1",
+        createBackup("different-session")
+      )
     ).rejects.toMatchObject({
       code: MEMORY_BACKUP_STORAGE_ERRORS.CONFLICT,
     });
 
+    // Operacioni i dështuar duhet ta lirojë kyçjen.
     await expect(stat(lockPath)).rejects.toMatchObject({
       code: "ENOENT",
     });
 
-    await expect(storage.get("backup-1")).resolves.not.toBeNull();
+    // Backup-i origjinal duhet të mbetet i ruajtur.
+    const originalBackup = await storage.get("backup-1");
+
+    expect(originalBackup).not.toBeNull();
+    expect(originalBackup.payload.sessionId).toBe("fault-session");
   });
 });
