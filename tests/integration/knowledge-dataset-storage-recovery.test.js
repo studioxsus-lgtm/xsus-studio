@@ -36,6 +36,17 @@ function createTestEntries() {
   ];
 }
 
+function expectSuccessfulRegistration(registration, testName) {
+  if (registration?.success !== true) {
+    console.error(
+      `[${testName}] Regjistrimi dështoi:`,
+      JSON.stringify(registration, null, 2)
+    );
+  }
+
+  expect(registration?.success).toBe(true);
+}
+
 afterEach(async () => {
   await Promise.all(
     temporaryDirectories.splice(0).map((directory) =>
@@ -58,7 +69,10 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
         createTestEntries()
       );
 
-      expect(registration.success).toBe(true);
+      expectSuccessfulRegistration(
+        registration,
+        "ruajtja dhe rikthimi"
+      );
 
       const savedJSON = JSON.parse(
         await readFile(filePath, "utf8")
@@ -76,16 +90,17 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
     });
 
     try {
-      const result = secondPipeline.listDatasets();
+      const datasets = secondPipeline.listDatasets();
 
-      expect(result.success).toBe(true);
-      expect(result.datasets).toHaveLength(1);
-      expect(result.datasets[0].id).toBe("recovery-test");
-      expect(result.datasets[0].entryCount).toBe(1);
+      expect(Array.isArray(datasets)).toBe(true);
+      expect(datasets).toHaveLength(1);
+      expect(datasets[0].id).toBe("recovery-test");
+      expect(datasets[0].entryCount).toBe(1);
 
       const restored = secondPipeline.getDataset("recovery-test");
 
       expect(restored).not.toBeNull();
+      expect(restored.collection).toHaveLength(1);
       expect(restored.collection[0]).toMatchObject({
         id: "xsus-entry-1",
         title: "XSUS AI",
@@ -130,18 +145,17 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
         ]
       );
 
-      expect(registration.success).toBe(true);
+      expectSuccessfulRegistration(
+        registration,
+        "ruajtja e fushave të hyrjes"
+      );
 
       const content = JSON.parse(
         await readFile(filePath, "utf8")
       );
 
       expect(content.datasets).toHaveLength(1);
-
-      expect(content.datasets[0].id).toBe(
-        "json-content-test"
-      );
-
+      expect(content.datasets[0].id).toBe("json-content-test");
       expect(content.datasets[0].collection).toHaveLength(1);
 
       expect(content.datasets[0].collection[0]).toMatchObject({
