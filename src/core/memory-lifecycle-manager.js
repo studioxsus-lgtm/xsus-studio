@@ -1,14 +1,14 @@
-
 /**
  * XSUS AI Core — Memory Lifecycle Manager
  * Version: 1.0.0
  *
  * Përgjegjësitë:
  * - Krijimi dhe ruajtja e kopjeve rezervë.
- * - Kontrolli i integritetit të kopjeve.
+ * - Verifikimi i integritetit para ruajtjes.
+ * - Verifikimi i backup-it pas ruajtjes.
  * - Rikuperimi i kontrolluar i memories.
  * - Raportimi i gjendjes së memories.
- * - Ruajtja e kopjeve të vjetra sipas politikës së retention.
+ * - Retention opsional për kopjet e vjetra.
  *
  * Siguria:
  * - Fshirja automatike është e çaktivizuar si parazgjedhje.
@@ -17,6 +17,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { verifyMemoryBackup } from "./memory-backup.js";
 
 export const MEMORY_LIFECYCLE_MANAGER_VERSION = "1.0.0";
 
@@ -57,27 +58,21 @@ function getErrorMessage(error) {
 }
 
 function normalizeBackupList(result) {
-  if (Array.isArray(result)) {
-    return result;
-  }
-
-  if (Array.isArray(result?.backups)) {
-    return result.backups;
-  }
-
-  if (Array.isArray(result?.items)) {
-    return result.items;
-  }
-
+  if (Array.isArray(result)) return result;
+  if (Array.isArray(result?.backups)) return result.backups;
+  if (Array.isArray(result?.items)) return result.items;
   return [];
 }
 
 function getBackupId(item) {
-  if (typeof item === "string") {
-    return item;
-  }
+  if (typeof item === "string") return item;
 
-  return item?.backupId ?? item?.id ?? item?.metadata?.backupId ?? null;
+  return (
+    item?.backupId ??
+    item?.id ??
+    item?.metadata?.backupId ??
+    null
+  );
 }
 
 function getBackupTimestamp(item) {
@@ -125,16 +120,19 @@ function validateConfiguration({
   return null;
 }
 
+function isRecoveryFailure(result) {
+  return (
+    !result ||
+    result.success === false ||
+    result.recovered === false ||
+    result.status === "error" ||
+    result.status === "not_found" ||
+    result.status === "no_valid_backup"
+  );
+}
+
 /**
  * Krijon një menaxher për ciklin e jetës së memories.
- *
- * @param {object} options
- * @param {object} options.storage
- * @param {object} options.recoveryEngine
- * @param {Function} options.createBackup
- * @param {Function} [options.applyRecoveredMemory]
- * @param {number} [options.maxBackups]
- * @param {boolean} [options.enableRetention=false]
  */
 export function createMemoryLifecycleManager(options = {}) {
   const {
@@ -157,20 +155,29 @@ export function createMemoryLifecycleManager(options = {}) {
   }
 
   if (!Number.isInteger(maxBackups) || maxBackups < 1) {
-    throw new TypeError("maxBackups duhet të jetë numër i plotë pozitiv.");
+    throw new TypeError(
+      "maxBackups duhet të jetë numër i plotë pozitiv."
+    );
   }
 
   if (
     applyRecoveredMemory !== undefined &&
     typeof applyRecoveredMemory !== "function"
   ) {
-    throw new TypeError("applyRecoveredMemory duhet të jetë funksion.");
+    throw new TypeError(
+      "applyRecoveredMemory duhet të jetë funksion."
+    );
+  }
+
+  if (enableRetention && typeof storage.delete !== "function") {
+    throw new TypeError(
+      "storage duhet të ofrojë delete kur retention është aktiv."
+    );
   }
 
   let operationQueue = Promise.resolve();
 
-  // Serializon operacionet e këtij instance për të shmangur
-  // ndërthurjen e veprimeve të ciklit të jetës.
+  // Serializon krijimet dhe operacionet e këtij menaxheri.
   function runExclusive(operation) {
     const current = operationQueue.then(operation, operation);
 
@@ -183,8 +190,7 @@ export function createMemoryLifecycleManager(options = {}) {
   }
 
   async function listBackups() {
-    const result = await storage.list();
-    return normalizeBackupList(result);
+    return normalizeBackupList(await storage.list());
   }
 
   async function applyRetentionPolicy() {
@@ -208,12 +214,18 @@ export function createMemoryLifecycleManager(options = {}) {
     for (const item of toDelete) {
       const backupId = getBackupId(item);
 
-      if (typeof backupId !== "string" || backupId.length === 0) {
+      if (
+        typeof backupId !== "string" ||
+        backupId.trim().length === 0
+      ) {
         continue;
       }
 
-      await storage.delete(backupId);
-      deleted.push(backupId);
+      const didDelete = await storage.delete(backupId);
+
+      if (didDelete) {
+        deleted.push(backupId);
+      }
     }
 
     return {
@@ -224,12 +236,22 @@ export function createMemoryLifecycleManager(options = {}) {
   }
 
   /**
-   * Krijon një kopje rezervë të re.
-   * createBackup duhet të kthejë objektin e plotë të backup-it,
-   * në formatin që pranon storage.verify.
+   * Krijon, verifikon dhe ruan një backup.
    */
   async function createAndSaveBackup(metadata = {}) {
     return runExclusive(async () => {
+      if (
+        metadata === null ||
+        typeof metadata !== "object" ||
+        Array.isArray(metadata)
+      ) {
+        return failure(
+          "createBackup",
+          MEMORY_LIFECYCLE_ERRORS.BACKUP_CREATION_FAILED,
+          "metadata duhet të jetë objekt."
+        );
+      }
+
       let backup;
 
       try {
@@ -242,7 +264,11 @@ export function createMemoryLifecycleManager(options = {}) {
         );
       }
 
-      if (!backup || typeof backup !== "object" || Array.isArray(backup)) {
+      if (
+        !backup ||
+        typeof backup !== "object" ||
+        Array.isArray(backup)
+      ) {
         return failure(
           "createBackup",
           MEMORY_LIFECYCLE_ERRORS.BACKUP_CREATION_FAILED,
@@ -256,46 +282,88 @@ export function createMemoryLifecycleManager(options = {}) {
         backup.id ??
         randomUUID();
 
-      if (typeof backupId !== "string" || backupId.trim().length === 0) {
+      if (
+        typeof backupId !== "string" ||
+        backupId.trim().length === 0
+      ) {
         return failure(
           "createBackup",
-          MEMORY_LIFECYCLE_ERRORS.BACKUP_SAVE_FAILED,
+          MEMORY_LIFECYCLE_ERRORS.BACKUP_CREATION_FAILED,
           "Identifikuesi i kopjes rezervë është i pavlefshëm."
         );
       }
 
-      try {
-        const verification = await storage.verify(backup);
+      // Verifiko formatin dhe checksum-in e objektit para ruajtjes.
+      // storage.verify() nuk përdoret këtu sepse ai pret backupId.
+      let backupVerification;
 
-        if (
-          verification === false ||
-          verification?.valid === false ||
-          verification?.success === false
-        ) {
-          return failure(
-            "createBackup",
-            MEMORY_LIFECYCLE_ERRORS.BACKUP_CREATION_FAILED,
-            "Kopja rezervë nuk kaloi kontrollin e integritetit.",
-            { backupId, verification }
-          );
-        }
+      try {
+        backupVerification = verifyMemoryBackup(backup);
       } catch (error) {
         return failure(
           "createBackup",
           MEMORY_LIFECYCLE_ERRORS.BACKUP_CREATION_FAILED,
-          `Kontrolli i integritetit dështoi: ${getErrorMessage(error)}`,
+          `Kontrolli i backup-it dështoi: ${getErrorMessage(error)}`,
           { backupId }
         );
       }
 
+      if (!backupVerification?.valid) {
+        return failure(
+          "createBackup",
+          MEMORY_LIFECYCLE_ERRORS.BACKUP_CREATION_FAILED,
+          "Kopja rezervë nuk kaloi kontrollin e integritetit.",
+          {
+            backupId,
+            verification: backupVerification
+          }
+        );
+      }
+
       try {
-        await storage.save(backupId, backup, { overwrite: false });
+        await storage.save(backupId, backup, {
+          overwrite: false
+        });
       } catch (error) {
         return failure(
           "createBackup",
           MEMORY_LIFECYCLE_ERRORS.BACKUP_SAVE_FAILED,
           getErrorMessage(error),
           { backupId }
+        );
+      }
+
+      // Verifiko backup-in e ruajtur duke përdorur ID-në.
+      try {
+        const storedVerification = await storage.verify(backupId);
+
+        const invalid =
+          storedVerification === false ||
+          storedVerification?.valid !== true ||
+          storedVerification?.exists === false ||
+          storedVerification?.success === false;
+
+        if (invalid) {
+          return failure(
+            "createBackup",
+            MEMORY_LIFECYCLE_ERRORS.BACKUP_SAVE_FAILED,
+            "Backup-i u ruajt, por verifikimi pas ruajtjes dështoi.",
+            {
+              backupId,
+              saved: true,
+              verification: storedVerification
+            }
+          );
+        }
+      } catch (error) {
+        return failure(
+          "createBackup",
+          MEMORY_LIFECYCLE_ERRORS.BACKUP_SAVE_FAILED,
+          `Backup-i u ruajt, por verifikimi pas ruajtjes dështoi: ${getErrorMessage(error)}`,
+          {
+            backupId,
+            saved: true
+          }
         );
       }
 
@@ -310,6 +378,7 @@ export function createMemoryLifecycleManager(options = {}) {
           getErrorMessage(error),
           {
             backupId,
+            backup,
             saved: true
           }
         );
@@ -331,9 +400,7 @@ export function createMemoryLifecycleManager(options = {}) {
       try {
         const report = await recoveryEngine.inspect();
 
-        return success("inspect", {
-          report
-        });
+        return success("inspect", { report });
       } catch (error) {
         return failure(
           "inspect",
@@ -349,7 +416,10 @@ export function createMemoryLifecycleManager(options = {}) {
    */
   async function recover(backupId) {
     return runExclusive(async () => {
-      if (typeof backupId !== "string" || backupId.trim().length === 0) {
+      if (
+        typeof backupId !== "string" ||
+        backupId.trim().length === 0
+      ) {
         return failure(
           "recover",
           MEMORY_LIFECYCLE_ERRORS.RECOVERY_FAILED,
@@ -359,16 +429,10 @@ export function createMemoryLifecycleManager(options = {}) {
 
       try {
         const result = await recoveryEngine.recover({
-          backupId
+          backupId: backupId.trim()
         });
 
-        if (
-          !result ||
-          result.success === false ||
-          result.status === "error" ||
-          result.status === "not_found" ||
-          result.status === "no_valid_backup"
-        ) {
+        if (isRecoveryFailure(result)) {
           return failure(
             "recover",
             MEMORY_LIFECYCLE_ERRORS.RECOVERY_FAILED,
@@ -380,7 +444,7 @@ export function createMemoryLifecycleManager(options = {}) {
         }
 
         return success("recover", {
-          backupId,
+          backupId: backupId.trim(),
           result,
           applied: false
         });
@@ -396,8 +460,7 @@ export function createMemoryLifecycleManager(options = {}) {
   }
 
   /**
-   * Rikuperon dhe aplikon një kopje vetëm nëse përdoruesi
-   * e ka konfiguruar shprehimisht applyRecoveredMemory.
+   * Rikuperon dhe aplikon backup-in vetëm me callback të konfiguruar.
    */
   async function recoverAndApply(backupId) {
     return runExclusive(async () => {
@@ -409,7 +472,10 @@ export function createMemoryLifecycleManager(options = {}) {
         );
       }
 
-      if (typeof backupId !== "string" || backupId.trim().length === 0) {
+      if (
+        typeof backupId !== "string" ||
+        backupId.trim().length === 0
+      ) {
         return failure(
           "recoverAndApply",
           MEMORY_LIFECYCLE_ERRORS.RECOVERY_FAILED,
@@ -417,33 +483,33 @@ export function createMemoryLifecycleManager(options = {}) {
         );
       }
 
+      const normalizedId = backupId.trim();
       let recovery;
 
       try {
-        recovery = await recoveryEngine.recover({ backupId });
+        recovery = await recoveryEngine.recover({
+          backupId: normalizedId
+        });
       } catch (error) {
         return failure(
           "recoverAndApply",
           MEMORY_LIFECYCLE_ERRORS.RECOVERY_FAILED,
           getErrorMessage(error),
-          { backupId }
+          { backupId: normalizedId }
         );
       }
 
-      if (
-        !recovery ||
-        recovery.success === false ||
-        recovery.status === "error" ||
-        recovery.status === "not_found" ||
-        recovery.status === "no_valid_backup"
-      ) {
+      if (isRecoveryFailure(recovery)) {
         return failure(
           "recoverAndApply",
           MEMORY_LIFECYCLE_ERRORS.RECOVERY_FAILED,
           recovery?.error?.message ??
             recovery?.message ??
             "Nuk u gjet një kopje e vlefshme për rikuperim.",
-          { backupId, recovery }
+          {
+            backupId: normalizedId,
+            recovery
+          }
         );
       }
 
@@ -457,13 +523,16 @@ export function createMemoryLifecycleManager(options = {}) {
           "recoverAndApply",
           MEMORY_LIFECYCLE_ERRORS.RECOVERY_FAILED,
           "Recovery Engine nuk ktheu objektin e rikuperuar.",
-          { backupId, recovery }
+          {
+            backupId: normalizedId,
+            recovery
+          }
         );
       }
 
       try {
         await applyRecoveredMemory(backup, {
-          backupId,
+          backupId: normalizedId,
           recovery
         });
       } catch (error) {
@@ -471,12 +540,15 @@ export function createMemoryLifecycleManager(options = {}) {
           "recoverAndApply",
           MEMORY_LIFECYCLE_ERRORS.APPLY_FAILED,
           getErrorMessage(error),
-          { backupId, recovery }
+          {
+            backupId: normalizedId,
+            recovery
+          }
         );
       }
 
       return success("recoverAndApply", {
-        backupId,
+        backupId: normalizedId,
         applied: true,
         recovery
       });
@@ -484,7 +556,7 @@ export function createMemoryLifecycleManager(options = {}) {
   }
 
   /**
-   * Jep një përmbledhje të gjendjes së memories.
+   * Përmbledh gjendjen e memories dhe kopjeve rezervë.
    */
   async function getStatus() {
     return runExclusive(async () => {
