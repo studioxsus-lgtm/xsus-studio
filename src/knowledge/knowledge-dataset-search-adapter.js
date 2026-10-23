@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI Core — Knowledge Dataset Search Adapter
- * Version: 1.0.0
+ * Version: 1.0.1
  *
  * Përgjegjësitë:
  * - Kërkimi në dataset-et e regjistruara.
@@ -19,7 +19,7 @@ import {
 } from "../language/normalization.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-search-adapter";
-const ENGINE_VERSION = "1.0.0";
+const ENGINE_VERSION = "1.0.1";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
@@ -52,6 +52,14 @@ function normalizeLanguage(value) {
   }
 
   return normalizeLanguageCode(value.trim());
+}
+
+function normalizeDomain(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim().toLowerCase();
 }
 
 function matchesLanguage(entryLanguage, requestedLanguage) {
@@ -90,12 +98,11 @@ function normalizeLimit(value) {
 }
 
 /**
- * Merr hyrjet nga formatet e mbështetura të dataset-it.
- *
- * Registry mund t'i ruajë hyrjet te:
+ * Mbështet formatet e njohura të dataset-it:
  * - dataset.entries
- * - dataset.collection
+ * - dataset.collection si array
  * - dataset.collection.entries
+ * - dataset.collection.collection.entries
  */
 function getDatasetEntries(dataset) {
   if (!dataset || typeof dataset !== "object") {
@@ -112,6 +119,12 @@ function getDatasetEntries(dataset) {
 
   if (Array.isArray(dataset.collection?.entries)) {
     return dataset.collection.entries;
+  }
+
+  if (
+    Array.isArray(dataset.collection?.collection?.entries)
+  ) {
+    return dataset.collection.collection.entries;
   }
 
   return null;
@@ -165,12 +178,22 @@ function scoreEntry(entry, query, queryTerms) {
     score += 25;
   }
 
-  if (keywords.includes(query)) score += 35;
-  if (tags.includes(query)) score += 20;
-  if (content.includes(query)) score += 15;
+  if (keywords.includes(query)) {
+    score += 35;
+  }
+
+  if (tags.includes(query)) {
+    score += 20;
+  }
+
+  if (content.includes(query)) {
+    score += 15;
+  }
 
   for (const term of queryTerms) {
-    if (!term) continue;
+    if (!term) {
+      continue;
+    }
 
     if (title.split(/\s+/u).includes(term)) {
       score += 12;
@@ -187,6 +210,7 @@ function scoreEntry(entry, query, queryTerms) {
   const statusRank = {
     verified: 3,
     reviewed: 2,
+    published: 2,
     draft: 1
   };
 
@@ -217,18 +241,12 @@ function createError(message) {
     metadata: {
       engine: ENGINE_NAME,
       version: ENGINE_VERSION,
-      resultCount: 0
+      resultCount: 0,
+      matchedCount: 0
     }
   };
 }
 
-/**
- * Krijon një adapter për një registry ekzistues.
- *
- * Registry duhet të ofrojë:
- * - listDatasets()
- * - getDataset(datasetId)
- */
 export function createKnowledgeDatasetSearchAdapter({
   registry
 } = {}) {
@@ -273,11 +291,7 @@ export function createKnowledgeDatasetSearchAdapter({
       options.language
     );
 
-    const requestedDomain =
-      typeof options.domain === "string"
-        ? options.domain.trim()
-        : "";
-
+    const requestedDomain = normalizeDomain(options.domain);
     const limit = normalizeLimit(options.limit);
 
     const queryTerms = [
@@ -353,7 +367,7 @@ export function createKnowledgeDatasetSearchAdapter({
 
         if (
           requestedDomain &&
-          entry.domain !== requestedDomain
+          normalizeDomain(entry.domain) !== requestedDomain
         ) {
           continue;
         }
@@ -370,10 +384,6 @@ export function createKnowledgeDatasetSearchAdapter({
           continue;
         }
 
-        if (seenEntryIds.has(entry.id)) {
-          continue;
-        }
-
         const score = scoreEntry(
           entry,
           normalizedQuery,
@@ -384,12 +394,19 @@ export function createKnowledgeDatasetSearchAdapter({
           continue;
         }
 
-        seenEntryIds.add(entry.id);
+        const datasetId = summary.id;
+        const uniqueKey = `${datasetId}:${entry.id}`;
+
+        if (seenEntryIds.has(uniqueKey)) {
+          continue;
+        }
+
+        seenEntryIds.add(uniqueKey);
 
         matches.push({
           entry,
           score,
-          datasetId: summary.id
+          datasetId
         });
       }
     }
@@ -399,7 +416,13 @@ export function createKnowledgeDatasetSearchAdapter({
         return b.score - a.score;
       }
 
-      return a.entry.id.localeCompare(b.entry.id);
+      const idComparison = a.entry.id.localeCompare(b.entry.id);
+
+      if (idComparison !== 0) {
+        return idComparison;
+      }
+
+      return a.datasetId.localeCompare(b.datasetId);
     });
 
     const results = matches
@@ -443,10 +466,6 @@ export function createKnowledgeDatasetSearchAdapter({
   });
 }
 
-/**
- * Krijon një funksion kërkimi të përshtatshëm
- * për integrim të mëvonshëm me knowledge-service.js.
- */
 export function createKnowledgeDatasetSearchProvider(options) {
   const adapter = createKnowledgeDatasetSearchAdapter(options);
 
