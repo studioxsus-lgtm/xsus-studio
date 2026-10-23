@@ -1,138 +1,103 @@
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  test
-} from "vitest";
-
+import { afterEach, describe, expect, test } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { processAIRequest, configureAICoreMemoryPersistence } from "../../src/core/ai-core.js";
 
 import {
   createMemorySession,
-  addMemoryMessage,
+  clearAllMemory,
   getMemoryHistory,
-  hasMemorySession,
-  clearAllMemory
 } from "../../src/core/memory-engine.js";
 
-import {
-  createMemoryPersistence
-} from "../../src/core/memory-persistence-integration.js";
+import { createMemoryPersistence } from "../../src/core/memory-persistence-integration.js";
 
-import {
-  createJSONMemoryStorage
-} from "../../src/core/json-memory-storage.js";
+import { createJSONMemoryStorage } from "../../src/core/json-memory-storage.js";
 
-describe("XSUS AI Core - JSON Memory recovery", () => {
-  let temporaryDirectory;
-  let filePath;
-
-  const sessionId = "xsus-ai-core-restart-session";
-  const prefix = "xsus-ai-core-restart-test:";
-
-  beforeEach(async () => {
-    temporaryDirectory = await mkdtemp(
-      path.join(os.tmpdir(), "xsus-ai-memory-")
-    );
-
-    filePath = path.join(
-      temporaryDirectory,
-      "memory.json"
-    );
-
-    clearAllMemory();
-  });
+describe("XSUS AI Core — JSON memory recovery", () => {
+  let tempDirectory;
 
   afterEach(async () => {
+    configureAICoreMemoryPersistence(null);
     clearAllMemory();
 
-    if (temporaryDirectory) {
-      await rm(temporaryDirectory, {
-        recursive: true,
-        force: true
-      });
+    if (tempDirectory) {
+      await rm(tempDirectory, { recursive: true, force: true });
+      tempDirectory = undefined;
     }
   });
 
-  test("rikthen historikun nga JSON pasi memoria RAM pastrohet", async () => {
-    const firstStorage = createJSONMemoryStorage({
-      filePath
-    });
+  test("rikthen historikun e ruajtur përmes një instance të re persistence", async () => {
+    tempDirectory = await mkdtemp(join(tmpdir(), "xsus-ai-memory-"));
+    const filePath = join(tempDirectory, "memory.json");
+    const sessionId = "restart-integration-session";
 
     const firstPersistence = createMemoryPersistence({
-      storage: firstStorage,
-      filePath,
-      prefix
+      storage: createJSONMemoryStorage({ filePath }),
+      prefix: "xsus:test:"
     });
+
+    configureAICoreMemoryPersistence(firstPersistence);
 
     createMemorySession({
       sessionId,
-      metadata: {
-        language: "sq"
-      }
+      metadata: { language: "sq" }
     });
 
-    addMemoryMessage({
-      sessionId,
-      role: "user",
-      content: "Dua të ndërtoj një aplikacion AI."
+    const firstRequest = await processAIRequest({
+      query: "Dua të ndërtoj një aplikacion AI.",
+      conversationId: sessionId,
+      language: "sq"
     });
 
-    addMemoryMessage({
-      sessionId,
-      role: "assistant",
-      content: "Fillo me arkitekturën e bërthamës."
-    });
+    expect(firstRequest).toBeDefined();
+    expect(firstRequest.error).toBeUndefined();
 
-    await firstPersistence.saveSession(sessionId);
+    const historyBeforeRestart = getMemoryHistory(sessionId);
+    expect(historyBeforeRestart.length).toBeGreaterThan(0);
 
-    expect(hasMemorySession(sessionId)).toBe(true);
-
-    const savedHistory = getMemoryHistory(sessionId);
-
-    expect(savedHistory).toHaveLength(2);
-
+    // Simulo humbjen e memories aktive, duke ruajtur skedarin JSON.
     clearAllMemory();
 
-    expect(hasMemorySession(sessionId)).toBe(false);
+    expect(getMemoryHistory(sessionId)).toHaveLength(0);
 
-    const secondStorage = createJSONMemoryStorage({
-      filePath
-    });
-
+    // Krijo instancë të re që lexon të njëjtin skedar JSON.
     const secondPersistence = createMemoryPersistence({
-      storage: secondStorage,
-      filePath,
-      prefix
+      storage: createJSONMemoryStorage({ filePath }),
+      prefix: "xsus:test:"
     });
 
-    const restored = await secondPersistence.restoreSession(
-      sessionId
+    configureAICoreMemoryPersistence(secondPersistence);
+
+    const secondRequest = await processAIRequest({
+      query: "Vazhdo me planin e aplikacionit.",
+      conversationId: sessionId,
+      language: "sq"
+    });
+
+    expect(secondRequest).toBeDefined();
+    expect(secondRequest.error).toBeUndefined();
+
+    const recoveredHistory = getMemoryHistory(sessionId);
+
+    expect(recoveredHistory.length).toBeGreaterThan(
+      historyBeforeRestart.length
     );
 
-    expect(restored).toBeTruthy();
-    expect(hasMemorySession(sessionId)).toBe(true);
+    expect(
+      recoveredHistory.some(
+        (message) =>
+          message.content === "Dua të ndërtoj një aplikacion AI."
+      )
+    ).toBe(true);
 
-    const history = getMemoryHistory(sessionId);
-
-    expect(history).toHaveLength(2);
-
-    expect(history[0]).toEqual(
-      expect.objectContaining({
-        role: "user",
-        content: "Dua të ndërtoj një aplikacion AI."
-      })
-    );
-
-    expect(history[1]).toEqual(
-      expect.objectContaining({
-        role: "assistant",
-        content: "Fillo me arkitekturën e bërthamës."
-      })
-    );
+    expect(
+      recoveredHistory.some(
+        (message) =>
+          message.content === "Vazhdo me planin e aplikacionit."
+      )
+    ).toBe(true);
   });
 });
