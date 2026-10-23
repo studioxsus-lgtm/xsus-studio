@@ -9,6 +9,7 @@
  * - Kontrolli i dështimeve të storage.
  * - Kontrolli i retention.
  * - Serializimi i krijimit të backup-eve.
+ * - Verifikimi i qëndrueshmërisë së backup-eve.
  */
 
 import {
@@ -168,13 +169,35 @@ describe("XSUS AI Core — Memory Lifecycle Hardening", () => {
     const { lifecycleManager, recoveryEngine } =
       await createEnvironment();
 
-    const recoverSpy = vi.spyOn(recoveryEngine, "recover");
+    // Përdorim wrapper-in për të mos modifikuar objektin e ngrirë.
+    let recoverCalls = 0;
 
-    const result = await lifecycleManager.recover("   ");
+    const manager = createMemoryLifecycleManager({
+      storage: createMemoryBackupStorage({
+        filePath: path.join(
+          temporaryDirectories[temporaryDirectories.length - 1],
+          "empty-id-backups.json"
+        )
+      }),
+      recoveryEngine: {
+        inspect: (...args) => recoveryEngine.inspect(...args),
+        recover: (...args) => {
+          recoverCalls += 1;
+          return recoveryEngine.recover(...args);
+        }
+      },
+      createBackup: async () =>
+        createMemoryBackup({ message: "test" })
+    });
+
+    const result = await manager.recover("   ");
 
     expect(result.success).toBe(false);
     expect(result.error.code).toBe("RECOVERY_FAILED");
-    expect(recoverSpy).not.toHaveBeenCalled();
+    expect(recoverCalls).toBe(0);
+
+    // Sigurohemi që menaxheri origjinal është ende i përdorshëm.
+    expect(typeof lifecycleManager.recover).toBe("function");
   });
 
   test("nuk aplikon backup pa callback të konfiguruar", async () => {
@@ -229,12 +252,20 @@ describe("XSUS AI Core — Memory Lifecycle Hardening", () => {
   test("raporton dështimin e storage gjatë ruajtjes", async () => {
     const { storage, recoveryEngine } = await createEnvironment();
 
-    const saveSpy = vi
-      .spyOn(storage, "save")
-      .mockRejectedValue(new Error("Disku nuk është i disponueshëm"));
+    const saveMock = vi.fn().mockRejectedValue(
+      new Error("Disku nuk është i disponueshëm")
+    );
+
+    const writableStorage = {
+      save: saveMock,
+      list: (...args) => storage.list(...args),
+      get: (...args) => storage.get(...args),
+      verify: (...args) => storage.verify(...args),
+      delete: (...args) => storage.delete(...args)
+    };
 
     const manager = createMemoryLifecycleManager({
-      storage,
+      storage: writableStorage,
       recoveryEngine,
       createBackup: async () =>
         createMemoryBackup({ message: "test ruajtjeje" })
@@ -247,23 +278,28 @@ describe("XSUS AI Core — Memory Lifecycle Hardening", () => {
     expect(result.error.message).toContain(
       "Disku nuk është i disponueshëm"
     );
-
-    saveSpy.mockRestore();
+    expect(saveMock).toHaveBeenCalledOnce();
   });
 
   test("verifikon backup-in pas ruajtjes", async () => {
     const { storage, recoveryEngine } = await createEnvironment();
 
-    const verifySpy = vi
-      .spyOn(storage, "verify")
-      .mockResolvedValue({
-        valid: false,
-        exists: true,
-        errors: ["integritet i pavlefshëm"]
-      });
+    const verifyMock = vi.fn().mockResolvedValue({
+      valid: false,
+      exists: true,
+      errors: ["integritet i pavlefshëm"]
+    });
+
+    const verificationStorage = {
+      save: (...args) => storage.save(...args),
+      list: (...args) => storage.list(...args),
+      get: (...args) => storage.get(...args),
+      delete: (...args) => storage.delete(...args),
+      verify: verifyMock
+    };
 
     const manager = createMemoryLifecycleManager({
-      storage,
+      storage: verificationStorage,
       recoveryEngine,
       createBackup: async () =>
         createMemoryBackup({ message: "post-save verification" })
@@ -273,24 +309,43 @@ describe("XSUS AI Core — Memory Lifecycle Hardening", () => {
 
     expect(result.success).toBe(false);
     expect(result.error.code).toBe("BACKUP_SAVE_FAILED");
-    expect(verifySpy).toHaveBeenCalledWith(result.backupId);
-
-    verifySpy.mockRestore();
+    expect(verifyMock).toHaveBeenCalledWith(result.backupId);
   });
 
   test("nuk fshin backup-e automatikisht kur retention është çaktivizuar", async () => {
     const { lifecycleManager, storage } = await createEnvironment();
 
-    const deleteSpy = vi.spyOn(storage, "delete");
+    let deleteCalls = 0;
 
-    const first = await lifecycleManager.createAndSaveBackup();
-    const second = await lifecycleManager.createAndSaveBackup();
+    const observingStorage = {
+      save: (...args) => storage.save(...args),
+      list: (...args) => storage.list(...args),
+      get: (...args) => storage.get(...args),
+      verify: (...args) => storage.verify(...args),
+      delete: (...args) => {
+        deleteCalls += 1;
+        return storage.delete(...args);
+      }
+    };
+
+    const { recoveryEngine } = await createEnvironment();
+
+    const manager = createMemoryLifecycleManager({
+      storage: observingStorage,
+      recoveryEngine,
+      createBackup: async () =>
+        createMemoryBackup({ message: "retention test" })
+    });
+
+    const first = await manager.createAndSaveBackup();
+    const second = await manager.createAndSaveBackup();
 
     expect(first.success).toBe(true);
     expect(second.success).toBe(true);
-    expect(deleteSpy).not.toHaveBeenCalled();
+    expect(deleteCalls).toBe(0);
 
-    deleteSpy.mockRestore();
+    // Menaxheri origjinal mbetet i vlefshëm.
+    expect(typeof lifecycleManager.createAndSaveBackup).toBe("function");
   });
 
   test("serializon krijimet paralele të backup-eve", async () => {
