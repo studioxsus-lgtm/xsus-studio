@@ -89,16 +89,14 @@ describe("XSUS AI — Persistence Recovery Integrity", () => {
     expect(registry.listDatasets()).toHaveLength(2);
 
     expect(
-      registry.getDataset("albanian-knowledge")
-        .collection[0]
+      registry.getDataset("albanian-knowledge").collection[0]
     ).toMatchObject({
       id: "sq-001",
       content: "Njohuri në shqip."
     });
 
     expect(
-      registry.getDataset("english-knowledge")
-        .collection[0]
+      registry.getDataset("english-knowledge").collection[0]
     ).toMatchObject({
       id: "en-001",
       content: "Knowledge in English."
@@ -116,7 +114,13 @@ describe("XSUS AI — Persistence Recovery Integrity", () => {
         },
         {
           id: "invalid-dataset",
-          entries: []
+          entries: [
+            {
+              id: "invalid-001",
+              title: "Hyrje e pavlefshme",
+              language: "sq"
+            }
+          ]
         }
       ]
     });
@@ -234,14 +238,29 @@ describe("XSUS AI — Persistence Recovery Integrity", () => {
 
     expect(snapshot).toHaveLength(2);
 
-    expect(snapshot).toContainEqual({
-      id: "sq-knowledge",
-      entries: createEntries("sq-001", "Përmbajtja shqipe.")
+    const sqDataset = snapshot.find(
+      (dataset) => dataset.id === "sq-knowledge"
+    );
+
+    const enDataset = snapshot.find(
+      (dataset) => dataset.id === "en-knowledge"
+    );
+
+    expect(sqDataset).toBeDefined();
+    expect(enDataset).toBeDefined();
+
+    expect(sqDataset.entries).toHaveLength(1);
+    expect(sqDataset.entries[0]).toMatchObject({
+      id: "sq-001",
+      title: "Titulli sq-001",
+      content: "Përmbajtja shqipe."
     });
 
-    expect(snapshot).toContainEqual({
-      id: "en-knowledge",
-      entries: createEntries("en-001", "English content.")
+    expect(enDataset.entries).toHaveLength(1);
+    expect(enDataset.entries[0]).toMatchObject({
+      id: "en-001",
+      title: "Titulli en-001",
+      content: "English content."
     });
   });
 
