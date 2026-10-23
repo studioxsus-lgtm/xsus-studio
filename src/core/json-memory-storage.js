@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI Core — JSON Memory Storage
- * Version: 1.1.0
+ * Version: 1.0.0
  *
  * Ruajtje e qëndrueshme e memories në skedar JSON.
  * Përdor Node.js filesystem API.
