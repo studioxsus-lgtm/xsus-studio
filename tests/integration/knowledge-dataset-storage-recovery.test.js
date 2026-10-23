@@ -9,7 +9,9 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { createKnowledgeDatasetPipeline } from "../../src/knowledge/knowledge-dataset-pipeline.js";
+import {
+  createKnowledgeDatasetPipeline
+} from "../../src/knowledge/knowledge-dataset-pipeline.js";
 
 const temporaryDirectories = [];
 
@@ -23,6 +25,17 @@ async function createTemporaryFilePath() {
   return join(directory, "datasets.json");
 }
 
+function createTestEntries() {
+  return [
+    {
+      id: "xsus-entry-1",
+      title: "XSUS AI",
+      content: "Një sistem inteligjence artificiale.",
+      language: "sq"
+    }
+  ];
+}
+
 afterEach(async () => {
   await Promise.all(
     temporaryDirectories.splice(0).map((directory) =>
@@ -32,7 +45,7 @@ afterEach(async () => {
 });
 
 describe("XSUS Knowledge Dataset Storage Recovery", () => {
-  test("ruan dataset-et në JSON dhe i rikthen pas rinisjes", async () => {
+  test("ruan dataset-in në JSON dhe e rikthen pas rinisjes", async () => {
     const filePath = await createTemporaryFilePath();
 
     const firstPipeline = await createKnowledgeDatasetPipeline({
@@ -40,27 +53,20 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
     });
 
     try {
-      const registration = await firstPipeline.registerDataset({
-        id: "recovery-test",
-        name: "Recovery Test",
-        language: "sq",
-        entries: [
-          {
-            question: "Çfarë është XSUS AI?",
-            answer: "Një sistem inteligjence artificiale."
-          }
-        ]
-      });
+      const registration = await firstPipeline.registerDataset(
+        "recovery-test",
+        createTestEntries()
+      );
 
       expect(registration.success).toBe(true);
 
-      const savedContent = await readFile(filePath, "utf8");
-      const savedJSON = JSON.parse(savedContent);
+      const savedJSON = JSON.parse(
+        await readFile(filePath, "utf8")
+      );
 
-      expect(savedJSON).toBeDefined();
-      expect(savedJSON).toHaveProperty("datasets");
       expect(savedJSON.datasets).toHaveLength(1);
       expect(savedJSON.datasets[0].id).toBe("recovery-test");
+      expect(savedJSON.datasets[0].collection).toHaveLength(1);
     } finally {
       await firstPipeline.close();
     }
@@ -75,13 +81,22 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
       expect(result.success).toBe(true);
       expect(result.datasets).toHaveLength(1);
       expect(result.datasets[0].id).toBe("recovery-test");
-      expect(result.datasets[0].name).toBe("Recovery Test");
+      expect(result.datasets[0].entryCount).toBe(1);
+
+      const restored = secondPipeline.getDataset("recovery-test");
+
+      expect(restored).not.toBeNull();
+      expect(restored.collection[0]).toMatchObject({
+        id: "xsus-entry-1",
+        title: "XSUS AI",
+        content: "Një sistem inteligjence artificiale."
+      });
     } finally {
       await secondPipeline.close();
     }
   });
 
-  test("skedari JSON i dëmtuar nuk duhet të rikthehet si dataset i vlefshëm", async () => {
+  test("refuzon rikthimin nga një skedar JSON i dëmtuar", async () => {
     const filePath = await createTemporaryFilePath();
 
     await writeFile(filePath, "{ JSON i dëmtuar", "utf8");
@@ -91,7 +106,7 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
     ).rejects.toThrow();
   });
 
-  test("skedari JSON i ruajtur përmban të dhënat e dataset-it", async () => {
+  test("ruan fushat e standardizuara të hyrjes në JSON", async () => {
     const filePath = await createTemporaryFilePath();
 
     const pipeline = await createKnowledgeDatasetPipeline({
@@ -99,32 +114,45 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
     });
 
     try {
-      const registration = await pipeline.registerDataset({
-        id: "json-content-test",
-        name: "JSON Content Test",
-        language: "en",
-        entries: [
+      const registration = await pipeline.registerDataset(
+        "json-content-test",
+        [
           {
-            question: "What is a dataset?",
-            answer: "A structured collection of knowledge."
+            id: "entry-en-1",
+            title: "Knowledge Dataset",
+            content: "A structured collection of knowledge.",
+            language: "en",
+            domain: "general",
+            topic: "datasets",
+            keywords: ["knowledge", "dataset"],
+            tags: ["test"]
           }
         ]
-      });
+      );
 
       expect(registration.success).toBe(true);
 
-      const content = JSON.parse(await readFile(filePath, "utf8"));
+      const content = JSON.parse(
+        await readFile(filePath, "utf8")
+      );
 
-      expect(content.datasets[0]).toMatchObject({
-        id: "json-content-test",
-        name: "JSON Content Test",
-        language: "en"
-      });
+      expect(content.datasets).toHaveLength(1);
 
-      expect(content.datasets[0].entries).toHaveLength(1);
-      expect(content.datasets[0].entries[0]).toMatchObject({
-        question: "What is a dataset?",
-        answer: "A structured collection of knowledge."
+      expect(content.datasets[0].id).toBe(
+        "json-content-test"
+      );
+
+      expect(content.datasets[0].collection).toHaveLength(1);
+
+      expect(content.datasets[0].collection[0]).toMatchObject({
+        id: "entry-en-1",
+        title: "Knowledge Dataset",
+        content: "A structured collection of knowledge.",
+        language: "en",
+        domain: "general",
+        topic: "datasets",
+        keywords: ["knowledge", "dataset"],
+        tags: ["test"]
       });
     } finally {
       await pipeline.close();
