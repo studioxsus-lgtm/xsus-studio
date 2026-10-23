@@ -114,11 +114,9 @@ export async function createKnowledgeDatasetPipeline({
 
   let closed = false;
   let closing = false;
-  let closePromise = null;
 
   let operationQueue = Promise.resolve();
 
-  // Gjendja e fundit e njohur e persistencës.
   let persistenceConsistent = true;
   let lastPersistenceError = null;
 
@@ -143,7 +141,7 @@ export async function createKnowledgeDatasetPipeline({
       return operation();
     });
 
-    // Një operacion i dështuar nuk bllokon radhën.
+    // Dështimi i një operacioni nuk bllokon radhën.
     operationQueue = task.then(
       () => undefined,
       () => undefined
@@ -490,24 +488,20 @@ export async function createKnowledgeDatasetPipeline({
     });
   }
 
-  function close() {
+  async function close() {
     if (closed || closing) {
-      return closePromise || Promise.resolve(false);
+      return false;
     }
 
     closing = true;
 
-    // Pris të gjitha operacionet e pranuara më parë.
-    closePromise = (async () => {
-      await operationQueue;
+    // Prit operacionet e pranuara para fillimit të mbylljes.
+    await operationQueue;
 
-      closed = true;
-      bootstrap.close();
+    closed = true;
+    bootstrap.close();
 
-      return true;
-    })();
-
-    return closePromise;
+    return true;
   }
 
   return Object.freeze({
