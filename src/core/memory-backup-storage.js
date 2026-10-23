@@ -13,9 +13,9 @@
  * - Rikuperimi konservator i kyçjeve të vjetruara.
  *
  * Shënim:
- * Ky implementim është menduar për filesystem lokal që mbështet
- * krijimin ekskluziv të skedarëve dhe rename brenda filesystem-it.
- * Për koordinim të shpërndarë kërkohet një mekanizëm i dedikuar.
+ * Ky implementim është menduar për filesystem lokal që
+ * mbështet krijimin ekskluziv të skedarëve dhe rename.
+ * Për koordinim të shpërndarë kërkohet mekanizëm i dedikuar.
  */
 
 import { randomUUID } from "node:crypto";
@@ -184,9 +184,7 @@ function sleep(milliseconds) {
 
 /**
  * Kontrollon nëse PID-i ekziston.
- *
- * EPERM trajtohet si "mund të jetë aktiv".
- * Në rast pasigurie nuk supozohet se procesi ka vdekur.
+ * EPERM trajtohet si proces potencialisht aktiv.
  */
 function isProcessAlive(pid) {
   if (!Number.isSafeInteger(pid) || pid <= 0) {
@@ -205,6 +203,10 @@ function isProcessAlive(pid) {
   }
 }
 
+/**
+ * Lexon metadata-n e kyçjes.
+ * Kthen null nëse skedari mungon ose metadata është e pavlefshme.
+ */
 async function readLockInfo(lockPath) {
   let content;
 
@@ -227,6 +229,7 @@ async function readLockInfo(lockPath) {
 
     if (
       typeof lock?.token !== "string" ||
+      lock.token.length === 0 ||
       !Number.isSafeInteger(lock?.pid) ||
       lock.pid <= 0
     ) {
@@ -240,7 +243,7 @@ async function readLockInfo(lockPath) {
 }
 
 /**
- * Heq kyçjen vetëm nëse token-i përputhet.
+ * Heq kyçjen vetëm nëse token-i ende përputhet.
  */
 async function removeLockIfOwned(lockPath, token) {
   const lock = await readLockInfo(lockPath);
@@ -263,62 +266,69 @@ async function removeLockIfOwned(lockPath, token) {
 }
 
 /**
- * Rikuperim konservator:
- * - Nëse pronari mund të jetë aktiv, kyçja ruhet.
- * - Nëse pronari nuk ekziston dhe kyçja është e vjetër,
- *   provohet zhvendosja e saj në emër unik.
- * - Kyçjet e dëmtuara nuk fshihen automatikisht.
+ * Rikuperon kyçjet e vjetruara.
  *
- * Shënim: kontrolli i PID-it nuk e eliminon plotësisht
- * garën me një proces të ri ose ripërdorimin e PID-it.
+ * - Kyçjet e reja nuk preken.
+ * - Kyçjet e vjetra me PID aktiv ruhen.
+ * - Kyçjet e vjetra me PID joaktiv mund të rikuperohen.
+ * - Kyçjet e vjetra me metadata të dëmtuara mund të
+ *   rikuperohen pasi kontrollohet mosha e tyre.
+ *
+ * Kujdes: stat dhe rename nuk formojnë një operacion atomik
+ * të kushtëzuar nga mtime. Për këtë arsye mbetet një rrezik
+ * gare ndërmjet proceseve në skenarë ekstremë.
  */
 async function tryRecoverStaleLock(lockPath, staleMs) {
-  let lockInfo;
-  let lock;
+  let initialStat;
 
   try {
-    lockInfo = await stat(lockPath);
-    lock = await readLockInfo(lockPath);
+    initialStat = await stat(lockPath);
   } catch (error) {
     if (error.code === "ENOENT") {
       return true;
     }
 
-    throw error;
+    throw createStorageError(
+      MEMORY_BACKUP_STORAGE_ERRORS.IO_FAILED,
+      "Nuk mund të kontrollohet mosha e kyçjes.",
+      error
+    );
   }
 
-  if (!lock) {
-    // Mos fshi kyçje që nuk mund të verifikohet.
+  if (Date.now() - initialStat.mtimeMs <= staleMs) {
     return false;
   }
 
-  if (Date.now() - lockInfo.mtimeMs <= staleMs) {
-    return false;
-  }
+  const lock = await readLockInfo(lockPath);
 
-  if (isProcessAlive(lock.pid)) {
+  // Nëse metadata është e vlefshme dhe procesi ekziston,
+  // mos e hiq kyçjen, edhe nëse mtime është e vjetër.
+  if (lock && isProcessAlive(lock.pid)) {
     return false;
   }
 
   const stalePath = `${lockPath}.stale-${randomUUID()}`;
 
   try {
-    // Rename brenda filesystem-it; mos fshi kyçjen origjinale
-    // drejtpërdrejt nga një kontroll vetëm i moshës.
+    const currentStat = await stat(lockPath);
+
+    // Nëse koha e ndryshimit ka ndryshuar, skedari mund
+    // të jetë zëvendësuar. Mos ndërhy.
+    if (currentStat.mtimeMs !== initialStat.mtimeMs) {
+      return false;
+    }
+
     await rename(lockPath, stalePath);
   } catch (error) {
-    if (
-      error.code === "ENOENT" ||
-      error.code === "EEXIST"
-    ) {
+    if (error.code === "ENOENT") {
       return true;
     }
 
     return false;
   }
 
-  // Fshirja e kopjes së vjetër nuk duhet të bllokojë
-  // marrjen e kyçjes së re, pasi origjinalja është zhvendosur.
+  // Kyçja e vjetër është zhvendosur.
+  // Dështimi i pastrimit nuk duhet ta bllokojë tentativën tjetër.
   await rm(stalePath, { force: true }).catch(() => {});
 
   return true;
