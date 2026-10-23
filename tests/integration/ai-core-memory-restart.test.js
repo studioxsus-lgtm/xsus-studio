@@ -1,5 +1,12 @@
 
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test
+} from "vitest";
+
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -12,10 +19,15 @@ import {
   clearAllMemory
 } from "../../src/core/memory-engine.js";
 
-import { createMemoryPersistence } from "../../src/core/memory-persistence-integration.js";
-import { createJSONMemoryStorage } from "../../src/core/json-memory-storage.js";
+import {
+  createMemoryPersistence
+} from "../../src/core/memory-persistence-integration.js";
 
-describe("XSUS AI Core — JSON memory recovery", () => {
+import {
+  createJSONMemoryStorage
+} from "../../src/core/json-memory-storage.js";
+
+describe("XSUS AI Core - JSON Memory recovery", () => {
   let temporaryDirectory;
   let filePath;
 
@@ -27,7 +39,10 @@ describe("XSUS AI Core — JSON memory recovery", () => {
       path.join(os.tmpdir(), "xsus-ai-memory-")
     );
 
-    filePath = path.join(temporaryDirectory, "memory.json");
+    filePath = path.join(
+      temporaryDirectory,
+      "memory.json"
+    );
 
     clearAllMemory();
   });
@@ -44,21 +59,31 @@ describe("XSUS AI Core — JSON memory recovery", () => {
   });
 
   test("rikthen historikun nga JSON pasi memoria RAM pastrohet", async () => {
-    const firstStorage = createJSONMemoryStorage({ filePath });
+    const firstStorage = createJSONMemoryStorage({
+      filePath
+    });
+
     const firstPersistence = createMemoryPersistence({
       storage: firstStorage,
       filePath,
       prefix
     });
 
-    createMemorySession(sessionId, "sq");
+    createMemorySession({
+      sessionId,
+      metadata: {
+        language: "sq"
+      }
+    });
 
-    addMemoryMessage(sessionId, {
+    addMemoryMessage({
+      sessionId,
       role: "user",
       content: "Dua të ndërtoj një aplikacion AI."
     });
 
-    addMemoryMessage(sessionId, {
+    addMemoryMessage({
+      sessionId,
       role: "assistant",
       content: "Fillo me arkitekturën e bërthamës."
     });
@@ -67,18 +92,27 @@ describe("XSUS AI Core — JSON memory recovery", () => {
 
     expect(hasMemorySession(sessionId)).toBe(true);
 
+    const savedHistory = getMemoryHistory(sessionId);
+
+    expect(savedHistory).toHaveLength(2);
+
     clearAllMemory();
 
     expect(hasMemorySession(sessionId)).toBe(false);
 
-    const secondStorage = createJSONMemoryStorage({ filePath });
+    const secondStorage = createJSONMemoryStorage({
+      filePath
+    });
+
     const secondPersistence = createMemoryPersistence({
       storage: secondStorage,
       filePath,
       prefix
     });
 
-    const restored = await secondPersistence.restoreSession(sessionId);
+    const restored = await secondPersistence.restoreSession(
+      sessionId
+    );
 
     expect(restored).toBeTruthy();
     expect(hasMemorySession(sessionId)).toBe(true);
@@ -86,6 +120,7 @@ describe("XSUS AI Core — JSON memory recovery", () => {
     const history = getMemoryHistory(sessionId);
 
     expect(history).toHaveLength(2);
+
     expect(history[0]).toEqual(
       expect.objectContaining({
         role: "user",
