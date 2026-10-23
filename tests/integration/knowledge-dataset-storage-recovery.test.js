@@ -58,7 +58,6 @@ afterEach(async () => {
 describe("XSUS Knowledge Dataset Storage Recovery", () => {
   test("ruan dataset-in në JSON dhe e rikthen pas rinisjes", async () => {
     const filePath = await createTemporaryFilePath();
-
     const firstPipeline = await createKnowledgeDatasetPipeline({
       filePath
     });
@@ -78,9 +77,17 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
         await readFile(filePath, "utf8")
       );
 
+      expect(savedJSON.formatVersion).toBe("1.0.0");
       expect(savedJSON.datasets).toHaveLength(1);
       expect(savedJSON.datasets[0].id).toBe("recovery-test");
-      expect(savedJSON.datasets[0].collection).toHaveLength(1);
+
+      // Storage ruan hyrjet te "entries", jo te "collection".
+      expect(savedJSON.datasets[0].entries).toHaveLength(1);
+      expect(savedJSON.datasets[0].entries[0]).toMatchObject({
+        id: "xsus-entry-1",
+        title: "XSUS AI",
+        content: "Një sistem inteligjence artificiale."
+      });
     } finally {
       await firstPipeline.close();
     }
@@ -123,7 +130,6 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
 
   test("ruan fushat e standardizuara të hyrjes në JSON", async () => {
     const filePath = await createTemporaryFilePath();
-
     const pipeline = await createKnowledgeDatasetPipeline({
       filePath
     });
@@ -154,11 +160,13 @@ describe("XSUS Knowledge Dataset Storage Recovery", () => {
         await readFile(filePath, "utf8")
       );
 
+      expect(content.formatVersion).toBe("1.0.0");
       expect(content.datasets).toHaveLength(1);
       expect(content.datasets[0].id).toBe("json-content-test");
-      expect(content.datasets[0].collection).toHaveLength(1);
 
-      expect(content.datasets[0].collection[0]).toMatchObject({
+      // Kontrollo formatin real të storage-it.
+      expect(content.datasets[0].entries).toHaveLength(1);
+      expect(content.datasets[0].entries[0]).toMatchObject({
         id: "entry-en-1",
         title: "Knowledge Dataset",
         content: "A structured collection of knowledge.",
