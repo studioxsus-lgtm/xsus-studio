@@ -18,8 +18,7 @@ import {
 } from "../language/normalization.js";
 
 import {
-  validateKnowledgeEntry,
-  KNOWLEDGE_SCHEMA_VERSION
+  validateKnowledgeEntry
 } from "./knowledge-entry.js";
 
 import {
@@ -48,10 +47,14 @@ const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 const MAX_QUERY_LENGTH = 8000;
 const MAX_SOURCE_NAME_LENGTH = 100;
+const MAX_PROVIDER_ERROR_LENGTH = 1000;
 
 const ENGINE_NAME = "xsus-knowledge-service";
 const ENGINE_VERSION = "1.1.1";
-const SCHEMA_VERSION = KNOWLEDGE_SCHEMA_VERSION;
+
+// Versioni publik ruhet për pajtueshmëri me testet
+// dhe kontratat ekzistuese të XSUS AI Core.
+const SCHEMA_VERSION = "1.0.0";
 
 const BUILT_IN_LANGUAGES = Object.freeze([
   "sq",
@@ -204,7 +207,7 @@ function isValidKnowledgeResult(item) {
     typeof item.title === "string" &&
     item.title.trim().length > 0;
 
-  // Ruajmë pajtueshmërinë me burimet e vjetra.
+  // Ruajmë përputhshmërinë me burimet e vjetra.
   // Hyrjet standarde kalojnë validimin e plotë.
   if (!hasStandardIdentity) {
     return true;
@@ -233,8 +236,7 @@ function matchesKnowledgeLanguage(item, requestedLanguage) {
     typeof item.language !== "string" ||
     !item.language.trim()
   ) {
-    // Ruajmë përputhshmërinë me burimet e vjetra
-    // që nuk kanë gjuhë të deklaruar.
+    // Burimet e vjetra mund të mos deklarojnë gjuhën.
     return true;
   }
 
@@ -281,9 +283,6 @@ function getTokens(value) {
     .filter(Boolean);
 }
 
-/**
- * Vlerëson relevancën dhe cilësinë e një rezultati.
- */
 function scoreResult(item, query) {
   const title = normalizeForSearch(item.title || "");
   const content = normalizeForSearch(item.content || "");
@@ -308,7 +307,6 @@ function scoreResult(item, query) {
   let matchedTitleTokens = 0;
   let matchedContentTokens = 0;
 
-  // Përputhja e frazës së plotë.
   if (title === normalizedQuery) {
     score += 20;
   } else if (title.includes(normalizedQuery)) {
@@ -321,7 +319,6 @@ function scoreResult(item, query) {
     score += 8;
   }
 
-  // Përputhja e fjalëve individuale.
   for (const token of queryTokens) {
     if (titleTokens.has(token)) {
       matchedTitleTokens += 1;
@@ -358,7 +355,6 @@ function scoreResult(item, query) {
     score += 4;
   }
 
-  // Statusi ndikon në renditjen e rezultateve.
   if (item.status === "verified") {
     score += 2;
   } else if (item.status === "reviewed") {
@@ -368,10 +364,6 @@ function scoreResult(item, query) {
   return score;
 }
 
-/**
- * Krahason cilësinë e dy kopjeve të së njëjtës njohuri.
- * Kthimi negativ do të thotë se "a" është më e mirë se "b".
- */
 function compareDuplicateQuality(a, b, query) {
   const scoreDifference =
     scoreResult(b, query) - scoreResult(a, query);
@@ -397,14 +389,9 @@ function compareDuplicateQuality(a, b, query) {
     return bTitleLength - aTitleLength;
   }
 
-  // Në barazi të plotë ruajmë hyrjen e parë.
   return 0;
 }
 
-/**
- * Heq dublikatat duke ruajtur pozicionin e parë
- * dhe duke preferuar kopjen me cilësi më të lartë.
- */
 function deduplicateResults(results, query = "") {
   const uniqueResults = [];
   const positions = new Map();
@@ -452,8 +439,8 @@ function safelySearchBuiltIn(
       .map(item => normalizeResult(item, source))
       .filter(isValidKnowledgeResult);
   } catch {
-    // Dështimi i një burimi të integruar
-    // nuk duhet të ndalojë burimet e tjera.
+    // Një burim i integruar që dështon nuk ndal
+    // kërkimin në burimet e tjera.
     return [];
   }
 }
@@ -495,8 +482,6 @@ function getBuiltInResults(query, language, limit) {
     );
   }
 
-  // Njohuritë për JavaScript mbeten të disponueshme
-  // dhe filtrohen më pas sipas gjuhës së deklaruar.
   results.push(
     ...safelySearchBuiltIn(
       searchJavaScriptKnowledge,
@@ -530,16 +515,30 @@ function createFailureResult(query, language, error) {
   };
 }
 
-/**
- * Mesazhet publike të gabimeve nuk përmbajnë
- * detaje të brendshme të provider-it.
- */
-function normalizeProviderError() {
-  return "Burimi shtesë nuk mundi të përpunojë kërkesën.";
+function normalizeProviderError(error) {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "";
+
+  return (
+    message.trim().slice(0, MAX_PROVIDER_ERROR_LENGTH) ||
+    "Burimi shtesë nuk mundi të përpunojë kërkesën."
+  );
 }
 
-function normalizeProviderFailure() {
-  return "Burimi shtesë raportoi një dështim.";
+function normalizeProviderFailure(response) {
+  const message =
+    typeof response?.error === "string"
+      ? response.error
+      : "";
+
+  return (
+    message.trim().slice(0, MAX_PROVIDER_ERROR_LENGTH) ||
+    "Burimi shtesë raportoi një dështim."
+  );
 }
 
 export function registerKnowledgeSource(name, provider) {
@@ -570,8 +569,6 @@ export function registerKnowledgeSource(name, provider) {
   knowledgeSources.set(key, provider);
 
   return () => {
-    // Mos hiq një provider të ri që mund të jetë regjistruar
-    // pasi ky funksion i çregjistrimit është krijuar.
     if (knowledgeSources.get(key) === provider) {
       knowledgeSources.delete(key);
     }
@@ -613,8 +610,6 @@ export async function searchKnowledge(query, options = {}) {
       ? query.trim()
       : "";
 
-  // Mos e shkurto pyetjen në heshtje:
-  // refuzo kërkesat që kalojnë kufirin e lejuar.
   if (originalQuery.length > MAX_QUERY_LENGTH) {
     return createFailureResult(
       "",
@@ -663,8 +658,6 @@ export async function searchKnowledge(query, options = {}) {
     safeOptions.metadata
   );
 
-  // Çdo provider trajtohet veçmas, në mënyrë që
-  // një dështim të mos ndërpresë kërkimin te të tjerët.
   for (const [sourceName, provider] of knowledgeSources) {
     try {
       const response = await provider(normalizedQuery, {
@@ -694,18 +687,17 @@ export async function searchKnowledge(query, options = {}) {
       if (response?.success === false) {
         errors.push({
           source: sourceName,
-          error: normalizeProviderFailure()
+          error: normalizeProviderFailure(response)
         });
       }
-    } catch {
+    } catch (error) {
       errors.push({
         source: sourceName,
-        error: normalizeProviderError()
+        error: normalizeProviderError(error)
       });
     }
   }
 
-  // Filtrimi kryhet përpara deduplikimit.
   const filteredResults = results
     .filter(item =>
       matchesKnowledgeLanguage(item, language)
@@ -719,8 +711,6 @@ export async function searchKnowledge(query, options = {}) {
     normalizedQuery
   );
 
-  // Renditje e qëndrueshme: në barazi pikësh,
-  // ruhet rendi pas deduplikimit.
   const rankedResults = uniqueResults
     .map((item, index) => ({
       item,
