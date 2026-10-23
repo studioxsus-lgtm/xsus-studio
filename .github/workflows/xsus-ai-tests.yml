@@ -13,10 +13,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: xsus-ai-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Run tests and coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -38,8 +43,22 @@ jobs:
           test -d tests/unit
           echo "Project files verified."
 
+      - name: Configure npm retries
+        run: |
+          npm config set fetch-retries 5
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          npm config set fetch-timeout 300000
+          npm config set audit false
+          npm config set fund false
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci --no-audit --no-fund
+        env:
+          npm_config_fetch_retries: 5
+          npm_config_fetch_retry_mintimeout: 20000
+          npm_config_fetch_retry_maxtimeout: 120000
+          npm_config_fetch_timeout: 300000
 
       - name: Run all tests
         run: npm test
