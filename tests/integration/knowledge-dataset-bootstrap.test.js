@@ -51,7 +51,8 @@ describe("Knowledge Dataset Bootstrap", () => {
 
     expect(instance.getMetadata()).toEqual({
       engine: "xsus-knowledge-dataset-bootstrap",
-      version: "1.0.0"
+      version: "1.1.0",
+      storageMode: "file"
     });
   });
 
