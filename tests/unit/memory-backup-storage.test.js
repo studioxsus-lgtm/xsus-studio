@@ -1,4 +1,3 @@
-
 import { afterEach, describe, expect, test } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -213,6 +212,7 @@ describe("XSUS AI Core — Memory Backup Storage", () => {
     const storedBackups = await storage.list();
 
     expect(storedBackups).toHaveLength(3);
+
     await expect(storage.get("backup-1")).resolves.toEqual(backups[0]);
     await expect(storage.get("backup-2")).resolves.toEqual(backups[1]);
     await expect(storage.get("backup-3")).resolves.toEqual(backups[2]);
@@ -224,7 +224,7 @@ describe("XSUS AI Core — Memory Backup Storage", () => {
     await storage.save("backup-1", createBackup());
 
     await expect(storage.getStats()).resolves.toMatchObject({
-      version: "1.1.0",
+      version: "1.2.0",
       entries: 1,
       filePath,
     });
