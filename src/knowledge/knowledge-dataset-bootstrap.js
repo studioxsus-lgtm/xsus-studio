@@ -1,13 +1,15 @@
 
 /**
  * XSUS AI Core — Knowledge Dataset Bootstrap
- * Version: 1.0.0
+ * Version: 1.1.0
  *
- * Inicializon sistemin e dataset-eve:
- * 1. Krijon registry-n.
- * 2. Krijon storage dhe persistence.
- * 3. Rikthen dataset-et e ruajtura.
- * 4. Regjistron integrimin me knowledge-service.
+ * Përgjegjësitë:
+ * 1. Krijon registry-n e dataset-eve.
+ * 2. Inicializon storage real ose adapter të injektuar për testim.
+ * 3. Krijon sistemin e persistence.
+ * 4. Rikthen dataset-et e ruajtura.
+ * 5. Regjistron integrimin me knowledge-service.
+ * 6. Mundëson mbylljen e sigurt të integrimit.
  */
 
 import {
@@ -27,12 +29,30 @@ import {
 } from "./knowledge-dataset-integration.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-bootstrap";
-const ENGINE_VERSION = "1.0.0";
+const ENGINE_VERSION = "1.1.0";
+
+function validateStorageAdapter(storageAdapter) {
+  if (
+    !storageAdapter ||
+    typeof storageAdapter.saveDatasets !== "function" ||
+    typeof storageAdapter.loadDatasets !== "function"
+  ) {
+    throw new TypeError(
+      "storageAdapter duhet të ofrojë metodat saveDatasets dhe loadDatasets."
+    );
+  }
+
+  return storageAdapter;
+}
 
 export async function initializeKnowledgeDatasets({
-  filePath
+  filePath,
+  storageAdapter
 } = {}) {
-  if (typeof filePath !== "string" || !filePath.trim()) {
+  if (
+    !storageAdapter &&
+    (typeof filePath !== "string" || !filePath.trim())
+  ) {
     throw new TypeError(
       "filePath duhet të jetë një shteg i vlefshëm për ruajtjen e dataset-eve."
     );
@@ -40,16 +60,16 @@ export async function initializeKnowledgeDatasets({
 
   const registry = createKnowledgeDatasetRegistry();
 
-  const storage = createKnowledgeDatasetStorage({
-    filePath
-  });
+  const storage = storageAdapter
+    ? validateStorageAdapter(storageAdapter)
+    : createKnowledgeDatasetStorage({ filePath });
 
   const persistence = createKnowledgeDatasetPersistence({
     registry,
     storage
   });
 
-  // Rikthen dataset-et para se të regjistrohet burimi i kërkimit.
+  // Rikthen dataset-et përpara regjistrimit të burimit të kërkimit.
   const restoration = await persistence.restoreRegistry();
 
   if (restoration?.success === false) {
@@ -96,7 +116,8 @@ export async function initializeKnowledgeDatasets({
     getMetadata() {
       return Object.freeze({
         engine: ENGINE_NAME,
-        version: ENGINE_VERSION
+        version: ENGINE_VERSION,
+        storageMode: storageAdapter ? "adapter" : "file"
       });
     }
   });
