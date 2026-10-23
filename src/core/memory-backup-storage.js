@@ -4,22 +4,22 @@
  * Version: 1.2.0
  *
  * Përgjegjësitë:
- * - Ruajtja e backup-eve në skedar JSON.
- * - Leximi dhe listimi i backup-eve.
- * - Fshirja dhe verifikimi i backup-eve.
- * - Shkrimi atomik dhe sinkronizimi i të dhënave.
+ * - Ruajtja dhe leximi i backup-eve JSON.
+ * - Listimi, fshirja dhe verifikimi i backup-eve.
+ * - Shkrimi atomik me sinkronizim të të dhënave.
  * - Parandalimi i mbishkrimit pa leje.
- * - Serializimi brenda procesit dhe kyçja ndërprocesore.
- * - Rikuperimi i kujdesshëm i kyçjeve të vjetruara.
+ * - Serializimi brenda procesit.
+ * - Kyçja ndërprocesore me token unik.
+ * - Rikuperimi konservator i kyçjeve të vjetruara.
  *
  * Shënim:
- * Ky mekanizëm koordinon proceset që respektojnë të njëjtin
- * protokoll lock në një filesystem të përshtatshëm.
- * Për sisteme me shumë serverë ose filesystem të shpërndarë,
- * kërkohet një mekanizëm koordinimi i dedikuar.
+ * Ky implementim është menduar për filesystem lokal që mbështet
+ * krijimin ekskluziv të skedarëve dhe rename brenda filesystem-it.
+ * Për koordinim të shpërndarë kërkohet një mekanizëm i dedikuar.
  */
 
 import { randomUUID } from "node:crypto";
+import { kill } from "node:process";
 import {
   mkdir,
   open,
@@ -183,16 +183,36 @@ function sleep(milliseconds) {
 }
 
 /**
- * Heq kyçjen vetëm kur skedari ende përmban token-in tonë.
+ * Kontrollon nëse PID-i ekziston.
+ *
+ * EPERM trajtohet si "mund të jetë aktiv".
+ * Në rast pasigurie nuk supozohet se procesi ka vdekur.
  */
-async function removeLockIfOwned(lockPath, token) {
+function isProcessAlive(pid) {
+  if (!Number.isSafeInteger(pid) || pid <= 0) {
+    return false;
+  }
+
+  try {
+    kill(pid, 0);
+    return true;
+  } catch (error) {
+    if (error.code === "ESRCH") {
+      return false;
+    }
+
+    return true;
+  }
+}
+
+async function readLockInfo(lockPath) {
   let content;
 
   try {
     content = await readFile(lockPath, "utf8");
   } catch (error) {
     if (error.code === "ENOENT") {
-      return;
+      return null;
     }
 
     throw createStorageError(
@@ -202,16 +222,30 @@ async function removeLockIfOwned(lockPath, token) {
     );
   }
 
-  let lock;
-
   try {
-    lock = JSON.parse(content);
-  } catch {
-    // Mos fshi një kyçje të dëmtuar që nuk mund të verifikohet.
-    return;
-  }
+    const lock = JSON.parse(content);
 
-  if (lock?.token !== token) {
+    if (
+      typeof lock?.token !== "string" ||
+      !Number.isSafeInteger(lock?.pid) ||
+      lock.pid <= 0
+    ) {
+      return null;
+    }
+
+    return lock;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Heq kyçjen vetëm nëse token-i përputhet.
+ */
+async function removeLockIfOwned(lockPath, token) {
+  const lock = await readLockInfo(lockPath);
+
+  if (!lock || lock.token !== token) {
     return;
   }
 
@@ -229,13 +263,67 @@ async function removeLockIfOwned(lockPath, token) {
 }
 
 /**
- * Kyçje ndërprocesore përmes krijimit ekskluziv të skedarit.
+ * Rikuperim konservator:
+ * - Nëse pronari mund të jetë aktiv, kyçja ruhet.
+ * - Nëse pronari nuk ekziston dhe kyçja është e vjetër,
+ *   provohet zhvendosja e saj në emër unik.
+ * - Kyçjet e dëmtuara nuk fshihen automatikisht.
  *
- * Kujdes:
- * Kyçjet e vjetruara trajtohen sipas moshës së skedarit.
- * Për përdorim në mjedise me procese të gjata, kjo politikë
- * kërkon timeout dhe stale interval të konfiguruar siç duhet.
+ * Shënim: kontrolli i PID-it nuk e eliminon plotësisht
+ * garën me një proces të ri ose ripërdorimin e PID-it.
  */
+async function tryRecoverStaleLock(lockPath, staleMs) {
+  let lockInfo;
+  let lock;
+
+  try {
+    lockInfo = await stat(lockPath);
+    lock = await readLockInfo(lockPath);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return true;
+    }
+
+    throw error;
+  }
+
+  if (!lock) {
+    // Mos fshi kyçje që nuk mund të verifikohet.
+    return false;
+  }
+
+  if (Date.now() - lockInfo.mtimeMs <= staleMs) {
+    return false;
+  }
+
+  if (isProcessAlive(lock.pid)) {
+    return false;
+  }
+
+  const stalePath = `${lockPath}.stale-${randomUUID()}`;
+
+  try {
+    // Rename brenda filesystem-it; mos fshi kyçjen origjinale
+    // drejtpërdrejt nga një kontroll vetëm i moshës.
+    await rename(lockPath, stalePath);
+  } catch (error) {
+    if (
+      error.code === "ENOENT" ||
+      error.code === "EEXIST"
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Fshirja e kopjes së vjetër nuk duhet të bllokojë
+  // marrjen e kyçjes së re, pasi origjinalja është zhvendosur.
+  await rm(stalePath, { force: true }).catch(() => {});
+
+  return true;
+}
+
 async function acquireFileLock({
   lockPath,
   timeoutMs,
@@ -322,34 +410,13 @@ async function acquireFileLock({
     }
 
     try {
-      const lockInfo = await stat(lockPath);
-      const lockAge = Date.now() - lockInfo.mtimeMs;
-
-      if (lockAge > staleMs) {
-        const stalePath =
-          `${lockPath}.stale-${randomUUID()}`;
-
-        try {
-          await rename(lockPath, stalePath);
-          await rm(stalePath, { force: true });
-          continue;
-        } catch (error) {
-          if (
-            error.code === "ENOENT" ||
-            error.code === "EEXIST"
-          ) {
-            continue;
-          }
-
-          // Mos e fshi kyçjen me forcë kur rikuperimi dështon.
-        }
-      }
+      await tryRecoverStaleLock(lockPath, staleMs);
     } catch (error) {
-      if (error.code === "ENOENT") {
-        continue;
+      if (
+        error.code === MEMORY_BACKUP_STORAGE_ERRORS.IO_FAILED
+      ) {
+        throw error;
       }
-
-      // Gabimet e stat() nuk duhet të çojnë në fshirje të kyçjes.
     }
 
     if (Date.now() - startedAt >= timeoutMs) {
@@ -428,7 +495,6 @@ export function createMemoryBackupStorage({
         try {
           await lock.release();
         } catch (releaseError) {
-          // Mos e masko gabimin fillestar të operacionit.
           if (!operationError) {
             throw releaseError;
           }
@@ -485,6 +551,21 @@ export function createMemoryBackupStorage({
     return parsed;
   }
 
+  async function syncDirectory(directoryPath) {
+    let directoryHandle;
+
+    try {
+      directoryHandle = await open(directoryPath, "r");
+      await directoryHandle.sync();
+    } catch (error) {
+      if (!UNSUPPORTED_DIRECTORY_SYNC_CODES.has(error.code)) {
+        throw error;
+      }
+    } finally {
+      await directoryHandle?.close().catch(() => {});
+    }
+  }
+
   async function writeAll(data) {
     const temporaryPath =
       `${resolvedPath}.${randomUUID()}.tmp`;
@@ -504,40 +585,20 @@ export function createMemoryBackupStorage({
         "utf8"
       );
 
-      // Sinkronizo përmbajtjen para zëvendësimit.
       await temporaryHandle.sync();
 
       await temporaryHandle.close();
       temporaryHandle = undefined;
 
-      // Skedari i përkohshëm është në të njëjtin direktorium.
       await rename(temporaryPath, resolvedPath);
       renamed = true;
 
-      // Sinkronizo direktoriumin kur mbështetet nga platforma.
-      let directoryHandle;
-
-      try {
-        directoryHandle = await open(
-          dirname(resolvedPath),
-          "r"
-        );
-
-        await directoryHandle.sync();
-      } catch (error) {
-        if (
-          !UNSUPPORTED_DIRECTORY_SYNC_CODES.has(error.code)
-        ) {
-          throw error;
-        }
-      } finally {
-        await directoryHandle?.close().catch(() => {});
-      }
+      await syncDirectory(dirname(resolvedPath));
     } catch (cause) {
       throw createStorageError(
         MEMORY_BACKUP_STORAGE_ERRORS.IO_FAILED,
         renamed
-          ? "Backup-i u zëvendësua, por sinkronizimi përfundimtar dështoi."
+          ? "Skedari u zëvendësua, por sinkronizimi përfundimtar dështoi."
           : "Nuk mund të ruhet skedari i backup-eve.",
         cause
       );
