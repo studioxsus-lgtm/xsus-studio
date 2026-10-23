@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI — Knowledge Entry Standard
  * Version: 1.3.0
@@ -60,6 +59,25 @@ const DEFAULTS = Object.freeze({
 const LANGUAGE_CODE_PATTERN =
   /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/iu;
 
+const BASE_LANGUAGE_PATTERN = /^[a-z]{2,3}$/iu;
+
+function isPlainObject(value) {
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
+}
+
 function cleanString(value, fallback = "") {
   if (typeof value !== "string") {
     return fallback;
@@ -78,6 +96,7 @@ function normalizeList(value) {
   }
 
   const normalized = [];
+  const seen = new Set();
 
   for (const item of value) {
     if (typeof item !== "string") {
@@ -88,9 +107,12 @@ function normalizeList(value) {
       .normalize("NFC")
       .trim();
 
-    if (entry && !normalized.includes(entry)) {
-      normalized.push(entry);
+    if (!entry || seen.has(entry)) {
+      continue;
     }
+
+    seen.add(entry);
+    normalized.push(entry);
   }
 
   return normalized;
@@ -106,8 +128,8 @@ function normalizeEntryLanguage(value) {
 
   if (
     typeof normalized !== "string" ||
-    !normalized ||
-    normalized === "auto"
+    !normalized.trim() ||
+    normalized.trim().toLowerCase() === "auto"
   ) {
     throw new TypeError(
       "Kodi i gjuhës nuk është i vlefshëm."
@@ -129,7 +151,7 @@ function normalizeEntryLanguage(value) {
 
   if (
     typeof baseLanguage !== "string" ||
-    !/^[a-z]{2,3}$/iu.test(baseLanguage)
+    !BASE_LANGUAGE_PATTERN.test(baseLanguage)
   ) {
     throw new TypeError(
       "Kodi bazë i gjuhës nuk është i vlefshëm."
@@ -173,13 +195,9 @@ function validateDomainId(domain) {
  * Krijon një hyrje të standardizuar të njohurive.
  */
 export function createKnowledgeEntry(input = {}) {
-  if (
-    input === null ||
-    typeof input !== "object" ||
-    Array.isArray(input)
-  ) {
+  if (!isPlainObject(input)) {
     throw new TypeError(
-      "Hyrja e njohurive duhet të jetë objekt."
+      "Hyrja e njohurive duhet të jetë objekt i vlefshëm."
     );
   }
 
@@ -238,7 +256,7 @@ export function createKnowledgeEntry(input = {}) {
     input.language
   );
 
-  return Object.freeze({
+  const entry = {
     id,
     title,
     content,
@@ -265,7 +283,9 @@ export function createKnowledgeEntry(input = {}) {
       DEFAULTS.version
     ),
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION
-  });
+  };
+
+  return Object.freeze(entry);
 }
 
 /**
@@ -293,7 +313,7 @@ export function validateKnowledgeEntry(input) {
 
 /**
  * Krijon një koleksion hyrjesh të standardizuara.
- * ID-të duhet të jenë unike brenda koleksionit.
+ * ID-të duhet të jenë unike pas normalizimit.
  */
 export function createKnowledgeCollection(entries = []) {
   if (!Array.isArray(entries)) {
