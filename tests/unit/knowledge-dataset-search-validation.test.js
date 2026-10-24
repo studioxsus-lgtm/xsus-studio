@@ -1,4 +1,3 @@
-
 import { describe, expect, test } from "vitest";
 
 import {
@@ -35,7 +34,7 @@ function createAdapter() {
 }
 
 describe("Knowledge Dataset Search — Validation", () => {
-  test("kthen gabim për kufirin zero", () => {
+  test("kufizon limit-in zero në minimumin 1", () => {
     const adapter = createAdapter();
 
     const result = adapter.search("JavaScript", {
@@ -44,9 +43,10 @@ describe("Knowledge Dataset Search — Validation", () => {
 
     expect(result.success).toBe(true);
     expect(result.metadata.limit).toBe(1);
+    expect(result.results).toHaveLength(1);
   });
 
-  test("përdor kufirin maksimal për një limit shumë të madh", () => {
+  test("kufizon limit-in e madh në maksimumin 50", () => {
     const adapter = createAdapter();
 
     const result = adapter.search("JavaScript", {
@@ -55,6 +55,7 @@ describe("Knowledge Dataset Search — Validation", () => {
 
     expect(result.success).toBe(true);
     expect(result.metadata.limit).toBe(50);
+    expect(result.results.length).toBeLessThanOrEqual(50);
   });
 
   test("nuk hedh përjashtim për gjuhë të pavlefshme", () => {
@@ -65,5 +66,61 @@ describe("Knowledge Dataset Search — Validation", () => {
         language: "invalid_language_123"
       });
     }).not.toThrow();
+  });
+
+  test("ruan hyrjen origjinale pas kërkimit", () => {
+    const registry = createKnowledgeDatasetRegistry();
+
+    const entry = {
+      id: "integrity-entry",
+      title: "XSUS Integrity",
+      content: "Testing knowledge integrity.",
+      domain: "technology",
+      topic: "integrity",
+      language: "en",
+      difficulty: "beginner",
+      status: "verified",
+      keywords: ["integrity"],
+      tags: ["testing"]
+    };
+
+    const originalEntry = structuredClone(entry);
+
+    const registration = registry.registerDataset(
+      "integrity-test",
+      [entry]
+    );
+
+    expect(registration.success).toBe(true);
+
+    const adapter = createKnowledgeDatasetSearchAdapter({
+      registry
+    });
+
+    const result = adapter.search("integrity");
+
+    expect(result.success).toBe(true);
+    expect(entry).toEqual(originalEntry);
+    expect(entry).not.toHaveProperty("searchScore");
+    expect(entry).not.toHaveProperty("datasetId");
+  });
+
+  test("kthen rezultate të ngrira me metadata të sakta", () => {
+    const adapter = createAdapter();
+
+    const result = adapter.search("JavaScript");
+
+    expect(result.success).toBe(true);
+    expect(result.results).toHaveLength(1);
+
+    expect(result.metadata.engine).toBe(
+      "xsus-knowledge-dataset-search-adapter"
+    );
+
+    expect(result.metadata.version).toBe("1.0.0");
+
+    expect(Object.isFrozen(result.results[0])).toBe(true);
+    expect(Object.isFrozen(result.results[0].keywords)).toBe(true);
+    expect(Object.isFrozen(result.results[0].tags)).toBe(true);
   });
 });
