@@ -1,7 +1,6 @@
-
 /**
  * XSUS AI — Knowledge Service
- * Version: 1.1.2
+ * Version: 1.1.3
  *
  * Përgjegjësitë:
  * - Kërkimi në bazat e integruara të njohurive.
@@ -51,7 +50,7 @@ const MAX_SOURCE_NAME_LENGTH = 100;
 const MAX_PROVIDER_ERROR_LENGTH = 1000;
 
 const ENGINE_NAME = "xsus-knowledge-service";
-const ENGINE_VERSION = "1.1.2";
+const ENGINE_VERSION = "1.1.3";
 const SCHEMA_VERSION = "1.0.0";
 
 const BUILT_IN_LANGUAGES = Object.freeze([
@@ -205,8 +204,7 @@ function isValidKnowledgeResult(item) {
     typeof item.title === "string" &&
     item.title.trim().length > 0;
 
-  // Ruajmë pajtueshmërinë me burimet e vjetra
-  // që nuk kanë identitetin standard të një hyrjeje.
+  // Ruajmë pajtueshmërinë me burimet e vjetra.
   if (!hasStandardIdentity) {
     return true;
   }
@@ -234,7 +232,6 @@ function matchesKnowledgeLanguage(item, requestedLanguage) {
     typeof item.language !== "string" ||
     !item.language.trim()
   ) {
-    // Burimet e vjetra mund të mos deklarojnë gjuhën.
     return true;
   }
 
@@ -242,7 +239,7 @@ function matchesKnowledgeLanguage(item, requestedLanguage) {
 }
 
 /**
- * Krijon një çelës deduplikimi brenda të njëjtit burim.
+ * Deduplikon rezultatet brenda të njëjtit burim.
  * Rezultatet identike nga burime të ndryshme ruhen veçmas.
  */
 function getResultKey(item) {
@@ -441,7 +438,7 @@ function safelySearchBuiltIn(
       .map(item => normalizeResult(item, source))
       .filter(isValidKnowledgeResult);
   } catch {
-    // Dështimi i një burimi të integruar nuk ndal
+    // Një burim i integruar që dështon nuk ndal
     // kërkimin në burimet e tjera.
     return [];
   }
@@ -545,10 +542,7 @@ function normalizeProviderFailure(response) {
 
 /**
  * Regjistron një burim shtesë njohurish.
- *
- * @param {string} name Emri unik i burimit.
- * @param {Function} provider Funksioni që kryen kërkimin.
- * @returns {Function} Funksioni për çregjistrimin e burimit.
+ * Kthen funksionin për çregjistrimin e atij provider-i.
  */
 export function registerKnowledgeSource(name, provider) {
   if (
@@ -576,8 +570,6 @@ export function registerKnowledgeSource(name, provider) {
   knowledgeSources.set(key, provider);
 
   return () => {
-    // Mos lejo që një çregjistrim i vjetër të heqë
-    // një provider tjetër të regjistruar me të njëjtin emër.
     if (knowledgeSources.get(key) === provider) {
       knowledgeSources.delete(key);
     }
@@ -683,8 +675,13 @@ export async function searchKnowledge(query, options = {}) {
           : [];
 
       for (const item of items) {
+        // Emri i burimit të regjistruar është autoritativ.
+        // Provider-i nuk mund ta zëvendësojë me një emër tjetër.
         const normalizedItem = normalizeResult(
-          item,
+          {
+            ...item,
+            source: sourceName
+          },
           sourceName
         );
 
