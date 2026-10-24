@@ -4,7 +4,7 @@
 * Version: 1.2.1
 * 
 * - Ruajtje e dataset-eve dhe versioneve.
-* - Rikuperim atomik.
+* - Rikuperim me validim paraprak dhe rollback.
 * - Refuzim kur regjistri real nuk është bosh.
 * - Përputhshmëri me snapshot-et e vjetra.
 * - Kthim i ID-ve të rikuperuara për API dhe teste.
@@ -34,6 +34,7 @@ if (value === undefined || value === null || value === "") {
 return DEFAULT_DATASET_VERSION;
 }
 
+// Versioni duhet të jetë në formatin X.Y.Z.
 if (
 typeof value !== "string" ||
 !/^(0|[1-9]\d*).(0|[1-9]\d*).(0|[1-9]\d*)$/.test(value)
@@ -154,7 +155,7 @@ const datasets = [];
 }
 
 async function restoreRegistry() {
-// Refuzo para se të lexosh storage nëse registry nuk është bosh.
+// Refuzo përpara ngarkimit nëse registry nuk është bosh.
 try {
 if (!isEmptyRegistry(registry)) {
 return failure(
@@ -181,7 +182,11 @@ try {
   );
 }
 
-if (!loaded || loaded.success !== true || !Array.isArray(loaded.datasets)) {
+if (
+  !loaded ||
+  loaded.success !== true ||
+  !Array.isArray(loaded.datasets)
+) {
   return failure(
     loaded?.error || "Storage ktheu një snapshot të pavlefshëm."
   );
@@ -226,7 +231,7 @@ try {
     if (!result || result.success !== true) {
       throw new Error(
         result?.error ||
-        `Validimi i dataset-it "${dataset.id}" dështoi.`
+          `Validimi i dataset-it "${dataset.id}" dështoi.`
       );
     }
   }
@@ -238,7 +243,7 @@ try {
   );
 }
 
-// Kontrollo përsëri para ndryshimit të registry-t real.
+// Kontrollo përsëri përpara ndryshimit të registry-t real.
 try {
   if (!isEmptyRegistry(registry)) {
     return failure(
@@ -266,7 +271,7 @@ try {
     if (!result || result.success !== true) {
       throw new Error(
         result?.error ||
-        `Regjistrimi i dataset-it "${dataset.id}" dështoi.`
+          `Regjistrimi i dataset-it "${dataset.id}" dështoi.`
       );
     }
 
@@ -288,12 +293,12 @@ try {
     }
   };
 } catch (error) {
-  // Në dështim, hiq dataset-et e regjistruara nga ky rikuperim.
+  // Në rast dështimi, hiq dataset-et e regjistruara nga ky rikuperim.
   for (const id of [...registeredIds].reverse()) {
     try {
       registry.removeDataset(id);
     } catch {
-      // Ruaj gabimin origjinal.
+      // Ruaj gabimin origjinal të rikuperimit.
     }
   }
 
