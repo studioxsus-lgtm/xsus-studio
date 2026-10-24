@@ -1,4 +1,3 @@
-
 import {
   afterEach,
   describe,
@@ -264,9 +263,7 @@ describe("XSUS Knowledge Service", () => {
     );
 
     const matching = result.results.filter(
-      item => item.content.toLowerCase().includes(
-        "normalization"
-      )
+      item => item.content.toLowerCase().includes("normalization")
     );
 
     expect(matching).toHaveLength(1);
@@ -348,9 +345,6 @@ describe("XSUS Knowledge Service", () => {
     ).toBe(true);
   });
 
-  // Regression test 1:
-  // Një hyrje me ID dhe titull, por me domain të pavlefshëm,
-  // nuk duhet të pranohet në rezultatet e standardizuara.
   test("refuzon hyrjen standarde me fushë të pavlefshme", async () => {
     const sourceName = "invalid-domain-entry-test-source";
 
@@ -370,15 +364,10 @@ describe("XSUS Knowledge Service", () => {
     );
 
     expect(
-      result.results.some(
-        item => item.id === "invalid-domain-entry"
-      )
+      result.results.some(item => item.id === "invalid-domain-entry")
     ).toBe(false);
   });
 
-  // Regression test 2:
-  // Një hyrje e deklaruar anglisht nuk duhet të kalojë
-  // filtrin e kërkimit në shqip.
   test("filtron rezultatet sipas gjuhës së deklaruar", async () => {
     const sourceName = "language-isolation-test-source";
 
@@ -404,9 +393,6 @@ describe("XSUS Knowledge Service", () => {
     ).toBe(false);
   });
 
-  // Regression test 3:
-  // Kur përmbajtja dhe titulli janë të njëjta, hyrja verified
-  // duhet të fitojë ndaj hyrjes reviewed gjatë deduplikimit.
   test("preferon statusin verified kur cilësia tjetër është e barabartë", async () => {
     const sourceName = "verified-quality-test-source";
 
