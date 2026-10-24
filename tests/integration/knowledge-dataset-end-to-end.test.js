@@ -29,9 +29,11 @@ import {
 
 import {
   searchKnowledge,
-  hasKnowledgeSource
+  hasKnowledgeSource,
+  unregisterKnowledgeSource
 } from "../../src/knowledge/knowledge-service.js";
 
+const SOURCE_NAME = "xsus-knowledge-datasets";
 const temporaryDirectories = [];
 const registeredIntegrations = [];
 
@@ -50,6 +52,8 @@ afterEach(async () => {
     integration.unregister();
   }
 
+  unregisterKnowledgeSource(SOURCE_NAME);
+
   await Promise.all(
     temporaryDirectories.splice(0).map((directory) =>
       rm(directory, {
@@ -64,6 +68,8 @@ describe("XSUS Knowledge Dataset End-to-End", () => {
   test(
     "dataset-i i regjistruar gjendet përmes searchKnowledge",
     async () => {
+      unregisterKnowledgeSource(SOURCE_NAME);
+
       const filePath = await createTemporaryFilePath();
 
       const pipeline = await createKnowledgeDatasetPipeline({
