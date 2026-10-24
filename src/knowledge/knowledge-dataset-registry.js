@@ -1,10 +1,10 @@
 
 /**
  * XSUS AI — Knowledge Dataset Registry
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Regjistër në memorie për dataset-et e validuara.
- * Mbështet zëvendësim të kontrolluar për migrimet.
+ * Dallon versionin e skemës nga versioni i dataset-it.
  */
 
 import {
@@ -12,8 +12,9 @@ import {
 } from "./knowledge-dataset-validator.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-registry";
-const ENGINE_VERSION = "1.1.0";
+const ENGINE_VERSION = "1.2.0";
 const MAX_DATASET_ID_LENGTH = 120;
+const DEFAULT_DATASET_VERSION = "1.0.0";
 
 const DATASET_ID_PATTERN =
   /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/u;
@@ -51,10 +52,27 @@ function createRegistryResult(success, fields = {}) {
   };
 }
 
+function normalizeDatasetVersion(value) {
+  if (value === undefined) {
+    return DEFAULT_DATASET_VERSION;
+  }
+
+  if (
+    typeof value !== "string" ||
+    !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u.test(value)
+  ) {
+    throw new TypeError(
+      "Versioni i dataset-it duhet të jetë në formatin X.Y.Z."
+    );
+  }
+
+  return value;
+}
+
 export function createKnowledgeDatasetRegistry() {
   const datasets = new Map();
 
-  function createRecord(id, entries) {
+  function createRecord(id, entries, datasetVersion) {
     const validation = validateKnowledgeDataset(entries);
 
     if (!validation.valid) {
@@ -71,20 +89,25 @@ export function createKnowledgeDatasetRegistry() {
         id,
         collection: validation.collection,
         entryCount: validation.collection.length,
-        schemaVersion: validation.metadata.schemaVersion
+        schemaVersion: validation.metadata.schemaVersion,
+        datasetVersion
       })
     };
   }
 
-  function registerDataset(datasetId, entries) {
+  function registerDataset(datasetId, entries, options = {}) {
     let id;
+    let datasetVersion;
 
     try {
       id = normalizeDatasetId(datasetId);
+      datasetVersion = normalizeDatasetVersion(
+        options?.datasetVersion
+      );
     } catch (error) {
       return createRegistryResult(false, {
-        error: error.message,
-        datasetId: null
+        datasetId: null,
+        error: error.message
       });
     }
 
@@ -95,7 +118,11 @@ export function createKnowledgeDatasetRegistry() {
       });
     }
 
-    const result = createRecord(id, entries);
+    const result = createRecord(
+      id,
+      entries,
+      datasetVersion
+    );
 
     if (!result.success) {
       return createRegistryResult(false, {
@@ -113,16 +140,15 @@ export function createKnowledgeDatasetRegistry() {
     });
   }
 
-  /**
-   * Zëvendëson një dataset ekzistues vetëm nëse
-   * dataset-i i ri kalon validimin.
-   * Në rast dështimi, rekordi ekzistues nuk ndryshon.
-   */
-  function replaceDataset(datasetId, entries) {
+  function replaceDataset(datasetId, entries, options = {}) {
     let id;
+    let datasetVersion;
 
     try {
       id = normalizeDatasetId(datasetId);
+      datasetVersion = normalizeDatasetVersion(
+        options?.datasetVersion
+      );
     } catch (error) {
       return createRegistryResult(false, {
         datasetId: null,
@@ -139,7 +165,11 @@ export function createKnowledgeDatasetRegistry() {
       });
     }
 
-    const result = createRecord(id, entries);
+    const result = createRecord(
+      id,
+      entries,
+      datasetVersion
+    );
 
     if (!result.success) {
       return createRegistryResult(false, {
@@ -178,7 +208,8 @@ export function createKnowledgeDatasetRegistry() {
     return Array.from(datasets.values(), dataset => ({
       id: dataset.id,
       entryCount: dataset.entryCount,
-      schemaVersion: dataset.schemaVersion
+      schemaVersion: dataset.schemaVersion,
+      datasetVersion: dataset.datasetVersion
     }));
   }
 
