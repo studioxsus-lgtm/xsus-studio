@@ -10,7 +10,6 @@
 * - Ruajtja e identitetit të burimit.
 * - Çregjistrimi i sigurt i integrimit.
 * - Mbështetja e emrave unikë të burimeve.
-* - Trajtimi i sigurt i gabimeve.
     */
 
 import {
@@ -21,9 +20,10 @@ hasKnowledgeSource
 const SOURCE_NAME = "xsus-knowledge-datasets";
 const ENGINE_NAME = "xsus-knowledge-dataset-integration";
 const ENGINE_VERSION = "1.2.4";
-const MAX_SOURCE_NAME_LENGTH = 100;
+
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
+const MAX_SOURCE_NAME_LENGTH = 100;
 
 function isPlainObject(value) {
 if (
@@ -43,7 +43,7 @@ prototype === null
 }
 
 function normalizeSourceName(value) {
-if (value === undefined || value === null) {
+if (value === undefined) {
 return SOURCE_NAME;
 }
 
@@ -53,15 +53,15 @@ throw new TypeError(
 );
 }
 
-const normalized = value.trim();
+const name = value.trim();
 
-if (normalized.length > MAX_SOURCE_NAME_LENGTH) {
+if (name.length > MAX_SOURCE_NAME_LENGTH) {
 throw new TypeError(
 "Emri i burimit nuk mund të kalojë ${MAX_SOURCE_NAME_LENGTH} karaktere."
 );
 }
 
-return normalized;
+return name;
 }
 
 function normalizeText(value) {
@@ -71,11 +71,7 @@ return typeof value === "string"
 }
 
 function normalizeLimit(value) {
-if (
-value === undefined ||
-value === null ||
-value === ""
-) {
+if (value === undefined || value === null || value === "") {
 return DEFAULT_LIMIT;
 }
 
@@ -85,10 +81,7 @@ if (!Number.isFinite(parsed)) {
 return DEFAULT_LIMIT;
 }
 
-return Math.max(
-1,
-Math.min(Math.floor(parsed), MAX_LIMIT)
-);
+return Math.max(1, Math.min(Math.floor(parsed), MAX_LIMIT));
 }
 
 function normalizeEntries(response, sourceName) {
@@ -148,8 +141,10 @@ return [];
 function createDirectRegistrySearch(registry) {
 return (query, options = {}) => {
 const normalizedQuery = normalizeText(query);
+
 const language = normalizeText(options.language)
-.split(/[-_]/u)[0];
+  .split(/[-_]/u)[0];
+
 const domain = normalizeText(options.domain);
 const summaries = registry.listDatasets();
 
@@ -157,8 +152,7 @@ if (!Array.isArray(summaries)) {
   return {
     success: false,
     results: [],
-    error:
-      "Registry nuk ktheu listë të vlefshme dataset-esh."
+    error: "Registry nuk ktheu listë të vlefshme dataset-esh."
   };
 }
 
@@ -182,7 +176,9 @@ for (const summary of summaries) {
     continue;
   }
 
-  for (const entry of getDatasetEntries(dataset)) {
+  const entries = getDatasetEntries(dataset);
+
+  for (const entry of entries) {
     if (
       !isPlainObject(entry) ||
       typeof entry.content !== "string" ||
@@ -306,8 +302,7 @@ success: false,
 source: resolvedSourceName,
 engine: ENGINE_NAME,
 version: ENGINE_VERSION,
-error:
-"Burimi "${resolvedSourceName}" është regjistruar tashmë.",
+error: "Burimi "${resolvedSourceName}" është regjistruar tashmë.",
 close() {
 return false;
 },
