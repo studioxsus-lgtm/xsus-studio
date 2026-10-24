@@ -11,6 +11,7 @@
  * - Metadata të sakta edhe për përgjigjet e gabimit.
  * - Mbështetje për storageAdapter të injektuar për testim.
  * - Mbyllje pas përfundimit të operacioneve të pranuara.
+ * - Mbështetje për sourceName të personalizuar.
  * - Ruajtja e API-së publike ekzistuese.
  */
 
@@ -76,7 +77,8 @@ function createError(message, extra = {}) {
 
 export async function createKnowledgeDatasetPipeline({
   filePath,
-  storageAdapter
+  storageAdapter,
+  sourceName
 } = {}) {
   if (
     typeof filePath !== "string" ||
@@ -93,6 +95,10 @@ export async function createKnowledgeDatasetPipeline({
 
   if (storageAdapter !== undefined) {
     bootstrapOptions.storageAdapter = storageAdapter;
+  }
+
+  if (sourceName !== undefined) {
+    bootstrapOptions.sourceName = sourceName;
   }
 
   const bootstrap = await initializeKnowledgeDatasets(
