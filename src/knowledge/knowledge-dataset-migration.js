@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI Core — Knowledge Dataset Migration Engine
  * Version: 1.0.0
@@ -24,10 +23,19 @@ function isPlainObject(value) {
 
   const prototype = Object.getPrototypeOf(value);
 
-  return prototype === Object.prototype || prototype === null;
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
 }
 
 function cloneValue(value) {
+  if (typeof structuredClone !== "function") {
+    throw new Error(
+      "Mjedisi nuk mbështet structuredClone."
+    );
+  }
+
   return structuredClone(value);
 }
 
@@ -52,7 +60,9 @@ function compareVersions(left, right) {
   const b = parseVersion(right);
 
   if (!a || !b) {
-    throw new Error("Versioni duhet të jetë në formatin semver X.Y.Z.");
+    throw new Error(
+      "Versioni duhet të jetë në formatin semver X.Y.Z."
+    );
   }
 
   for (let index = 0; index < 3; index += 1) {
@@ -86,14 +96,16 @@ function validateDataset(dataset) {
   ) {
     return {
       valid: false,
-      error: "Dataset-i duhet të ketë një identifikues të vlefshëm."
+      error:
+        "Dataset-i duhet të ketë një identifikues të vlefshëm."
     };
   }
 
   if (!Array.isArray(dataset.entries)) {
     return {
       valid: false,
-      error: "Dataset-i duhet të përmbajë një listë entries."
+      error:
+        "Dataset-i duhet të përmbajë një listë entries."
     };
   }
 
@@ -113,7 +125,8 @@ function validateDataset(dataset) {
     ) {
       return {
         valid: false,
-        error: "Çdo hyrje duhet të ketë një identifikues të vlefshëm."
+        error:
+          "Çdo hyrje duhet të ketë një identifikues të vlefshëm."
       };
     }
 
@@ -123,21 +136,24 @@ function validateDataset(dataset) {
     ) {
       return {
         valid: false,
-        error: `Hyrja "${entry.id}" duhet të ketë një titull të vlefshëm.`
+        error:
+          `Hyrja "${entry.id}" duhet të ketë një titull të vlefshëm.`
       };
     }
 
     if (typeof entry.content !== "string") {
       return {
         valid: false,
-        error: `Përmbajtja e hyrjes "${entry.id}" duhet të jetë tekst.`
+        error:
+          `Përmbajtja e hyrjes "${entry.id}" duhet të jetë tekst.`
       };
     }
 
     if (seenIds.has(entry.id)) {
       return {
         valid: false,
-        error: `Identifikues i përsëritur: "${entry.id}".`
+        error:
+          `Identifikues i përsëritur: "${entry.id}".`
       };
     }
 
@@ -166,6 +182,24 @@ function normalizeMigrationResult(result) {
   return result;
 }
 
+function runValidation(validate, dataset) {
+  const result = validate(dataset);
+
+  if (!result || result.valid !== true) {
+    return {
+      valid: false,
+      error:
+        result?.error ||
+        "Dataset-i nuk kalon validimin."
+    };
+  }
+
+  return {
+    valid: true,
+    error: null
+  };
+}
+
 /**
  * Krijon një motor të pavarur migrimi.
  *
@@ -184,7 +218,9 @@ export function createKnowledgeDatasetMigration({
   }
 
   if (typeof validate !== "function") {
-    throw new TypeError("validate duhet të jetë funksion.");
+    throw new TypeError(
+      "validate duhet të jetë funksion."
+    );
   }
 
   const migrations = new Map();
@@ -193,8 +229,11 @@ export function createKnowledgeDatasetMigration({
     fromVersion,
     toVersion,
     migrate
-  }) {
-    if (!parseVersion(fromVersion) || !parseVersion(toVersion)) {
+  } = {}) {
+    if (
+      !parseVersion(fromVersion) ||
+      !parseVersion(toVersion)
+    ) {
       throw new TypeError(
         "Versionet e migrimit duhet të jenë në formatin X.Y.Z."
       );
@@ -207,13 +246,17 @@ export function createKnowledgeDatasetMigration({
     }
 
     if (typeof migrate !== "function") {
-      throw new TypeError("migrate duhet të jetë funksion.");
+      throw new TypeError(
+        "migrate duhet të jetë funksion."
+      );
     }
 
     const key = `${fromVersion}->${toVersion}`;
 
     if (migrations.has(key)) {
-      throw new Error(`Migrimi "${key}" është regjistruar tashmë.`);
+      throw new Error(
+        `Migrimi "${key}" është regjistruar tashmë.`
+      );
     }
 
     migrations.set(key, migrate);
@@ -250,9 +293,10 @@ export function createKnowledgeDatasetMigration({
     return candidates[0] ?? null;
   }
 
-  async function migrateDataset(dataset, {
-    targetVersion = currentVersion
-  } = {}) {
+  async function migrateDataset(
+    dataset,
+    { targetVersion = currentVersion } = {}
+  ) {
     if (!parseVersion(targetVersion)) {
       return createFailure(
         "Versioni i synuar nuk është i vlefshëm."
@@ -260,19 +304,41 @@ export function createKnowledgeDatasetMigration({
     }
 
     if (!isPlainObject(dataset)) {
-      return createFailure("Dataset-i duhet të jetë objekt.");
+      return createFailure(
+        "Dataset-i duhet të jetë objekt."
+      );
     }
 
-    const original = cloneValue(dataset);
-    const originalValidation = validate(original);
+    let original;
 
-    if (
-      !originalValidation ||
-      originalValidation.valid !== true
-    ) {
+    try {
+      original = cloneValue(dataset);
+    } catch (error) {
       return createFailure(
-        originalValidation?.error ??
-          "Dataset-i burimor nuk kalon validimin."
+        error instanceof Error
+          ? error.message
+          : "Dataset-i nuk mund të kopjohet."
+      );
+    }
+
+    let originalValidation;
+
+    try {
+      originalValidation = runValidation(
+        validate,
+        cloneValue(original)
+      );
+    } catch (error) {
+      return createFailure(
+        error instanceof Error
+          ? error.message
+          : "Validimi i dataset-it burimor dështoi."
+      );
+    }
+
+    if (!originalValidation.valid) {
+      return createFailure(
+        originalValidation.error
       );
     }
 
@@ -318,7 +384,10 @@ export function createKnowledgeDatasetMigration({
 
     try {
       while (compareVersions(version, targetVersion) < 0) {
-        const next = findNextMigration(version, targetVersion);
+        const next = findNextMigration(
+          version,
+          targetVersion
+        );
 
         if (!next) {
           return createFailure(
@@ -327,11 +396,13 @@ export function createKnowledgeDatasetMigration({
               sourceVersion,
               targetVersion,
               currentVersion: version,
-              migrationsApplied
+              migrationsApplied,
+              originalPreserved: true
             }
           );
         }
 
+        // Migrimi merr kopje, jo objektin origjinal.
         const migrationInput = cloneValue(workingCopy);
 
         const migrationOutput = await next.migrate(
@@ -342,21 +413,27 @@ export function createKnowledgeDatasetMigration({
           migrationOutput
         );
 
+        // Versioni përcaktohet nga regjistrimi i migrimit,
+        // jo nga rezultati i funksionit të migrimit.
         const nextDataset = {
           ...workingCopy,
           ...normalized,
           schemaVersion: next.toVersion
         };
 
-        const validation = validate(nextDataset);
+        const validation = runValidation(
+          validate,
+          cloneValue(nextDataset)
+        );
 
-        if (!validation || validation.valid !== true) {
+        if (!validation.valid) {
           throw new Error(
-            validation?.error ??
+            validation.error ||
               `Dataset-i nuk kalon validimin pas migrimit ${next.toVersion}.`
           );
         }
 
+        // Përditëso kopjen e punës vetëm pas validimit.
         workingCopy = cloneValue(nextDataset);
         version = next.toVersion;
         migrationsApplied += 1;
@@ -381,6 +458,7 @@ export function createKnowledgeDatasetMigration({
         {
           sourceVersion,
           targetVersion,
+          currentVersion: version,
           migrationsApplied,
           originalPreserved: true
         }
@@ -406,16 +484,19 @@ export function createKnowledgeDatasetMigration({
 
         return comparison !== 0
           ? comparison
-          : compareVersions(a.toVersion, b.toVersion);
+          : compareVersions(
+              a.toVersion,
+              b.toVersion
+            );
       });
   }
 
-  return {
+  return Object.freeze({
     currentVersion,
     registerMigration,
     migrateDataset,
     listMigrations
-  };
+  });
 }
 
 export {
