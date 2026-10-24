@@ -1,15 +1,16 @@
 /**
 
 * XSUS AI — Knowledge Dataset Integration
-* Version: 1.2.3
+* Version: 1.2.4
 * 
 * Përgjegjësitë:
 * - Integrimi i dataset-eve me Knowledge Service.
 * - Mbështetja e registry-t dhe pipeline-it.
-* - Normalizimi dhe validimi i rezultateve.
+* - Normalizimi i rezultateve.
 * - Ruajtja e identitetit të burimit.
 * - Çregjistrimi i sigurt i integrimit.
 * - Mbështetja e emrave unikë të burimeve.
+* - Trajtimi i sigurt i gabimeve.
     */
 
 import {
@@ -19,7 +20,10 @@ hasKnowledgeSource
 
 const SOURCE_NAME = "xsus-knowledge-datasets";
 const ENGINE_NAME = "xsus-knowledge-dataset-integration";
-const ENGINE_VERSION = "1.2.3";
+const ENGINE_VERSION = "1.2.4";
+const MAX_SOURCE_NAME_LENGTH = 100;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 50;
 
 function isPlainObject(value) {
 if (
@@ -39,19 +43,52 @@ prototype === null
 }
 
 function normalizeSourceName(value) {
-if (typeof value !== "string" || !value.trim()) {
+if (value === undefined || value === null) {
 return SOURCE_NAME;
+}
+
+if (typeof value !== "string" || !value.trim()) {
+throw new TypeError(
+"Emri i burimit duhet të jetë tekst jo bosh."
+);
 }
 
 const normalized = value.trim();
 
-if (normalized.length > 100) {
+if (normalized.length > MAX_SOURCE_NAME_LENGTH) {
 throw new TypeError(
-"Emri i burimit nuk mund të kalojë 100 karaktere."
+"Emri i burimit nuk mund të kalojë ${MAX_SOURCE_NAME_LENGTH} karaktere."
 );
 }
 
 return normalized;
+}
+
+function normalizeText(value) {
+return typeof value === "string"
+? value.normalize("NFKC").trim().toLowerCase()
+: "";
+}
+
+function normalizeLimit(value) {
+if (
+value === undefined ||
+value === null ||
+value === ""
+) {
+return DEFAULT_LIMIT;
+}
+
+const parsed = Number(value);
+
+if (!Number.isFinite(parsed)) {
+return DEFAULT_LIMIT;
+}
+
+return Math.max(
+1,
+Math.min(Math.floor(parsed), MAX_LIMIT)
+);
 }
 
 function normalizeEntries(response, sourceName) {
@@ -74,31 +111,35 @@ source: sourceName
 }));
 }
 
-function normalizeText(value) {
-return typeof value === "string"
-? value.normalize("NFKC").trim().toLowerCase()
-: "";
-}
-
 function getDatasetEntries(dataset) {
 if (Array.isArray(dataset)) {
 return dataset;
 }
 
-if (Array.isArray(dataset?.entries)) {
+if (!isPlainObject(dataset)) {
+return [];
+}
+
+if (Array.isArray(dataset.entries)) {
 return dataset.entries;
 }
 
-if (Array.isArray(dataset?.collection)) {
+if (Array.isArray(dataset.collection)) {
 return dataset.collection;
 }
 
-if (Array.isArray(dataset?.collection?.entries)) {
+if (Array.isArray(dataset.collection?.entries)) {
 return dataset.collection.entries;
 }
 
-if (Array.isArray(dataset?.collection?.collection)) {
+if (Array.isArray(dataset.collection?.collection)) {
 return dataset.collection.collection;
+}
+
+if (
+Array.isArray(dataset.collection?.collection?.entries)
+) {
+return dataset.collection.collection.entries;
 }
 
 return [];
@@ -107,10 +148,8 @@ return [];
 function createDirectRegistrySearch(registry) {
 return (query, options = {}) => {
 const normalizedQuery = normalizeText(query);
-
 const language = normalizeText(options.language)
-  .split(/[-_]/u)[0];
-
+.split(/[-_]/u)[0];
 const domain = normalizeText(options.domain);
 const summaries = registry.listDatasets();
 
@@ -204,11 +243,7 @@ for (const summary of summaries) {
   }
 }
 
-const requestedLimit = Number(options.limit);
-
-const limit = Number.isFinite(requestedLimit)
-  ? Math.max(1, Math.min(Math.floor(requestedLimit), 50))
-  : 10;
+const limit = normalizeLimit(options.limit);
 
 return {
   success: true,
@@ -249,7 +284,7 @@ throw new TypeError(
 * 
 * @param {Object} options
 * @param {Object} options.registry Registry ose pipeline.
-* @param {string} options.sourceName Emri i burimit.
+* @param {string} options.sourceName Emri unik i burimit.
 * @returns {Object} Rezultati i regjistrimit.
   */
   export function registerKnowledgeDatasetIntegration({
@@ -291,7 +326,7 @@ const safeOptions = isPlainObject(options)
   const response = await search(query, {
     language: safeOptions.language,
     domain: safeOptions.domain,
-    limit: safeOptions.limit
+    limit: normalizeLimit(safeOptions.limit)
   });
 
   if (response?.success === false) {
