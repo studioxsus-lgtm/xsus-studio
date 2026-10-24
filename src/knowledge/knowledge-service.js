@@ -50,7 +50,7 @@ const MAX_SOURCE_NAME_LENGTH = 100;
 const MAX_PROVIDER_ERROR_LENGTH = 1000;
 
 const ENGINE_NAME = "xsus-knowledge-service";
-const ENGINE_VERSION = "1.1.3";
+const ENGINE_VERSION = "1.1.1";
 const SCHEMA_VERSION = "1.0.0";
 
 const BUILT_IN_LANGUAGES = Object.freeze([
@@ -675,6 +675,10 @@ export async function searchKnowledge(query, options = {}) {
           : [];
 
       for (const item of items) {
+        if (!isPlainObject(item)) {
+          continue;
+        }
+
         // Emri i burimit të regjistruar është autoritativ.
         // Provider-i nuk mund ta zëvendësojë me një emër tjetër.
         const normalizedItem = normalizeResult(
