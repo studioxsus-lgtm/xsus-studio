@@ -27,7 +27,41 @@ function isPlainObject(value) {
 
   const prototype = Object.getPrototypeOf(value);
 
-  return prototype === Object.prototype || prototype === null;
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
+}
+
+function createMetadata({
+  query = "",
+  language = null,
+  domain = null,
+  resultCount = 0,
+  matchedCount = 0,
+  limit = DEFAULT_LIMIT,
+  datasetCount = 0
+} = {}) {
+  return {
+    engine: ENGINE_NAME,
+    version: ENGINE_VERSION,
+    query,
+    language,
+    domain,
+    resultCount,
+    matchedCount,
+    limit,
+    datasetCount
+  };
+}
+
+function createErrorResult(message, metadata = {}) {
+  return {
+    success: false,
+    results: [],
+    error: message,
+    metadata: createMetadata(metadata)
+  };
 }
 
 function normalizeLanguage(value) {
@@ -35,9 +69,9 @@ function normalizeLanguage(value) {
     return null;
   }
 
-  const normalized = normalizeLanguageCode(value);
+  const language = normalizeLanguageCode(value);
 
-  return normalized === "auto" ? null : normalized;
+  return language === "auto" ? null : language;
 }
 
 function normalizeDomain(value) {
@@ -94,11 +128,27 @@ function getDatasetEntries(dataset) {
     return dataset.collection.entries;
   }
 
-  if (Array.isArray(dataset.collection?.collection?.entries)) {
+  if (
+    Array.isArray(dataset.collection?.collection?.entries)
+  ) {
     return dataset.collection.collection.entries;
   }
 
   return [];
+}
+
+function isValidSearchEntry(entry) {
+  return (
+    isPlainObject(entry) &&
+    typeof entry.id === "string" &&
+    entry.id.trim().length > 0 &&
+    typeof entry.title === "string" &&
+    entry.title.trim().length > 0 &&
+    typeof entry.content === "string" &&
+    entry.content.trim().length > 0 &&
+    typeof entry.language === "string" &&
+    typeof entry.domain === "string"
+  );
 }
 
 function getSearchableText(entry) {
@@ -137,9 +187,11 @@ function getSearchableFields(entry) {
 }
 
 function getStatusRank(status) {
-  return STATUS_RANK[
-    typeof status === "string" ? status.toLowerCase() : ""
-  ] || 0;
+  if (typeof status !== "string") {
+    return 0;
+  }
+
+  return STATUS_RANK[status.toLowerCase()] || 0;
 }
 
 function scoreEntry(entry, query, queryTerms) {
@@ -171,8 +223,6 @@ function scoreEntry(entry, query, queryTerms) {
   }
 
   for (const term of queryTerms) {
-    if (!term) continue;
-
     if (fields.title.includes(term)) {
       score += fields.title === term ? 12 : 6;
     }
@@ -198,22 +248,18 @@ function scoreEntry(entry, query, queryTerms) {
 }
 
 function cloneAndFreezeEntry(entry, datasetId, searchScore) {
-  const keywords = Object.freeze(
-    Array.isArray(entry.keywords)
-      ? [...entry.keywords]
-      : []
-  );
-
-  const tags = Object.freeze(
-    Array.isArray(entry.tags)
-      ? [...entry.tags]
-      : []
-  );
-
   return Object.freeze({
     ...entry,
-    keywords,
-    tags,
+    keywords: Object.freeze(
+      Array.isArray(entry.keywords)
+        ? [...entry.keywords]
+        : []
+    ),
+    tags: Object.freeze(
+      Array.isArray(entry.tags)
+        ? [...entry.tags]
+        : []
+    ),
     datasetId,
     searchScore
   });
@@ -224,50 +270,36 @@ function compareMatches(first, second) {
     return second.searchScore - first.searchScore;
   }
 
-  const firstStatus = getStatusRank(first.status);
-  const secondStatus = getStatusRank(second.status);
+  const statusDifference =
+    getStatusRank(second.status) - getStatusRank(first.status);
 
-  if (secondStatus !== firstStatus) {
-    return secondStatus - firstStatus;
+  if (statusDifference !== 0) {
+    return statusDifference;
   }
 
-  const idComparison = String(first.id || "").localeCompare(
-    String(second.id || "")
+  const idDifference = String(first.id).localeCompare(
+    String(second.id)
   );
 
-  if (idComparison !== 0) {
-    return idComparison;
+  if (idDifference !== 0) {
+    return idDifference;
   }
 
-  return String(first.datasetId || "").localeCompare(
-    String(second.datasetId || "")
+  return String(first.datasetId).localeCompare(
+    String(second.datasetId)
   );
 }
 
 function getDatasetId(dataset, fallbackId) {
-  if (dataset && typeof dataset.id === "string" && dataset.id) {
+  if (
+    dataset &&
+    typeof dataset.id === "string" &&
+    dataset.id.trim()
+  ) {
     return dataset.id;
   }
 
   return fallbackId;
-}
-
-function getRegistryDatasets(registry) {
-  const datasets = registry.listDatasets();
-
-  if (!Array.isArray(datasets)) {
-    return [];
-  }
-
-  return datasets;
-}
-
-function getRegistryDataset(registry, datasetSummary) {
-  if (!datasetSummary || typeof datasetSummary.id !== "string") {
-    return null;
-  }
-
-  return registry.getDataset(datasetSummary.id);
 }
 
 export function createKnowledgeDatasetSearchAdapter({
@@ -279,7 +311,7 @@ export function createKnowledgeDatasetSearchAdapter({
     typeof registry.getDataset !== "function"
   ) {
     throw new TypeError(
-      "Një registry i vlefshëm kërkohet për kërkimin e dataset-eve."
+      "Kërkohet një registry i vlefshëm për kërkimin e dataset-eve."
     );
   }
 
@@ -291,61 +323,39 @@ export function createKnowledgeDatasetSearchAdapter({
   }
 
   function search(query, options = {}) {
+    if (options === null || !isPlainObject(options)) {
+      return createErrorResult(
+        "Opsionet e kërkimit duhet të jenë një objekt i vlefshëm."
+      );
+    }
+
     if (typeof query !== "string" || !query.trim()) {
-      return {
-        success: false,
-        results: [],
-        error: "Pyetja e kërkimit nuk mund të jetë bosh.",
-        metadata: {
-          ...getMetadata(),
-          resultCount: 0,
-          matchedCount: 0,
-          limit: DEFAULT_LIMIT,
-          datasetCount: 0
-        }
-      };
+      return createErrorResult(
+        "Pyetja e kërkimit nuk mund të jetë bosh."
+      );
     }
 
     if (query.length > MAX_QUERY_LENGTH) {
-      return {
-        success: false,
-        results: [],
-        error: "Pyetja e kërkimit është tepër e gjatë.",
-        metadata: {
-          ...getMetadata(),
-          resultCount: 0,
-          matchedCount: 0,
-          limit: DEFAULT_LIMIT,
-          datasetCount: 0
-        }
-      };
-    }
-
-    if (!isPlainObject(options)) {
-      options = {};
+      return createErrorResult(
+        "Pyetja e kërkimit është tepër e gjatë."
+      );
     }
 
     const normalizedQuery = normalizeForSearch(query);
 
     if (!normalizedQuery) {
-      return {
-        success: false,
-        results: [],
-        error: "Pyetja e kërkimit nuk përmban tekst të vlefshëm.",
-        metadata: {
-          ...getMetadata(),
-          resultCount: 0,
-          matchedCount: 0,
-          limit: DEFAULT_LIMIT,
-          datasetCount: 0
-        }
-      };
+      return createErrorResult(
+        "Pyetja e kërkimit nuk përmban tekst të vlefshëm."
+      );
     }
 
-    const queryTerms = normalizedQuery.split(/\s+/u).filter(Boolean);
+    const requestedLanguage = normalizeLanguage(
+      options.language
+    );
 
-    const requestedLanguage = normalizeLanguage(options.language);
-    const requestedDomain = normalizeDomain(options.domain);
+    const requestedDomain = normalizeDomain(
+      options.domain
+    );
 
     const rawLimit = Number.isFinite(options.limit)
       ? Math.trunc(options.limit)
@@ -356,26 +366,77 @@ export function createKnowledgeDatasetSearchAdapter({
       Math.max(1, rawLimit)
     );
 
-    const datasetSummaries = getRegistryDatasets(registry);
+    const queryTerms = normalizedQuery
+      .split(/\s+/u)
+      .filter(Boolean);
+
+    let datasetSummaries;
+
+    try {
+      datasetSummaries = registry.listDatasets();
+    } catch {
+      return createErrorResult(
+        "Nuk mund të lexohen dataset-et nga registry.",
+        {
+          query: normalizedQuery,
+          language: requestedLanguage,
+          domain: requestedDomain,
+          limit
+        }
+      );
+    }
+
+    if (!Array.isArray(datasetSummaries)) {
+      return createErrorResult(
+        "Registry ktheu një listë të pavlefshme dataset-esh.",
+        {
+          query: normalizedQuery,
+          language: requestedLanguage,
+          domain: requestedDomain,
+          limit
+        }
+      );
+    }
+
     const matches = [];
     const seenEntryKeys = new Set();
+    let validDatasetCount = 0;
 
     for (const summary of datasetSummaries) {
-      const dataset = getRegistryDataset(registry, summary);
+      if (
+        !isPlainObject(summary) ||
+        typeof summary.id !== "string" ||
+        !summary.id.trim()
+      ) {
+        continue;
+      }
+
+      let dataset;
+
+      try {
+        dataset = registry.getDataset(summary.id);
+      } catch {
+        // Një dataset i dëmtuar nuk duhet të ndalë kërkimin.
+        continue;
+      }
 
       if (!dataset) {
         continue;
       }
 
+      validDatasetCount += 1;
+
       const datasetId = getDatasetId(dataset, summary.id);
       const entries = getDatasetEntries(dataset);
 
       for (const entry of entries) {
-        if (!entry || typeof entry !== "object") {
+        if (!isValidSearchEntry(entry)) {
           continue;
         }
 
-        if (!matchesLanguage(entry.language, requestedLanguage)) {
+        if (
+          !matchesLanguage(entry.language, requestedLanguage)
+        ) {
           continue;
         }
 
@@ -387,13 +448,15 @@ export function createKnowledgeDatasetSearchAdapter({
 
         const isMatch =
           searchableText.includes(normalizedQuery) ||
-          queryTerms.some((term) => searchableText.includes(term));
+          queryTerms.some((term) =>
+            searchableText.includes(term)
+          );
 
         if (!isMatch) {
           continue;
         }
 
-        const entryKey = `${datasetId}:${String(entry.id || "")}`;
+        const entryKey = `${datasetId}:${entry.id}`;
 
         if (seenEntryKeys.has(entryKey)) {
           continue;
@@ -401,14 +464,12 @@ export function createKnowledgeDatasetSearchAdapter({
 
         seenEntryKeys.add(entryKey);
 
-        const searchScore = scoreEntry(
-          entry,
-          normalizedQuery,
-          queryTerms
-        );
-
         matches.push(
-          cloneAndFreezeEntry(entry, datasetId, searchScore)
+          cloneAndFreezeEntry(
+            entry,
+            datasetId,
+            scoreEntry(entry, normalizedQuery, queryTerms)
+          )
         );
       }
     }
@@ -420,15 +481,15 @@ export function createKnowledgeDatasetSearchAdapter({
     return {
       success: true,
       results,
-      metadata: {
-        ...getMetadata(),
-        language: requestedLanguage || "auto",
+      metadata: createMetadata({
+        query: normalizedQuery,
+        language: requestedLanguage,
         domain: requestedDomain,
         resultCount: results.length,
         matchedCount: matches.length,
         limit,
-        datasetCount: datasetSummaries.length
-      }
+        datasetCount: validDatasetCount
+      })
     };
   }
 
