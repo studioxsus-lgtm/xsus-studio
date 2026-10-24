@@ -1,14 +1,13 @@
-
 /**
  * XSUS AI — Knowledge Dataset Integration
- * Version: 1.2.0
+ * Version: 1.3.0
  *
  * Përgjegjësitë:
- * - Integrimi i knowledge datasets me Knowledge Service.
- * - Mbështetja e emrave unikë për burimet.
- * - Normalizimi i rezultateve të kërkimit.
- * - Ruajtja e identitetit të burimit në çdo rezultat.
- * - Çregjistrimi i sigurt i integrimit.
+ * - Integrimi i registry/pipeline me Knowledge Service.
+ * - Mbështetja e burimeve me emra unikë.
+ * - Kërkimi përmes API-së së përshtatshme.
+ * - Normalizimi dhe identiteti i rezultateve.
+ * - Çregjistrimi i sigurt dhe idempotent.
  */
 
 import {
@@ -18,7 +17,7 @@ import {
 
 const SOURCE_NAME = "xsus-knowledge-datasets";
 const ENGINE_NAME = "xsus-knowledge-dataset-integration";
-const ENGINE_VERSION = "1.2.0";
+const ENGINE_VERSION = "1.3.0";
 
 function isPlainObject(value) {
   if (
@@ -68,32 +67,46 @@ function normalizeEntries(response, sourceName) {
     }));
 }
 
+function resolveSearchFunction(registry) {
+  if (registry && typeof registry.search === "function") {
+    return registry.search.bind(registry);
+  }
+
+  if (
+    registry &&
+    typeof registry.searchKnowledgeDataset === "function"
+  ) {
+    return registry.searchKnowledgeDataset.bind(registry);
+  }
+
+  return null;
+}
+
 /**
- * Regjistron integrimin e një registry me Knowledge Service.
+ * Regjistron integrimin e registry/pipeline me Knowledge Service.
  *
- * registry duhet të ofrojë:
- * - search(query, options)
+ * Pranon objekte që ofrojnë:
+ * - search(query, options), ose
+ * - searchKnowledgeDataset(query, options).
  *
  * @param {Object} options
- * @param {Object} options.registry Registry ose pipeline i datasets.
+ * @param {Object} options.registry Registry ose pipeline.
  * @param {string} options.sourceName Emri unik i burimit.
- * @returns {Object} Rezultati i regjistrimit dhe funksioni close().
+ * @returns {Object} Rezultati i regjistrimit dhe close().
  */
 export function registerKnowledgeDatasetIntegration({
   registry,
   sourceName = SOURCE_NAME
 } = {}) {
-  if (
-    !registry ||
-    typeof registry.search !== "function"
-  ) {
+  const search = resolveSearchFunction(registry);
+
+  if (!search) {
     throw new TypeError(
-      "Registry duhet të ofrojë funksionin search(query, options)."
+      "Registry duhet të ofrojë search(query, options) ose searchKnowledgeDataset(query, options)."
     );
   }
 
-  const resolvedSourceName =
-    normalizeSourceName(sourceName);
+  const resolvedSourceName = normalizeSourceName(sourceName);
 
   if (hasKnowledgeSource(resolvedSourceName)) {
     return {
@@ -105,6 +118,9 @@ export function registerKnowledgeDatasetIntegration({
         `Burimi "${resolvedSourceName}" është regjistruar tashmë.`,
       close() {
         return false;
+      },
+      unregister() {
+        return false;
       }
     };
   }
@@ -115,7 +131,7 @@ export function registerKnowledgeDatasetIntegration({
         ? options
         : {};
 
-      const response = await registry.search(query, {
+      const response = await search(query, {
         language: safeOptions.language,
         domain: safeOptions.domain,
         limit: safeOptions.limit
@@ -139,12 +155,12 @@ export function registerKnowledgeDatasetIntegration({
           resolvedSourceName
         ),
         metadata: {
-          engine: ENGINE_NAME,
-          version: ENGINE_VERSION,
-          source: resolvedSourceName,
           ...(isPlainObject(response?.metadata)
             ? response.metadata
-            : {})
+            : {}),
+          engine: ENGINE_NAME,
+          version: ENGINE_VERSION,
+          source: resolvedSourceName
         }
       };
     } catch (error) {
@@ -159,40 +175,31 @@ export function registerKnowledgeDatasetIntegration({
     }
   };
 
-  const unregister = registerKnowledgeSource(
+  const unregisterSource = registerKnowledgeSource(
     resolvedSourceName,
     provider
   );
 
   let closed = false;
 
+  function close() {
+    if (closed) {
+      return false;
+    }
+
+    closed = true;
+    unregisterSource();
+
+    return true;
+  }
+
   return {
     success: true,
     source: resolvedSourceName,
     engine: ENGINE_NAME,
     version: ENGINE_VERSION,
-
-    close() {
-      if (closed) {
-        return false;
-      }
-
-      closed = true;
-      unregister();
-
-      return true;
-    },
-
-    unregister() {
-      if (closed) {
-        return false;
-      }
-
-      closed = true;
-      unregister();
-
-      return true;
-    }
+    close,
+    unregister: close
   };
 }
 
