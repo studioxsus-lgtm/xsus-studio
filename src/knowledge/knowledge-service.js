@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI — Knowledge Service
- * Version: 1.1.2
+ * Version: 1.1.1
  *
  * Përgjegjësitë:
  * - Kërkimi në bazat e integruara të njohurive.
