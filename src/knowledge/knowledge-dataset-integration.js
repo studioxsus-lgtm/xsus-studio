@@ -1,14 +1,15 @@
 
 /**
  * XSUS AI Core — Knowledge Dataset Integration
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Përgjegjësitë:
- * - Regjistrimi i kërkimit në dataset si burim njohurish.
+ * - Regjistrimi i dataset-eve si burim njohurish.
+ * - Mbështetja e emrave të personalizuar të burimeve.
  * - Normalizimi i rezultateve.
  * - Izolimi i gabimeve të provider-it.
  * - Ruajtja e kontratës së knowledge-service.js.
- * - Mundësimi i çregjistrimit të burimit.
+ * - Çregjistrimi i sigurt i burimit.
  */
 
 import {
@@ -26,9 +27,10 @@ function createFailureResult(error, metadata = null) {
   return {
     success: false,
     results: [],
-    error: typeof error === "string" && error.trim()
-      ? error
-      : DEFAULT_ERROR_MESSAGE,
+    error:
+      typeof error === "string" && error.trim()
+        ? error
+        : DEFAULT_ERROR_MESSAGE,
     metadata
   };
 }
@@ -49,7 +51,7 @@ function normalizeSearchOptions(options = {}) {
   };
 }
 
-function normalizeProviderResult(result) {
+function normalizeProviderResult(result, sourceName) {
   if (
     !result ||
     typeof result !== "object" ||
@@ -72,14 +74,16 @@ function normalizeProviderResult(result) {
     );
   }
 
-  const results = result.results.filter((entry) => (
-    entry !== null &&
-    typeof entry === "object" &&
-    !Array.isArray(entry)
-  )).map((entry) => ({
-    ...entry,
-    source: SOURCE_NAME
-  }));
+  const results = result.results
+    .filter((entry) =>
+      entry !== null &&
+      typeof entry === "object" &&
+      !Array.isArray(entry)
+    )
+    .map((entry) => ({
+      ...entry,
+      source: sourceName
+    }));
 
   return {
     success: true,
@@ -89,21 +93,34 @@ function normalizeProviderResult(result) {
 }
 
 /**
- * Regjistron burimin e dataset-eve në knowledge-service.
+ * Regjistron një burim dataset-esh në knowledge-service.
  *
  * @param {object} options
- * @param {object} options.registry
- * @returns {{success: boolean, source: string, unregister: Function}}
+ * @param {object} options.registry Regjistri i dataset-eve.
+ * @param {string} options.sourceName Emër opsional unik i burimit.
  */
 export function registerKnowledgeDatasetIntegration({
-  registry
+  registry,
+  sourceName = SOURCE_NAME
 } = {}) {
+  if (
+    typeof sourceName !== "string" ||
+    !sourceName.trim() ||
+    sourceName.trim().length > 100
+  ) {
+    throw new TypeError(
+      "Emri i burimit duhet të jetë tekst me 1 deri në 100 karaktere."
+    );
+  }
+
+  const resolvedSourceName = sourceName.trim();
+
   const provider = createKnowledgeDatasetSearchProvider({
     registry
   });
 
   const unregister = registerKnowledgeSource(
-    SOURCE_NAME,
+    resolvedSourceName,
     async (query, options = {}) => {
       const normalizedOptions = normalizeSearchOptions(options);
 
@@ -119,7 +136,10 @@ export function registerKnowledgeDatasetIntegration({
           normalizedOptions
         );
 
-        return normalizeProviderResult(result);
+        return normalizeProviderResult(
+          result,
+          resolvedSourceName
+        );
       } catch (error) {
         return createFailureResult(
           error instanceof Error && error.message.trim()
@@ -132,7 +152,7 @@ export function registerKnowledgeDatasetIntegration({
 
   return Object.freeze({
     success: true,
-    source: SOURCE_NAME,
+    source: resolvedSourceName,
     unregister
   });
 }
