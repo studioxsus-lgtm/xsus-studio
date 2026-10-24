@@ -307,7 +307,7 @@ describe("Knowledge Dataset Search Adapter", () => {
     expect(result.success).toBe(true);
     expect(result.results).toHaveLength(1);
     expect(result.results[0].id).toBe("sq-entry");
-    expect(result.metadata.language).toBe("sq-al");
+    expect(result.metadata.language).toBe("sq-AL");
   });
 
   test("rendit rezultatet në mënyrë të qëndrueshme kur pikët janë të barabarta", () => {
