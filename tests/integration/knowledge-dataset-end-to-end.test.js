@@ -29,11 +29,11 @@ import {
 
 import {
   searchKnowledge,
-  hasKnowledgeSource,
-  unregisterKnowledgeSource
+  hasKnowledgeSource
 } from "../../src/knowledge/knowledge-service.js";
 
-const SOURCE_NAME = "xsus-knowledge-datasets";
+const SOURCE_NAME = "xsus-knowledge-datasets-e2e-test";
+
 const temporaryDirectories = [];
 const registeredIntegrations = [];
 
@@ -52,8 +52,6 @@ afterEach(async () => {
     integration.unregister();
   }
 
-  unregisterKnowledgeSource(SOURCE_NAME);
-
   await Promise.all(
     temporaryDirectories.splice(0).map((directory) =>
       rm(directory, {
@@ -68,8 +66,6 @@ describe("XSUS Knowledge Dataset End-to-End", () => {
   test(
     "dataset-i i regjistruar gjendet përmes searchKnowledge",
     async () => {
-      unregisterKnowledgeSource(SOURCE_NAME);
-
       const filePath = await createTemporaryFilePath();
 
       const pipeline = await createKnowledgeDatasetPipeline({
@@ -97,31 +93,30 @@ describe("XSUS Knowledge Dataset End-to-End", () => {
 
         expect(registration.success).toBe(true);
 
-        const integration =
-          registerKnowledgeDatasetIntegration({
-            registry: pipeline
-          });
+        const integration = registerKnowledgeDatasetIntegration({
+          registry: pipeline,
+          sourceName: SOURCE_NAME
+        });
 
         registeredIntegrations.push(integration);
 
         expect(integration.success).toBe(true);
-        expect(hasKnowledgeSource(integration.source)).toBe(true);
+        expect(integration.source).toBe(SOURCE_NAME);
+        expect(hasKnowledgeSource(SOURCE_NAME)).toBe(true);
 
-        const result = await searchKnowledge(
-          "nebula-742",
-          {
-            language: "en",
-            domain: "general",
-            limit: 10
-          }
-        );
+        const result = await searchKnowledge("nebula-742", {
+          language: "en",
+          domain: "general",
+          limit: 10
+        });
 
         expect(result.success).toBe(true);
 
         expect(
-          result.results.some((entry) =>
-            entry.id === "e2e-xsus-entry" &&
-            entry.source === integration.source
+          result.results.some(
+            (entry) =>
+              entry.id === "e2e-xsus-entry" &&
+              entry.source === SOURCE_NAME
           )
         ).toBe(true);
       } finally {
