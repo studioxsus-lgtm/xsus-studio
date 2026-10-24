@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI Core — Knowledge Dataset Bootstrap
  * Version: 1.1.0
@@ -31,7 +30,7 @@ import {
 } from "./knowledge-dataset-integration.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-bootstrap";
-const ENGINE_VERSION = "1.1.2";
+const ENGINE_VERSION = "1.1.0";
 
 function validateStorageAdapter(storageAdapter) {
   if (
@@ -114,7 +113,7 @@ export async function initializeKnowledgeDatasets({
   let closed = false;
 
   try {
-    // Rikthen të dhënat para regjistrimit të integrimit.
+    // Rikthen dataset-et përpara regjistrimit të burimit.
     const restoration = validateRestorationResult(
       await persistence.restoreRegistry()
     );
@@ -173,7 +172,7 @@ export async function initializeKnowledgeDatasets({
       }
     });
   } catch (error) {
-    // Nëse inicializimi dështon, mos lër burim aktiv.
+    // Mos lër burim të regjistruar nëse inicializimi dështon.
     closeIntegration(integration);
     throw error;
   }
