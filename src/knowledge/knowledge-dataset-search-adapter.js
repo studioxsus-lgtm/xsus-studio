@@ -1,12 +1,13 @@
 
 /**
  * XSUS AI Core — Knowledge Dataset Search Adapter
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Përgjegjësitë:
  * - Kërkimi në dataset-et e regjistruara.
  * - Filtrimi sipas gjuhës dhe domenit.
- * - Renditja sipas relevancës.
+ * - Renditja deterministe sipas relevancës dhe cilësisë.
+ * - Deduplikimi i njohurive identike ndërmjet dataset-eve.
  * - Kufizimi i numrit të rezultateve.
  * - Kthimi i rezultateve në format të standardizuar.
  *
@@ -19,11 +20,18 @@ import {
 } from "../language/normalization.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-search-adapter";
-const ENGINE_VERSION = "1.0.0";
+const ENGINE_VERSION = "1.1.0";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 const MAX_QUERY_LENGTH = 8000;
+
+const STATUS_RANK = Object.freeze({
+  verified: 3,
+  published: 2,
+  reviewed: 2,
+  draft: 1
+});
 
 function isPlainObject(value) {
   if (value === null || typeof value !== "object") {
@@ -51,7 +59,9 @@ function normalizeLanguage(value) {
     return "";
   }
 
-  return normalizeLanguageCode(value.trim());
+  const normalized = normalizeLanguageCode(value.trim());
+
+  return normalized === "auto" ? "" : normalized;
 }
 
 function normalizeDomain(value) {
@@ -59,7 +69,15 @@ function normalizeDomain(value) {
     return "";
   }
 
-  return value.trim().toLowerCase();
+  return normalizeText(value);
+}
+
+function getBaseLanguage(value) {
+  const normalized = normalizeLanguage(value);
+
+  return normalized
+    ? normalized.split("-")[0].toLowerCase()
+    : "";
 }
 
 function matchesLanguage(entryLanguage, requestedLanguage) {
@@ -68,15 +86,14 @@ function matchesLanguage(entryLanguage, requestedLanguage) {
   }
 
   const entry = normalizeLanguage(entryLanguage);
-  const requested = normalizeLanguage(requestedLanguage);
 
-  if (!entry || !requested) {
+  if (!entry) {
     return false;
   }
 
   return (
-    entry === requested ||
-    entry.split("-")[0] === requested.split("-")[0]
+    entry.toLowerCase() === requestedLanguage.toLowerCase() ||
+    getBaseLanguage(entry) === getBaseLanguage(requestedLanguage)
   );
 }
 
@@ -85,7 +102,13 @@ function normalizeLimit(value) {
     return DEFAULT_LIMIT;
   }
 
-  const parsed = Number(value);
+  let parsed;
+
+  try {
+    parsed = Number(value);
+  } catch {
+    return DEFAULT_LIMIT;
+  }
 
   if (!Number.isFinite(parsed)) {
     return DEFAULT_LIMIT;
@@ -98,15 +121,11 @@ function normalizeLimit(value) {
 }
 
 /**
- * Dataset Registry ruan:
- * {
- *   id,
- *   collection: [...entries],
- *   entryCount,
- *   schemaVersion
- * }
- *
- * Mbështeten edhe formatet e tjera të zakonshme.
+ * Mbështet formatet:
+ * - { entries: [...] }
+ * - { collection: [...] }
+ * - { collection: { entries: [...] } }
+ * - { collection: { collection: { entries: [...] } } }
  */
 function getDatasetEntries(dataset) {
   if (!dataset || typeof dataset !== "object") {
@@ -151,10 +170,51 @@ function getSearchableText(entry) {
   );
 }
 
+function tokenize(value) {
+  const normalized = normalizeText(value);
+
+  if (!normalized) {
+    return [];
+  }
+
+  return normalized.split(/\s+/u).filter(Boolean);
+}
+
+function containsWholeTerm(text, term) {
+  if (!text || !term) {
+    return false;
+  }
+
+  const escaped = term.replace(
+    /[.*+?^${}()|[\]\\]/gu,
+    "\\$&"
+  );
+
+  const pattern = new RegExp(
+    `(^|[^\\p{L}\\p{M}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{M}\\p{N}])`,
+    "u"
+  );
+
+  return pattern.test(text);
+}
+
+function countTermMatches(text, terms) {
+  let count = 0;
+
+  for (const term of terms) {
+    if (containsWholeTerm(text, term)) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
 function scoreEntry(entry, query, queryTerms) {
   const title = normalizeText(entry.title);
   const content = normalizeText(entry.content);
   const topic = normalizeText(entry.topic);
+  const domain = normalizeDomain(entry.domain);
 
   const keywords = normalizeText(
     Array.isArray(entry.keywords)
@@ -170,60 +230,145 @@ function scoreEntry(entry, query, queryTerms) {
 
   let score = 0;
 
+  // Përputhja e drejtpërdrejtë me titullin.
   if (title === query) {
-    score += 100;
+    score += 120;
   } else if (title.includes(query)) {
-    score += 60;
+    score += 70;
   }
 
+  // Tema është tregues i rëndësishëm i relevancës.
   if (topic === query) {
-    score += 40;
+    score += 50;
   } else if (topic.includes(query)) {
-    score += 25;
+    score += 30;
   }
 
-  if (keywords.includes(query)) score += 35;
-  if (tags.includes(query)) score += 20;
-  if (content.includes(query)) score += 15;
-
-  for (const term of queryTerms) {
-    if (!term) {
-      continue;
-    }
-
-    if (title.split(/\s+/u).includes(term)) {
-      score += 12;
-    } else if (title.includes(term)) {
-      score += 6;
-    }
-
-    if (keywords.includes(term)) score += 8;
-    if (tags.includes(term)) score += 5;
-    if (topic.includes(term)) score += 4;
-    if (content.includes(term)) score += 2;
+  if (keywords.includes(query)) {
+    score += 35;
   }
 
-  const statusRank = {
-    verified: 3,
-    reviewed: 2,
-    published: 2,
-    draft: 1
-  };
+  if (tags.includes(query)) {
+    score += 22;
+  }
 
-  score += statusRank[entry.status] ?? 0;
+  if (content.includes(query)) {
+    score += 15;
+  }
+
+  if (domain === query) {
+    score += 10;
+  }
+
+  // Përputhjet me fjalë të plota kanë përparësi.
+  const titleTerms = countTermMatches(title, queryTerms);
+  const topicTerms = countTermMatches(topic, queryTerms);
+  const keywordTerms = countTermMatches(keywords, queryTerms);
+  const tagTerms = countTermMatches(tags, queryTerms);
+  const contentTerms = countTermMatches(content, queryTerms);
+
+  score += titleTerms * 14;
+  score += topicTerms * 6;
+  score += keywordTerms * 8;
+  score += tagTerms * 5;
+  score += contentTerms * 2;
+
+  // Bonus modest për hyrjet me status më të besueshëm.
+  score += STATUS_RANK[entry.status] ?? 0;
 
   return score;
+}
+
+function getQualityRank(entry) {
+  return STATUS_RANK[entry.status] ?? 0;
+}
+
+function compareText(first, second) {
+  if (first < second) return -1;
+  if (first > second) return 1;
+  return 0;
+}
+
+/**
+ * Identifikon dublikatat me titull, përmbajtje,
+ * gjuhë dhe domen identikë pas normalizimit.
+ *
+ * ID-ja dhe dataset-i nuk përdoren si pjesë e çelësit,
+ * kështu që njohuria mund të identifikohet edhe kur
+ * ruhet në dataset-e të ndryshme.
+ */
+function createDuplicateKey(entry) {
+  return JSON.stringify([
+    normalizeText(entry.title),
+    normalizeText(entry.content),
+    normalizeLanguage(entry.language),
+    normalizeDomain(entry.domain)
+  ]);
+}
+
+function compareMatches(first, second) {
+  if (second.score !== first.score) {
+    return second.score - first.score;
+  }
+
+  const firstQuality = getQualityRank(first.entry);
+  const secondQuality = getQualityRank(second.entry);
+
+  if (secondQuality !== firstQuality) {
+    return secondQuality - firstQuality;
+  }
+
+  const idComparison = compareText(
+    first.entry.id,
+    second.entry.id
+  );
+
+  if (idComparison !== 0) {
+    return idComparison;
+  }
+
+  const datasetComparison = compareText(
+    first.datasetId,
+    second.datasetId
+  );
+
+  if (datasetComparison !== 0) {
+    return datasetComparison;
+  }
+
+  return compareText(
+    createDuplicateKey(first.entry),
+    createDuplicateKey(second.entry)
+  );
+}
+
+function deduplicateMatches(matches) {
+  const bestByKey = new Map();
+
+  for (const match of matches) {
+    const key = createDuplicateKey(match.entry);
+    const existing = bestByKey.get(key);
+
+    if (!existing || compareMatches(match, existing) < 0) {
+      bestByKey.set(key, match);
+    }
+  }
+
+  return [...bestByKey.values()];
 }
 
 function createResult(entry, score) {
   return Object.freeze({
     ...entry,
+
     keywords: Object.freeze([
       ...(Array.isArray(entry.keywords) ? entry.keywords : [])
     ]),
+
     tags: Object.freeze([
       ...(Array.isArray(entry.tags) ? entry.tags : [])
     ]),
+
     searchScore: score,
     searchSource: ENGINE_NAME
   });
@@ -275,7 +420,7 @@ export function createKnowledgeDatasetSearchAdapter({
       );
     }
 
-    const normalizedQuery = normalizeText(query.trim());
+    const normalizedQuery = normalizeText(query);
 
     if (!normalizedQuery) {
       return createError(
@@ -290,13 +435,13 @@ export function createKnowledgeDatasetSearchAdapter({
     const requestedDomain = normalizeDomain(options.domain);
     const limit = normalizeLimit(options.limit);
 
-    const queryTerms = [
-      ...new Set(
-        normalizedQuery
-          .split(/\s+/u)
-          .filter(Boolean)
-      )
-    ];
+    const queryTerms = [...new Set(tokenize(normalizedQuery))];
+
+    if (queryTerms.length === 0) {
+      return createError(
+        "Pyetja nuk përmban tekst të kërkueshëm."
+      );
+    }
 
     let datasetSummaries;
 
@@ -315,7 +460,7 @@ export function createKnowledgeDatasetSearchAdapter({
     }
 
     const matches = [];
-    const seenEntries = new Set();
+    const seenDatasetEntries = new Set();
 
     for (const summary of datasetSummaries) {
       if (
@@ -326,11 +471,14 @@ export function createKnowledgeDatasetSearchAdapter({
         continue;
       }
 
+      const datasetId = summary.id.trim();
+
       let dataset;
 
       try {
-        dataset = registry.getDataset(summary.id);
+        dataset = registry.getDataset(datasetId);
       } catch {
+        // Një dataset i paarritshëm nuk duhet të ndalojë kërkimin.
         continue;
       }
 
@@ -349,7 +497,9 @@ export function createKnowledgeDatasetSearchAdapter({
           typeof entry.id !== "string" ||
           !entry.id.trim() ||
           typeof entry.title !== "string" ||
-          typeof entry.content !== "string"
+          !entry.title.trim() ||
+          typeof entry.content !== "string" ||
+          !entry.content.trim()
         ) {
           continue;
         }
@@ -368,12 +518,24 @@ export function createKnowledgeDatasetSearchAdapter({
           continue;
         }
 
+        // Shmang përsëritjen e së njëjtës ID brenda dataset-it.
+        const datasetEntryKey = JSON.stringify([
+          datasetId,
+          entry.id.trim()
+        ]);
+
+        if (seenDatasetEntries.has(datasetEntryKey)) {
+          continue;
+        }
+
+        seenDatasetEntries.add(datasetEntryKey);
+
         const searchableText = getSearchableText(entry);
 
         const hasQueryMatch =
           searchableText.includes(normalizedQuery) ||
           queryTerms.some((term) =>
-            searchableText.includes(term)
+            containsWholeTerm(searchableText, term)
           );
 
         if (!hasQueryMatch) {
@@ -390,37 +552,21 @@ export function createKnowledgeDatasetSearchAdapter({
           continue;
         }
 
-        const uniqueKey = `${summary.id}:${entry.id}`;
-
-        if (seenEntries.has(uniqueKey)) {
-          continue;
-        }
-
-        seenEntries.add(uniqueKey);
-
         matches.push({
           entry,
           score,
-          datasetId: summary.id
+          datasetId
         });
       }
     }
 
-    matches.sort((a, b) => {
-      if (b.score !== a.score) {
-        return b.score - a.score;
-      }
+    // Fillimisht zgjedhim versionin më të mirë të njohurive
+    // që janë dublikate, pastaj rendisim rezultatet.
+    const uniqueMatches = deduplicateMatches(matches);
 
-      const idComparison = a.entry.id.localeCompare(b.entry.id);
+    uniqueMatches.sort(compareMatches);
 
-      if (idComparison !== 0) {
-        return idComparison;
-      }
-
-      return a.datasetId.localeCompare(b.datasetId);
-    });
-
-    const results = matches
+    const results = uniqueMatches
       .slice(0, limit)
       .map(({ entry, score, datasetId }) =>
         createResult(
@@ -435,6 +581,7 @@ export function createKnowledgeDatasetSearchAdapter({
     return {
       success: true,
       results,
+
       metadata: {
         engine: ENGINE_NAME,
         version: ENGINE_VERSION,
@@ -443,7 +590,7 @@ export function createKnowledgeDatasetSearchAdapter({
         domain: requestedDomain || null,
         limit,
         resultCount: results.length,
-        matchedCount: matches.length,
+        matchedCount: uniqueMatches.length,
         datasetCount: datasetSummaries.length
       }
     };
