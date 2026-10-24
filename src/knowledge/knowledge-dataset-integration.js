@@ -1,173 +1,203 @@
-/**
 
-* XSUS AI Core — Knowledge Dataset Integration
-* Version: 1.2.1
-* 
-* Përgjegjësitë:
-* - Regjistrimi i dataset-eve si burim njohurish.
-* - Mbështetja e emrave të personalizuar të burimeve.
-* - Normalizimi i rezultateve.
-* - Izolimi i gabimeve të provider-it.
-* - Ruajtja e kontratës së knowledge-service.js.
-* - Çregjistrimi i sigurt i burimit.
-    */
+/**
+ * XSUS AI — Knowledge Dataset Integration
+ * Version: 1.2.0
+ *
+ * Përgjegjësitë:
+ * - Integrimi i knowledge datasets me Knowledge Service.
+ * - Mbështetja e emrave unikë për burimet.
+ * - Normalizimi i rezultateve të kërkimit.
+ * - Ruajtja e identitetit të burimit në çdo rezultat.
+ * - Çregjistrimi i sigurt i integrimit.
+ */
 
 import {
-registerKnowledgeSource
+  registerKnowledgeSource,
+  hasKnowledgeSource
 } from "./knowledge-service.js";
 
-import {
-createKnowledgeDatasetSearchProvider
-} from "./knowledge-dataset-search-adapter.js";
-
 const SOURCE_NAME = "xsus-knowledge-datasets";
-const DEFAULT_ERROR_MESSAGE = "Kërkimi në dataset dështoi.";
+const ENGINE_NAME = "xsus-knowledge-dataset-integration";
+const ENGINE_VERSION = "1.2.0";
 
-function createFailureResult(error, metadata = null) {
-return {
-success: false,
-results: [],
-error:
-typeof error === "string" && error.trim()
-? error
-: DEFAULT_ERROR_MESSAGE,
-metadata
-};
-}
-
-function normalizeSearchOptions(options = {}) {
-if (
-options === null ||
-typeof options !== "object" ||
-Array.isArray(options)
-) {
-return null;
-}
-
-return {
-language: options.language,
-domain: options.domain,
-limit: options.limit
-};
-}
-
-function normalizeProviderResult(result, sourceName) {
-if (
-!result ||
-typeof result !== "object" ||
-Array.isArray(result)
-) {
-return createFailureResult(DEFAULT_ERROR_MESSAGE);
-}
-
-if (result.success !== true) {
-return createFailureResult(
-result.error,
-result.metadata ?? null
-);
-}
-
-if (!Array.isArray(result.results)) {
-return createFailureResult(
-"Provider-i ktheu rezultate në format të pavlefshëm.",
-result.metadata ?? null
-);
-}
-
-const results = result.results
-.filter((entry) =>
-entry !== null &&
-typeof entry === "object" &&
-!Array.isArray(entry)
-)
-.map((entry) => ({
-...entry,
-source: sourceName
-}));
-
-return {
-success: true,
-results,
-metadata: result.metadata ?? null
-};
-}
-
-/**
-
-* Regjistron një burim dataset-esh në knowledge-service.
-* 
-* @param {object} options
-* @param {object} options.registry Regjistri i dataset-eve.
-* @param {string} [options.sourceName] Emër unik i burimit.
-* @returns {{ success: boolean, source: string, unregister: Function }}
-  */
-  export function registerKnowledgeDatasetIntegration({
-  registry,
-  sourceName = SOURCE_NAME
-  } = {}) {
+function isPlainObject(value) {
   if (
-  typeof sourceName !== "string" ||
-  !sourceName.trim() ||
-  sourceName.trim().length > 100
+    value === null ||
+    typeof value !== "object" ||
+    Array.isArray(value)
   ) {
-  throw new TypeError(
-  "Emri i burimit duhet të jetë tekst me 1 deri në 100 karaktere."
-  );
-  }
-
-const resolvedSourceName = sourceName.trim();
-
-const provider = createKnowledgeDatasetSearchProvider({
-registry
-});
-
-const unregister = registerKnowledgeSource(
-resolvedSourceName,
-async (query, options = {}) => {
-const normalizedOptions = normalizeSearchOptions(options);
-
-  if (!normalizedOptions) {
-    return createFailureResult(
-      "Opsionet e kërkimit janë të pavlefshme."
-    );
-  }
-
-  try {
-    const result = await provider.searchKnowledgeDataset(
-      query,
-      normalizedOptions
-    );
-
-    return normalizeProviderResult(
-      result,
-      resolvedSourceName
-    );
-  } catch (error) {
-    return createFailureResult(
-      error instanceof Error && error.message.trim()
-        ? error.message
-        : DEFAULT_ERROR_MESSAGE
-    );
-  }
-}
-
-);
-
-let isRegistered = true;
-
-return Object.freeze({
-success: true,
-source: resolvedSourceName,
-
-unregister() {
-  if (!isRegistered) {
     return false;
   }
 
-  isRegistered = false;
-  unregister();
-  return true;
+  const prototype = Object.getPrototypeOf(value);
+
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
 }
 
-});
+function normalizeSourceName(sourceName) {
+  if (
+    typeof sourceName !== "string" ||
+    !sourceName.trim()
+  ) {
+    return SOURCE_NAME;
+  }
+
+  return sourceName.trim();
 }
+
+function normalizeEntries(response, sourceName) {
+  const entries = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.results)
+      ? response.results
+      : [];
+
+  return entries
+    .filter(
+      entry =>
+        isPlainObject(entry) &&
+        typeof entry.content === "string" &&
+        entry.content.trim().length > 0
+    )
+    .map(entry => ({
+      ...entry,
+      source: sourceName
+    }));
+}
+
+/**
+ * Regjistron integrimin e një registry me Knowledge Service.
+ *
+ * registry duhet të ofrojë:
+ * - search(query, options)
+ *
+ * @param {Object} options
+ * @param {Object} options.registry Registry ose pipeline i datasets.
+ * @param {string} options.sourceName Emri unik i burimit.
+ * @returns {Object} Rezultati i regjistrimit dhe funksioni close().
+ */
+export function registerKnowledgeDatasetIntegration({
+  registry,
+  sourceName = SOURCE_NAME
+} = {}) {
+  if (
+    !registry ||
+    typeof registry.search !== "function"
+  ) {
+    throw new TypeError(
+      "Registry duhet të ofrojë funksionin search(query, options)."
+    );
+  }
+
+  const resolvedSourceName =
+    normalizeSourceName(sourceName);
+
+  if (hasKnowledgeSource(resolvedSourceName)) {
+    return {
+      success: false,
+      source: resolvedSourceName,
+      engine: ENGINE_NAME,
+      version: ENGINE_VERSION,
+      error:
+        `Burimi "${resolvedSourceName}" është regjistruar tashmë.`,
+      close() {
+        return false;
+      }
+    };
+  }
+
+  const provider = async (query, options = {}) => {
+    try {
+      const safeOptions = isPlainObject(options)
+        ? options
+        : {};
+
+      const response = await registry.search(query, {
+        language: safeOptions.language,
+        domain: safeOptions.domain,
+        limit: safeOptions.limit
+      });
+
+      if (response?.success === false) {
+        return {
+          success: false,
+          results: [],
+          error:
+            typeof response.error === "string"
+              ? response.error
+              : "Kërkimi në knowledge datasets dështoi."
+        };
+      }
+
+      return {
+        success: true,
+        results: normalizeEntries(
+          response,
+          resolvedSourceName
+        ),
+        metadata: {
+          engine: ENGINE_NAME,
+          version: ENGINE_VERSION,
+          source: resolvedSourceName,
+          ...(isPlainObject(response?.metadata)
+            ? response.metadata
+            : {})
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        results: [],
+        error:
+          error instanceof Error
+            ? error.message
+            : "Ndodhi një gabim gjatë kërkimit në datasets."
+      };
+    }
+  };
+
+  const unregister = registerKnowledgeSource(
+    resolvedSourceName,
+    provider
+  );
+
+  let closed = false;
+
+  return {
+    success: true,
+    source: resolvedSourceName,
+    engine: ENGINE_NAME,
+    version: ENGINE_VERSION,
+
+    close() {
+      if (closed) {
+        return false;
+      }
+
+      closed = true;
+      unregister();
+
+      return true;
+    },
+
+    unregister() {
+      if (closed) {
+        return false;
+      }
+
+      closed = true;
+      unregister();
+
+      return true;
+    }
+  };
+}
+
+export {
+  SOURCE_NAME as KNOWLEDGE_DATASET_SOURCE_NAME
+};
+
+export default registerKnowledgeDatasetIntegration;
