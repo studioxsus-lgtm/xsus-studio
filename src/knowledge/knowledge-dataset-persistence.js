@@ -4,10 +4,11 @@
 * Version: 1.2.1
 * 
 * - Ruajtje e dataset-eve dhe versioneve.
-* - Validim paraprak dhe rikuperim me rollback.
+* - Validim paraprak para rikuperimit.
+* - Rollback kur regjistrimi dështon.
 * - Refuzim kur registry nuk është bosh.
 * - Përputhshmëri me snapshot-et e vjetra.
-* - Kthim i datasetIds në rezultatet e rikuperimit.
+* - Kthim i datasetIds në rezultatin e rikuperimit.
     */
 
 import { createKnowledgeDatasetRegistry } from "./knowledge-dataset-registry.js";
@@ -158,6 +159,7 @@ const datasets = [];
 }
 
 async function restoreRegistry() {
+// Mos lejo rikuperim mbi një registry që nuk është bosh.
 try {
 if (!isEmptyRegistry(registry)) {
 return failure(
@@ -219,7 +221,7 @@ try {
   );
 }
 
-// Validimi paraprak kryhet jashtë registry-t real.
+// Valido të gjitha dataset-et në një registry të përkohshëm.
 try {
   const temporaryRegistry = createKnowledgeDatasetRegistry();
 
@@ -245,7 +247,7 @@ try {
   );
 }
 
-// Kontroll i dytë para regjistrimit real.
+// Kontrollo përsëri para regjistrimit në registry-n real.
 try {
   if (!isEmptyRegistry(registry)) {
     return failure(
@@ -295,11 +297,12 @@ try {
     }
   };
 } catch (error) {
+  // Kthe registry-n në gjendjen fillestare nëse regjistrimi dështon.
   for (const id of [...registeredIds].reverse()) {
     try {
       registry.removeDataset(id);
     } catch {
-      // Ruajmë gabimin fillestar.
+      // Ruaj gabimin origjinal.
     }
   }
 
