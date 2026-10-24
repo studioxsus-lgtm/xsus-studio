@@ -1,5 +1,5 @@
 
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import {
   createKnowledgeDatasetMigration,
@@ -18,7 +18,7 @@ function createDataset({
       language: "sq",
       domain: "general"
     }
-  ] = {}
+  ]
 } = {}) {
   return {
     id,
@@ -259,7 +259,7 @@ describe("XSUS AI — Knowledge Dataset Migration", () => {
     );
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Migrimi prapa");
+    expect(result.error.toLowerCase()).toContain("migrimi prapa");
   });
 
   test("mbështet migrime asinkrone", async () => {
