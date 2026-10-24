@@ -1,7 +1,7 @@
 /**
 
 * XSUS AI — Knowledge Service
-* Version: 1.1.2
+* Version: 1.1.3
 * 
 * Përgjegjësitë:
 * - Kërkimi në bazat e integruara të njohurive.
@@ -51,7 +51,7 @@ const MAX_SOURCE_NAME_LENGTH = 100;
 const MAX_PROVIDER_ERROR_LENGTH = 1000;
 
 const ENGINE_NAME = "xsus-knowledge-service";
-const ENGINE_VERSION = "1.1.2";
+const ENGINE_VERSION = "1.1.3";
 const SCHEMA_VERSION = "1.0.0";
 
 const BUILT_IN_LANGUAGES = Object.freeze([
@@ -240,9 +240,8 @@ return getBaseLanguage(item.language) === targetLanguage;
 
 /**
 
-* Deduplikon brenda të njëjtit burim.
-* Rezultatet me përmbajtje të njëjtë nga burime
-* të ndryshme ruhen veçmas.
+* Deduplikon rezultatet brenda të njëjtit burim.
+* Përmbajtja e njëjtë nga burime të ndryshme ruhet veçmas.
   */
   function getResultKey(item) {
   const source =
