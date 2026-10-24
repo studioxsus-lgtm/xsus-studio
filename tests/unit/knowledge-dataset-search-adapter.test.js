@@ -1,4 +1,3 @@
-
 import { describe, expect, test } from "vitest";
 
 import {
@@ -26,7 +25,10 @@ function createEntry(overrides = {}) {
   };
 }
 
-function createRegistryWithEntries(entries, datasetId = "test-data") {
+function createRegistryWithEntries(
+  entries,
+  datasetId = "test-data"
+) {
   const registry = createKnowledgeDatasetRegistry();
 
   const registration = registry.registerDataset(
@@ -103,9 +105,9 @@ describe("Knowledge Dataset Search Adapter", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.results.every(
-      (entry) => entry.language === "sq"
-    )).toBe(true);
+    expect(
+      result.results.every((entry) => entry.language === "sq")
+    ).toBe(true);
   });
 
   test("filtron rezultatet sipas domenit", () => {
@@ -250,5 +252,106 @@ describe("Knowledge Dataset Search Adapter", () => {
     expect(result.success).toBe(true);
     expect(result.results).toHaveLength(1);
     expect(provider.getMetadata().version).toBe("1.0.0");
+  });
+
+  test("rendit përputhjen e saktë të titullit mbi përputhjen në përmbajtje", () => {
+    const registry = createRegistryWithEntries([
+      createEntry({
+        id: "content-match",
+        title: "Web Development",
+        content: "JavaScript is a programming language."
+      }),
+      createEntry({
+        id: "title-match",
+        title: "JavaScript",
+        content: "A language used to build web applications."
+      })
+    ]);
+
+    const adapter = createKnowledgeDatasetSearchAdapter({
+      registry
+    });
+
+    const result = adapter.search("JavaScript");
+
+    expect(result.success).toBe(true);
+    expect(result.results.length).toBe(2);
+    expect(result.results[0].id).toBe("title-match");
+    expect(result.results[0].searchScore).toBeGreaterThan(
+      result.results[1].searchScore
+    );
+  });
+
+  test("mbështet kodin rajonal të gjuhës sq-AL", () => {
+    const registry = createRegistryWithEntries([
+      createEntry({
+        id: "sq-entry",
+        title: "Bazat e JavaScript",
+        content: "JavaScript është gjuhë programimi.",
+        language: "sq"
+      }),
+      createEntry({
+        id: "en-entry",
+        language: "en"
+      })
+    ]);
+
+    const adapter = createKnowledgeDatasetSearchAdapter({
+      registry
+    });
+
+    const result = adapter.search("JavaScript", {
+      language: "sq-AL"
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0].id).toBe("sq-entry");
+    expect(result.metadata.language).toBe("sq-al");
+  });
+
+  test("rendit rezultatet në mënyrë të qëndrueshme kur pikët janë të barabarta", () => {
+    const registry = createRegistryWithEntries([
+      createEntry({ id: "js-c" }),
+      createEntry({ id: "js-a" }),
+      createEntry({ id: "js-b" })
+    ]);
+
+    const adapter = createKnowledgeDatasetSearchAdapter({
+      registry
+    });
+
+    const firstResult = adapter.search("JavaScript");
+    const secondResult = adapter.search("JavaScript");
+
+    const firstIds = firstResult.results.map(
+      (entry) => entry.id
+    );
+
+    const secondIds = secondResult.results.map(
+      (entry) => entry.id
+    );
+
+    expect(firstIds).toEqual(["js-a", "js-b", "js-c"]);
+    expect(secondIds).toEqual(firstIds);
+  });
+
+  test("kthen metadata të sakta kur nuk gjenden rezultate", () => {
+    const registry = createRegistryWithEntries([
+      createEntry()
+    ]);
+
+    const adapter = createKnowledgeDatasetSearchAdapter({
+      registry
+    });
+
+    const result = adapter.search("quantum astronomy");
+
+    expect(result.success).toBe(true);
+    expect(result.results).toEqual([]);
+    expect(result.metadata.resultCount).toBe(0);
+    expect(result.metadata.matchedCount).toBe(0);
+    expect(result.metadata.limit).toBe(10);
+    expect(result.metadata.datasetCount).toBe(1);
   });
 });
