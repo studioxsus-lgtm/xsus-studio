@@ -4,10 +4,10 @@
 * Version: 1.2.1
 * 
 * - Ruajtje e dataset-eve dhe versioneve.
-* - Rikuperim me validim paraprak dhe rollback.
-* - Refuzim kur regjistri real nuk është bosh.
+* - Validim paraprak dhe rikuperim me rollback.
+* - Refuzim kur registry nuk është bosh.
 * - Përputhshmëri me snapshot-et e vjetra.
-* - Kthim i ID-ve të rikuperuara për API dhe teste.
+* - Kthim i datasetIds në rezultatet e rikuperimit.
     */
 
 import { createKnowledgeDatasetRegistry } from "./knowledge-dataset-registry.js";
@@ -34,7 +34,6 @@ if (value === undefined || value === null || value === "") {
 return DEFAULT_DATASET_VERSION;
 }
 
-// Versioni duhet të jetë në formatin X.Y.Z.
 if (
 typeof value !== "string" ||
 !/^(0|[1-9]\d*).(0|[1-9]\d*).(0|[1-9]\d*)$/.test(value)
@@ -77,7 +76,9 @@ throw new TypeError(
 return {
 id: dataset.id,
 entries: dataset.entries,
-datasetVersion: normalizeDatasetVersion(dataset.datasetVersion)
+datasetVersion: normalizeDatasetVersion(
+dataset.datasetVersion ?? dataset.version
+)
 };
 }
 
@@ -119,7 +120,9 @@ const datasets = [];
     datasets.push({
       id: dataset.id,
       entries: dataset.collection,
-      datasetVersion: normalizeDatasetVersion(dataset.datasetVersion)
+      datasetVersion: normalizeDatasetVersion(
+        dataset.datasetVersion
+      )
     });
   }
 
@@ -155,7 +158,6 @@ const datasets = [];
 }
 
 async function restoreRegistry() {
-// Refuzo përpara ngarkimit nëse registry nuk është bosh.
 try {
 if (!isEmptyRegistry(registry)) {
 return failure(
@@ -217,7 +219,7 @@ try {
   );
 }
 
-// Valido të gjitha dataset-et në një registry të përkohshëm.
+// Validimi paraprak kryhet jashtë registry-t real.
 try {
   const temporaryRegistry = createKnowledgeDatasetRegistry();
 
@@ -243,7 +245,7 @@ try {
   );
 }
 
-// Kontrollo përsëri përpara ndryshimit të registry-t real.
+// Kontroll i dytë para regjistrimit real.
 try {
   if (!isEmptyRegistry(registry)) {
     return failure(
@@ -293,12 +295,11 @@ try {
     }
   };
 } catch (error) {
-  // Në rast dështimi, hiq dataset-et e regjistruara nga ky rikuperim.
   for (const id of [...registeredIds].reverse()) {
     try {
       registry.removeDataset(id);
     } catch {
-      // Ruaj gabimin origjinal të rikuperimit.
+      // Ruajmë gabimin fillestar.
     }
   }
 
