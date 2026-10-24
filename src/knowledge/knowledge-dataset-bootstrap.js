@@ -1,3 +1,4 @@
+
 /**
  * XSUS AI Core — Knowledge Dataset Bootstrap
  * Version: 1.1.0
@@ -11,6 +12,7 @@
  * 6. Mundëson mbylljen e sigurt të integrimit.
  * 7. Pastron burimet nëse inicializimi dështon.
  * 8. Ruajtja e përputhshmërisë me API-në publike.
+ * 9. Mbështet emrin e personalizuar të burimit.
  */
 
 import {
@@ -78,7 +80,8 @@ function closeIntegration(integration) {
 
 export async function initializeKnowledgeDatasets({
   filePath,
-  storageAdapter
+  storageAdapter,
+  sourceName
 } = {}) {
   if (
     !storageAdapter &&
@@ -118,9 +121,16 @@ export async function initializeKnowledgeDatasets({
       await persistence.restoreRegistry()
     );
 
-    integration = registerKnowledgeDatasetIntegration({
-      registry
-    });
+    // Pa sourceName ruhet sjellja standarde ekzistuese.
+    const integrationOptions = { registry };
+
+    if (sourceName !== undefined) {
+      integrationOptions.sourceName = sourceName;
+    }
+
+    integration = registerKnowledgeDatasetIntegration(
+      integrationOptions
+    );
 
     if (!integration || integration.success !== true) {
       throw new Error(
