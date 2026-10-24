@@ -24,18 +24,14 @@ import {
 } from "../../src/knowledge/knowledge-dataset-pipeline.js";
 
 import {
-  registerKnowledgeDatasetIntegration
-} from "../../src/knowledge/knowledge-dataset-integration.js";
-
-import {
-  searchKnowledge,
-  hasKnowledgeSource
+  hasKnowledgeSource,
+  searchKnowledge
 } from "../../src/knowledge/knowledge-service.js";
 
 const SOURCE_NAME = "xsus-knowledge-datasets-e2e-test";
 
 const temporaryDirectories = [];
-const registeredIntegrations = [];
+const pipelines = [];
 
 async function createTemporaryFilePath() {
   const directory = await mkdtemp(
@@ -48,12 +44,8 @@ async function createTemporaryFilePath() {
 }
 
 afterEach(async () => {
-  for (const integration of registeredIntegrations.splice(0)) {
-    if (typeof integration?.close === "function") {
-      integration.close();
-    } else if (typeof integration?.unregister === "function") {
-      integration.unregister();
-    }
+  for (const pipeline of pipelines.splice(0)) {
+    await pipeline.close();
   }
 
   await Promise.all(
@@ -73,93 +65,84 @@ describe("XSUS Knowledge Dataset End-to-End", () => {
       const filePath = await createTemporaryFilePath();
 
       const pipeline = await createKnowledgeDatasetPipeline({
-        filePath
+        filePath,
+        sourceName: SOURCE_NAME
       });
 
-      try {
-        const registration = await pipeline.registerDataset(
-          "e2e-xsus-dataset",
-          [
-            {
-              id: "e2e-xsus-entry",
-              title: "XSUS Dataset Integration Check",
-              content:
-                "XSUS knowledge integration unique phrase nebula-742.",
-              language: "en",
-              domain: "general",
-              topic: "integration",
-              keywords: ["xsus", "nebula-742"],
-              tags: ["e2e-test"],
-              status: "verified"
-            }
-          ]
-        );
+      pipelines.push(pipeline);
 
-        expect(registration.success).toBe(true);
-
-        // Verifiko që dataset-i është regjistruar.
-        const dataset = pipeline.getDataset(
-          "e2e-xsus-dataset"
-        );
-
-        expect(dataset).toBeTruthy();
-
-        // Verifiko kërkimin direkt në pipeline.
-        const directResult = pipeline.search(
-          "nebula-742",
+      const registration = await pipeline.registerDataset(
+        "e2e-xsus-dataset",
+        [
           {
+            id: "e2e-xsus-entry",
+            title: "XSUS Dataset Integration Check",
+            content:
+              "XSUS knowledge integration unique phrase nebula-742.",
             language: "en",
             domain: "general",
-            limit: 10
+            topic: "integration",
+            keywords: ["xsus", "nebula-742"],
+            tags: ["e2e-test"],
+            status: "verified"
           }
-        );
+        ]
+      );
 
-        expect(directResult.success).toBe(true);
+      expect(registration.success).toBe(true);
 
-        expect(
-          directResult.results.some(
-            (entry) => entry.id === "e2e-xsus-entry"
-          )
-        ).toBe(true);
+      // Verifiko që dataset-i është regjistruar.
+      const dataset = pipeline.getDataset(
+        "e2e-xsus-dataset"
+      );
 
-        // Regjistro një burim unik për këtë test.
-        const integration = registerKnowledgeDatasetIntegration({
-          registry: pipeline,
-          sourceName: SOURCE_NAME
-        });
+      expect(dataset).toBeTruthy();
 
-        expect(integration.success).toBe(true);
-        expect(integration.source).toBe(SOURCE_NAME);
+      // Verifiko kërkimin direkt në pipeline.
+      const directResult = pipeline.search(
+        "nebula-742",
+        {
+          language: "en",
+          domain: "general",
+          limit: 10
+        }
+      );
 
-        registeredIntegrations.push(integration);
+      expect(directResult.success).toBe(true);
 
-        expect(hasKnowledgeSource(SOURCE_NAME)).toBe(true);
-
-        // Kërko përmes Knowledge Service.
-        const result = await searchKnowledge(
-          "nebula-742",
-          {
-            language: "en",
-            domain: "general",
-            limit: 10
-          }
-        );
-
-        expect(result.success).toBe(true);
-
-        const matchingEntry = result.results.find(
+      expect(
+        directResult.results.some(
           (entry) => entry.id === "e2e-xsus-entry"
-        );
+        )
+      ).toBe(true);
 
-        expect(
-          matchingEntry,
-          "Hyrja e dataset-it duhet të gjendet përmes searchKnowledge."
-        ).toBeTruthy();
+      // Pipeline-i duhet ta ketë regjistruar burimin e personalizuar.
+      expect(hasKnowledgeSource(SOURCE_NAME)).toBe(true);
 
-        expect(matchingEntry.source).toBe(SOURCE_NAME);
-      } finally {
-        await pipeline.close();
-      }
+      // Kërko përmes Knowledge Service.
+      const result = await searchKnowledge(
+        "nebula-742",
+        {
+          language: "en",
+          domain: "general",
+          limit: 10
+        }
+      );
+
+      expect(result.success).toBe(true);
+
+      const matchingEntry = result.results.find(
+        (entry) =>
+          entry.id === "e2e-xsus-entry" &&
+          entry.source === SOURCE_NAME
+      );
+
+      expect(
+        matchingEntry,
+        "Hyrja e dataset-it duhet të gjendet përmes burimit të personalizuar në searchKnowledge."
+      ).toBeTruthy();
+
+      expect(matchingEntry.source).toBe(SOURCE_NAME);
     }
   );
 });
