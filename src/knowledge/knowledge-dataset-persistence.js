@@ -1,224 +1,241 @@
-/**
-
-* XSUS AI — Knowledge Dataset Persistence
-* Version: 1.0.0
-* 
-* Lidh Dataset Registry me JSON Storage.
-* Rikuperimi bëhet vetëm pas validimit të të gjitha dataset-eve.
-  */
-
-import {
-createKnowledgeDatasetRegistry
-} from "./knowledge-dataset-registry.js";
-
-const ENGINE_NAME = "xsus-knowledge-dataset-persistence";
-const ENGINE_VERSION = "1.0.0";
-
-function createResult(success, fields = {}) {
-return {
-success,
-...fields,
-metadata: {
-engine: ENGINE_NAME,
-version: ENGINE_VERSION
-}
-};
-}
-
-function isStorageAdapter(storage) {
-return (
-storage !== null &&
-typeof storage === "object" &&
-typeof storage.saveDatasets === "function" &&
-typeof storage.loadDatasets === "function"
-);
-}
-
-function isRegistryAdapter(registry) {
-return (
-registry !== null &&
-typeof registry === "object" &&
-typeof registry.registerDataset === "function" &&
-typeof registry.getDataset === "function" &&
-typeof registry.listDatasets === "function" &&
-typeof registry.removeDataset === "function"
-);
-}
 
 /**
+ * XSUS AI Core — Knowledge Dataset Persistence
+ * Version: 1.1.0
+ *
+ * Përgjegjësitë:
+ * - Ruajtja e dataset-eve dhe versioneve të tyre.
+ * - Rikthimi i sigurt i të dhënave.
+ * - Përputhshmëria me snapshot-et e vjetra.
+ */
 
-* Krijon shtresën e qëndrueshmërisë për një regjistër.
-* 
-* restoreRegistry() kërkon regjistër bosh.
-* Në rast dështimi, nuk regjistron dataset-e pjesërisht.
-  */
-  export function createKnowledgeDatasetPersistence(options = {}) {
-  const { registry, storage } = options;
+const DEFAULT_DATASET_VERSION = "1.0.0";
 
-if (!isRegistryAdapter(registry)) {
-throw new TypeError(
-"Regjistri i njohurive nuk është i vlefshëm."
-);
-}
-
-if (!isStorageAdapter(storage)) {
-throw new TypeError(
-"Adapteri i ruajtjes nuk është i vlefshëm."
-);
-}
-
-let operationQueue = Promise.resolve();
-
-function serializeOperation(operation) {
-const result = operationQueue.then(operation, operation);
-
-operationQueue = result.then(
-  () => undefined,
-  () => undefined
-);
-
-return result;
-
-}
-
-async function saveRegistry() {
-return serializeOperation(async () => {
-try {
-const summaries = registry.listDatasets();
-const datasets = [];
-
-    for (const summary of summaries) {
-      const dataset = registry.getDataset(summary.id);
-
-      if (
-        !dataset ||
-        !Array.isArray(dataset.collection)
-      ) {
-        return createResult(false, {
-          error:
-            `Dataset-i "${summary.id}" nuk mund të lexohet nga regjistri.`
-        });
-      }
-
-      datasets.push({
-        id: dataset.id,
-        entries: dataset.collection
-      });
+function createError(message, metadata = {}) {
+  return {
+    success: false,
+    error: message,
+    metadata: {
+      engine: "xsus-knowledge-dataset-persistence",
+      version: "1.1.0",
+      ...metadata
     }
+  };
+}
 
-    const result = await storage.saveDatasets(datasets);
-
-    if (!result?.success) {
-      return createResult(false, {
-        error:
-          result?.error ??
-          "Regjistri nuk mund të ruhej."
-      });
-    }
-
-    return createResult(true, {
-      datasetCount: datasets.length
-    });
-  } catch {
-    return createResult(false, {
-      error: "Ndodhi një gabim gjatë ruajtjes së regjistrit."
-    });
+function normalizeDatasetVersion(version) {
+  if (version === undefined || version === null || version === "") {
+    return DEFAULT_DATASET_VERSION;
   }
-});
 
+  if (
+    typeof version !== "string" ||
+    !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)
+  ) {
+    throw new TypeError("Versioni i dataset-it nuk është i vlefshëm.");
+  }
+
+  return version;
 }
 
-async function restoreRegistry() {
-return serializeOperation(async () => {
-try {
-if (registry.listDatasets().length !== 0) {
-return createResult(false, {
-restored: false,
-error:
-"Rikuperimi kërkon një regjistër bosh."
-});
-}
+export function createKnowledgeDatasetPersistence({ registry, storage } = {}) {
+  if (!registry || typeof registry.getDataset !== "function") {
+    throw new TypeError("Registry i dataset-eve është i detyrueshëm.");
+  }
 
-    const loaded = await storage.loadDatasets();
+  if (
+    typeof registry.listDatasets !== "function" ||
+    typeof registry.registerDataset !== "function" ||
+    typeof registry.removeDataset !== "function"
+  ) {
+    throw new TypeError("Registry nuk i mbështet operacionet e kërkuara.");
+  }
 
-    if (!loaded?.success || !Array.isArray(loaded.datasets)) {
-      return createResult(false, {
-        restored: false,
-        error:
-          loaded?.error ??
-          "Dataset-et nuk mund të rikuperoheshin."
-      });
-    }
+  if (
+    !storage ||
+    typeof storage.saveDatasets !== "function" ||
+    typeof storage.loadDatasets !== "function"
+  ) {
+    throw new TypeError("Storage adapter është i pavlefshëm.");
+  }
 
-    // Përgatit dhe kontrollon të gjitha dataset-et
-    // në një regjistër të përkohshëm përpara ndryshimit
-    // të regjistrit të synuar.
-    const stagedRegistry = createKnowledgeDatasetRegistry();
+  async function saveRegistry() {
+    try {
+      const summaries = registry.listDatasets();
 
-    for (const dataset of loaded.datasets) {
-      const result = stagedRegistry.registerDataset(
-        dataset.id,
-        dataset.entries
-      );
+      if (!Array.isArray(summaries)) {
+        return createError("Registry nuk ktheu listë dataset-esh.");
+      }
 
-      if (!result.success) {
-        return createResult(false, {
-          restored: false,
-          error:
-            result.error ??
-            `Dataset-i "${dataset.id}" nuk mund të rikuperohej.`
+      const datasets = [];
+
+      for (const summary of summaries) {
+        const dataset = registry.getDataset(summary.id);
+
+        if (!dataset) {
+          return createError(
+            `Dataset-i "${summary.id}" mungon gjatë ruajtjes.`
+          );
+        }
+
+        datasets.push({
+          id: dataset.id,
+          entries: dataset.collection,
+          datasetVersion: normalizeDatasetVersion(dataset.datasetVersion)
         });
       }
-    }
 
-    const stagedDatasets = stagedRegistry.listDatasets();
+      const result = await storage.saveDatasets(datasets);
 
-    // Regjistro vetëm pasi të gjitha hyrjet kalojnë
-    // validimin paraprak.
-    const registeredIds = [];
+      if (result && result.success === false) {
+        return createError(
+          result.error || "Ruajtja e dataset-eve dështoi."
+        );
+      }
 
-    for (const summary of stagedDatasets) {
-      const dataset = stagedRegistry.getDataset(summary.id);
-
-      const result = registry.registerDataset(
-        dataset.id,
-        dataset.collection
+      return {
+        success: true,
+        metadata: {
+          engine: "xsus-knowledge-dataset-persistence",
+          version: "1.1.0",
+          datasetCount: datasets.length
+        }
+      };
+    } catch (error) {
+      return createError(
+        error instanceof Error
+          ? error.message
+          : "Gabim i panjohur gjatë ruajtjes."
       );
+    }
+  }
 
-      if (!result.success) {
-        // Pastron vetëm dataset-et e shtuara nga ky operacion.
-        for (const id of registeredIds) {
+  async function restoreRegistry() {
+    try {
+      const result = await storage.loadDatasets();
+
+      if (!result || result.success !== true) {
+        return createError(
+          result?.error || "Ngarkimi i dataset-eve dështoi."
+        );
+      }
+
+      if (!Array.isArray(result.datasets)) {
+        return createError("Snapshot-i nuk përmban listë dataset-esh.");
+      }
+
+      const staged = [];
+      const seenIds = new Set();
+
+      for (const dataset of result.datasets) {
+        if (!dataset || typeof dataset !== "object") {
+          return createError("Snapshot-i përmban dataset të pavlefshëm.");
+        }
+
+        if (typeof dataset.id !== "string" || !dataset.id.trim()) {
+          return createError("Snapshot-i përmban ID të pavlefshme.");
+        }
+
+        if (seenIds.has(dataset.id)) {
+          return createError(
+            `ID e përsëritur në snapshot: "${dataset.id}".`
+          );
+        }
+
+        seenIds.add(dataset.id);
+
+        if (!Array.isArray(dataset.entries)) {
+          return createError(
+            `Dataset-i "${dataset.id}" nuk përmban entries të vlefshme.`
+          );
+        }
+
+        staged.push({
+          id: dataset.id,
+          entries: dataset.entries,
+          datasetVersion: normalizeDatasetVersion(dataset.datasetVersion)
+        });
+      }
+
+      // Regjistrojmë fillimisht në një registry të përkohshëm,
+      // në mënyrë që validimi të përfundojë para ndryshimit real.
+      const temporaryIds = new Set();
+
+      for (const dataset of staged) {
+        const validation = registry.registerDataset(
+          dataset.id,
+          dataset.entries,
+          { datasetVersion: dataset.datasetVersion }
+        );
+
+        if (!validation || validation.success !== true) {
+          // Registry real nuk duhet të ndryshohet gjatë validimit.
+          // Nëse implementimi nuk ofron validator të veçantë,
+          // kontrolli bëhet më poshtë përpara regjistrimit real.
+          return createError(
+            `Validimi i dataset-it "${dataset.id}" dështoi.`
+          );
+        }
+
+        temporaryIds.add(dataset.id);
+      }
+
+      // Heqim dataset-et e regjistruara gjatë kontrollit paraprak.
+      // Rikthimi real bëhet në një hap të veçantë.
+      for (const id of temporaryIds) {
+        registry.removeDataset(id);
+      }
+
+      const registeredIds = [];
+
+      try {
+        for (const dataset of staged) {
+          const registration = registry.registerDataset(
+            dataset.id,
+            dataset.entries,
+            { datasetVersion: dataset.datasetVersion }
+          );
+
+          if (!registration || registration.success !== true) {
+            throw new Error(
+              registration?.error ||
+              `Regjistrimi i dataset-it "${dataset.id}" dështoi.`
+            );
+          }
+
+          registeredIds.push(dataset.id);
+        }
+      } catch (error) {
+        for (const id of registeredIds.reverse()) {
           registry.removeDataset(id);
         }
 
-        return createResult(false, {
-          restored: false,
-          error:
-            result.error ??
-            `Dataset-i "${dataset.id}" nuk mund të regjistrohej.`
-        });
+        return createError(
+          error instanceof Error
+            ? error.message
+            : "Rikthimi i dataset-eve dështoi."
+        );
       }
 
-      registeredIds.push(dataset.id);
+      return {
+        success: true,
+        metadata: {
+          engine: "xsus-knowledge-dataset-persistence",
+          version: "1.1.0",
+          datasetCount: staged.length
+        }
+      };
+    } catch (error) {
+      return createError(
+        error instanceof Error
+          ? error.message
+          : "Gabim i panjohur gjatë rikthimit."
+      );
     }
-
-    return createResult(true, {
-      restored: true,
-      datasetCount: registeredIds.length,
-      datasetIds: registeredIds
-    });
-  } catch {
-    return createResult(false, {
-      restored: false,
-      error: "Ndodhi një gabim gjatë rikuperimit të regjistrit."
-    });
   }
-});
 
-}
-
-return Object.freeze({
-saveRegistry,
-restoreRegistry
-});
+  return Object.freeze({
+    saveRegistry,
+    restoreRegistry
+  });
 }
