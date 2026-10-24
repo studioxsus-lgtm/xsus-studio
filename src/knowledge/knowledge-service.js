@@ -1,6 +1,7 @@
+
 /**
  * XSUS AI — Knowledge Service
- * Version: 1.1.1
+ * Version: 1.1.2
  *
  * Përgjegjësitë:
  * - Kërkimi në bazat e integruara të njohurive.
@@ -50,7 +51,7 @@ const MAX_SOURCE_NAME_LENGTH = 100;
 const MAX_PROVIDER_ERROR_LENGTH = 1000;
 
 const ENGINE_NAME = "xsus-knowledge-service";
-const ENGINE_VERSION = "1.1.1";
+const ENGINE_VERSION = "1.1.2";
 const SCHEMA_VERSION = "1.0.0";
 
 const BUILT_IN_LANGUAGES = Object.freeze([
@@ -204,7 +205,7 @@ function isValidKnowledgeResult(item) {
     typeof item.title === "string" &&
     item.title.trim().length > 0;
 
-  // Ruajmë pajtueshmërinë me burimet e vjetra.
+  // Ruaj pajtueshmërinë me burimet e vjetra.
   if (!hasStandardIdentity) {
     return true;
   }
@@ -238,10 +239,6 @@ function matchesKnowledgeLanguage(item, requestedLanguage) {
   return getBaseLanguage(item.language) === targetLanguage;
 }
 
-/**
- * Deduplikon rezultatet brenda të njëjtit burim.
- * Rezultatet identike nga burime të ndryshme ruhen veçmas.
- */
 function getResultKey(item) {
   const source =
     typeof item.source === "string"
@@ -331,14 +328,13 @@ function scoreResult(item, query) {
   score += matchedTitleTokens * 4;
   score += matchedContentTokens;
 
-  const titleCoverage =
-    matchedTitleTokens / queryTokens.length;
+  score += Math.round(
+    (matchedTitleTokens / queryTokens.length) * 4
+  );
 
-  const contentCoverage =
-    matchedContentTokens / queryTokens.length;
-
-  score += Math.round(titleCoverage * 4);
-  score += Math.round(contentCoverage * 2);
+  score += Math.round(
+    (matchedContentTokens / queryTokens.length) * 2
+  );
 
   if (
     queryTokens.length > 1 &&
@@ -438,8 +434,6 @@ function safelySearchBuiltIn(
       .map(item => normalizeResult(item, source))
       .filter(isValidKnowledgeResult);
   } catch {
-    // Një burim i integruar që dështon nuk ndal
-    // kërkimin në burimet e tjera.
     return [];
   }
 }
@@ -540,10 +534,6 @@ function normalizeProviderFailure(response) {
   );
 }
 
-/**
- * Regjistron një burim shtesë njohurish.
- * Kthen funksionin për çregjistrimin e atij provider-i.
- */
 export function registerKnowledgeSource(name, provider) {
   if (
     typeof name !== "string" ||
@@ -570,6 +560,8 @@ export function registerKnowledgeSource(name, provider) {
   knowledgeSources.set(key, provider);
 
   return () => {
+    // Mos fshi një provider tjetër që mund të jetë
+    // regjistruar me të njëjtin emër pas çregjistrimit.
     if (knowledgeSources.get(key) === provider) {
       knowledgeSources.delete(key);
     }
@@ -668,6 +660,13 @@ export async function searchKnowledge(query, options = {}) {
         metadata: { ...providerMetadata }
       });
 
+      if (response?.success === false) {
+        errors.push({
+          source: sourceName,
+          error: normalizeProviderFailure(response)
+        });
+      }
+
       const items = Array.isArray(response)
         ? response
         : Array.isArray(response?.results)
@@ -679,8 +678,8 @@ export async function searchKnowledge(query, options = {}) {
           continue;
         }
 
-        // Emri i burimit të regjistruar është autoritativ.
-        // Provider-i nuk mund ta zëvendësojë me një emër tjetër.
+        // Emri i regjistruar është autoritativ.
+        // Provider-i nuk mund ta zëvendësojë.
         const normalizedItem = normalizeResult(
           {
             ...item,
@@ -689,16 +688,12 @@ export async function searchKnowledge(query, options = {}) {
           sourceName
         );
 
-        if (isValidKnowledgeResult(normalizedItem)) {
+        if (
+          normalizedItem &&
+          isValidKnowledgeResult(normalizedItem)
+        ) {
           results.push(normalizedItem);
         }
-      }
-
-      if (response?.success === false) {
-        errors.push({
-          source: sourceName,
-          error: normalizeProviderFailure(response)
-        });
       }
     } catch (error) {
       errors.push({
