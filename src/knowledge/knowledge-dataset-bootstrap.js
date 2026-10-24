@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI Core — Knowledge Dataset Bootstrap
- * Version: 1.1.2
+ * Version: 1.1.0
  *
  * Përgjegjësitë:
  * 1. Krijon registry-n e dataset-eve.
