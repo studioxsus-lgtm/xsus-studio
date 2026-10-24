@@ -51,7 +51,7 @@ const MAX_SOURCE_NAME_LENGTH = 100;
 const MAX_PROVIDER_ERROR_LENGTH = 1000;
 
 const ENGINE_NAME = "xsus-knowledge-service";
-const ENGINE_VERSION = "1.1.2";
+const ENGINE_VERSION = "1.1.1";
 const SCHEMA_VERSION = "1.0.0";
 
 const BUILT_IN_LANGUAGES = Object.freeze([
