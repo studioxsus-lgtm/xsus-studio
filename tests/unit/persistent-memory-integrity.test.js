@@ -115,4 +115,40 @@ describe("XSUS AI Core — Snapshot integrity", () => {
     expect(savedRecord.snapshot.messages[0].content)
       .toBe("Mos ndrysho origjinalin");
   });
+
+  test("refuzon snapshot-in që i përket një sesioni tjetër", async () => {
+    const records = new Map();
+
+    const storage = {
+      get: vi.fn(async (key) => {
+        const value = records.get(key);
+        return value === undefined ? null : structuredClone(value);
+      }),
+      set: vi.fn(async (key, value) => {
+        records.set(key, structuredClone(value));
+      }),
+      delete: vi.fn(async (key) => {
+        records.delete(key);
+      }),
+    };
+
+    const persistence = createPersistentMemory({
+      storage,
+      prefix: "xsus:mismatch:",
+      exportSession: vi.fn(async () => ({
+        schemaVersion: 1,
+        session: { sessionId: "session-B" },
+        messages: [],
+      })),
+      importSession: vi.fn(async () => ({
+        success: true,
+        restored: true,
+      })),
+    });
+
+    await expect(persistence.saveSession("session-A"))
+      .rejects.toThrow();
+
+    expect(records.size).toBe(0);
+  });
 });
