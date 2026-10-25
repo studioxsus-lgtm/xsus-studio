@@ -10,6 +10,7 @@
  * - Validimi i integritetit të regjistrimeve.
  * - Kontrolli i versionit të të dhënave.
  * - Izolimi i gabimeve dhe validimi i hyrjeve.
+ * - Koordinimi i ruajtjeve paralele për çdo sesion.
  *
  * Ky modul përdor dependency injection për të mos lidhur
  * logjikën e memories me një backend të vetëm.
@@ -78,8 +79,8 @@ function isValidSavedAt(savedAt) {
  * - snapshot.sessionId
  * - snapshot.session.sessionId
  *
- * Nëse ID-ja mungon, kthen undefined për të ruajtur
- * përputhshmërinë me snapshot-et ekzistuese.
+ * Nëse ID-ja mungon, kthen undefined për përputhshmëri
+ * me snapshot-et ekzistuese.
  */
 function getSnapshotSessionId(snapshot) {
   if (typeof snapshot.sessionId === "string") {
@@ -192,6 +193,10 @@ export function createPersistentMemory({
     );
   }
 
+  // Çdo sesion ka radhën e vet të ruajtjes.
+  // Ruajtjet e sesioneve të ndryshme mund të vazhdojnë paralelisht.
+  const saveQueues = new Map();
+
   function getStorageKey(sessionId) {
     if (!validateSessionId(sessionId)) {
       throw createError(
@@ -203,7 +208,11 @@ export function createPersistentMemory({
     return `${prefix}${sessionId}`;
   }
 
-  async function saveSession(sessionId) {
+  /**
+   * Kryen një ruajtje pasi të ketë përfunduar ruajtja
+   * e mëparshme për të njëjtin sesion.
+   */
+  async function performSaveSession(sessionId) {
     const key = getStorageKey(sessionId);
 
     let snapshot;
@@ -281,6 +290,41 @@ export function createPersistentMemory({
       version: PERSISTENT_MEMORY_VERSION,
       savedAt: record.savedAt
     };
+  }
+
+  /**
+   * Serializon ruajtjet sipas rendit të kërkesave për
+   * të njëjtin sesion.
+   *
+   * Një ruajtje e dështuar nuk e bllokon radhën.
+   */
+  function saveSession(sessionId) {
+    const key = getStorageKey(sessionId);
+    const previousSave = saveQueues.get(key);
+
+    const currentSave = (previousSave
+      ? previousSave.catch(() => undefined)
+      : Promise.resolve()
+    ).then(() => performSaveSession(sessionId));
+
+    saveQueues.set(key, currentSave);
+
+    // Pastrohet vetëm hyrja që i përket ruajtjes së fundit.
+    // Kapja e këtij zinxhiri shmang gabime të pareferuara.
+    currentSave.then(
+      () => {
+        if (saveQueues.get(key) === currentSave) {
+          saveQueues.delete(key);
+        }
+      },
+      () => {
+        if (saveQueues.get(key) === currentSave) {
+          saveQueues.delete(key);
+        }
+      }
+    );
+
+    return currentSave;
   }
 
   async function restoreSession(sessionId) {
