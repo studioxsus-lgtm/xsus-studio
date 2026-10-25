@@ -222,13 +222,10 @@ describe("XSUS AI Core — Snapshot integrity", () => {
 
     const firstSave = persistence.saveSession("session-A");
 
-    // Prit vetëm derisa shkrimi i parë të hyjë në pritje.
     await firstWriteStarted;
 
-    // Ruajtja e dytë futet në radhë pas të parës.
     const secondSave = persistence.saveSession("session-A");
 
-    // Liro shkrimin e parë që ruajtja e dytë të vazhdojë.
     releaseFirstWrite();
 
     await Promise.all([firstSave, secondSave]);
@@ -243,5 +240,75 @@ describe("XSUS AI Core — Snapshot integrity", () => {
 
     expect(savedRecord.snapshot.messages[0].content)
       .toBe("snapshot i ri");
+  });
+
+  test("fshirja pas një ruajtjeje në proces duhet ta lërë sesionin të fshirë", async () => {
+    const records = new Map();
+
+    let releaseWrite;
+    let signalWriteStarted;
+
+    const writeGate = new Promise((resolve) => {
+      releaseWrite = resolve;
+    });
+
+    const writeStarted = new Promise((resolve) => {
+      signalWriteStarted = resolve;
+    });
+
+    const storage = {
+      async get(key) {
+        return records.get(key) ?? null;
+      },
+
+      async set(key, value) {
+        signalWriteStarted();
+        await writeGate;
+        records.set(key, structuredClone(value));
+      },
+
+      async delete(key) {
+        records.delete(key);
+      },
+    };
+
+    const persistence = createPersistentMemory({
+      storage,
+      prefix: "xsus:memory:session:",
+      exportSession: async (sessionId) => ({
+        sessionId,
+        messages: [
+          {
+            role: "user",
+            content: "Mesazh për t'u ruajtur",
+          },
+        ],
+      }),
+      importSession: async () => ({
+        success: true,
+      }),
+      deleteSession: async () => ({
+        success: true,
+      }),
+    });
+
+    const savePromise = persistence.saveSession(
+      "session-delete-race",
+    );
+
+    await writeStarted;
+
+    const deletePromise = persistence.deleteSavedSession(
+      "session-delete-race",
+    );
+
+    releaseWrite();
+
+    await savePromise;
+    await deletePromise;
+
+    expect(
+      records.has("xsus:memory:session:session-delete-race"),
+    ).toBe(false);
   });
 });
