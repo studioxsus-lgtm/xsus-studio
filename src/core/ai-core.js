@@ -10,7 +10,7 @@
  * - Përdorimi dhe kufizimi i historikut të bisedës.
  * - Kërkimi në bazën e njohurive.
  * - Standardizimi i përgjigjeve.
- * - Vlerësimi i cilësisë së përgjigjeve.
+ * - Vlerësimi i cilësisë përmes Response Quality Pipeline.
  * - Menaxhimi i memories RAM dhe persistent memory.
  * - Konfigurimi i memories për integrime dhe teste.
  * - Metadata dhe trajtimi i sigurt i gabimeve.
@@ -55,8 +55,8 @@ import {
 } from "./response-engine.js";
 
 import {
-  evaluateResponseQuality
-} from "./response-quality-engine.js";
+  createResponseQualityPipeline
+} from "./response-quality-pipeline.js";
 
 export const AI_CORE_VERSION = "1.2.0";
 
@@ -67,6 +67,9 @@ const MAX_QUERY_LENGTH = 8000;
 const MAX_CONVERSATION_ID_LENGTH = 200;
 const MAX_SUPPLIED_HISTORY = 20;
 const MAX_CONTEXT_MESSAGES = 4;
+
+const responseQualityPipeline =
+  createResponseQualityPipeline();
 
 let memoryPersistenceInstance = null;
 
@@ -449,11 +452,8 @@ function collectSources(results, knowledge, responseResult) {
 }
 
 /**
- * Krijon metadata të sigurta për vlerësimin e cilësisë.
- *
- * Ekspozohen vetëm fushat publike të kontratës.
- * Fushat e brendshme, si languageVerification dhe
- * internalDebugData, nuk ekspozohen këtu.
+ * Ekspozon vetëm fushat publike të kontratës së cilësisë.
+ * Detajet e verifikimit dhe raporti i brendshëm nuk ekspozohen.
  */
 function buildResponseQualityMetadata(responseQuality) {
   if (
@@ -854,11 +854,11 @@ export async function processAIRequest(input = {}) {
     }
 
     /*
-     * Vlerëso cilësinë pasi të jetë krijuar përgjigjja
-     * përfundimtare dhe të jenë identifikuar burimet.
+     * Vlerësimi kryhet nga pipeline-i i përbashkët:
+     * cilësia, verifikimi strukturor i burimeve dhe raporti.
      *
-     * Vlerësimi është heuristik dhe nuk provon vetë
-     * saktësinë faktike të përgjigjes.
+     * Raporti i brendshëm dhe rezultatet e verifikimit
+     * nuk ekspozohen në metadata-n publike të AI Core.
      */
     const responseSources = collectSources(
       results,
@@ -869,16 +869,24 @@ export async function processAIRequest(input = {}) {
     let responseQuality = null;
 
     try {
-      responseQuality = evaluateResponseQuality({
+      const pipelineResult = responseQualityPipeline.evaluate({
         query: requestContext.query,
         answer,
-        requestedLanguage: language,
+        expectedLanguage: language,
         responseLanguage: language,
         sources: responseSources
       });
+
+      if (
+        pipelineResult &&
+        pipelineResult.quality &&
+        typeof pipelineResult.quality === "object"
+      ) {
+        responseQuality = pipelineResult.quality;
+      }
     } catch {
       /*
-       * Gabimi i modulit të cilësisë nuk duhet të ndërpresë
+       * Gabimi i pipeline-it nuk duhet të ndërpresë
        * një përgjigje që është krijuar me sukses.
        */
       responseQuality = null;
