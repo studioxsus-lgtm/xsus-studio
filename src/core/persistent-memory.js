@@ -66,23 +66,24 @@ function isValidSavedAt(savedAt) {
     return false;
   }
 
-  const timestamp = Date.parse(savedAt);
-
-  return Number.isFinite(timestamp);
+  return Number.isFinite(Date.parse(savedAt));
 }
 
+/**
+ * Kontrollon integritetin e regjistrimit para rikthimit.
+ *
+ * Renditja është e rëndësishme:
+ * 1. Struktura e regjistrimit.
+ * 2. ID-ja e sesionit.
+ * 3. Snapshot-i.
+ * 4. Data e ruajtjes.
+ * 5. Versioni.
+ */
 function validateSessionRecord(record, sessionId) {
   if (!isPlainObject(record)) {
     throw createError(
       "INVALID_SESSION_RECORD",
       "Regjistrimi i ruajtur i sesionit nuk është objekt i vlefshëm."
-    );
-  }
-
-  if (record.version !== PERSISTENT_MEMORY_VERSION) {
-    throw createError(
-      "UNSUPPORTED_SESSION_VERSION",
-      "Versioni i regjistrimit të sesionit nuk mbështetet."
     );
   }
 
@@ -107,6 +108,13 @@ function validateSessionRecord(record, sessionId) {
     throw createError(
       "INVALID_SESSION_RECORD",
       "Data e ruajtjes së sesionit nuk është e vlefshme."
+    );
+  }
+
+  if (record.version !== PERSISTENT_MEMORY_VERSION) {
+    throw createError(
+      "UNSUPPORTED_SESSION_VERSION",
+      "Versioni i regjistrimit të sesionit nuk mbështetet."
     );
   }
 
