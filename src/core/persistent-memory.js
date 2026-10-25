@@ -1,3 +1,4 @@
+
 /**
  * XSUS AI Core — Persistent Memory
  * Version: 1.0.0
@@ -70,14 +71,33 @@ function isValidSavedAt(savedAt) {
 }
 
 /**
- * Kontrollon integritetin e regjistrimit para rikthimit.
+ * Nxjerr ID-në e sesionit nga formatet e mbështetura
+ * të snapshot-it.
  *
- * Renditja është e rëndësishme:
- * 1. Struktura e regjistrimit.
- * 2. ID-ja e sesionit.
- * 3. Snapshot-i.
- * 4. Data e ruajtjes.
- * 5. Versioni.
+ * Mbështet:
+ * - snapshot.sessionId
+ * - snapshot.session.sessionId
+ *
+ * Nëse ID-ja mungon, kthen undefined për të ruajtur
+ * përputhshmërinë me snapshot-et ekzistuese.
+ */
+function getSnapshotSessionId(snapshot) {
+  if (typeof snapshot.sessionId === "string") {
+    return snapshot.sessionId;
+  }
+
+  if (
+    isPlainObject(snapshot.session) &&
+    typeof snapshot.session.sessionId === "string"
+  ) {
+    return snapshot.session.sessionId;
+  }
+
+  return undefined;
+}
+
+/**
+ * Kontrollon integritetin e regjistrimit para rikthimit.
  */
 function validateSessionRecord(record, sessionId) {
   if (!isPlainObject(record)) {
@@ -104,6 +124,18 @@ function validateSessionRecord(record, sessionId) {
     );
   }
 
+  const snapshotSessionId = getSnapshotSessionId(record.snapshot);
+
+  if (
+    snapshotSessionId !== undefined &&
+    snapshotSessionId !== sessionId
+  ) {
+    throw createError(
+      "INVALID_SESSION_RECORD",
+      "ID-ja e sesionit në snapshot nuk përputhet."
+    );
+  }
+
   if (!isValidSavedAt(record.savedAt)) {
     throw createError(
       "INVALID_SESSION_RECORD",
@@ -123,18 +155,6 @@ function validateSessionRecord(record, sessionId) {
 
 /**
  * Krijon shërbimin e memories së qëndrueshme.
- *
- * storage:
- *   Adapter që ofron get(), set() dhe delete().
- *
- * exportSession:
- *   Funksion që kthen një snapshot të sesionit.
- *
- * importSession:
- *   Funksion që rikthen një snapshot në memory-engine.
- *
- * deleteSession:
- *   Funksion opsional për fshirjen e sesionit aktiv.
  */
 export function createPersistentMemory({
   storage,
@@ -221,6 +241,20 @@ export function createPersistentMemory({
       throw createError(
         "SESSION_SERIALIZATION_FAILED",
         "Snapshot-i nuk mund të ruhet si objekt JSON."
+      );
+    }
+
+    // Kontrolli i integritetit para shkrimit në storage.
+    const snapshotSessionId =
+      getSnapshotSessionId(serializedSnapshot);
+
+    if (
+      snapshotSessionId !== undefined &&
+      snapshotSessionId !== sessionId
+    ) {
+      throw createError(
+        "SESSION_ID_MISMATCH",
+        "Snapshot-i nuk i përket sesionit të kërkuar."
       );
     }
 
