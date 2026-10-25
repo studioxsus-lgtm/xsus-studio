@@ -8,7 +8,7 @@
  * - Fshirja e sesioneve të ruajtura.
  * - Validimi i integritetit dhe versionit.
  * - Izolimi i gabimeve dhe validimi i hyrjeve.
- * - Koordinimi i ruajtjeve paralele për çdo sesion.
+ * - Koordinimi i operacioneve paralele për çdo sesion.
  *
  * Përdor dependency injection për të mos lidhur
  * logjikën e memories me një backend të vetëm.
@@ -168,7 +168,8 @@ export function createPersistentMemory({
   }
 
   // Një radhë e pavarur për çdo sesion.
-  const saveQueues = new Map();
+  // Ruajtja dhe fshirja përdorin të njëjtën radhë.
+  const operationQueues = new Map();
 
   function getStorageKey(sessionId) {
     if (!validateSessionId(sessionId)) {
@@ -181,9 +182,41 @@ export function createPersistentMemory({
     return `${prefix}${sessionId}`;
   }
 
-  async function performSaveSession(sessionId) {
-    const key = getStorageKey(sessionId);
+  /**
+   * Serializon operacionet për të njëjtin sesion.
+   *
+   * Një operacion i dështuar nuk e bllokon radhën.
+   * Operacionet për sesione të ndryshme mbeten të pavarura.
+   */
+  function enqueueSessionOperation(key, operation) {
+    const previousOperation = operationQueues.get(key);
 
+    const currentOperation = (
+      previousOperation
+        ? previousOperation.catch(() => undefined)
+        : Promise.resolve()
+    ).then(operation);
+
+    operationQueues.set(key, currentOperation);
+
+    // Pastro radhën vetëm nëse ende i përket këtij operacioni.
+    currentOperation.then(
+      () => {
+        if (operationQueues.get(key) === currentOperation) {
+          operationQueues.delete(key);
+        }
+      },
+      () => {
+        if (operationQueues.get(key) === currentOperation) {
+          operationQueues.delete(key);
+        }
+      }
+    );
+
+    return currentOperation;
+  }
+
+  async function performSaveSession(sessionId, key) {
     let snapshot;
 
     try {
@@ -261,40 +294,15 @@ export function createPersistentMemory({
   }
 
   /**
-   * Ruajtjet për të njëjtin sesion serializohen sipas
-   * rendit të kërkesave. Sesionet e ndryshme nuk bllokojnë
-   * njëri-tjetrin.
+   * Ruajtja futet në radhën e sesionit.
    */
   async function saveSession(sessionId) {
-    // Validimi ndodh brenda funksionit async, prandaj
-    // ID-ja e pavlefshme refuzohet përmes Promise.
     const key = getStorageKey(sessionId);
-    const previousSave = saveQueues.get(key);
 
-    const currentSave = (
-      previousSave
-        ? previousSave.catch(() => undefined)
-        : Promise.resolve()
-    ).then(() => performSaveSession(sessionId));
-
-    saveQueues.set(key, currentSave);
-
-    // Pastro vetëm radhën që ende i përket kësaj kërkese.
-    // Promise i pastrimit trajton suksesin dhe dështimin.
-    currentSave.then(
-      () => {
-        if (saveQueues.get(key) === currentSave) {
-          saveQueues.delete(key);
-        }
-      },
-      () => {
-        if (saveQueues.get(key) === currentSave) {
-          saveQueues.delete(key);
-        }
-      }
+    return enqueueSessionOperation(
+      key,
+      () => performSaveSession(sessionId, key)
     );
-
-    return currentSave;
   }
 
   async function restoreSession(sessionId) {
@@ -353,23 +361,29 @@ export function createPersistentMemory({
     };
   }
 
+  /**
+   * Fshirja futet në të njëjtën radhë si ruajtja.
+   * Nëse ka ruajtje në proces, ajo përfundon e para.
+   */
   async function deleteSavedSession(sessionId) {
     const key = getStorageKey(sessionId);
 
-    try {
-      await storage.delete(key);
-    } catch (error) {
-      throw createError(
-        "SESSION_DELETE_FAILED",
-        "Sesioni i ruajtur nuk mund të fshihet.",
-        error
-      );
-    }
+    return enqueueSessionOperation(key, async () => {
+      try {
+        await storage.delete(key);
+      } catch (error) {
+        throw createError(
+          "SESSION_DELETE_FAILED",
+          "Sesioni i ruajtur nuk mund të fshihet.",
+          error
+        );
+      }
 
-    return {
-      success: true,
-      sessionId
-    };
+      return {
+        success: true,
+        sessionId
+      };
+    });
   }
 
   async function deleteSessionCompletely(sessionId) {
