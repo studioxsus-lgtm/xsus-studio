@@ -382,4 +382,120 @@ describe("XSUS AI Memory Persistence Integration", () => {
     expect(record.sessionId).toBe(conversationId);
     expect(record.snapshot.session.messages.length).toBeGreaterThanOrEqual(3);
   });
+
+  test("vazhdon ruajtjen pas dështimit të një operacioni", async () => {
+    await setup();
+
+    const sessionId = "integration-queue-recovery";
+
+    createMemorySession(sessionId);
+
+    addMemoryMessage({
+      sessionId,
+      role: "user",
+      content: "Të dhëna për rikuperim",
+    });
+
+    const storage = createJSONMemoryStorage({
+      filePath: path.join(tempDirectory, "recovery.json"),
+    });
+
+    const originalSet = storage.set.bind(storage);
+    let shouldFail = true;
+
+    storage.set = async (...args) => {
+      if (shouldFail) {
+        shouldFail = false;
+        throw new Error("Dështim i simuluar i shkrimit");
+      }
+
+      return originalSet(...args);
+    };
+
+    const recoveryPersistence = createMemoryPersistence({
+      storage,
+    });
+
+    await expect(
+      recoveryPersistence.saveSession(sessionId)
+    ).rejects.toBeDefined();
+
+    const saved = await recoveryPersistence.saveSession(sessionId);
+
+    expect(saved.success).toBe(true);
+
+    const record = await storage.get(
+      `xsus:memory:session:${sessionId}`
+    );
+
+    expect(record).not.toBeNull();
+    expect(record.snapshot.session.messages[0].content).toBe(
+      "Të dhëna për rikuperim"
+    );
+  });
+
+  test("rikthen sesionet e shëndosha edhe kur një rekord ka version të pambështetur", async () => {
+    await setup();
+
+    const storage = createJSONMemoryStorage({
+      filePath: path.join(tempDirectory, "isolation.json"),
+    });
+
+    const healthySessionId = "integration-healthy-session";
+    const damagedSessionId = "integration-damaged-session";
+
+    const isolatedPersistence = createMemoryPersistence({
+      storage,
+    });
+
+    createMemorySession(healthySessionId);
+
+    addMemoryMessage({
+      sessionId: healthySessionId,
+      role: "user",
+      content: "Sesioni i shëndoshë duhet të ruhet",
+    });
+
+    await isolatedPersistence.saveSession(healthySessionId);
+
+    await storage.set(
+      `xsus:memory:session:${damagedSessionId}`,
+      {
+        version: "999.0.0",
+        sessionId: damagedSessionId,
+        savedAt: new Date().toISOString(),
+        snapshot: {
+          session: {
+            messages: [],
+          },
+        },
+      }
+    );
+
+    clearAllMemory();
+
+    await expect(
+      isolatedPersistence.restoreSession(damagedSessionId)
+    ).rejects.toMatchObject({
+      code: "UNSUPPORTED_SESSION_VERSION",
+    });
+
+    const restored = await isolatedPersistence.restoreSession(
+      healthySessionId
+    );
+
+    expect(restored.success).toBe(true);
+    expect(restored.restored).toBe(true);
+
+    expect(getMemoryHistory(healthySessionId)[0].content).toBe(
+      "Sesioni i shëndoshë duhet të ruhet"
+    );
+
+    const healthyRecord = await storage.get(
+      `xsus:memory:session:${healthySessionId}`
+    );
+
+    expect(healthyRecord).not.toBeNull();
+    expect(healthyRecord.sessionId).toBe(healthySessionId);
+  });
 });
