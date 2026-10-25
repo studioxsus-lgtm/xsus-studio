@@ -1,178 +1,329 @@
 /**
+ * XSUS AI Core — Public API
+ * Version: 1.3.0
+ *
+ * Eksporton ndërfaqet publike të XSUS AI Core.
+ */
 
-* XSUS AI Core — Public API
-* Version: 1.3.0
-* 
-* Eksporton ndërfaqet publike të XSUS AI Core.
-  */
+// ============================================================
+// AI CORE
+// ============================================================
 
 import {
-processAIRequest,
-AI_CORE_VERSION,
+  processAIRequest,
+  AI_CORE_VERSION,
 } from "./core/ai-core.js";
 
 import {
-XSUS_CORE_VERSION,
-SUPPORTED_LANGUAGES,
-REQUEST_TYPES,
-AI_ERROR_CODES,
-createAIRequest,
-createAIResponse,
-createAIErrorResponse,
+  XSUS_CORE_VERSION,
+  SUPPORTED_LANGUAGES,
+  REQUEST_TYPES,
+  AI_ERROR_CODES,
+  createAIRequest,
+  createAIResponse,
+  createAIErrorResponse,
 } from "./core/ai-core-contracts.js";
 
-import {
-createRequestContext,
-isValidRequestContext,
-REQUEST_CONTEXT_VERSION,
-} from "./core/request-context.js";
+// ============================================================
+// REQUEST CONTEXT
+// ============================================================
 
 import {
-analyzeLanguage,
-detectLanguage,
-getLanguageInfo,
-getSupportedLanguages,
+  createRequestContext,
+  isValidRequestContext,
+  REQUEST_CONTEXT_VERSION,
+} from "./core/request-context.js";
+
+// ============================================================
+// LANGUAGE ENGINE
+// ============================================================
+
+import {
+  analyzeLanguage,
+  detectLanguage,
+  getLanguageInfo,
+  getSupportedLanguages,
 } from "./language/language-engine.js";
 
 import {
-analyzeGrammar,
-isGrammarEngineSupported,
+  analyzeGrammar,
+  isGrammarEngineSupported,
 } from "./language/grammar-engine.js";
 
 import {
-normalizeText,
-normalizeForSearch,
-tokenizeText,
-normalizeLanguageCode,
-getBaseLanguage,
+  normalizeText,
+  normalizeForSearch,
+  tokenizeText,
+  normalizeLanguageCode,
+  getBaseLanguage,
 } from "./language/normalization.js";
 
-import {
-searchKnowledge,
-registerKnowledgeSource,
-listKnowledgeSources,
-hasKnowledgeSource,
-unregisterKnowledgeSource,
-} from "./knowledge/knowledge-service.js";
+// ============================================================
+// KNOWLEDGE SERVICE
+// ============================================================
 
 import {
-routeAIRequest,
+  searchKnowledge,
+  registerKnowledgeSource,
+  listKnowledgeSources,
+  hasKnowledgeSource,
+  unregisterKnowledgeSource,
+} from "./knowledge/knowledge-service.js";
+
+// ============================================================
+// RUNTIME
+// ============================================================
+
+import {
+  routeAIRequest,
 } from "./runtime/router.js";
 
 import {
-registerService,
-getService,
-hasService,
-listServices,
-unregisterService,
-clearServices,
+  registerService,
+  getService,
+  hasService,
+  listServices,
+  unregisterService,
+  clearServices,
 } from "./runtime/service-registry.js";
 
-/**
+// ============================================================
+// RESPONSE QUALITY PIPELINE
+// ============================================================
 
-* Lista publike e kodeve të gjuhëve.
-* Kthen kopje për të mos ekspozuar listën origjinale.
-  */
-  function getPublicSupportedLanguages() {
+import {
+  createResponseQualityPipeline,
+  RESPONSE_QUALITY_PIPELINE_VERSION,
+} from "./core/response-quality-pipeline.js";
+
+import {
+  evaluateResponseQualityPipeline,
+  createResponseQualityPipelineAPI,
+  getResponseQualityPipelineInfo,
+  RESPONSE_QUALITY_PIPELINE_API_VERSION,
+} from "./core/response-quality-pipeline-api.js";
+
+import {
+  createResponseQualityReport,
+  RESPONSE_QUALITY_REPORT_VERSION,
+  RESPONSE_QUALITY_REPORT_STATUSES,
+} from "./core/response-quality-report.js";
+
+import {
+  evaluateResponseQuality,
+  RESPONSE_QUALITY_VERSION,
+} from "./core/response-quality-engine.js";
+
+import {
+  verifyResponseSource,
+  verifyResponseSources,
+  SOURCE_VERIFICATION_STATUSES,
+  SOURCE_VERIFICATION_VERSION,
+} from "./core/response-source-verifier.js";
+
+// ============================================================
+// PUBLIC LANGUAGE HELPERS
+// ============================================================
+
+/**
+ * Lista publike e kodeve të gjuhëve.
+ * Kthen kopje për të mos ekspozuar listën origjinale.
+ */
+function getPublicSupportedLanguages() {
   return [...getSupportedLanguages()];
-  }
+}
+
+// ============================================================
+// MAIN PUBLIC OBJECT
+// ============================================================
 
 /**
-
-* Objekti kryesor publik i XSUS AI.
-  */
-  export const XSUSAI = Object.freeze({
+ * Objekti kryesor publik i XSUS AI.
+ */
+export const XSUSAI = Object.freeze({
   get version() {
-  return AI_CORE_VERSION;
+    return AI_CORE_VERSION;
   },
 
-get coreVersion() {
-return XSUS_CORE_VERSION;
-},
+  get coreVersion() {
+    return XSUS_CORE_VERSION;
+  },
 
-processAIRequest,
+  processAIRequest,
 
-analyzeLanguage,
-detectLanguage,
-getLanguageInfo,
-getSupportedLanguages: getPublicSupportedLanguages,
+  // Language
+  analyzeLanguage,
+  detectLanguage,
+  getLanguageInfo,
+  getSupportedLanguages: getPublicSupportedLanguages,
 
-analyzeGrammar,
-isGrammarEngineSupported,
+  analyzeGrammar,
+  isGrammarEngineSupported,
 
-createAIRequest,
-createAIResponse,
-createAIErrorResponse,
+  // Contracts
+  createAIRequest,
+  createAIResponse,
+  createAIErrorResponse,
 
-createRequestContext,
-isValidRequestContext,
+  // Request context
+  createRequestContext,
+  isValidRequestContext,
 
-searchKnowledge,
-registerKnowledgeSource,
-listKnowledgeSources,
-hasKnowledgeSource,
-unregisterKnowledgeSource,
+  // Knowledge
+  searchKnowledge,
+  registerKnowledgeSource,
+  listKnowledgeSources,
+  hasKnowledgeSource,
+  unregisterKnowledgeSource,
 
-routeAIRequest,
+  // Runtime
+  routeAIRequest,
 
-registerService,
-getService,
-hasService,
-listServices,
-unregisterService,
-clearServices,
+  registerService,
+  getService,
+  hasService,
+  listServices,
+  unregisterService,
+  clearServices,
+
+  // Response quality
+  createResponseQualityPipeline,
+  evaluateResponseQualityPipeline,
+  createResponseQualityPipelineAPI,
+  getResponseQualityPipelineInfo,
+
+  createResponseQualityReport,
+  evaluateResponseQuality,
+
+  verifyResponseSource,
+  verifyResponseSources,
+
+  get responseQualityPipelineVersion() {
+    return RESPONSE_QUALITY_PIPELINE_VERSION;
+  },
+
+  get responseQualityPipelineAPIVersion() {
+    return RESPONSE_QUALITY_PIPELINE_API_VERSION;
+  },
+
+  get responseQualityVersion() {
+    return RESPONSE_QUALITY_VERSION;
+  },
+
+  get responseQualityReportVersion() {
+    return RESPONSE_QUALITY_REPORT_VERSION;
+  },
+
+  get sourceVerificationVersion() {
+    return SOURCE_VERIFICATION_VERSION;
+  },
 });
 
-/**
+// ============================================================
+// DIRECT PUBLIC EXPORTS
+// ============================================================
 
-* Eksportet e drejtpërdrejta mbeten të disponueshme.
-  */
-  export {
+/**
+ * Eksportet e drejtpërdrejta mbeten të disponueshme.
+ */
+
+// AI Core
+export {
   processAIRequest,
   AI_CORE_VERSION,
 
-XSUS_CORE_VERSION,
-SUPPORTED_LANGUAGES,
-REQUEST_TYPES,
-AI_ERROR_CODES,
-createAIRequest,
-createAIResponse,
-createAIErrorResponse,
+  XSUS_CORE_VERSION,
+  SUPPORTED_LANGUAGES,
+  REQUEST_TYPES,
+  AI_ERROR_CODES,
 
-createRequestContext,
-isValidRequestContext,
-REQUEST_CONTEXT_VERSION,
-
-analyzeLanguage,
-detectLanguage,
-getLanguageInfo,
-analyzeGrammar,
-isGrammarEngineSupported,
-
-normalizeText,
-normalizeForSearch,
-tokenizeText,
-normalizeLanguageCode,
-getBaseLanguage,
-
-searchKnowledge,
-registerKnowledgeSource,
-listKnowledgeSources,
-hasKnowledgeSource,
-unregisterKnowledgeSource,
-
-routeAIRequest,
-
-registerService,
-getService,
-hasService,
-listServices,
-unregisterService,
-clearServices,
+  createAIRequest,
+  createAIResponse,
+  createAIErrorResponse,
 };
 
-/**
+// Request context
+export {
+  createRequestContext,
+  isValidRequestContext,
+  REQUEST_CONTEXT_VERSION,
+};
 
-* Lista e gjuhëve për API-në publike.
-  */
-  export { getPublicSupportedLanguages as getSupportedLanguages };
+// Language engine
+export {
+  analyzeLanguage,
+  detectLanguage,
+  getLanguageInfo,
+  analyzeGrammar,
+  isGrammarEngineSupported,
+};
+
+// Language normalization
+export {
+  normalizeText,
+  normalizeForSearch,
+  tokenizeText,
+  normalizeLanguageCode,
+  getBaseLanguage,
+};
+
+// Knowledge service
+export {
+  searchKnowledge,
+  registerKnowledgeSource,
+  listKnowledgeSources,
+  hasKnowledgeSource,
+  unregisterKnowledgeSource,
+};
+
+// Runtime
+export {
+  routeAIRequest,
+
+  registerService,
+  getService,
+  hasService,
+  listServices,
+  unregisterService,
+  clearServices,
+};
+
+// Response Quality Pipeline
+export {
+  createResponseQualityPipeline,
+  RESPONSE_QUALITY_PIPELINE_VERSION,
+};
+
+// Response Quality Pipeline API
+export {
+  evaluateResponseQualityPipeline,
+  createResponseQualityPipelineAPI,
+  getResponseQualityPipelineInfo,
+  RESPONSE_QUALITY_PIPELINE_API_VERSION,
+};
+
+// Response Quality Report
+export {
+  createResponseQualityReport,
+  RESPONSE_QUALITY_REPORT_VERSION,
+  RESPONSE_QUALITY_REPORT_STATUSES,
+};
+
+// Response Quality Engine
+export {
+  evaluateResponseQuality,
+  RESPONSE_QUALITY_VERSION,
+};
+
+// Response Source Verifier
+export {
+  verifyResponseSource,
+  verifyResponseSources,
+  SOURCE_VERIFICATION_STATUSES,
+  SOURCE_VERIFICATION_VERSION,
+};
+
+// Public language list
+export {
+  getPublicSupportedLanguages as getSupportedLanguages,
+};
