@@ -135,13 +135,16 @@ const result = verifyResponseSource(
 "Artificial intelligence research."
 );
 
-expect(result.valid).false;
+expect(result.valid).toBe(false);
+expect(result.structurallyValid).toBe(true);
+expect(result.status).toBe(
+SOURCE_VERIFICATION_STATUSES.UNVERIFIED
+);
 expect(result.verified).toBe(false);
 expect(result.trustEstablished).toBe(false);
 expect(result.errors).toContain(
-  SOURCE_VERIFICATION_ERRORS.MISSING_URL
+SOURCE_VERIFICATION_ERRORS.MISSING_URL
 );
-
 });
 
 test("refuzon burimet që nuk janë varg ose objekt i thjeshtë", () => {
