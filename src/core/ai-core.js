@@ -453,7 +453,10 @@ function collectSources(results, knowledge, responseResult) {
  * për vlerësimin e cilësisë së përgjigjes.
  */
 function buildResponseQualityMetadata(responseQuality) {
-  if (!responseQuality || typeof responseQuality !== "object") {
+  if (
+    !responseQuality ||
+    typeof responseQuality !== "object"
+  ) {
     return null;
   }
 
@@ -463,6 +466,8 @@ function buildResponseQualityMetadata(responseQuality) {
     dimensions: responseQuality.dimensions,
     sourceCount: responseQuality.sourceCount,
     valid: responseQuality.valid,
+    languageVerification:
+      responseQuality.languageVerification ?? null,
     errors: responseQuality.errors
   };
 }
@@ -848,12 +853,11 @@ export async function processAIRequest(input = {}) {
     }
 
     /*
-     * Vlerëso cilësinë e përgjigjes pasi është krijuar
-     * përgjigjja përfundimtare dhe janë identifikuar burimet.
+     * Vlerëso cilësinë pasi të jetë krijuar përgjigjja
+     * përfundimtare dhe të jenë identifikuar burimet.
      *
-     * Ky vlerësim është heuristik. Ai nuk provon vetë
-     * saktësinë faktike të përgjigjes ose rëndësinë
-     * e burimeve për pyetjen.
+     * Vlerësimi është heuristik dhe nuk provon vetë
+     * saktësinë faktike të përgjigjes.
      */
     const responseSources = collectSources(
       results,
@@ -873,8 +877,8 @@ export async function processAIRequest(input = {}) {
       });
     } catch {
       /*
-       * Dështimi i modulit të cilësisë nuk duhet të
-       * ndërpresë një përgjigje që është krijuar me sukses.
+       * Gabimi i modulit të cilësisë nuk duhet të ndërpresë
+       * një përgjigje që është krijuar me sukses.
        */
       responseQuality = null;
     }
@@ -891,7 +895,7 @@ export async function processAIRequest(input = {}) {
 
     /*
      * Metadata përdor historikun paraprak, para mesazhit
-     * aktual, për të ruajtur kontratën ekzistuese të testeve.
+     * aktual, për të ruajtur sjelljen ekzistuese.
      */
     const metadata = buildMetadata({
       language,
