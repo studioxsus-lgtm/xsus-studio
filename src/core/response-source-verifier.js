@@ -33,7 +33,11 @@ MISSING_URL: "MISSING_URL"
 });
 
 const MAX_SOURCE_TEXT_LENGTH = 50000;
-const ALLOWED_URL_PROTOCOLS = new Set(["http:", "https:"]);
+
+const ALLOWED_URL_PROTOCOLS = new Set([
+"http:",
+"https:"
+]);
 
 function normalizeText(value) {
 if (typeof value !== "string") {
@@ -43,10 +47,6 @@ return "";
 return value.trim();
 }
 
-function hasText(value) {
-return normalizeText(value).length > 0;
-}
-
 function isPlainObject(value) {
 if (value === null || typeof value !== "object") {
 return false;
@@ -54,7 +54,10 @@ return false;
 
 const prototype = Object.getPrototypeOf(value);
 
-return prototype === Object.prototype || prototype === null;
+return (
+prototype === Object.prototype ||
+prototype === null
+);
 }
 
 function validateUrl(value) {
@@ -152,8 +155,13 @@ errors: Object.freeze([...new Set(errors)])
   export function verifyResponseSource(source) {
   const errors = [];
 
-if (typeof source === "string") {
-const content = normalizeText(source);
+/*
+
+* Një varg tekstual nuk përmban metadata të plota
+* dhe nuk ka URL për t'u kontrolluar.
+  */
+  if (typeof source === "string") {
+  const content = normalizeText(source);
 
 if (!content) {
   return createResult({
@@ -169,20 +177,29 @@ if (!content) {
       hostname: null,
       error: SOURCE_VERIFICATION_ERRORS.MISSING_URL
     },
-    errors: [SOURCE_VERIFICATION_ERRORS.EMPTY_SOURCE]
+    errors: [
+      SOURCE_VERIFICATION_ERRORS.EMPTY_SOURCE
+    ]
   });
 }
 
-if (content.length > MAX_SOURCE_TEXT_LENGTH) {
-  errors.push(SOURCE_VERIFICATION_ERRORS.INVALID_SOURCE);
+const withinLengthLimit =
+  content.length <= MAX_SOURCE_TEXT_LENGTH;
+
+if (!withinLengthLimit) {
+  errors.push(
+    SOURCE_VERIFICATION_ERRORS.INVALID_SOURCE
+  );
 }
 
-errors.push(SOURCE_VERIFICATION_ERRORS.MISSING_URL);
+errors.push(
+  SOURCE_VERIFICATION_ERRORS.MISSING_URL
+);
 
 return createResult({
   status: SOURCE_VERIFICATION_STATUSES.UNVERIFIED,
-  valid: errors.length === 1,
-  structurallyValid: errors.length === 1,
+  valid: false,
+  structurallyValid: withinLengthLimit,
   title: "",
   content,
   url: {
@@ -197,38 +214,53 @@ return createResult({
 
 }
 
-if (!isPlainObject(source)) {
-return createResult({
-status: SOURCE_VERIFICATION_STATUSES.INVALID,
-valid: false,
-structurallyValid: false,
-title: "",
-content: "",
-url: {
-present: false,
-valid: false,
-protocol: null,
-hostname: null,
-error: SOURCE_VERIFICATION_ERRORS.MISSING_URL
-},
-errors: [SOURCE_VERIFICATION_ERRORS.INVALID_SOURCE]
-});
-}
+/*
+
+* Pranohen vetëm objektet e thjeshta.
+  */
+  if (!isPlainObject(source)) {
+  return createResult({
+  status: SOURCE_VERIFICATION_STATUSES.INVALID,
+  valid: false,
+  structurallyValid: false,
+  title: "",
+  content: "",
+  url: {
+  present: false,
+  valid: false,
+  protocol: null,
+  hostname: null,
+  error: SOURCE_VERIFICATION_ERRORS.MISSING_URL
+  },
+  errors: [
+  SOURCE_VERIFICATION_ERRORS.INVALID_SOURCE
+  ]
+  });
+  }
 
 const title = normalizeText(source.title);
 const content = normalizeText(source.content);
 const url = validateUrl(source.url);
 
 if (!title) {
-errors.push(SOURCE_VERIFICATION_ERRORS.MISSING_TITLE);
+errors.push(
+SOURCE_VERIFICATION_ERRORS.MISSING_TITLE
+);
 }
 
 if (!content) {
-errors.push(SOURCE_VERIFICATION_ERRORS.MISSING_CONTENT);
+errors.push(
+SOURCE_VERIFICATION_ERRORS.MISSING_CONTENT
+);
 }
 
-if (content.length > MAX_SOURCE_TEXT_LENGTH) {
-errors.push(SOURCE_VERIFICATION_ERRORS.INVALID_SOURCE);
+const withinLengthLimit =
+content.length <= MAX_SOURCE_TEXT_LENGTH;
+
+if (!withinLengthLimit) {
+errors.push(
+SOURCE_VERIFICATION_ERRORS.INVALID_SOURCE
+);
 }
 
 if (url.error) {
@@ -238,7 +270,7 @@ errors.push(url.error);
 const structurallyValid =
 title.length > 0 &&
 content.length > 0 &&
-content.length <= MAX_SOURCE_TEXT_LENGTH;
+withinLengthLimit;
 
 const valid =
 structurallyValid &&
@@ -250,7 +282,8 @@ let status;
 if (!structurallyValid) {
 status = SOURCE_VERIFICATION_STATUSES.INVALID;
 } else if (valid) {
-status = SOURCE_VERIFICATION_STATUSES.STRUCTURALLY_VALID;
+status =
+SOURCE_VERIFICATION_STATUSES.STRUCTURALLY_VALID;
 } else {
 status = SOURCE_VERIFICATION_STATUSES.UNVERIFIED;
 }
@@ -270,15 +303,17 @@ errors
 
 * Kontrollon një koleksion burimesh.
 * 
-* Burimet e pavlefshme nuk hidhen në heshtje:
-* secili burim merr rezultatin e vet.
+* Çdo burim merr rezultatin e vet.
+* Prania e një URL-je nuk provon besueshmërinë.
 * 
 * @param {Array} sources
 * @returns {object}
   */
   export function verifyResponseSources(sources) {
   if (!Array.isArray(sources)) {
-  throw new TypeError("Burimet duhet të jenë një varg.");
+  throw new TypeError(
+  "Burimet duhet të jenë një varg."
+  );
   }
 
 const results = sources.map((source) =>
@@ -295,12 +330,14 @@ const structurallyValidCount = results.filter(
 
 const invalidCount = results.filter(
 (result) =>
-result.status === SOURCE_VERIFICATION_STATUSES.INVALID
+result.status ===
+SOURCE_VERIFICATION_STATUSES.INVALID
 ).length;
 
 const unverifiedCount = results.filter(
 (result) =>
-result.status === SOURCE_VERIFICATION_STATUSES.UNVERIFIED
+result.status ===
+SOURCE_VERIFICATION_STATUSES.UNVERIFIED
 ).length;
 
 return Object.freeze({
