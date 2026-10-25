@@ -590,6 +590,10 @@
                     fr: "L'analyse des images n'est pas encore confirmée comme prise en charge par l'API XSUS AI. Veuillez décrire l'image en texte."
                 };
 
+                if (removeFileBtn) {
+                    removeFileBtn.click();
+                }
+
                 return messages[lang] || messages.en;
             }
 
