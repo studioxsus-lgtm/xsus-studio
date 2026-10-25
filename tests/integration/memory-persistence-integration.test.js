@@ -1,4 +1,3 @@
-
 import { afterEach, describe, expect, test } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
@@ -21,11 +20,17 @@ import {
   createJSONMemoryStorage,
 } from "../../src/core/json-memory-storage.js";
 
+import {
+  processAIRequest,
+  configureAICoreMemoryPersistence,
+} from "../../src/core/ai-core.js";
+
 describe("XSUS AI Memory Persistence Integration", () => {
   let tempDirectory;
   let persistence;
 
   afterEach(async () => {
+    configureAICoreMemoryPersistence(null);
     clearAllMemory();
 
     if (tempDirectory) {
@@ -36,6 +41,8 @@ describe("XSUS AI Memory Persistence Integration", () => {
 
       tempDirectory = undefined;
     }
+
+    persistence = undefined;
   });
 
   async function setup() {
@@ -118,6 +125,9 @@ describe("XSUS AI Memory Persistence Integration", () => {
     expect(record).not.toBeNull();
     expect(record.sessionId).toBe("integration-2");
     expect(record.snapshot.session.messages).toHaveLength(1);
+    expect(record.snapshot.session.messages[0].content).toBe(
+      "Test i ruajtjes në disk"
+    );
   });
 
   test("kthen rezultat kur sesioni i ruajtur nuk ekziston", async () => {
@@ -153,6 +163,7 @@ describe("XSUS AI Memory Persistence Integration", () => {
 
     expect(result.success).toBe(true);
     expect(hasMemorySession("integration-delete")).toBe(false);
+
     expect(
       await persistence.hasSavedSession("integration-delete")
     ).toBe(false);
@@ -180,5 +191,195 @@ describe("XSUS AI Memory Persistence Integration", () => {
     expect(
       getMemorySession("integration-duplicate").messages[0].content
     ).toBe("Mesazhi origjinal");
+  });
+
+  test("rikthen historikun pas pastrimit të memories aktive", async () => {
+    await setup();
+
+    const sessionId = "integration-recovery";
+
+    createMemorySession(sessionId);
+
+    addMemoryMessage({
+      sessionId,
+      role: "user",
+      content: "Dua të mësoj JavaScript.",
+    });
+
+    addMemoryMessage({
+      sessionId,
+      role: "assistant",
+      content: "Mund të fillosh me bazat e JavaScript.",
+    });
+
+    const saved = await persistence.saveSession(sessionId);
+
+    expect(saved.success).toBe(true);
+
+    clearAllMemory();
+
+    expect(hasMemorySession(sessionId)).toBe(false);
+
+    const restored = await persistence.restoreSession(sessionId);
+
+    expect(restored.success).toBe(true);
+    expect(restored.restored).toBe(true);
+
+    const history = getMemoryHistory(sessionId);
+
+    expect(history).toHaveLength(2);
+    expect(history[0].content).toBe(
+      "Dua të mësoj JavaScript."
+    );
+    expect(history[1].content).toBe(
+      "Mund të fillosh me bazat e JavaScript."
+    );
+  });
+
+  test("izolon historikun e dy sesioneve të ndryshme", async () => {
+    await setup();
+
+    const sessionA = "integration-isolation-a";
+    const sessionB = "integration-isolation-b";
+
+    createMemorySession(sessionA);
+    createMemorySession(sessionB);
+
+    addMemoryMessage({
+      sessionId: sessionA,
+      role: "user",
+      content: "Mesazh vetëm për sesionin A.",
+    });
+
+    addMemoryMessage({
+      sessionId: sessionB,
+      role: "user",
+      content: "Mesazh vetëm për sesionin B.",
+    });
+
+    addMemoryMessage({
+      sessionId: sessionA,
+      role: "assistant",
+      content: "Përgjigjja e sesionit A.",
+    });
+
+    const historyA = getMemoryHistory(sessionA);
+    const historyB = getMemoryHistory(sessionB);
+
+    expect(historyA).toHaveLength(2);
+    expect(historyB).toHaveLength(1);
+
+    expect(
+      historyA.some((message) =>
+        message.content.includes("sesionin B")
+      )
+    ).toBe(false);
+
+    expect(
+      historyB.some((message) =>
+        message.content.includes("sesionin A")
+      )
+    ).toBe(false);
+
+    expect(historyB[0].content).toBe(
+      "Mesazh vetëm për sesionin B."
+    );
+  });
+
+  test("ruan dhe rikthen sesionet në mënyrë të pavarur", async () => {
+    await setup();
+
+    createMemorySession("integration-independent-a");
+    createMemorySession("integration-independent-b");
+
+    addMemoryMessage({
+      sessionId: "integration-independent-a",
+      role: "user",
+      content: "Të dhënat e sesionit A.",
+    });
+
+    addMemoryMessage({
+      sessionId: "integration-independent-b",
+      role: "user",
+      content: "Të dhënat e sesionit B.",
+    });
+
+    await persistence.saveSession("integration-independent-a");
+    await persistence.saveSession("integration-independent-b");
+
+    clearAllMemory();
+
+    expect(hasMemorySession("integration-independent-a")).toBe(false);
+    expect(hasMemorySession("integration-independent-b")).toBe(false);
+
+    const restoredA = await persistence.restoreSession(
+      "integration-independent-a"
+    );
+
+    expect(restoredA.restored).toBe(true);
+    expect(hasMemorySession("integration-independent-a")).toBe(true);
+    expect(hasMemorySession("integration-independent-b")).toBe(false);
+
+    const restoredB = await persistence.restoreSession(
+      "integration-independent-b"
+    );
+
+    expect(restoredB.restored).toBe(true);
+
+    expect(
+      getMemoryHistory("integration-independent-a")[0].content
+    ).toBe("Të dhënat e sesionit A.");
+
+    expect(
+      getMemoryHistory("integration-independent-b")[0].content
+    ).toBe("Të dhënat e sesionit B.");
+  });
+
+  test("orkestruesi përdor historikun e bisedës pasuese", async () => {
+    await setup();
+
+    configureAICoreMemoryPersistence(persistence);
+
+    const conversationId = "integration-ai-core-follow-up";
+
+    const firstResult = await processAIRequest({
+      query: "Dua të mësoj programim.",
+      language: "sq",
+      conversationId,
+    });
+
+    expect(firstResult.answer).toBeTruthy();
+
+    const secondResult = await processAIRequest({
+      query: "Cilin hap duhet të ndjek më pas?",
+      language: "sq",
+      conversationId,
+    });
+
+    expect(secondResult.answer).toBeTruthy();
+
+    expect(secondResult.metadata.context).toBeDefined();
+
+    expect(secondResult.metadata.context.conversationId).toBe(
+      conversationId
+    );
+
+    expect(secondResult.metadata.context.hasPreviousContext).toBe(true);
+
+    expect(
+      secondResult.metadata.context.historyMessageCount
+    ).toBeGreaterThanOrEqual(2);
+
+    expect(
+      await persistence.hasSavedSession(conversationId)
+    ).toBe(true);
+
+    const record = await createJSONMemoryStorage({
+      filePath: path.join(tempDirectory, "memory.json"),
+    }).get(`xsus:memory:session:${conversationId}`);
+
+    expect(record).not.toBeNull();
+    expect(record.sessionId).toBe(conversationId);
+    expect(record.snapshot.session.messages.length).toBeGreaterThanOrEqual(3);
   });
 });
