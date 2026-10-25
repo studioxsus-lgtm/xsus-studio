@@ -1,5 +1,4 @@
-
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import {
   evaluateResponseQuality,
@@ -33,6 +32,7 @@ describe("XSUS AI Core — Response Quality Engine", () => {
     expect(result.dimensions.language).toBe(100);
     expect(result.sourceCount).toBe(1);
     expect(result.errors).toEqual([]);
+    expect(result).toHaveProperty("languageVerification");
   });
 
   test("identifikon një pyetje bosh", () => {
@@ -69,7 +69,7 @@ describe("XSUS AI Core — Response Quality Engine", () => {
     expect(result.dimensions.language).toBe(100);
   });
 
-  test("identifikon mospërputhjen e gjuhës", () => {
+  test("identifikon mospërputhjen e kodeve të gjuhëve", () => {
     const result = evaluateResponseQuality({
       query: "Shpjego inteligjencën artificiale.",
       answer:
@@ -94,6 +94,32 @@ describe("XSUS AI Core — Response Quality Engine", () => {
     );
   });
 
+  test("identifikon gjuhën e kërkuar në analizën e përgjigjes", () => {
+    const result = evaluateResponseQuality({
+      query: "What is artificial intelligence?",
+      answer:
+        "Artificial intelligence is a field of computer science that develops intelligent systems.",
+      requestedLanguage: "en",
+      responseLanguage: "en",
+    });
+
+    expect(result.languageVerification).not.toBeNull();
+    expect(result).toHaveProperty(
+      "languageVerification.requestedLanguage",
+      "en",
+    );
+  });
+
+  test("përgjigjja pa gjuhë të kërkuar nuk kërkon verifikim", () => {
+    const result = evaluateResponseQuality({
+      query: "Test",
+      answer: "Kjo është një përgjigje testuese.",
+    });
+
+    expect(result.dimensions.language).toBeNull();
+    expect(result.languageVerification).toBeNull();
+  });
+
   test("filtron burimet e pavlefshme", () => {
     const result = evaluateResponseQuality({
       query: "Çfarë është AI?",
@@ -112,6 +138,18 @@ describe("XSUS AI Core — Response Quality Engine", () => {
     expect(result.dimensions.sources).toBe(100);
   });
 
+  test("llogarit rezultatin e burimeve kur nuk ka burime", () => {
+    const result = evaluateResponseQuality({
+      query: "What is AI?",
+      answer:
+        "Artificial intelligence is a field of computer science.",
+      sources: [],
+    });
+
+    expect(result.sourceCount).toBe(0);
+    expect(result.dimensions.sources).toBe(50);
+  });
+
   test("rezultati përmban të gjitha dimensionet", () => {
     const result = evaluateResponseQuality({
       query: "Test",
@@ -121,6 +159,36 @@ describe("XSUS AI Core — Response Quality Engine", () => {
     expect(Object.keys(result.dimensions)).toEqual(
       [...RESPONSE_QUALITY_DIMENSIONS],
     );
+  });
+
+  test("dimensionet kanë vlera numerike ose null", () => {
+    const result = evaluateResponseQuality({
+      query: "Test",
+      answer: "Kjo është një përgjigje testuese.",
+    });
+
+    for (const value of Object.values(result.dimensions)) {
+      expect(
+        value === null ||
+          (typeof value === "number" &&
+            value >= 0 &&
+            value <= 100),
+      ).toBe(true);
+    }
+  });
+
+  test("rezultati përmban vetëm pikë të kufizuara", () => {
+    const result = evaluateResponseQuality({
+      query: "Çfarë është XSUS AI?",
+      answer:
+        "XSUS AI është një sistem inteligjence artificiale shumëgjuhëshe.",
+      requestedLanguage: "sq",
+      responseLanguage: "sq",
+    });
+
+    expect(Number.isFinite(result.score)).toBe(true);
+    expect(result.score).toBeGreaterThanOrEqual(0);
+    expect(result.score).toBeLessThanOrEqual(100);
   });
 
   test("nuk lejon ndryshimin e rezultatit dhe dimensioneve", () => {
@@ -140,6 +208,10 @@ describe("XSUS AI Core — Response Quality Engine", () => {
     );
 
     expect(() => evaluateResponseQuality("test")).toThrow(
+      "Të dhënat e vlerësimit duhet të jenë objekt.",
+    );
+
+    expect(() => evaluateResponseQuality([])).toThrow(
       "Të dhënat e vlerësimit duhet të jenë objekt.",
     );
   });
