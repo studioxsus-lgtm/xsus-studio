@@ -155,7 +155,6 @@ describe("XSUS AI Core — Snapshot integrity", () => {
   test("ruajtja paralele nuk duhet të lejojë që snapshot-i i vjetër të mbishkruajë të riun", async () => {
     let releaseFirstWrite;
     let signalFirstWriteStarted;
-    let signalSecondExport;
 
     const firstWriteStarted = new Promise((resolve) => {
       signalFirstWriteStarted = resolve;
@@ -163,10 +162,6 @@ describe("XSUS AI Core — Snapshot integrity", () => {
 
     const firstWriteGate = new Promise((resolve) => {
       releaseFirstWrite = resolve;
-    });
-
-    const secondExportStarted = new Promise((resolve) => {
-      signalSecondExport = resolve;
     });
 
     const records = new Map();
@@ -203,10 +198,6 @@ describe("XSUS AI Core — Snapshot integrity", () => {
       exportSession: vi.fn(async (sessionId) => {
         exportCount += 1;
 
-        if (exportCount === 2) {
-          signalSecondExport();
-        }
-
         return {
           sessionId,
           messages: [
@@ -231,12 +222,13 @@ describe("XSUS AI Core — Snapshot integrity", () => {
 
     const firstSave = persistence.saveSession("session-A");
 
+    // Prit vetëm derisa shkrimi i parë të hyjë në pritje.
     await firstWriteStarted;
 
+    // Ruajtja e dytë futet në radhë pas të parës.
     const secondSave = persistence.saveSession("session-A");
 
-    await secondExportStarted;
-
+    // Liro shkrimin e parë që ruajtja e dytë të vazhdojë.
     releaseFirstWrite();
 
     await Promise.all([firstSave, secondSave]);
@@ -246,6 +238,8 @@ describe("XSUS AI Core — Snapshot integrity", () => {
     );
 
     expect(savedRecord).toBeDefined();
+    expect(exportCount).toBe(2);
+    expect(writeCount).toBe(2);
 
     expect(savedRecord.snapshot.messages[0].content)
       .toBe("snapshot i ri");
