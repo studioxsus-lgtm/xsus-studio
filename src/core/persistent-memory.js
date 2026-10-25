@@ -168,7 +168,7 @@ export function createPersistentMemory({
   }
 
   // Një radhë e pavarur për çdo sesion.
-  // Ruajtja dhe fshirja përdorin të njëjtën radhë.
+  // Ruajtja, rikthimi, fshirja dhe kontrolli përdorin të njëjtën radhë.
   const operationQueues = new Map();
 
   function getStorageKey(sessionId) {
@@ -184,9 +184,8 @@ export function createPersistentMemory({
 
   /**
    * Serializon operacionet për të njëjtin sesion.
-   *
-   * Një operacion i dështuar nuk e bllokon radhën.
-   * Operacionet për sesione të ndryshme mbeten të pavarura.
+   * Dështimi i një operacioni nuk e bllokon radhën.
+   * Sesionet e ndryshme mbeten të pavarura.
    */
   function enqueueSessionOperation(key, operation) {
     const previousOperation = operationQueues.get(key);
@@ -199,7 +198,6 @@ export function createPersistentMemory({
 
     operationQueues.set(key, currentOperation);
 
-    // Pastro radhën vetëm nëse ende i përket këtij operacioni.
     currentOperation.then(
       () => {
         if (operationQueues.get(key) === currentOperation) {
@@ -293,9 +291,6 @@ export function createPersistentMemory({
     };
   }
 
-  /**
-   * Ruajtja futet në radhën e sesionit.
-   */
   async function saveSession(sessionId) {
     const key = getStorageKey(sessionId);
 
@@ -305,65 +300,69 @@ export function createPersistentMemory({
     );
   }
 
+  /**
+   * Rikthimi pret operacionet e mëparshme të të njëjtit sesion.
+   */
   async function restoreSession(sessionId) {
     const key = getStorageKey(sessionId);
 
-    let record;
+    return enqueueSessionOperation(key, async () => {
+      let record;
 
-    try {
-      record = await storage.get(key);
-    } catch (error) {
-      throw createError(
-        "SESSION_READ_FAILED",
-        "Sesioni nuk mund të lexohet nga storage.",
-        error
-      );
-    }
+      try {
+        record = await storage.get(key);
+      } catch (error) {
+        throw createError(
+          "SESSION_READ_FAILED",
+          "Sesioni nuk mund të lexohet nga storage.",
+          error
+        );
+      }
 
-    if (record == null) {
+      if (record == null) {
+        return {
+          success: false,
+          restored: false,
+          sessionId,
+          reason: "SESSION_NOT_FOUND"
+        };
+      }
+
+      validateSessionRecord(record, sessionId);
+
+      let snapshot;
+
+      try {
+        snapshot = cloneData(record.snapshot);
+      } catch (error) {
+        throw createError(
+          "INVALID_SESSION_RECORD",
+          "Snapshot-i i ruajtur nuk mund të lexohet.",
+          error
+        );
+      }
+
+      try {
+        await importSession(sessionId, snapshot);
+      } catch (error) {
+        throw createError(
+          "SESSION_RESTORE_FAILED",
+          "Sesioni nuk mund të rikthehet në memory-engine.",
+          error
+        );
+      }
+
       return {
-        success: false,
-        restored: false,
+        success: true,
+        restored: true,
         sessionId,
-        reason: "SESSION_NOT_FOUND"
+        savedAt: record.savedAt ?? null
       };
-    }
-
-    validateSessionRecord(record, sessionId);
-
-    let snapshot;
-
-    try {
-      snapshot = cloneData(record.snapshot);
-    } catch (error) {
-      throw createError(
-        "INVALID_SESSION_RECORD",
-        "Snapshot-i i ruajtur nuk mund të lexohet.",
-        error
-      );
-    }
-
-    try {
-      await importSession(sessionId, snapshot);
-    } catch (error) {
-      throw createError(
-        "SESSION_RESTORE_FAILED",
-        "Sesioni nuk mund të rikthehet në memory-engine.",
-        error
-      );
-    }
-
-    return {
-      success: true,
-      restored: true,
-      sessionId,
-      savedAt: record.savedAt ?? null
-    };
+    });
   }
 
   /**
-   * Fshirja futet në të njëjtën radhë si ruajtja.
-   * Nëse ka ruajtje në proces, ajo përfundon e para.
+   * Fshirja pret operacionet e mëparshme të të njëjtit sesion.
    */
   async function deleteSavedSession(sessionId) {
     const key = getStorageKey(sessionId);
@@ -404,18 +403,23 @@ export function createPersistentMemory({
     return saved;
   }
 
+  /**
+   * Kontrolli pret operacionet e mëparshme të të njëjtit sesion.
+   */
   async function hasSavedSession(sessionId) {
     const key = getStorageKey(sessionId);
 
-    try {
-      return (await storage.get(key)) != null;
-    } catch (error) {
-      throw createError(
-        "SESSION_READ_FAILED",
-        "Nuk mund të kontrollohet ekzistenca e sesionit.",
-        error
-      );
-    }
+    return enqueueSessionOperation(key, async () => {
+      try {
+        return (await storage.get(key)) != null;
+      } catch (error) {
+        throw createError(
+          "SESSION_READ_FAILED",
+          "Nuk mund të kontrollohet ekzistenca e sesionit.",
+          error
+        );
+      }
+    });
   }
 
   return Object.freeze({
