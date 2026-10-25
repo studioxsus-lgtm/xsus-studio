@@ -357,7 +357,6 @@ describe("XSUS AI Memory Persistence Integration", () => {
     });
 
     expect(secondResult.answer).toBeTruthy();
-
     expect(secondResult.metadata.context).toBeDefined();
 
     expect(secondResult.metadata.context.conversationId).toBe(
@@ -396,20 +395,28 @@ describe("XSUS AI Memory Persistence Integration", () => {
       content: "Të dhëna për rikuperim",
     });
 
-    const storage = createJSONMemoryStorage({
+    const baseStorage = createJSONMemoryStorage({
       filePath: path.join(tempDirectory, "recovery.json"),
     });
 
-    const originalSet = storage.set.bind(storage);
     let shouldFail = true;
 
-    storage.set = async (...args) => {
-      if (shouldFail) {
-        shouldFail = false;
-        throw new Error("Dështim i simuluar i shkrimit");
-      }
+    const storage = {
+      get: (...args) => baseStorage.get(...args),
+      delete: (...args) => baseStorage.delete(...args),
+      has: (...args) => baseStorage.has(...args),
+      keys: (...args) => baseStorage.keys(...args),
+      clear: (...args) => baseStorage.clear(...args),
+      getStats: (...args) => baseStorage.getStats(...args),
 
-      return originalSet(...args);
+      set: async (...args) => {
+        if (shouldFail) {
+          shouldFail = false;
+          throw new Error("Dështim i simuluar i shkrimit");
+        }
+
+        return baseStorage.set(...args);
+      },
     };
 
     const recoveryPersistence = createMemoryPersistence({
@@ -424,7 +431,7 @@ describe("XSUS AI Memory Persistence Integration", () => {
 
     expect(saved.success).toBe(true);
 
-    const record = await storage.get(
+    const record = await baseStorage.get(
       `xsus:memory:session:${sessionId}`
     );
 
