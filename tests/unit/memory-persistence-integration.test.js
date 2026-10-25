@@ -12,8 +12,8 @@ import {
 } from "../../src/core/memory-engine.js";
 
 describe("XSUS AI Core — Memory Persistence Integration", () => {
-  afterEach(async () => {
-    await clearAllMemory();
+  afterEach(() => {
+    clearAllMemory();
     vi.restoreAllMocks();
   });
 
@@ -25,7 +25,10 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
 
       get: vi.fn(async (key) => {
         const value = records.get(key);
-        return value === undefined ? null : structuredClone(value);
+
+        return value === undefined
+          ? null
+          : structuredClone(value);
       }),
 
       set: vi.fn(async (key, value) => {
@@ -38,27 +41,42 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
     };
   }
 
+  function createSessionWithMessage(sessionId) {
+    createMemorySession(sessionId);
+
+    addMemoryMessage({
+      sessionId,
+      role: "user",
+      content: "Përshëndetje XSUS AI",
+      metadata: { language: "sq" },
+    });
+  }
+
   test("krijon integrimin me konfigurimin e parazgjedhur", () => {
     const persistence = createMemoryPersistence();
 
     expect(persistence).toBeDefined();
     expect(persistence.saveSession).toBeTypeOf("function");
     expect(persistence.restoreSession).toBeTypeOf("function");
-    expect(persistence.deleteSession).toBeTypeOf("function");
+    expect(persistence.deleteSavedSession).toBeTypeOf("function");
+    expect(persistence.deleteSessionCompletely).toBeTypeOf("function");
+    expect(persistence.hasSavedSession).toBeTypeOf("function");
   });
 
   test("pranon storage të personalizuar", async () => {
     const storage = createTestStorage();
+    const sessionId = "custom-storage-session";
+
+    createSessionWithMessage(sessionId);
 
     const persistence = createMemoryPersistence({
       storage,
       prefix: "xsus:integration:",
     });
 
-    expect(persistence).toBeDefined();
+    const result = await persistence.saveSession(sessionId);
 
-    await persistence.saveSession("custom-storage-session");
-
+    expect(result.success).toBe(true);
     expect(storage.set).toHaveBeenCalledOnce();
     expect(storage.records.size).toBe(1);
   });
@@ -89,28 +107,21 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
 
   test("ruan dhe rikthen një sesion përmes integrimit", async () => {
     const storage = createTestStorage();
+    const sessionId = "integration-round-trip-session";
 
     const persistence = createMemoryPersistence({
       storage,
       prefix: "xsus:round-trip:",
     });
 
-    const sessionId = "integration-round-trip-session";
-
-    createMemorySession(sessionId);
-
-    addMemoryMessage(sessionId, {
-      role: "user",
-      content: "Përshëndetje XSUS AI",
-      metadata: { language: "sq" },
-    });
+    createSessionWithMessage(sessionId);
 
     const saved = await persistence.saveSession(sessionId);
 
     expect(saved.success).toBe(true);
     expect(storage.records.size).toBe(1);
 
-    await clearAllMemory();
+    clearAllMemory();
 
     expect(getMemorySession(sessionId)).toBeNull();
 
@@ -131,28 +142,44 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
 
   test("fshin regjistrimin e ruajtur përmes integrimit", async () => {
     const storage = createTestStorage();
+    const sessionId = "integration-delete-session";
 
     const persistence = createMemoryPersistence({
       storage,
       prefix: "xsus:delete-integration:",
     });
 
-    const sessionId = "integration-delete-session";
-
-    createMemorySession(sessionId);
-
-    addMemoryMessage(sessionId, {
-      role: "user",
-      content: "Mesazh për fshirje",
-    });
+    createSessionWithMessage(sessionId);
 
     await persistence.saveSession(sessionId);
 
     expect(storage.records.size).toBe(1);
 
-    const result = await persistence.deleteSession(sessionId);
+    const result = await persistence.deleteSavedSession(sessionId);
 
     expect(result.success).toBe(true);
     expect(storage.records.size).toBe(0);
+
+    // Fshirja vetëm e regjistrimit të ruajtur
+    // nuk duhet të fshijë sesionin aktiv.
+    expect(getMemorySession(sessionId)).not.toBeNull();
+  });
+
+  test("kontrollon nëse sesioni është ruajtur", async () => {
+    const storage = createTestStorage();
+    const sessionId = "integration-has-session";
+
+    const persistence = createMemoryPersistence({
+      storage,
+      prefix: "xsus:has-integration:",
+    });
+
+    createSessionWithMessage(sessionId);
+
+    expect(await persistence.hasSavedSession(sessionId)).toBe(false);
+
+    await persistence.saveSession(sessionId);
+
+    expect(await persistence.hasSavedSession(sessionId)).toBe(true);
   });
 });
