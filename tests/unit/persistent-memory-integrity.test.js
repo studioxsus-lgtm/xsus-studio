@@ -311,4 +311,138 @@ describe("XSUS AI Core — Snapshot integrity", () => {
       records.has("xsus:memory:session:session-delete-race"),
     ).toBe(false);
   });
+
+  test("rikthimi pret ruajtjen në proces për të njëjtin sesion", async () => {
+    const records = new Map();
+
+    let releaseWrite;
+    let signalWriteStarted;
+
+    const writeGate = new Promise((resolve) => {
+      releaseWrite = resolve;
+    });
+
+    const writeStarted = new Promise((resolve) => {
+      signalWriteStarted = resolve;
+    });
+
+    const storage = {
+      async get(key) {
+        const value = records.get(key);
+        return value === undefined ? null : structuredClone(value);
+      },
+
+      async set(key, value) {
+        signalWriteStarted();
+        await writeGate;
+        records.set(key, structuredClone(value));
+      },
+
+      async delete(key) {
+        records.delete(key);
+      },
+    };
+
+    let importCount = 0;
+
+    const persistence = createPersistentMemory({
+      storage,
+      prefix: "xsus:memory:session:",
+
+      exportSession: async (sessionId) => ({
+        sessionId,
+        messages: [
+          { role: "user", content: "Mesazh i ruajtur" },
+        ],
+      }),
+
+      importSession: async (sessionId, snapshot) => {
+        importCount += 1;
+
+        expect(sessionId).toBe("restore-race");
+        expect(snapshot.messages[0].content)
+          .toBe("Mesazh i ruajtur");
+
+        return { success: true };
+      },
+    });
+
+    const savePromise = persistence.saveSession("restore-race");
+
+    await writeStarted;
+
+    const restorePromise =
+      persistence.restoreSession("restore-race");
+
+    releaseWrite();
+
+    await savePromise;
+
+    const result = await restorePromise;
+
+    expect(result.success).toBe(true);
+    expect(result.restored).toBe(true);
+    expect(importCount).toBe(1);
+  });
+
+  test("kontrolli i ekzistencës pret ruajtjen në proces", async () => {
+    const records = new Map();
+
+    let releaseWrite;
+    let signalWriteStarted;
+
+    const writeGate = new Promise((resolve) => {
+      releaseWrite = resolve;
+    });
+
+    const writeStarted = new Promise((resolve) => {
+      signalWriteStarted = resolve;
+    });
+
+    const storage = {
+      async get(key) {
+        const value = records.get(key);
+        return value === undefined ? null : structuredClone(value);
+      },
+
+      async set(key, value) {
+        signalWriteStarted();
+        await writeGate;
+        records.set(key, structuredClone(value));
+      },
+
+      async delete(key) {
+        records.delete(key);
+      },
+    };
+
+    const persistence = createPersistentMemory({
+      storage,
+      prefix: "xsus:memory:session:",
+
+      exportSession: async (sessionId) => ({
+        sessionId,
+        messages: [
+          { role: "user", content: "Mesazh i ruajtur" },
+        ],
+      }),
+
+      importSession: async () => ({ success: true }),
+    });
+
+    const savePromise = persistence.saveSession("has-race");
+
+    await writeStarted;
+
+    const existsPromise =
+      persistence.hasSavedSession("has-race");
+
+    releaseWrite();
+
+    await savePromise;
+
+    const exists = await existsPromise;
+
+    expect(exists).toBe(true);
+  });
 });
