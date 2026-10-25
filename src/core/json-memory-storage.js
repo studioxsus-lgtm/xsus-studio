@@ -1,17 +1,16 @@
-
 /**
  * XSUS AI Core — JSON Memory Storage
  * Version: 1.0.0
  *
  * Ruajtje e qëndrueshme e memories në skedar JSON.
- * Përdor Node.js filesystem API.
  *
  * Garancitë:
- * - Operacione të serializuara mes instancave në të njëjtin proces.
+ * - Operacione të serializuara brenda të njëjtit proces.
  * - Emra unikë për skedarët e përkohshëm.
  * - Shkrim atomik përmes skedarit të përkohshëm dhe rename().
  * - Kopjim i të dhënave JSON për të shmangur referencat e jashtme.
  * - Rikuperim i radhës pas dështimit të një operacioni.
+ * - Gabime me kode të qëndrueshme.
  *
  * Kufizim:
  * Nuk siguron kyçje mes proceseve të ndryshme Node.js.
@@ -30,11 +29,18 @@ import path from "node:path";
 
 export const JSON_MEMORY_STORAGE_VERSION = "1.0.0";
 
-/**
- * Radhë e përbashkët për çdo rrugë skedari.
- * Koordinon instancat brenda të njëjtit proces Node.js.
- */
 const fileQueues = new Map();
+
+function createStorageError(code, message, cause) {
+  const error = new Error(message);
+  error.code = code;
+
+  if (cause !== undefined) {
+    error.cause = cause;
+  }
+
+  return error;
+}
 
 function normalizeFilePath(filePath) {
   return path.resolve(filePath);
@@ -59,7 +65,8 @@ function serializeFileOperation(filePath, operation) {
 
 function normalizeKey(key) {
   if (typeof key !== "string" || !key.trim()) {
-    throw new Error(
+    throw createStorageError(
+      "INVALID_STORAGE_KEY",
       "Çelësi i memories duhet të jetë tekst jo bosh."
     );
   }
@@ -72,23 +79,28 @@ function cloneJSON(value) {
 
   try {
     serialized = JSON.stringify(value);
-  } catch {
-    throw new Error(
-      "Të dhënat e memories nuk mund të serializohen në JSON."
+  } catch (error) {
+    throw createStorageError(
+      "JSON_SERIALIZATION_FAILED",
+      "Të dhënat e memories nuk mund të serializohen në JSON.",
+      error
     );
   }
 
   if (serialized === undefined) {
-    throw new Error(
+    throw createStorageError(
+      "JSON_SERIALIZATION_FAILED",
       "Të dhënat e memories duhet të jenë të vlefshme për JSON."
     );
   }
 
   try {
     return JSON.parse(serialized);
-  } catch {
-    throw new Error(
-      "Të dhënat e memories nuk mund të kopjohen nga JSON."
+  } catch (error) {
+    throw createStorageError(
+      "JSON_CLONE_FAILED",
+      "Të dhënat e memories nuk mund të kopjohen nga JSON.",
+      error
     );
   }
 }
@@ -99,16 +111,30 @@ function validateStore(value) {
     typeof value !== "object" ||
     Array.isArray(value)
   ) {
-    throw new Error(
+    throw createStorageError(
+      "INVALID_STORAGE_STRUCTURE",
       "Struktura e skedarit të memories është e pavlefshme."
     );
   }
 
   for (const key of Object.keys(value)) {
-    normalizeKey(key);
+    if (!key.trim()) {
+      throw createStorageError(
+        "INVALID_STORAGE_STRUCTURE",
+        "Skedari i memories përmban një çelës të pavlefshëm."
+      );
+    }
   }
 
-  return cloneJSON(value);
+  try {
+    return cloneJSON(value);
+  } catch (error) {
+    throw createStorageError(
+      "INVALID_STORAGE_STRUCTURE",
+      "Struktura e skedarit të memories nuk mund të validohet.",
+      error
+    );
+  }
 }
 
 export function createJSONMemoryStorage(options = {}) {
@@ -117,7 +143,8 @@ export function createJSONMemoryStorage(options = {}) {
     typeof options !== "object" ||
     Array.isArray(options)
   ) {
-    throw new Error(
+    throw createStorageError(
+      "INVALID_STORAGE_OPTIONS",
       "Opsionet e JSON storage janë të pavlefshme."
     );
   }
@@ -145,16 +172,22 @@ export function createJSONMemoryStorage(options = {}) {
         return {};
       }
 
-      throw error;
+      throw createStorageError(
+        "STORAGE_READ_FAILED",
+        "Skedari i memories nuk mund të lexohet.",
+        error
+      );
     }
 
     let parsed;
 
     try {
       parsed = JSON.parse(content);
-    } catch {
-      throw new Error(
-        "Skedari i memories përmban JSON të pavlefshëm."
+    } catch (error) {
+      throw createStorageError(
+        "CORRUPTED_JSON",
+        "Skedari i memories përmban JSON të pavlefshëm.",
+        error
       );
     }
 
@@ -180,7 +213,12 @@ export function createJSONMemoryStorage(options = {}) {
       await rename(temporaryPath, filePath);
     } catch (error) {
       await unlink(temporaryPath).catch(() => {});
-      throw error;
+
+      throw createStorageError(
+        "STORAGE_WRITE_FAILED",
+        "Skedari i memories nuk mund të ruhet.",
+        error
+      );
     }
   }
 
@@ -190,12 +228,10 @@ export function createJSONMemoryStorage(options = {}) {
     return serializeFileOperation(filePath, async () => {
       const store = await readStore();
 
-      if (
-        !Object.prototype.hasOwnProperty.call(
-          store,
-          normalizedKey
-        )
-      ) {
+      if (!Object.prototype.hasOwnProperty.call(
+        store,
+        normalizedKey
+      )) {
         return null;
       }
 
