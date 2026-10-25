@@ -6,9 +6,17 @@
  * dhe krijimin e raportit përfundimtar.
  */
 
-import { evaluateResponseQuality } from "./response-quality-engine.js";
-import { verifyResponseSources } from "./response-source-verifier.js";
-import { createResponseQualityReport } from "./response-quality-report.js";
+import {
+  evaluateResponseQuality
+} from "./response-quality-engine.js";
+
+import {
+  verifyResponseSources
+} from "./response-source-verifier.js";
+
+import {
+  createResponseQualityReport
+} from "./response-quality-report.js";
 
 export const RESPONSE_QUALITY_PIPELINE_VERSION = "1.0.0";
 
@@ -16,12 +24,8 @@ function normalizeSources(sources) {
   return Array.isArray(sources) ? sources : [];
 }
 
-function normalizeAnswer(answer) {
-  return typeof answer === "string" ? answer : "";
-}
-
-function normalizeLanguage(language) {
-  return typeof language === "string" ? language.trim() : "";
+function normalizeString(value) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function createPipelineError(code, message) {
@@ -51,13 +55,22 @@ export function createResponseQualityPipeline() {
       };
     }
 
-    const answer = normalizeAnswer(input.answer);
-    const expectedLanguage = normalizeLanguage(
-      input.expectedLanguage
+    const query = normalizeString(input.query);
+    const answer = normalizeString(input.answer);
+
+    const expectedLanguage = normalizeString(
+      input.expectedLanguage ??
+      input.requestedLanguage
     );
+
+    const responseLanguage = normalizeString(
+      input.responseLanguage ??
+      expectedLanguage
+    );
+
     const sources = normalizeSources(input.sources);
 
-    if (!answer.trim()) {
+    if (!answer) {
       errors.push(
         createPipelineError(
           "EMPTY_ANSWER",
@@ -72,8 +85,10 @@ export function createResponseQualityPipeline() {
 
     try {
       quality = evaluateResponseQuality({
+        query,
         answer,
-        expectedLanguage,
+        requestedLanguage: expectedLanguage,
+        responseLanguage,
         sources
       });
     } catch {
