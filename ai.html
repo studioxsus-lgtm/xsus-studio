@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -325,9 +324,9 @@
         <div class="px-3 sm:px-5 pb-4">
           <form id="chatForm" class="input-area rounded-2xl p-2 sm:p-3">
             <textarea id="messageInput"
-                      rows="2"
+                      rows="1"
                       maxlength="8000"
-                      class="w-full resize-y min-h-[52px] max-h-48 bg-transparent outline-none text-sm sm:text-base text-gray-100 placeholder:text-gray-600 px-2 py-2"
+                      class="w-full resize-none min-h-[44px] max-h-48 overflow-y-auto bg-transparent outline-none text-sm sm:text-base text-gray-100 placeholder:text-gray-600 px-2 py-2"
                       placeholder="Ask XSUS AI anything..."
                       aria-label="Message"
                       required></textarea>
@@ -646,7 +645,6 @@
 
       if (window.marked && typeof window.marked.parse === "function") {
         try {
-          // Escape raw HTML before Markdown parsing to prevent model/user HTML injection.
           const htmlSafeSource = escapeHTML(source);
           const rendered = window.marked.parse(htmlSafeSource, {
             breaks: true,
@@ -720,8 +718,6 @@
       const contentNode = document.createElement("div");
       contentNode.className = "message-content";
 
-      // Only render plain text content as escaped Markdown; never interpolate
-      // user-provided content directly into an HTML template.
       contentNode.innerHTML = safeMarkdown(message.content);
       bubble.appendChild(contentNode);
 
@@ -1044,7 +1040,6 @@
         return pages.join("\n");
       }
 
-      // Try the project's document reader if available.
       try {
         const module = await import("./services/file-service.js");
         const reader = module.readDocumentFile;
@@ -1238,7 +1233,6 @@
 
         throw new Error("Unexpected health response.");
       } catch (error) {
-        // A failed health check does not block chat: /api/chat is still attempted.
         console.warn("XSUS API health check failed:", error);
         elements.consoleStatus.textContent = t("apiConnected");
         return false;
@@ -1360,10 +1354,22 @@
       }
     });
 
-    elements.input.addEventListener("input", () => {
+    const MAX_INPUT_HEIGHT = 192;
+
+    function autoResizeInput() {
       elements.input.style.height = "auto";
-      elements.input.style.height = `${Math.min(elements.input.scrollHeight, 192)}px`;
-    });
+      const nextHeight = Math.min(
+        elements.input.scrollHeight,
+        MAX_INPUT_HEIGHT
+      );
+      elements.input.style.height = `${nextHeight}px`;
+      elements.input.style.overflowY =
+        elements.input.scrollHeight > MAX_INPUT_HEIGHT
+          ? "auto"
+          : "hidden";
+    }
+
+    elements.input.addEventListener("input", autoResizeInput);
 
     elements.clear.addEventListener("click", clearConversation);
     elements.export.addEventListener("click", exportConversation);
@@ -1418,7 +1424,6 @@
     checkAPIHealth();
   </script>
 
-  <!-- PDF.js is loaded separately so non-PDF chat still works if it fails. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </body>
 </html>
