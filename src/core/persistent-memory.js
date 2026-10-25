@@ -4,15 +4,13 @@
  * Version: 1.0.0
  *
  * Përgjegjësitë:
- * - Ruajtja e sesioneve në storage.
- * - Rikthimi i sesioneve të ruajtura.
+ * - Ruajtja dhe rikthimi i sesioneve.
  * - Fshirja e sesioneve të ruajtura.
- * - Validimi i integritetit të regjistrimeve.
- * - Kontrolli i versionit të të dhënave.
+ * - Validimi i integritetit dhe versionit.
  * - Izolimi i gabimeve dhe validimi i hyrjeve.
  * - Koordinimi i ruajtjeve paralele për çdo sesion.
  *
- * Ky modul përdor dependency injection për të mos lidhur
+ * Përdor dependency injection për të mos lidhur
  * logjikën e memories me një backend të vetëm.
  */
 
@@ -49,7 +47,6 @@ function cloneData(value) {
 
 function createError(code, message, cause) {
   const error = new Error(message);
-
   error.code = code;
 
   if (cause !== undefined) {
@@ -71,17 +68,6 @@ function isValidSavedAt(savedAt) {
   return Number.isFinite(Date.parse(savedAt));
 }
 
-/**
- * Nxjerr ID-në e sesionit nga formatet e mbështetura
- * të snapshot-it.
- *
- * Mbështet:
- * - snapshot.sessionId
- * - snapshot.session.sessionId
- *
- * Nëse ID-ja mungon, kthen undefined për përputhshmëri
- * me snapshot-et ekzistuese.
- */
 function getSnapshotSessionId(snapshot) {
   if (typeof snapshot.sessionId === "string") {
     return snapshot.sessionId;
@@ -97,9 +83,6 @@ function getSnapshotSessionId(snapshot) {
   return undefined;
 }
 
-/**
- * Kontrollon integritetin e regjistrimit para rikthimit.
- */
 function validateSessionRecord(record, sessionId) {
   if (!isPlainObject(record)) {
     throw createError(
@@ -154,9 +137,6 @@ function validateSessionRecord(record, sessionId) {
   return true;
 }
 
-/**
- * Krijon shërbimin e memories së qëndrueshme.
- */
 export function createPersistentMemory({
   storage,
   exportSession,
@@ -176,25 +156,18 @@ export function createPersistentMemory({
   }
 
   if (typeof exportSession !== "function") {
-    throw new TypeError(
-      "exportSession duhet të jetë funksion."
-    );
+    throw new TypeError("exportSession duhet të jetë funksion.");
   }
 
   if (typeof importSession !== "function") {
-    throw new TypeError(
-      "importSession duhet të jetë funksion."
-    );
+    throw new TypeError("importSession duhet të jetë funksion.");
   }
 
   if (typeof prefix !== "string" || prefix.trim().length === 0) {
-    throw new TypeError(
-      "Prefix duhet të jetë tekst jo bosh."
-    );
+    throw new TypeError("Prefix duhet të jetë tekst jo bosh.");
   }
 
-  // Çdo sesion ka radhën e vet të ruajtjes.
-  // Ruajtjet e sesioneve të ndryshme mund të vazhdojnë paralelisht.
+  // Një radhë e pavarur për çdo sesion.
   const saveQueues = new Map();
 
   function getStorageKey(sessionId) {
@@ -208,10 +181,6 @@ export function createPersistentMemory({
     return `${prefix}${sessionId}`;
   }
 
-  /**
-   * Kryen një ruajtje pasi të ketë përfunduar ruajtja
-   * e mëparshme për të njëjtin sesion.
-   */
   async function performSaveSession(sessionId) {
     const key = getStorageKey(sessionId);
 
@@ -253,7 +222,6 @@ export function createPersistentMemory({
       );
     }
 
-    // Kontrolli i integritetit para shkrimit në storage.
     const snapshotSessionId =
       getSnapshotSessionId(serializedSnapshot);
 
@@ -293,24 +261,26 @@ export function createPersistentMemory({
   }
 
   /**
-   * Serializon ruajtjet sipas rendit të kërkesave për
-   * të njëjtin sesion.
-   *
-   * Një ruajtje e dështuar nuk e bllokon radhën.
+   * Ruajtjet për të njëjtin sesion serializohen sipas
+   * rendit të kërkesave. Sesionet e ndryshme nuk bllokojnë
+   * njëri-tjetrin.
    */
-  function saveSession(sessionId) {
+  async function saveSession(sessionId) {
+    // Validimi ndodh brenda funksionit async, prandaj
+    // ID-ja e pavlefshme refuzohet përmes Promise.
     const key = getStorageKey(sessionId);
     const previousSave = saveQueues.get(key);
 
-    const currentSave = (previousSave
-      ? previousSave.catch(() => undefined)
-      : Promise.resolve()
+    const currentSave = (
+      previousSave
+        ? previousSave.catch(() => undefined)
+        : Promise.resolve()
     ).then(() => performSaveSession(sessionId));
 
     saveQueues.set(key, currentSave);
 
-    // Pastrohet vetëm hyrja që i përket ruajtjes së fundit.
-    // Kapja e këtij zinxhiri shmang gabime të pareferuara.
+    // Pastro vetëm radhën që ende i përket kësaj kërkese.
+    // Promise i pastrimit trajton suksesin dhe dështimin.
     currentSave.then(
       () => {
         if (saveQueues.get(key) === currentSave) {
