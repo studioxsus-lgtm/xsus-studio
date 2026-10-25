@@ -151,4 +151,92 @@ describe("XSUS AI Core — Snapshot integrity", () => {
 
     expect(records.size).toBe(0);
   });
+
+  test("ruajtja paralele nuk duhet të lejojë që snapshot-i i vjetër të mbishkruajë të riun", async () => {
+    let releaseFirstWrite;
+    let signalFirstWriteStarted;
+
+    const firstWriteStarted = new Promise((resolve) => {
+      signalFirstWriteStarted = resolve;
+    });
+
+    const firstWriteGate = new Promise((resolve) => {
+      releaseFirstWrite = resolve;
+    });
+
+    const records = new Map();
+    let writeCount = 0;
+    let exportCount = 0;
+
+    const storage = {
+      get: vi.fn(async (key) => {
+        const value = records.get(key);
+        return value === undefined ? null : structuredClone(value);
+      }),
+
+      set: vi.fn(async (key, value) => {
+        writeCount += 1;
+        const currentWrite = writeCount;
+
+        if (currentWrite === 1) {
+          signalFirstWriteStarted();
+          await firstWriteGate;
+        }
+
+        records.set(key, structuredClone(value));
+      }),
+
+      delete: vi.fn(async (key) => {
+        records.delete(key);
+      }),
+    };
+
+    const persistence = createPersistentMemory({
+      storage,
+      prefix: "xsus:memory:session:",
+
+      exportSession: vi.fn(async (sessionId) => {
+        exportCount += 1;
+
+        return {
+          sessionId,
+          messages: [
+            {
+              role: "user",
+              content:
+                exportCount === 1
+                  ? "snapshot i vjetër"
+                  : "snapshot i ri",
+            },
+          ],
+        };
+      }),
+
+      importSession: vi.fn(async () => ({
+        success: true,
+        restored: true,
+      })),
+
+      deleteSession: vi.fn(async () => ({ success: true })),
+    });
+
+    const firstSave = persistence.saveSession("session-A");
+
+    await firstWriteStarted;
+
+    const secondSave = persistence.saveSession("session-A");
+    await secondSave;
+
+    releaseFirstWrite();
+    await firstSave;
+
+    const savedRecord = records.get(
+      "xsus:memory:session:session-A",
+    );
+
+    expect(savedRecord).toBeDefined();
+
+    expect(savedRecord.snapshot.messages[0].content)
+      .toBe("snapshot i ri");
+  });
 });
