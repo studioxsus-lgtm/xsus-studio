@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI Core — Response Quality Engine
  * Version: 1.0.0
@@ -6,13 +5,17 @@
  * Përgjegjësitë:
  * - Vlerësimi bazë i strukturës së përgjigjeve.
  * - Kontrolli i pyetjes dhe përgjigjes.
- * - Kontrolli i gjuhës së kërkuar.
+ * - Verifikimi heuristik i gjuhës së përgjigjes.
  * - Vlerësimi i burimeve të përgjigjes.
  * - Gjenerimi i rezultateve të matshme.
  *
  * Ky modul nuk pretendon të verifikojë të vërtetën
  * faktike të një përgjigjeje.
  */
+
+import {
+  verifyResponseLanguage,
+} from "./response-language-verifier.js";
 
 export const RESPONSE_QUALITY_VERSION = "1.0.0";
 
@@ -121,12 +124,50 @@ function calculateClarity(answer) {
   return 100;
 }
 
-function calculateLanguage(requestedLanguage, responseLanguage) {
+function calculateLanguage(
+  requestedLanguage,
+  responseLanguage,
+  verification,
+) {
   if (!requestedLanguage || !responseLanguage) {
     return null;
   }
 
-  return requestedLanguage === responseLanguage ? 100 : 0;
+  // Kodet e gjuhëve duhet të përputhen fillimisht.
+  if (requestedLanguage !== responseLanguage) {
+    return 0;
+  }
+
+  // Nëse nuk ka tekst të mjaftueshëm ose verifikimi
+  // nuk mund të japë përfundim, ruajmë rezultatin bazë.
+  if (
+    !verification ||
+    verification.status === "unknown" ||
+    verification.status === "insufficient_text" ||
+    verification.status === "unsupported_language"
+  ) {
+    return 100;
+  }
+
+  if (verification.matches === true) {
+    return 100;
+  }
+
+  if (verification.matches === false) {
+    return 0;
+  }
+
+  // Nëse verifikuesi përdor statusin "match".
+  if (verification.status === "match") {
+    return 100;
+  }
+
+  // Nëse përdor statusin "mismatch".
+  if (verification.status === "mismatch") {
+    return 0;
+  }
+
+  return 100;
 }
 
 function calculateSourceScore(sources) {
@@ -135,6 +176,23 @@ function calculateSourceScore(sources) {
 
 function roundScore(value) {
   return Math.round(value * 100) / 100;
+}
+
+function verifyLanguageSafely(answer, requestedLanguage) {
+  if (!answer || !requestedLanguage) {
+    return null;
+  }
+
+  try {
+    return verifyResponseLanguage({
+      text: answer,
+      requestedLanguage,
+    });
+  } catch {
+    // Gabimi i verifikuesit nuk duhet ta ndërpresë
+    // vlerësimin e përgjithshëm të përgjigjes.
+    return null;
+  }
 }
 
 /**
@@ -196,9 +254,15 @@ export function evaluateResponseQuality(input = {}) {
     errors.push("UNSUPPORTED_RESPONSE_LANGUAGE");
   }
 
+  const languageVerification = verifyLanguageSafely(
+    answer,
+    requestedLanguage,
+  );
+
   const languageScore = calculateLanguage(
     requestedLanguage,
     responseLanguage,
+    languageVerification,
   );
 
   const dimensions = {
@@ -209,7 +273,7 @@ export function evaluateResponseQuality(input = {}) {
   };
 
   const applicableScores = Object.values(dimensions)
-    .filter((score) => score !== null);
+    .filter((value) => value !== null);
 
   const score = applicableScores.length > 0
     ? roundScore(
@@ -228,6 +292,7 @@ export function evaluateResponseQuality(input = {}) {
     score,
     dimensions: Object.freeze(dimensions),
     sourceCount: sources.length,
+    languageVerification,
     errors: Object.freeze(errors),
   });
 }
