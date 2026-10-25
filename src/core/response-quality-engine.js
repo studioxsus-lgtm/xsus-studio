@@ -6,16 +6,18 @@
  * - Vlerësimi i plotësisë së përgjigjes.
  * - Vlerësimi i qartësisë.
  * - Vlerësimi i përputhjes së gjuhës.
- * - Vlerësimi i burimeve.
+ * - Vlerësimi strukturor i burimeve.
  * - Kthimi i rezultateve të standardizuara.
  *
  * Parime:
  * - Mos pretendo siguri kur mungojnë prova.
  * - Ruaj strukturën publike të rezultateve.
- * - Mos lejo dështimin e verifikuesit të prishë vlerësimin.
+ * - Mos lejo dështimin e verifikuesve të prishë vlerësimin.
+ * - Verifikimi strukturor nuk provon vërtetësinë e përmbajtjes.
  */
 
 import { verifyResponseLanguage } from "./response-language-verifier.js";
+import { verifyResponseSources } from "./response-source-verifier.js";
 
 export const RESPONSE_QUALITY_VERSION = "1.0.0";
 
@@ -154,8 +156,6 @@ function calculateClarity(answer) {
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
 
-  // Një përgjigje e gjatë dhe e ndarë në paragrafë
-  // mund të jetë më e lehtë për t'u lexuar.
   if (answer.length >= 600 && paragraphs.length > 1) {
     return 100;
   }
@@ -183,12 +183,10 @@ function calculateLanguage(
     return null;
   }
 
-  // Kodet e ndryshme tregojnë mospërputhje.
   if (requestedLanguage !== responseLanguage) {
     return 0;
   }
 
-  // Pa verifikim nuk pretendojmë siguri.
   if (!verification || typeof verification !== "object") {
     return null;
   }
@@ -210,8 +208,46 @@ function calculateLanguage(
   return null;
 }
 
-function calculateSourceScore(sources) {
-  return sources.length > 0 ? 100 : 50;
+/**
+ * Vlerëson burimet në mënyrë të kujdesshme.
+ *
+ * 100 = të gjitha burimet e dhëna janë strukturalisht të vlefshme.
+ * 50  = nuk është dhënë asnjë burim.
+ * 0   = të paktën një burim nuk është strukturalisht i vlefshëm.
+ *
+ * Ky rezultat nuk provon vërtetësinë ose besueshmërinë
+ * faktike të përmbajtjes së burimeve.
+ */
+function calculateSourceScore(
+  sources,
+  sourceVerification
+) {
+  if (sources.length === 0) {
+    return 50;
+  }
+
+  if (
+    !sourceVerification ||
+    typeof sourceVerification !== "object" ||
+    !Array.isArray(sourceVerification.results)
+  ) {
+    return 0;
+  }
+
+  if (sourceVerification.results.length !== sources.length) {
+    return 0;
+  }
+
+  const allStructurallyValid =
+    sourceVerification.results.every(
+      (result) =>
+        result &&
+        typeof result === "object" &&
+        result.structurallyValid === true &&
+        result.valid === true
+    );
+
+  return allStructurallyValid ? 100 : 0;
 }
 
 function roundScore(value) {
@@ -235,8 +271,22 @@ function verifyLanguageSafely(answer, requestedLanguage) {
 
     return result;
   } catch {
+    return null;
+  }
+}
+
+function verifySourcesSafely(sources) {
+  try {
+    const result = verifyResponseSources(sources);
+
+    if (!result || typeof result !== "object") {
+      return null;
+    }
+
+    return result;
+  } catch {
     // Dështimi i verifikuesit nuk duhet të ndërpresë
-    // vlerësimin e përgjithshëm të përgjigjes.
+    // vlerësimin e përgjithshëm.
     return null;
   }
 }
@@ -312,6 +362,8 @@ export function evaluateResponseQuality(input = {}) {
     requestedLanguage
   );
 
+  const sourceVerification = verifySourcesSafely(sources);
+
   const dimensions = {
     completeness: calculateCompleteness(query, answer),
     clarity: calculateClarity(answer),
@@ -320,7 +372,10 @@ export function evaluateResponseQuality(input = {}) {
       responseLanguage,
       languageVerification
     ),
-    sources: calculateSourceScore(sources)
+    sources: calculateSourceScore(
+      sources,
+      sourceVerification
+    )
   };
 
   const score = calculateOverallScore(dimensions);
