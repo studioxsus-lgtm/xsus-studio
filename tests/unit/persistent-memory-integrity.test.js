@@ -155,6 +155,7 @@ describe("XSUS AI Core — Snapshot integrity", () => {
   test("ruajtja paralele nuk duhet të lejojë që snapshot-i i vjetër të mbishkruajë të riun", async () => {
     let releaseFirstWrite;
     let signalFirstWriteStarted;
+    let signalSecondExport;
 
     const firstWriteStarted = new Promise((resolve) => {
       signalFirstWriteStarted = resolve;
@@ -162,6 +163,10 @@ describe("XSUS AI Core — Snapshot integrity", () => {
 
     const firstWriteGate = new Promise((resolve) => {
       releaseFirstWrite = resolve;
+    });
+
+    const secondExportStarted = new Promise((resolve) => {
+      signalSecondExport = resolve;
     });
 
     const records = new Map();
@@ -198,6 +203,10 @@ describe("XSUS AI Core — Snapshot integrity", () => {
       exportSession: vi.fn(async (sessionId) => {
         exportCount += 1;
 
+        if (exportCount === 2) {
+          signalSecondExport();
+        }
+
         return {
           sessionId,
           messages: [
@@ -225,10 +234,12 @@ describe("XSUS AI Core — Snapshot integrity", () => {
     await firstWriteStarted;
 
     const secondSave = persistence.saveSession("session-A");
-    await secondSave;
+
+    await secondExportStarted;
 
     releaseFirstWrite();
-    await firstSave;
+
+    await Promise.all([firstSave, secondSave]);
 
     const savedRecord = records.get(
       "xsus:memory:session:session-A",
