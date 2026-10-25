@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI Core — Request Orchestrator
  * Version: 1.2.0
@@ -11,6 +10,7 @@
  * - Përdorimi dhe kufizimi i historikut të bisedës.
  * - Kërkimi në bazën e njohurive.
  * - Standardizimi i përgjigjeve.
+ * - Vlerësimi i cilësisë së përgjigjeve.
  * - Menaxhimi i memories RAM dhe persistent memory.
  * - Konfigurimi i memories për integrime dhe teste.
  * - Metadata dhe trajtimi i sigurt i gabimeve.
@@ -53,6 +53,10 @@ import {
 import {
   createResponse
 } from "./response-engine.js";
+
+import {
+  evaluateResponseQuality
+} from "./response-quality-engine.js";
 
 export const AI_CORE_VERSION = "1.2.0";
 
@@ -444,6 +448,25 @@ function collectSources(results, knowledge, responseResult) {
   ];
 }
 
+/**
+ * Krijon metadata të sigurta dhe të standardizuara
+ * për vlerësimin e cilësisë së përgjigjes.
+ */
+function buildResponseQualityMetadata(responseQuality) {
+  if (!responseQuality || typeof responseQuality !== "object") {
+    return null;
+  }
+
+  return {
+    version: responseQuality.version,
+    score: responseQuality.score,
+    dimensions: responseQuality.dimensions,
+    sourceCount: responseQuality.sourceCount,
+    valid: responseQuality.valid,
+    errors: responseQuality.errors
+  };
+}
+
 function buildContextMetadata({
   conversationId,
   history = []
@@ -477,7 +500,8 @@ function buildMetadata({
   requestId,
   conversationId,
   memoryEnabled,
-  responseResult
+  responseResult,
+  responseQuality
 }) {
   /*
    * Historia e kaluar këtu është historiku paraprak,
@@ -513,7 +537,10 @@ function buildMetadata({
       version: responseResult?.version || null,
       confidence: responseResult?.confidence ?? 0,
       success: Boolean(responseResult?.success)
-    }
+    },
+    responseQuality: buildResponseQualityMetadata(
+      responseQuality
+    )
   };
 }
 
@@ -820,6 +847,38 @@ export async function processAIRequest(input = {}) {
       });
     }
 
+    /*
+     * Vlerëso cilësinë e përgjigjes pasi është krijuar
+     * përgjigjja përfundimtare dhe janë identifikuar burimet.
+     *
+     * Ky vlerësim është heuristik. Ai nuk provon vetë
+     * saktësinë faktike të përgjigjes ose rëndësinë
+     * e burimeve për pyetjen.
+     */
+    const responseSources = collectSources(
+      results,
+      knowledge,
+      standardizedResponse
+    );
+
+    let responseQuality;
+
+    try {
+      responseQuality = evaluateResponseQuality({
+        query: requestContext.query,
+        answer,
+        requestedLanguage: language,
+        responseLanguage: language,
+        sources: responseSources
+      });
+    } catch {
+      /*
+       * Dështimi i modulit të cilësisë nuk duhet të
+       * ndërpresë një përgjigje që është krijuar me sukses.
+       */
+      responseQuality = null;
+    }
+
     if (memoryEnabled) {
       saveMemoryMessage(
         conversationId,
@@ -846,7 +905,8 @@ export async function processAIRequest(input = {}) {
       requestId,
       conversationId,
       memoryEnabled,
-      responseResult: standardizedResponse
+      responseResult: standardizedResponse,
+      responseQuality
     });
 
     const response = createAIResponse({
