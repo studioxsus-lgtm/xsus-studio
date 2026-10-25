@@ -1,4 +1,3 @@
-
 import { describe, expect, test } from "vitest";
 import { processAIRequest } from "../../src/core/ai-core.js";
 
@@ -151,5 +150,95 @@ describe("XSUS AI Core", () => {
     expect(result.metadata).toHaveProperty("knowledgeResults");
     expect(result.metadata.knowledgeResults).toBeGreaterThanOrEqual(0);
     expect(Array.isArray(result.metadata.sources)).toBe(true);
+  });
+
+  test("përgjigjja përmban metadata të cilësisë", async () => {
+    const result = await processAIRequest({
+      query: "What is JavaScript?",
+      language: "en"
+    });
+
+    expect(result.answer).toBeTruthy();
+    expect(result.metadata.responseQuality).toEqual(
+      expect.objectContaining({
+        version: "1.0.0",
+        score: expect.any(Number),
+        dimensions: expect.any(Object),
+        sourceCount: expect.any(Number),
+        valid: expect.any(Boolean),
+        errors: expect.any(Array)
+      })
+    );
+  });
+
+  test("metadata e cilësisë përmban katër dimensionet", async () => {
+    const result = await processAIRequest({
+      query: "Çfarë është programimi?",
+      language: "sq"
+    });
+
+    const dimensions =
+      result.metadata.responseQuality?.dimensions;
+
+    expect(dimensions).toBeDefined();
+
+    expect(Object.keys(dimensions)).toEqual([
+      "completeness",
+      "clarity",
+      "language",
+      "sources"
+    ]);
+  });
+
+  test("metadata e cilësisë përfshin verifikimin e gjuhës", async () => {
+    const result = await processAIRequest({
+      query: "What is artificial intelligence?",
+      language: "en"
+    });
+
+    const quality = result.metadata.responseQuality;
+
+    expect(quality).toBeDefined();
+    expect(quality).toHaveProperty("languageVerification");
+  });
+
+  test("rezultati i cilësisë ka pikë brenda intervalit të vlefshëm", async () => {
+    const result = await processAIRequest({
+      query: "Shpjego programimin.",
+      language: "sq"
+    });
+
+    const quality = result.metadata.responseQuality;
+
+    expect(quality).toBeDefined();
+    expect(Number.isFinite(quality.score)).toBe(true);
+    expect(quality.score).toBeGreaterThanOrEqual(0);
+    expect(quality.score).toBeLessThanOrEqual(100);
+  });
+
+  test("metadata e cilësisë ruan numrin e burimeve", async () => {
+    const result = await processAIRequest({
+      query: "What is JavaScript?",
+      language: "en"
+    });
+
+    const quality = result.metadata.responseQuality;
+
+    expect(quality).toBeDefined();
+    expect(quality.sourceCount).toBeGreaterThanOrEqual(0);
+    expect(quality.sourceCount).toBeLessThanOrEqual(
+      result.metadata.sources.length
+    );
+  });
+
+  test("metadata bazë ruan versionin e XSUS AI Core", async () => {
+    const result = await processAIRequest({
+      query: "Çfarë është XSUS AI?",
+      language: "sq"
+    });
+
+    expect(result.version).toBe("1.2.0");
+    expect(result.metadata.version).toBe("1.2.0");
+    expect(result.metadata.engine).toBe("xsus-ai-core");
   });
 });
