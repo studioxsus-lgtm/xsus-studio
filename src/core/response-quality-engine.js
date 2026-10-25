@@ -1,6 +1,6 @@
 /**
  * XSUS AI Core — Response Quality Engine
- * Version: 1.1.0
+ * Version: 1.0.0
  *
  * Përgjegjësitë:
  * - Vlerësimi i plotësisë së përgjigjes.
@@ -17,7 +17,7 @@
 
 import { verifyResponseLanguage } from "./response-language-verifier.js";
 
-export const RESPONSE_QUALITY_VERSION = "1.1.0";
+export const RESPONSE_QUALITY_VERSION = "1.0.0";
 
 export const RESPONSE_QUALITY_DIMENSIONS = Object.freeze([
   "completeness",
@@ -183,10 +183,12 @@ function calculateLanguage(
     return null;
   }
 
+  // Kodet e ndryshme tregojnë mospërputhje.
   if (requestedLanguage !== responseLanguage) {
     return 0;
   }
 
+  // Pa verifikim nuk pretendojmë siguri.
   if (!verification || typeof verification !== "object") {
     return null;
   }
@@ -233,6 +235,8 @@ function verifyLanguageSafely(answer, requestedLanguage) {
 
     return result;
   } catch {
+    // Dështimi i verifikuesit nuk duhet të ndërpresë
+    // vlerësimin e përgjithshëm të përgjigjes.
     return null;
   }
 }
