@@ -449,8 +449,11 @@ function collectSources(results, knowledge, responseResult) {
 }
 
 /**
- * Krijon metadata të sigurta dhe të standardizuara
- * për vlerësimin e cilësisë së përgjigjes.
+ * Krijon metadata të sigurta për vlerësimin e cilësisë.
+ *
+ * Ekspozohen vetëm fushat publike të kontratës.
+ * Fushat e brendshme, si languageVerification dhe
+ * internalDebugData, nuk ekspozohen këtu.
  */
 function buildResponseQualityMetadata(responseQuality) {
   if (
@@ -462,12 +465,10 @@ function buildResponseQualityMetadata(responseQuality) {
 
   return {
     version: responseQuality.version,
+    valid: responseQuality.valid,
     score: responseQuality.score,
     dimensions: responseQuality.dimensions,
     sourceCount: responseQuality.sourceCount,
-    valid: responseQuality.valid,
-    languageVerification:
-      responseQuality.languageVerification ?? null,
     errors: responseQuality.errors
   };
 }
@@ -865,7 +866,7 @@ export async function processAIRequest(input = {}) {
       standardizedResponse
     );
 
-    let responseQuality;
+    let responseQuality = null;
 
     try {
       responseQuality = evaluateResponseQuality({
