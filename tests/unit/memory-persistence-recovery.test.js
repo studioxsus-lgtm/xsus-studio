@@ -29,7 +29,7 @@ return {
 
 }
 
-test("raporton gabimin kur ruajtja dështon", async () => {
+test("trajton dështimin e ruajtjes me mesazh të standardizuar", async () => {
 const storage = createStorage();
 
 storage.set.mockRejectedValueOnce(
@@ -51,11 +51,13 @@ const persistence = createPersistentMemory({
 
 await expect(
   persistence.saveSession("recovery-save")
-).rejects.toThrow("Storage unavailable");
+).rejects.toThrow("Sesioni nuk mund të ruhet në storage.");
+
+expect(storage.records.size).toBe(0);
 
 });
 
-test("raporton gabimin kur rikthimi dështon", async () => {
+test("trajton dështimin e rikthimit me mesazh të standardizuar", async () => {
 const storage = createStorage();
 
 storage.records.set("xsus:recovery:recovery-restore", {
@@ -82,11 +84,13 @@ const persistence = createPersistentMemory({
 
 await expect(
   persistence.restoreSession("recovery-restore")
-).rejects.toThrow("Restore failed");
+).rejects.toThrow(
+  "Sesioni nuk mund të rikthehet në memory-engine."
+);
 
 });
 
-test("ruajtja e dështuar nuk krijon regjistrim të ri", async () => {
+test("dështimi i ruajtjes nuk lë regjistrim të ri", async () => {
 const storage = createStorage();
 
 storage.set.mockRejectedValueOnce(
@@ -108,7 +112,7 @@ const persistence = createPersistentMemory({
 
 await expect(
   persistence.saveSession("no-partial-record")
-).rejects.toThrow("Disk write failed");
+).rejects.toThrow("Sesioni nuk mund të ruhet në storage.");
 
 expect(storage.records.size).toBe(0);
 
