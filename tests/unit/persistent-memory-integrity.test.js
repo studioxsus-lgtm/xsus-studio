@@ -445,4 +445,92 @@ describe("XSUS AI Core — Snapshot integrity", () => {
 
     expect(exists).toBe(true);
   });
+
+  test("fshirja e plotë pret ruajtjen në proces dhe nuk lë snapshot të ruajtur", async () => {
+    const records = new Map();
+
+    let releaseWrite;
+    let signalWriteStarted;
+
+    const writeGate = new Promise((resolve) => {
+      releaseWrite = resolve;
+    });
+
+    const writeStarted = new Promise((resolve) => {
+      signalWriteStarted = resolve;
+    });
+
+    const storage = {
+      async get(key) {
+        const value = records.get(key);
+        return value === undefined ? null : structuredClone(value);
+      },
+
+      async set(key, value) {
+        signalWriteStarted();
+        await writeGate;
+        records.set(key, structuredClone(value));
+      },
+
+      async delete(key) {
+        records.delete(key);
+      },
+    };
+
+    const deleteSession = vi.fn(async () => ({
+      success: true,
+    }));
+
+    const persistence = createPersistentMemory({
+      storage,
+      prefix: "xsus:memory:session:",
+
+      exportSession: vi.fn(async (sessionId) => ({
+        sessionId,
+        messages: [
+          {
+            role: "user",
+            content: "Snapshot për fshirje",
+          },
+        ],
+      })),
+
+      importSession: vi.fn(async () => ({
+        success: true,
+        restored: true,
+      })),
+
+      deleteSession,
+    });
+
+    const savePromise = persistence.saveSession(
+      "session-complete-delete-race",
+    );
+
+    await writeStarted;
+
+    const deletePromise = persistence.deleteSessionCompletely(
+      "session-complete-delete-race",
+    );
+
+    releaseWrite();
+
+    await savePromise;
+
+    const deleteResult = await deletePromise;
+
+    expect(deleteResult.success).toBe(true);
+
+    expect(
+      records.has(
+        "xsus:memory:session:session-complete-delete-race",
+      ),
+    ).toBe(false);
+
+    expect(deleteSession).toHaveBeenCalledTimes(1);
+
+    expect(deleteSession).toHaveBeenCalledWith(
+      "session-complete-delete-race",
+    );
+  });
 });
