@@ -139,8 +139,15 @@ function getPublicSupportedLanguages() {
 
 /**
  * Objekti kryesor publik i XSUS AI.
+ *
+ * Ekspozon funksionet kryesore, versionet dhe
+ * ndërfaqet e moduleve të XSUS AI Core.
  */
 export const XSUSAI = Object.freeze({
+  // ----------------------------------------------------------
+  // CORE
+  // ----------------------------------------------------------
+
   get version() {
     return AI_CORE_VERSION;
   },
@@ -151,7 +158,21 @@ export const XSUSAI = Object.freeze({
 
   processAIRequest,
 
-  // Language
+  // Versionet publike të moduleve
+  AI_CORE_VERSION,
+  XSUS_CORE_VERSION,
+  REQUEST_CONTEXT_VERSION,
+
+  RESPONSE_QUALITY_PIPELINE_VERSION,
+  RESPONSE_QUALITY_PIPELINE_API_VERSION,
+  RESPONSE_QUALITY_REPORT_VERSION,
+  RESPONSE_QUALITY_VERSION,
+  SOURCE_VERIFICATION_VERSION,
+
+  // ----------------------------------------------------------
+  // LANGUAGE
+  // ----------------------------------------------------------
+
   analyzeLanguage,
   detectLanguage,
   getLanguageInfo,
@@ -160,23 +181,46 @@ export const XSUSAI = Object.freeze({
   analyzeGrammar,
   isGrammarEngineSupported,
 
-  // Contracts
+  // Normalizimi i gjuhëve dhe tekstit
+  normalizeText,
+  normalizeForSearch,
+  tokenizeText,
+  normalizeLanguageCode,
+  getBaseLanguage,
+
+  // ----------------------------------------------------------
+  // CONTRACTS
+  // ----------------------------------------------------------
+
+  SUPPORTED_LANGUAGES,
+  REQUEST_TYPES,
+  AI_ERROR_CODES,
+
   createAIRequest,
   createAIResponse,
   createAIErrorResponse,
 
-  // Request context
+  // ----------------------------------------------------------
+  // REQUEST CONTEXT
+  // ----------------------------------------------------------
+
   createRequestContext,
   isValidRequestContext,
 
-  // Knowledge
+  // ----------------------------------------------------------
+  // KNOWLEDGE
+  // ----------------------------------------------------------
+
   searchKnowledge,
   registerKnowledgeSource,
   listKnowledgeSources,
   hasKnowledgeSource,
   unregisterKnowledgeSource,
 
-  // Runtime
+  // ----------------------------------------------------------
+  // RUNTIME
+  // ----------------------------------------------------------
+
   routeAIRequest,
 
   registerService,
@@ -186,7 +230,10 @@ export const XSUSAI = Object.freeze({
   unregisterService,
   clearServices,
 
-  // Response quality
+  // ----------------------------------------------------------
+  // RESPONSE QUALITY
+  // ----------------------------------------------------------
+
   createResponseQualityPipeline,
   evaluateResponseQualityPipeline,
   createResponseQualityPipelineAPI,
@@ -197,6 +244,10 @@ export const XSUSAI = Object.freeze({
 
   verifyResponseSource,
   verifyResponseSources,
+
+  // ----------------------------------------------------------
+  // RESPONSE QUALITY VERSION GETTERS
+  // ----------------------------------------------------------
 
   get responseQualityPipelineVersion() {
     return RESPONSE_QUALITY_PIPELINE_VERSION;
@@ -222,10 +273,6 @@ export const XSUSAI = Object.freeze({
 // ============================================================
 // DIRECT PUBLIC EXPORTS
 // ============================================================
-
-/**
- * Eksportet e drejtpërdrejta mbeten të disponueshme.
- */
 
 // AI Core
 export {
