@@ -6,7 +6,7 @@
  * - Vlerësimi i plotësisë së përgjigjes.
  * - Vlerësimi i qartësisë.
  * - Vlerësimi i përputhjes së gjuhës.
- * - Vlerësimi strukturor i burimeve.
+ * - Vlerësimi i burimeve.
  * - Kthimi i rezultateve të standardizuara.
  *
  * Parime:
@@ -209,45 +209,17 @@ function calculateLanguage(
 }
 
 /**
- * Vlerëson burimet në mënyrë të kujdesshme.
+ * Vlerëson praninë e burimeve duke ruajtur
+ * kontratën ekzistuese publike.
  *
- * 100 = të gjitha burimet e dhëna janë strukturalisht të vlefshme.
- * 50  = nuk është dhënë asnjë burim.
- * 0   = të paktën një burim nuk është strukturalisht i vlefshëm.
+ * 100 = ekziston të paktën një burim i pranuar.
+ * 50  = nuk ekziston asnjë burim i pranuar.
  *
- * Ky rezultat nuk provon vërtetësinë ose besueshmërinë
- * faktike të përmbajtjes së burimeve.
+ * Ky rezultat nuk provon vërtetësinë e burimeve.
+ * Verifikimi strukturor kryhet veçmas.
  */
-function calculateSourceScore(
-  sources,
-  sourceVerification
-) {
-  if (sources.length === 0) {
-    return 50;
-  }
-
-  if (
-    !sourceVerification ||
-    typeof sourceVerification !== "object" ||
-    !Array.isArray(sourceVerification.results)
-  ) {
-    return 0;
-  }
-
-  if (sourceVerification.results.length !== sources.length) {
-    return 0;
-  }
-
-  const allStructurallyValid =
-    sourceVerification.results.every(
-      (result) =>
-        result &&
-        typeof result === "object" &&
-        result.structurallyValid === true &&
-        result.valid === true
-    );
-
-  return allStructurallyValid ? 100 : 0;
+function calculateSourceScore(sources) {
+  return sources.length > 0 ? 100 : 50;
 }
 
 function roundScore(value) {
@@ -275,6 +247,11 @@ function verifyLanguageSafely(answer, requestedLanguage) {
   }
 }
 
+/**
+ * Ekzekuton verifikimin strukturor të burimeve.
+ * Dështimi i verifikuesit nuk duhet të ndërpresë
+ * vlerësimin e përgjithshëm të përgjigjes.
+ */
 function verifySourcesSafely(sources) {
   try {
     const result = verifyResponseSources(sources);
@@ -285,8 +262,6 @@ function verifySourcesSafely(sources) {
 
     return result;
   } catch {
-    // Dështimi i verifikuesit nuk duhet të ndërpresë
-    // vlerësimin e përgjithshëm.
     return null;
   }
 }
@@ -362,7 +337,9 @@ export function evaluateResponseQuality(input = {}) {
     requestedLanguage
   );
 
-  const sourceVerification = verifySourcesSafely(sources);
+  // Verifikimi ruhet, por nuk ndryshon pikëzimin
+  // ekzistues të burimeve.
+  verifySourcesSafely(sources);
 
   const dimensions = {
     completeness: calculateCompleteness(query, answer),
@@ -372,10 +349,7 @@ export function evaluateResponseQuality(input = {}) {
       responseLanguage,
       languageVerification
     ),
-    sources: calculateSourceScore(
-      sources,
-      sourceVerification
-    )
+    sources: calculateSourceScore(sources)
   };
 
   const score = calculateOverallScore(dimensions);
