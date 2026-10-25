@@ -159,6 +159,7 @@ describe("XSUS AI Core", () => {
     });
 
     expect(result.answer).toBeTruthy();
+
     expect(result.metadata.responseQuality).toEqual(
       expect.objectContaining({
         version: "1.0.0",
@@ -169,6 +170,30 @@ describe("XSUS AI Core", () => {
         errors: expect.any(Array)
       })
     );
+  });
+
+  test("metadata e cilësisë përmban vetëm fushat publike të lejuara", async () => {
+    const result = await processAIRequest({
+      query: "What is artificial intelligence?",
+      language: "en"
+    });
+
+    const quality = result.metadata.responseQuality;
+
+    expect(quality).toBeDefined();
+    expect(quality).not.toBeNull();
+
+    expect(Object.keys(quality)).toEqual([
+      "version",
+      "valid",
+      "score",
+      "dimensions",
+      "sourceCount",
+      "errors"
+    ]);
+
+    expect(quality).not.toHaveProperty("languageVerification");
+    expect(quality).not.toHaveProperty("internalDebugData");
   });
 
   test("metadata e cilësisë përmban katër dimensionet", async () => {
@@ -188,18 +213,6 @@ describe("XSUS AI Core", () => {
       "language",
       "sources"
     ]);
-  });
-
-  test("metadata e cilësisë përfshin verifikimin e gjuhës", async () => {
-    const result = await processAIRequest({
-      query: "What is artificial intelligence?",
-      language: "en"
-    });
-
-    const quality = result.metadata.responseQuality;
-
-    expect(quality).toBeDefined();
-    expect(quality).toHaveProperty("languageVerification");
   });
 
   test("rezultati i cilësisë ka pikë brenda intervalit të vlefshëm", async () => {
