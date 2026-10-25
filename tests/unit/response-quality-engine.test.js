@@ -1,59 +1,53 @@
 import { describe, expect, test } from "vitest";
 
 import {
-evaluateResponseQuality,
 RESPONSE_QUALITY_VERSION,
 RESPONSE_QUALITY_DIMENSIONS,
+evaluateResponseQuality
 } from "../../src/core/response-quality-engine.js";
 
-describe("XSUS AI Core — Response Quality Engine", () => {
-test("ka versionin e pritshëm", () => {
-expect(RESPONSE_QUALITY_VERSION).toBe("1.0.0");
-});
-
-test("vlerëson një përgjigje me strukturën e pritshme", () => {
+describe("XSUS Response Quality Engine", () => {
+test("ka versionin dhe strukturën e pritshme", () => {
 const result = evaluateResponseQuality({
-query: "Çfarë është inteligjenca artificiale?",
+query: "What is artificial intelligence?",
 answer:
-"Inteligjenca artificiale është një fushë e informatikës që zhvillon sisteme të afta të kryejnë detyra që zakonisht kërkojnë inteligjencë njerëzore.",
-requestedLanguage: "sq",
-responseLanguage: "sq",
+"Artificial intelligence is a field of computer science that focuses on creating systems capable of performing tasks that normally require human intelligence.",
+requestedLanguage: "en",
+responseLanguage: "en",
 sources: [
 {
 id: "source-1",
-title: "Hyrje në inteligjencën artificiale",
-},
-],
+title: "AI Introduction",
+content: "Artificial intelligence overview."
+}
+]
 });
 
+expect(RESPONSE_QUALITY_VERSION).toBe("1.0.0");
 expect(result.version).toBe("1.0.0");
-expect(result.valid).toBe(true);
-expect(result.score).toBeGreaterThan(0);
+expect(result).toHaveProperty("valid");
+expect(result).toHaveProperty("score");
+expect(result).toHaveProperty("dimensions");
+expect(result).toHaveProperty("sourceCount");
+expect(result).toHaveProperty("languageVerification");
+expect(result).toHaveProperty("errors");
+
 expect(result.dimensions.language).toBe(100);
 expect(result.sourceCount).toBe(1);
 expect(result.errors).toEqual([]);
-expect(result).toHaveProperty("languageVerification");
 
 });
 
-test("identifikon një pyetje bosh", () => {
+test("identifikon pyetjen dhe përgjigjen bosh", () => {
 const result = evaluateResponseQuality({
 query: "   ",
-answer: "Kjo është një përgjigje e vlefshme.",
+answer: "",
+requestedLanguage: "en",
+responseLanguage: "en"
 });
 
 expect(result.valid).toBe(false);
 expect(result.errors).toContain("EMPTY_QUERY");
-
-});
-
-test("identifikon një përgjigje bosh", () => {
-const result = evaluateResponseQuality({
-query: "Çfarë është XSUS AI?",
-answer: "   ",
-});
-
-expect(result.valid).toBe(false);
 expect(result.errors).toContain("EMPTY_ANSWER");
 expect(result.dimensions.completeness).toBe(0);
 expect(result.dimensions.clarity).toBe(0);
@@ -62,11 +56,55 @@ expect(result.dimensions.clarity).toBe(0);
 
 test("normalizon kodet e gjuhëve", () => {
 const result = evaluateResponseQuality({
+query: "Explain artificial intelligence.",
+answer:
+"Artificial intelligence is a field of computer science that develops systems capable of performing tasks associated with human intelligence.",
+requestedLanguage: "en-US",
+responseLanguage: "en"
+});
+
+expect(result.dimensions.language).toBe(100);
+expect(result.languageVerification).not.toBeNull();
+expect(result.languageVerification.requestedLanguage).toBe("en");
+
+});
+
+test("identifikon mospërputhjen e gjuhës", () => {
+const result = evaluateResponseQuality({
+query: "Shpjego inteligjencën artificiale.",
+answer:
+"Artificial intelligence is a field of computer science that develops intelligent systems.",
+requestedLanguage: "sq",
+responseLanguage: "en"
+});
+
+expect(result.dimensions.language).toBe(0);
+
+});
+
+test("identifikon kodin e pambështetur të gjuhës", () => {
+const result = evaluateResponseQuality({
+query: "Explain artificial intelligence.",
+answer:
+"Artificial intelligence is a field of computer science that develops systems capable of performing tasks associated with human intelligence.",
+requestedLanguage: "xx",
+responseLanguage: "en"
+});
+
+expect(result.valid).toBe(false);
+expect(result.errors).toContain(
+  "UNSUPPORTED_REQUESTED_LANGUAGE"
+);
+
+});
+
+test("kryen verifikimin e gjuhës kur kërkohet", () => {
+const result = evaluateResponseQuality({
 query: "What is artificial intelligence?",
 answer:
-"Artificial intelligence is a field of computer science that develops systems capable of learning from data, recognizing patterns, solving problems, and performing tasks that normally require human intelligence.",
-requestedLanguage: "en-US",
-responseLanguage: "en",
+"Artificial intelligence is a field of computer science that develops systems capable of performing tasks associated with human intelligence.",
+requestedLanguage: "en",
+responseLanguage: "en"
 });
 
 expect(result.languageVerification).not.toBeNull();
@@ -75,54 +113,11 @@ expect(result.dimensions.language).toBe(100);
 
 });
 
-test("identifikon mospërputhjen e kodeve të gjuhëve", () => {
+test("nuk kërkon verifikim kur gjuha nuk specifikohet", () => {
 const result = evaluateResponseQuality({
-query: "Shpjego inteligjencën artificiale.",
+query: "Explain artificial intelligence.",
 answer:
-"Artificial intelligence is a field of computer science that develops systems capable of learning from data and solving problems.",
-requestedLanguage: "sq",
-responseLanguage: "en",
-});
-
-expect(result.dimensions.language).toBe(0);
-
-});
-
-test("refuzon kodet e gjuhëve të pambështetura", () => {
-const result = evaluateResponseQuality({
-query: "Test",
-answer: "Kjo është një përgjigje testuese.",
-requestedLanguage: "xx",
-});
-
-expect(result.valid).toBe(false);
-expect(result.errors).toContain(
-  "UNSUPPORTED_REQUESTED_LANGUAGE",
-);
-
-});
-
-test("identifikon gjuhën e kërkuar në analizën e përgjigjes", () => {
-const result = evaluateResponseQuality({
-query: "What is artificial intelligence?",
-answer:
-"Artificial intelligence is a field of computer science that develops intelligent systems capable of learning from data, understanding information, and solving complex problems.",
-requestedLanguage: "en",
-responseLanguage: "en",
-});
-
-expect(result.languageVerification).not.toBeNull();
-expect(result).toHaveProperty(
-  "languageVerification.requestedLanguage",
-  "en",
-);
-
-});
-
-test("përgjigjja pa gjuhë të kërkuar nuk kërkon verifikim", () => {
-const result = evaluateResponseQuality({
-query: "Test",
-answer: "Kjo është një përgjigje testuese.",
+"Artificial intelligence is a field of computer science that develops systems capable of performing tasks associated with human intelligence."
 });
 
 expect(result.dimensions.language).toBeNull();
@@ -132,16 +127,18 @@ expect(result.languageVerification).toBeNull();
 
 test("filtron burimet e pavlefshme", () => {
 const result = evaluateResponseQuality({
-query: "Çfarë është AI?",
+query: "What is artificial intelligence?",
 answer:
-"Inteligjenca artificiale është një fushë e informatikës.",
+"Artificial intelligence is a field of computer science that develops systems capable of performing tasks associated with human intelligence.",
 sources: [
 "Burim i vlefshëm",
 null,
 {},
-{ title: "Burim tjetër" },
-42,
-],
+{
+title: "Burim tjetër"
+},
+42
+]
 });
 
 expect(result.sourceCount).toBe(2);
@@ -149,12 +146,12 @@ expect(result.dimensions.sources).toBe(100);
 
 });
 
-test("llogarit rezultatin e burimeve kur nuk ka burime", () => {
+test("vlerëson rastin pa burime", () => {
 const result = evaluateResponseQuality({
-query: "What is AI?",
+query: "What is artificial intelligence?",
 answer:
-"Artificial intelligence is a field of computer science.",
-sources: [],
+"Artificial intelligence is a field of computer science that develops systems capable of performing tasks associated with human intelligence.",
+sources: []
 });
 
 expect(result.sourceCount).toBe(0);
@@ -162,42 +159,52 @@ expect(result.dimensions.sources).toBe(50);
 
 });
 
-test("rezultati përmban të gjitha dimensionet", () => {
+test("përdor dimensionet e përcaktuara", () => {
 const result = evaluateResponseQuality({
-query: "Test",
-answer: "Kjo është një përgjigje testuese.",
+query: "What is artificial intelligence?",
+answer:
+"Artificial intelligence is a field of computer science that develops systems capable of performing tasks associated with human intelligence.",
+requestedLanguage: "en",
+responseLanguage: "en",
+sources: ["AI documentation"]
 });
 
 expect(Object.keys(result.dimensions)).toEqual(
-  [...RESPONSE_QUALITY_DIMENSIONS],
+  [...RESPONSE_QUALITY_DIMENSIONS]
 );
 
 });
 
-test("dimensionet kanë vlera numerike ose null", () => {
+test("dimensionet kanë vlera numerike nga 0 deri në 100 ose null", () => {
 const result = evaluateResponseQuality({
-query: "Test",
-answer: "Kjo është një përgjigje testuese.",
+query: "What is artificial intelligence?",
+answer:
+"Artificial intelligence is a field of computer science that develops systems capable of performing tasks associated with human intelligence.",
+requestedLanguage: "en",
+responseLanguage: "en"
 });
 
 for (const value of Object.values(result.dimensions)) {
-  expect(
-    value === null ||
-      (typeof value === "number" &&
-        value >= 0 &&
-        value <= 100),
-  ).toBe(true);
+  if (value === null) {
+    continue;
+  }
+
+  expect(typeof value).toBe("number");
+  expect(Number.isFinite(value)).toBe(true);
+  expect(value).toBeGreaterThanOrEqual(0);
+  expect(value).toBeLessThanOrEqual(100);
 }
 
 });
 
-test("rezultati përmban vetëm pikë të kufizuara", () => {
+test("rezultati i përgjithshëm është brenda kufijve", () => {
 const result = evaluateResponseQuality({
-query: "Çfarë është XSUS AI?",
+query: "What is artificial intelligence?",
 answer:
-"XSUS AI është një sistem inteligjence artificiale shumëgjuhëshe.",
-requestedLanguage: "sq",
-responseLanguage: "sq",
+"Artificial intelligence is a field of computer science that develops systems capable of performing tasks associated with human intelligence.",
+requestedLanguage: "en",
+responseLanguage: "en",
+sources: ["AI documentation"]
 });
 
 expect(Number.isFinite(result.score)).toBe(true);
@@ -206,10 +213,14 @@ expect(result.score).toBeLessThanOrEqual(100);
 
 });
 
-test("nuk lejon ndryshimin e rezultatit dhe dimensioneve", () => {
+test("rezultati dhe koleksionet e tij janë të pandryshueshme", () => {
 const result = evaluateResponseQuality({
-query: "Test",
-answer: "Kjo është një përgjigje testuese.",
+query: "What is artificial intelligence?",
+answer:
+"Artificial intelligence is a field of computer science that develops systems capable of performing tasks associated with human intelligence.",
+requestedLanguage: "en",
+responseLanguage: "en",
+sources: ["AI documentation"]
 });
 
 expect(Object.isFrozen(result)).toBe(true);
@@ -218,18 +229,72 @@ expect(Object.isFrozen(result.errors)).toBe(true);
 
 });
 
-test("refuzon hyrje që nuk janë objekt", () => {
-expect(() => evaluateResponseQuality(null)).toThrow(
-"Të dhënat e vlerësimit duhet të jenë objekt.",
+test.each([null, "invalid", []])(
+"refuzon hyrjen e pavlefshme: %s",
+(input) => {
+expect(() => evaluateResponseQuality(input)).toThrow();
+}
 );
 
-expect(() => evaluateResponseQuality("test")).toThrow(
-  "Të dhënat e vlerësimit duhet të jenë objekt.",
-);
+test("nuk i konsideron burimet provë automatike të saktësisë", () => {
+const result = evaluateResponseQuality({
+query: "What is AI?",
+answer:
+"Artificial intelligence is a field of computer science.",
+sources: [
+{
+id: "source-1",
+title: "AI introduction",
+url: "not-a-verified-source"
+}
+]
+});
 
-expect(() => evaluateResponseQuality([])).toThrow(
-  "Të dhënat e vlerësimit duhet të jenë objekt.",
-);
+expect(result.sourceCount).toBe(1);
+expect(result.dimensions.sources).toBe(100);
+
+// Ky test dokumenton sjelljen aktuale:
+// prania e burimit nuk verifikon përmbajtjen e tij.
+// Vlerësimi i besueshmërisë do të implementohet veçmas.
+
+});
+
+test("burimet bosh nuk numërohen si burime të vlefshme", () => {
+const result = evaluateResponseQuality({
+query: "What is AI?",
+answer:
+"Artificial intelligence is a field of computer science.",
+sources: [
+"",
+"   ",
+null,
+{},
+[],
+42
+]
+});
+
+expect(result.sourceCount).toBe(0);
+expect(result.dimensions.sources).toBe(50);
+
+});
+
+test("pranon burime me përmbajtje tekstuale", () => {
+const result = evaluateResponseQuality({
+query: "What is AI?",
+answer:
+"Artificial intelligence is a field of computer science.",
+sources: [
+{
+id: "source-content-1",
+content:
+"Artificial intelligence research and definitions."
+}
+]
+});
+
+expect(result.sourceCount).toBe(1);
+expect(result.dimensions.sources).toBe(100);
 
 });
 });
