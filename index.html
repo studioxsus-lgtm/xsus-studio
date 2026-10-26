@@ -1,249 +1,486 @@
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#080b16">
-    <meta name="description" content="XSUS Studio - Hybrid Intelligence Platform">
-    <title>XSUS Studio - Hybrid Intelligence Portal</title>
+    <meta name="description" content="XSUS Studio — The X Identity. A technology platform for AI, apps, web, games, logos and domains.">
+
+    <title>XSUS Studio — The X Identity</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
     <script src="https://unpkg.com/lucide@latest"></script>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="min-h-screen relative flex flex-col justify-between">
-    <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+<body class="min-h-screen relative flex flex-col">
 
+    <canvas
+        id="particleCanvas"
+        class="fixed inset-0 pointer-events-none z-0 opacity-40"
+        aria-hidden="true"
+    ></canvas>
+
+    <!-- HEADER -->
     <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-20 py-3 flex flex-wrap items-center justify-between gap-4">
 
-            <a href="index.html" class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-600 to-purple-600 p-[2px] shadow-lg shadow-cyan-500/20">
-                    <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                        <span class="font-extrabold text-xl text-cyan-400">X</span>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+
+            <!-- Brand -->
+            <div class="flex items-center justify-between gap-3">
+
+                <a
+                    href="index.html"
+                    class="flex items-center gap-3 min-w-0"
+                    aria-label="XSUS Studio home"
+                >
+                    <div class="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-600 to-purple-600 p-[2px] shadow-lg shadow-cyan-500/20">
+
+                        <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                            <span class="font-extrabold text-xl text-cyan-400">X</span>
+                        </div>
+
                     </div>
-                </div>
-                <div>
-                    <h1 class="font-bold text-xl tracking-tight text-white">XSUS Studio</h1>
-                    <p class="text-xs text-cyan-400 font-medium">Hybrid Intelligence</p>
-                </div>
-            </a>
 
-            <nav class="flex flex-wrap items-center gap-3 md:gap-5 text-sm font-medium text-slate-300">
-                <a href="ai.html" class="hover:text-cyan-400 transition-colors">Xsus AI</a>
-                <a href="app.html" class="hover:text-cyan-400 transition-colors">Xsus App</a>
-                <a href="web.html" class="hover:text-cyan-400 transition-colors">Xsus Web</a>
-                <a href="game.html" class="hover:text-cyan-400 transition-colors">Xsus Game</a>
-                <a href="logo.html" class="hover:text-cyan-400 transition-colors">Xsus Logo</a>
-                <a href="domain.html" class="hover:text-cyan-400 transition-colors">Xsus Domain</a>
+                    <div class="min-w-0">
+                        <h1 class="font-bold text-lg sm:text-xl tracking-tight text-white">
+                            XSUS Studio
+                        </h1>
+
+                        <p class="text-[10px] sm:text-xs text-cyan-400 font-medium tracking-wider">
+                            THE X IDENTITY
+                        </p>
+                    </div>
+                </a>
+
+                <!-- Language + Authentication -->
+                <div class="flex items-center justify-end gap-2 shrink-0">
+
+                    <div class="relative">
+                        <label for="languageSelect" class="sr-only">
+                            Choose language
+                        </label>
+
+                        <select
+                            id="languageSelect"
+                            aria-label="Choose language"
+                            class="h-10 min-w-[82px] rounded-lg border border-cyan-500/30 bg-slate-900 px-2 sm:px-3 text-sm font-semibold text-cyan-300 outline-none transition hover:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                        >
+                            <option value="en">EN ▾</option>
+                            <option value="fr">FR ▾</option>
+                            <option value="sq">SQ ▾</option>
+                        </select>
+                    </div>
+
+                    <div id="authButtons" class="flex items-center gap-2">
+
+                        <a
+                            href="auth.html"
+                            id="loginLink"
+                            class="px-2.5 sm:px-3 py-2 rounded-lg border border-slate-700 text-slate-200 text-xs sm:text-sm font-semibold hover:border-cyan-400 hover:text-cyan-400 transition-colors whitespace-nowrap"
+                            data-i18n="login"
+                        >
+                            Login
+                        </a>
+
+                        <a
+                            href="auth.html?mode=signup"
+                            id="signupLink"
+                            class="px-2.5 sm:px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity whitespace-nowrap"
+                            data-i18n="signup"
+                        >
+                            Sign Up
+                        </a>
+
+                    </div>
+
+                    <div id="userAccount" class="hidden items-center gap-2">
+
+                        <span
+                            id="userEmail"
+                            class="hidden sm:block text-xs text-cyan-300 max-w-36 truncate"
+                        ></span>
+
+                        <button
+                            id="logoutButton"
+                            type="button"
+                            class="px-2.5 sm:px-3 py-2 rounded-lg border border-slate-700 text-slate-200 text-xs sm:text-sm hover:border-red-400 hover:text-red-300 whitespace-nowrap"
+                            data-i18n="logout"
+                        >
+                            Logout
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Main navigation -->
+            <nav
+                class="mt-3 flex items-center gap-5 overflow-x-auto whitespace-nowrap pb-1 text-sm font-medium text-slate-300"
+                aria-label="Main navigation"
+            >
+                <a href="ai.html" class="hover:text-cyan-400 transition-colors">
+                    Xsus AI
+                </a>
+
+                <a href="app.html" class="hover:text-cyan-400 transition-colors">
+                    Xsus App
+                </a>
+
+                <a href="web.html" class="hover:text-cyan-400 transition-colors">
+                    Xsus Web
+                </a>
+
+                <a href="game.html" class="hover:text-cyan-400 transition-colors">
+                    Xsus Game
+                </a>
+
+                <a href="logo.html" class="hover:text-cyan-400 transition-colors">
+                    Xsus Logo
+                </a>
+
+                <a href="domain.html" class="hover:text-cyan-400 transition-colors">
+                    Xsus Domain
+                </a>
             </nav>
 
-            <div class="flex items-center gap-3 flex-wrap">
-                <div class="flex items-center gap-1 bg-slate-900/80 p-1 rounded-lg border border-slate-800 text-xs font-semibold">
-                    <button type="button" data-language="en" id="lang-en" class="px-2.5 py-1 rounded-md transition-all">EN</button>
-                    <button type="button" data-language="fr" id="lang-fr" class="px-2.5 py-1 rounded-md transition-all">FR</button>
-                    <button type="button" data-language="sq" id="lang-sq" class="px-2.5 py-1 rounded-md transition-all">SQ</button>
-                </div>
-
-                <div id="authButtons" class="flex items-center gap-2">
-                    <a href="auth.html" id="loginLink"
-                       class="px-3 py-2 rounded-lg border border-slate-700 text-slate-200 text-sm font-semibold hover:border-cyan-400 hover:text-cyan-400 transition-colors"
-                       data-i18n="login">Login</a>
-
-                    <a href="auth.html?mode=signup" id="signupLink"
-                       class="px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-bold hover:opacity-90 transition-opacity"
-                       data-i18n="signup">Sign Up</a>
-                </div>
-
-                <div id="userAccount" class="hidden items-center gap-2">
-                    <span id="userEmail" class="text-xs text-cyan-300 max-w-36 truncate"></span>
-                    <button id="logoutButton" type="button"
-                        class="px-3 py-2 rounded-lg border border-slate-700 text-slate-200 text-sm hover:border-red-400 hover:text-red-300"
-                        data-i18n="logout">Logout</button>
-                </div>
-            </div>
         </div>
     </header>
 
-    <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16 flex-1 w-full">
+    <!-- MAIN CONTENT -->
+    <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-12 sm:space-y-16 flex-1 w-full">
 
+        <!-- HERO -->
         <section class="text-center space-y-6 max-w-4xl mx-auto">
+
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold tracking-wide uppercase">
+
                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                <span id="hero-badge" data-i18n="badge">Official Hybrid Intelligence Platform</span>
+
+                <span data-i18n="badge">
+                    Official Hybrid Intelligence Platform
+                </span>
+
             </div>
 
             <h2 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-                <span data-i18n="heroBefore">The most powerful digital tools in a</span>
-                <span class="gradient-text" data-i18n="heroHighlight">Single Studio</span>
+
+                <span data-i18n="heroBefore">
+                    The most powerful digital tools in a
+                </span>
+
+                <span class="gradient-text" data-i18n="heroHighlight">
+                    Single Studio
+                </span>
+
             </h2>
 
-            <p id="hero-subtitle" data-i18n="subtitle"
-               class="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            <p
+                data-i18n="subtitle"
+                class="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed"
+            >
                 Explore our independent modules, designed for performance and specialized workflows.
             </p>
+
         </section>
 
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- MODULE CARDS -->
+        <section
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"
+            aria-label="XSUS Studio products"
+        >
 
-            <a href="ai.html" class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group block">
-                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform"><i data-lucide="cpu" class="w-6 h-6"></i></div>
+            <!-- XSUS AI -->
+            <a
+                href="ai.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all space-y-4 group block"
+            >
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                    <i data-lucide="cpu" class="w-6 h-6"></i>
+                </div>
+
                 <h3 class="text-xl font-bold text-white">Xsus AI</h3>
-                <p class="text-slate-400 text-sm" data-i18n="cardAI">Smart assistant for text generation, video scripts, analysis, and coding.</p>
+
+                <p data-i18n="cardAI" class="text-slate-400 text-sm leading-relaxed">
+                    Smart assistant for text generation, video scripts, analysis, and coding.
+                </p>
             </a>
 
-            <a href="app.html" class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all space-y-4 group block">
-                <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform"><i data-lucide="smartphone" class="w-6 h-6"></i></div>
+            <!-- XSUS APP -->
+            <a
+                href="app.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all space-y-4 group block"
+            >
+                <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                    <i data-lucide="smartphone" class="w-6 h-6"></i>
+                </div>
+
                 <h3 class="text-xl font-bold text-white">Xsus App</h3>
-                <p class="text-slate-400 text-sm" data-i18n="cardApp">Mobile and web application builder, live mockups, and theme customization.</p>
+
+                <p data-i18n="cardApp" class="text-slate-400 text-sm leading-relaxed">
+                    Mobile and web application builder, live mockups, and theme customization.
+                </p>
             </a>
 
-            <a href="web.html" class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all space-y-4 group block">
-                <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform"><i data-lucide="globe" class="w-6 h-6"></i></div>
+            <!-- XSUS WEB -->
+            <a
+                href="web.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all space-y-4 group block"
+            >
+                <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                    <i data-lucide="globe" class="w-6 h-6"></i>
+                </div>
+
                 <h3 class="text-xl font-bold text-white">Xsus Web</h3>
-                <p class="text-slate-400 text-sm" data-i18n="cardWeb">Modern web design, multi-file architectures, and hosting solutions.</p>
+
+                <p data-i18n="cardWeb" class="text-slate-400 text-sm leading-relaxed">
+                    Modern web design, multi-file architectures, and hosting solutions.
+                </p>
             </a>
 
-            <a href="game.html" class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all space-y-4 group block">
-                <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform"><i data-lucide="gamepad-2" class="w-6 h-6"></i></div>
+            <!-- XSUS GAME -->
+            <a
+                href="game.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all space-y-4 group block"
+            >
+                <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                    <i data-lucide="gamepad-2" class="w-6 h-6"></i>
+                </div>
+
                 <h3 class="text-xl font-bold text-white">Xsus Game</h3>
-                <p class="text-slate-400 text-sm" data-i18n="cardGame">Interactive browser gaming experiences and physics engines.</p>
+
+                <p data-i18n="cardGame" class="text-slate-400 text-sm leading-relaxed">
+                    Interactive browser gaming experiences and physics engines.
+                </p>
             </a>
 
-            <a href="logo.html" class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all space-y-4 group block">
-                <div class="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform"><i data-lucide="palette" class="w-6 h-6"></i></div>
+            <!-- XSUS LOGO -->
+            <a
+                href="logo.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all space-y-4 group block"
+            >
+                <div class="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
+                    <i data-lucide="palette" class="w-6 h-6"></i>
+                </div>
+
                 <h3 class="text-xl font-bold text-white">Xsus Logo</h3>
-                <p class="text-slate-400 text-sm" data-i18n="cardLogo">Brand identity, vector graphics, and professional logo design services.</p>
+
+                <p data-i18n="cardLogo" class="text-slate-400 text-sm leading-relaxed">
+                    Brand identity, vector graphics, and professional logo design services.
+                </p>
             </a>
 
-            <a href="domain.html" class="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all space-y-4 group block">
-                <div class="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform"><i data-lucide="server" class="w-6 h-6"></i></div>
+            <!-- XSUS DOMAIN -->
+            <a
+                href="domain.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all space-y-4 group block"
+            >
+                <div class="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
+                    <i data-lucide="server" class="w-6 h-6"></i>
+                </div>
+
                 <h3 class="text-xl font-bold text-white">Xsus Domain</h3>
-                <p class="text-slate-400 text-sm" data-i18n="cardDomain">Domain management, DNS routing, and secure web configuration.</p>
+
+                <p data-i18n="cardDomain" class="text-slate-400 text-sm leading-relaxed">
+                    Domain management, DNS routing, and secure web configuration.
+                </p>
             </a>
 
         </section>
+
     </main>
 
-    <footer class="glass-panel border-t border-slate-800/80 mt-16 py-8 text-center text-xs text-slate-500">
-        <span data-i18n="footer">&copy; 2026 XSUS Studio. All rights reserved.</span>
+    <!-- FOOTER -->
+    <footer class="relative z-10 glass-panel border-t border-slate-800/80 mt-12 sm:mt-16 py-8 text-center">
+
+        <p class="text-sm font-semibold tracking-widest text-cyan-400 mb-2">
+            XSUS STUDIO
+        </p>
+
+        <p class="text-xs tracking-[0.25em] text-slate-400 mb-4">
+            THE X IDENTITY
+        </p>
+
+        <span data-i18n="footer" class="text-xs text-slate-500">
+            © 2026 XSUS Studio. All rights reserved.
+        </span>
+
     </footer>
 
-    <div id="siteNotice" class="hidden fixed bottom-4 left-4 right-4 z-[100] max-w-lg mx-auto p-4 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm" role="status" aria-live="polite"></div>
+    <!-- Notifications -->
+    <div
+        id="siteNotice"
+        class="hidden fixed bottom-4 left-4 right-4 z-[100] max-w-lg mx-auto p-4 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm"
+        role="status"
+        aria-live="polite"
+    ></div>
 
     <!-- Existing application logic -->
     <script type="module" src="script.js"></script>
 
     <!-- Language and Supabase account integration -->
     <script type="module">
+
         import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
         const SUPABASE_URL = "https://rdcwqjsmzklktfccebfs.supabase.co";
-        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr";
 
-        const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true
+        const SUPABASE_PUBLISHABLE_KEY =
+            "sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr";
+
+        const supabase = createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY,
+            {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
+                }
             }
-        });
+        );
 
+        // TRANSLATIONS
         const translations = {
+
             en: {
                 badge: "Official Hybrid Intelligence Platform",
                 heroBefore: "The most powerful digital tools in a",
                 heroHighlight: "Single Studio",
                 subtitle: "Explore our independent modules, designed for performance and specialized workflows.",
+
                 cardAI: "Smart assistant for text generation, video scripts, analysis, and coding.",
                 cardApp: "Mobile and web application builder, live mockups, and theme customization.",
                 cardWeb: "Modern web design, multi-file architectures, and hosting solutions.",
                 cardGame: "Interactive browser gaming experiences and physics engines.",
                 cardLogo: "Brand identity, vector graphics, and professional logo design services.",
                 cardDomain: "Domain management, DNS routing, and secure web configuration.",
+
                 footer: "© 2026 XSUS Studio. All rights reserved.",
-                login: "Login", signup: "Sign Up", logout: "Logout",
+
+                login: "Login",
+                signup: "Sign Up",
+                logout: "Logout",
+
                 signedOut: "You have signed out.",
                 logoutError: "Could not sign out."
             },
+
             fr: {
                 badge: "Plateforme officielle d’intelligence hybride",
                 heroBefore: "Les outils numériques les plus puissants réunis dans un",
                 heroHighlight: "Studio unique",
                 subtitle: "Découvrez nos modules indépendants, conçus pour la performance et des flux de travail spécialisés.",
+
                 cardAI: "Assistant intelligent pour la rédaction, les scripts vidéo, l’analyse et le développement.",
                 cardApp: "Création d’applications mobiles et web, aperçus en direct et personnalisation des thèmes.",
                 cardWeb: "Conception web moderne, architectures multi-fichiers et solutions d’hébergement.",
                 cardGame: "Jeux interactifs dans le navigateur et moteurs physiques.",
                 cardLogo: "Identité de marque, graphisme vectoriel et création professionnelle de logos.",
                 cardDomain: "Gestion de domaines, routage DNS et configuration web sécurisée.",
+
                 footer: "© 2026 XSUS Studio. Tous droits réservés.",
-                login: "Connexion", signup: "Inscription", logout: "Déconnexion",
+
+                login: "Connexion",
+                signup: "Inscription",
+                logout: "Déconnexion",
+
                 signedOut: "Vous êtes déconnecté.",
                 logoutError: "Impossible de vous déconnecter."
             },
+
             sq: {
                 badge: "Platforma zyrtare e inteligjencës hibride",
                 heroBefore: "Mjetet dixhitale më të fuqishme në një",
                 heroHighlight: "Studio të vetme",
                 subtitle: "Eksploro modulet tona të pavarura, të krijuara për performancë dhe procese të specializuara.",
+
                 cardAI: "Asistent inteligjent për krijimin e teksteve, skenarëve video, analizave dhe programimit.",
                 cardApp: "Krijues aplikacionesh për celular dhe web, pamje paraprake dhe personalizim të temave.",
                 cardWeb: "Dizajn modern web, arkitektura me shumë skedarë dhe zgjidhje për hostim.",
                 cardGame: "Përvoja interaktive lojërash në shfletues dhe motorë fizikë.",
                 cardLogo: "Identitet marke, grafika vektoriale dhe shërbime profesionale për dizajn logos.",
                 cardDomain: "Menaxhim domenesh, drejtim DNS dhe konfigurim i sigurt i pranisë në web.",
+
                 footer: "© 2026 XSUS Studio. Të gjitha të drejtat e rezervuara.",
-                login: "Hyr", signup: "Regjistrohu", logout: "Dil",
+
+                login: "Hyr",
+                signup: "Regjistrohu",
+                logout: "Dil",
+
                 signedOut: "Dole nga llogaria.",
                 logoutError: "Nuk u arrit dalja nga llogaria."
             }
+
         };
 
+        // LANGUAGE
+        const languageSelect = document.getElementById("languageSelect");
+
         function getLanguage() {
-            const saved = localStorage.getItem("xsus_language");
-            return translations[saved] ? saved : "en";
+
+            try {
+                const saved = localStorage.getItem("xsus_language");
+
+                return translations[saved] ? saved : "en";
+
+            } catch (error) {
+                return "en";
+            }
+
         }
 
         function applyLanguage(language) {
-            if (!translations[language]) language = "en";
 
-            localStorage.setItem("xsus_language", language);
+            if (!translations[language]) {
+                language = "en";
+            }
+
+            try {
+                localStorage.setItem("xsus_language", language);
+            } catch (error) {
+                // The page can still work if localStorage is unavailable.
+            }
+
             document.documentElement.lang = language;
 
             document.querySelectorAll("[data-i18n]").forEach(element => {
+
                 const key = element.dataset.i18n;
+
                 if (translations[language][key] !== undefined) {
                     element.textContent = translations[language][key];
                 }
+
             });
 
-            ["en", "fr", "sq"].forEach(code => {
-                const button = document.getElementById("lang-" + code);
-                if (!button) return;
+            if (languageSelect) {
+                languageSelect.value = language;
+            }
 
-                const selected = code === language;
-                button.classList.toggle("bg-cyan-500/20", selected);
-                button.classList.toggle("text-cyan-400", selected);
-                button.classList.toggle("border", selected);
-                button.classList.toggle("border-cyan-500/40", selected);
-                button.classList.toggle("text-slate-400", !selected);
-                button.setAttribute("aria-pressed", String(selected));
-            });
         }
 
-        // Keep compatibility with HTML or application code that calls setLanguage().
+        // Preserve compatibility with existing application code.
         window.setLanguage = applyLanguage;
 
-        document.querySelectorAll("[data-language]").forEach(button => {
-            button.addEventListener("click", () => {
-                applyLanguage(button.dataset.language);
-            });
-        });
+        if (languageSelect) {
 
+            languageSelect.addEventListener("change", event => {
+                applyLanguage(event.target.value);
+            });
+
+        }
+
+        // AUTHENTICATION
         const authButtons = document.getElementById("authButtons");
         const userAccount = document.getElementById("userAccount");
         const userEmail = document.getElementById("userEmail");
@@ -251,62 +488,108 @@
         const siteNotice = document.getElementById("siteNotice");
 
         function showNotice(message) {
+
             siteNotice.textContent = message;
             siteNotice.classList.remove("hidden");
-            window.setTimeout(() => siteNotice.classList.add("hidden"), 4000);
+
+            window.setTimeout(() => {
+                siteNotice.classList.add("hidden");
+            }, 4000);
+
         }
 
         function showSignedOut() {
+
             authButtons.classList.remove("hidden");
+
             userAccount.classList.add("hidden");
             userAccount.classList.remove("flex");
+
             userEmail.textContent = "";
+
         }
 
         function showSignedIn(user) {
+
             authButtons.classList.add("hidden");
+
             userAccount.classList.remove("hidden");
             userAccount.classList.add("flex");
+
             userEmail.textContent = user.email || "";
+
         }
 
         logoutButton.addEventListener("click", async () => {
+
             logoutButton.disabled = true;
 
-            const { error } = await supabase.auth.signOut();
+            try {
 
-            logoutButton.disabled = false;
+                const { error } = await supabase.auth.signOut();
 
-            if (error) {
+                if (error) {
+                    showNotice(translations[getLanguage()].logoutError);
+                    return;
+                }
+
+                showSignedOut();
+
+                showNotice(translations[getLanguage()].signedOut);
+
+            } catch (error) {
+
                 showNotice(translations[getLanguage()].logoutError);
-                return;
+
+            } finally {
+
+                logoutButton.disabled = false;
+
             }
 
-            showSignedOut();
-            showNotice(translations[getLanguage()].signedOut);
         });
 
         supabase.auth.onAuthStateChange((event, session) => {
-            if (session?.user) showSignedIn(session.user);
-            else showSignedOut();
+
+            if (session?.user) {
+                showSignedIn(session.user);
+            } else {
+                showSignedOut();
+            }
+
         });
 
         async function initializeAccountHeader() {
+
             applyLanguage(getLanguage());
 
-            const { data, error } = await supabase.auth.getSession();
+            try {
 
-            if (error || !data.session) {
+                const { data, error } = await supabase.auth.getSession();
+
+                if (error || !data.session) {
+                    showSignedOut();
+                    return;
+                }
+
+                showSignedIn(data.session.user);
+
+            } catch (error) {
+
                 showSignedOut();
-                return;
+
             }
 
-            showSignedIn(data.session.user);
         }
 
         initializeAccountHeader();
 
-        if (window.lucide) window.lucide.createIcons();
+        // ICONS
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+
     </script>
+
 </body>
 </html>
