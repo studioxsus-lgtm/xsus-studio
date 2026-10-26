@@ -12,6 +12,7 @@
  * 7. Pastron burimet nëse inicializimi dështon.
  * 8. Ruajtja e përputhshmërisë me API-në publike.
  * 9. Mbështet emrin e personalizuar të burimit.
+ * 10. Ruajtja e gabimit origjinal gjatë pastrimit.
  */
 
 import {
@@ -33,6 +34,9 @@ import {
 const ENGINE_NAME = "xsus-knowledge-dataset-bootstrap";
 const ENGINE_VERSION = "1.1.0";
 
+/**
+ * Kontrollon adapter-in e storage.
+ */
 function validateStorageAdapter(storageAdapter) {
   if (
     !storageAdapter ||
@@ -48,8 +52,25 @@ function validateStorageAdapter(storageAdapter) {
 }
 
 /**
- * Kontrollon rezultatin e rikthimit.
- * Përfshin arsyen origjinale në gabim për të lehtësuar diagnostikimin.
+ * Përgatit informacionin diagnostikues pa lejuar
+ * që një objekt i pakonvertueshëm të shkaktojë gabim tjetër.
+ */
+function getErrorDetails(value) {
+  if (typeof value?.error === "string") {
+    return value.error;
+  }
+
+  try {
+    const serialized = JSON.stringify(value);
+
+    return serialized ?? "Nuk u kthye rezultat i vlefshëm.";
+  } catch {
+    return "Rezultati nuk mund të serializohet.";
+  }
+}
+
+/**
+ * Kontrollon rezultatin e rikthimit të dataset-eve.
  */
 function validateRestorationResult(restoration) {
   if (
@@ -57,19 +78,20 @@ function validateRestorationResult(restoration) {
     restoration === undefined ||
     restoration.success !== true
   ) {
-    const details =
-      typeof restoration?.error === "string"
-        ? restoration.error
-        : JSON.stringify(restoration);
+    const details = getErrorDetails(restoration);
 
     throw new Error(
-      `Rikthimi i dataset-eve të XSUS AI dështoi. Detajet: ${details ?? "Nuk u kthye rezultat i vlefshëm."}`
+      `Rikthimi i dataset-eve të XSUS AI dështoi. Detajet: ${details}`
     );
   }
 
   return restoration;
 }
 
+/**
+ * Mbyll integrimin duke ruajtur përparësinë
+ * e metodës close ndaj metodës unregister.
+ */
 function closeIntegration(integration) {
   if (!integration) {
     return false;
@@ -86,13 +108,40 @@ function closeIntegration(integration) {
   return false;
 }
 
+/**
+ * Pastron integrimin pas dështimit të inicializimit.
+ *
+ * Gabimi gjatë pastrimit nuk duhet të fshehë
+ * gabimin origjinal që shkaktoi dështimin.
+ */
+function safelyCloseIntegration(integration) {
+  try {
+    return closeIntegration(integration);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Inicializon sistemin e dataset-eve të XSUS AI.
+ *
+ * @param {Object} options
+ * @param {string} options.filePath
+ * @param {Object} options.storageAdapter
+ * @param {string} options.sourceName
+ *
+ * @returns {Promise<Object>}
+ */
 export async function initializeKnowledgeDatasets({
   filePath,
   storageAdapter,
   sourceName
 } = {}) {
+  const hasStorageAdapter = storageAdapter !== undefined;
+
+  // Validimi i konfigurimit të storage.
   if (
-    !storageAdapter &&
+    !hasStorageAdapter &&
     (
       typeof filePath !== "string" ||
       !filePath.trim()
@@ -103,13 +152,14 @@ export async function initializeKnowledgeDatasets({
     );
   }
 
-  if (storageAdapter !== undefined) {
+  if (hasStorageAdapter) {
     validateStorageAdapter(storageAdapter);
   }
 
+  // Krijimi i komponentëve bazë.
   const registry = createKnowledgeDatasetRegistry();
 
-  const storage = storageAdapter
+  const storage = hasStorageAdapter
     ? storageAdapter
     : createKnowledgeDatasetStorage({
         filePath: filePath.trim()
@@ -124,18 +174,22 @@ export async function initializeKnowledgeDatasets({
   let closed = false;
 
   try {
-    // Rikthen dataset-et përpara regjistrimit të burimit.
+    // 1. Rikthe dataset-et përpara regjistrimit të integrimit.
     const restoration = validateRestorationResult(
       await persistence.restoreRegistry()
     );
 
-    // Pa sourceName ruhet sjellja standarde ekzistuese.
-    const integrationOptions = { registry };
+    // 2. Përgatit opsionet e integrimit.
+    const integrationOptions = {
+      registry
+    };
 
+    // Ruaj sjelljen standarde kur sourceName nuk jepet.
     if (sourceName !== undefined) {
       integrationOptions.sourceName = sourceName;
     }
 
+    // 3. Regjistro integrimin me Knowledge Service.
     integration = registerKnowledgeDatasetIntegration(
       integrationOptions
     );
@@ -147,6 +201,9 @@ export async function initializeKnowledgeDatasets({
       );
     }
 
+    /**
+     * Kontrollon nëse inicializuesi është ende aktiv.
+     */
     function assertOpen() {
       if (closed) {
         throw new Error(
@@ -155,43 +212,64 @@ export async function initializeKnowledgeDatasets({
       }
     }
 
+    /**
+     * Mbyll inicializuesin vetëm një herë.
+     *
+     * Nëse integrimi dështon gjatë mbylljes,
+     * gjendja closed mbetet aktive për të parandaluar
+     * përdorimin e mëtejshëm të inicializuesit.
+     */
     function close() {
       if (closed) {
         return false;
       }
 
       closed = true;
-      closeIntegration(integration);
 
-      return true;
+      return closeIntegration(integration);
     }
 
+    // 4. Kthe objektin publik me API-në ekzistuese.
     return Object.freeze({
       success: true,
+
       registry,
       storage,
       persistence,
       integration,
       restoration,
 
+      /**
+       * Ruajtja e dataset-eve.
+       */
       async save() {
         assertOpen();
+
         return persistence.saveRegistry();
       },
 
+      /**
+       * Mbyllja e integrimit.
+       */
       close,
 
+      /**
+       * Metadata e inicializuesit.
+       */
       getMetadata() {
         return Object.freeze({
           engine: ENGINE_NAME,
           version: ENGINE_VERSION,
-          storageMode: storageAdapter ? "adapter" : "file"
+          storageMode: hasStorageAdapter
+            ? "adapter"
+            : "file"
         });
       }
     });
   } catch (error) {
-    // Mos lër burim të regjistruar nëse inicializimi dështon.
-    closeIntegration(integration);
+    // Pastrimi nuk duhet të fshehë gabimin origjinal.
+    safelyCloseIntegration(integration);
+
     throw error;
   }
 }
