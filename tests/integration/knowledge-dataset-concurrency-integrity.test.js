@@ -82,7 +82,9 @@ describe("XSUS AI — Knowledge Dataset Concurrency Integrity", () => {
         persisted.map((dataset) => dataset.id).sort()
       ).toEqual([...ids].sort());
 
-      expect(pipeline.getMetadata().persistenceConsistent).toBe(true);
+      expect(
+        pipeline.getMetadata().persistenceConsistent
+      ).toBe(true);
     } finally {
       await pipeline.close();
     }
@@ -120,7 +122,10 @@ describe("XSUS AI — Knowledge Dataset Concurrency Integrity", () => {
       expect(pipeline.getDataset("shared-dataset")).not.toBeNull();
 
       expect(storage.getPersistedDatasets()).toHaveLength(1);
-      expect(pipeline.getMetadata().persistenceConsistent).toBe(true);
+
+      expect(
+        pipeline.getMetadata().persistenceConsistent
+      ).toBe(true);
     } finally {
       await pipeline.close();
     }
@@ -188,7 +193,10 @@ describe("XSUS AI — Knowledge Dataset Concurrency Integrity", () => {
         .sort();
 
       expect(persistedIds).toEqual(expectedIds);
-      expect(pipeline.getMetadata().persistenceConsistent).toBe(true);
+
+      expect(
+        pipeline.getMetadata().persistenceConsistent
+      ).toBe(true);
     } finally {
       await pipeline.close();
     }
@@ -225,7 +233,10 @@ describe("XSUS AI — Knowledge Dataset Concurrency Integrity", () => {
       ).toBeNull();
 
       expect(storage.getPersistedDatasets()).toHaveLength(0);
-      expect(pipeline.getMetadata().persistenceConsistent).toBe(true);
+
+      expect(
+        pipeline.getMetadata().persistenceConsistent
+      ).toBe(true);
     } finally {
       await pipeline.close();
     }
@@ -259,13 +270,16 @@ describe("XSUS AI — Knowledge Dataset Concurrency Integrity", () => {
 
       expect(storage.getPersistedDatasets()).toHaveLength(8);
       expect(pipeline.listDatasets()).toHaveLength(8);
-      expect(pipeline.getMetadata().persistenceConsistent).toBe(true);
+
+      expect(
+        pipeline.getMetadata().persistenceConsistent
+      ).toBe(true);
     } finally {
       await pipeline.close();
     }
   });
 
-  test("mbyll pipeline-in pa lënë operacione të regjistrimit të papërfunduara", async () => {
+  test("mbyll pipeline-in duke pritur operacionet e regjistruara më parë", async () => {
     const storage = createStorageAdapter();
     const pipeline = await createPipeline(storage);
 
@@ -278,18 +292,16 @@ describe("XSUS AI — Knowledge Dataset Concurrency Integrity", () => {
         )
     );
 
+    // Nis mbylljen pa pritur fillimisht regjistrimet.
+    const closePromise = pipeline.close();
+
     const results = await Promise.all(registrationPromises);
+    const closeResult = await closePromise;
 
     expect(results.every((result) => result.success)).toBe(true);
-
-    const closeResult = await pipeline.close();
-
     expect(closeResult).toBe(true);
 
-    const secondCloseResult = await pipeline.close();
-
-    expect(secondCloseResult).toBe(false);
-
+    expect(await pipeline.close()).toBe(false);
     expect(storage.getPersistedDatasets()).toHaveLength(10);
   });
 });
