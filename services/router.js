@@ -1,17 +1,23 @@
+// services/router.js
+// XSUS Studio — Smart Service Router
 
- // services/router.js
 import { studioCore } from './xsus-core.js';
+
 import {
     loadCustomKnowledge,
     checkCustomKnowledge
 } from './custom-knowledge-service.js';
+
 import { searchKnowledge } from './knowledge-service.js';
 import { javaKnowledge } from './javaKnowledge.js';
+
 import {
     detectQueryLanguage,
     normalizeQueryText
 } from './language-engine.js';
+
 import { analyzeAlbanianGrammar } from './grammar-engine.js';
+
 import { checkWikipedia } from './wikipedia-service.js';
 import { checkNews } from './news-service.js';
 import { checkSports } from './sports-service.js';
@@ -25,26 +31,227 @@ import { checkTranslation } from './translation-service.js';
 import { checkConverter } from './converter-service.js';
 import { checkImageGeneration } from './image-service.js';
 
-// Ngarkimi fillestar i njohurive të personalizuara.
-try {
-    loadCustomKnowledge();
-} catch (error) {
-    console.warn('Gabim te custom knowledge:', error);
+// -------------------------------------------------------------
+// KONFIGURIMI
+// -------------------------------------------------------------
+
+const DEFAULT_LANGUAGE = 'en';
+const DEFAULT_MODULE = 'xsus-ai';
+
+const SUPPORTED_LANGUAGES = new Set([
+    'sq',
+    'en',
+    'fr'
+]);
+
+// -------------------------------------------------------------
+// NGARKIMI I NJOHURIVE TË PERSONALIZUARA
+// -------------------------------------------------------------
+
+let customKnowledgeLoadPromise = null;
+
+function initializeCustomKnowledge() {
+    if (customKnowledgeLoadPromise) {
+        return customKnowledgeLoadPromise;
+    }
+
+    try {
+        customKnowledgeLoadPromise = Promise.resolve(
+            loadCustomKnowledge()
+        ).catch((error) => {
+            console.warn(
+                'Gabim gjatë ngarkimit të Custom Knowledge:',
+                error
+            );
+
+            // Lejojmë një përpjekje tjetër në kërkesën pasuese.
+            customKnowledgeLoadPromise = null;
+
+            return null;
+        });
+    } catch (error) {
+        console.warn(
+            'Gabim gjatë inicializimit të Custom Knowledge:',
+            error
+        );
+
+        customKnowledgeLoadPromise = null;
+        return Promise.resolve(null);
+    }
+
+    return customKnowledgeLoadPromise;
+}
+
+// Fillon ngarkimin pa bllokuar importimin e modulit.
+void initializeCustomKnowledge();
+
+// -------------------------------------------------------------
+// NDIHMËS: NORMALIZIMI I TEKSTIT
+// -------------------------------------------------------------
+
+function normalizeText(value) {
+    if (typeof value !== 'string') {
+        return '';
+    }
+
+    try {
+        return normalizeQueryText(value);
+    } catch {
+        return value
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    }
+}
+
+function includesAny(text, keywords) {
+    return keywords.some((keyword) =>
+        text.includes(normalizeText(keyword))
+    );
+}
+
+function resolveLanguage(lang) {
+    if (
+        typeof lang === 'string' &&
+        SUPPORTED_LANGUAGES.has(lang.toLowerCase())
+    ) {
+        return lang.toLowerCase();
+    }
+
+    return DEFAULT_LANGUAGE;
+}
+
+function getLocalizedText(lang, sq, en, fr) {
+    if (lang === 'fr') return fr;
+    if (lang === 'en') return en;
+
+    return sq;
+}
+
+// -------------------------------------------------------------
+// GJENERIMI I SIGURT I FJALËKALIMEVE
+// -------------------------------------------------------------
+
+const PASSWORD_CHARACTERS =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
+    'abcdefghijklmnopqrstuvwxyz' +
+    '0123456789@#$%&*!';
+
+function generateSecurePassword(length = 14) {
+    if (
+        !Number.isInteger(length) ||
+        length < 1 ||
+        length > 1024
+    ) {
+        throw new RangeError(
+            'Gjatësia e fjalëkalimit është e pavlefshme.'
+        );
+    }
+
+    const cryptoProvider = globalThis.crypto;
+
+    if (
+        !cryptoProvider ||
+        typeof cryptoProvider.getRandomValues !== 'function'
+    ) {
+        throw new Error(
+            'Web Crypto nuk është i disponueshëm.'
+        );
+    }
+
+    let password = '';
+
+    // Përzgjedhja me refuzim shmang modulo bias.
+    const limit =
+        Math.floor(256 / PASSWORD_CHARACTERS.length) *
+        PASSWORD_CHARACTERS.length;
+
+    const buffer = new Uint8Array(
+        Math.max(32, length * 2)
+    );
+
+    while (password.length < length) {
+        cryptoProvider.getRandomValues(buffer);
+
+        for (const value of buffer) {
+            if (value >= limit) {
+                continue;
+            }
+
+            password +=
+                PASSWORD_CHARACTERS[
+                    value % PASSWORD_CHARACTERS.length
+                ];
+
+            if (password.length === length) {
+                break;
+            }
+        }
+    }
+
+    return password;
+}
+
+// -------------------------------------------------------------
+// UTILITET: NGJYRAT
+// -------------------------------------------------------------
+
+function generateRandomHexColor() {
+    const cryptoProvider = globalThis.crypto;
+
+    if (
+        cryptoProvider &&
+        typeof cryptoProvider.getRandomValues === 'function'
+    ) {
+        const buffer = new Uint8Array(3);
+
+        cryptoProvider.getRandomValues(buffer);
+
+        return (
+            '#' +
+            Array.from(buffer)
+                .map((value) =>
+                    value.toString(16).padStart(2, '0')
+                )
+                .join('')
+        );
+    }
+
+    // Ngjyra nuk është sekret; fallback-i këtu është i pranueshëm.
+    const value = Math.floor(
+        Math.random() * 0x1000000
+    );
+
+    return '#' + value.toString(16).padStart(6, '0');
 }
 
 // -------------------------------------------------------------
 // JAVA MASTER KNOWLEDGE
 // -------------------------------------------------------------
+
 function checkJavaKnowledge(userQuery, lang = 'sq') {
-    if (!userQuery || !Array.isArray(javaKnowledge)) {
+    if (
+        typeof userQuery !== 'string' ||
+        !Array.isArray(javaKnowledge)
+    ) {
         return null;
     }
 
-    const clean = normalizeQueryText(userQuery);
+    const clean = normalizeText(userQuery);
 
     const match = javaKnowledge.find((item) => {
-        const titleSq = normalizeQueryText(item.title_sq || '');
-        const titleEn = normalizeQueryText(item.title || '');
+        if (!item || typeof item !== 'object') {
+            return false;
+        }
+
+        const titleSq = normalizeText(
+            item.title_sq || ''
+        );
+
+        const titleEn = normalizeText(
+            item.title || ''
+        );
 
         return (
             (titleSq && clean.includes(titleSq)) ||
@@ -52,16 +259,29 @@ function checkJavaKnowledge(userQuery, lang = 'sq') {
         );
     });
 
-    if (!match) return null;
+    if (!match) {
+        return null;
+    }
 
     if (lang === 'en') {
         return `### ☕ ${match.title || 'Java Knowledge'}
 
-${match.content_en || ''}
+${match.content_en || match.content_sq || ''}
 
 **💻 Code Example:**
 \`\`\`java
 ${match.example || '// Java example'}
+\`\`\``;
+    }
+
+    if (lang === 'fr') {
+        return `### ☕ ${match.title || 'Connaissances Java'}
+
+${match.content_fr || match.content_en || match.content_sq || ''}
+
+**💻 Exemple de code :**
+\`\`\`java
+${match.example || '// Exemple Java'}
 \`\`\``;
     }
 
@@ -76,51 +296,49 @@ ${match.example || '// Shembull Java'}
 }
 
 // -------------------------------------------------------------
-// KNOWLEDGE ISLAMIKE
+// NJOHURI ISLAMIKE
 // -------------------------------------------------------------
-function checkIslamicKnowledge(userQuery, lang = 'sq') {
-    if (!userQuery) return null;
 
-    const clean = normalizeQueryText(userQuery);
+function checkIslamicKnowledge(userQuery, lang = 'sq') {
+    if (typeof userQuery !== 'string') {
+        return null;
+    }
+
+    const clean = normalizeText(userQuery);
 
     const prayerKeywords = [
-        'namaz', 'falje', 'orari i namazit',
-        'sabah', 'sabahu', 'sabahit',
-        'drek', 'dreka', 'drekes', 'drekas',
-        'ikindi', 'ikindia', 'ikindise',
-        'aksham', 'akshami', 'akshamit',
-        'jaci', 'jacia', 'jacise',
-        'fejr', 'dhuhr', 'asr', 'maghrib', 'isha',
-        'prayer times', 'salat', 'heures de priere',
-        'priere', 'fajr', 'dhohr'
+        'namaz',
+        'falje',
+        'orari i namazit',
+        'sabah',
+        'sabahu',
+        'sabahit',
+        'drek',
+        'dreka',
+        'drekes',
+        'ikindi',
+        'ikindia',
+        'aksham',
+        'akshami',
+        'jaci',
+        'jacia',
+        'fejr',
+        'dhuhr',
+        'asr',
+        'maghrib',
+        'isha',
+        'prayer times',
+        'salat',
+        'heures de priere',
+        'priere',
+        'fajr',
+        'dhohr'
     ];
 
-    if (prayerKeywords.some((word) => clean.includes(word))) {
-        if (lang === 'en') {
-            return `🕌 **Daily Prayer Information**
-
-- **Fajr:** Morning prayer before sunrise.
-- **Dhuhr:** Midday prayer.
-- **Asr:** Afternoon prayer.
-- **Maghrib:** Sunset prayer.
-- **Isha:** Night prayer.
-
-*Exact times depend on your location and calculation method.*`;
-        }
-
-        if (lang === 'fr') {
-            return `🕌 **Informations sur les prières quotidiennes**
-
-- **Fajr :** Prière du matin.
-- **Dhuhr :** Prière de midi.
-- **Asr :** Prière de l'après-midi.
-- **Maghrib :** Prière du coucher du soleil.
-- **Isha :** Prière de la nuit.
-
-*Les horaires exacts dépendent de la localisation et de la méthode de calcul.*`;
-        }
-
-        return `🕌 **Informacion mbi namazet**
+    if (includesAny(clean, prayerKeywords)) {
+        return getLocalizedText(
+            lang,
+            `🕌 **Informacion mbi namazet**
 
 - **Fajr / Sabahu:** Para lindjes së diellit.
 - **Dhuhr / Dreka:** Mesdita.
@@ -128,113 +346,138 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
 - **Maghrib / Akshami:** Perëndimi i diellit.
 - **Isha / Jacia:** Nata.
 
-*Oraret e sakta varen nga vendndodhja dhe metoda e llogaritjes.*`;
+*Oraret e sakta varen nga vendndodhja dhe metoda e llogaritjes.*`,
+            `🕌 **Daily Prayer Information**
+
+- **Fajr:** Morning prayer before sunrise.
+- **Dhuhr:** Midday prayer.
+- **Asr:** Afternoon prayer.
+- **Maghrib:** Sunset prayer.
+- **Isha:** Night prayer.
+
+*Exact times depend on your location and calculation method.*`,
+            `🕌 **Informations sur les prières quotidiennes**
+
+- **Fajr :** Prière du matin.
+- **Dhuhr :** Prière de midi.
+- **Asr :** Prière de l'après-midi.
+- **Maghrib :** Prière du coucher du soleil.
+- **Isha :** Prière de la nuit.
+
+*Les horaires exacts dépendent de la localisation et de la méthode de calcul.*`
+        );
     }
 
     const ramadanKeywords = [
-        'ramazan', 'ramadan', 'agjerim', 'agjerimi',
-        'fasting', 'jeune', 'imsak', 'iftar', 'syfyr', 'syfyri'
+        'ramazan',
+        'ramadan',
+        'agjerim',
+        'agjerimi',
+        'fasting',
+        'jeune',
+        'imsak',
+        'iftar',
+        'syfyr',
+        'syfyri'
     ];
 
-    if (ramadanKeywords.some((word) => clean.includes(word))) {
-        if (lang === 'en') {
-            return `🌙 **Ramadan and Fasting**
+    if (includesAny(clean, ramadanKeywords)) {
+        return getLocalizedText(
+            lang,
+            `🌙 **Ramazani dhe agjërimi**
 
-Ramadan is the Islamic month of fasting and reflection. Fasting begins at dawn and ends at sunset.`;
-        }
+Ramazani është muaji islam i agjërimit dhe përkushtimit. Agjërimi fillon në agim dhe përfundon në perëndim të diellit.`,
+            `🌙 **Ramadan and Fasting**
 
-        if (lang === 'fr') {
-            return `🌙 **Ramadan et jeûne**
+Ramadan is the Islamic month of fasting and reflection. Fasting begins at dawn and ends at sunset.`,
+            `🌙 **Ramadan et jeûne**
 
-Le Ramadan est le mois islamique du jeûne et du recueillement. Le jeûne commence à l'aube et se termine au coucher du soleil.`;
-        }
-
-        return `🌙 **Ramazani dhe agjërimi**
-
-Ramazani është muaji islam i agjërimit dhe përkushtimit. Agjërimi fillon në agim dhe përfundon në perëndim të diellit.`;
+Le Ramadan est le mois islamique du jeûne et du recueillement. Le jeûne commence à l'aube et se termine au coucher du soleil.`
+        );
     }
 
     const zakatKeywords = [
-        'zeqat', 'zeqati', 'zekat', 'zakat', 'alms'
+        'zeqat',
+        'zeqati',
+        'zekat',
+        'zakat',
+        'alms'
     ];
 
-    if (zakatKeywords.some((word) => clean.includes(word))) {
-        if (lang === 'en') {
-            return `💰 **Zakat**
+    if (includesAny(clean, zakatKeywords)) {
+        return getLocalizedText(
+            lang,
+            `💰 **Zeqati**
 
-Zakat is an obligatory form of charity for eligible Muslims. The commonly cited rate for qualifying savings is 2.5%, subject to the applicable rules and Nisab threshold.`;
-        }
+Zeqati është një detyrim financiar për myslimanët që plotësojnë kushtet. Norma e përmendur zakonisht për pasurinë e përshtatshme është 2,5 %, sipas rregullave dhe pragut të Nisabit.`,
+            `💰 **Zakat**
 
-        if (lang === 'fr') {
-            return `💰 **Zakat**
+Zakat is an obligatory form of charity for eligible Muslims. The commonly cited rate for qualifying savings is 2.5%, subject to the applicable rules and Nisab threshold.`,
+            `💰 **Zakat**
 
-La zakat est une aumône obligatoire pour les musulmans concernés. Le taux couramment cité pour certains biens éligibles est de 2,5 %, selon les règles applicables et le seuil du Nisab.`;
-        }
-
-        return `💰 **Zeqati**
-
-Zeqati është një detyrim financiar për myslimanët që plotësojnë kushtet. Norma e përmendur zakonisht për pasurinë e përshtatshme është 2,5 %, sipas rregullave dhe pragut të Nisabit.`;
+La zakat est une aumône obligatoire pour les musulmans concernés. Le taux couramment cité pour certains biens éligibles est de 2,5 %, selon les règles applicables et le seuil du Nisab.`
+        );
     }
 
     const hajjKeywords = [
-        'haxh', 'haxhi', 'hajj', 'haj',
-        'pelerinage', 'mecca', 'meke', 'qabe', 'kaaba'
+        'haxh',
+        'haxhi',
+        'hajj',
+        'pelerinage',
+        'mecca',
+        'meke',
+        'qabe',
+        'kaaba'
     ];
 
-    if (hajjKeywords.some((word) => clean.includes(word))) {
-        if (lang === 'en') {
-            return `🕋 **Hajj Pilgrimage**
+    if (includesAny(clean, hajjKeywords)) {
+        return getLocalizedText(
+            lang,
+            `🕋 **Haxhi**
 
-Hajj is the pilgrimage to Mecca, obligatory once in a lifetime for Muslims who meet the relevant conditions and are able to perform it.`;
-        }
+Haxhi është pelegrinazhi në Mekë, i detyrueshëm një herë në jetë për myslimanët që plotësojnë kushtet dhe kanë mundësi ta kryejnë.`,
+            `🕋 **Hajj Pilgrimage**
 
-        if (lang === 'fr') {
-            return `🕋 **Pèlerinage du Hajj**
+Hajj is the pilgrimage to Mecca, obligatory once in a lifetime for Muslims who meet the relevant conditions and are able to perform it.`,
+            `🕋 **Pèlerinage du Hajj**
 
-Le Hajj est le pèlerinage à La Mecque, obligatoire une fois dans la vie pour les musulmans qui remplissent les conditions et en ont la capacité.`;
-        }
-
-        return `🕋 **Haxhi**
-
-Haxhi është pelegrinazhi në Mekë, i detyrueshëm një herë në jetë për myslimanët që plotësojnë kushtet dhe kanë mundësi ta kryejnë.`;
+Le Hajj est le pèlerinage à La Mecque, obligatoire une fois dans la vie pour les musulmans qui remplissent les conditions et en ont la capacité.`
+        );
     }
 
     const pillarsKeywords = [
         'kushtet e islamit',
         'pillars of islam',
-        "piliers de l islam",
+        'piliers de l islam',
         'shahada',
         'deshmia'
     ];
 
-    if (pillarsKeywords.some((word) => clean.includes(word))) {
-        if (lang === 'en') {
-            return `🌟 **The Five Pillars of Islam**
-
-1. Shahada — Declaration of faith
-2. Salat — Prayer
-3. Zakat — Obligatory charity
-4. Sawm — Fasting
-5. Hajj — Pilgrimage`;
-        }
-
-        if (lang === 'fr') {
-            return `🌟 **Les cinq piliers de l'islam**
-
-1. Shahada — Profession de foi
-2. Salat — Prière
-3. Zakat — Aumône obligatoire
-4. Sawm — Jeûne
-5. Hajj — Pèlerinage`;
-        }
-
-        return `🌟 **Pesë kushtet e Islamit**
+    if (includesAny(clean, pillarsKeywords)) {
+        return getLocalizedText(
+            lang,
+            `🌟 **Pesë kushtet e Islamit**
 
 1. Shahada — Dëshmia
 2. Salat — Namazi
 3. Zakat — Zeqati
 4. Sawm — Agjërimi
-5. Haxh — Pelegrinazhi`;
+5. Haxh — Pelegrinazhi`,
+            `🌟 **The Five Pillars of Islam**
+
+1. Shahada — Declaration of faith
+2. Salat — Prayer
+3. Zakat — Obligatory charity
+4. Sawm — Fasting
+5. Hajj — Pilgrimage`,
+            `🌟 **Les cinq piliers de l'islam**
+
+1. Shahada — Profession de foi
+2. Salat — Prière
+3. Zakat — Aumône obligatoire
+4. Sawm — Jeûne
+5. Hajj — Pèlerinage`
+        );
     }
 
     return null;
@@ -243,6 +486,7 @@ Haxhi është pelegrinazhi në Mekë, i detyrueshëm një herë në jetë për m
 // -------------------------------------------------------------
 // XSUS KNOWLEDGE SEARCH
 // -------------------------------------------------------------
+
 function checkKnowledge(userQuery, lang) {
     if (typeof searchKnowledge !== 'function') {
         return null;
@@ -257,7 +501,11 @@ function checkKnowledge(userQuery, lang) {
 
         const bestMatch = docs[0];
 
-        if (!bestMatch || typeof bestMatch.content !== 'string') {
+        if (
+            !bestMatch ||
+            typeof bestMatch.content !== 'string' ||
+            !bestMatch.content.trim()
+        ) {
             return null;
         }
 
@@ -275,25 +523,95 @@ function checkKnowledge(userQuery, lang) {
 }
 
 // -------------------------------------------------------------
+// ZBULIMI I GJUHËS
+// -------------------------------------------------------------
+
+function detectActiveLanguage(userQuery, requestedLang, analysis) {
+    const tokens = Array.isArray(analysis?.tokens)
+        ? analysis.tokens
+        : [];
+
+    const hasAlbanianTokens = tokens.some(
+        (token) =>
+            token?.nounLemma != null ||
+            token?.verbLemma != null ||
+            token?.isNegation
+    );
+
+    const normalized = normalizeText(userQuery);
+
+    const albanianMarkers = [
+        'më jep',
+        'me jep',
+        'ngjyr',
+        'fjalëkalim',
+        'fjalekalim',
+        'çfarë',
+        'cfare',
+        'përshëndetje',
+        'pershendetje',
+        'shpjego',
+        'dua të',
+        'dua te'
+    ];
+
+    if (
+        hasAlbanianTokens ||
+        albanianMarkers.some((marker) =>
+            normalized.includes(normalizeText(marker))
+        )
+    ) {
+        return 'sq';
+    }
+
+    try {
+        const detected = detectQueryLanguage(userQuery);
+
+        if (
+            typeof detected === 'string' &&
+            SUPPORTED_LANGUAGES.has(detected.toLowerCase())
+        ) {
+            return detected.toLowerCase();
+        }
+    } catch (error) {
+        console.warn(
+            'Gabim gjatë zbulimit të gjuhës:',
+            error
+        );
+    }
+
+    return resolveLanguage(
+        requestedLang === 'auto'
+            ? DEFAULT_LANGUAGE
+            : requestedLang
+    );
+}
+
+// -------------------------------------------------------------
 // ROUTER KRYESOR
 // -------------------------------------------------------------
+
 export async function smartRouter(
     userQuery,
     lang = 'auto',
-    moduleName = 'xsus-ai'
+    moduleName = DEFAULT_MODULE
 ) {
-    if (typeof userQuery !== 'string' || !userQuery.trim()) {
+    if (
+        typeof userQuery !== 'string' ||
+        !userQuery.trim()
+    ) {
         return null;
     }
 
-    const lowerQuery = userQuery.toLowerCase().trim();
+    const query = userQuery.trim();
+    const lowerQuery = normalizeText(query);
 
     let albanianAnalysis = null;
     let grammarContext = '';
 
-    // Analiza gramatikore nuk duhet të ndalojë ruterin në rast gabimi.
+    // Analiza gramatikore është ndihmëse, jo kusht për përgjigjen.
     try {
-        albanianAnalysis = analyzeAlbanianGrammar(userQuery);
+        albanianAnalysis = analyzeAlbanianGrammar(query);
 
         if (albanianAnalysis) {
             const tokens = Array.isArray(albanianAnalysis.tokens)
@@ -301,14 +619,19 @@ export async function smartRouter(
                 : [];
 
             grammarContext = JSON.stringify({
-                language: albanianAnalysis.language,
-                sentenceType: albanianAnalysis.sentenceType,
-                hasNegation: albanianAnalysis.hasNegation,
-                hasRequestMarker: albanianAnalysis.hasRequestMarker,
+                language: albanianAnalysis.language ?? null,
+                sentenceType: albanianAnalysis.sentenceType ?? null,
+                hasNegation: Boolean(
+                    albanianAnalysis.hasNegation
+                ),
+                hasRequestMarker: Boolean(
+                    albanianAnalysis.hasRequestMarker
+                ),
                 tokens: tokens.map((token) => ({
-                    word: token.text,
-                    nounLemma: token.nounLemma,
-                    verbLemma: token.verbLemma
+                    word: token?.text ?? '',
+                    nounLemma: token?.nounLemma ?? null,
+                    verbLemma: token?.verbLemma ?? null,
+                    isNegation: Boolean(token?.isNegation)
                 }))
             });
         }
@@ -319,153 +642,162 @@ export async function smartRouter(
         );
     }
 
-    const tokens = Array.isArray(albanianAnalysis?.tokens)
-        ? albanianAnalysis.tokens
-        : [];
-
-    const hasAlbanianTokens = tokens.some(
-        (token) =>
-            token.nounLemma != null ||
-            token.verbLemma != null ||
-            token.isNegation
+    const activeLang = detectActiveLanguage(
+        query,
+        lang,
+        albanianAnalysis
     );
 
-    const albanianMarkers = [
-        'më jep', 'me jep', 'ngjyr', 'fjalëkalim',
-        'fjalekalim', 'çfarë', 'cfare', 'në '
+    // ---------------------------------------------------------
+    // UTILITET: NGJYRAT
+    // ---------------------------------------------------------
+
+    const colorKeywords = [
+        'ngjyr',
+        'color',
+        'colour',
+        'hex code',
+        'hex color',
+        'random color',
+        'random colour'
     ];
 
-    const isAlbanianQuery =
-        hasAlbanianTokens ||
-        albanianMarkers.some((word) => lowerQuery.includes(word));
-
-    let detectedLang = 'auto';
-
-    try {
-        detectedLang = detectQueryLanguage(userQuery) || 'auto';
-    } catch (error) {
-        console.warn('Gabim gjatë zbulimit të gjuhës:', error);
-    }
-
-    const activeLang = isAlbanianQuery
-        ? 'sq'
-        : (
-            detectedLang !== 'auto'
-                ? detectedLang
-                : (lang === 'auto' || !lang ? 'en' : lang)
+    const asksForRandomColor =
+        colorKeywords.some((keyword) =>
+            lowerQuery.includes(normalizeText(keyword))
+        ) ||
+        (
+            (
+                lowerQuery.includes('më jep') ||
+                lowerQuery.includes('me jep')
+            ) &&
+            lowerQuery.includes('rast')
         );
 
-    // -------------------------------------------------------------
-    // UTILITET: NGJYRAT
-    // -------------------------------------------------------------
-    if (
-        lowerQuery.includes('ngjyr') ||
-        lowerQuery.includes('color') ||
-        lowerQuery.includes('hex') ||
-        (
-            (lowerQuery.includes('më jep') || lowerQuery.includes('me jep')) &&
-            lowerQuery.includes('rast')
-        )
-    ) {
-        const randomHex = '#' +
-            Math.floor(Math.random() * 16777215)
-                .toString(16)
-                .padStart(6, '0');
+    if (asksForRandomColor) {
+        const hex = generateRandomHexColor();
 
-        if (activeLang === 'sq') {
-            return `🎨 **Ngjyrë e rastësishme për dizajn**
-
-- Kodi Hex: **${randomHex}**`;
-        }
-
-        return `🎨 **Random design color**
-
-- Hex code: **${randomHex}**`;
+        return getLocalizedText(
+            activeLang,
+            `🎨 **Ngjyrë e rastësishme për dizajn**\n\n- Kodi Hex: **${hex}**`,
+            `🎨 **Random design color**\n\n- Hex code: **${hex}**`,
+            `🎨 **Couleur aléatoire pour le design**\n\n- Code Hex : **${hex}**`
+        );
     }
 
-    // -------------------------------------------------------------
+    // ---------------------------------------------------------
     // UTILITET: FJALËKALIME
-    // -------------------------------------------------------------
+    // ---------------------------------------------------------
+
+    const passwordKeywords = [
+        'fjalëkalim',
+        'fjalekalim',
+        'fjalikalim',
+        'password',
+        'generate a password',
+        'create a password',
+        'mot de passe',
+        'generer un mot de passe',
+        'générer un mot de passe'
+    ];
+
     if (
-        lowerQuery.includes('fjalëkalim') ||
-        lowerQuery.includes('fjalekalim') ||
-        lowerQuery.includes('fjalikalim') ||
-        lowerQuery.includes('password')
+        passwordKeywords.some((keyword) =>
+            lowerQuery.includes(normalizeText(keyword))
+        )
     ) {
-        const chars =
-            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*!';
+        let password;
 
-        let password = '';
+        try {
+            password = generateSecurePassword(14);
+        } catch (error) {
+            console.error(
+                'Nuk u krijua dot fjalëkalimi i sigurt:',
+                error
+            );
 
-        // Shënim: për përdorim sigurie në prodhim, përdor një
-        // gjenerator kriptografik të përshtatshëm.
-        for (let index = 0; index < 14; index++) {
-            password += chars.charAt(
-                Math.floor(Math.random() * chars.length)
+            return getLocalizedText(
+                activeLang,
+                'Nuk mund të krijoj një fjalëkalim të sigurt në këtë mjedis. Provo një shfletues që mbështet Web Crypto.',
+                'A secure password could not be generated in this environment. Please use a browser that supports Web Crypto.',
+                'Impossible de générer un mot de passe sécurisé dans cet environnement. Utilisez un navigateur compatible avec Web Crypto.'
             );
         }
 
-        if (activeLang === 'sq') {
-            return `🔒 **Fjalëkalim i gjeneruar**
-
-\`\`\`text
-${password}
-\`\`\`
-
-Ruaje në një vend të sigurt.`;
-        }
-
-        return `🔒 **Generated password**
-
-\`\`\`text
-${password}
-\`\`\`
-
-Store it securely.`;
+        return getLocalizedText(
+            activeLang,
+            `🔒 **Fjalëkalim i gjeneruar**\n\n\`\`\`text\n${password}\n\`\`\`\n\nRuaje në një vend të sigurt.`,
+            `🔒 **Generated password**\n\n\`\`\`text\n${password}\n\`\`\`\n\nStore it securely.`,
+            `🔒 **Mot de passe généré**\n\n\`\`\`text\n${password}\n\`\`\`\n\nConservez-le dans un endroit sûr.`
+        );
     }
 
-    // -------------------------------------------------------------
+    // ---------------------------------------------------------
     // BËRTHAMA QENDRORE
-    // -------------------------------------------------------------
+    // ---------------------------------------------------------
+
     try {
-        if (studioCore && typeof studioCore.requestAccess === 'function') {
-            const coreReply = studioCore.requestAccess(
-                moduleName,
-                userQuery,
+        if (
+            studioCore &&
+            typeof studioCore.requestAccess === 'function'
+        ) {
+            const coreReply = await studioCore.requestAccess(
+                moduleName || DEFAULT_MODULE,
+                query,
                 activeLang,
                 { grammarContext }
             );
 
-            if (coreReply) return coreReply;
+            if (
+                typeof coreReply === 'string' &&
+                coreReply.trim()
+            ) {
+                return coreReply;
+            }
         }
     } catch (error) {
         console.warn('Gabim te XSUS Core:', error);
     }
 
-    // -------------------------------------------------------------
+    // ---------------------------------------------------------
     // JAVA KNOWLEDGE
-    // -------------------------------------------------------------
+    // ---------------------------------------------------------
+
     try {
-        const javaAnswer = checkJavaKnowledge(userQuery, activeLang);
-        if (javaAnswer) return javaAnswer;
+        const javaAnswer = checkJavaKnowledge(
+            query,
+            activeLang
+        );
+
+        if (javaAnswer) {
+            return javaAnswer;
+        }
     } catch (error) {
         console.warn('Gabim te Java Knowledge:', error);
     }
 
-    // -------------------------------------------------------------
-    // ISLAMIC KNOWLEDGE
-    // -------------------------------------------------------------
+    // ---------------------------------------------------------
+    // KNOWLEDGE ISLAMIKE
+    // ---------------------------------------------------------
+
     try {
-        const islamicAnswer = checkIslamicKnowledge(userQuery, activeLang);
-        if (islamicAnswer) return islamicAnswer;
+        const islamicAnswer = checkIslamicKnowledge(
+            query,
+            activeLang
+        );
+
+        if (islamicAnswer) {
+            return islamicAnswer;
+        }
     } catch (error) {
         console.warn('Gabim te Islamic Knowledge:', error);
     }
 
-    // -------------------------------------------------------------
-    // SHËRBIMET EKZISTUESE
-    // -------------------------------------------------------------
-    const services = [
+    // ---------------------------------------------------------
+    // SHËRBIMET E SPECIALIZUARA
+    // ---------------------------------------------------------
+
+    const specializedServices = [
         ['sports', checkSports],
         ['weather', checkWeather],
         ['image generation', checkImageGeneration],
@@ -473,41 +805,66 @@ Store it securely.`;
         ['math', checkMath]
     ];
 
-    for (const [name, service] of services) {
-        if (typeof service !== 'function') continue;
+    for (const [name, service] of specializedServices) {
+        if (typeof service !== 'function') {
+            continue;
+        }
 
         try {
-            const result = await service(userQuery, activeLang);
-            if (result) return result;
+            const result = await service(query, activeLang);
+
+            if (result) {
+                return result;
+            }
         } catch (error) {
-            console.warn(`Gabim te shërbimi ${name}:`, error);
+            console.warn(
+                `Gabim te shërbimi ${name}:`,
+                error
+            );
         }
     }
 
-    // Njohuritë e personalizuara.
+    // ---------------------------------------------------------
+    // CUSTOM KNOWLEDGE
+    // ---------------------------------------------------------
+
     try {
+        await initializeCustomKnowledge();
+
         if (typeof checkCustomKnowledge === 'function') {
-            const custom = await checkCustomKnowledge(
-                userQuery,
+            const customAnswer = await checkCustomKnowledge(
+                query,
                 activeLang
             );
 
-            if (custom) return custom;
+            if (customAnswer) {
+                return customAnswer;
+            }
         }
     } catch (error) {
-        console.warn('Gabim te Custom Knowledge:', error);
+        console.warn(
+            'Gabim te Custom Knowledge:',
+            error
+        );
     }
 
-    // -------------------------------------------------------------
-    // XSUS KNOWLEDGE — BAZA E RE E JAVASCRIPT-IT PËRFSHIHET KËTU
-    // -------------------------------------------------------------
-    const knowledgeAnswer = checkKnowledge(userQuery, activeLang);
+    // ---------------------------------------------------------
+    // XSUS KNOWLEDGE
+    // ---------------------------------------------------------
+
+    const knowledgeAnswer = checkKnowledge(
+        query,
+        activeLang
+    );
 
     if (knowledgeAnswer) {
         return knowledgeAnswer;
     }
 
-    // Shërbimet e tjera vazhdojnë edhe nëse kërkimi i njohurive dështon.
+    // ---------------------------------------------------------
+    // SHËRBIMET E TJERA
+    // ---------------------------------------------------------
+
     const remainingServices = [
         ['converter', checkConverter],
         ['translation', checkTranslation],
@@ -519,13 +876,21 @@ Store it securely.`;
     ];
 
     for (const [name, service] of remainingServices) {
-        if (typeof service !== 'function') continue;
+        if (typeof service !== 'function') {
+            continue;
+        }
 
         try {
-            const result = await service(userQuery, activeLang);
-            if (result) return result;
+            const result = await service(query, activeLang);
+
+            if (result) {
+                return result;
+            }
         } catch (error) {
-            console.warn(`Gabim te shërbimi ${name}:`, error);
+            console.warn(
+                `Gabim te shërbimi ${name}:`,
+                error
+            );
         }
     }
 
