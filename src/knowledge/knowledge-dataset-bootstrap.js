@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI Core — Knowledge Dataset Bootstrap
  * Version: 1.1.0
@@ -48,14 +47,23 @@ function validateStorageAdapter(storageAdapter) {
   return storageAdapter;
 }
 
+/**
+ * Kontrollon rezultatin e rikthimit.
+ * Përfshin arsyen origjinale në gabim për të lehtësuar diagnostikimin.
+ */
 function validateRestorationResult(restoration) {
   if (
     restoration === null ||
     restoration === undefined ||
-    restoration.success === false
+    restoration.success !== true
   ) {
+    const details =
+      typeof restoration?.error === "string"
+        ? restoration.error
+        : JSON.stringify(restoration);
+
     throw new Error(
-      "Rikthimi i dataset-eve të XSUS AI dështoi."
+      `Rikthimi i dataset-eve të XSUS AI dështoi. Detajet: ${details ?? "Nuk u kthye rezultat i vlefshëm."}`
     );
   }
 
