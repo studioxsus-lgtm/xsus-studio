@@ -1,354 +1,431 @@
 /**
-
-* XSUS AI — Knowledge Dataset Storage
-* Version: 1.1.0
-* 
-* Përmirësime:
-* - Validim i plotë para ruajtjes dhe pas ngarkimit.
-* - Shkrim në skedar të përkohshëm me flush të të dhënave.
-* - Zëvendësim atomik përmes rename().
-* - Pastrim i skedarëve të përkohshëm pas dështimit.
-* - Refuzim i JSON-it të korruptuar pa e trajtuar si bosh.
-* - Serializim i operacioneve brenda instancës.
-    */
+ * XSUS AI — Knowledge Dataset Storage
+ * Version: 1.1.0
+ *
+ * Përmirësime:
+ * - Validim i plotë para ruajtjes dhe pas ngarkimit.
+ * - Ruajtje dhe rikthim i versionit të dataset-it.
+ * - Përputhshmëri me snapshot-et e vjetra pa datasetVersion.
+ * - Shkrim në skedar të përkohshëm me flush të të dhënave.
+ * - Zëvendësim atomik përmes rename().
+ * - Pastrim i skedarëve të përkohshëm pas dështimit.
+ * - Refuzim i JSON-it të korruptuar pa e trajtuar si bosh.
+ * - Serializim i operacioneve brenda instancës.
+ */
 
 import {
-readFile,
-open,
-rename,
-mkdir,
-rm
+  readFile,
+  open,
+  rename,
+  mkdir,
+  rm
 } from "node:fs/promises";
 
 import { dirname } from "node:path";
 
 import {
-validateKnowledgeDataset
+  validateKnowledgeDataset
 } from "./knowledge-dataset-validator.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-storage";
 const ENGINE_VERSION = "1.1.0";
 const STORAGE_FORMAT_VERSION = "1.0.0";
+const DEFAULT_DATASET_VERSION = "1.0.0";
 
+/**
+ * Kontrollon nëse vlera është objekt i thjeshtë.
+ */
 function isPlainObject(value) {
-if (value === null || typeof value !== "object") {
-return false;
-}
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
 
-const prototype = Object.getPrototypeOf(value);
+  const prototype = Object.getPrototypeOf(value);
 
-return (
-prototype === Object.prototype ||
-prototype === null
-);
-}
-
-function normalizeDatasetId(value) {
-if (typeof value !== "string") {
-return null;
-}
-
-const id = value.normalize("NFC").trim();
-
-if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$/u.test(id)) {
-return null;
-}
-
-return id;
-}
-
-function createResult(success, fields = {}) {
-return {
-success,
-...fields,
-metadata: {
-engine: ENGINE_NAME,
-version: ENGINE_VERSION,
-formatVersion: STORAGE_FORMAT_VERSION
-}
-};
-}
-
-function validateSnapshot(snapshot) {
-if (
-!isPlainObject(snapshot) ||
-snapshot.formatVersion !== STORAGE_FORMAT_VERSION ||
-!Array.isArray(snapshot.datasets)
-) {
-return {
-valid: false,
-error: "Struktura e skedarit JSON nuk është e vlefshme."
-};
-}
-
-const ids = new Set();
-const datasets = [];
-
-for (
-let index = 0;
-index < snapshot.datasets.length;
-index += 1
-) {
-const dataset = snapshot.datasets[index];
-
-if (!isPlainObject(dataset)) {
-  return {
-    valid: false,
-    error: `Dataset-i në pozicionin ${index} nuk është objekt i vlefshëm.`
-  };
-}
-
-const id = normalizeDatasetId(dataset.id);
-
-if (!id) {
-  return {
-    valid: false,
-    error: `ID e dataset-it në pozicionin ${index} nuk është e vlefshme.`
-  };
-}
-
-if (ids.has(id)) {
-  return {
-    valid: false,
-    error: `ID e përsëritur në skedarin JSON: "${id}".`
-  };
-}
-
-if (!Array.isArray(dataset.entries)) {
-  return {
-    valid: false,
-    error: `Dataset-i "${id}" nuk përmban një varg hyrjesh.`
-  };
-}
-
-const validation = validateKnowledgeDataset(
-  dataset.entries
-);
-
-if (!validation.valid) {
-  return {
-    valid: false,
-    error: `Dataset-i "${id}" nuk kaloi validimin.`,
-    validationErrors: validation.errors ?? []
-  };
-}
-
-ids.add(id);
-
-datasets.push({
-  id,
-  entries: validation.collection
-});
-
-}
-
-return {
-valid: true,
-datasets
-};
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
 }
 
 /**
+ * Normalizon dhe validon ID-në e dataset-it.
+ */
+function normalizeDatasetId(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
 
-* Shkruan të dhënat në një skedar të përkohshëm.
-* sync() kërkon që të dhënat e skedarit të dërgohen
-* në sistemin e skedarëve para zëvendësimit.
-  */
-  async function writeTemporaryFile(
+  const id = value.normalize("NFC").trim();
+
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$/u.test(id)) {
+    return null;
+  }
+
+  return id;
+}
+
+/**
+ * Normalizon versionin semantik të dataset-it.
+ *
+ * Snapshot-et e vjetra që nuk përmbajnë version
+ * vazhdojnë të përdorin versionin 1.0.0.
+ */
+function normalizeDatasetVersion(value) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return DEFAULT_DATASET_VERSION;
+  }
+
+  if (
+    typeof value !== "string" ||
+    !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u.test(value)
+  ) {
+    return null;
+  }
+
+  return value;
+}
+
+/**
+ * Krijon një rezultat standard të storage.
+ */
+function createResult(success, fields = {}) {
+  return {
+    success,
+    ...fields,
+    metadata: {
+      engine: ENGINE_NAME,
+      version: ENGINE_VERSION,
+      formatVersion: STORAGE_FORMAT_VERSION
+    }
+  };
+}
+
+/**
+ * Validon të gjithë snapshot-in dhe normalizon dataset-et.
+ *
+ * Ruhet datasetVersion, në mënyrë që versioni të mos
+ * humbasë gjatë ruajtjes ose ngarkimit nga JSON-i.
+ */
+function validateSnapshot(snapshot) {
+  if (
+    !isPlainObject(snapshot) ||
+    snapshot.formatVersion !== STORAGE_FORMAT_VERSION ||
+    !Array.isArray(snapshot.datasets)
+  ) {
+    return {
+      valid: false,
+      error: "Struktura e skedarit JSON nuk është e vlefshme."
+    };
+  }
+
+  const ids = new Set();
+  const datasets = [];
+
+  for (
+    let index = 0;
+    index < snapshot.datasets.length;
+    index += 1
+  ) {
+    const dataset = snapshot.datasets[index];
+
+    if (!isPlainObject(dataset)) {
+      return {
+        valid: false,
+        error:
+          `Dataset-i në pozicionin ${index} nuk është objekt i vlefshëm.`
+      };
+    }
+
+    const id = normalizeDatasetId(dataset.id);
+
+    if (!id) {
+      return {
+        valid: false,
+        error:
+          `ID e dataset-it në pozicionin ${index} nuk është e vlefshme.`
+      };
+    }
+
+    if (ids.has(id)) {
+      return {
+        valid: false,
+        error:
+          `ID e përsëritur në skedarin JSON: "${id}".`
+      };
+    }
+
+    if (!Array.isArray(dataset.entries)) {
+      return {
+        valid: false,
+        error:
+          `Dataset-i "${id}" nuk përmban një varg hyrjesh.`
+      };
+    }
+
+    const datasetVersion = normalizeDatasetVersion(
+      dataset.datasetVersion ?? dataset.version
+    );
+
+    if (!datasetVersion) {
+      return {
+        valid: false,
+        error:
+          `Versioni i dataset-it "${id}" nuk është i vlefshëm.`
+      };
+    }
+
+    const validation = validateKnowledgeDataset(
+      dataset.entries
+    );
+
+    if (!validation.valid) {
+      return {
+        valid: false,
+        error:
+          `Dataset-i "${id}" nuk kaloi validimin.`,
+        validationErrors: validation.errors ?? []
+      };
+    }
+
+    ids.add(id);
+
+    datasets.push({
+      id,
+      entries: validation.collection,
+      datasetVersion
+    });
+  }
+
+  return {
+    valid: true,
+    datasets
+  };
+}
+
+/**
+ * Shkruan të dhënat në një skedar të përkohshëm.
+ *
+ * sync() kërkon që të dhënat e skedarit të dërgohen
+ * në sistemin e skedarëve përpara zëvendësimit.
+ */
+async function writeTemporaryFile(
   temporaryPath,
   serialized
-  ) {
+) {
   const handle = await open(
-  temporaryPath,
-  "wx",
-  0o600
+    temporaryPath,
+    "wx",
+    0o600
   );
 
-try {
-await handle.writeFile(serialized, "utf8");
-await handle.sync();
-} finally {
-await handle.close();
-}
+  try {
+    await handle.writeFile(serialized, "utf8");
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
 }
 
 /**
-
-* Krijon një adapter ruajtjeje për një skedar JSON.
-* 
-* saveDatasets pranon:
-* [{ id: "sq-general", entries: [...] }]
-* 
-* loadDatasets kthen dataset-et vetëm kur i gjithë
-* skedari dhe çdo dataset janë të vlefshëm.
-  */
-  export function createKnowledgeDatasetStorage(options = {}) {
+ * Krijon një adapter ruajtjeje për një skedar JSON.
+ *
+ * saveDatasets pranon:
+ * [
+ *   {
+ *     id: "sq-general",
+ *     entries: [...],
+ *     datasetVersion: "1.0.0"
+ *   }
+ * ]
+ *
+ * datasetVersion është opsional për përputhshmëri
+ * me snapshot-et e vjetra.
+ *
+ * loadDatasets kthen dataset-et vetëm kur i gjithë
+ * skedari dhe çdo dataset janë të vlefshëm.
+ */
+export function createKnowledgeDatasetStorage(options = {}) {
   const suppliedPath = options.filePath;
 
-if (
-typeof suppliedPath !== "string" ||
-!suppliedPath.trim()
-) {
-throw new TypeError(
-"Duhet të jepet rruga e skedarit JSON."
-);
-}
+  if (
+    typeof suppliedPath !== "string" ||
+    !suppliedPath.trim()
+  ) {
+    throw new TypeError(
+      "Duhet të jepet rruga e skedarit JSON."
+    );
+  }
 
-const filePath = suppliedPath.trim();
+  const filePath = suppliedPath.trim();
 
-let operationQueue = Promise.resolve();
-let temporaryFileCounter = 0;
+  let operationQueue = Promise.resolve();
+  let temporaryFileCounter = 0;
 
-function serializeOperation(operation) {
-const result = operationQueue.then(
-operation,
-operation
-);
+  /**
+   * Serializon operacionet brenda kësaj instance.
+   */
+  function serializeOperation(operation) {
+    const result = operationQueue.then(
+      operation,
+      operation
+    );
 
-operationQueue = result.then(
-  () => undefined,
-  () => undefined
-);
+    operationQueue = result.then(
+      () => undefined,
+      () => undefined
+    );
 
-return result;
+    return result;
+  }
 
-}
+  /**
+   * Ruajtja e dataset-eve në skedarin JSON.
+   */
+  async function saveDatasets(datasets) {
+    return serializeOperation(async () => {
+      const snapshot = {
+        formatVersion: STORAGE_FORMAT_VERSION,
+        datasets
+      };
 
-async function saveDatasets(datasets) {
-return serializeOperation(async () => {
-const snapshot = {
-formatVersion: STORAGE_FORMAT_VERSION,
-datasets
-};
+      const validation = validateSnapshot(snapshot);
 
-  const validation = validateSnapshot(snapshot);
+      if (!validation.valid) {
+        return createResult(false, {
+          error: validation.error,
+          validationErrors:
+            validation.validationErrors ?? []
+        });
+      }
 
-  if (!validation.valid) {
-    return createResult(false, {
-      error: validation.error,
-      validationErrors:
-        validation.validationErrors ?? []
+      const normalizedSnapshot = {
+        formatVersion: STORAGE_FORMAT_VERSION,
+
+        datasets: validation.datasets.map((dataset) => ({
+          id: dataset.id,
+          entries: dataset.entries,
+          datasetVersion: dataset.datasetVersion
+        }))
+      };
+
+      let serialized;
+
+      try {
+        serialized =
+          `${JSON.stringify(normalizedSnapshot, null, 2)}\n`;
+      } catch {
+        return createResult(false, {
+          error:
+            "Dataset-et nuk mund të serializoheshin në JSON."
+        });
+      }
+
+      const directory = dirname(filePath);
+
+      const temporaryPath =
+        `${filePath}.tmp-${process.pid}-${++temporaryFileCounter}`;
+
+      try {
+        await mkdir(directory, {
+          recursive: true
+        });
+
+        await writeTemporaryFile(
+          temporaryPath,
+          serialized
+        );
+
+        await rename(
+          temporaryPath,
+          filePath
+        );
+
+        return createResult(true, {
+          datasetCount: normalizedSnapshot.datasets.length
+        });
+      } catch {
+        try {
+          await rm(temporaryPath, {
+            force: true
+          });
+        } catch {
+          // Ruajmë rezultatin e dështimit kryesor.
+        }
+
+        return createResult(false, {
+          error:
+            "Dataset-et nuk mund të ruheshin në skedarin JSON."
+        });
+      }
     });
   }
 
-  const normalizedSnapshot = {
-    formatVersion: STORAGE_FORMAT_VERSION,
-    datasets: validation.datasets.map((dataset) => ({
-      id: dataset.id,
-      entries: dataset.entries
-    }))
-  };
+  /**
+   * Ngarkimi dhe validimi i dataset-eve nga skedari JSON.
+   */
+  async function loadDatasets() {
+    return serializeOperation(async () => {
+      let contents;
 
-  let serialized;
+      try {
+        contents = await readFile(
+          filePath,
+          "utf8"
+        );
+      } catch (error) {
+        if (error?.code === "ENOENT") {
+          return createResult(true, {
+            datasets: [],
+            datasetCount: 0,
+            recovered: false
+          });
+        }
 
-  try {
-    serialized =
-      `${JSON.stringify(normalizedSnapshot, null, 2)}\n`;
-  } catch {
-    return createResult(false, {
-      error: "Dataset-et nuk mund të serializoheshin në JSON."
-    });
-  }
+        return createResult(false, {
+          datasets: null,
+          error: "Skedari JSON nuk mund të lexohej."
+        });
+      }
 
-  const directory = dirname(filePath);
+      let snapshot;
 
-  const temporaryPath =
-    `${filePath}.tmp-${process.pid}-${++temporaryFileCounter}`;
+      try {
+        snapshot = JSON.parse(contents);
+      } catch {
+        return createResult(false, {
+          datasets: null,
+          error: "Skedari JSON është i korruptuar."
+        });
+      }
 
-  try {
-    await mkdir(directory, {
-      recursive: true
-    });
+      const validation = validateSnapshot(snapshot);
 
-    await writeTemporaryFile(
-      temporaryPath,
-      serialized
-    );
+      if (!validation.valid) {
+        return createResult(false, {
+          datasets: null,
+          error: validation.error,
+          validationErrors:
+            validation.validationErrors ?? []
+        });
+      }
 
-    await rename(
-      temporaryPath,
-      filePath
-    );
-
-    return createResult(true, {
-      datasetCount: normalizedSnapshot.datasets.length
-    });
-  } catch {
-    try {
-      await rm(temporaryPath, {
-        force: true
-      });
-    } catch {
-      // Ruajmë rezultatin e dështimit kryesor.
-    }
-
-    return createResult(false, {
-      error: "Dataset-et nuk mund të ruheshin në skedarin JSON."
-    });
-  }
-});
-
-}
-
-async function loadDatasets() {
-return serializeOperation(async () => {
-let contents;
-
-  try {
-    contents = await readFile(
-      filePath,
-      "utf8"
-    );
-  } catch (error) {
-    if (error?.code === "ENOENT") {
       return createResult(true, {
-        datasets: [],
-        datasetCount: 0,
-        recovered: false
+        datasets: validation.datasets,
+        datasetCount: validation.datasets.length,
+        recovered: true
       });
-    }
-
-    return createResult(false, {
-      datasets: null,
-      error: "Skedari JSON nuk mund të lexohej."
     });
   }
 
-  let snapshot;
-
-  try {
-    snapshot = JSON.parse(contents);
-  } catch {
-    return createResult(false, {
-      datasets: null,
-      error: "Skedari JSON është i korruptuar."
-    });
-  }
-
-  const validation = validateSnapshot(snapshot);
-
-  if (!validation.valid) {
-    return createResult(false, {
-      datasets: null,
-      error: validation.error,
-      validationErrors:
-        validation.validationErrors ?? []
-    });
-  }
-
-  return createResult(true, {
-    datasets: validation.datasets,
-    datasetCount: validation.datasets.length,
-    recovered: true
+  return Object.freeze({
+    saveDatasets,
+    loadDatasets
   });
-});
-
-}
-
-return Object.freeze({
-saveDatasets,
-loadDatasets
-});
 }
 
 export default createKnowledgeDatasetStorage;
