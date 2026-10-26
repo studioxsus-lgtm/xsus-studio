@@ -1,879 +1,1279 @@
-/* ==========================================================
-   XSUS STUDIO
-   Complete Cyber Glassmorphism Stylesheet
-   Version: 2.0.0
-   ========================================================== */
-
-/* ==========================================================
-   1. GLOBAL STYLES
-   ========================================================== */
-
-:root {
-    color-scheme: dark;
-
-    --xsus-bg: #050811;
-    --xsus-panel: rgba(13, 19, 34, 0.7);
-    --xsus-panel-strong: rgba(13, 19, 34, 0.9);
-
-    --xsus-text: #f8fafc;
-    --xsus-text-muted: #94a3b8;
-
-    --xsus-cyan: #00f2fe;
-    --xsus-blue: #4facfe;
-    --xsus-purple: #7000ff;
-    --xsus-pink: #ff007f;
-    --xsus-teal: #00ffcc;
-
-    --xsus-border: rgba(255, 255, 255, 0.08);
-    --xsus-radius: 16px;
-
-    --xsus-transition:
-        color 0.2s ease,
-        background 0.2s ease,
-        border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        transform 0.2s ease;
-}
-
-* {
-    box-sizing: border-box;
-}
-
-html {
-    min-height: 100%;
-    scroll-behavior: smooth;
-    scroll-padding-top: 100px;
-}
-
-body {
-    min-height: 100vh;
-    margin: 0;
-    padding: 0;
-
-    overflow-x: hidden;
-
-    font-family:
-        'Inter',
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        sans-serif;
-
-    background-color: var(--xsus-bg);
-    color: var(--xsus-text);
-
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-body,
-button,
-input,
-textarea,
-select {
-    font-family:
-        'Inter',
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        sans-serif;
-}
-
-button,
-input,
-textarea,
-select {
-    font-size: inherit;
-}
-
-button,
-a,
-input,
-textarea,
-select {
-    -webkit-tap-highlight-color: transparent;
-}
-
-img,
-svg,
-video,
-canvas {
-    max-width: 100%;
-}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080b16">
 
-img {
-    height: auto;
-}
+    <meta
+        name="description"
+        content="XSUS Studio — The X Identity. A technology platform for AI, apps, web, games, logos and domains."
+    >
 
-a {
-    color: inherit;
-}
+    <meta name="color-scheme" content="dark">
 
-button {
-    cursor: pointer;
-}
+    <title>XSUS Studio — The X Identity</title>
 
-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-}
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-::selection {
-    background: rgba(0, 242, 254, 0.3);
-    color: #ffffff;
-}
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
 
-/* ==========================================================
-   2. BACKGROUND AND GLASSMORPHISM
-   ========================================================== */
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 
-.glass-panel {
-    background: rgba(13, 19, 34, 0.7);
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
 
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
+<body class="min-h-screen relative flex flex-col">
 
-    border: 1px solid var(--xsus-border);
-}
+    <!-- =====================================================
+         BACKGROUND PARTICLES
+         ===================================================== -->
 
-.glass-panel-glow {
-    background: rgba(13, 19, 34, 0.85);
+    <canvas
+        id="particleCanvas"
+        class="fixed inset-0 pointer-events-none z-0 opacity-40"
+        aria-hidden="true"
+    ></canvas>
 
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
 
-    border: 1px solid rgba(0, 242, 254, 0.3);
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
 
-    box-shadow:
-        0 0 25px rgba(0, 242, 254, 0.15),
-        inset 0 0 20px rgba(0, 242, 254, 0.025);
-}
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
 
-#particleCanvas {
-    position: fixed;
-    inset: 0;
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
 
-    width: 100%;
-    height: 100%;
+            <!-- BRAND + LANGUAGE + ACCOUNT -->
 
-    pointer-events: none;
-    z-index: 0;
-}
+            <div class="flex items-center justify-between gap-3">
 
+                <!-- BRAND -->
+
+                <a
+                    href="index.html"
+                    class="flex items-center gap-3 min-w-0"
+                    aria-label="XSUS Studio home"
+                >
+
+                    <div
+                        class="w-11 h-11 shrink-0 rounded-xl
+                        bg-gradient-to-br from-cyan-400 via-blue-600 to-purple-600
+                        p-[2px] shadow-lg shadow-cyan-500/20"
+                    >
+
+                        <div
+                            class="w-full h-full bg-slate-950 rounded-[10px]
+                            flex items-center justify-center"
+                        >
+                            <span class="font-extrabold text-xl text-cyan-400">
+                                X
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="min-w-0">
+
+                        <h1
+                            class="font-bold text-lg sm:text-xl
+                            tracking-tight text-white"
+                        >
+                            XSUS Studio
+                        </h1>
+
+                        <p
+                            class="text-[10px] sm:text-xs text-cyan-400
+                            font-medium tracking-wider"
+                        >
+                            THE X IDENTITY
+                        </p>
+
+                    </div>
+
+                </a>
+
+
+                <!-- LANGUAGE + AUTHENTICATION -->
+
+                <div class="flex items-center justify-end gap-2 shrink-0">
+
+                    <!-- LANGUAGE SELECTOR -->
+
+                    <div class="relative">
+
+                        <label for="languageSelect" class="sr-only">
+                            Choose language
+                        </label>
+
+                        <select
+                            id="languageSelect"
+                            aria-label="Choose language"
+                            class="h-10 min-w-[76px] rounded-lg
+                            border border-cyan-500/30 bg-slate-900
+                            px-2 sm:px-3 text-sm font-semibold
+                            text-cyan-300 outline-none transition
+                            hover:border-cyan-400
+                            focus:ring-2 focus:ring-cyan-500/30"
+                        >
+                            <option value="en">EN</option>
+                            <option value="fr">FR</option>
+                            <option value="sq">SQ</option>
+                        </select>
 
-/* ==========================================================
-   3. GRADIENT TEXT
-   ========================================================== */
+                    </div>
+
+
+                    <!-- SIGNED-OUT BUTTONS -->
+
+                    <div
+                        id="authButtons"
+                        class="flex items-center gap-2"
+                    >
 
-.gradient-text {
-    display: inline-block;
+                        <a
+                            href="auth.html"
+                            id="loginLink"
+                            class="px-2.5 sm:px-3 py-2 rounded-lg
+                            border border-slate-700 text-slate-200
+                            text-xs sm:text-sm font-semibold
+                            hover:border-cyan-400 hover:text-cyan-400
+                            transition-colors whitespace-nowrap"
+                            data-i18n="login"
+                        >
+                            Login
+                        </a>
 
-    background: linear-gradient(
-        135deg,
-        #00f2fe 0%,
-        #4facfe 35%,
-        #8b5cf6 70%,
-        #ff007f 100%
-    );
+                        <a
+                            href="auth.html?mode=signup"
+                            id="signupLink"
+                            class="px-2.5 sm:px-3 py-2 rounded-lg
+                            bg-gradient-to-r from-cyan-500 to-blue-600
+                            text-white text-xs sm:text-sm font-bold
+                            hover:opacity-90 transition-opacity
+                            whitespace-nowrap"
+                            data-i18n="signup"
+                        >
+                            Sign Up
+                        </a>
 
-    background-clip: text;
-    -webkit-background-clip: text;
+                    </div>
 
-    color: transparent;
-    -webkit-text-fill-color: transparent;
-}
 
+                    <!-- SIGNED-IN ACCOUNT -->
 
-/* ==========================================================
-   4. HEADER
-   ========================================================== */
+                    <div
+                        id="userAccount"
+                        class="hidden items-center gap-2"
+                    >
 
-header.sticky {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-}
+                        <span
+                            id="userEmail"
+                            class="hidden sm:block text-xs text-cyan-300
+                            max-w-36 truncate"
+                        ></span>
 
-header.glass-panel {
-    background: rgba(5, 8, 17, 0.88);
+                        <button
+                            id="logoutButton"
+                            type="button"
+                            class="px-2.5 sm:px-3 py-2 rounded-lg
+                            border border-slate-700 text-slate-200
+                            text-xs sm:text-sm
+                            hover:border-red-400 hover:text-red-300
+                            whitespace-nowrap"
+                            data-i18n="logout"
+                        >
+                            Logout
+                        </button>
 
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
+                    </div>
 
-    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-}
+                </div>
 
-header a {
-    text-decoration: none;
-}
+            </div>
 
-header h1 {
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
 
-header select {
-    max-width: 100%;
-    cursor: pointer;
-}
+            <!-- =================================================
+                 MAIN NAVIGATION — SIX XSUS MODULES
+                 ================================================= -->
 
-header button,
-header a,
-header select {
-    transition: var(--xsus-transition);
-}
+            <nav
+                class="xsus-main-nav"
+                aria-label="Main navigation"
+            >
 
-header button:focus-visible,
-header a:focus-visible,
-header select:focus-visible {
-    outline: 2px solid var(--xsus-cyan);
-    outline-offset: 3px;
-}
+                <!-- XSUS AI -->
 
+                <a
+                    href="ai.html"
+                    class="xsus-nav-item xsus-nav-ai"
+                >
+                    <i data-lucide="cpu" aria-hidden="true"></i>
 
-/* ==========================================================
-   5. XSUS STUDIO MAIN NAVIGATION
-   Six responsive product modules
-   ========================================================== */
+                    <span data-i18n="navAI">
+                        Xsus AI
+                    </span>
+                </a>
 
-.xsus-main-nav {
-    position: relative;
-    z-index: 2;
 
-    display: grid;
+                <!-- XSUS APP -->
 
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+                <a
+                    href="app.html"
+                    class="xsus-nav-item xsus-nav-app"
+                >
+                    <i data-lucide="smartphone" aria-hidden="true"></i>
 
-    align-items: stretch;
-    gap: 10px;
+                    <span data-i18n="navApp">
+                        Xsus App
+                    </span>
+                </a>
 
-    width: 100%;
-    margin-top: 18px;
-    padding: 8px 0 4px;
-}
 
-.xsus-nav-item {
-    position: relative;
+                <!-- XSUS WEB -->
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+                <a
+                    href="web.html"
+                    class="xsus-nav-item xsus-nav-web"
+                >
+                    <i data-lucide="globe" aria-hidden="true"></i>
 
-    gap: 8px;
+                    <span data-i18n="navWeb">
+                        Xsus Web
+                    </span>
+                </a>
 
-    min-width: 0;
-    min-height: 46px;
 
-    padding: 10px 8px;
+                <!-- XSUS GAME -->
 
-    overflow: hidden;
+                <a
+                    href="game.html"
+                    class="xsus-nav-item xsus-nav-game"
+                >
+                    <i data-lucide="gamepad-2" aria-hidden="true"></i>
 
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    border-radius: 12px;
+                    <span data-i18n="navGame">
+                        Xsus Game
+                    </span>
+                </a>
 
-    background: rgba(15, 23, 42, 0.62);
 
-    color: #cbd5e1;
+                <!-- XSUS LOGO -->
 
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.3;
+                <a
+                    href="logo.html"
+                    class="xsus-nav-item xsus-nav-logo"
+                >
+                    <i data-lucide="palette" aria-hidden="true"></i>
 
-    text-align: center;
-    text-decoration: none;
-    white-space: nowrap;
+                    <span data-i18n="navLogo">
+                        Xsus Logo
+                    </span>
+                </a>
 
-    transition: var(--xsus-transition);
-}
 
-.xsus-nav-item i,
-.xsus-nav-item svg {
-    display: block;
+                <!-- XSUS DOMAIN -->
 
-    width: 17px;
-    height: 17px;
+                <a
+                    href="domain.html"
+                    class="xsus-nav-item xsus-nav-domain"
+                >
+                    <i data-lucide="server" aria-hidden="true"></i>
 
-    flex: 0 0 17px;
-}
+                    <span data-i18n="navDomain">
+                        Xsus Domain
+                    </span>
+                </a>
 
-.xsus-nav-item span {
-    min-width: 0;
-}
+            </nav>
 
-.xsus-nav-item:hover {
-    transform: translateY(-2px);
+        </div>
 
-    background: rgba(15, 23, 42, 0.96);
-}
+    </header>
 
-.xsus-nav-item:active {
-    transform: translateY(0);
-}
 
-.xsus-nav-item:focus-visible {
-    outline: 2px solid var(--xsus-cyan);
-    outline-offset: 3px;
-}
+    <!-- =====================================================
+         MAIN CONTENT
+         ===================================================== -->
 
-/* XSUS AI — Cyan */
+    <main
+        class="relative z-10 max-w-7xl mx-auto
+        px-4 sm:px-6 lg:px-8
+        py-12 sm:py-16
+        space-y-12 sm:space-y-16
+        flex-1 w-full"
+    >
 
-.xsus-nav-ai:hover {
-    color: #22d3ee;
+        <!-- =================================================
+             HERO SECTION
+             ================================================= -->
 
-    border-color: rgba(34, 211, 238, 0.65);
+        <section
+            class="text-center space-y-6 max-w-4xl mx-auto"
+            aria-labelledby="heroTitle"
+        >
 
-    box-shadow:
-        0 0 18px rgba(34, 211, 238, 0.12);
-}
+            <!-- PLATFORM BADGE -->
+
+            <div
+                class="inline-flex items-center gap-2
+                px-3 py-1 rounded-full
+                bg-cyan-500/10 border border-cyan-500/30
+                text-cyan-400 text-xs font-semibold
+                tracking-wide uppercase"
+            >
 
-/* XSUS APP — Blue */
+                <i
+                    data-lucide="sparkles"
+                    class="w-3.5 h-3.5"
+                    aria-hidden="true"
+                ></i>
 
-.xsus-nav-app:hover {
-    color: #60a5fa;
+                <span data-i18n="badge">
+                    Official Hybrid Intelligence Platform
+                </span>
 
-    border-color: rgba(96, 165, 250, 0.65);
+            </div>
+
+
+            <!-- MAIN HEADLINE -->
+
+            <h2
+                id="heroTitle"
+                class="text-4xl sm:text-6xl font-extrabold
+                tracking-tight text-white leading-tight"
+            >
+
+                <span data-i18n="heroBefore">
+                    The most powerful digital tools in a
+                </span>
+
+                <span
+                    class="gradient-text"
+                    data-i18n="heroHighlight"
+                >
+                    Single Studio
+                </span>
+
+            </h2>
+
+
+            <!-- SUBTITLE -->
+
+            <p
+                data-i18n="subtitle"
+                class="text-slate-400 text-base sm:text-lg
+                max-w-2xl mx-auto leading-relaxed"
+            >
+                Explore our independent modules, designed for
+                performance and specialized workflows.
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             SIX PRODUCT CARDS
+             ================================================= -->
+
+        <section
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3
+            gap-5 sm:gap-6"
+            aria-label="XSUS Studio products"
+        >
+
+            <!-- XSUS AI -->
+
+            <a
+                href="ai.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl
+                border border-slate-800
+                hover:border-cyan-500/40
+                transition-all space-y-4 group block"
+            >
+
+                <div
+                    class="w-12 h-12 rounded-xl
+                    bg-cyan-500/10 border border-cyan-500/30
+                    flex items-center justify-center
+                    text-cyan-400 group-hover:scale-110
+                    transition-transform"
+                >
+                    <i
+                        data-lucide="cpu"
+                        class="w-6 h-6"
+                        aria-hidden="true"
+                    ></i>
+                </div>
+
+                <h3 class="text-xl font-bold text-white">
+                    XSUS AI
+                </h3>
+
+                <p
+                    data-i18n="cardAI"
+                    class="text-slate-400 text-sm leading-relaxed"
+                >
+                    Smart assistant for text generation, video scripts,
+                    analysis, and coding.
+                </p>
+
+            </a>
+
+
+            <!-- XSUS APP -->
+
+            <a
+                href="app.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl
+                border border-slate-800
+                hover:border-blue-500/40
+                transition-all space-y-4 group block"
+            >
+
+                <div
+                    class="w-12 h-12 rounded-xl
+                    bg-blue-500/10 border border-blue-500/30
+                    flex items-center justify-center
+                    text-blue-400 group-hover:scale-110
+                    transition-transform"
+                >
+                    <i
+                        data-lucide="smartphone"
+                        class="w-6 h-6"
+                        aria-hidden="true"
+                    ></i>
+                </div>
+
+                <h3 class="text-xl font-bold text-white">
+                    XSUS App
+                </h3>
+
+                <p
+                    data-i18n="cardApp"
+                    class="text-slate-400 text-sm leading-relaxed"
+                >
+                    Mobile and web application builder, live mockups,
+                    and theme customization.
+                </p>
+
+            </a>
+
+
+            <!-- XSUS WEB -->
+
+            <a
+                href="web.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl
+                border border-slate-800
+                hover:border-indigo-500/40
+                transition-all space-y-4 group block"
+            >
+
+                <div
+                    class="w-12 h-12 rounded-xl
+                    bg-indigo-500/10 border border-indigo-500/30
+                    flex items-center justify-center
+                    text-indigo-400 group-hover:scale-110
+                    transition-transform"
+                >
+                    <i
+                        data-lucide="globe"
+                        class="w-6 h-6"
+                        aria-hidden="true"
+                    ></i>
+                </div>
+
+                <h3 class="text-xl font-bold text-white">
+                    XSUS Web
+                </h3>
+
+                <p
+                    data-i18n="cardWeb"
+                    class="text-slate-400 text-sm leading-relaxed"
+                >
+                    Modern web design, multi-file architectures,
+                    and hosting solutions.
+                </p>
+
+            </a>
+
+
+            <!-- XSUS GAME -->
+
+            <a
+                href="game.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl
+                border border-slate-800
+                hover:border-purple-500/40
+                transition-all space-y-4 group block"
+            >
+
+                <div
+                    class="w-12 h-12 rounded-xl
+                    bg-purple-500/10 border border-purple-500/30
+                    flex items-center justify-center
+                    text-purple-400 group-hover:scale-110
+                    transition-transform"
+                >
+                    <i
+                        data-lucide="gamepad-2"
+                        class="w-6 h-6"
+                        aria-hidden="true"
+                    ></i>
+                </div>
+
+                <h3 class="text-xl font-bold text-white">
+                    XSUS Game
+                </h3>
+
+                <p
+                    data-i18n="cardGame"
+                    class="text-slate-400 text-sm leading-relaxed"
+                >
+                    Interactive browser gaming experiences
+                    and physics engines.
+                </p>
+
+            </a>
+
+
+            <!-- XSUS LOGO -->
+
+            <a
+                href="logo.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl
+                border border-slate-800
+                hover:border-pink-500/40
+                transition-all space-y-4 group block"
+            >
+
+                <div
+                    class="w-12 h-12 rounded-xl
+                    bg-pink-500/10 border border-pink-500/30
+                    flex items-center justify-center
+                    text-pink-400 group-hover:scale-110
+                    transition-transform"
+                >
+                    <i
+                        data-lucide="palette"
+                        class="w-6 h-6"
+                        aria-hidden="true"
+                    ></i>
+                </div>
+
+                <h3 class="text-xl font-bold text-white">
+                    XSUS Logo
+                </h3>
+
+                <p
+                    data-i18n="cardLogo"
+                    class="text-slate-400 text-sm leading-relaxed"
+                >
+                    Brand identity, vector graphics,
+                    and professional logo design services.
+                </p>
+
+            </a>
+
+
+            <!-- XSUS DOMAIN -->
+
+            <a
+                href="domain.html"
+                class="glass-panel p-5 sm:p-6 rounded-2xl
+                border border-slate-800
+                hover:border-teal-500/40
+                transition-all space-y-4 group block"
+            >
+
+                <div
+                    class="w-12 h-12 rounded-xl
+                    bg-teal-500/10 border border-teal-500/30
+                    flex items-center justify-center
+                    text-teal-400 group-hover:scale-110
+                    transition-transform"
+                >
+                    <i
+                        data-lucide="server"
+                        class="w-6 h-6"
+                        aria-hidden="true"
+                    ></i>
+                </div>
+
+                <h3 class="text-xl font-bold text-white">
+                    XSUS Domain
+                </h3>
+
+                <p
+                    data-i18n="cardDomain"
+                    class="text-slate-400 text-sm leading-relaxed"
+                >
+                    Domain management, DNS routing,
+                    and secure web configuration.
+                </p>
+
+            </a>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <footer
+        class="relative z-10 glass-panel border-t
+        border-slate-800/80 mt-12 sm:mt-16
+        py-8 text-center"
+    >
+
+        <p
+            class="text-sm font-semibold tracking-widest
+            text-cyan-400 mb-2"
+        >
+            XSUS STUDIO
+        </p>
+
+        <p
+            class="text-xs tracking-[0.25em]
+            text-slate-400 mb-4"
+        >
+            THE X IDENTITY
+        </p>
+
+        <span
+            data-i18n="footer"
+            class="text-xs text-slate-500"
+        >
+            © 2026 XSUS Studio. All rights reserved.
+        </span>
+
+    </footer>
+
+
+    <!-- =====================================================
+         ACCESSIBLE NOTIFICATIONS
+         ===================================================== -->
+
+    <div
+        id="siteNotice"
+        class="hidden fixed bottom-4 left-4 right-4
+        z-[100] max-w-lg mx-auto p-4 rounded-xl
+        border border-slate-700 bg-slate-900
+        text-white text-sm"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+
+    <!-- =====================================================
+         EXISTING APPLICATION LOGIC
+         ===================================================== -->
+
+    <script type="module" src="script.js"></script>
+
+
+    <!-- =====================================================
+         LANGUAGE + SUPABASE AUTHENTICATION
+         ===================================================== -->
+
+    <script type="module">
+
+        import {
+            createClient
+        } from "https://esm.sh/@supabase/supabase-js@2";
+
+
+        /* =================================================
+           SUPABASE CONFIGURATION
+           ================================================= */
+
+        const SUPABASE_URL =
+            "https://rdcwqjsmzklktfccebfs.supabase.co";
+
+        const SUPABASE_PUBLISHABLE_KEY =
+            "sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr";
+
+        const supabase = createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY,
+            {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
+                }
+            }
+        );
+
+
+        /* =================================================
+           TRANSLATIONS
+           ================================================= */
+
+        const translations = {
+
+            /* ---------------------------------------------
+               ENGLISH
+               --------------------------------------------- */
+
+            en: {
+
+                badge:
+                    "Official Hybrid Intelligence Platform",
+
+                heroBefore:
+                    "The most powerful digital tools in a",
 
-    box-shadow:
-        0 0 18px rgba(96, 165, 250, 0.12);
-}
+                heroHighlight:
+                    "Single Studio",
 
-/* XSUS WEB — Indigo */
+                subtitle:
+                    "Explore our independent modules, designed for performance and specialized workflows.",
 
-.xsus-nav-web:hover {
-    color: #a5b4fc;
 
-    border-color: rgba(129, 140, 248, 0.65);
+                navAI: "Xsus AI",
+                navApp: "Xsus App",
+                navWeb: "Xsus Web",
+                navGame: "Xsus Game",
+                navLogo: "Xsus Logo",
+                navDomain: "Xsus Domain",
 
-    box-shadow:
-        0 0 18px rgba(129, 140, 248, 0.12);
-}
 
-/* XSUS GAME — Purple */
+                cardAI:
+                    "Smart assistant for text generation, video scripts, analysis, and coding.",
 
-.xsus-nav-game:hover {
-    color: #c084fc;
+                cardApp:
+                    "Mobile and web application builder, live mockups, and theme customization.",
 
-    border-color: rgba(192, 132, 252, 0.65);
+                cardWeb:
+                    "Modern web design, multi-file architectures, and hosting solutions.",
 
-    box-shadow:
-        0 0 18px rgba(192, 132, 252, 0.12);
-}
+                cardGame:
+                    "Interactive browser gaming experiences and physics engines.",
 
-/* XSUS LOGO — Pink */
+                cardLogo:
+                    "Brand identity, vector graphics, and professional logo design services.",
 
-.xsus-nav-logo:hover {
-    color: #f472b6;
+                cardDomain:
+                    "Domain management, DNS routing, and secure web configuration.",
 
-    border-color: rgba(244, 114, 182, 0.65);
 
-    box-shadow:
-        0 0 18px rgba(244, 114, 182, 0.12);
-}
+                footer:
+                    "© 2026 XSUS Studio. All rights reserved.",
 
-/* XSUS DOMAIN — Teal */
 
-.xsus-nav-domain:hover {
-    color: #5eead4;
+                login: "Login",
+                signup: "Sign Up",
+                logout: "Logout",
 
-    border-color: rgba(94, 234, 212, 0.65);
 
-    box-shadow:
-        0 0 18px rgba(94, 234, 212, 0.12);
-}
+                signedOut:
+                    "You have signed out.",
 
+                logoutError:
+                    "Could not sign out."
 
-/* ==========================================================
-   6. MAIN CONTENT AND HERO
-   ========================================================== */
+            },
 
-main {
-    position: relative;
-    z-index: 1;
-}
 
-main section {
-    min-width: 0;
-}
+            /* ---------------------------------------------
+               FRENCH
+               --------------------------------------------- */
 
-main h2 {
-    overflow-wrap: anywhere;
-}
+            fr: {
 
-main p {
-    overflow-wrap: break-word;
-}
+                badge:
+                    "Plateforme officielle d’intelligence hybride",
 
-main .gradient-text {
-    padding-bottom: 0.08em;
-}
+                heroBefore:
+                    "Les outils numériques les plus puissants réunis dans un",
 
-main section[aria-label="XSUS Studio products"] {
-    align-items: stretch;
-}
+                heroHighlight:
+                    "Studio unique",
 
+                subtitle:
+                    "Découvrez nos modules indépendants, conçus pour la performance et des flux de travail spécialisés.",
 
-/* ==========================================================
-   7. PRODUCT CARDS
-   ========================================================== */
 
-main a.glass-panel {
-    position: relative;
+                navAI: "Xsus AI",
+                navApp: "Xsus App",
+                navWeb: "Xsus Web",
+                navGame: "Xsus Game",
+                navLogo: "Xsus Logo",
+                navDomain: "Xsus Domain",
 
-    min-width: 0;
 
-    overflow: hidden;
+                cardAI:
+                    "Assistant intelligent pour la rédaction, les scripts vidéo, l’analyse et le développement.",
 
-    background: rgba(13, 19, 34, 0.72);
+                cardApp:
+                    "Création d’applications mobiles et web, aperçus en direct et personnalisation des thèmes.",
 
-    border-color: rgba(148, 163, 184, 0.17);
+                cardWeb:
+                    "Conception web moderne, architectures multi-fichiers et solutions d’hébergement.",
 
-    text-decoration: none;
+                cardGame:
+                    "Jeux interactifs dans le navigateur et moteurs physiques.",
 
-    transition:
-        background 0.25s ease,
-        border-color 0.25s ease,
-        box-shadow 0.25s ease,
-        transform 0.25s ease;
-}
+                cardLogo:
+                    "Identité de marque, graphisme vectoriel et création professionnelle de logos.",
 
-main a.glass-panel:hover {
-    background: rgba(17, 25, 43, 0.92);
+                cardDomain:
+                    "Gestion de domaines, routage DNS et configuration web sécurisée.",
 
-    transform: translateY(-4px);
-}
 
-main a.glass-panel:focus-visible {
-    outline: 2px solid var(--xsus-cyan);
-    outline-offset: 4px;
-}
+                footer:
+                    "© 2026 XSUS Studio. Tous droits réservés.",
 
-main a.glass-panel h3 {
-    color: #ffffff;
-    transition: color 0.2s ease;
-}
 
-main a.glass-panel p {
-    color: #94a3b8;
-    line-height: 1.75;
-}
+                login: "Connexion",
+                signup: "Inscription",
+                logout: "Déconnexion",
 
-/* AI card */
 
-main a.glass-panel:has(.text-cyan-400):hover {
-    border-color: rgba(34, 211, 238, 0.4);
+                signedOut:
+                    "Vous êtes déconnecté.",
 
-    box-shadow:
-        0 12px 35px rgba(34, 211, 238, 0.06);
-}
+                logoutError:
+                    "Impossible de vous déconnecter."
 
-/* App card */
+            },
 
-main a.glass-panel:has(.text-blue-400):hover {
-    border-color: rgba(96, 165, 250, 0.4);
 
-    box-shadow:
-        0 12px 35px rgba(96, 165, 250, 0.06);
-}
+            /* ---------------------------------------------
+               ALBANIAN
+               --------------------------------------------- */
 
-/* Web card */
+            sq: {
 
-main a.glass-panel:has(.text-indigo-400):hover {
-    border-color: rgba(129, 140, 248, 0.4);
+                badge:
+                    "Platforma zyrtare e inteligjencës hibride",
 
-    box-shadow:
-        0 12px 35px rgba(129, 140, 248, 0.06);
-}
+                heroBefore:
+                    "Mjetet dixhitale më të fuqishme në një",
 
-/* Game card */
+                heroHighlight:
+                    "Studio të vetme",
 
-main a.glass-panel:has(.text-purple-400):hover {
-    border-color: rgba(192, 132, 252, 0.4);
+                subtitle:
+                    "Eksploro modulet tona të pavarura, të krijuara për performancë dhe procese të specializuara.",
 
-    box-shadow:
-        0 12px 35px rgba(192, 132, 252, 0.06);
-}
 
-/* Logo card */
+                navAI: "Xsus AI",
+                navApp: "Xsus App",
+                navWeb: "Xsus Web",
+                navGame: "Xsus Game",
+                navLogo: "Xsus Logo",
+                navDomain: "Xsus Domain",
 
-main a.glass-panel:has(.text-pink-400):hover {
-    border-color: rgba(244, 114, 182, 0.4);
 
-    box-shadow:
-        0 12px 35px rgba(244, 114, 182, 0.06);
-}
+                cardAI:
+                    "Asistent inteligjent për krijimin e teksteve, skenarëve video, analizave dhe programimit.",
 
-/* Domain card */
+                cardApp:
+                    "Krijues aplikacionesh për celular dhe web, pamje paraprake dhe personalizim të temave.",
 
-main a.glass-panel:has(.text-teal-400):hover {
-    border-color: rgba(45, 212, 191, 0.4);
+                cardWeb:
+                    "Dizajn modern web, arkitektura me shumë skedarë dhe zgjidhje për hostim.",
 
-    box-shadow:
-        0 12px 35px rgba(45, 212, 191, 0.06);
-}
+                cardGame:
+                    "Përvoja interaktive lojërash në shfletues dhe motorë fizikë.",
 
+                cardLogo:
+                    "Identitet marke, grafika vektoriale dhe shërbime profesionale për dizajn logos.",
 
-/* ==========================================================
-   8. BUTTONS AND FORM CONTROLS
-   ========================================================== */
+                cardDomain:
+                    "Menaxhim domenesh, drejtim DNS dhe konfigurim i sigurt i pranisë në web.",
 
-button,
-input,
-textarea,
-select {
-    max-width: 100%;
-}
 
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-    outline: 2px solid rgba(0, 242, 254, 0.8);
-    outline-offset: 2px;
-}
+                footer:
+                    "© 2026 XSUS Studio. Të gjitha të drejtat e rezervuara.",
 
-input,
-textarea,
-select {
-    color: #f8fafc;
-}
 
-input::placeholder,
-textarea::placeholder {
-    color: #64748b;
-    opacity: 1;
-}
+                login: "Hyr",
+                signup: "Regjistrohu",
+                logout: "Dil",
 
 
-/* ==========================================================
-   9. CHAT INPUT AREA
-   Rules are scoped to chat interfaces only
-   ========================================================== */
+                signedOut:
+                    "Dole nga llogaria.",
 
-.chat-input-wrapper,
-.input-container,
-footer.chat-footer {
-    position: sticky;
+                logoutError:
+                    "Nuk u arrit dalja nga llogaria."
 
-    bottom: 0;
-    left: 0;
-    right: 0;
+            }
 
-    width: 100%;
-    box-sizing: border-box;
+        };
 
-    padding-top: 12px;
-    padding-left: 16px;
-    padding-right: 16px;
 
-    padding-bottom:
-        max(20px, env(safe-area-inset-bottom, 0px));
+        /* =================================================
+           LANGUAGE MANAGEMENT
+           ================================================= */
 
-    margin-bottom: 8px;
+        const languageSelect =
+            document.getElementById("languageSelect");
 
-    background: rgba(5, 8, 17, 0.95);
 
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+        function getLanguage() {
 
-    z-index: 40;
-}
+            try {
 
-/* Chat text area */
+                const saved =
+                    localStorage.getItem("xsus_language");
 
-.chat-input-wrapper textarea,
-.input-container textarea {
-    display: block;
+                return translations[saved] ? saved : "en";
 
-    width: 100%;
+            } catch (error) {
 
-    min-height: 44px;
-    max-height: 150px;
+                return "en";
 
-    padding: 12px 16px;
+            }
 
-    overflow-y: auto;
-    resize: none;
+        }
 
-    border: 1px solid rgba(0, 242, 254, 0.25);
-    border-radius: 14px;
 
-    background: rgba(13, 19, 34, 0.9);
+        function applyLanguage(language) {
 
-    color: #ffffff;
+            if (!translations[language]) {
+                language = "en";
+            }
 
-    font-size: 15px;
-    line-height: 1.5;
+            try {
 
-    outline: none;
+                localStorage.setItem(
+                    "xsus_language",
+                    language
+                );
 
-    box-sizing: border-box;
+            } catch (error) {
 
-    transition:
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
-}
+                // The page can still work without localStorage.
 
-.chat-input-wrapper textarea:focus,
-.input-container textarea:focus {
-    border-color: rgba(0, 242, 254, 0.6);
+            }
 
-    box-shadow:
-        0 0 15px rgba(0, 242, 254, 0.2);
-}
+            document.documentElement.lang = language;
 
+            document.querySelectorAll("[data-i18n]").forEach(
+                element => {
 
-/* ==========================================================
-   10. CUSTOM SCROLLBARS
-   ========================================================== */
+                    const key = element.dataset.i18n;
 
-.custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color:
-        rgba(0, 242, 254, 0.35)
-        rgba(5, 8, 17, 0.5);
-}
+                    const translated =
+                        translations[language][key];
 
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
+                    if (translated !== undefined) {
 
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(5, 8, 17, 0.5);
-}
+                        element.textContent = translated;
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(0, 242, 254, 0.25);
+                    }
 
-    border-radius: 6px;
-}
+                }
+            );
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 242, 254, 0.55);
-}
+            if (languageSelect) {
 
-/* Horizontal navigation scrollbar */
+                languageSelect.value = language;
 
-.xsus-main-nav {
-    scrollbar-width: thin;
-}
+            }
 
+        }
 
-/* ==========================================================
-   11. FOOTER
-   ========================================================== */
 
-body > footer:not(.chat-footer) {
-    position: relative;
-    z-index: 1;
-}
+        /*
+         * Preserve compatibility with existing application code.
+         */
 
-footer.glass-panel {
-    background: rgba(13, 19, 34, 0.72);
+        window.setLanguage = applyLanguage;
 
-    border-top-color: rgba(148, 163, 184, 0.14);
-}
 
-footer p,
-footer span {
-    overflow-wrap: break-word;
-}
+        if (languageSelect) {
 
+            languageSelect.addEventListener(
+                "change",
+                event => {
 
-/* ==========================================================
-   12. NOTIFICATIONS
-   ========================================================== */
+                    applyLanguage(event.target.value);
 
-#siteNotice {
-    position: fixed;
+                }
+            );
 
-    left: 16px;
-    right: 16px;
-    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+        }
 
-    z-index: 100;
 
-    width: calc(100% - 32px);
-    max-width: 480px;
+        /* =================================================
+           ACCOUNT ELEMENTS
+           ================================================= */
 
-    margin-left: auto;
-    margin-right: auto;
+        const authButtons =
+            document.getElementById("authButtons");
 
-    background: rgba(15, 23, 42, 0.97);
+        const userAccount =
+            document.getElementById("userAccount");
 
-    border: 1px solid rgba(148, 163, 184, 0.25);
-    border-radius: 14px;
+        const userEmail =
+            document.getElementById("userEmail");
 
-    color: #f8fafc;
+        const logoutButton =
+            document.getElementById("logoutButton");
 
-    box-shadow:
-        0 12px 40px rgba(0, 0, 0, 0.35);
-}
+        const siteNotice =
+            document.getElementById("siteNotice");
 
 
-/* ==========================================================
-   13. TABLETS
-   ========================================================== */
+        /* =================================================
+           NOTIFICATIONS
+           ================================================= */
 
-@media (max-width: 900px) {
-    .xsus-main-nav {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-    }
+        let noticeTimeout = null;
 
-    .xsus-nav-item {
-        min-height: 44px;
-        padding: 10px 6px;
-    }
-}
 
+        function showNotice(message) {
 
-/* ==========================================================
-   14. MOBILE PHONES
-   ========================================================== */
+            if (!siteNotice) {
+                return;
+            }
 
-@media (max-width: 640px) {
-    html {
-        scroll-padding-top: 80px;
-    }
+            siteNotice.textContent = message;
 
-    .glass-panel {
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
-    }
+            siteNotice.classList.remove("hidden");
 
-    header.glass-panel {
-        -webkit-backdrop-filter: blur(14px);
-        backdrop-filter: blur(14px);
-    }
+            if (noticeTimeout !== null) {
 
-    .xsus-main-nav {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+                window.clearTimeout(noticeTimeout);
 
-        gap: 7px;
+            }
 
-        margin-top: 14px;
-        padding-top: 6px;
-    }
+            noticeTimeout = window.setTimeout(() => {
 
-    .xsus-nav-item {
-        display: flex;
+                siteNotice.classList.add("hidden");
 
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+                noticeTimeout = null;
 
-        gap: 5px;
+            }, 4000);
 
-        min-height: 62px;
-        padding: 8px 3px;
+        }
 
-        border-radius: 10px;
 
-        font-size: 11px;
-        line-height: 1.3;
+        /* =================================================
+           ACCOUNT HEADER STATE
+           ================================================= */
 
-        white-space: normal;
-        overflow-wrap: anywhere;
-    }
+        function showSignedOut() {
 
-    .xsus-nav-item i,
-    .xsus-nav-item svg {
-        width: 19px;
-        height: 19px;
+            if (authButtons) {
 
-        flex-basis: 19px;
-    }
+                authButtons.classList.remove("hidden");
 
-    main a.glass-panel:hover {
-        transform: translateY(-2px);
-    }
+            }
 
-    .chat-input-wrapper,
-    .input-container,
-    footer.chat-footer {
-        padding-left: 12px;
-        padding-right: 12px;
+            if (userAccount) {
 
-        padding-bottom:
-            max(24px, env(safe-area-inset-bottom, 0px));
+                userAccount.classList.add("hidden");
+                userAccount.classList.remove("flex");
 
-        margin-bottom: 12px;
-    }
-}
+            }
 
+            if (userEmail) {
 
-/* ==========================================================
-   15. SMALL MOBILE SCREENS
-   ========================================================== */
+                userEmail.textContent = "";
 
-@media (max-width: 380px) {
-    .xsus-main-nav {
-        gap: 5px;
-    }
+            }
 
-    .xsus-nav-item {
-        min-height: 58px;
-        padding: 7px 2px;
+        }
 
-        font-size: 10px;
-    }
 
-    .xsus-nav-item i,
-    .xsus-nav-item svg {
-        width: 17px;
-        height: 17px;
+        function showSignedIn(user) {
 
-        flex-basis: 17px;
-    }
-}
+            if (authButtons) {
 
+                authButtons.classList.add("hidden");
 
-/* ==========================================================
-   16. LARGE SCREENS
-   ========================================================== */
+            }
 
-@media (min-width: 1440px) {
-    .xsus-main-nav {
-        gap: 12px;
-    }
+            if (userAccount) {
 
-    .xsus-nav-item {
-        min-height: 50px;
-        font-size: 14px;
-    }
-}
+                userAccount.classList.remove("hidden");
+                userAccount.classList.add("flex");
 
+            }
 
-/* ==========================================================
-   17. REDUCED MOTION ACCESSIBILITY
-   ========================================================== */
+            if (userEmail) {
 
-@media (prefers-reduced-motion: reduce) {
-    html {
-        scroll-behavior: auto;
-    }
+                userEmail.textContent =
+                    user?.email || "";
 
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
+            }
 
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
+        }
 
-    .xsus-nav-item:hover,
-    main a.glass-panel:hover {
-        transform: none;
-    }
-}
 
+        /* =================================================
+           SIGN OUT
+           ================================================= */
 
-/* ==========================================================
-   END OF XSUS STUDIO STYLESHEET
-   ========================================================== */
+        if (logoutButton) {
+
+            logoutButton.addEventListener(
+                "click",
+                async () => {
+
+                    logoutButton.disabled = true;
+
+                    try {
+
+                        const { error } =
+                            await supabase.auth.signOut();
+
+                        if (error) {
+
+                            showNotice(
+                                translations[getLanguage()].logoutError
+                            );
+
+                            return;
+
+                        }
+
+                        showSignedOut();
+
+                        showNotice(
+                            translations[getLanguage()].signedOut
+                        );
+
+                    } catch (error) {
+
+                        console.error(
+                            "XSUS sign-out error:",
+                            error
+                        );
+
+                        showNotice(
+                            translations[getLanguage()].logoutError
+                        );
+
+                    } finally {
+
+                        logoutButton.disabled = false;
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           AUTHENTICATION STATE CHANGES
+           ================================================= */
+
+        supabase.auth.onAuthStateChange(
+            (event, session) => {
+
+                if (session?.user) {
+
+                    showSignedIn(session.user);
+
+                } else {
+
+                    showSignedOut();
+
+                }
+
+            }
+        );
+
+
+        /* =================================================
+           INITIALIZE ACCOUNT HEADER
+           ================================================= */
+
+        async function initializeAccountHeader() {
+
+            applyLanguage(getLanguage());
+
+            try {
+
+                const {
+                    data,
+                    error
+                } = await supabase.auth.getSession();
+
+                if (error) {
+
+                    console.error(
+                        "XSUS session initialization error:",
+                        error
+                    );
+
+                    showSignedOut();
+
+                    return;
+
+                }
+
+                if (!data.session) {
+
+                    showSignedOut();
+
+                    return;
+
+                }
+
+                showSignedIn(data.session.user);
+
+            } catch (error) {
+
+                console.error(
+                    "XSUS account initialization error:",
+                    error
+                );
+
+                showSignedOut();
+
+            }
+
+        }
+
+
+        initializeAccountHeader();
+
+
+        /* =================================================
+           LUCIDE ICONS
+           ================================================= */
+
+        function initializeIcons() {
+
+            if (
+                window.lucide &&
+                typeof window.lucide.createIcons === "function"
+            ) {
+
+                window.lucide.createIcons();
+
+            }
+
+        }
+
+
+        initializeIcons();
+
+    </script>
+
+</body>
+</html>
