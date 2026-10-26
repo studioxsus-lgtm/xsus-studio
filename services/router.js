@@ -1,5 +1,6 @@
 // services/router.js
 // XSUS Studio — Smart Service Router
+// Version: 2.4.0
 
 import { studioCore } from './xsus-core.js';
 
@@ -64,7 +65,6 @@ function initializeCustomKnowledge() {
                 error
             );
 
-            // Lejojmë një përpjekje tjetër në kërkesën pasuese.
             customKnowledgeLoadPromise = null;
 
             return null;
@@ -76,17 +76,18 @@ function initializeCustomKnowledge() {
         );
 
         customKnowledgeLoadPromise = null;
+
         return Promise.resolve(null);
     }
 
     return customKnowledgeLoadPromise;
 }
 
-// Fillon ngarkimin pa bllokuar importimin e modulit.
+// Ngarkimi fillestar pa bllokuar importimin.
 void initializeCustomKnowledge();
 
 // -------------------------------------------------------------
-// NDIHMËS: NORMALIZIMI I TEKSTIT
+// NORMALIZIMI I TEKSTIT
 // -------------------------------------------------------------
 
 function normalizeText(value) {
@@ -112,19 +113,25 @@ function includesAny(text, keywords) {
 }
 
 function resolveLanguage(lang) {
-    if (
-        typeof lang === 'string' &&
-        SUPPORTED_LANGUAGES.has(lang.toLowerCase())
-    ) {
-        return lang.toLowerCase();
+    if (typeof lang === 'string') {
+        const normalized = lang.toLowerCase().trim();
+
+        if (SUPPORTED_LANGUAGES.has(normalized)) {
+            return normalized;
+        }
     }
 
     return DEFAULT_LANGUAGE;
 }
 
 function getLocalizedText(lang, sq, en, fr) {
-    if (lang === 'fr') return fr;
-    if (lang === 'en') return en;
+    if (lang === 'fr') {
+        return fr;
+    }
+
+    if (lang === 'en') {
+        return en;
+    }
 
     return sq;
 }
@@ -162,7 +169,6 @@ function generateSecurePassword(length = 14) {
 
     let password = '';
 
-    // Përzgjedhja me refuzim shmang modulo bias.
     const limit =
         Math.floor(256 / PASSWORD_CHARACTERS.length) *
         PASSWORD_CHARACTERS.length;
@@ -179,10 +185,9 @@ function generateSecurePassword(length = 14) {
                 continue;
             }
 
-            password +=
-                PASSWORD_CHARACTERS[
-                    value % PASSWORD_CHARACTERS.length
-                ];
+            password += PASSWORD_CHARACTERS[
+                value % PASSWORD_CHARACTERS.length
+            ];
 
             if (password.length === length) {
                 break;
@@ -194,7 +199,7 @@ function generateSecurePassword(length = 14) {
 }
 
 // -------------------------------------------------------------
-// UTILITET: NGJYRAT
+// NGJYRA TË RASTËSISHME
 // -------------------------------------------------------------
 
 function generateRandomHexColor() {
@@ -218,7 +223,6 @@ function generateRandomHexColor() {
         );
     }
 
-    // Ngjyra nuk është sekret; fallback-i këtu është i pranueshëm.
     const value = Math.floor(
         Math.random() * 0x1000000
     );
@@ -541,17 +545,12 @@ function detectActiveLanguage(userQuery, requestedLang, analysis) {
     const normalized = normalizeText(userQuery);
 
     const albanianMarkers = [
-        'më jep',
         'me jep',
         'ngjyr',
-        'fjalëkalim',
         'fjalekalim',
-        'çfarë',
         'cfare',
-        'përshëndetje',
         'pershendetje',
         'shpjego',
-        'dua të',
         'dua te'
     ];
 
@@ -609,7 +608,6 @@ export async function smartRouter(
     let albanianAnalysis = null;
     let grammarContext = '';
 
-    // Analiza gramatikore është ndihmëse, jo kusht për përgjigjen.
     try {
         albanianAnalysis = analyzeAlbanianGrammar(query);
 
@@ -649,6 +647,29 @@ export async function smartRouter(
     );
 
     // ---------------------------------------------------------
+    // MOTI — KONTROLLI PARA XSUS CORE
+    // ---------------------------------------------------------
+
+    try {
+        const weatherAnswer = await checkWeather(
+            query,
+            activeLang
+        );
+
+        if (
+            typeof weatherAnswer === 'string' &&
+            weatherAnswer.trim()
+        ) {
+            return weatherAnswer;
+        }
+    } catch (error) {
+        console.warn(
+            'Gabim te shërbimi i motit:',
+            error
+        );
+    }
+
+    // ---------------------------------------------------------
     // UTILITET: NGJYRAT
     // ---------------------------------------------------------
 
@@ -668,7 +689,6 @@ export async function smartRouter(
         ) ||
         (
             (
-                lowerQuery.includes('më jep') ||
                 lowerQuery.includes('me jep')
             ) &&
             lowerQuery.includes('rast')
@@ -690,15 +710,13 @@ export async function smartRouter(
     // ---------------------------------------------------------
 
     const passwordKeywords = [
-        'fjalëkalim',
         'fjalekalim',
         'fjalikalim',
         'password',
         'generate a password',
         'create a password',
         'mot de passe',
-        'generer un mot de passe',
-        'générer un mot de passe'
+        'generer un mot de passe'
     ];
 
     if (
@@ -733,7 +751,7 @@ export async function smartRouter(
     }
 
     // ---------------------------------------------------------
-    // BËRTHAMA QENDRORE
+    // XSUS CORE
     // ---------------------------------------------------------
 
     try {
@@ -777,7 +795,7 @@ export async function smartRouter(
     }
 
     // ---------------------------------------------------------
-    // KNOWLEDGE ISLAMIKE
+    // NJOHURI ISLAMIKE
     // ---------------------------------------------------------
 
     try {
@@ -799,7 +817,6 @@ export async function smartRouter(
 
     const specializedServices = [
         ['sports', checkSports],
-        ['weather', checkWeather],
         ['image generation', checkImageGeneration],
         ['QR code', checkQRCode],
         ['math', checkMath]
