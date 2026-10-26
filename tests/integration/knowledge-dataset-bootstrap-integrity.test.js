@@ -224,7 +224,7 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
         storageAdapter
       })
     ).rejects.toThrow(
-      "Rikthimi i dataset-eve të XSUS AI dështoi."
+      /Rikthimi i dataset-eve të XSUS AI dështoi/
     );
   });
 
@@ -249,11 +249,6 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
         sourceName
       })
     ).rejects.toThrow();
-
-    // Ky test kontrollon që bootstrap-i nuk ka arritur
-    // te faza e regjistrimit të integrimit.
-    // Verifikimi i drejtpërdrejtë i Knowledge Service
-    // i përket testit të integrimit të dataset-it.
   });
 
   test("save() pas mbylljes refuzohet", async () => {
@@ -274,6 +269,7 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
     await writeFile(
       filePath,
       JSON.stringify({
+        formatVersion: "1.0.0",
         datasets: []
       }),
       "utf8"
@@ -284,6 +280,10 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
     });
 
     expect(instance.success).toBe(true);
+    expect(instance.restoration.success).toBe(true);
+    expect(instance.restoration.restored).toBe(true);
+    expect(instance.restoration.datasetCount).toBe(0);
+    expect(instance.restoration.datasetIds).toEqual([]);
     expect(instance.registry.listDatasets()).toEqual([]);
   });
 });
