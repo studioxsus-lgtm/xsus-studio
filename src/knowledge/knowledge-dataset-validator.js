@@ -1,10 +1,17 @@
-
 /**
  * XSUS AI — Knowledge Dataset Validator
  * Version: 1.0.0
  *
- * Validon dataset-et përpara integrimit në Knowledge Service.
- * Ripërdor standardin ekzistues Knowledge Entry.
+ * Përgjegjësitë:
+ * - Validimi i dataset-eve përpara integrimit.
+ * - Ripërdorimi i standardit ekzistues Knowledge Entry.
+ * - Kontrolli i ID-ve të përsëritura.
+ * - Refuzimi i dataset-eve me hyrje të pavlefshme.
+ * - Kthimi i rezultateve dhe gabimeve të strukturuara.
+ *
+ * Parimi:
+ * Nëse një hyrje është e pavlefshme, dataset-i i plotë
+ * refuzohet. Hyrjet origjinale nuk modifikohen.
  */
 
 import {
@@ -21,21 +28,35 @@ function isPlainObject(value) {
     return false;
   }
 
-  const prototype = Object.getPrototypeOf(value);
+  try {
+    const prototype = Object.getPrototypeOf(value);
 
-  return (
-    prototype === Object.prototype ||
-    prototype === null
-  );
+    return (
+      prototype === Object.prototype ||
+      prototype === null
+    );
+  } catch {
+    return false;
+  }
 }
 
 function normalizeId(value) {
-  return typeof value === "string"
-    ? value.normalize("NFC").trim()
-    : "";
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  try {
+    return value.normalize("NFC").trim();
+  } catch {
+    return "";
+  }
 }
 
-function createMetadata(totalEntries, validEntries, invalidEntries) {
+function createMetadata(
+  totalEntries,
+  validEntries,
+  invalidEntries
+) {
   return {
     engine: ENGINE_NAME,
     version: ENGINE_VERSION,
@@ -46,8 +67,19 @@ function createMetadata(totalEntries, validEntries, invalidEntries) {
   };
 }
 
-function createInvalidResult(input, errors, validEntries = 0) {
-  const totalEntries = Array.isArray(input) ? input.length : 0;
+function createInvalidResult(
+  input,
+  errors,
+  validEntries = 0
+) {
+  const totalEntries = Array.isArray(input)
+    ? input.length
+    : 0;
+
+  const safeValidEntries = Math.max(
+    0,
+    Math.min(validEntries, totalEntries)
+  );
 
   return {
     valid: false,
@@ -55,27 +87,48 @@ function createInvalidResult(input, errors, validEntries = 0) {
     errors,
     metadata: createMetadata(
       totalEntries,
-      validEntries,
-      totalEntries - validEntries
+      safeValidEntries,
+      totalEntries - safeValidEntries
     )
   };
 }
 
+function createEntryError(index, id, message) {
+  return {
+    index,
+    id: id || null,
+    message
+  };
+}
+
 /**
- * Kontrollon dataset-in pa hedhur gabime te thirrësi.
+ * Validon një dataset pa lejuar pranimin e pjesshëm.
  *
- * Nëse qoftë edhe një hyrje është e pavlefshme,
- * koleksioni kthehet null për të parandaluar
- * pranimin e pjesshëm të dataset-it.
+ * Rezultati:
+ * {
+ *   valid: boolean,
+ *   collection: object | null,
+ *   errors: Array,
+ *   metadata: object
+ * }
+ *
+ * validEntries:
+ * Numri i hyrjeve që kalojnë validimin individual
+ * dhe kontrollin e identifikuesve të përsëritur.
+ *
+ * invalidEntries:
+ * Numri i hyrjeve që nuk përfshihen në këtë grup.
+ *
+ * Ky funksion nuk modifikon hyrjet origjinale.
  */
 export function validateKnowledgeDataset(input) {
   if (!Array.isArray(input)) {
     return createInvalidResult(input, [
-      {
-        index: null,
-        id: null,
-        message: "Dataset-i i njohurive duhet të jetë një varg."
-      }
+      createEntryError(
+        null,
+        null,
+        "Dataset-i i njohurive duhet të jetë një varg."
+      )
     ]);
   }
 
@@ -84,45 +137,102 @@ export function validateKnowledgeDataset(input) {
   const normalizedEntries = [];
 
   for (let index = 0; index < input.length; index += 1) {
-    const entry = input[index];
+    let entry;
+    let id = "";
 
-    if (!isPlainObject(entry)) {
-      errors.push({
-        index,
-        id: null,
-        message: "Hyrja e dataset-it duhet të jetë objekt i thjeshtë."
-      });
+    try {
+      entry = input[index];
 
-      continue;
-    }
+      if (!isPlainObject(entry)) {
+        errors.push(
+          createEntryError(
+            index,
+            null,
+            "Hyrja e dataset-it duhet të jetë objekt i thjeshtë."
+          )
+        );
 
-    const id = normalizeId(entry.id);
-    const validation = validateKnowledgeEntry(entry);
-
-    if (!validation.valid) {
-      for (const message of validation.errors) {
-        errors.push({
-          index,
-          id: id || null,
-          message
-        });
+        continue;
       }
 
-      continue;
+      id = normalizeId(entry.id);
+
+      const validation = validateKnowledgeEntry(entry);
+
+      if (
+        !validation ||
+        typeof validation.valid !== "boolean"
+      ) {
+        errors.push(
+          createEntryError(
+            index,
+            id,
+            "Validuesi i hyrjes ktheu një rezultat të pavlefshëm."
+          )
+        );
+
+        continue;
+      }
+
+      if (!validation.valid) {
+        const validationErrors = Array.isArray(
+          validation.errors
+        )
+          ? validation.errors
+          : ["Hyrja nuk kaloi validimin."];
+
+        for (const message of validationErrors) {
+          errors.push(
+            createEntryError(
+              index,
+              id,
+              typeof message === "string"
+                ? message
+                : "Hyrja përmban një gabim validimi."
+            )
+          );
+        }
+
+        continue;
+      }
+
+      if (!id) {
+        errors.push(
+          createEntryError(
+            index,
+            null,
+            "Hyrja duhet të ketë një ID të vlefshme."
+          )
+        );
+
+        continue;
+      }
+
+      if (seenIds.has(id)) {
+        errors.push(
+          createEntryError(
+            index,
+            id,
+            `ID e përsëritur në dataset: "${id}".`
+          )
+        );
+
+        continue;
+      }
+
+      seenIds.add(id);
+      normalizedEntries.push(entry);
+    } catch (error) {
+      errors.push(
+        createEntryError(
+          index,
+          id,
+          error instanceof Error
+            ? `Gabim gjatë validimit të hyrjes: ${error.message}`
+            : "Ndodhi një gabim i panjohur gjatë validimit të hyrjes."
+        )
+      );
     }
-
-    if (seenIds.has(id)) {
-      errors.push({
-        index,
-        id,
-        message: `ID e përsëritur në dataset: "${id}".`
-      });
-
-      continue;
-    }
-
-    seenIds.add(id);
-    normalizedEntries.push(entry);
   }
 
   if (errors.length > 0) {
@@ -136,18 +246,23 @@ export function validateKnowledgeDataset(input) {
   let collection;
 
   try {
-    collection = createKnowledgeCollection(normalizedEntries);
+    collection = createKnowledgeCollection(
+      normalizedEntries
+    );
   } catch (error) {
-    return createInvalidResult(input, [
-      {
-        index: null,
-        id: null,
-        message:
+    return createInvalidResult(
+      input,
+      [
+        createEntryError(
+          null,
+          null,
           error instanceof Error
             ? error.message
             : "Dataset-i nuk mund të krijohet."
-      }
-    ]);
+        )
+      ],
+      0
+    );
   }
 
   return {
