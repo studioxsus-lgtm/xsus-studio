@@ -1,17 +1,18 @@
 /**
  * XSUS AI Core — Knowledge Dataset Pipeline
- * Version: 1.4.0
+ * Version: 1.3.0
  *
  * Përmirësime:
- * - Serializim i operacioneve që ndryshojnë gjendjen.
- * - Rikthim i dataset-eve pas dështimit të persistencës.
- * - Gjurmim i konsistencës së persistencës.
- * - Raportim i gabimeve të rikuperimit.
- * - Metadata të standardizuara.
- * - Mbështetje për storageAdapter dhe sourceName.
- * - Mbyllje e sigurt me një Promise të përbashkët.
- * - Përfundim i operacioneve të pranuara para mbylljes.
- * - Ruajtje e API-së publike ekzistuese.
+ * - Serializimi i operacioneve që ndryshojnë gjendjen.
+ * - Rikthimi i dataset-eve kur ruajtja dështon.
+ * - Gjurmimi i konsistencës së persistencës.
+ * - Raportimi i dështimeve të rikuperimit.
+ * - Metadata të sakta edhe për përgjigjet e gabimit.
+ * - Mbështetje për storageAdapter të injektuar për testim.
+ * - Mbyllje pas përfundimit të operacioneve të pranuara.
+ * - Mbyllje e njëkohshme me një Promise të përbashkët.
+ * - Mbështetje për sourceName të personalizuar.
+ * - Ruajtja e API-së publike ekzistuese.
  */
 
 import {
@@ -23,30 +24,7 @@ import {
 } from "./knowledge-dataset-search-adapter.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-pipeline";
-const ENGINE_VERSION = "1.4.0";
-
-const ERROR_MESSAGES = Object.freeze({
-  INVALID_FILE_PATH:
-    "filePath duhet të jetë një shteg i vlefshëm për ruajtjen e dataset-eve.",
-  CLOSED:
-    "Knowledge Dataset Pipeline është mbyllur ose po mbyllet.",
-  CLOSED_OPERATION:
-    "Knowledge Dataset Pipeline është mbyllur.",
-  SAVE_FAILED:
-    "Ruajtja e dataset-eve dështoi.",
-  ROLLBACK_FAILED:
-    "Rikthimi i storage-it dështoi.",
-  REGISTER_FAILED:
-    "Regjistrimi i dataset-it dështoi.",
-  REMOVE_FAILED:
-    "Heqja e dataset-it dështoi.",
-  RESTORE_FAILED:
-    "Rikthimi i dataset-it në memorie dështoi.",
-  DATASET_NOT_FOUND:
-    "Dataset-i nuk u gjet.",
-  INVALID_SEARCH_OPTIONS:
-    "Opsionet e kërkimit janë të pavlefshme."
-});
+const ENGINE_VERSION = "1.3.0";
 
 function isPlainObject(value) {
   if (
@@ -66,14 +44,12 @@ function isPlainObject(value) {
 }
 
 function getErrorMessage(error, fallback) {
-  return (
-    error instanceof Error && error.message
-      ? error.message
-      : fallback
-  );
+  return error instanceof Error && error.message
+    ? error.message
+    : fallback;
 }
 
-function createMetadata(extra = {}) {
+function createSuccessMetadata(extra = {}) {
   return {
     engine: ENGINE_NAME,
     version: ENGINE_VERSION,
@@ -91,7 +67,7 @@ function createError(message, extra = {}) {
     success: false,
     error: message,
     ...fields,
-    metadata: createMetadata(
+    metadata: createSuccessMetadata(
       isPlainObject(extraMetadata)
         ? extraMetadata
         : {}
@@ -108,7 +84,9 @@ export async function createKnowledgeDatasetPipeline({
     typeof filePath !== "string" ||
     !filePath.trim()
   ) {
-    throw new TypeError(ERROR_MESSAGES.INVALID_FILE_PATH);
+    throw new TypeError(
+      "filePath duhet të jetë një shteg i vlefshëm për ruajtjen e dataset-eve."
+    );
   }
 
   const bootstrapOptions = {
@@ -127,23 +105,6 @@ export async function createKnowledgeDatasetPipeline({
     bootstrapOptions
   );
 
-  if (
-    !bootstrap ||
-    !bootstrap.registry ||
-    typeof bootstrap.save !== "function" ||
-    typeof bootstrap.close !== "function"
-  ) {
-    try {
-      bootstrap?.close?.();
-    } catch {
-      // Ruajmë gabimin fillestar të inicializimit.
-    }
-
-    throw new Error(
-      "Inicializimi i Knowledge Dataset Pipeline dështoi."
-    );
-  }
-
   const registry = bootstrap.registry;
 
   let searchAdapter;
@@ -156,7 +117,7 @@ export async function createKnowledgeDatasetPipeline({
     try {
       await bootstrap.close();
     } catch {
-      // Ruajmë gabimin fillestar.
+      // Ruajmë gabimin fillestar të inicializimit.
     }
 
     throw error;
@@ -173,7 +134,9 @@ export async function createKnowledgeDatasetPipeline({
 
   function assertOpen() {
     if (closed || closing) {
-      throw new Error(ERROR_MESSAGES.CLOSED);
+      throw new Error(
+        "Knowledge Dataset Pipeline është mbyllur ose po mbyllet."
+      );
     }
   }
 
@@ -182,13 +145,15 @@ export async function createKnowledgeDatasetPipeline({
 
     const task = operationQueue.then(async () => {
       if (closed) {
-        throw new Error(ERROR_MESSAGES.CLOSED_OPERATION);
+        throw new Error(
+          "Knowledge Dataset Pipeline është mbyllur."
+        );
       }
 
       return operation();
     });
 
-    // Një dështim nuk e bllokon radhën.
+    // Dështimi i një operacioni nuk bllokon radhën.
     operationQueue = task.then(
       () => undefined,
       () => undefined
@@ -207,7 +172,7 @@ export async function createKnowledgeDatasetPipeline({
 
       lastPersistenceError = getErrorMessage(
         error,
-        ERROR_MESSAGES.SAVE_FAILED
+        "Ruajtja e dataset-eve dështoi."
       );
 
       throw error;
@@ -215,7 +180,8 @@ export async function createKnowledgeDatasetPipeline({
 
     if (result?.success !== true) {
       const error = new Error(
-        result?.error || ERROR_MESSAGES.SAVE_FAILED
+        result?.error ||
+        "Ruajtja e dataset-eve dështoi."
       );
 
       persistenceConsistent = false;
@@ -243,7 +209,7 @@ export async function createKnowledgeDatasetPipeline({
 
       lastPersistenceError = getErrorMessage(
         error,
-        ERROR_MESSAGES.ROLLBACK_FAILED
+        "Rikthimi i storage-it dështoi."
       );
 
       return {
@@ -251,14 +217,6 @@ export async function createKnowledgeDatasetPipeline({
         rollbackError: lastPersistenceError
       };
     }
-  }
-
-  function getPersistenceMetadata(extra = {}) {
-    return {
-      persistenceConsistent,
-      lastPersistenceError,
-      ...extra
-    };
   }
 
   async function registerDataset(datasetId, entries) {
@@ -272,11 +230,11 @@ export async function createKnowledgeDatasetPipeline({
         if (!registration.success) {
           return {
             ...registration,
-            metadata: createMetadata(
-              getPersistenceMetadata({
-                persisted: false
-              })
-            )
+            metadata: createSuccessMetadata({
+              persisted: false,
+              persistenceConsistent,
+              lastPersistenceError
+            })
           };
         }
 
@@ -287,7 +245,7 @@ export async function createKnowledgeDatasetPipeline({
             success: true,
             datasetId: registration.datasetId,
             dataset: registration.dataset,
-            metadata: createMetadata({
+            metadata: createSuccessMetadata({
               persisted: true,
               persistenceConsistent: true,
               lastPersistenceError: null
@@ -296,7 +254,7 @@ export async function createKnowledgeDatasetPipeline({
         } catch (error) {
           const originalError = getErrorMessage(
             error,
-            ERROR_MESSAGES.REGISTER_FAILED
+            "Regjistrimi i dataset-it dështoi."
           );
 
           let rollbackSucceeded = false;
@@ -314,7 +272,8 @@ export async function createKnowledgeDatasetPipeline({
               );
             }
 
-            const persistenceRollback = await persistRollback();
+            const persistenceRollback =
+              await persistRollback();
 
             rollbackSucceeded =
               persistenceRollback.rollbackSucceeded;
@@ -326,7 +285,7 @@ export async function createKnowledgeDatasetPipeline({
 
             rollbackError = getErrorMessage(
               rollbackFailure,
-              ERROR_MESSAGES.ROLLBACK_FAILED
+              "Rikthimi i storage-it dështoi."
             );
 
             lastPersistenceError = rollbackError;
@@ -336,9 +295,11 @@ export async function createKnowledgeDatasetPipeline({
             datasetId: registration.datasetId,
             rollbackSucceeded,
             rollbackError,
-            metadata: getPersistenceMetadata({
-              persisted: rollbackSucceeded
-            })
+            metadata: {
+              persisted: rollbackSucceeded,
+              persistenceConsistent,
+              lastPersistenceError
+            }
           });
         }
       });
@@ -346,13 +307,14 @@ export async function createKnowledgeDatasetPipeline({
       return createError(
         getErrorMessage(
           error,
-          ERROR_MESSAGES.REGISTER_FAILED
+          "Regjistrimi i dataset-it dështoi."
         ),
         {
           datasetId: null,
-          metadata: getPersistenceMetadata({
-            persisted: false
-          })
+          metadata: {
+            persistenceConsistent,
+            lastPersistenceError
+          }
         }
       );
     }
@@ -363,7 +325,7 @@ export async function createKnowledgeDatasetPipeline({
 
     if (!isPlainObject(options)) {
       return createError(
-        ERROR_MESSAGES.INVALID_SEARCH_OPTIONS,
+        "Opsionet e kërkimit janë të pavlefshme.",
         { results: [] }
       );
     }
@@ -392,13 +354,14 @@ export async function createKnowledgeDatasetPipeline({
 
         if (!existingDataset) {
           return createError(
-            ERROR_MESSAGES.DATASET_NOT_FOUND,
+            "Dataset-i nuk u gjet.",
             {
               datasetId,
               removed: false,
-              metadata: getPersistenceMetadata({
-                persisted: false
-              })
+              metadata: {
+                persistenceConsistent,
+                lastPersistenceError
+              }
             }
           );
         }
@@ -408,11 +371,10 @@ export async function createKnowledgeDatasetPipeline({
         if (!removal.success) {
           return {
             ...removal,
-            metadata: createMetadata(
-              getPersistenceMetadata({
-                persisted: false
-              })
-            )
+            metadata: createSuccessMetadata({
+              persistenceConsistent,
+              lastPersistenceError
+            })
           };
         }
 
@@ -423,7 +385,7 @@ export async function createKnowledgeDatasetPipeline({
             success: true,
             datasetId: removal.datasetId,
             removed: true,
-            metadata: createMetadata({
+            metadata: createSuccessMetadata({
               persisted: true,
               persistenceConsistent: true,
               lastPersistenceError: null
@@ -432,7 +394,7 @@ export async function createKnowledgeDatasetPipeline({
         } catch (error) {
           const originalError = getErrorMessage(
             error,
-            ERROR_MESSAGES.REMOVE_FAILED
+            "Heqja e dataset-it nuk mund të ruhej."
           );
 
           let rollbackSucceeded = false;
@@ -447,23 +409,20 @@ export async function createKnowledgeDatasetPipeline({
             if (!restoration.success) {
               throw new Error(
                 restoration.error ||
-                ERROR_MESSAGES.RESTORE_FAILED
+                "Rikthimi i dataset-it në memorie dështoi."
               );
             }
 
-            const persistenceRollback = await persistRollback();
+            const rollback = await persistRollback();
 
-            rollbackSucceeded =
-              persistenceRollback.rollbackSucceeded;
-
-            rollbackError =
-              persistenceRollback.rollbackError;
+            rollbackSucceeded = rollback.rollbackSucceeded;
+            rollbackError = rollback.rollbackError;
           } catch (rollbackFailure) {
             persistenceConsistent = false;
 
             rollbackError = getErrorMessage(
               rollbackFailure,
-              ERROR_MESSAGES.RESTORE_FAILED
+              "Rikthimi i dataset-it në memorie dështoi."
             );
 
             lastPersistenceError = rollbackError;
@@ -474,9 +433,11 @@ export async function createKnowledgeDatasetPipeline({
             removed: false,
             rollbackSucceeded,
             rollbackError,
-            metadata: getPersistenceMetadata({
-              persisted: rollbackSucceeded
-            })
+            metadata: {
+              persisted: rollbackSucceeded,
+              persistenceConsistent,
+              lastPersistenceError
+            }
           });
         }
       });
@@ -484,14 +445,15 @@ export async function createKnowledgeDatasetPipeline({
       return createError(
         getErrorMessage(
           error,
-          ERROR_MESSAGES.REMOVE_FAILED
+          "Heqja e dataset-it dështoi."
         ),
         {
           datasetId,
           removed: false,
-          metadata: getPersistenceMetadata({
-            persisted: false
-          })
+          metadata: {
+            persistenceConsistent,
+            lastPersistenceError
+          }
         }
       );
     }
@@ -505,7 +467,7 @@ export async function createKnowledgeDatasetPipeline({
         return {
           ...(isPlainObject(result) ? result : {}),
           success: true,
-          metadata: createMetadata({
+          metadata: createSuccessMetadata({
             ...(isPlainObject(result?.metadata)
               ? result.metadata
               : {}),
@@ -519,12 +481,14 @@ export async function createKnowledgeDatasetPipeline({
       return createError(
         getErrorMessage(
           error,
-          ERROR_MESSAGES.SAVE_FAILED
+          "Ruajtja e dataset-eve dështoi."
         ),
         {
-          metadata: getPersistenceMetadata({
-            persisted: false
-          })
+          metadata: {
+            persisted: false,
+            persistenceConsistent,
+            lastPersistenceError
+          }
         }
       );
     }
@@ -541,57 +505,35 @@ export async function createKnowledgeDatasetPipeline({
       serializedOperations: true,
       persistenceConsistent,
       lastPersistenceError,
-      closed,
-      closing
+      closed
     });
   }
 
   function close() {
-    if (closePromise) {
-      return closePromise;
-    }
-
+    // Pas përfundimit të mbylljes, thirrjet e tjera kthejnë false.
     if (closed) {
       return Promise.resolve(false);
     }
 
+    // Thirrjet që mbërrijnë gjatë të njëjtit proces
+    // mbylljeje presin të njëjtën Promise.
+    if (closePromise) {
+      return closePromise;
+    }
+
     closing = true;
 
-    // Të gjitha thirrjet e njëkohshme presin të njëjtën mbyllje.
     closePromise = (async () => {
-      let operationQueueError = null;
+      // Operacionet e pranuara më parë përfundojnë të parat.
+      await operationQueue;
 
-      try {
-        await operationQueue;
-      } catch (error) {
-        operationQueueError = error;
-      }
+      // bootstrap.close mund të jetë sinkron ose asinkron.
+      await bootstrap.close();
 
-      try {
-        await bootstrap.close();
-        closed = true;
+      closed = true;
+      closing = false;
 
-        return true;
-      } catch (error) {
-        // Pipeline mbetet në gjendje closing për të shmangur
-        // pranimin e operacioneve të reja pas një mbylljeje të pasigurt.
-        persistenceConsistent = false;
-
-        lastPersistenceError = getErrorMessage(
-          error,
-          "Mbyllja e Knowledge Dataset Pipeline dështoi."
-        );
-
-        throw error;
-      } finally {
-        if (closed) {
-          closing = false;
-        }
-
-        // operationQueue është e mbrojtur nga refuzimet.
-        // Variabla ruhet për diagnostikim nëse kërkohet më vonë.
-        void operationQueueError;
-      }
+      return true;
     })();
 
     return closePromise;
