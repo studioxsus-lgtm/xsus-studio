@@ -539,15 +539,21 @@ describe("XSUS AI Core — Response Quality Report", () => {
     expect(report.version).toBe(RESPONSE_QUALITY_REPORT_VERSION);
     expect(report.score).toBeNull();
     expect(report.sourceCount).toBe(0);
+
     expect(report.dimensions).toEqual({
       completeness: null,
       clarity: null,
       language: null,
       sources: null
     });
+
     expect(report.sources.available).toBe(false);
     expect(report.errors).toEqual([]);
-    expect(report.warnings).toEqual([]);
+
+    expect(report.warnings).toEqual([
+      "QUALITY_INPUT_CONTAINS_ERRORS"
+    ]);
+
     expect(report.recommendations).toEqual([]);
   });
 });
