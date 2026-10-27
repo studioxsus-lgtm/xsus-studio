@@ -1,7 +1,34 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi
+} from "vitest";
+
+import {
+  mkdtemp,
+  rm,
+  writeFile
+} from "node:fs/promises";
+
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+const {
+  registerIntegrationMock
+} = vi.hoisted(() => ({
+  registerIntegrationMock: vi.fn()
+}));
+
+vi.mock(
+  "../../src/knowledge/knowledge-dataset-integration.js",
+  () => ({
+    registerKnowledgeDatasetIntegration:
+      registerIntegrationMock
+  })
+);
 
 import {
   initializeKnowledgeDatasets
@@ -11,6 +38,15 @@ const activeBootstraps = [];
 const temporaryDirectories = [];
 
 describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    registerIntegrationMock.mockReturnValue({
+      success: true,
+      close: vi.fn(() => true)
+    });
+  });
+
   afterEach(async () => {
     for (const instance of activeBootstraps.splice(0)) {
       instance.close();
@@ -37,7 +73,8 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
   }
 
   async function createBootstrap(options = {}) {
-    const filePath = options.filePath ?? await createTemporaryFilePath();
+    const filePath =
+      options.filePath ?? await createTemporaryFilePath();
 
     const instance = await initializeKnowledgeDatasets({
       ...options,
@@ -46,14 +83,18 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
 
     activeBootstraps.push(instance);
 
-    return { instance, filePath };
+    return {
+      instance,
+      filePath
+    };
   }
 
   function createEntry(overrides = {}) {
     return {
       id: "bootstrap-entry-001",
       title: "Bootstrap Test Entry",
-      content: "This entry verifies knowledge dataset bootstrap integrity.",
+      content:
+        "This entry verifies knowledge dataset bootstrap integrity.",
       language: "en",
       domain: "general",
       topic: "bootstrap",
@@ -125,6 +166,8 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
         filePath: "   "
       })
     ).rejects.toThrow(TypeError);
+
+    expect(registerIntegrationMock).not.toHaveBeenCalled();
   });
 
   test("pranon adapter të vlefshëm dhe shënon mënyrën adapter", async () => {
@@ -141,6 +184,7 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
     });
 
     expect(storageAdapter.loadDatasets).toHaveBeenCalledTimes(1);
+    expect(registerIntegrationMock).toHaveBeenCalledTimes(1);
   });
 
   test("refuzon adapter që nuk përmban metodat e kërkuara", async () => {
@@ -160,10 +204,13 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
         }
       })
     ).rejects.toThrow(TypeError);
+
+    expect(registerIntegrationMock).not.toHaveBeenCalled();
   });
 
   test("ruan dataset-in përmes bootstrap.save()", async () => {
     const storageAdapter = createStorageAdapter();
+
     const { instance } = await createBootstrap({
       storageAdapter
     });
@@ -178,8 +225,18 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
     const saveResult = await instance.save();
 
     expect(saveResult.success).toBe(true);
-    expect(storageAdapter.saveDatasets).toHaveBeenCalled();
-    expect(storageAdapter.getSavedDatasets()).toHaveLength(1);
+    expect(storageAdapter.saveDatasets).toHaveBeenCalledTimes(1);
+
+    const savedDatasets = storageAdapter.getSavedDatasets();
+
+    expect(savedDatasets).toHaveLength(1);
+    expect(savedDatasets[0].id).toBe("bootstrap-save-dataset");
+    expect(savedDatasets[0].entries).toHaveLength(1);
+    expect(savedDatasets[0].entries[0]).toMatchObject({
+      id: "bootstrap-entry-001",
+      title: "Bootstrap Test Entry",
+      language: "en"
+    });
   });
 
   test("rikthen dataset-et ekzistuese nga adapteri", async () => {
@@ -205,6 +262,7 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
     ).not.toBeNull();
 
     expect(instance.restoration.success).toBe(true);
+    expect(storageAdapter.loadDatasets).toHaveBeenCalledTimes(1);
   });
 
   test("refuzon inicializimin kur rikthimi dështon", async () => {
@@ -226,21 +284,24 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
     ).rejects.toThrow(
       /Rikthimi i dataset-eve të XSUS AI dështoi/
     );
+
+    expect(storageAdapter.loadDatasets).toHaveBeenCalledTimes(1);
+    expect(registerIntegrationMock).not.toHaveBeenCalled();
   });
 
-  test("nuk regjistron integrim të vlefshëm pas dështimit të rikthimit", async () => {
+  test("nuk regjistron integrimin pas dështimit të rikthimit", async () => {
     const sourceName =
       "xsus-bootstrap-failure-isolation-test";
 
     const storageAdapter = {
-      loadDatasets: async () => ({
+      loadDatasets: vi.fn(async () => ({
         success: false,
         error: "Dështim i simuluar."
-      }),
+      })),
 
-      saveDatasets: async () => ({
+      saveDatasets: vi.fn(async () => ({
         success: true
-      })
+      }))
     };
 
     await expect(
@@ -248,7 +309,12 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Integrity", () => {
         storageAdapter,
         sourceName
       })
-    ).rejects.toThrow();
+    ).rejects.toThrow(
+      /Rikthimi i dataset-eve të XSUS AI dështoi/
+    );
+
+    expect(storageAdapter.loadDatasets).toHaveBeenCalledTimes(1);
+    expect(registerIntegrationMock).not.toHaveBeenCalled();
   });
 
   test("save() pas mbylljes refuzohet", async () => {
