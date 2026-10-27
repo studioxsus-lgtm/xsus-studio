@@ -1,5 +1,11 @@
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 const mocks = vi.hoisted(() => ({
   evaluateResponseQuality: vi.fn(),
@@ -22,6 +28,30 @@ vi.mock("../../src/core/response-quality-report.js", () => ({
 import {
   createResponseQualityPipeline,
 } from "../../src/core/response-quality-pipeline.js";
+
+/**
+ * Kontrollon kodin e gabimit pa supozuar
+ * se gabimet ruhen si vargje apo objekte.
+ */
+function containsErrorCode(value, expectedCode) {
+  if (value === expectedCode) {
+    return true;
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) =>
+      containsErrorCode(item, expectedCode)
+    );
+  }
+
+  if (value && typeof value === "object") {
+    return Object.values(value).some((item) =>
+      containsErrorCode(item, expectedCode)
+    );
+  }
+
+  return false;
+}
 
 describe("XSUS Response Quality Pipeline — Resilience", () => {
   beforeEach(() => {
@@ -53,14 +83,17 @@ describe("XSUS Response Quality Pipeline — Resilience", () => {
 
   it("ruan rezultatin kur verifikimi i burimeve dështon", () => {
     mocks.verifyResponseSources.mockImplementation(() => {
-      throw new Error("Simulated source verification failure");
+      throw new Error(
+        "Simulated source verification failure"
+      );
     });
 
     const pipeline = createResponseQualityPipeline();
 
     const result = pipeline.evaluate({
       query: "Çfarë është XSUS AI?",
-      answer: "XSUS AI është një sistem inteligjence artificiale.",
+      answer:
+        "XSUS AI është një sistem inteligjence artificiale.",
       language: "sq",
       sources: [
         {
@@ -74,19 +107,34 @@ describe("XSUS Response Quality Pipeline — Resilience", () => {
     expect(result.version).toBe("1.0.0");
     expect(result.quality).not.toBeNull();
     expect(result.sourceVerification).toBeNull();
-    expect(result.errors).toContain(
-      "SOURCE_VERIFICATION_FAILED",
-    );
+
+    expect(
+      containsErrorCode(
+        result.errors,
+        "SOURCE_VERIFICATION_FAILED"
+      )
+    ).toBe(true);
+
     expect(result.report).not.toBeNull();
 
-    expect(mocks.evaluateResponseQuality).toHaveBeenCalledTimes(1);
-    expect(mocks.verifyResponseSources).toHaveBeenCalledTimes(1);
-    expect(mocks.createResponseQualityReport).toHaveBeenCalledTimes(1);
+    expect(
+      mocks.evaluateResponseQuality
+    ).toHaveBeenCalledTimes(1);
+
+    expect(
+      mocks.verifyResponseSources
+    ).toHaveBeenCalledTimes(1);
+
+    expect(
+      mocks.createResponseQualityReport
+    ).toHaveBeenCalledTimes(1);
   });
 
   it("ruan verifikimin kur vlerësimi i cilësisë dështon", () => {
     mocks.evaluateResponseQuality.mockImplementation(() => {
-      throw new Error("Simulated quality evaluation failure");
+      throw new Error(
+        "Simulated quality evaluation failure"
+      );
     });
 
     const pipeline = createResponseQualityPipeline();
@@ -106,13 +154,26 @@ describe("XSUS Response Quality Pipeline — Resilience", () => {
 
     expect(result.quality).toBeNull();
     expect(result.sourceVerification).not.toBeNull();
-    expect(result.errors).toContain(
-      "QUALITY_EVALUATION_FAILED",
-    );
+
+    expect(
+      containsErrorCode(
+        result.errors,
+        "QUALITY_EVALUATION_FAILED"
+      )
+    ).toBe(true);
+
     expect(result.report).not.toBeNull();
+
+    expect(
+      mocks.verifyResponseSources
+    ).toHaveBeenCalledTimes(1);
+
+    expect(
+      mocks.createResponseQualityReport
+    ).toHaveBeenCalledTimes(1);
   });
 
-  it("regjistron gabimin e raportit pa ekspozuar mesazhin e brendshëm", () => {
+  it("regjistron dështimin e raportit pa ekspozuar mesazhin e brendshëm", () => {
     mocks.createResponseQualityReport.mockImplementation(() => {
       throw new Error("Internal report failure");
     });
@@ -126,12 +187,18 @@ describe("XSUS Response Quality Pipeline — Resilience", () => {
       sources: [],
     });
 
-    expect(result.errors).toContain(
-      "REPORT_CREATION_FAILED",
-    );
+    expect(
+      containsErrorCode(
+        result.errors,
+        "REPORT_CREATION_FAILED"
+      )
+    ).toBe(true);
 
-    expect(JSON.stringify(result)).not.toContain(
-      "Internal report failure",
-    );
+    expect(
+      JSON.stringify(result)
+    ).not.toContain("Internal report failure");
+
+    expect(result.quality).not.toBeNull();
+    expect(result.sourceVerification).not.toBeNull();
   });
 });
