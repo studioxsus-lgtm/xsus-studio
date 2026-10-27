@@ -1,3 +1,4 @@
+
 import { describe, expect, test } from "vitest";
 
 import {
@@ -472,5 +473,81 @@ describe("XSUS AI Core — Response Quality Report", () => {
     expect(() => createResponseQualityReport("invalid")).toThrow(TypeError);
     expect(() => createResponseQualityReport([])).toThrow(TypeError);
     expect(() => createResponseQualityReport(new Date())).toThrow(TypeError);
+  });
+
+  // Testet e reja — integriteti i raportit
+
+  test("nuk ndryshon hyrjet origjinale gjatë krijimit të raportit", () => {
+    const input = {
+      ...qualityResult,
+      dimensions: { ...qualityResult.dimensions },
+      errors: [" EMPTY_ANSWER "]
+    };
+
+    const verification = {
+      results: [
+        {
+          title: "  Burimi A  ",
+          valid: true,
+          verified: false,
+          trustEstablished: false,
+          errors: [" ERROR "]
+        }
+      ]
+    };
+
+    const originalInput = structuredClone(input);
+    const originalVerification = structuredClone(verification);
+
+    createResponseQualityReport(input, verification);
+
+    expect(input).toEqual(originalInput);
+    expect(verification).toEqual(originalVerification);
+  });
+
+  test("raportet e veçanta nuk ndajnë koleksionet publike", () => {
+    const first = createResponseQualityReport(qualityResult);
+    const second = createResponseQualityReport(qualityResult);
+
+    expect(first).not.toBe(second);
+    expect(first.dimensions).not.toBe(second.dimensions);
+    expect(first.errors).not.toBe(second.errors);
+    expect(first.warnings).not.toBe(second.warnings);
+    expect(first.recommendations).not.toBe(second.recommendations);
+    expect(first.sources).not.toBe(second.sources);
+    expect(first.sources.results).not.toBe(second.sources.results);
+  });
+
+  test("ruan kontratën publike kur mungojnë fushat opsionale", () => {
+    const report = createResponseQualityReport({
+      valid: false
+    });
+
+    expect(Object.keys(report).sort()).toEqual([
+      "dimensions",
+      "errors",
+      "recommendations",
+      "score",
+      "sourceCount",
+      "sources",
+      "status",
+      "valid",
+      "version",
+      "warnings"
+    ]);
+
+    expect(report.version).toBe(RESPONSE_QUALITY_REPORT_VERSION);
+    expect(report.score).toBeNull();
+    expect(report.sourceCount).toBe(0);
+    expect(report.dimensions).toEqual({
+      completeness: null,
+      clarity: null,
+      language: null,
+      sources: null
+    });
+    expect(report.sources.available).toBe(false);
+    expect(report.errors).toEqual([]);
+    expect(report.warnings).toEqual([]);
+    expect(report.recommendations).toEqual([]);
   });
 });
