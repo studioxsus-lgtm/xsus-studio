@@ -1,3 +1,4 @@
+
 /**
  * XSUS AI Core — Request Orchestrator
  * Version: 1.2.0
@@ -11,6 +12,7 @@
  * - Kërkimi në bazën e njohurive.
  * - Standardizimi i përgjigjeve.
  * - Vlerësimi i cilësisë përmes Response Quality Pipeline.
+ * - Verifikimi strukturor i burimeve.
  * - Menaxhimi i memories RAM dhe persistent memory.
  * - Konfigurimi i memories për integrime dhe teste.
  * - Metadata dhe trajtimi i sigurt i gabimeve.
@@ -412,6 +414,18 @@ function saveMemoryMessage(sessionId, role, content) {
   }
 }
 
+/**
+ * Mbledh burimet pa shpikur metadata.
+ *
+ * - Vargjet ruhen si burime tekstuale.
+ * - Objektet ruhen kur përmbajnë të paktën një fushë
+ *   identifikuese ose përmbajtjeje.
+ * - Objektet origjinale nuk modifikohen.
+ * - Dublikimet hiqen duke përdorur përmbajtjen e
+ *   fushave të njohura.
+ *
+ * Ky funksion nuk provon besueshmërinë e burimeve.
+ */
 function collectSources(results, knowledge, responseResult) {
   const sources = [];
 
@@ -421,17 +435,34 @@ function collectSources(results, knowledge, responseResult) {
 
   if (Array.isArray(results)) {
     for (const item of results) {
-      if (!item || typeof item === "string") {
+      if (typeof item === "string") {
+        sources.push(item);
         continue;
       }
 
-      const source =
-        item.source ||
-        item.metadata?.source ||
-        item.id;
+      if (
+        !item ||
+        typeof item !== "object" ||
+        Array.isArray(item)
+      ) {
+        continue;
+      }
 
-      if (typeof source === "string" && source.trim()) {
-        sources.push(source.trim());
+      const hasSourceFields = [
+        item.id,
+        item.title,
+        item.content,
+        item.url,
+        item.source,
+        item.metadata?.source
+      ].some(
+        value =>
+          typeof value === "string" &&
+          value.trim().length > 0
+      );
+
+      if (hasSourceFields) {
+        sources.push(item);
       }
     }
   }
@@ -440,15 +471,54 @@ function collectSources(results, knowledge, responseResult) {
     sources.push(...responseResult.metadata.sources);
   }
 
-  return [
-    ...new Set(
-      sources.filter(
-        source =>
-          typeof source === "string" &&
-          source.trim().length > 0
+  const seen = new Set();
+
+  return sources.filter(source => {
+    if (typeof source === "string") {
+      const normalized = source.trim();
+
+      if (!normalized || seen.has(`text:${normalized}`)) {
+        return false;
+      }
+
+      seen.add(`text:${normalized}`);
+      return true;
+    }
+
+    if (
+      !source ||
+      typeof source !== "object" ||
+      Array.isArray(source)
+    ) {
+      return false;
+    }
+
+    const key = [
+      source.id,
+      source.title,
+      source.url,
+      source.content,
+      source.source,
+      source.metadata?.source
+    ]
+      .map(value =>
+        typeof value === "string" ? value.trim() : ""
       )
-    )
-  ];
+      .join("|");
+
+    if (!key.replace(/\|/g, "")) {
+      return false;
+    }
+
+    const objectKey = `object:${key}`;
+
+    if (seen.has(objectKey)) {
+      return false;
+    }
+
+    seen.add(objectKey);
+    return true;
+  });
 }
 
 /**
@@ -854,11 +924,12 @@ export async function processAIRequest(input = {}) {
     }
 
     /*
-     * Vlerësimi kryhet nga pipeline-i i përbashkët:
-     * cilësia, verifikimi strukturor i burimeve dhe raporti.
+     * Vlerësimi kryhet nga pipeline-i i përbashkët.
+     * Burimet e strukturuara i jepen pipeline-it pa
+     * krijuar URL, tituj ose përmbajtje artificiale.
      *
-     * Raporti i brendshëm dhe rezultatet e verifikimit
-     * nuk ekspozohen në metadata-n publike të AI Core.
+     * Metadata publike ruan fushat ekzistuese të cilësisë.
+     * Gabimet e pipeline-it nuk e ndërpresin përgjigjen.
      */
     const responseSources = collectSources(
       results,
@@ -885,10 +956,6 @@ export async function processAIRequest(input = {}) {
         responseQuality = pipelineResult.quality;
       }
     } catch {
-      /*
-       * Gabimi i pipeline-it nuk duhet të ndërpresë
-       * një përgjigje që është krijuar me sukses.
-       */
       responseQuality = null;
     }
 
