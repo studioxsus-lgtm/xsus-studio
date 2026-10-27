@@ -11,6 +11,7 @@
  * - Pastrim i skedarëve të përkohshëm pas dështimit.
  * - Refuzim i JSON-it të korruptuar pa e trajtuar si bosh.
  * - Serializim i operacioneve brenda instancës.
+ * - Injeksion opsional i operacioneve të skedarëve për testim.
  */
 
 import {
@@ -31,6 +32,22 @@ const ENGINE_NAME = "xsus-knowledge-dataset-storage";
 const ENGINE_VERSION = "1.1.0";
 const STORAGE_FORMAT_VERSION = "1.0.0";
 const DEFAULT_DATASET_VERSION = "1.0.0";
+
+const REQUIRED_FILE_SYSTEM_METHODS = [
+  "readFile",
+  "open",
+  "rename",
+  "mkdir",
+  "rm"
+];
+
+const DEFAULT_FILE_SYSTEM = Object.freeze({
+  readFile,
+  open,
+  rename,
+  mkdir,
+  rm
+});
 
 /**
  * Kontrollon nëse vlera është objekt i thjeshtë.
@@ -68,8 +85,7 @@ function normalizeDatasetId(value) {
 /**
  * Normalizon versionin semantik të dataset-it.
  *
- * Snapshot-et e vjetra që nuk përmbajnë version
- * vazhdojnë të përdorin versionin 1.0.0.
+ * Snapshot-et e vjetra pa version përdorin 1.0.0.
  */
 function normalizeDatasetVersion(value) {
   if (
@@ -106,10 +122,31 @@ function createResult(success, fields = {}) {
 }
 
 /**
- * Validon të gjithë snapshot-in dhe normalizon dataset-et.
+ * Kontrollon operacionet e injektuara të sistemit të skedarëve.
  *
- * Ruhet datasetVersion, në mënyrë që versioni të mos
- * humbasë gjatë ruajtjes ose ngarkimit nga JSON-i.
+ * Adapteri duhet të implementojë të pesë metodat.
+ * Kur nuk jepet adapter, përdoren metodat standarde të Node.js.
+ */
+function resolveFileSystem(fileSystem) {
+  if (!isPlainObject(fileSystem)) {
+    throw new TypeError(
+      "Adapteri i sistemit të skedarëve duhet të jetë objekt."
+    );
+  }
+
+  for (const method of REQUIRED_FILE_SYSTEM_METHODS) {
+    if (typeof fileSystem[method] !== "function") {
+      throw new TypeError(
+        `Adapteri i sistemit të skedarëve duhet të implementojë "${method}".`
+      );
+    }
+  }
+
+  return fileSystem;
+}
+
+/**
+ * Validon të gjithë snapshot-in dhe normalizon dataset-et.
  */
 function validateSnapshot(snapshot) {
   if (
@@ -210,14 +247,15 @@ function validateSnapshot(snapshot) {
 /**
  * Shkruan të dhënat në një skedar të përkohshëm.
  *
- * sync() kërkon që të dhënat e skedarit të dërgohen
- * në sistemin e skedarëve përpara zëvendësimit.
+ * sync() kërkon sinkronizimin e të dhënave të skedarit
+ * përpara zëvendësimit.
  */
 async function writeTemporaryFile(
   temporaryPath,
-  serialized
+  serialized,
+  fileSystem
 ) {
-  const handle = await open(
+  const handle = await fileSystem.open(
     temporaryPath,
     "wx",
     0o600
@@ -234,20 +272,12 @@ async function writeTemporaryFile(
 /**
  * Krijon një adapter ruajtjeje për një skedar JSON.
  *
- * saveDatasets pranon:
- * [
- *   {
- *     id: "sq-general",
- *     entries: [...],
- *     datasetVersion: "1.0.0"
- *   }
- * ]
+ * Opsionet:
+ * - filePath: rruga e skedarit JSON, e detyrueshme.
+ * - fileSystem: adapter opsional për operacionet e skedarëve.
  *
- * datasetVersion është opsional për përputhshmëri
- * me snapshot-et e vjetra.
- *
- * loadDatasets kthen dataset-et vetëm kur i gjithë
- * skedari dhe çdo dataset janë të vlefshëm.
+ * Adapteri fileSystem duhet të ofrojë:
+ * readFile, open, rename, mkdir dhe rm.
  */
 export function createKnowledgeDatasetStorage(options = {}) {
   const suppliedPath = options.filePath;
@@ -262,6 +292,10 @@ export function createKnowledgeDatasetStorage(options = {}) {
   }
 
   const filePath = suppliedPath.trim();
+
+  const fileSystem = resolveFileSystem(
+    options.fileSystem ?? DEFAULT_FILE_SYSTEM
+  );
 
   let operationQueue = Promise.resolve();
   let temporaryFileCounter = 0;
@@ -305,7 +339,6 @@ export function createKnowledgeDatasetStorage(options = {}) {
 
       const normalizedSnapshot = {
         formatVersion: STORAGE_FORMAT_VERSION,
-
         datasets: validation.datasets.map((dataset) => ({
           id: dataset.id,
           entries: dataset.entries,
@@ -331,16 +364,17 @@ export function createKnowledgeDatasetStorage(options = {}) {
         `${filePath}.tmp-${process.pid}-${++temporaryFileCounter}`;
 
       try {
-        await mkdir(directory, {
+        await fileSystem.mkdir(directory, {
           recursive: true
         });
 
         await writeTemporaryFile(
           temporaryPath,
-          serialized
+          serialized,
+          fileSystem
         );
 
-        await rename(
+        await fileSystem.rename(
           temporaryPath,
           filePath
         );
@@ -350,7 +384,7 @@ export function createKnowledgeDatasetStorage(options = {}) {
         });
       } catch {
         try {
-          await rm(temporaryPath, {
+          await fileSystem.rm(temporaryPath, {
             force: true
           });
         } catch {
@@ -373,7 +407,7 @@ export function createKnowledgeDatasetStorage(options = {}) {
       let contents;
 
       try {
-        contents = await readFile(
+        contents = await fileSystem.readFile(
           filePath,
           "utf8"
         );
