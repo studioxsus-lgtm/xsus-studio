@@ -51,6 +51,20 @@ describe("XSUS Knowledge Dataset Storage — Atomicity", () => {
     };
   }
 
+  function createInvalidDataset() {
+    return {
+      id: "invalid-dataset",
+      datasetVersion: "1.0.0",
+      entries: [
+        {
+          id: "",
+          title: "",
+          content: "",
+        },
+      ],
+    };
+  }
+
   it("preserves the existing snapshot when a new save is rejected", async () => {
     const temporary = await createTemporaryStorage();
 
@@ -76,20 +90,8 @@ describe("XSUS Knowledge Dataset Storage — Atomicity", () => {
         "utf8"
       );
 
-      const invalidDataset = {
-        id: "invalid-dataset",
-        datasetVersion: "1.0.0",
-        entries: [
-          {
-            id: "",
-            title: "",
-            content: "",
-          },
-        ],
-      };
-
       const failedSave = await storage.saveDatasets([
-        invalidDataset,
+        createInvalidDataset(),
       ]);
 
       expect(failedSave.success).toBe(false);
@@ -133,11 +135,7 @@ describe("XSUS Knowledge Dataset Storage — Atomicity", () => {
       expect(initialSave.success).toBe(true);
 
       const failedSave = await storage.saveDatasets([
-        {
-          id: "invalid-dataset",
-          datasetVersion: "1.0.0",
-          entries: [],
-        },
+        createInvalidDataset(),
       ]);
 
       expect(failedSave.success).toBe(false);
@@ -169,17 +167,7 @@ describe("XSUS Knowledge Dataset Storage — Atomicity", () => {
       expect(initialSave.success).toBe(true);
 
       const failedSave = await storage.saveDatasets([
-        {
-          id: "invalid-dataset",
-          datasetVersion: "1.0.0",
-          entries: [
-            {
-              id: "",
-              title: "",
-              content: "",
-            },
-          ],
-        },
+        createInvalidDataset(),
       ]);
 
       expect(failedSave.success).toBe(false);
