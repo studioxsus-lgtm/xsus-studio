@@ -236,4 +236,124 @@ expect(first.version).toBe("1.0.0");
 expect(second.version).toBe("1.0.0");
 
 });
+
+test("përdor të njëjtën strukturë bazë në rezultate të ndryshme", () => {
+const pipeline = createResponseQualityPipeline();
+
+const validResult = pipeline.evaluate({
+  answer: "Kjo është një përgjigje e vlefshme për testim.",
+  expectedLanguage: "sq",
+  sources: []
+});
+
+const invalidResult = pipeline.evaluate(null);
+
+const expectedKeys = [
+  "version",
+  "quality",
+  "sourceVerification",
+  "report",
+  "errors"
+];
+
+expect(Object.keys(validResult).sort()).toEqual(
+  [...expectedKeys].sort()
+);
+
+expect(Object.keys(invalidResult).sort()).toEqual(
+  [...expectedKeys].sort()
+);
+
+});
+
+test("nuk ndan gabimet ndërmjet kërkesave të ndryshme", () => {
+const pipeline = createResponseQualityPipeline();
+
+const invalidResult = pipeline.evaluate(null);
+
+const validResult = pipeline.evaluate({
+  answer:
+    "Kjo është një përgjigje e qartë që përdoret për testimin e pipeline-it.",
+  expectedLanguage: "sq",
+  sources: []
+});
+
+expect(invalidResult.errors).toContainEqual({
+  code: "INVALID_INPUT",
+  message: "Hyrja duhet të jetë objekt."
+});
+
+expect(validResult.errors).not.toContainEqual(
+  expect.objectContaining({
+    code: "INVALID_INPUT"
+  })
+);
+
+});
+
+test("përdor rezultate të ndara për kërkesa të njëpasnjëshme", () => {
+const pipeline = createResponseQualityPipeline();
+
+const first = pipeline.evaluate({
+  answer:
+    "Kjo është përgjigjja e parë për kontrollin e cilësisë.",
+  expectedLanguage: "sq",
+  sources: []
+});
+
+const second = pipeline.evaluate({
+  answer:
+    "This is the second answer used to test the quality pipeline.",
+  expectedLanguage: "en",
+  sources: []
+});
+
+expect(first).not.toBe(second);
+expect(first.quality).toBeDefined();
+expect(second.quality).toBeDefined();
+expect(first.report).toBeDefined();
+expect(second.report).toBeDefined();
+
+});
+
+test("ruan informacionin për burimet në rezultatin e integruar", () => {
+const pipeline = createResponseQualityPipeline();
+
+const result = pipeline.evaluate({
+  answer:
+    "Kjo përgjigje shpjegon një temë dhe përmban një burim për shqyrtim.",
+  expectedLanguage: "sq",
+  sources: [
+    {
+      title: "Burim prove",
+      content: "Përmbajtje prove pa verifikim të pavarur."
+    }
+  ]
+});
+
+expect(result.sourceVerification).not.toBeNull();
+expect(result.report).toBeDefined();
+expect(result.report).toHaveProperty("sourceVerification");
+
+});
+
+test("kthen rezultate pa pretenduar verifikim të pavarur të fakteve", () => {
+const pipeline = createResponseQualityPipeline();
+
+const result = pipeline.evaluate({
+  query: "Çfarë është një fakt?",
+  answer:
+    "Një fakt është një pohim që mund të kontrollohet kundrejt provave.",
+  expectedLanguage: "sq",
+  sources: []
+});
+
+expect(result.quality).not.toBeNull();
+
+if (result.sourceVerification) {
+  expect(result.sourceVerification.verifiedCount ?? 0).toBe(0);
+  expect(result.sourceVerification.trustEstablishedCount ?? 0).toBe(0);
+}
+
+});
 });
