@@ -128,7 +128,7 @@ export function createResponseQualityPipeline() {
     }
 
     // Hapi 2: verifikimi i burimeve.
-    // Ky hap ekzekutohet edhe nëse vlerësimi i cilësisë dështon.
+    // Ekzekutohet edhe nëse vlerësimi i cilësisë dështon.
     try {
       sourceVerification = verifyResponseSources(sources);
     } catch {
@@ -141,21 +141,32 @@ export function createResponseQualityPipeline() {
     }
 
     // Hapi 3: krijimi i raportit.
-    // Raporti krijohet vetëm nëse vlerësimi prodhoi rezultat.
-    if (quality !== null) {
-      try {
-        report = createResponseQualityReport(
-          quality,
-          sourceVerification
-        );
-      } catch {
-        errors.push(
-          createPipelineError(
-            "REPORT_CREATION_FAILED",
-            "Krijimi i raportit dështoi."
-          )
-        );
-      }
+    // Provohet edhe kur vlerësimi i cilësisë dështon.
+    try {
+      const reportQuality =
+        quality !== null
+          ? quality
+          : {
+              valid: false,
+              score: null,
+              dimensions: {},
+              errors: [
+                "QUALITY_EVALUATION_FAILED"
+              ],
+              sourceCount: sources.length
+            };
+
+      report = createResponseQualityReport(
+        reportQuality,
+        sourceVerification
+      );
+    } catch {
+      errors.push(
+        createPipelineError(
+          "REPORT_CREATION_FAILED",
+          "Krijimi i raportit dështoi."
+        )
+      );
     }
 
     return createPipelineResult({
