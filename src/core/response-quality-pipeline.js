@@ -1,9 +1,17 @@
+
 /**
  * XSUS AI Core — Response Quality Pipeline
  * Version: 1.0.0
  *
- * Bashkon vlerësimin e cilësisë, verifikimin e burimeve
- * dhe krijimin e raportit përfundimtar.
+ * Përgjegjësitë:
+ * - Normalizimi i hyrjes.
+ * - Vlerësimi i cilësisë së përgjigjes.
+ * - Verifikimi strukturor i burimeve.
+ * - Krijimi i raportit përfundimtar.
+ * - Standardizimi dhe izolimi i gabimeve.
+ *
+ * API publike ruhet:
+ * createResponseQualityPipeline().evaluate(input)
  */
 
 import {
@@ -29,31 +37,49 @@ function normalizeString(value) {
 }
 
 function createPipelineError(code, message) {
-  return Object.freeze({ code, message });
+  return Object.freeze({
+    code,
+    message
+  });
+}
+
+function createPipelineResult({
+  quality = null,
+  sourceVerification = null,
+  report = null,
+  errors = []
+} = {}) {
+  return Object.freeze({
+    version: RESPONSE_QUALITY_PIPELINE_VERSION,
+    quality,
+    sourceVerification,
+    report,
+    errors: Object.freeze([...errors])
+  });
+}
+
+function createInvalidInputResult() {
+  return createPipelineResult({
+    errors: [
+      createPipelineError(
+        "INVALID_INPUT",
+        "Hyrja duhet të jetë objekt."
+      )
+    ]
+  });
 }
 
 export function createResponseQualityPipeline() {
   function evaluate(input = {}) {
-    const errors = [];
-
     if (
       input === null ||
       typeof input !== "object" ||
       Array.isArray(input)
     ) {
-      return {
-        version: RESPONSE_QUALITY_PIPELINE_VERSION,
-        quality: null,
-        sourceVerification: null,
-        report: null,
-        errors: [
-          createPipelineError(
-            "INVALID_INPUT",
-            "Hyrja duhet të jetë objekt."
-          )
-        ]
-      };
+      return createInvalidInputResult();
     }
+
+    const errors = [];
 
     const query = normalizeString(input.query);
     const answer = normalizeString(input.answer);
@@ -83,6 +109,7 @@ export function createResponseQualityPipeline() {
     let sourceVerification = null;
     let report = null;
 
+    // Hapi 1: vlerësimi i cilësisë.
     try {
       quality = evaluateResponseQuality({
         query,
@@ -100,6 +127,8 @@ export function createResponseQualityPipeline() {
       );
     }
 
+    // Hapi 2: verifikimi i burimeve.
+    // Ky hap ekzekutohet edhe nëse vlerësimi i cilësisë dështon.
     try {
       sourceVerification = verifyResponseSources(sources);
     } catch {
@@ -111,6 +140,8 @@ export function createResponseQualityPipeline() {
       );
     }
 
+    // Hapi 3: krijimi i raportit.
+    // Raporti krijohet vetëm nëse vlerësimi prodhoi rezultat.
     if (quality !== null) {
       try {
         report = createResponseQualityReport(
@@ -127,14 +158,15 @@ export function createResponseQualityPipeline() {
       }
     }
 
-    return {
-      version: RESPONSE_QUALITY_PIPELINE_VERSION,
+    return createPipelineResult({
       quality,
       sourceVerification,
       report,
       errors
-    };
+    });
   }
 
-  return Object.freeze({ evaluate });
+  return Object.freeze({
+    evaluate
+  });
 }
