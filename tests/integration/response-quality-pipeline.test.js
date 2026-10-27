@@ -332,8 +332,10 @@ const result = pipeline.evaluate({
 });
 
 expect(result.sourceVerification).not.toBeNull();
+expect(result.sourceVerification.results).toBeDefined();
 expect(result.report).toBeDefined();
-expect(result.report).toHaveProperty("sourceVerification");
+expect(result.report).toHaveProperty("dimensions");
+expect(result.report).toHaveProperty("recommendations");
 
 });
 
@@ -352,7 +354,9 @@ expect(result.quality).not.toBeNull();
 
 if (result.sourceVerification) {
   expect(result.sourceVerification.verifiedCount ?? 0).toBe(0);
-  expect(result.sourceVerification.trustEstablishedCount ?? 0).toBe(0);
+  expect(
+    result.sourceVerification.trustEstablishedCount ?? 0
+  ).toBe(0);
 }
 
 });
