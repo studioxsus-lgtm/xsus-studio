@@ -1,26 +1,51 @@
-import { describe, it, expect, vi } from "vitest";
+import {
+  beforeEach,
+  describe,
+  it,
+  expect,
+  vi
+} from "vitest";
 
-const closeMock = vi.fn(() => true);
-
-vi.mock("../../src/knowledge/knowledge-dataset-integration.js", () => ({
-  registerKnowledgeDatasetIntegration: vi.fn(() => ({
-    success: false,
-    error: "Regjistrimi i integrimit dështoi.",
-    close: closeMock
-  }))
+const {
+  closeMock,
+  registerIntegrationMock
+} = vi.hoisted(() => ({
+  closeMock: vi.fn(() => true),
+  registerIntegrationMock: vi.fn()
 }));
+
+vi.mock(
+  "../../src/knowledge/knowledge-dataset-integration.js",
+  () => ({
+    registerKnowledgeDatasetIntegration:
+      registerIntegrationMock
+  })
+);
 
 import {
   initializeKnowledgeDatasets
 } from "../../src/knowledge/knowledge-dataset-bootstrap.js";
 
 describe("XSUS AI — Knowledge Dataset Bootstrap Cleanup", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    closeMock.mockReturnValue(true);
+
+    registerIntegrationMock.mockReturnValue({
+      success: false,
+      error: "Regjistrimi i integrimit dështoi.",
+      close: closeMock
+    });
+  });
+
   it("pastron integrimin kur regjistrimi dështon", async () => {
     const storageAdapter = {
       loadDatasets: vi.fn().mockResolvedValue({
         success: true,
         datasets: []
       }),
+
       saveDatasets: vi.fn().mockResolvedValue({
         success: true
       })
@@ -34,6 +59,12 @@ describe("XSUS AI — Knowledge Dataset Bootstrap Cleanup", () => {
       "Regjistrimi i integrimit dështoi."
     );
 
-    expect(closeMock).toHaveBeenCalledTimes(1);
+    expect(
+      registerIntegrationMock
+    ).toHaveBeenCalledTimes(1);
+
+    expect(
+      closeMock
+    ).toHaveBeenCalledTimes(1);
   });
 });
