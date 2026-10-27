@@ -12,6 +12,7 @@
  * - Mbyllje pas përfundimit të operacioneve të pranuara.
  * - Mbyllje e njëkohshme me një Promise të përbashkët.
  * - Mbështetje për sourceName të personalizuar.
+ * - Validimi i dataset-eve përpara regjistrimit.
  * - Ruajtja e API-së publike ekzistuese.
  */
 
@@ -22,6 +23,10 @@ import {
 import {
   createKnowledgeDatasetSearchAdapter
 } from "./knowledge-dataset-search-adapter.js";
+
+import {
+  validateKnowledgeDataset
+} from "./knowledge-dataset-validator.js";
 
 const ENGINE_NAME = "xsus-knowledge-dataset-pipeline";
 const ENGINE_VERSION = "1.3.0";
@@ -222,6 +227,68 @@ export async function createKnowledgeDatasetPipeline({
   async function registerDataset(datasetId, entries) {
     try {
       return await enqueueOperation(async () => {
+        /*
+         * Validimi kryhet përpara ndryshimit të regjistrit.
+         * Nëse dataset-i është i pavlefshëm, nuk kryhet
+         * regjistrim, ruajtje apo rikthim.
+         */
+        let validation;
+
+        try {
+          validation = validateKnowledgeDataset(entries);
+        } catch (error) {
+          return createError(
+            getErrorMessage(
+              error,
+              "Validimi i dataset-it dështoi."
+            ),
+            {
+              datasetId,
+              validationErrors: [],
+              metadata: {
+                persisted: false,
+                persistenceConsistent,
+                lastPersistenceError
+              }
+            }
+          );
+        }
+
+        if (
+          !validation ||
+          validation.valid !== true
+        ) {
+          const validationErrors =
+            Array.isArray(validation?.errors)
+              ? validation.errors
+              : [
+                  {
+                    index: null,
+                    id: null,
+                    message:
+                      "Validator-i nuk ktheu një rezultat të vlefshëm."
+                  }
+                ];
+
+          return createError(
+            "Dataset-i nuk kaloi validimin.",
+            {
+              datasetId,
+              validationErrors,
+              metadata: {
+                persisted: false,
+                persistenceConsistent,
+                lastPersistenceError,
+                validation: validation?.metadata ?? null
+              }
+            }
+          );
+        }
+
+        /*
+         * Ruajmë API-në ekzistuese të registry-t:
+         * ai vazhdon të marrë datasetId dhe entries.
+         */
         const registration = registry.registerDataset(
           datasetId,
           entries
@@ -233,7 +300,8 @@ export async function createKnowledgeDatasetPipeline({
             metadata: createSuccessMetadata({
               persisted: false,
               persistenceConsistent,
-              lastPersistenceError
+              lastPersistenceError,
+              validation: validation.metadata ?? null
             })
           };
         }
@@ -248,7 +316,8 @@ export async function createKnowledgeDatasetPipeline({
             metadata: createSuccessMetadata({
               persisted: true,
               persistenceConsistent: true,
-              lastPersistenceError: null
+              lastPersistenceError: null,
+              validation: validation.metadata ?? null
             })
           };
         } catch (error) {
@@ -298,7 +367,8 @@ export async function createKnowledgeDatasetPipeline({
             metadata: {
               persisted: rollbackSucceeded,
               persistenceConsistent,
-              lastPersistenceError
+              lastPersistenceError,
+              validation: validation.metadata ?? null
             }
           });
         }
@@ -310,7 +380,7 @@ export async function createKnowledgeDatasetPipeline({
           "Regjistrimi i dataset-it dështoi."
         ),
         {
-          datasetId: null,
+          datasetId: datasetId ?? null,
           metadata: {
             persistenceConsistent,
             lastPersistenceError
@@ -510,13 +580,10 @@ export async function createKnowledgeDatasetPipeline({
   }
 
   function close() {
-    // Pas përfundimit të mbylljes, thirrjet e tjera kthejnë false.
     if (closed) {
       return Promise.resolve(false);
     }
 
-    // Thirrjet që mbërrijnë gjatë të njëjtit proces
-    // mbylljeje presin të njëjtën Promise.
     if (closePromise) {
       return closePromise;
     }
@@ -524,10 +591,9 @@ export async function createKnowledgeDatasetPipeline({
     closing = true;
 
     closePromise = (async () => {
-      // Operacionet e pranuara më parë përfundojnë të parat.
+      // Përfundojnë operacionet e pranuara më parë.
       await operationQueue;
 
-      // bootstrap.close mund të jetë sinkron ose asinkron.
       await bootstrap.close();
 
       closed = true;
