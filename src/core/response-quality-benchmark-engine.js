@@ -52,7 +52,10 @@ return value;
 function validateMetric(metric, index, collectionName) {
 if (!isPlainObject(metric)) {
 throw new TypeError(
-"${collectionName}[${index}] duhet të jetë objekt i thjeshtë."
+collectionName +
+"[" +
+index +
+"] duhet të jetë objekt i thjeshtë."
 );
 }
 
@@ -61,7 +64,10 @@ typeof metric.id !== "string" ||
 metric.id.trim().length === 0
 ) {
 throw new TypeError(
-"${collectionName}[${index}] duhet të ketë id të vlefshëm."
+collectionName +
+"[" +
+index +
+"] duhet të ketë id të vlefshëm."
 );
 }
 
@@ -70,7 +76,10 @@ typeof metric.value !== "number" ||
 !Number.isFinite(metric.value)
 ) {
 throw new TypeError(
-"${collectionName}[${index}].value duhet të jetë numër i vlefshëm."
+collectionName +
+"[" +
+index +
+"].value duhet të jetë numër i vlefshëm."
 );
 }
 
@@ -83,7 +92,7 @@ value: metric.value,
 function validateCollection(metrics, collectionName) {
 if (!Array.isArray(metrics)) {
 throw new TypeError(
-"${collectionName} duhet të jetë një array."
+collectionName + " duhet të jetë një array."
 );
 }
 
@@ -98,7 +107,11 @@ collectionName
 
 if (ids.has(validated.id)) {
   throw new TypeError(
-    `ID e përsëritur në ${collectionName}: ${validated.id}.`
+    "ID e përsëritur në " +
+      collectionName +
+      ": " +
+      validated.id +
+      "."
   );
 }
 
@@ -151,7 +164,9 @@ const benchmarkIds = new Set();
 const results = benchmarks.map((benchmark, index) => {
 if (!isPlainObject(benchmark)) {
 throw new TypeError(
-"benchmarks[${index}] duhet të jetë objekt i thjeshtë."
+"benchmarks[" +
+index +
+"] duhet të jetë objekt i thjeshtë."
 );
 }
 
@@ -160,7 +175,9 @@ if (
   benchmark.id.trim().length === 0
 ) {
   throw new TypeError(
-    `benchmarks[${index}] duhet të ketë id të vlefshëm.`
+    "benchmarks[" +
+      index +
+      "] duhet të ketë id të vlefshëm."
   );
 }
 
@@ -168,7 +185,7 @@ const id = benchmark.id.trim();
 
 if (benchmarkIds.has(id)) {
   throw new TypeError(
-    `ID e përsëritur në benchmarks: ${id}.`
+    "ID e përsëritur në benchmarks: " + id + "."
   );
 }
 
@@ -179,7 +196,9 @@ if (
   !Number.isFinite(benchmark.target)
 ) {
   throw new TypeError(
-    `Objektivi për "${id}" duhet të jetë numër i vlefshëm.`
+    'Objektivi për "' +
+      id +
+      '" duhet të jetë numër i vlefshëm.'
   );
 }
 
@@ -188,7 +207,7 @@ if (
   benchmark.direction !== "max"
 ) {
   throw new TypeError(
-    `direction për "${id}" duhet të jetë "min" ose "max".`
+    'direction për "' + id + '" duhet të jetë "min" ose "max".'
   );
 }
 
