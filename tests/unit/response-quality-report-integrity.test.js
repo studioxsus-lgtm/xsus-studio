@@ -125,4 +125,39 @@ describe("XSUS AI Core — Response Quality Report Integrity", () => {
     expect(Object.isFrozen(report.recommendations)).toBe(true);
     expect(Object.isFrozen(report.sources)).toBe(true);
   });
+
+  test("strukturat e brendshme të burimeve janë të pandryshueshme", () => {
+    const report = createResponseQualityReport(
+      {
+        valid: true,
+        score: 90,
+        dimensions: {
+          completeness: 90,
+          clarity: 90,
+          language: 90,
+          sources: 90
+        },
+        errors: [],
+        sourceCount: 1
+      },
+      {
+        results: [
+          {
+            status: "structurally_valid",
+            valid: true,
+            structurallyValid: true,
+            verified: false,
+            trustEstablished: false,
+            title: "Burim testues",
+            contentLength: 100,
+            errors: []
+          }
+        ]
+      }
+    );
+
+    expect(Object.isFrozen(report.sources.results)).toBe(true);
+    expect(Object.isFrozen(report.sources.results[0])).toBe(true);
+    expect(Object.isFrozen(report.sources.results[0].errors)).toBe(true);
+  });
 });
