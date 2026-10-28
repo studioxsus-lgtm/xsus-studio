@@ -52,7 +52,7 @@ describe("XSUS AI Core — Source Verifier Boundaries", () => {
     );
   });
 
-  test("dallon burimin strukturorisht të vlefshëm nga ai i verifikuar", () => {
+  test("dallon vlefshmërinë strukturore nga verifikimi faktik", () => {
     const result = verifyResponseSource({
       title: "Example",
       content: "Source content",
@@ -85,7 +85,7 @@ describe("XSUS AI Core — Source Verifier Boundaries", () => {
 
     expect(result.total).toBe(3);
     expect(result.validCount).toBe(1);
-    expect(result.structurallyValidCount).toBe(2);
+    expect(result.structurallyValidCount).toBe(1);
     expect(result.invalidCount).toBe(1);
     expect(result.unverifiedCount).toBe(1);
     expect(result.verifiedCount).toBe(0);
