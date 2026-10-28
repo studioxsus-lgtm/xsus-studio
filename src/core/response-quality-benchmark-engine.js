@@ -137,7 +137,9 @@ return validated;
   );
 
 if (!Array.isArray(benchmarks)) {
-throw new TypeError("benchmarks duhet të jetë një array.");
+throw new TypeError(
+"benchmarks duhet të jetë një array."
+);
 }
 
 const currentById = new Map(
