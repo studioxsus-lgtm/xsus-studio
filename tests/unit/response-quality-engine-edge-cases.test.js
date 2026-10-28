@@ -1,4 +1,10 @@
-import { describe, expect, test, vi, afterEach } from "vitest";
+import {
+describe,
+expect,
+test,
+vi,
+afterEach,
+} from "vitest";
 
 import {
 evaluateResponseQuality,
@@ -174,6 +180,143 @@ const expectedScore =
 
 expect(result.dimensions.language).toBeNull();
 expect(result.score).toBe(expectedScore);
+
+});
+
+// =========================================================
+// TESTE SHTESË — SIGURIA DHE QËNDRUESHMËRIA E VERIFIKUESIT
+// =========================================================
+
+test("trajton gabimin e verifikuesit të gjuhës pa ndërprerë vlerësimin", () => {
+vi.spyOn(
+languageVerifier,
+"verifyResponseLanguage",
+).mockImplementation(() => {
+throw new Error("Gabim testues i verifikuesit");
+});
+
+const result = evaluateResponseQuality({
+  query: "What is artificial intelligence?",
+  answer:
+    "Artificial intelligence is a field of computer science that develops intelligent systems.",
+  requestedLanguage: "en",
+  responseLanguage: "en",
+});
+
+expect(result).toBeDefined();
+expect(result.dimensions.language).toBeNull();
+expect(result.languageVerification).toBeNull();
+expect(result.score).toBeGreaterThanOrEqual(0);
+expect(result.score).toBeLessThanOrEqual(100);
+
+});
+
+test.each([
+["null", null],
+["undefined", undefined],
+["string", "invalid"],
+["number", 42],
+["array", []],
+])(
+"trajton rezultatin e pavlefshëm të verifikuesit: %s",
+(_label, mockResult) => {
+vi.spyOn(
+languageVerifier,
+"verifyResponseLanguage",
+).mockReturnValue(mockResult);
+
+  const result = evaluateResponseQuality({
+    query: "What is artificial intelligence?",
+    answer:
+      "Artificial intelligence is a field of computer science that develops intelligent systems.",
+    requestedLanguage: "en",
+    responseLanguage: "en",
+  });
+
+  expect(result).toBeDefined();
+  expect(result.languageVerification).toBeNull();
+  expect(result.dimensions.language).toBeNull();
+},
+
+);
+
+test("izolon rezultatin e verifikimit nga mutacionet e jashtme", () => {
+const verification = {
+valid: true,
+status: "match",
+matches: true,
+metadata: {
+labels: ["language-verified"],
+},
+};
+
+vi.spyOn(
+  languageVerifier,
+  "verifyResponseLanguage",
+).mockReturnValue(verification);
+
+const first = evaluateResponseQuality({
+  query: "Explain artificial intelligence",
+  answer:
+    "Artificial intelligence is a field of computer science that develops intelligent systems.",
+  requestedLanguage: "en",
+  responseLanguage: "en",
+});
+
+verification.metadata.labels.push("externally-modified");
+verification.status = "mismatch";
+
+expect(first.languageVerification.status).toBe("match");
+
+expect(first.languageVerification.metadata.labels).toEqual([
+  "language-verified",
+]);
+
+expect(Object.isFrozen(first.languageVerification)).toBe(true);
+expect(
+  Object.isFrozen(first.languageVerification.metadata),
+).toBe(true);
+
+expect(
+  Object.isFrozen(first.languageVerification.metadata.labels),
+).toBe(true);
+
+});
+
+test("nuk ndryshon dimensionet e tjera kur verifikuesi dështon", () => {
+const input = {
+query: "What is artificial intelligence?",
+answer:
+"Artificial intelligence is a field of computer science that develops intelligent systems.",
+requestedLanguage: "en",
+responseLanguage: "en",
+sources: [],
+};
+
+const normalResult = evaluateResponseQuality(input);
+
+vi.spyOn(
+  languageVerifier,
+  "verifyResponseLanguage",
+).mockImplementation(() => {
+  throw new Error("Gabim testues");
+});
+
+const failedVerifierResult = evaluateResponseQuality(input);
+
+expect(
+  failedVerifierResult.dimensions.completeness,
+).toBe(normalResult.dimensions.completeness);
+
+expect(
+  failedVerifierResult.dimensions.clarity,
+).toBe(normalResult.dimensions.clarity);
+
+expect(
+  failedVerifierResult.dimensions.sources,
+).toBe(normalResult.dimensions.sources);
+
+expect(failedVerifierResult.score).toBeLessThanOrEqual(100);
 
 });
 });
