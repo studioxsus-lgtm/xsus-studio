@@ -8,35 +8,42 @@ import {
 createResponseQualityBenchmarkHistoryPersistence,
 } from "../../src/core/response-quality-benchmark-history-persistence.js";
 
-function createReport(index) {
-return {
-summary: {
-total: 1,
-passed: 1,
-failed: 0,
-score: index,
-},
-results: [
-{
-id: "case-${index}",
-status: "passed",
-},
-],
-};
-}
+/**
 
-function createEntry(index, timestamp = index * 100) {
-return {
-id: "benchmark-${index}",
-timestamp,
-report: createReport(index),
-};
-}
+* Krijon një raport testimi me ID dinamike.
+  */
+  function createReport(index) {
+  return {
+  summary: {
+  total: 1,
+  passed: 1,
+  failed: 0,
+  score: index,
+  },
+  results: [
+  {
+  id: "case-${index}",
+  status: "passed",
+  },
+  ],
+  };
+  }
+
+/**
+
+* Krijon një hyrje historiku me ID unike.
+  */
+  function createEntry(index, timestamp = index * 100) {
+  return {
+  id: "benchmark-${index}",
+  timestamp,
+  report: createReport(index),
+  };
+  }
 
 /**
 
 * Simulon storage JSON me kopje të pavarura të të dhënave.
-* Kjo shmang ndryshimet aksidentale të historikut të ruajtur.
   */
   function createStorage(initialHistory = []) {
   let persistedHistory = structuredClone(initialHistory);
@@ -57,13 +64,17 @@ getPersistedHistory() {
 };
 }
 
-function createHarness({
-maxEntries = 100,
-initialHistory = [],
-} = {}) {
-const engine = createResponseQualityBenchmarkHistoryEngine({
-maxEntries,
-});
+/**
+
+* Krijon engine-in, storage-in dhe persistence-in.
+  */
+  function createHarness({
+  maxEntries = 100,
+  initialHistory = [],
+  } = {}) {
+  const engine = createResponseQualityBenchmarkHistoryEngine({
+  maxEntries,
+  });
 
 const storage = createStorage(initialHistory);
 
@@ -79,8 +90,12 @@ persistence,
 };
 }
 
-async function createInitializedHarness(options = {}) {
-const harness = createHarness(options);
+/**
+
+* Krijon një instancë dhe inicializon historikun.
+  */
+  async function createInitializedHarness(options = {}) {
+  const harness = createHarness(options);
 
 await harness.persistence.initialize();
 
@@ -315,9 +330,7 @@ const removed =
 await persistence.flush();
 
 expect(removed).toBe(false);
-
 expect(getEngineIds(engine)).toEqual(historyBefore);
-
 expect(getPersistedIds(storage)).toEqual(savedHistoryBefore);
 
 expect(storage.saveHistory).toHaveBeenCalledTimes(
