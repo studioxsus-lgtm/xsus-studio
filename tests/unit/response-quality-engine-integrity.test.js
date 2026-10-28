@@ -130,4 +130,69 @@ describe("XSUS AI Core — Response Quality Engine Integrity", () => {
     expect(first.dimensions).not.toBe(second.dimensions);
     expect(first.errors).not.toBe(second.errors);
   });
+
+  test("strukturat e verifikimit të gjuhës janë të izoluara mes thirrjeve", () => {
+    const first = evaluateResponseQuality({
+      query: "What is water?",
+      answer: "Water is a chemical compound made of hydrogen and oxygen.",
+      requestedLanguage: "en",
+      responseLanguage: "en",
+      sources: []
+    });
+
+    const second = evaluateResponseQuality({
+      query: "What is air?",
+      answer: "Air is a mixture of gases.",
+      requestedLanguage: "en",
+      responseLanguage: "en",
+      sources: []
+    });
+
+    if (
+      first.languageVerification !== null &&
+      first.languageVerification !== undefined &&
+      second.languageVerification !== null &&
+      second.languageVerification !== undefined
+    ) {
+      expect(first.languageVerification).not.toBe(
+        second.languageVerification
+      );
+    }
+  });
+
+  test("nuk ndan të njëjtin objekt errors mes rezultateve", () => {
+    const first = evaluateResponseQuality({
+      query: "",
+      answer: "",
+      sources: []
+    });
+
+    const second = evaluateResponseQuality({
+      query: "",
+      answer: "",
+      sources: []
+    });
+
+    expect(first.errors).not.toBe(second.errors);
+    expect(Object.isFrozen(first.errors)).toBe(true);
+    expect(Object.isFrozen(second.errors)).toBe(true);
+  });
+
+  test("dimensionet e çdo rezultati janë të izoluara", () => {
+    const first = evaluateResponseQuality({
+      query: "Pyetja e parë",
+      answer: "Përgjigjja e parë është e mjaftueshme për testim.",
+      sources: []
+    });
+
+    const second = evaluateResponseQuality({
+      query: "Pyetja e dytë",
+      answer: "Përgjigjja e dytë është e mjaftueshme për testim.",
+      sources: []
+    });
+
+    expect(first.dimensions).not.toBe(second.dimensions);
+    expect(Object.isFrozen(first.dimensions)).toBe(true);
+    expect(Object.isFrozen(second.dimensions)).toBe(true);
+  });
 });
