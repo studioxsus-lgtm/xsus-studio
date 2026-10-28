@@ -14,6 +14,7 @@
  * - Ruaj strukturën publike të rezultateve.
  * - Mos lejo dështimin e verifikuesve të prishë vlerësimin.
  * - Verifikimi strukturor nuk provon vërtetësinë e përmbajtjes.
+ * - Izolo dhe mbro strukturat e rezultateve nga ndryshimet e jashtme.
  */
 
 import { verifyResponseLanguage } from "./response-language-verifier.js";
@@ -102,6 +103,103 @@ function normalizeSources(sources) {
         value.trim().length > 0
     );
   });
+}
+
+/**
+ * Ngrin objektet dhe listat e zakonshme në thellësi.
+ *
+ * WeakSet parandalon rekursionin e pafund në rastet
+ * kur struktura përmban referenca ciklike.
+ */
+function deepFreeze(value, seen = new WeakSet()) {
+  if (
+    value === null ||
+    (typeof value !== "object" &&
+      typeof value !== "function") ||
+    seen.has(value)
+  ) {
+    return value;
+  }
+
+  seen.add(value);
+
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+
+    if (descriptor && "value" in descriptor) {
+      deepFreeze(descriptor.value, seen);
+    }
+  }
+
+  return Object.freeze(value);
+}
+
+/**
+ * Krijon kopje të pavarura të objekteve dhe listave
+ * të zakonshme, pastaj i ngrin në thellësi.
+ *
+ * Referencat ciklike trajtohen përmes WeakMap.
+ * Objektet me prototipe të veçanta nuk kopjohen,
+ * për të shmangur ndryshimin e semantikës së tyre.
+ */
+function cloneAndFreeze(value, seen = new WeakMap()) {
+  if (
+    value === null ||
+    (typeof value !== "object" &&
+      typeof value !== "function")
+  ) {
+    return value;
+  }
+
+  if (typeof value === "function") {
+    return value;
+  }
+
+  if (seen.has(value)) {
+    return seen.get(value);
+  }
+
+  if (Array.isArray(value)) {
+    const clone = [];
+    seen.set(value, clone);
+
+    for (const item of value) {
+      clone.push(cloneAndFreeze(item, seen));
+    }
+
+    return deepFreeze(clone);
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  if (
+    prototype !== Object.prototype &&
+    prototype !== null
+  ) {
+    return value;
+  }
+
+  const clone = Object.create(prototype);
+  seen.set(value, clone);
+
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+
+    if (!descriptor) {
+      continue;
+    }
+
+    if ("value" in descriptor) {
+      Object.defineProperty(clone, key, {
+        ...descriptor,
+        value: cloneAndFreeze(descriptor.value, seen)
+      });
+    } else {
+      Object.defineProperty(clone, key, descriptor);
+    }
+  }
+
+  return deepFreeze(clone);
 }
 
 function calculateCompleteness(query, answer) {
@@ -226,6 +324,13 @@ function roundScore(value) {
   return Math.round(value * 100) / 100;
 }
 
+/**
+ * Verifikon gjuhën në mënyrë të sigurt.
+ *
+ * Rezultati kopjohet dhe ngrihet në thellësi kur
+ * përbëhet nga objekte/lista të zakonshme.
+ * Gabimet e verifikuesit nuk ndërpresin vlerësimin.
+ */
 function verifyLanguageSafely(answer, requestedLanguage) {
   if (!answer || !requestedLanguage) {
     return null;
@@ -237,11 +342,15 @@ function verifyLanguageSafely(answer, requestedLanguage) {
       requestedLanguage
     });
 
-    if (!result || typeof result !== "object") {
+    if (
+      !result ||
+      typeof result !== "object" ||
+      Array.isArray(result)
+    ) {
       return null;
     }
 
-    return result;
+    return cloneAndFreeze(result);
   } catch {
     return null;
   }
