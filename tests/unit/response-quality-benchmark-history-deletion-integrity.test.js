@@ -134,9 +134,17 @@ for (let index = 1; index <= 5; index += 1) {
 
 expect(persistence.getHistorySize()).toBe(5);
 
-expect(await persistence.removeReport("benchmark-2")).toBe(true);
-expect(await persistence.removeReport("benchmark-4")).toBe(true);
-expect(await persistence.removeReport("benchmark-1")).toBe(true);
+expect(
+  await persistence.removeReport("benchmark-2"),
+).toBe(true);
+
+expect(
+  await persistence.removeReport("benchmark-4"),
+).toBe(true);
+
+expect(
+  await persistence.removeReport("benchmark-1"),
+).toBe(true);
 
 await persistence.flush();
 
@@ -172,7 +180,8 @@ expect(first.persistence.getHistorySize()).toBe(0);
 expect(first.engine.listReports()).toEqual([]);
 expect(first.storage.getPersistedHistory()).toEqual([]);
 
-const secondEngine = createResponseQualityBenchmarkHistoryEngine();
+const secondEngine =
+  createResponseQualityBenchmarkHistoryEngine();
 
 const secondPersistence =
   createResponseQualityBenchmarkHistoryPersistence({
@@ -195,7 +204,9 @@ await first.persistence.addReport(createEntry(1));
 await first.persistence.addReport(createEntry(2));
 await first.persistence.addReport(createEntry(3));
 
-expect(await first.persistence.removeReport("benchmark-2")).toBe(true);
+expect(
+  await first.persistence.removeReport("benchmark-2"),
+).toBe(true);
 
 await first.persistence.flush();
 
@@ -220,7 +231,9 @@ expect(getEngineIds(recoveredEngine)).toEqual([
   "benchmark-1",
 ]);
 
-expect(recoveredPersistence.getReportById("benchmark-2")).toBeNull();
+expect(
+  recoveredPersistence.getReportById("benchmark-2"),
+).toBeNull();
 
 expect(
   recoveredPersistence.getReportById("benchmark-1"),
@@ -240,7 +253,9 @@ expect(
   }),
 );
 
-expect(persistedBeforeRecovery.map((entry) => entry.id)).toEqual([
+expect(
+  persistedBeforeRecovery.map((entry) => entry.id),
+).toEqual([
   "benchmark-1",
   "benchmark-3",
 ]);
@@ -283,7 +298,7 @@ expect(persistence.getHistorySize()).toBe(0);
 
 });
 
-it("nuk ndryshon historikun nëse kërkohet fshirja e një ID-je që mungon", async () => {
+it("nuk ndryshon historikun kur kërkohet fshirja e një ID-je që mungon", async () => {
 const { engine, storage, persistence } =
 await createInitializedHarness();
 
@@ -294,15 +309,20 @@ const historyBefore = getEngineIds(engine);
 const savedHistoryBefore = getPersistedIds(storage);
 const saveCallsBefore = storage.saveHistory.mock.calls.length;
 
-const removed = await persistence.removeReport("benchmark-missing");
+const removed =
+  await persistence.removeReport("benchmark-missing");
 
 await persistence.flush();
 
 expect(removed).toBe(false);
+
 expect(getEngineIds(engine)).toEqual(historyBefore);
+
 expect(getPersistedIds(storage)).toEqual(savedHistoryBefore);
 
-expect(storage.saveHistory).toHaveBeenCalledTimes(saveCallsBefore);
+expect(storage.saveHistory).toHaveBeenCalledTimes(
+  saveCallsBefore,
+);
 
 });
 });
