@@ -58,9 +58,9 @@ function createEntry(index, timestamp = index * 100) {
 
 function createHarness({
   maxEntries = 100,
-  initialHistory = [],
-  loadHistory = vi.fn(),
-  saveHistory = vi.fn(),
+  initialHistory,
+  loadHistory = vi.fn().mockResolvedValue([]),
+  saveHistory = vi.fn().mockResolvedValue(undefined),
 } = {}) {
   const engine = createResponseQualityBenchmarkHistoryEngine({
     maxEntries,
@@ -71,8 +71,11 @@ function createHarness({
     saveHistory,
   };
 
-  loadHistory.mockResolvedValue(initialHistory);
-  saveHistory.mockResolvedValue(undefined);
+  // Vendos historikun fillestar vetëm kur është specifikuar.
+  // Ruaj sjelljen e mock-eve të personalizuara.
+  if (initialHistory !== undefined) {
+    loadHistory.mockResolvedValue(initialHistory);
+  }
 
   const persistence =
     createResponseQualityBenchmarkHistoryPersistence({
@@ -198,17 +201,18 @@ describe(
 
         expect(metadata.initialized).toBe(true);
         expect(metadata.historySize).toBe(0);
-        expect(harness.persistence.listReports()).toEqual(
-          []
-        );
+
+        expect(
+          harness.persistence.listReports()
+        ).toEqual([]);
 
         expect(
           harness.persistence.getLatestReport()
         ).toBeNull();
 
-        expect(harness.storage.loadHistory).toHaveBeenCalledTimes(
-          1
-        );
+        expect(
+          harness.storage.loadHistory
+        ).toHaveBeenCalledTimes(1);
       }
     );
 
@@ -239,7 +243,9 @@ describe(
 
         expect(engine.getHistorySize()).toBe(0);
 
-        expect(storage.loadHistory).not.toHaveBeenCalled();
+        expect(
+          storage.loadHistory
+        ).not.toHaveBeenCalled();
       }
     );
 
@@ -273,7 +279,9 @@ describe(
           harness.persistence.getMetadata().initialized
         ).toBe(false);
 
-        expect(harness.engine.getHistorySize()).toBe(0);
+        expect(
+          harness.engine.getHistorySize()
+        ).toBe(0);
       }
     );
 
@@ -296,7 +304,9 @@ describe(
           harness.persistence.getMetadata().initialized
         ).toBe(false);
 
-        expect(harness.engine.getHistorySize()).toBe(0);
+        expect(
+          harness.engine.getHistorySize()
+        ).toBe(0);
       }
     );
 
@@ -369,7 +379,9 @@ describe(
 
         await harness.persistence.initialize();
 
-        expect(harness.persistence.getMetadata()).toMatchObject({
+        expect(
+          harness.persistence.getMetadata()
+        ).toMatchObject({
           version: "1.0.0",
           initialized: true,
           historySize: 2,
@@ -383,7 +395,9 @@ describe(
           createEntry(3, 300)
         );
 
-        expect(harness.persistence.getMetadata()).toMatchObject({
+        expect(
+          harness.persistence.getMetadata()
+        ).toMatchObject({
           initialized: true,
           historySize: 3,
           engine: {
