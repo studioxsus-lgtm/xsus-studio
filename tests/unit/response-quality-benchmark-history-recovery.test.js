@@ -1,15 +1,13 @@
 /**
  * XSUS AI Core — Benchmark History Persistence & Recovery Tests
- * Version: 1.1.2
+ * Version: 1.2.0
  *
  * Përfshin:
- * - Testet e storage JSON (Faza 11.8).
- * - Testet e integrimit dhe rikthimit (Fazat 11.9–11.10).
- * - Validimin e historikut dhe integritetin e të dhënave.
- * - Riprovimin pas dështimit të ruajtjes.
- * - Kontrollin e gjendjes së sinkronizimit.
- * - Testimin e thirrjeve paralele të rikuperimit.
- * - Testet e integritetit të rikuperimit (Faza 11.11).
+ * - Faza 11.8: JSON Storage Recovery.
+ * - Faza 11.9: Persistence Integration.
+ * - Faza 11.10: Recovery Integration.
+ * - Faza 11.11: Recovery Integrity & Consistency.
+ * - Faza 11.12: History Lifecycle & Management.
  */
 
 import {
@@ -497,8 +495,7 @@ describe("XSUS Benchmark History Recovery Integration", () => {
 
     await recovery.recover();
 
-    const saveCalls = storage.saveHistory.mock.calls;
-    const savedEntries = saveCalls.at(-1)?.[0];
+    const savedEntries = storage.saveHistory.mock.calls.at(-1)?.[0];
 
     expect(savedEntries).toBeDefined();
 
@@ -655,10 +652,7 @@ describe("XSUS Benchmark History Recovery Integrity", () => {
         savedCount: 0,
       });
 
-    const { recovery } = createHarness(
-      { saveHistory },
-      0
-    );
+    const { recovery } = createHarness({ saveHistory }, 0);
 
     await expect(
       recovery.recover()
@@ -719,5 +713,211 @@ describe("XSUS Benchmark History Recovery Integrity", () => {
       sequence: 2,
       report: secondReport,
     });
+  });
+});
+
+// --------------------------------------------------
+// Faza 11.12 — Benchmark History Lifecycle & Management
+// --------------------------------------------------
+
+describe("XSUS Benchmark History Lifecycle", () => {
+  it("fshin një raport pa ndryshuar raportet e tjera", async () => {
+    const {
+      persistence,
+      recovery,
+    } = createHarness();
+
+    await persistence.initialize();
+
+    await persistence.addReport({
+      id: "lifecycle-1",
+      timestamp: 1000,
+      report: createReport(80),
+    });
+
+    await persistence.addReport({
+      id: "lifecycle-2",
+      timestamp: 2000,
+      report: createReport(90),
+    });
+
+    await persistence.addReport({
+      id: "lifecycle-3",
+      timestamp: 3000,
+      report: createReport(95),
+    });
+
+    const removed = await persistence.removeReport("lifecycle-2");
+
+    expect(removed).toBe(true);
+    expect(persistence.getHistorySize()).toBe(2);
+
+    expect(
+      persistence.listReports().map((entry) => entry.id)
+    ).toEqual([
+      "lifecycle-1",
+      "lifecycle-3",
+    ]);
+
+    await recovery.recover();
+
+    const savedEntries = (
+      await persistence.listReports()
+    );
+
+    expect(savedEntries).toHaveLength(2);
+    expect(savedEntries.map((entry) => entry.id)).toEqual([
+      "lifecycle-1",
+      "lifecycle-3",
+    ]);
+  });
+
+  it("pastron të gjithë historikun", async () => {
+    const {
+      persistence,
+      recovery,
+    } = createHarness();
+
+    await persistence.initialize();
+
+    await persistence.addReport({
+      id: "clear-1",
+      timestamp: 1000,
+      report: createReport(80),
+    });
+
+    await persistence.addReport({
+      id: "clear-2",
+      timestamp: 2000,
+      report: createReport(90),
+    });
+
+    await persistence.clearHistory();
+
+    expect(persistence.getHistorySize()).toBe(0);
+    expect(persistence.listReports()).toEqual([]);
+    expect(persistence.getLatestReport()).toBeNull();
+
+    await recovery.recover();
+
+    expect(persistence.getHistorySize()).toBe(0);
+    expect(persistence.listReports()).toEqual([]);
+  });
+
+  it("nuk lejon rikthimin e raportit të fshirë nga storage", async () => {
+    const {
+      persistence,
+      storage,
+      recovery,
+    } = createHarness();
+
+    await persistence.initialize();
+
+    await persistence.addReport({
+      id: "deleted-1",
+      timestamp: 1000,
+      report: createReport(88),
+    });
+
+    await persistence.addReport({
+      id: "preserved-1",
+      timestamp: 2000,
+      report: createReport(96),
+    });
+
+    await persistence.removeReport("deleted-1");
+
+    await recovery.recover();
+
+    const savedEntries = storage.saveHistory.mock.calls.at(-1)?.[0];
+
+    expect(savedEntries.map((entry) => entry.id)).toEqual([
+      "preserved-1",
+    ]);
+
+    expect(
+      persistence.getReportById("deleted-1")
+    ).toBeNull();
+  });
+
+  it("ruan historikun bosh pas pastrimit edhe në storage", async () => {
+    const {
+      persistence,
+      storage,
+    } = createHarness();
+
+    await persistence.initialize();
+
+    await persistence.addReport({
+      id: "empty-1",
+      timestamp: 1000,
+      report: createReport(75),
+    });
+
+    await persistence.addReport({
+      id: "empty-2",
+      timestamp: 2000,
+      report: createReport(85),
+    });
+
+    await persistence.clearHistory();
+
+    const savedEntries = storage.saveHistory.mock.calls.at(-1)?.[0];
+
+    expect(savedEntries).toEqual([]);
+    expect(persistence.getHistorySize()).toBe(0);
+  });
+
+  it("përditëson numrin dhe raportin e fundit pas fshirjes", async () => {
+    const { persistence } = createHarness();
+
+    await persistence.initialize();
+
+    await persistence.addReport({
+      id: "latest-1",
+      timestamp: 1000,
+      report: createReport(70),
+    });
+
+    await persistence.addReport({
+      id: "latest-2",
+      timestamp: 2000,
+      report: createReport(85),
+    });
+
+    await persistence.addReport({
+      id: "latest-3",
+      timestamp: 3000,
+      report: createReport(98),
+    });
+
+    expect(persistence.getHistorySize()).toBe(3);
+    expect(persistence.getLatestReport().id).toBe("latest-3");
+
+    await persistence.removeReport("latest-3");
+
+    expect(persistence.getHistorySize()).toBe(2);
+    expect(persistence.getLatestReport().id).toBe("latest-2");
+  });
+
+  it("trajton fshirjen e një raporti që nuk ekziston", async () => {
+    const { persistence } = createHarness();
+
+    await persistence.initialize();
+
+    await persistence.addReport({
+      id: "existing-1",
+      timestamp: 1000,
+      report: createReport(90),
+    });
+
+    const removed = await persistence.removeReport("missing-report");
+
+    expect(removed).toBe(false);
+    expect(persistence.getHistorySize()).toBe(1);
+
+    expect(
+      persistence.getReportById("existing-1")
+    ).not.toBeNull();
   });
 });
