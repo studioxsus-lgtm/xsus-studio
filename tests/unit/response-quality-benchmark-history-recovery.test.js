@@ -8,6 +8,7 @@
  * - Faza 11.10: Recovery Integration.
  * - Faza 11.11: Recovery Integrity & Consistency.
  * - Faza 11.12: History Lifecycle & Management.
+ * - Faza 11.13: Concurrency & Transaction Safety.
  */
 
 import {
@@ -922,7 +923,10 @@ describe("XSUS Benchmark History Lifecycle", () => {
       persistence.getReportById("existing-1")
     ).not.toBeNull();
   });
-});
+
+  // --------------------------------------------------
+// Faza 11.13 — Concurrency & Transaction Safety
+// --------------------------------------------------
 
 describe("XSUS Benchmark History Concurrency & Transaction Safety", () => {
   it("ruan të dy raportet kur shtohen njëkohësisht", async () => {
@@ -1095,9 +1099,8 @@ describe("XSUS Benchmark History Concurrency & Transaction Safety", () => {
 
     expect(persistence.getHistorySize()).toBe(2);
   });
-});
 
-it("ruan gjendjen përfundimtare kur shtimi dhe fshirja ndërthuren", async () => {
+  it("ruan gjendjen përfundimtare kur shtimi dhe fshirja ndërthuren", async () => {
     const engine =
       createResponseQualityBenchmarkHistoryEngine();
 
@@ -1214,3 +1217,5 @@ it("ruan gjendjen përfundimtare kur shtimi dhe fshirja ndërthuren", async () =
       savedHistory.map((entry) => entry.id).sort()
     ).toEqual(["sequence-2", "sequence-3"]);
   });
+});
+});
