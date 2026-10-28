@@ -1,6 +1,6 @@
 /**
  * XSUS AI Core — Benchmark History Persistence & Recovery Tests
- * Version: 1.2.0
+ * Version: 1.2.1
  *
  * Përfshin:
  * - Faza 11.8: JSON Storage Recovery.
@@ -724,6 +724,7 @@ describe("XSUS Benchmark History Lifecycle", () => {
   it("fshin një raport pa ndryshuar raportet e tjera", async () => {
     const {
       persistence,
+      storage,
       recovery,
     } = createHarness();
 
@@ -752,24 +753,25 @@ describe("XSUS Benchmark History Lifecycle", () => {
     expect(removed).toBe(true);
     expect(persistence.getHistorySize()).toBe(2);
 
-    expect(
-      persistence.listReports().map((entry) => entry.id)
-    ).toEqual([
-      "lifecycle-1",
-      "lifecycle-3",
-    ]);
+    // Kontrollojmë përmbajtjen, jo një renditje të papërcaktuar.
+    const remainingIds = persistence
+      .listReports()
+      .map((entry) => entry.id);
+
+    expect(remainingIds).toHaveLength(2);
+    expect(remainingIds).toContain("lifecycle-1");
+    expect(remainingIds).toContain("lifecycle-3");
+    expect(remainingIds).not.toContain("lifecycle-2");
 
     await recovery.recover();
 
-    const savedEntries = (
-      await persistence.listReports()
-    );
+    const savedEntries = storage.saveHistory.mock.calls.at(-1)?.[0];
+    const savedIds = savedEntries.map((entry) => entry.id);
 
-    expect(savedEntries).toHaveLength(2);
-    expect(savedEntries.map((entry) => entry.id)).toEqual([
-      "lifecycle-1",
-      "lifecycle-3",
-    ]);
+    expect(savedIds).toHaveLength(2);
+    expect(savedIds).toContain("lifecycle-1");
+    expect(savedIds).toContain("lifecycle-3");
+    expect(savedIds).not.toContain("lifecycle-2");
   });
 
   it("pastron të gjithë historikun", async () => {
