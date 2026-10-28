@@ -75,6 +75,7 @@ errors: ["EMPTY_ANSWER"]
 expect(report.status).toBe(
   RESPONSE_QUALITY_REPORT_STATUSES.INSUFFICIENT_DATA
 );
+
 expect(report.errors).toContain("EMPTY_ANSWER");
 
 });
@@ -114,6 +115,7 @@ sources: 90
 expect(report.status).toBe(
   RESPONSE_QUALITY_REPORT_STATUSES.COMPLETE
 );
+
 expect(report.warnings).toEqual([]);
 
 });
@@ -133,6 +135,7 @@ errors: []
 });
 
 expect(report.score).toBe(100);
+
 expect(report.dimensions).toEqual({
   completeness: 100,
   clarity: 0,
@@ -162,6 +165,7 @@ errors: []
 });
 
 expect(report.score).toBeNull();
+
 expect(report.dimensions.completeness).toBeNull();
 expect(report.dimensions.clarity).toBe(80);
 expect(report.dimensions.language).toBeNull();
@@ -369,8 +373,10 @@ errors: ["EMPTY_ANSWER"]
 expect(report.status).toBe(
   RESPONSE_QUALITY_REPORT_STATUSES.NEEDS_IMPROVEMENT
 );
+
 expect(report.recommendations.length).toBeGreaterThan(0);
 expect(report.warnings).toContain("QUALITY_INPUT_CONTAINS_ERRORS");
+
 expect(report.recommendations).toContain(
   "Korrigjo gabimet e hyrjes para se të mbështetesh te rezultati."
 );
@@ -420,6 +426,7 @@ errors: ["MISSING_TITLE"]
 });
 
 expect(report.warnings).toContain("SOME_SOURCES_INVALID");
+
 expect(report.recommendations).toContain(
   "Kontrollo titujt, përmbajtjen dhe URL-të e burimeve të pavlefshme."
 );
@@ -445,6 +452,7 @@ errors: []
 expect(report.sources.note).toContain(
   "nuk provojnë vërtetësinë faktike"
 );
+
 expect(report.sources.verifiedCount).toBe(0);
 expect(report.sources.trustEstablishedCount).toBe(0);
 
@@ -559,9 +567,11 @@ expect(report.dimensions).toEqual({
 
 expect(report.sources.available).toBe(false);
 expect(report.errors).toEqual([]);
+
 expect(report.warnings).toEqual([
   "QUALITY_INPUT_CONTAINS_ERRORS"
 ]);
+
 expect(report.recommendations).toEqual([]);
 
 });
@@ -597,6 +607,7 @@ expect(report.sources.invalidCount).toBe(2);
 expect(report.sources.unverifiedCount).toBe(2);
 expect(report.sources.verifiedCount).toBe(1);
 expect(report.sources.trustEstablishedCount).toBe(1);
+
 expect(report.warnings).toContain("SOME_SOURCES_INVALID");
 expect(report.warnings).not.toContain("NO_SOURCES_VERIFIED");
 expect(report.warnings).not.toContain("SOURCE_TRUST_NOT_ESTABLISHED");
@@ -620,6 +631,7 @@ expect(report.dimensions).toEqual({
 });
 
 expect(report.warnings).toEqual([]);
+
 expect(report.status).toBe(
   RESPONSE_QUALITY_REPORT_STATUSES.INSUFFICIENT_DATA
 );
@@ -642,6 +654,7 @@ errors: []
 
 expect(report.warnings).not.toContain("LOW_COMPLETENESS");
 expect(report.warnings).not.toContain("LOW_CLARITY");
+
 expect(report.warnings).not.toContain(
   "LANGUAGE_MISMATCH_OR_LOW_SCORE"
 );
@@ -649,15 +662,19 @@ expect(report.warnings).not.toContain(
 expect(report.recommendations).toContain(
   "Përmirëso plotësinë duke iu përgjigjur drejtpërdrejt të gjitha pjesëve të pyetjes."
 );
+
 expect(report.recommendations).toContain(
   "Përmirëso qartësinë me fjali më të drejtpërdrejta dhe strukturë më të lexueshme."
 );
+
 expect(report.recommendations).toContain(
   "Kontrollo që gjuha e përgjigjes të përputhet me gjuhën e kërkuar."
 );
 
+// Pikët 60 nuk janë nën pragun 60 dhe nuk prodhojnë paralajmërime.
+// Rekomandimet për dimensionet nuk e ndryshojnë vetë statusin.
 expect(report.status).toBe(
-  RESPONSE_QUALITY_REPORT_STATUSES.NEEDS_IMPROVEMENT
+  RESPONSE_QUALITY_REPORT_STATUSES.COMPLETE
 );
 
 });
