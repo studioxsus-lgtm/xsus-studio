@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI Core — Benchmark History Persistence & Recovery Tests
- * Version: 1.1.0
+ * Version: 1.1.1
  *
  * Përfshin:
  * - Testet e storage JSON (Faza 11.8).
@@ -464,7 +464,10 @@ describe("XSUS Benchmark History Recovery Integration", () => {
   });
 
   it("ruan raportet aktuale të historikut", async () => {
-    const { engine, storage, recovery } = createHarness();
+    const { engine, storage, persistence, recovery } = createHarness();
+
+    // Inicializo persistence përpara se të shtosh raportet.
+    await persistence.initialize();
 
     engine.addReport({
       id: "report-1",
@@ -480,11 +483,19 @@ describe("XSUS Benchmark History Recovery Integration", () => {
 
     await recovery.recover();
 
-    const savedEntries = storage.saveHistory.mock.calls.at(-1)[0];
+    const saveCalls = storage.saveHistory.mock.calls;
+    const savedEntries = saveCalls.at(-1)?.[0];
+
+    expect(savedEntries).toBeDefined();
 
     expect(savedEntries.map((entry) => entry.id)).toEqual([
       "report-1",
       "report-2",
+    ]);
+
+    expect(savedEntries.map((entry) => entry.sequence)).toEqual([
+      1,
+      2,
     ]);
   });
 
