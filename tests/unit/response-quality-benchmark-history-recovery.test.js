@@ -1096,3 +1096,121 @@ describe("XSUS Benchmark History Concurrency & Transaction Safety", () => {
     expect(persistence.getHistorySize()).toBe(2);
   });
 });
+
+it("ruan gjendjen përfundimtare kur shtimi dhe fshirja ndërthuren", async () => {
+    const engine =
+      createResponseQualityBenchmarkHistoryEngine();
+
+    const storage = {
+      loadHistory: vi.fn().mockResolvedValue([]),
+      saveHistory: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const persistence =
+      createResponseQualityBenchmarkHistoryPersistence({
+        engine,
+        storage,
+      });
+
+    await persistence.initialize();
+
+    await persistence.addReport({
+      id: "interleave-1",
+      report: createReport(81),
+      timestamp: 100,
+    });
+
+    await persistence.addReport({
+      id: "interleave-2",
+      report: createReport(82),
+      timestamp: 200,
+    });
+
+    const [added, removed] = await Promise.all([
+      persistence.addReport({
+        id: "interleave-3",
+        report: createReport(83),
+        timestamp: 300,
+      }),
+      persistence.removeReport("interleave-1"),
+    ]);
+
+    expect(added.id).toBe("interleave-3");
+    expect(removed).toBe(true);
+    expect(persistence.getHistorySize()).toBe(2);
+
+    expect(
+      persistence.getReportById("interleave-1")
+    ).toBeNull();
+
+    expect(
+      persistence.getReportById("interleave-2")
+    ).not.toBeNull();
+
+    expect(
+      persistence.getReportById("interleave-3")
+    ).not.toBeNull();
+
+    await persistence.flush();
+
+    const savedHistory =
+      storage.saveHistory.mock.calls.at(-1)?.[0];
+
+    expect(
+      savedHistory.map((entry) => entry.id).sort()
+    ).toEqual(["interleave-2", "interleave-3"]);
+  });
+
+  it("ruan historikun e saktë pas shtimeve dhe fshirjeve të njëpasnjëshme", async () => {
+    const engine =
+      createResponseQualityBenchmarkHistoryEngine();
+
+    const storage = {
+      loadHistory: vi.fn().mockResolvedValue([]),
+      saveHistory: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const persistence =
+      createResponseQualityBenchmarkHistoryPersistence({
+        engine,
+        storage,
+      });
+
+    await persistence.initialize();
+
+    await Promise.all([
+      persistence.addReport({
+        id: "sequence-1",
+        report: createReport(71),
+        timestamp: 100,
+      }),
+      persistence.addReport({
+        id: "sequence-2",
+        report: createReport(72),
+        timestamp: 200,
+      }),
+    ]);
+
+    await persistence.removeReport("sequence-1");
+
+    await persistence.addReport({
+      id: "sequence-3",
+      report: createReport(73),
+      timestamp: 300,
+    });
+
+    await persistence.flush();
+
+    expect(persistence.getHistorySize()).toBe(2);
+
+    expect(
+      persistence.getReportById("sequence-1")
+    ).toBeNull();
+
+    const savedHistory =
+      storage.saveHistory.mock.calls.at(-1)?.[0];
+
+    expect(
+      savedHistory.map((entry) => entry.id).sort()
+    ).toEqual(["sequence-2", "sequence-3"]);
+  });
