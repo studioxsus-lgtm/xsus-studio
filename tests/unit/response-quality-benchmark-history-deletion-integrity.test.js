@@ -22,7 +22,7 @@ createResponseQualityBenchmarkHistoryPersistence,
   },
   results: [
   {
-  id: "case-${index}",
+  id: "case-" + index,
   status: "passed",
   },
   ],
@@ -35,7 +35,7 @@ createResponseQualityBenchmarkHistoryPersistence,
   */
   function createEntry(index, timestamp = index * 100) {
   return {
-  id: "benchmark-${index}",
+  id: "benchmark-" + index,
   timestamp,
   report: createReport(index),
   };
@@ -181,7 +181,7 @@ expect(persistence.getReportById("benchmark-4")).toBeNull();
 
 });
 
-it("pastron historikun dhe e rikthen si listë bosh", async () => {
+it("pastron historikun bosh pas fshirjes dhe rikuperimit", async () => {
 const first = await createInitializedHarness();
 
 await first.persistence.addReport(createEntry(1));
