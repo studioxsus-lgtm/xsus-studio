@@ -1,0 +1,221 @@
+
+import { describe, expect, it } from "vitest";
+
+import {
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
+
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import {
+  RESPONSE_QUALITY_BENCHMARK_HISTORY_STORAGE_VERSION,
+  createResponseQualityBenchmarkHistoryStorage,
+} from "../../src/core/response-quality-benchmark-history-storage.js";
+
+async function createTempDirectory() {
+  return mkdtemp(
+    join(tmpdir(), "xsus-benchmark-history-")
+  );
+}
+
+function createEntry(id, timestamp = 100) {
+  return {
+    id,
+    timestamp,
+    sequence: 1,
+    report: {
+      version: "1.0.0",
+      summary: {
+        benchmarkCount: 1,
+      },
+      results: [
+        {
+          id: "accuracy",
+          status: "passed",
+          actual: 0.99,
+        },
+      ],
+    },
+  };
+}
+
+describe("XSUS Response Quality Benchmark History Storage", () => {
+  it("përdor versionin e pritshëm", () => {
+    expect(
+      RESPONSE_QUALITY_BENCHMARK_HISTORY_STORAGE_VERSION
+    ).toBe("1.0.0");
+  });
+
+  it("ruan dhe ringarkon historikun", async () => {
+    const directory = await createTempDirectory();
+    const filePath = join(directory, "history.json");
+
+    try {
+      const storage =
+        createResponseQualityBenchmarkHistoryStorage({
+          filePath,
+        });
+
+      const history = [
+        createEntry("run-1"),
+        {
+          ...createEntry("run-2", 200),
+          sequence: 2,
+        },
+      ];
+
+      const result = await storage.saveHistory(history);
+
+      expect(result.savedCount).toBe(2);
+      expect(await storage.loadHistory()).toEqual(history);
+    } finally {
+      await rm(directory, {
+        recursive: true,
+        force: true,
+      });
+    }
+  });
+
+  it("kthen array bosh kur skedari nuk ekziston", async () => {
+    const directory = await createTempDirectory();
+    const filePath = join(directory, "missing.json");
+
+    try {
+      const storage =
+        createResponseQualityBenchmarkHistoryStorage({
+          filePath,
+        });
+
+      await expect(storage.loadHistory()).resolves.toEqual([]);
+    } finally {
+      await rm(directory, {
+        recursive: true,
+        force: true,
+      });
+    }
+  });
+
+  it("refuzon JSON të pavlefshëm", async () => {
+    const directory = await createTempDirectory();
+    const filePath = join(directory, "history.json");
+
+    try {
+      await writeFile(filePath, "{ invalid json", "utf8");
+
+      const storage =
+        createResponseQualityBenchmarkHistoryStorage({
+          filePath,
+        });
+
+      await expect(storage.loadHistory()).rejects.toThrow(
+        "Skedari i historikut benchmark përmban JSON të pavlefshëm."
+      );
+    } finally {
+      await rm(directory, {
+        recursive: true,
+        force: true,
+      });
+    }
+  });
+
+  it("refuzon dokument me format të panjohur", async () => {
+    const directory = await createTempDirectory();
+    const filePath = join(directory, "history.json");
+
+    try {
+      await writeFile(
+        filePath,
+        JSON.stringify({
+          format: "unknown",
+          formatVersion: 1,
+          entries: [],
+        }),
+        "utf8"
+      );
+
+      const storage =
+        createResponseQualityBenchmarkHistoryStorage({
+          filePath,
+        });
+
+      await expect(storage.loadHistory()).rejects.toThrow(
+        "Validimi i historikut benchmark dështoi."
+      );
+    } finally {
+      await rm(directory, {
+        recursive: true,
+        force: true,
+      });
+    }
+  });
+
+  it("refuzon ID të përsëritura", async () => {
+    const directory = await createTempDirectory();
+    const filePath = join(directory, "history.json");
+
+    try {
+      const storage =
+        createResponseQualityBenchmarkHistoryStorage({
+          filePath,
+        });
+
+      await expect(
+        storage.saveHistory([
+          createEntry("duplicate"),
+          {
+            ...createEntry("duplicate", 200),
+            sequence: 2,
+          },
+        ])
+      ).rejects.toThrow(
+        "ID e përsëritur në history: duplicate."
+      );
+    } finally {
+      await rm(directory, {
+        recursive: true,
+        force: true,
+      });
+    }
+  });
+
+  it("ruan dokument JSON me strukturën e pritshme", async () => {
+    const directory = await createTempDirectory();
+    const filePath = join(directory, "history.json");
+
+    try {
+      const storage =
+        createResponseQualityBenchmarkHistoryStorage({
+          filePath,
+        });
+
+      await storage.saveHistory([createEntry("run-1")]);
+
+      const document = JSON.parse(
+        await readFile(filePath, "utf8")
+      );
+
+      expect(document.format).toBe(
+        "xsus-benchmark-history"
+      );
+      expect(document.formatVersion).toBe(1);
+      expect(document.entries).toHaveLength(1);
+    } finally {
+      await rm(directory, {
+        recursive: true,
+        force: true,
+      });
+    }
+  });
+
+  it("refuzon filePath bosh", () => {
+    expect(() =>
+      createResponseQualityBenchmarkHistoryStorage({
+        filePath: " ",
+      })
+    ).toThrow("filePath duhet të jetë tekst jo bosh.");
+  });
+});
