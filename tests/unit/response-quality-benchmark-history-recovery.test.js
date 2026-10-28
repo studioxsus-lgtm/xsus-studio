@@ -1,15 +1,15 @@
-
 /**
  * XSUS AI Core — Benchmark History Persistence & Recovery Tests
- * Version: 1.1.1
+ * Version: 1.1.2
  *
  * Përfshin:
  * - Testet e storage JSON (Faza 11.8).
- * - Testet e integrimit dhe rikthimit (Faza 11.9–11.10).
+ * - Testet e integrimit dhe rikthimit (Fazat 11.9–11.10).
  * - Validimin e historikut dhe integritetin e të dhënave.
  * - Riprovimin pas dështimit të ruajtjes.
  * - Kontrollin e gjendjes së sinkronizimit.
  * - Testimin e thirrjeve paralele të rikuperimit.
+ * - Testet e integritetit të rikuperimit (Faza 11.11).
  */
 
 import {
@@ -136,7 +136,7 @@ function createHarness(storageOverrides = {}, maxRetries = 2) {
 }
 
 // --------------------------------------------------
-// Faza 11.8 — Storage persistence recovery
+// Faza 11.8 — Storage Persistence Recovery
 // --------------------------------------------------
 
 describe("XSUS Benchmark History Storage Recovery", () => {
@@ -378,9 +378,13 @@ describe("XSUS Benchmark History Storage Recovery", () => {
           createEntry("same", 100, 1),
           createEntry("same", 200, 2),
         ])
-      ).rejects.toThrow("ID e përsëritur në history: same.");
+      ).rejects.toThrow(
+        "ID e përsëritur në history: same."
+      );
 
-      await expect(readFile(filePath, "utf8")).rejects.toMatchObject({
+      await expect(
+        readFile(filePath, "utf8")
+      ).rejects.toMatchObject({
         code: "ENOENT",
       });
     } finally {
@@ -390,7 +394,7 @@ describe("XSUS Benchmark History Storage Recovery", () => {
 });
 
 // --------------------------------------------------
-// Faza 11.10 — Recovery integration
+// Faza 11.10 — Recovery Integration
 // --------------------------------------------------
 
 describe("XSUS Benchmark History Recovery Integration", () => {
@@ -416,7 +420,9 @@ describe("XSUS Benchmark History Recovery Integration", () => {
       .mockRejectedValueOnce(
         new Error("Disku përkohësisht i padisponueshëm")
       )
-      .mockResolvedValueOnce({ savedCount: 0 });
+      .mockResolvedValueOnce({
+        savedCount: 0,
+      });
 
     const { recovery } = createHarness({ saveHistory }, 2);
 
@@ -435,7 +441,9 @@ describe("XSUS Benchmark History Recovery Integration", () => {
 
     const { recovery } = createHarness({ saveHistory }, 2);
 
-    await expect(recovery.recover()).rejects.toMatchObject({
+    await expect(
+      recovery.recover()
+    ).rejects.toMatchObject({
       code: "BENCHMARK_HISTORY_RECOVERY_FAILED",
       attempts: 3,
     });
@@ -452,7 +460,9 @@ describe("XSUS Benchmark History Recovery Integration", () => {
 
     const { recovery } = createHarness({ saveHistory }, 0);
 
-    await expect(recovery.recover()).rejects.toThrow(
+    await expect(
+      recovery.recover()
+    ).rejects.toThrow(
       "Rikuperimi i ruajtjes së historikut benchmark dështoi."
     );
 
@@ -464,9 +474,13 @@ describe("XSUS Benchmark History Recovery Integration", () => {
   });
 
   it("ruan raportet aktuale të historikut", async () => {
-    const { engine, storage, persistence, recovery } = createHarness();
+    const {
+      engine,
+      storage,
+      persistence,
+      recovery,
+    } = createHarness();
 
-    // Inicializo persistence përpara se të shtosh raportet.
     await persistence.initialize();
 
     engine.addReport({
@@ -542,5 +556,168 @@ describe("XSUS Benchmark History Recovery Integration", () => {
     expect(firstResult.status).toBe("synchronized");
     expect(secondResult.status).toBe("synchronized");
     expect(saveHistory).toHaveBeenCalledTimes(1);
+  });
+});
+
+// --------------------------------------------------
+// Faza 11.11 — Recovery Integrity & Consistency
+// --------------------------------------------------
+
+describe("XSUS Benchmark History Recovery Integrity", () => {
+  it("ruan raportet pas rikuperimeve të përsëritura", async () => {
+    const {
+      persistence,
+      storage,
+      recovery,
+    } = createHarness();
+
+    await persistence.initialize();
+
+    await persistence.addReport({
+      id: "integrity-1",
+      timestamp: 1000,
+      report: createReport(85),
+    });
+
+    await persistence.addReport({
+      id: "integrity-2",
+      timestamp: 2000,
+      report: createReport(95),
+    });
+
+    await recovery.recover();
+    await recovery.recover();
+    await recovery.recover();
+
+    const result = recovery.getStatus();
+    const savedEntries = storage.saveHistory.mock.calls.at(-1)?.[0];
+
+    expect(result.status).toBe("synchronized");
+    expect(result.synchronized).toBe(true);
+
+    expect(savedEntries.map((entry) => entry.id)).toEqual([
+      "integrity-1",
+      "integrity-2",
+    ]);
+  });
+
+  it("ruan rendin dhe sequence e raporteve", async () => {
+    const {
+      persistence,
+      storage,
+      recovery,
+    } = createHarness();
+
+    await persistence.initialize();
+
+    await persistence.addReport({
+      id: "sequence-1",
+      timestamp: 1000,
+      report: createReport(80),
+    });
+
+    await persistence.addReport({
+      id: "sequence-2",
+      timestamp: 2000,
+      report: createReport(90),
+    });
+
+    await persistence.addReport({
+      id: "sequence-3",
+      timestamp: 3000,
+      report: createReport(95),
+    });
+
+    await recovery.recover();
+
+    const savedEntries = storage.saveHistory.mock.calls.at(-1)?.[0];
+
+    expect(savedEntries.map((entry) => entry.id)).toEqual([
+      "sequence-1",
+      "sequence-2",
+      "sequence-3",
+    ]);
+
+    expect(savedEntries.map((entry) => entry.sequence)).toEqual([
+      1,
+      2,
+      3,
+    ]);
+  });
+
+  it("rikuperohet në një thirrje të re pas dështimit të ruajtjes", async () => {
+    const saveHistory = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new Error("Dështim i përkohshëm i ruajtjes")
+      )
+      .mockResolvedValue({
+        savedCount: 0,
+      });
+
+    const { recovery } = createHarness(
+      { saveHistory },
+      0
+    );
+
+    await expect(
+      recovery.recover()
+    ).rejects.toThrow(
+      "Rikuperimi i ruajtjes së historikut benchmark dështoi."
+    );
+
+    expect(recovery.getStatus().status).toBe("failed");
+
+    const result = await recovery.recover();
+
+    expect(result.status).toBe("synchronized");
+    expect(result.synchronized).toBe(true);
+    expect(recovery.getStatus().lastError).toBeNull();
+    expect(saveHistory).toHaveBeenCalledTimes(2);
+  });
+
+  it("ruan raportet dhe përmbajtjen e tyre gjatë rikuperimit", async () => {
+    const {
+      persistence,
+      storage,
+      recovery,
+    } = createHarness();
+
+    await persistence.initialize();
+
+    const firstReport = createReport(87);
+    const secondReport = createReport(96);
+
+    await persistence.addReport({
+      id: "content-1",
+      timestamp: 1000,
+      report: firstReport,
+    });
+
+    await persistence.addReport({
+      id: "content-2",
+      timestamp: 2000,
+      report: secondReport,
+    });
+
+    await recovery.recover();
+
+    const savedEntries = storage.saveHistory.mock.calls.at(-1)?.[0];
+
+    expect(savedEntries).toHaveLength(2);
+
+    expect(savedEntries[0]).toMatchObject({
+      id: "content-1",
+      timestamp: 1000,
+      sequence: 1,
+      report: firstReport,
+    });
+
+    expect(savedEntries[1]).toMatchObject({
+      id: "content-2",
+      timestamp: 2000,
+      sequence: 2,
+      report: secondReport,
+    });
   });
 });
