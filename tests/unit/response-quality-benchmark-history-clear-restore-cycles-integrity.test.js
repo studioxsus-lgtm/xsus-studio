@@ -215,7 +215,7 @@ describe(
             .score,
         ).toBe(99);
 
-        // Snapshot-i i marrë më parë mbetet i pandryshuar.
+        // Snapshot-i i vjetër mbetet i pandryshuar.
         expect(oldSnapshot.id).toBe("snapshot-old");
         expect(oldSnapshot.report.summary.score).toBe(91);
       },
@@ -326,7 +326,7 @@ describe(
 
         await persistence.initialize();
 
-        // Pastrimi i historikut që është tashmë bosh.
+        // Pastrimi i historikut bosh.
         await persistence.clearHistory();
 
         expect(persistence.getHistorySize()).toBe(0);
@@ -346,6 +346,7 @@ describe(
 
         // Shtojmë një raport dhe pastaj e pastrojmë.
         await persistence.addReport(createReport("empty-cycle-a"));
+
         await persistence.flush();
 
         expect(persistence.getHistorySize()).toBe(1);
@@ -411,6 +412,7 @@ describe(
 
             expect(storage.getSnapshot()).toEqual([]);
           } else {
+            // Pas dy cikleve pastrim, cikli i fundit ruan vetëm raportin e vet.
             expect(restoredPersistence.getHistorySize()).toBe(1);
             expect(storage.getSnapshot()).toHaveLength(1);
 
