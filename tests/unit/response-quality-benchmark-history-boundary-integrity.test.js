@@ -97,7 +97,9 @@ const restoredPersistence =
 await restoredPersistence.initialize();
 
 expect(restoredPersistence.getHistorySize()).toBe(1);
-expect(restoredPersistence.getReportById("boundary-1")).not.toBeNull();
+expect(
+  restoredPersistence.getReportById("boundary-1"),
+).not.toBeNull();
 
 expect(
   restoredEngine.listReports().map((entry) => entry.id),
@@ -138,10 +140,7 @@ const savedEntry = storage
   .find((item) => item.id === "boundary-2");
 
 expect(savedEntry).toBeDefined();
-
-expect(
-  savedEntry.report.results[0].details,
-).toBe(longText);
+expect(savedEntry.report.results[0].details).toBe(longText);
 
 });
 
@@ -178,12 +177,12 @@ expect(new Set(savedIds).size).toBe(identifiers.length);
 
 });
 
-it("ruan vlerat numerike në kufijtë zero dhe negativë", async () => {
-const { storage, persistence } = createHarness();
+it("ruan vlerat numerike zero dhe refuzon timestamp negativ", async () => {
+const { engine, storage, persistence } = createHarness();
 
 await persistence.initialize();
 
-await persistence.addReport({
+const zeroEntry = {
   ...createEntry(3),
   timestamp: 0,
   report: {
@@ -195,44 +194,35 @@ await persistence.addReport({
     },
     results: [],
   },
-});
+};
 
-await persistence.addReport({
-  ...createEntry(4),
-  timestamp: -100,
-  report: {
-    summary: {
-      total: 1,
-      passed: 0,
-      failed: 1,
-      score: -1,
-    },
-    results: [
-      {
-        id: "boundary-case-4",
-        status: "failed",
-      },
-    ],
-  },
-});
-
+await persistence.addReport(zeroEntry);
 await persistence.flush();
 
-const savedHistory = storage.getPersistedHistory();
+const savedZeroEntry = storage
+  .getPersistedHistory()
+  .find((entry) => entry.id === "boundary-3");
 
-const zeroEntry = savedHistory.find(
-  (entry) => entry.id === "boundary-3",
+expect(savedZeroEntry).toBeDefined();
+expect(savedZeroEntry.timestamp).toBe(0);
+expect(savedZeroEntry.report.summary.score).toBe(0);
+
+const negativeEntry = {
+  ...createEntry(4),
+  timestamp: -100,
+};
+
+expect(() => {
+  engine.addReport(negativeEntry);
+}).toThrow(
+  "timestamp duhet të jetë numër i vlefshëm jo negativ.",
 );
 
-const negativeEntry = savedHistory.find(
-  (entry) => entry.id === "boundary-4",
-);
+expect(persistence.getHistorySize()).toBe(1);
 
-expect(zeroEntry.timestamp).toBe(0);
-expect(zeroEntry.report.summary.score).toBe(0);
-
-expect(negativeEntry.timestamp).toBe(-100);
-expect(negativeEntry.report.summary.score).toBe(-1);
+expect(
+  storage.getPersistedHistory().map((entry) => entry.id),
+).toEqual(["boundary-3"]);
 
 });
 });
