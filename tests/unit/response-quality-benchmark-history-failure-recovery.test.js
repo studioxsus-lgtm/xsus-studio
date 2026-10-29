@@ -52,7 +52,6 @@ function createHarness({
 initialHistory = [],
 } = {}) {
 const engine = createResponseQualityBenchmarkHistoryEngine();
-
 const storage = createStorage(initialHistory);
 
 const persistence = createResponseQualityBenchmarkHistoryPersistence({
@@ -115,17 +114,10 @@ await expect(
 ).rejects.toThrow();
 
 expect(persistence.getHistorySize()).toBe(1);
+expect(storage.getPersistedHistory()).toEqual([]);
 
-storage.saveHistory.mockImplementation(async (history) => {
-  storage._persistedHistory = structuredClone(history);
-});
-
-// Ruajtja e dytë duhet të përfshijë historikun aktual në RAM.
-storage.saveHistory.mockImplementationOnce(async (history) => {
-  storage._persistedHistory = structuredClone(history);
-});
-
-// Shto një raport tjetër për të provuar ruajtjen pas rikthimit.
+// Mock-u i parazgjedhur i storage-it vazhdon të ruajë
+// historikun në gjendjen e tij të brendshme.
 await persistence.addReport(createEntry(2));
 await persistence.flush();
 
@@ -133,6 +125,10 @@ expect(persistence.getHistorySize()).toBe(2);
 
 expect(
   engine.listReports().map((entry) => entry.id),
+).toEqual(["benchmark-2", "benchmark-1"]);
+
+expect(
+  storage.getPersistedHistory().map((entry) => entry.id),
 ).toEqual(["benchmark-2", "benchmark-1"]);
 
 expect(storage.saveHistory).toHaveBeenCalledTimes(2);
@@ -150,8 +146,14 @@ await expect(
   persistence.initialize(),
 ).rejects.toThrow();
 
+// Pas dështimit, motori duhet të mbetet bosh.
 expect(engine.listReports()).toEqual([]);
+
+// Inicializimi duhet të mund të provohet përsëri.
+await persistence.initialize();
+
 expect(persistence.getHistorySize()).toBe(0);
+expect(persistence.listReports()).toEqual([]);
 
 });
 
@@ -175,6 +177,7 @@ await expect(
 
 expect(engine.listReports()).toEqual([]);
 
+// Leximi i dytë duhet të ketë sukses dhe të rikthejë historikun.
 await persistence.initialize();
 
 expect(persistence.getHistorySize()).toBe(2);
@@ -182,6 +185,10 @@ expect(persistence.getHistorySize()).toBe(2);
 expect(
   engine.listReports().map((entry) => entry.id),
 ).toEqual(["benchmark-2", "benchmark-1"]);
+
+expect(
+  storage.getPersistedHistory().map((entry) => entry.id),
+).toEqual(["benchmark-1", "benchmark-2"]);
 
 });
 });
