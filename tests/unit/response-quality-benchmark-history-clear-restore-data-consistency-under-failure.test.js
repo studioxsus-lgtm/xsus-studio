@@ -83,6 +83,12 @@ persistence,
 };
 }
 
+function getReportIds(engine) {
+return engine
+.listReports()
+.map((report) => report.id);
+}
+
 describe(
 "Response Quality Benchmark History — Clear and Restore Data Consistency Under Failure",
 () => {
@@ -110,13 +116,13 @@ const { engine, persistence } = createPersistence(storage);
       code: "BENCHMARK_HISTORY_PERSISTENCE_ERROR",
     });
 
-    expect(engine.getHistory()).toHaveLength(0);
+    expect(engine.getHistorySize()).toBe(0);
     expect(storage.getSnapshot()).toHaveLength(0);
 
     await persistence.clearHistory();
     await persistence.flush();
 
-    expect(engine.getHistory()).toHaveLength(0);
+    expect(engine.getHistorySize()).toBe(0);
     expect(storage.getSnapshot()).toHaveLength(0);
   },
 );
@@ -132,7 +138,9 @@ it(
 
     await persistence.initialize();
 
-    expect(engine.getHistory()).toHaveLength(1);
+    expect(getReportIds(engine)).toEqual([
+      "stale-report",
+    ]);
 
     storage.failNextSave();
 
@@ -142,20 +150,21 @@ it(
       code: "BENCHMARK_HISTORY_PERSISTENCE_ERROR",
     });
 
-    expect(engine.getHistory()).toHaveLength(0);
+    expect(engine.getHistorySize()).toBe(0);
     expect(storage.getSnapshot()).toHaveLength(1);
 
     await persistence.clearHistory();
     await persistence.flush();
 
-    expect(engine.getHistory()).toHaveLength(0);
+    expect(engine.getHistorySize()).toBe(0);
     expect(storage.getSnapshot()).toHaveLength(0);
 
     const recovered = createPersistence(storage);
 
     await recovered.persistence.initialize();
 
-    expect(recovered.engine.getHistory()).toHaveLength(0);
+    expect(recovered.engine.getHistorySize()).toBe(0);
+    expect(getReportIds(recovered.engine)).toEqual([]);
     expect(storage.getSnapshot()).toHaveLength(0);
   },
 );
@@ -171,7 +180,9 @@ it(
     storage.failNextSave();
 
     await expect(
-      persistence.addReport(createReport("report-before-recovery")),
+      persistence.addReport(
+        createReport("report-before-recovery"),
+      ),
     ).rejects.toMatchObject({
       code: "BENCHMARK_HISTORY_PERSISTENCE_ERROR",
     });
@@ -184,9 +195,9 @@ it(
 
     await persistence.flush();
 
-    expect(
-      engine.getHistory().map((report) => report.id),
-    ).toContain("report-after-recovery");
+    expect(getReportIds(engine)).toContain(
+      "report-after-recovery",
+    );
 
     expect(
       storage
@@ -213,13 +224,13 @@ it(
       message: "Inicializimi i historikut benchmark dështoi.",
     });
 
-    expect(engine.getHistory()).toHaveLength(0);
+    expect(engine.getHistorySize()).toBe(0);
 
     await persistence.initialize();
 
-    expect(
-      engine.getHistory().map((report) => report.id),
-    ).toEqual(["restored-report"]);
+    expect(getReportIds(engine)).toEqual([
+      "restored-report",
+    ]);
 
     expect(storage.getSnapshot()).toHaveLength(1);
   },
