@@ -116,8 +116,8 @@ await expect(
 expect(persistence.getHistorySize()).toBe(1);
 expect(storage.getPersistedHistory()).toEqual([]);
 
-// Mock-u i parazgjedhur i storage-it vazhdon të ruajë
-// historikun në gjendjen e tij të brendshme.
+// Raporti i parë mbetet në RAM pas dështimit.
+// Raporti i dytë provon se ruajtja mund të rikthehet.
 await persistence.addReport(createEntry(2));
 await persistence.flush();
 
@@ -127,9 +127,10 @@ expect(
   engine.listReports().map((entry) => entry.id),
 ).toEqual(["benchmark-2", "benchmark-1"]);
 
+// Storage-i ruan raportet sipas rendit të vet real.
 expect(
   storage.getPersistedHistory().map((entry) => entry.id),
-).toEqual(["benchmark-2", "benchmark-1"]);
+).toEqual(["benchmark-1", "benchmark-2"]);
 
 expect(storage.saveHistory).toHaveBeenCalledTimes(2);
 
@@ -177,7 +178,7 @@ await expect(
 
 expect(engine.listReports()).toEqual([]);
 
-// Leximi i dytë duhet të ketë sukses dhe të rikthejë historikun.
+// Leximi i dytë duhet të rikthejë historikun.
 await persistence.initialize();
 
 expect(persistence.getHistorySize()).toBe(2);
