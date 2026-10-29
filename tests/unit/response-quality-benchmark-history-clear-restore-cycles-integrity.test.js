@@ -215,7 +215,6 @@ describe(
             .score,
         ).toBe(99);
 
-        // Snapshot-i i vjetër mbetet i pandryshuar.
         expect(oldSnapshot.id).toBe("snapshot-old");
         expect(oldSnapshot.report.summary.score).toBe(91);
       },
@@ -326,44 +325,28 @@ describe(
 
         await persistence.initialize();
 
-        // Pastrimi i historikut bosh.
         await persistence.clearHistory();
-
         expect(persistence.getHistorySize()).toBe(0);
-
         await persistence.flush();
-
         expect(storage.getSnapshot()).toEqual([]);
 
-        // Pastrim i dytë i historikut bosh.
         await persistence.clearHistory();
-
         expect(persistence.getHistorySize()).toBe(0);
-
         await persistence.flush();
-
         expect(storage.getSnapshot()).toEqual([]);
 
-        // Shtojmë një raport dhe pastaj e pastrojmë.
         await persistence.addReport(createReport("empty-cycle-a"));
-
         await persistence.flush();
 
         expect(persistence.getHistorySize()).toBe(1);
 
         await persistence.clearHistory();
-
         expect(persistence.getHistorySize()).toBe(0);
-
         await persistence.flush();
-
         expect(storage.getSnapshot()).toEqual([]);
 
-        // Pastrim tjetër pasi historiku është bosh.
         await persistence.clearHistory();
-
         expect(persistence.getHistorySize()).toBe(0);
-
         await persistence.flush();
 
         expect(persistence.getHistorySize()).toBe(0);
@@ -372,7 +355,7 @@ describe(
     );
 
     it(
-      "ruan të dhënat e raporteve të reja pas disa cikleve pastrim-rikthim",
+      "ruan vetëm raportin e ciklit aktual pas pastrimit dhe rikthimit",
       async () => {
         const storage = createStorage();
         const { persistence } = createPersistence(storage);
@@ -380,6 +363,13 @@ describe(
         await persistence.initialize();
 
         for (let cycle = 0; cycle < 3; cycle += 1) {
+          // Sigurohemi që cikli i ri fillon me ruajtje bosh.
+          await persistence.clearHistory();
+          await persistence.flush();
+
+          expect(persistence.getHistorySize()).toBe(0);
+          expect(storage.getSnapshot()).toEqual([]);
+
           const id = `integrity-${cycle}`;
 
           await persistence.addReport(
@@ -392,34 +382,24 @@ describe(
 
           await persistence.flush();
 
+          expect(persistence.getHistorySize()).toBe(1);
+          expect(storage.getSnapshot()).toHaveLength(1);
+
           const { persistence: restoredPersistence } =
             createPersistence(storage);
 
           await restoredPersistence.initialize();
 
+          expect(restoredPersistence.getHistorySize()).toBe(1);
+          expect(restoredPersistence.listReports()).toHaveLength(1);
+
           expect(
             restoredPersistence.getReportById(id).report.summary.score,
           ).toBe(90 + cycle);
 
-          if (cycle < 2) {
-            expect(restoredPersistence.getHistorySize()).toBe(cycle + 1);
-
-            await restoredPersistence.clearHistory();
-
-            expect(restoredPersistence.getHistorySize()).toBe(0);
-
-            await restoredPersistence.flush();
-
-            expect(storage.getSnapshot()).toEqual([]);
-          } else {
-            // Pas dy cikleve pastrim, cikli i fundit ruan vetëm raportin e vet.
-            expect(restoredPersistence.getHistorySize()).toBe(1);
-            expect(storage.getSnapshot()).toHaveLength(1);
-
-            expect(
-              restoredPersistence.getReportById(id).report.summary.score,
-            ).toBe(92);
-          }
+          expect(
+            restoredPersistence.getReportById(`integrity-${(cycle + 1) % 3}`),
+          ).toBeNull();
         }
       },
     );
