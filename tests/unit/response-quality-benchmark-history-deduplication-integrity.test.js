@@ -48,24 +48,44 @@ getSnapshot() {
 };
 }
 
-function getReportIds(reports) {
-return reports.map((entry) => entry.id).sort();
-}
-
-describe("Response Quality Benchmark History — Deduplication Integrity", () => {
-it("refuzon shtimin e një identifikuesi që ekziston", () => {
+function createHarness(initialHistory = []) {
 const engine =
 createResponseQualityBenchmarkHistoryEngine();
 
-engine.addReport(createReport("report-1"));
+const storage = createStorage(initialHistory);
 
-expect(() => {
-  engine.addReport(
+const persistence =
+createResponseQualityBenchmarkHistoryPersistence({
+engine,
+storage,
+});
+
+return {
+engine,
+storage,
+persistence,
+};
+}
+
+function getReportIds(entries) {
+return entries.map((entry) => entry.id).sort();
+}
+
+describe("Response Quality Benchmark History — Deduplication Integrity", () => {
+it("refuzon shtimin e një identifikuesi që ekziston", async () => {
+const { engine, persistence } = createHarness();
+
+await persistence.initialize();
+
+await persistence.addReport(createReport("report-1"));
+
+await expect(
+  persistence.addReport(
     createReport("report-1", {
       summary: { score: 10 },
     }),
-  );
-}).toThrow(
+  ),
+).rejects.toThrow(
   "Raporti ekziston tashmë në historik: report-1.",
 );
 
@@ -73,27 +93,36 @@ expect(engine.getHistorySize()).toBe(1);
 
 });
 
-it("ruan raportin origjinal pas refuzimit të dublikatës", () => {
-const engine =
-createResponseQualityBenchmarkHistoryEngine();
+it("ruan raportin origjinal pas refuzimit të dublikatës", async () => {
+const { persistence } = createHarness();
 
-engine.addReport(
+await persistence.initialize();
+
+await persistence.addReport(
   createReport("report-1", {
-    summary: { score: 95, title: "Original" },
+    summary: {
+      score: 95,
+      title: "Original",
+    },
   }),
 );
 
-expect(() => {
-  engine.addReport(
+await expect(
+  persistence.addReport(
     createReport("report-1", {
-      summary: { score: 5, title: "Duplicate" },
+      summary: {
+        score: 5,
+        title: "Duplicate",
+      },
     }),
-  );
-}).toThrow(
+  ),
+).rejects.toThrow(
   "Raporti ekziston tashmë në historik: report-1.",
 );
 
-expect(engine.getReportById("report-1")).toMatchObject({
+expect(
+  persistence.getReportById("report-1"),
+).toMatchObject({
   id: "report-1",
   report: {
     summary: {
@@ -103,142 +132,116 @@ expect(engine.getReportById("report-1")).toMatchObject({
   },
 });
 
-expect(engine.getHistorySize()).toBe(1);
+expect(persistence.getHistorySize()).toBe(1);
 
 });
 
-it("nuk ndryshon hyrjet ekzistuese kur refuzohet një dublikatë", () => {
-const engine =
-createResponseQualityBenchmarkHistoryEngine();
-
-engine.addReport(createReport("report-1"));
-engine.addReport(createReport("report-2"));
-
-const before = engine.listReports();
-
-expect(() => {
-  engine.addReport(createReport("report-1"));
-}).toThrow(
-  "Raporti ekziston tashmë në historik: report-1.",
-);
-
-expect(engine.listReports()).toEqual(before);
-expect(engine.getHistorySize()).toBe(2);
-
-});
-
-it("ruan identifikuesit unikë pas flush", async () => {
-const engine =
-createResponseQualityBenchmarkHistoryEngine();
-
-const storage = createStorage();
-
-const persistence =
-  createResponseQualityBenchmarkHistoryPersistence({
-    engine,
-    storage,
-  });
+it("nuk ndryshon hyrjet ekzistuese kur refuzohet një dublikatë", async () => {
+const { persistence } = createHarness();
 
 await persistence.initialize();
 
-engine.addReport(createReport("report-1"));
-engine.addReport(createReport("report-2"));
-engine.addReport(createReport("report-3"));
+await persistence.addReport(createReport("report-1"));
+await persistence.addReport(createReport("report-2"));
 
-expect(() => {
-  engine.addReport(createReport("report-2"));
-}).toThrow(
+const before = persistence.listReports();
+
+await expect(
+  persistence.addReport(createReport("report-1")),
+).rejects.toThrow(
+  "Raporti ekziston tashmë në historik: report-1.",
+);
+
+expect(persistence.listReports()).toEqual(before);
+expect(persistence.getHistorySize()).toBe(2);
+
+});
+
+it("ruan identifikuesit unikë në storage pas shtimit", async () => {
+const { persistence, storage } = createHarness();
+
+await persistence.initialize();
+
+await persistence.addReport(createReport("report-1"));
+await persistence.addReport(createReport("report-2"));
+await persistence.addReport(createReport("report-3"));
+
+await expect(
+  persistence.addReport(createReport("report-2")),
+).rejects.toThrow(
   "Raporti ekziston tashmë në historik: report-2.",
 );
 
 await persistence.flush();
 
-const persistedReports = storage.getSnapshot();
+const persistedEntries = storage.getSnapshot();
 
-expect(getReportIds(persistedReports)).toEqual([
+expect(getReportIds(persistedEntries)).toEqual([
   "report-1",
   "report-2",
   "report-3",
 ]);
 
-expect(persistedReports).toHaveLength(3);
+expect(persistedEntries).toHaveLength(3);
 
 });
 
-it("ruan integritetin e historikut pas rikthimit", async () => {
-const firstEngine =
-createResponseQualityBenchmarkHistoryEngine();
+it("rikthen historikun dhe refuzon identifikuesit e përsëritur", async () => {
+const first = createHarness();
 
-const firstStorage = createStorage();
+await first.persistence.initialize();
 
-const firstPersistence =
-  createResponseQualityBenchmarkHistoryPersistence({
-    engine: firstEngine,
-    storage: firstStorage,
-  });
+await first.persistence.addReport(createReport("report-1"));
+await first.persistence.addReport(createReport("report-2"));
 
-await firstPersistence.initialize();
+await first.persistence.flush();
 
-firstEngine.addReport(createReport("report-1"));
-firstEngine.addReport(createReport("report-2"));
+const savedHistory = first.storage.getSnapshot();
 
-await firstPersistence.flush();
+const restored = createHarness(savedHistory);
 
-const savedHistory = firstStorage.getSnapshot();
+await restored.persistence.initialize();
 
-const restoredEngine =
-  createResponseQualityBenchmarkHistoryEngine();
-
-const restoredStorage = createStorage(savedHistory);
-
-const restoredPersistence =
-  createResponseQualityBenchmarkHistoryPersistence({
-    engine: restoredEngine,
-    storage: restoredStorage,
-  });
-
-await restoredPersistence.initialize();
-
-expect(restoredEngine.getHistorySize()).toBe(2);
+expect(restored.persistence.getHistorySize()).toBe(2);
 
 expect(
-  getReportIds(restoredEngine.listReports()),
+  getReportIds(restored.persistence.listReports()),
 ).toEqual(["report-1", "report-2"]);
 
-expect(() => {
-  restoredEngine.addReport(createReport("report-1"));
-}).toThrow(
+await expect(
+  restored.persistence.addReport(createReport("report-1")),
+).rejects.toThrow(
   "Raporti ekziston tashmë në historik: report-1.",
 );
 
-expect(restoredEngine.getHistorySize()).toBe(2);
+expect(restored.persistence.getHistorySize()).toBe(2);
 
 });
 
-it("mban storage-in dhe engine-in konsistent pas refuzimit të dublikatës", async () => {
-const engine =
-createResponseQualityBenchmarkHistoryEngine();
-
-const storage = createStorage();
-
-const persistence =
-  createResponseQualityBenchmarkHistoryPersistence({
-    engine,
-    storage,
-  });
+it("mban engine-in dhe storage-in konsistent pas refuzimit të dublikatës", async () => {
+const { engine, persistence, storage } = createHarness();
 
 await persistence.initialize();
 
-engine.addReport(createReport("report-1"));
-engine.addReport(createReport("report-2"));
+await persistence.addReport(
+  createReport("report-1", {
+    summary: { score: 88 },
+  }),
+);
+
+await persistence.addReport(
+  createReport("report-2", {
+    summary: { score: 96 },
+  }),
+);
 
 await persistence.flush();
 
 const persistedBefore = storage.getSnapshot();
 
-expect(() => {
-  engine.addReport(createReport("report-1"));
-}).toThrow(
+await expect(
+  persistence.addReport(createReport("report-1")),
+).rejects.toThrow(
   "Raporti ekziston tashmë në historik: report-1.",
 );
 
@@ -249,9 +252,9 @@ const persistedAfter = storage.getSnapshot();
 expect(persistedAfter).toEqual(persistedBefore);
 expect(engine.getHistorySize()).toBe(2);
 
-expect(getReportIds(engine.listReports())).toEqual(
-  getReportIds(persistedAfter),
-);
+expect(
+  getReportIds(persistence.listReports()),
+).toEqual(getReportIds(persistedAfter));
 
 });
 });
