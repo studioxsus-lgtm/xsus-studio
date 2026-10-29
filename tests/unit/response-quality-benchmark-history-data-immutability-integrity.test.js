@@ -8,29 +8,37 @@ import {
 createResponseQualityBenchmarkHistoryPersistence,
 } from "../../src/core/response-quality-benchmark-history-persistence.js";
 
-function createReport(id, overrides = {}) {
-return {
-id,
-timestamp: 1_800_000_000_000,
-report: {
-summary: {
-title: "Benchmark ${id}",
-score: 90,
-...overrides.summary,
-},
-results: overrides.results ?? [
-{
-name: "response-quality",
-score: 90,
-passed: true,
-},
-],
-},
-};
-}
+/**
 
-function createStorage(initialHistory = []) {
-let history = structuredClone(initialHistory);
+* Krijon një raport testimi me të dhëna të pavarura.
+  */
+  function createReport(id, overrides = {}) {
+  return {
+  id,
+  timestamp: 1_800_000_000_000,
+  report: {
+  summary: {
+  title: "Benchmark ${id}",
+  score: 90,
+  ...overrides.summary,
+  },
+  results: overrides.results ?? [
+  {
+  name: "response-quality",
+  score: 90,
+  passed: true,
+  },
+  ],
+  },
+  };
+  }
+
+/**
+
+* Storage testues që izolon të dhënat përmes kopjeve të thella.
+  */
+  function createStorage(initialHistory = []) {
+  let history = structuredClone(initialHistory);
 
 return {
 async loadHistory() {
@@ -115,6 +123,7 @@ it("izolon engine-in nga ndryshimet në hyrjen origjinale", () => {
   input.report.summary.score = 1;
   input.report.summary.title = "Modified externally";
   input.report.results[0].score = 0;
+
   input.report.results.push({
     name: "external-result",
     score: 0,
@@ -252,21 +261,20 @@ it("ruan integritetin pas persistimit dhe rikthimit", async () => {
 
   expect(Object.isFrozen(restoredEntry)).toBe(true);
   expect(Object.isFrozen(restoredEntry.report)).toBe(true);
+
   expect(
     Object.isFrozen(restoredEntry.report.summary),
   ).toBe(true);
+
   expect(
     Object.isFrozen(restoredEntry.report.results),
   ).toBe(true);
 
-  expect(
-    restoredEntry.report.summary.title,
-  ).toBe("Benchmark report-1");
+  expect(restoredEntry.report.summary.title).toBe(
+    "Benchmark report-1",
+  );
 
-  expect(
-    restoredEntry.report.summary.score,
-  ).toBe(90);
-
+  expect(restoredEntry.report.summary.score).toBe(90);
   expect(restoredPersistence.getHistorySize()).toBe(2);
 });
 
