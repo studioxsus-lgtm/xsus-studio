@@ -18,7 +18,7 @@ createResponseQualityBenchmarkHistoryPersistence,
   timestamp: 1_800_000_000_000,
   report: {
   summary: {
-  title: "Benchmark ${id}",
+  title: "Immutable Benchmark",
   score: 90,
   ...overrides.summary,
   },
@@ -133,7 +133,7 @@ it("izolon engine-in nga ndryshimet në hyrjen origjinale", () => {
   const saved = engine.getReportById("report-1");
 
   expect(saved.report.summary.score).toBe(90);
-  expect(saved.report.summary.title).toBe("Benchmark report-1");
+  expect(saved.report.summary.title).toBe("Immutable Benchmark");
   expect(saved.report.results).toHaveLength(1);
   expect(saved.report.results[0].score).toBe(90);
 });
@@ -270,9 +270,9 @@ it("ruan integritetin pas persistimit dhe rikthimit", async () => {
     Object.isFrozen(restoredEntry.report.results),
   ).toBe(true);
 
-  expect(restoredEntry.report.summary.title).toBe(
-    "Benchmark report-1",
-  );
+  expect(
+    restoredEntry.report.summary.title,
+  ).toBe("Immutable Benchmark");
 
   expect(restoredEntry.report.summary.score).toBe(90);
   expect(restoredPersistence.getHistorySize()).toBe(2);
