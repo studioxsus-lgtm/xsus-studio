@@ -80,11 +80,11 @@ describe("XSUS AI Core — Clear and Restore Failure Recovery Integrity", () => 
 
     await persistence.initialize();
 
-    await persistence.addReport(
-      createReport("report-after-failure"),
-    );
-
-    await expect(persistence.flush()).rejects.toThrow();
+    await expect(
+      persistence.addReport(createReport("report-after-failure")),
+    ).rejects.toMatchObject({
+      code: "BENCHMARK_HISTORY_PERSISTENCE_ERROR",
+    });
 
     await persistence.addReport(
       createReport("report-after-recovery"),
@@ -92,14 +92,18 @@ describe("XSUS AI Core — Clear and Restore Failure Recovery Integrity", () => 
 
     await persistence.flush();
 
-    expect(storage.getSnapshot().map((report) => report.id)).toContain(
-      "report-after-recovery",
-    );
+    const savedIds = storage
+      .getSnapshot()
+      .map((report) => report.id);
 
-    expect(persistence.getReportById("report-after-recovery")).not.toBeNull();
+    expect(savedIds).toContain("report-after-recovery");
+
+    expect(
+      persistence.getReportById("report-after-recovery"),
+    ).not.toBeNull();
   });
 
-  it("nuk i humbet raportet në memorie kur ruajtja dështon", async () => {
+  it("ruan raportet në memorie kur ruajtja dështon dhe rikuperon ruajtjen", async () => {
     const storage = createStorage();
     const originalSaveHistory = storage.saveHistory.bind(storage);
 
@@ -111,13 +115,15 @@ describe("XSUS AI Core — Clear and Restore Failure Recovery Integrity", () => 
 
     await persistence.initialize();
 
-    await persistence.addReport(
-      createReport("memory-report"),
-    );
+    await expect(
+      persistence.addReport(createReport("memory-report")),
+    ).rejects.toMatchObject({
+      code: "BENCHMARK_HISTORY_PERSISTENCE_ERROR",
+    });
 
-    await expect(persistence.flush()).rejects.toThrow();
-
-    expect(persistence.getReportById("memory-report")).not.toBeNull();
+    expect(
+      persistence.getReportById("memory-report"),
+    ).not.toBeNull();
 
     storage.saveHistory = originalSaveHistory;
 
@@ -127,9 +133,12 @@ describe("XSUS AI Core — Clear and Restore Failure Recovery Integrity", () => 
 
     await persistence.flush();
 
-    expect(storage.getSnapshot().map((report) => report.id)).toContain(
-      "recovery-report",
-    );
+    const savedIds = storage
+      .getSnapshot()
+      .map((report) => report.id);
+
+    expect(savedIds).toContain("recovery-report");
+    expect(savedIds).toContain("memory-report");
   });
 
   it("lejon pastrimin dhe ruajtjen pas rikuperimit nga gabimi", async () => {
@@ -153,11 +162,11 @@ describe("XSUS AI Core — Clear and Restore Failure Recovery Integrity", () => 
 
     await persistence.initialize();
 
-    await persistence.addReport(
-      createReport("temporary-report"),
-    );
-
-    await expect(persistence.flush()).rejects.toThrow();
+    await expect(
+      persistence.addReport(createReport("temporary-report")),
+    ).rejects.toMatchObject({
+      code: "BENCHMARK_HISTORY_PERSISTENCE_ERROR",
+    });
 
     await persistence.clearHistory();
     await persistence.flush();
@@ -166,7 +175,7 @@ describe("XSUS AI Core — Clear and Restore Failure Recovery Integrity", () => 
     expect(storage.getSnapshot()).toEqual([]);
   });
 
-  it("raporton dështimin e rikthimit nga storage", async () => {
+  it("raporton gabimin standard kur rikthimi nga storage dështon", async () => {
     const storage = createStorage([
       createReport("stored-report"),
     ]);
@@ -177,8 +186,10 @@ describe("XSUS AI Core — Clear and Restore Failure Recovery Integrity", () => 
 
     const { persistence } = createPersistence(storage);
 
-    await expect(persistence.initialize()).rejects.toThrow(
-      "Temporary load failure",
+    await expect(
+      persistence.initialize(),
+    ).rejects.toThrow(
+      "Inicializimi i historikut benchmark dështoi.",
     );
   });
 
@@ -201,13 +212,16 @@ describe("XSUS AI Core — Clear and Restore Failure Recovery Integrity", () => 
 
     const { persistence } = createPersistence(storage);
 
-    await expect(persistence.initialize()).rejects.toThrow(
-      "Temporary load failure",
+    await expect(
+      persistence.initialize(),
+    ).rejects.toThrow(
+      "Inicializimi i historikut benchmark dështoi.",
     );
 
     await persistence.initialize();
 
     expect(persistence.getHistorySize()).toBe(1);
+
     expect(
       persistence.getReportById("restored-report"),
     ).not.toBeNull();
