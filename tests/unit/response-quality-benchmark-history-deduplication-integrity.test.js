@@ -12,11 +12,20 @@ function createReport(id, overrides = {}) {
 return {
 id,
 timestamp: 1_800_000_000_000,
+report: {
+summary: {
+title: "Benchmark ${id}",
 score: 90,
-metadata: {
-source: "deduplication-integrity-test",
+...overrides.summary,
 },
-...overrides,
+results: overrides.results ?? [
+{
+name: "response-quality",
+score: 90,
+passed: true,
+},
+],
+},
 };
 }
 
@@ -39,88 +48,58 @@ getSnapshot() {
 };
 }
 
-function createHarness(initialHistory = []) {
-const storage = createStorage(initialHistory);
-
-const engine = createResponseQualityBenchmarkHistoryEngine();
-
-const persistence = createResponseQualityBenchmarkHistoryPersistence({
-engine,
-storage,
-});
-
-return {
-engine,
-persistence,
-storage,
-};
-}
-
-async function createInitializedHarness(initialHistory = []) {
-const harness = createHarness(initialHistory);
-
-await harness.persistence.initialize();
-
-return harness;
-}
-
 function getReportIds(reports) {
-return reports.map((report) => report.id).sort();
+return reports.map((entry) => entry.id).sort();
 }
 
 describe("Response Quality Benchmark History — Deduplication Integrity", () => {
-it("refuzon shtimin e një raporti me identifikues ekzistues", async () => {
-const { engine } = await createInitializedHarness();
+it("refuzon shtimin e një identifikuesi që ekziston", () => {
+const engine =
+createResponseQualityBenchmarkHistoryEngine();
 
-await engine.addReport(createReport("report-1"));
+engine.addReport(createReport("report-1"));
 
-await expect(
+expect(() => {
   engine.addReport(
     createReport("report-1", {
-      score: 10,
-      metadata: {
-        source: "duplicate",
-      },
+      summary: { score: 10 },
     }),
-  ),
-).rejects.toThrow(
-  new TypeError("Raporti ekziston tashmë në historik"),
+  );
+}).toThrow(
+  "Raporti ekziston tashmë në historik: report-1.",
 );
 
 expect(engine.getHistorySize()).toBe(1);
 
 });
 
-it("ruan raportin origjinal kur shtimi i dublikatës refuzohet", async () => {
-const { engine } = await createInitializedHarness();
+it("ruan raportin origjinal pas refuzimit të dublikatës", () => {
+const engine =
+createResponseQualityBenchmarkHistoryEngine();
 
-const originalReport = createReport("report-1", {
-  score: 95,
-  metadata: {
-    source: "original",
-  },
-});
+engine.addReport(
+  createReport("report-1", {
+    summary: { score: 95, title: "Original" },
+  }),
+);
 
-await engine.addReport(originalReport);
-
-try {
-  await engine.addReport(
+expect(() => {
+  engine.addReport(
     createReport("report-1", {
-      score: 5,
-      metadata: {
-        source: "duplicate",
-      },
+      summary: { score: 5, title: "Duplicate" },
     }),
   );
-} catch {
-  // Refuzimi i dublikatës pritet nga kontrata e engine-it.
-}
+}).toThrow(
+  "Raporti ekziston tashmë në historik: report-1.",
+);
 
 expect(engine.getReportById("report-1")).toMatchObject({
   id: "report-1",
-  score: 95,
-  metadata: {
-    source: "original",
+  report: {
+    summary: {
+      score: 95,
+      title: "Original",
+    },
   },
 });
 
@@ -128,18 +107,19 @@ expect(engine.getHistorySize()).toBe(1);
 
 });
 
-it("nuk ndryshon raportet ekzistuese kur refuzohet një dublikatë", async () => {
-const { engine } = await createInitializedHarness();
+it("nuk ndryshon hyrjet ekzistuese kur refuzohet një dublikatë", () => {
+const engine =
+createResponseQualityBenchmarkHistoryEngine();
 
-await engine.addReport(createReport("report-1", { score: 81 }));
-await engine.addReport(createReport("report-2", { score: 92 }));
+engine.addReport(createReport("report-1"));
+engine.addReport(createReport("report-2"));
 
 const before = engine.listReports();
 
-await expect(
-  engine.addReport(createReport("report-1", { score: 1 })),
-).rejects.toThrow(
-  new TypeError("Raporti ekziston tashmë në historik"),
+expect(() => {
+  engine.addReport(createReport("report-1"));
+}).toThrow(
+  "Raporti ekziston tashmë në historik: report-1.",
 );
 
 expect(engine.listReports()).toEqual(before);
@@ -148,17 +128,27 @@ expect(engine.getHistorySize()).toBe(2);
 });
 
 it("ruan identifikuesit unikë pas flush", async () => {
-const { engine, persistence, storage } =
-await createInitializedHarness();
+const engine =
+createResponseQualityBenchmarkHistoryEngine();
 
-await engine.addReport(createReport("report-1"));
-await engine.addReport(createReport("report-2"));
-await engine.addReport(createReport("report-3"));
+const storage = createStorage();
 
-await expect(
-  engine.addReport(createReport("report-2", { score: 0 })),
-).rejects.toThrow(
-  new TypeError("Raporti ekziston tashmë në historik"),
+const persistence =
+  createResponseQualityBenchmarkHistoryPersistence({
+    engine,
+    storage,
+  });
+
+await persistence.initialize();
+
+engine.addReport(createReport("report-1"));
+engine.addReport(createReport("report-2"));
+engine.addReport(createReport("report-3"));
+
+expect(() => {
+  engine.addReport(createReport("report-2"));
+}).toThrow(
+  "Raporti ekziston tashmë në historik: report-2.",
 );
 
 await persistence.flush();
@@ -175,49 +165,81 @@ expect(persistedReports).toHaveLength(3);
 
 });
 
-it("ruan integritetin e historikut pas rikthimit nga storage", async () => {
-const firstHarness = await createInitializedHarness();
+it("ruan integritetin e historikut pas rikthimit", async () => {
+const firstEngine =
+createResponseQualityBenchmarkHistoryEngine();
 
-await firstHarness.engine.addReport(createReport("report-1"));
-await firstHarness.engine.addReport(createReport("report-2"));
-await firstHarness.persistence.flush();
+const firstStorage = createStorage();
 
-const savedHistory = firstHarness.storage.getSnapshot();
+const firstPersistence =
+  createResponseQualityBenchmarkHistoryPersistence({
+    engine: firstEngine,
+    storage: firstStorage,
+  });
 
-const secondHarness = await createInitializedHarness(savedHistory);
+await firstPersistence.initialize();
 
-const restoredReports = secondHarness.engine.listReports();
+firstEngine.addReport(createReport("report-1"));
+firstEngine.addReport(createReport("report-2"));
 
-expect(restoredReports).toHaveLength(2);
-expect(getReportIds(restoredReports)).toEqual([
-  "report-1",
-  "report-2",
-]);
+await firstPersistence.flush();
 
-await expect(
-  secondHarness.engine.addReport(createReport("report-1")),
-).rejects.toThrow(
-  new TypeError("Raporti ekziston tashmë në historik"),
+const savedHistory = firstStorage.getSnapshot();
+
+const restoredEngine =
+  createResponseQualityBenchmarkHistoryEngine();
+
+const restoredStorage = createStorage(savedHistory);
+
+const restoredPersistence =
+  createResponseQualityBenchmarkHistoryPersistence({
+    engine: restoredEngine,
+    storage: restoredStorage,
+  });
+
+await restoredPersistence.initialize();
+
+expect(restoredEngine.getHistorySize()).toBe(2);
+
+expect(
+  getReportIds(restoredEngine.listReports()),
+).toEqual(["report-1", "report-2"]);
+
+expect(() => {
+  restoredEngine.addReport(createReport("report-1"));
+}).toThrow(
+  "Raporti ekziston tashmë në historik: report-1.",
 );
 
-expect(secondHarness.engine.getHistorySize()).toBe(2);
+expect(restoredEngine.getHistorySize()).toBe(2);
 
 });
 
 it("mban storage-in dhe engine-in konsistent pas refuzimit të dublikatës", async () => {
-const { engine, persistence, storage } =
-await createInitializedHarness();
+const engine =
+createResponseQualityBenchmarkHistoryEngine();
 
-await engine.addReport(createReport("report-1", { score: 88 }));
-await engine.addReport(createReport("report-2", { score: 96 }));
+const storage = createStorage();
+
+const persistence =
+  createResponseQualityBenchmarkHistoryPersistence({
+    engine,
+    storage,
+  });
+
+await persistence.initialize();
+
+engine.addReport(createReport("report-1"));
+engine.addReport(createReport("report-2"));
+
 await persistence.flush();
 
 const persistedBefore = storage.getSnapshot();
 
-await expect(
-  engine.addReport(createReport("report-1", { score: 0 })),
-).rejects.toThrow(
-  new TypeError("Raporti ekziston tashmë në historik"),
+expect(() => {
+  engine.addReport(createReport("report-1"));
+}).toThrow(
+  "Raporti ekziston tashmë në historik: report-1.",
 );
 
 await persistence.flush();
