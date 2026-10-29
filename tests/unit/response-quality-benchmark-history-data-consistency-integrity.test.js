@@ -147,7 +147,8 @@ describe("XSUS AI Core — Benchmark History Data Consistency Integrity", () => 
     const restoredEntry =
       restoredPersistence.getReportById("consistency-10");
 
-    expect(restoredEntry).toEqual(entry);
+    expect(restoredEntry).toMatchObject(entry);
+    expect(restoredEntry.sequence).toBe(1);
     expect(restoredPersistence.getHistorySize()).toBe(1);
   });
 
@@ -191,12 +192,25 @@ describe("XSUS AI Core — Benchmark History Data Consistency Integrity", () => 
     const finalHistory = storage.getPersistedHistory();
 
     expect(finalHistory).toHaveLength(2);
-    expect(finalHistory).toContainEqual(firstEntry);
-    expect(finalHistory).toContainEqual(secondEntry);
+
+    expect(finalHistory).toContainEqual(
+      expect.objectContaining(firstEntry),
+    );
+
+    expect(finalHistory).toContainEqual(
+      expect.objectContaining(secondEntry),
+    );
 
     expect(
       finalHistory.find((entry) => entry.id === "consistency-30"),
     ).toEqual(firstSnapshot[0]);
+
+    expect(
+      finalHistory.find((entry) => entry.id === "consistency-31"),
+    ).toMatchObject({
+      ...secondEntry,
+      sequence: 2,
+    });
   });
 
   it("rikthen të gjithë historikun pa humbur identifikuesit ose përmbajtjen", async () => {
@@ -229,10 +243,12 @@ describe("XSUS AI Core — Benchmark History Data Consistency Integrity", () => 
 
     expect(restoredPersistence.getHistorySize()).toBe(entries.length);
 
-    for (const entry of entries) {
-      expect(
-        restoredPersistence.getReportById(entry.id),
-      ).toEqual(entry);
+    for (const [index, entry] of entries.entries()) {
+      const restoredEntry =
+        restoredPersistence.getReportById(entry.id);
+
+      expect(restoredEntry).toMatchObject(entry);
+      expect(restoredEntry.sequence).toBe(index + 1);
     }
 
     expect(
