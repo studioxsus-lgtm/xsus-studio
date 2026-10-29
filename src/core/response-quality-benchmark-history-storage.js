@@ -1,15 +1,13 @@
-
 /**
  * XSUS AI Core — Response Quality Benchmark History Storage
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Përgjegjësitë:
- * - Ruajtja e historikut në JSON.
- * - Ngarkimi dhe validimi i historikut.
- * - Shkrimi atomik për të shmangur skedarë pjesërisht të shkruar.
- * - Rikuperimi i kontrolluar nga gabimet e leximit dhe JSON-it.
- *
- * Kërkon Node.js dhe mbështet node:fs/promises.
+ * - Ruajtja dhe ngarkimi i historikut JSON.
+ * - Validimi i historikut.
+ * - Shkrimi atomik.
+ * - Koordinimi i shkrimeve brenda të njëjtit proces Node.js.
+ * - Përditësimi transaksional për adapterët që përdorin të njëjtin skedar.
  */
 
 import {
@@ -23,15 +21,22 @@ import {
   dirname,
   basename,
   join,
+  resolve,
 } from "node:path";
 
 import { randomUUID } from "node:crypto";
 
 export const RESPONSE_QUALITY_BENCHMARK_HISTORY_STORAGE_VERSION =
-  "1.0.0";
+  "1.1.0";
 
 const STORAGE_FORMAT = "xsus-benchmark-history";
 const STORAGE_FORMAT_VERSION = 1;
+
+/**
+ * Kyçet ndahen mes të gjithë adapterëve të këtij moduli
+ * që përdorin të njëjtën rrugë absolute të skedarit.
+ */
+const pathLocks = new Map();
 
 function isPlainObject(value) {
   if (value === null || typeof value !== "object") {
@@ -62,6 +67,36 @@ function deepClone(value) {
   }
 
   return value;
+}
+
+/**
+ * Serializon operacionet për një skedar.
+ * Gabimi i një operacioni nuk bllokon operacionet pasuese.
+ */
+async function withPathLock(pathKey, operation) {
+  const previous = pathLocks.get(pathKey) ?? Promise.resolve();
+
+  let release;
+
+  const current = new Promise((resolvePromise) => {
+    release = resolvePromise;
+  });
+
+  const queued = previous.then(() => current);
+
+  pathLocks.set(pathKey, queued);
+
+  await previous.catch(() => {});
+
+  try {
+    return await operation();
+  } finally {
+    release();
+
+    if (pathLocks.get(pathKey) === queued) {
+      pathLocks.delete(pathKey);
+    }
+  }
 }
 
 function validateHistory(history) {
@@ -189,13 +224,6 @@ function createStorageError(message, cause) {
   return error;
 }
 
-/**
- * Krijon një storage adapter JSON.
- *
- * @param {object} options
- * @param {string} options.filePath
- * @returns {object}
- */
 export function createResponseQualityBenchmarkHistoryStorage(
   options = {}
 ) {
@@ -215,12 +243,56 @@ export function createResponseQualityBenchmarkHistoryStorage(
   }
 
   const filePath = options.filePath;
+  const lockKey = resolve(filePath);
 
   /**
-   * Ruajtja bëhet fillimisht në një skedar të përkohshëm,
-   * pastaj zëvendësohet skedari kryesor përmes rename().
+   * Lexon skedarin pa marrë kyçin.
+   * Përdoret nga transaksionet që tashmë e mbajnë kyçin.
    */
-  async function saveHistory(history) {
+  async function loadHistoryUnlocked() {
+    let serialized;
+
+    try {
+      serialized = await readFile(filePath, "utf8");
+    } catch (cause) {
+      if (cause && cause.code === "ENOENT") {
+        return [];
+      }
+
+      throw createStorageError(
+        "Leximi i historikut benchmark dështoi.",
+        cause
+      );
+    }
+
+    let document;
+
+    try {
+      document = JSON.parse(serialized);
+    } catch (cause) {
+      throw createStorageError(
+        "Skedari i historikut benchmark përmban JSON të pavlefshëm.",
+        cause
+      );
+    }
+
+    try {
+      validateDocument(document);
+    } catch (cause) {
+      throw createStorageError(
+        "Validimi i historikut benchmark dështoi.",
+        cause
+      );
+    }
+
+    return deepClone(document.entries);
+  }
+
+  /**
+   * Shkruan skedarin pa marrë kyçin.
+   * Thirret vetëm nga operacione që tashmë janë të koordinuara.
+   */
+  async function saveHistoryUnlocked(history) {
     validateHistory(history);
 
     const document = createDocument(history);
@@ -264,52 +336,64 @@ export function createResponseQualityBenchmarkHistoryStorage(
   }
 
   /**
-   * Ngarkon dhe validon historikun e ruajtur.
-   * Skedari që mungon kthehet si histori bosh vetëm
-   * kur gabimi është ENOENT.
+   * Ruajtje e koordinuar për adapterët që përdorin të njëjtin skedar.
+   */
+  async function saveHistory(history) {
+    const snapshot = deepClone(history);
+
+    return withPathLock(lockKey, () =>
+      saveHistoryUnlocked(snapshot)
+    );
+  }
+
+  /**
+   * Ngarkim i koordinuar me shkrimet brenda procesit.
    */
   async function loadHistory() {
-    let serialized;
+    return withPathLock(lockKey, loadHistoryUnlocked);
+  }
 
-    try {
-      serialized = await readFile(filePath, "utf8");
-    } catch (cause) {
-      if (cause && cause.code === "ENOENT") {
-        return [];
-      }
-
-      throw createStorageError(
-        "Leximi i historikut benchmark dështoi.",
-        cause
+  /**
+   * Transaksion leximi-ndryshimi-ruajtjeje.
+   *
+   * updater merr një kopje të historikut aktual dhe duhet
+   * të kthejë array-in e ri që dëshiron të ruajë.
+   *
+   * Transaksioni dështon nëse updater nuk kthen një array
+   * të vlefshëm ose nëse leximi/ruajtja dështon.
+   */
+  async function updateHistory(updater) {
+    if (typeof updater !== "function") {
+      throw new TypeError(
+        "updater duhet të jetë funksion."
       );
     }
 
-    let document;
+    return withPathLock(lockKey, async () => {
+      const currentHistory = await loadHistoryUnlocked();
 
-    try {
-      document = JSON.parse(serialized);
-    } catch (cause) {
-      throw createStorageError(
-        "Skedari i historikut benchmark përmban JSON të pavlefshëm.",
-        cause
+      const updatedHistory = await updater(
+        deepClone(currentHistory)
       );
-    }
 
-    try {
-      validateDocument(document);
-    } catch (cause) {
-      throw createStorageError(
-        "Validimi i historikut benchmark dështoi.",
-        cause
-      );
-    }
+      validateHistory(updatedHistory);
 
-    return deepClone(document.entries);
+      const snapshot = deepClone(updatedHistory);
+
+      const saveResult = await saveHistoryUnlocked(snapshot);
+
+      return {
+        ...saveResult,
+        history: deepClone(snapshot),
+      };
+    });
   }
 
   return Object.freeze({
     saveHistory,
     loadHistory,
+    updateHistory,
+
     getMetadata() {
       return Object.freeze({
         version:
