@@ -61,12 +61,27 @@ function createSetup(adapters = [], options = {}) {
   };
 }
 
+function createDeferred() {
+  let resolve;
+  let reject;
+
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return {
+    promise,
+    resolve,
+    reject,
+  };
+}
+
 describe("XSUS AI Core — Model Orchestrator", () => {
   it("ekspozon version-in e saktë", () => {
     const { orchestrator } = createSetup();
 
     expect(MODEL_ORCHESTRATOR_VERSION).toBe("1.0.0");
-
     expect(orchestrator.getStatus().version).toBe("1.0.0");
   });
 
@@ -203,7 +218,6 @@ describe("XSUS AI Core — Model Orchestrator", () => {
 
   it("përdor modelin e parazgjedhur të orchestrator-it", async () => {
     const adapterA = createAdapter("model-a");
-
     const adapterB = createAdapter("model-b");
 
     const { orchestrator } = createSetup(
@@ -270,7 +284,6 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     ]);
 
     await orchestrator.initialize("model-a");
-
     await orchestrator.initialize("model-b");
 
     const statuses = orchestrator.listRuntimeStatuses();
@@ -314,7 +327,6 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     ]);
 
     await orchestrator.initialize("model-a");
-
     await orchestrator.initialize("model-b");
 
     const result = await orchestrator.close();
@@ -343,11 +355,9 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     await orchestrator.initialize("model-a");
 
     const first = await orchestrator.close();
-
     const second = await orchestrator.close();
 
     expect(first.closed).toBe(true);
-
     expect(second.closed).toBe(true);
   });
 
@@ -385,5 +395,238 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     const { orchestrator } = createSetup();
 
     expect(Object.isFrozen(orchestrator)).toBe(true);
+  });
+
+  // --------------------------------------------------
+  // HARDENING — INITIALIZATION
+  // --------------------------------------------------
+
+  it("përcjell gabimin kur inicializimi i adapter-it dështon", async () => {
+    const adapter = createAdapter("model-a", {
+      async initialize() {
+        throw new Error("Initialization failed");
+      },
+    });
+
+    const { orchestrator } = createSetup([adapter]);
+
+    await expect(
+      orchestrator.initialize("model-a"),
+    ).rejects.toMatchObject({
+      message: "Initialization failed",
+    });
+
+    expect(
+      orchestrator.getRuntimeStatus("model-a").state,
+    ).toBe("error");
+  });
+
+  it("bashkon inicializimet paralele të të njëjtit model", async () => {
+    const initializationGate = createDeferred();
+    const initializationStarted = createDeferred();
+
+    let initializationCount = 0;
+
+    const adapter = createAdapter("model-a", {
+      async initialize() {
+        initializationCount += 1;
+        initializationStarted.resolve();
+
+        await initializationGate.promise;
+      },
+    });
+
+    const { orchestrator } = createSetup([adapter]);
+
+    const first = orchestrator.initialize("model-a");
+    const second = orchestrator.initialize("model-a");
+
+    await initializationStarted.promise;
+
+    expect(initializationCount).toBe(1);
+
+    initializationGate.resolve();
+
+    await Promise.all([first, second]);
+
+    expect(initializationCount).toBe(1);
+
+    expect(
+      orchestrator.getRuntimeStatus("model-a").initialized,
+    ).toBe(true);
+  });
+
+  // --------------------------------------------------
+  // HARDENING — GENERATION
+  // --------------------------------------------------
+
+  it("e mbështjell gabimin e gjenerimit me kodin e duhur", async () => {
+    const adapter = createAdapter("model-a", {
+      async generate() {
+        throw new Error("Inference failed");
+      },
+    });
+
+    const { orchestrator } = createSetup([adapter]);
+
+    await expect(
+      orchestrator.generate({
+        modelId: "model-a",
+        prompt: "Test",
+      }),
+    ).rejects.toMatchObject({
+      code: MODEL_ORCHESTRATOR_ERRORS.GENERATION_FAILED,
+      message: "Inference failed",
+      cause: expect.any(Error),
+    });
+  });
+
+  // --------------------------------------------------
+  // HARDENING — RUNTIME CREATION
+  // --------------------------------------------------
+
+  it("ruan shkakun kur krijimi i runtime dështon", async () => {
+    const registry = {
+      get: vi.fn(),
+      list: vi.fn(() => [{ id: "model-a" }]),
+    };
+
+    const selector = {
+      select: vi.fn(() => ({
+        id: "model-a",
+        modelId: "model-a",
+      })),
+    };
+
+    const orchestrator = createModelOrchestrator({
+      registry,
+      selector,
+    });
+
+    await expect(
+      orchestrator.initialize("model-a"),
+    ).rejects.toMatchObject({
+      code: MODEL_ORCHESTRATOR_ERRORS.RUNTIME_CREATION_FAILED,
+      cause: expect.any(Error),
+    });
+  });
+
+  // --------------------------------------------------
+  // HARDENING — CLOSE FAILURE
+  // --------------------------------------------------
+
+  it("raporton dështimet e runtime-ve gjatë mbylljes", async () => {
+    const adapterA = createAdapter("model-a", {
+      async close() {
+        throw new Error("Close failed");
+      },
+    });
+
+    const adapterB = createAdapter("model-b");
+
+    const { orchestrator } = createSetup([
+      adapterA,
+      adapterB,
+    ]);
+
+    await orchestrator.initialize("model-a");
+    await orchestrator.initialize("model-b");
+
+    const result = await orchestrator.close();
+
+    expect(result.success).toBe(false);
+    expect(result.closed).toBe(true);
+    expect(result.runtimesClosed).toBe(2);
+
+    expect(result.failures).toHaveLength(1);
+
+    expect(result.failures[0].message).toBe("Close failed");
+
+    expect(
+      orchestrator.getStatus().activeRuntimes,
+    ).toBe(0);
+  });
+
+  // --------------------------------------------------
+  // HARDENING — CLOSE DURING INITIALIZATION
+  // --------------------------------------------------
+
+  it("pret përfundimin e inicializimit aktiv gjatë mbylljes", async () => {
+    const initializationGate = createDeferred();
+    const initializationStarted = createDeferred();
+
+    const adapter = createAdapter("model-a", {
+      async initialize() {
+        initializationStarted.resolve();
+
+        await initializationGate.promise;
+      },
+    });
+
+    const { orchestrator } = createSetup([adapter]);
+
+    const initialization = orchestrator.initialize("model-a");
+
+    await initializationStarted.promise;
+
+    const closing = orchestrator.close();
+
+    initializationGate.resolve();
+
+    await expect(initialization).rejects.toBeDefined();
+
+    const closeResult = await closing;
+
+    expect(closeResult.closed).toBe(true);
+
+    expect(
+      orchestrator.getStatus().activeRuntimes,
+    ).toBe(0);
+  });
+
+  // --------------------------------------------------
+  // HARDENING — CLOSE DURING GENERATION
+  // --------------------------------------------------
+
+  it("pret përfundimin e gjenerimit aktiv gjatë mbylljes", async () => {
+    const generationGate = createDeferred();
+    const generationStarted = createDeferred();
+
+    const adapter = createAdapter("model-a", {
+      async generate() {
+        generationStarted.resolve();
+
+        await generationGate.promise;
+
+        return {
+          text: "Përgjigje e përfunduar",
+        };
+      },
+    });
+
+    const { orchestrator } = createSetup([adapter]);
+
+    const generation = orchestrator.generate({
+      modelId: "model-a",
+      prompt: "Test",
+    });
+
+    await generationStarted.promise;
+
+    const closing = orchestrator.close();
+
+    generationGate.resolve();
+
+    await expect(generation).rejects.toMatchObject({
+      code: MODEL_ORCHESTRATOR_ERRORS.GENERATION_FAILED,
+    });
+
+    const closeResult = await closing;
+
+    expect(closeResult.closed).toBe(true);
+
+    expect(
+      orchestrator.getStatus().activeRuntimes,
+    ).toBe(0);
   });
 });
