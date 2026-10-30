@@ -1,3 +1,4 @@
+
 /**
  * XSUS AI Core — Model Runtime
  * Version: 1.1.0
@@ -27,12 +28,23 @@ function isPlainObject(value) {
     return false;
   }
 
-  const prototype = Object.getPrototypeOf(value);
+  try {
+    const prototype = Object.getPrototypeOf(value);
 
-  return prototype === Object.prototype || prototype === null;
+    return (
+      prototype === Object.prototype ||
+      prototype === null
+    );
+  } catch {
+    return false;
+  }
 }
 
-function createRuntimeError(code, message, retryable = false) {
+function createRuntimeError(
+  code,
+  message,
+  retryable = false,
+) {
   const error = new Error(message);
 
   error.code = code;
@@ -41,7 +53,14 @@ function createRuntimeError(code, message, retryable = false) {
   return error;
 }
 
-function normalizeError(error, fallbackCode, fallbackMessage) {
+/**
+ * Kthen një gabim në kontratën standarde të modelit.
+ */
+function normalizeError(
+  error,
+  fallbackCode,
+  fallbackMessage,
+) {
   return createModelError({
     code:
       typeof error?.code === "string"
@@ -54,6 +73,21 @@ function normalizeError(error, fallbackCode, fallbackMessage) {
         : fallbackMessage,
     retryable: error?.retryable === true,
   });
+}
+
+/**
+ * Shndërron gabimin standard në Error për API-n e Runtime.
+ *
+ * createModelError() ruan detajet brenda objektit error.
+ */
+function toRuntimeError(normalizedError) {
+  const details = normalizedError.error;
+
+  return createRuntimeError(
+    details.code,
+    details.message,
+    details.retryable,
+  );
 }
 
 export function createModelRuntime(options = {}) {
@@ -78,7 +112,10 @@ export function createModelRuntime(options = {}) {
     );
   }
 
-  if (implementation !== undefined && adapter !== undefined) {
+  if (
+    implementation !== undefined &&
+    adapter !== undefined
+  ) {
     throw new TypeError(
       "Përdor implementation ose adapter, jo të dyja njëkohësisht.",
     );
@@ -133,14 +170,14 @@ export function createModelRuntime(options = {}) {
   function ensureAvailable() {
     if (state === MODEL_RUNTIME_STATES.CLOSED) {
       throw createRuntimeError(
-        MODEL_ERROR_CODES.MODEL_NOT_INITIALIZED,
+        MODEL_ERROR_CODES.NOT_INITIALIZED,
         "Model Runtime është mbyllur.",
       );
     }
 
     if (!selectedImplementation) {
       throw createRuntimeError(
-        MODEL_ERROR_CODES.MODEL_UNAVAILABLE,
+        MODEL_ERROR_CODES.UNAVAILABLE,
         "Nuk është lidhur asnjë implementim real i modelit.",
         true,
       );
@@ -150,7 +187,7 @@ export function createModelRuntime(options = {}) {
   async function initialize() {
     if (state === MODEL_RUNTIME_STATES.CLOSED) {
       throw createRuntimeError(
-        MODEL_ERROR_CODES.MODEL_NOT_INITIALIZED,
+        MODEL_ERROR_CODES.NOT_INITIALIZED,
         "Model Runtime është mbyllur dhe nuk mund të inicializohet.",
       );
     }
@@ -174,14 +211,15 @@ export function createModelRuntime(options = {}) {
           typeof selectedImplementation.initialize === "function"
         ) {
           await selectedImplementation.initialize({
-            modelId: selectedImplementation.modelId ?? modelId,
+            modelId:
+              selectedImplementation.modelId ?? modelId,
             runtimeVersion: MODEL_RUNTIME_VERSION,
           });
         }
 
         if (state === MODEL_RUNTIME_STATES.CLOSED) {
           throw createRuntimeError(
-            MODEL_ERROR_CODES.MODEL_NOT_INITIALIZED,
+            MODEL_ERROR_CODES.NOT_INITIALIZED,
             "Runtime u mbyll gjatë inicializimit.",
           );
         }
@@ -192,7 +230,7 @@ export function createModelRuntime(options = {}) {
       } catch (error) {
         lastError = normalizeError(
           error,
-          MODEL_ERROR_CODES.MODEL_UNAVAILABLE,
+          MODEL_ERROR_CODES.UNAVAILABLE,
           "Inicializimi i modelit dështoi.",
         );
 
@@ -200,13 +238,7 @@ export function createModelRuntime(options = {}) {
           state = MODEL_RUNTIME_STATES.ERROR;
         }
 
-        throw Object.assign(
-          new Error(lastError.message),
-          {
-            code: lastError.code,
-            retryable: lastError.retryable,
-          },
-        );
+        throw toRuntimeError(lastError);
       } finally {
         initializationPromise = null;
       }
@@ -218,7 +250,7 @@ export function createModelRuntime(options = {}) {
   async function generate(input) {
     if (state !== MODEL_RUNTIME_STATES.READY) {
       throw createRuntimeError(
-        MODEL_ERROR_CODES.MODEL_NOT_INITIALIZED,
+        MODEL_ERROR_CODES.NOT_INITIALIZED,
         "Model Runtime nuk është inicializuar. Thirr initialize() së pari.",
       );
     }
@@ -228,61 +260,64 @@ export function createModelRuntime(options = {}) {
     try {
       request = createModelRequest(input);
     } catch (error) {
-      throw Object.assign(
-        new Error(error.message),
-        {
-          code: MODEL_ERROR_CODES.MODEL_INVALID_REQUEST,
-          retryable: false,
-        },
+      const normalizedError = normalizeError(
+        error,
+        MODEL_ERROR_CODES.INVALID_REQUEST,
+        "Kërkesa e modelit nuk është e vlefshme.",
       );
+
+      throw toRuntimeError(normalizedError);
     }
 
     activeGenerations += 1;
 
-    let generationPromise;
+    /*
+     * Nisja përmes Promise.resolve().then() siguron që
+     * Promise të regjistrohet në Set përpara ekzekutimit
+     * të implementimit, edhe kur generate() hedh gabim
+     * në mënyrë sinkrone.
+     */
+    const generationPromise = Promise.resolve().then(
+      async () => {
+        try {
+          const rawResponse =
+            await selectedImplementation.generate(request);
 
-    generationPromise = (async () => {
-      try {
-        const rawResponse =
-          await selectedImplementation.generate(request);
+          if (state === MODEL_RUNTIME_STATES.CLOSED) {
+            throw createRuntimeError(
+              MODEL_ERROR_CODES.NOT_INITIALIZED,
+              "Runtime u mbyll gjatë gjenerimit.",
+            );
+          }
 
-        if (state === MODEL_RUNTIME_STATES.CLOSED) {
-          throw createRuntimeError(
-            MODEL_ERROR_CODES.MODEL_NOT_INITIALIZED,
-            "Runtime u mbyll gjatë gjenerimit.",
+          return createModelResponse({
+            ...rawResponse,
+            requestId:
+              rawResponse?.requestId ?? request.requestId,
+            conversationId:
+              rawResponse?.conversationId ??
+              request.conversationId,
+            modelId:
+              rawResponse?.modelId ??
+              selectedImplementation.modelId ??
+              modelId,
+            language:
+              rawResponse?.language ?? request.language,
+          });
+        } catch (error) {
+          lastError = normalizeError(
+            error,
+            MODEL_ERROR_CODES.INFERENCE_FAILED,
+            "Gjenerimi i përgjigjes nga modeli dështoi.",
           );
+
+          throw toRuntimeError(lastError);
+        } finally {
+          activeGenerations -= 1;
+          activeGenerationPromises.delete(generationPromise);
         }
-
-        return createModelResponse({
-          ...rawResponse,
-          requestId: rawResponse?.requestId ?? request.requestId,
-          conversationId:
-            rawResponse?.conversationId ?? request.conversationId,
-          modelId:
-            rawResponse?.modelId ??
-            selectedImplementation.modelId ??
-            modelId,
-          language: rawResponse?.language ?? request.language,
-        });
-      } catch (error) {
-        lastError = normalizeError(
-          error,
-          MODEL_ERROR_CODES.MODEL_INFERENCE_FAILED,
-          "Gjenerimi i përgjigjes nga modeli dështoi.",
-        );
-
-        throw Object.assign(
-          new Error(lastError.message),
-          {
-            code: lastError.code,
-            retryable: lastError.retryable,
-          },
-        );
-      } finally {
-        activeGenerations -= 1;
-        activeGenerationPromises.delete(generationPromise);
-      }
-    })();
+      },
+    );
 
     activeGenerationPromises.add(generationPromise);
 
@@ -298,6 +333,10 @@ export function createModelRuntime(options = {}) {
       return getStatus();
     }
 
+    /*
+     * Shënohet menjëherë si CLOSED për të ndaluar
+     * kërkesat dhe inicializimet e reja.
+     */
     state = MODEL_RUNTIME_STATES.CLOSED;
 
     closePromise = (async () => {
@@ -309,6 +348,9 @@ export function createModelRuntime(options = {}) {
         }
       }
 
+      /*
+       * Prit përfundimin e të gjitha gjenerimeve aktive.
+       */
       await Promise.allSettled([
         ...activeGenerationPromises,
       ]);
@@ -318,7 +360,8 @@ export function createModelRuntime(options = {}) {
         typeof selectedImplementation.close === "function"
       ) {
         await selectedImplementation.close({
-          modelId: selectedImplementation.modelId ?? modelId,
+          modelId:
+            selectedImplementation.modelId ?? modelId,
           runtimeVersion: MODEL_RUNTIME_VERSION,
         });
       }
@@ -336,7 +379,8 @@ export function createModelRuntime(options = {}) {
   function getStatus() {
     return {
       version: MODEL_RUNTIME_VERSION,
-      modelId: selectedImplementation?.modelId ?? modelId,
+      modelId:
+        selectedImplementation?.modelId ?? modelId,
       adapterId: selectedImplementation?.id ?? null,
       state,
       initialized: state === MODEL_RUNTIME_STATES.READY,
