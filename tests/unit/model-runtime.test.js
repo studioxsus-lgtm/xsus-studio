@@ -221,7 +221,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       const runtime = createModelRuntime();
 
       await expect(runtime.initialize()).rejects.toMatchObject({
-        code: MODEL_ERROR_CODES.MODEL_UNAVAILABLE,
+        code: MODEL_ERROR_CODES.UNAVAILABLE,
         retryable: true,
       });
     });
@@ -281,7 +281,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       await expect(
         runtime.generate({ prompt: "Përshëndetje" }),
       ).rejects.toMatchObject({
-        code: MODEL_ERROR_CODES.MODEL_NOT_INITIALIZED,
+        code: MODEL_ERROR_CODES.NOT_INITIALIZED,
       });
     });
 
@@ -320,7 +320,9 @@ describe("XSUS AI Core — Model Runtime", () => {
       await runtime.generate({
         prompt: "Test prompt",
         language: "en",
-        temperature: 0.4,
+        parameters: {
+          temperature: 0.4,
+        },
       });
 
       const request = implementation.generate.mock.calls[0][0];
@@ -328,7 +330,9 @@ describe("XSUS AI Core — Model Runtime", () => {
       expect(request).toMatchObject({
         prompt: "Test prompt",
         language: "en",
-        temperature: 0.4,
+        parameters: {
+          temperature: 0.4,
+        },
       });
 
       expect(request.contractVersion).toBeDefined();
@@ -396,7 +400,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       await expect(
         runtime.generate({ prompt: "" }),
       ).rejects.toMatchObject({
-        code: MODEL_ERROR_CODES.MODEL_INVALID_REQUEST,
+        code: MODEL_ERROR_CODES.INVALID_REQUEST,
         retryable: false,
       });
 
@@ -418,7 +422,7 @@ describe("XSUS AI Core — Model Runtime", () => {
         runtime.generate({ prompt: "Test" }),
       ).rejects.toMatchObject({
         message: "Inference failed",
-        code: MODEL_ERROR_CODES.MODEL_INFERENCE_FAILED,
+        code: MODEL_ERROR_CODES.INFERENCE_FAILED,
         retryable: false,
       });
 
@@ -429,7 +433,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       const implementation = createImplementation({
         generate: vi.fn(async () => {
           const error = new Error("Temporary inference error");
-          error.code = MODEL_ERROR_CODES.MODEL_TIMEOUT;
+          error.code = MODEL_ERROR_CODES.TIMEOUT;
           error.retryable = true;
           throw error;
         }),
@@ -442,7 +446,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       await expect(
         runtime.generate({ prompt: "Test" }),
       ).rejects.toMatchObject({
-        code: MODEL_ERROR_CODES.MODEL_TIMEOUT,
+        code: MODEL_ERROR_CODES.TIMEOUT,
         retryable: true,
       });
     });
@@ -461,7 +465,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       await expect(
         runtime.generate({ prompt: "Test" }),
       ).rejects.toMatchObject({
-        code: MODEL_ERROR_CODES.MODEL_INFERENCE_FAILED,
+        code: MODEL_ERROR_CODES.INVALID_RESPONSE,
       });
     });
 
@@ -553,7 +557,11 @@ describe("XSUS AI Core — Model Runtime", () => {
       const first = runtime.close();
       const second = runtime.close();
 
-      expect(implementation.close).toHaveBeenCalledOnce();
+      expect(first).toBe(second);
+
+      await vi.waitFor(() => {
+        expect(implementation.close).toHaveBeenCalledOnce();
+      });
 
       deferred.resolve();
 
@@ -586,7 +594,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       deferred.resolve({ text: "Përgjigje" });
 
       await expect(generation).rejects.toMatchObject({
-        code: MODEL_ERROR_CODES.MODEL_NOT_INITIALIZED,
+        code: MODEL_ERROR_CODES.NOT_INITIALIZED,
       });
 
       const status = await closing;
@@ -611,7 +619,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       deferred.resolve();
 
       await expect(initialization).rejects.toMatchObject({
-        code: MODEL_ERROR_CODES.MODEL_NOT_INITIALIZED,
+        code: MODEL_ERROR_CODES.NOT_INITIALIZED,
       });
 
       const status = await closing;
@@ -627,7 +635,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       await runtime.close();
 
       await expect(runtime.initialize()).rejects.toMatchObject({
-        code: MODEL_ERROR_CODES.MODEL_NOT_INITIALIZED,
+        code: MODEL_ERROR_CODES.NOT_INITIALIZED,
       });
 
       expect(implementation.initialize).not.toHaveBeenCalled();
@@ -643,7 +651,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       await expect(
         runtime.generate({ prompt: "Test" }),
       ).rejects.toMatchObject({
-        code: MODEL_ERROR_CODES.MODEL_NOT_INITIALIZED,
+        code: MODEL_ERROR_CODES.NOT_INITIALIZED,
       });
     });
 
