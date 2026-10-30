@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI Core — Model Runtime
  * Version: 1.1.0
@@ -61,11 +60,16 @@ function normalizeError(
   fallbackCode,
   fallbackMessage,
 ) {
+  const validErrorCodes = Object.values(MODEL_ERROR_CODES);
+
+  const code =
+    typeof error?.code === "string" &&
+    validErrorCodes.includes(error.code)
+      ? error.code
+      : fallbackCode;
+
   return createModelError({
-    code:
-      typeof error?.code === "string"
-        ? error.code
-        : fallbackCode,
+    code,
     message:
       typeof error?.message === "string" &&
       error.message.trim()
@@ -272,16 +276,30 @@ export function createModelRuntime(options = {}) {
     activeGenerations += 1;
 
     /*
-     * Nisja përmes Promise.resolve().then() siguron që
-     * Promise të regjistrohet në Set përpara ekzekutimit
-     * të implementimit, edhe kur generate() hedh gabim
-     * në mënyrë sinkrone.
+     * Regjistrimi në Set bëhet përpara ekzekutimit
+     * të implementimit, edhe në rast të një gabimi sinkron.
      */
     const generationPromise = Promise.resolve().then(
       async () => {
         try {
-          const rawResponse =
-            await selectedImplementation.generate(request);
+          let rawResponse;
+
+          /*
+           * Gabimet e implementimit klasifikohen
+           * si INFERENCE_FAILED.
+           */
+          try {
+            rawResponse =
+              await selectedImplementation.generate(request);
+          } catch (error) {
+            lastError = normalizeError(
+              error,
+              MODEL_ERROR_CODES.INFERENCE_FAILED,
+              "Gjenerimi i përgjigjes nga modeli dështoi.",
+            );
+
+            throw toRuntimeError(lastError);
+          }
 
           if (state === MODEL_RUNTIME_STATES.CLOSED) {
             throw createRuntimeError(
@@ -290,28 +308,34 @@ export function createModelRuntime(options = {}) {
             );
           }
 
-          return createModelResponse({
-            ...rawResponse,
-            requestId:
-              rawResponse?.requestId ?? request.requestId,
-            conversationId:
-              rawResponse?.conversationId ??
-              request.conversationId,
-            modelId:
-              rawResponse?.modelId ??
-              selectedImplementation.modelId ??
-              modelId,
-            language:
-              rawResponse?.language ?? request.language,
-          });
-        } catch (error) {
-          lastError = normalizeError(
-            error,
-            MODEL_ERROR_CODES.INFERENCE_FAILED,
-            "Gjenerimi i përgjigjes nga modeli dështoi.",
-          );
+          /*
+           * Gabimet gjatë validimit të përgjigjes
+           * klasifikohen si INVALID_RESPONSE.
+           */
+          try {
+            return createModelResponse({
+              ...rawResponse,
+              requestId:
+                rawResponse?.requestId ?? request.requestId,
+              conversationId:
+                rawResponse?.conversationId ??
+                request.conversationId,
+              modelId:
+                rawResponse?.modelId ??
+                selectedImplementation.modelId ??
+                modelId,
+              language:
+                rawResponse?.language ?? request.language,
+            });
+          } catch (error) {
+            lastError = normalizeError(
+              error,
+              MODEL_ERROR_CODES.INVALID_RESPONSE,
+              "Modeli ktheu një përgjigje të pavlefshme.",
+            );
 
-          throw toRuntimeError(lastError);
+            throw toRuntimeError(lastError);
+          }
         } finally {
           activeGenerations -= 1;
           activeGenerationPromises.delete(generationPromise);
