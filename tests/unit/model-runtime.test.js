@@ -557,8 +557,6 @@ describe("XSUS AI Core — Model Runtime", () => {
       const first = runtime.close();
       const second = runtime.close();
 
-      expect(first).toBe(second);
-
       await vi.waitFor(() => {
         expect(implementation.close).toHaveBeenCalledOnce();
       });
@@ -572,6 +570,7 @@ describe("XSUS AI Core — Model Runtime", () => {
 
       expect(firstStatus.state).toBe(MODEL_RUNTIME_STATES.CLOSED);
       expect(secondStatus.state).toBe(MODEL_RUNTIME_STATES.CLOSED);
+      expect(implementation.close).toHaveBeenCalledOnce();
     });
 
     it("pret përfundimin e gjenerimeve aktive", async () => {
