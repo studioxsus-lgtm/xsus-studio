@@ -1,6 +1,7 @@
+
 /**
  * XSUS AI Core — Public API
- * Version: 1.3.0
+ * Version: 1.4.0
  *
  * Eksporton ndërfaqet publike të XSUS AI Core.
  */
@@ -71,7 +72,7 @@ import {
 } from "./knowledge/knowledge-service.js";
 
 // ============================================================
-// RUNTIME
+// EXISTING RUNTIME
 // ============================================================
 
 import {
@@ -86,6 +87,68 @@ import {
   unregisterService,
   clearServices,
 } from "./runtime/service-registry.js";
+
+// ============================================================
+// MODEL CONTRACTS
+// ============================================================
+
+import {
+  MODEL_CONTRACTS_VERSION,
+  MODEL_ERROR_CODES,
+  MODEL_RUNTIME_STATES,
+  createModelRequest,
+  createModelResponse,
+  createModelError,
+} from "./runtime/model-contracts.js";
+
+// ============================================================
+// MODEL RUNTIME
+// ============================================================
+
+import {
+  createModelRuntime,
+  MODEL_RUNTIME_VERSION,
+} from "./runtime/model-runtime.js";
+
+// ============================================================
+// MODEL ADAPTER
+// ============================================================
+
+import {
+  createModelAdapter,
+  MODEL_ADAPTER_VERSION,
+  MODEL_ADAPTER_TYPES,
+} from "./runtime/model-adapter.js";
+
+// ============================================================
+// MODEL REGISTRY
+// ============================================================
+
+import {
+  createModelRegistry,
+  MODEL_REGISTRY_VERSION,
+  MODEL_REGISTRY_ERRORS,
+} from "./runtime/model-registry.js";
+
+// ============================================================
+// MODEL SELECTOR
+// ============================================================
+
+import {
+  createModelSelector,
+  MODEL_SELECTOR_VERSION,
+  MODEL_SELECTION_ERRORS,
+} from "./runtime/model-selector.js";
+
+// ============================================================
+// MODEL ORCHESTRATOR
+// ============================================================
+
+import {
+  createModelOrchestrator,
+  MODEL_ORCHESTRATOR_VERSION,
+  MODEL_ORCHESTRATOR_ERRORS,
+} from "./runtime/model-orchestrator.js";
 
 // ============================================================
 // RESPONSE QUALITY PIPELINE
@@ -141,7 +204,11 @@ function getPublicSupportedLanguages() {
  * Përmban funksionet publike dhe versionet e moduleve.
  */
 export const XSUSAI = Object.freeze({
+
+  // ----------------------------------------------------------
   // CORE
+  // ----------------------------------------------------------
+
   get version() {
     return AI_CORE_VERSION;
   },
@@ -152,18 +219,18 @@ export const XSUSAI = Object.freeze({
 
   processAIRequest,
 
-  // Versionet publike të moduleve
+  // ----------------------------------------------------------
+  // CORE VERSIONS
+  // ----------------------------------------------------------
+
   AI_CORE_VERSION,
   XSUS_CORE_VERSION,
   REQUEST_CONTEXT_VERSION,
 
-  RESPONSE_QUALITY_PIPELINE_VERSION,
-  RESPONSE_QUALITY_PIPELINE_API_VERSION,
-  RESPONSE_QUALITY_REPORT_VERSION,
-  RESPONSE_QUALITY_VERSION,
-  SOURCE_VERIFICATION_VERSION,
-
+  // ----------------------------------------------------------
   // LANGUAGE
+  // ----------------------------------------------------------
+
   analyzeLanguage,
   detectLanguage,
   getLanguageInfo,
@@ -178,7 +245,10 @@ export const XSUSAI = Object.freeze({
   normalizeLanguageCode,
   getBaseLanguage,
 
+  // ----------------------------------------------------------
   // CONTRACTS
+  // ----------------------------------------------------------
+
   SUPPORTED_LANGUAGES,
   REQUEST_TYPES,
   AI_ERROR_CODES,
@@ -187,18 +257,27 @@ export const XSUSAI = Object.freeze({
   createAIResponse,
   createAIErrorResponse,
 
+  // ----------------------------------------------------------
   // REQUEST CONTEXT
+  // ----------------------------------------------------------
+
   createRequestContext,
   isValidRequestContext,
 
+  // ----------------------------------------------------------
   // KNOWLEDGE
+  // ----------------------------------------------------------
+
   searchKnowledge,
   registerKnowledgeSource,
   listKnowledgeSources,
   hasKnowledgeSource,
   unregisterKnowledgeSource,
 
-  // RUNTIME
+  // ----------------------------------------------------------
+  // EXISTING RUNTIME
+  // ----------------------------------------------------------
+
   routeAIRequest,
 
   registerService,
@@ -208,7 +287,61 @@ export const XSUSAI = Object.freeze({
   unregisterService,
   clearServices,
 
+  // ----------------------------------------------------------
+  // MODEL CONTRACTS
+  // ----------------------------------------------------------
+
+  MODEL_CONTRACTS_VERSION,
+  MODEL_ERROR_CODES,
+  MODEL_RUNTIME_STATES,
+
+  createModelRequest,
+  createModelResponse,
+  createModelError,
+
+  // ----------------------------------------------------------
+  // MODEL RUNTIME
+  // ----------------------------------------------------------
+
+  createModelRuntime,
+  MODEL_RUNTIME_VERSION,
+
+  // ----------------------------------------------------------
+  // MODEL ADAPTER
+  // ----------------------------------------------------------
+
+  createModelAdapter,
+  MODEL_ADAPTER_VERSION,
+  MODEL_ADAPTER_TYPES,
+
+  // ----------------------------------------------------------
+  // MODEL REGISTRY
+  // ----------------------------------------------------------
+
+  createModelRegistry,
+  MODEL_REGISTRY_VERSION,
+  MODEL_REGISTRY_ERRORS,
+
+  // ----------------------------------------------------------
+  // MODEL SELECTOR
+  // ----------------------------------------------------------
+
+  createModelSelector,
+  MODEL_SELECTOR_VERSION,
+  MODEL_SELECTION_ERRORS,
+
+  // ----------------------------------------------------------
+  // MODEL ORCHESTRATOR
+  // ----------------------------------------------------------
+
+  createModelOrchestrator,
+  MODEL_ORCHESTRATOR_VERSION,
+  MODEL_ORCHESTRATOR_ERRORS,
+
+  // ----------------------------------------------------------
   // RESPONSE QUALITY
+  // ----------------------------------------------------------
+
   createResponseQualityPipeline,
   evaluateResponseQualityPipeline,
   createResponseQualityPipelineAPI,
@@ -220,11 +353,23 @@ export const XSUSAI = Object.freeze({
   verifyResponseSource,
   verifyResponseSources,
 
-  // STATUS CONSTANTS
+  // ----------------------------------------------------------
+  // RESPONSE QUALITY CONSTANTS
+  // ----------------------------------------------------------
+
   RESPONSE_QUALITY_REPORT_STATUSES,
   SOURCE_VERIFICATION_STATUSES,
 
-  // VERSION GETTERS
+  // ----------------------------------------------------------
+  // RESPONSE QUALITY VERSIONS
+  // ----------------------------------------------------------
+
+  RESPONSE_QUALITY_PIPELINE_VERSION,
+  RESPONSE_QUALITY_PIPELINE_API_VERSION,
+  RESPONSE_QUALITY_REPORT_VERSION,
+  RESPONSE_QUALITY_VERSION,
+  SOURCE_VERIFICATION_VERSION,
+
   get responseQualityPipelineVersion() {
     return RESPONSE_QUALITY_PIPELINE_VERSION;
   },
@@ -243,6 +388,34 @@ export const XSUSAI = Object.freeze({
 
   get sourceVerificationVersion() {
     return SOURCE_VERIFICATION_VERSION;
+  },
+
+  // ----------------------------------------------------------
+  // MODEL VERSION GETTERS
+  // ----------------------------------------------------------
+
+  get modelContractsVersion() {
+    return MODEL_CONTRACTS_VERSION;
+  },
+
+  get modelRuntimeVersion() {
+    return MODEL_RUNTIME_VERSION;
+  },
+
+  get modelAdapterVersion() {
+    return MODEL_ADAPTER_VERSION;
+  },
+
+  get modelRegistryVersion() {
+    return MODEL_REGISTRY_VERSION;
+  },
+
+  get modelSelectorVersion() {
+    return MODEL_SELECTOR_VERSION;
+  },
+
+  get modelOrchestratorVersion() {
+    return MODEL_ORCHESTRATOR_VERSION;
   },
 });
 
@@ -297,7 +470,7 @@ export {
   unregisterKnowledgeSource,
 };
 
-// Runtime
+// Existing runtime
 export {
   routeAIRequest,
   registerService,
@@ -306,6 +479,50 @@ export {
   listServices,
   unregisterService,
   clearServices,
+};
+
+// Model contracts
+export {
+  MODEL_CONTRACTS_VERSION,
+  MODEL_ERROR_CODES,
+  MODEL_RUNTIME_STATES,
+  createModelRequest,
+  createModelResponse,
+  createModelError,
+};
+
+// Model runtime
+export {
+  createModelRuntime,
+  MODEL_RUNTIME_VERSION,
+};
+
+// Model adapter
+export {
+  createModelAdapter,
+  MODEL_ADAPTER_VERSION,
+  MODEL_ADAPTER_TYPES,
+};
+
+// Model registry
+export {
+  createModelRegistry,
+  MODEL_REGISTRY_VERSION,
+  MODEL_REGISTRY_ERRORS,
+};
+
+// Model selector
+export {
+  createModelSelector,
+  MODEL_SELECTOR_VERSION,
+  MODEL_SELECTION_ERRORS,
+};
+
+// Model orchestrator
+export {
+  createModelOrchestrator,
+  MODEL_ORCHESTRATOR_VERSION,
+  MODEL_ORCHESTRATOR_ERRORS,
 };
 
 // Response Quality Pipeline
