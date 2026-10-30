@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI Core — Request Orchestrator
  * Version: 1.2.0
@@ -10,11 +9,12 @@
  * - Integrimi me Context Engine.
  * - Përdorimi dhe kufizimi i historikut të bisedës.
  * - Kërkimi në bazën e njohurive.
+ * - Integrimi opsional me Model Orchestrator.
  * - Standardizimi i përgjigjeve.
  * - Vlerësimi i cilësisë përmes Response Quality Pipeline.
  * - Verifikimi strukturor i burimeve.
  * - Menaxhimi i memories RAM dhe persistent memory.
- * - Konfigurimi i memories për integrime dhe teste.
+ * - Konfigurimi i integrimeve dhe testeve.
  * - Metadata dhe trajtimi i sigurt i gabimeve.
  */
 
@@ -60,6 +60,11 @@ import {
   createResponseQualityPipeline
 } from "./response-quality-pipeline.js";
 
+import {
+  createModelRequest,
+  MODEL_ERROR_CODES
+} from "../runtime/model-contracts.js";
+
 export const AI_CORE_VERSION = "1.2.0";
 
 const GENERIC_ERROR_MESSAGE =
@@ -70,10 +75,17 @@ const MAX_CONVERSATION_ID_LENGTH = 200;
 const MAX_SUPPLIED_HISTORY = 20;
 const MAX_CONTEXT_MESSAGES = 4;
 
+/*
+ * Model Contracts lejon prompt deri në 32,000 karaktere.
+ * Rezervohet hapësirë për udhëzimet dhe strukturën e prompt-it.
+ */
+const MAX_MODEL_PROMPT_LENGTH = 30000;
+
 const responseQualityPipeline =
   createResponseQualityPipeline();
 
 let memoryPersistenceInstance = null;
+let modelOrchestratorInstance = null;
 
 /**
  * Konfiguron persistent memory për integrime dhe teste.
@@ -84,11 +96,6 @@ let memoryPersistenceInstance = null;
  *
  * Kalimi i null rikthen krijimin automatik të instancës
  * së parazgjedhur.
- *
- * Kujdes:
- * Ky konfigurim ndryshon instancën e memories në nivel moduli.
- * Mos e përdor për konfigurime të ndryshme të përdoruesve
- * në të njëjtin proces pa izolim të përshtatshëm.
  */
 export function configureAICoreMemoryPersistence(
   instance = null
@@ -110,7 +117,36 @@ export function configureAICoreMemoryPersistence(
 }
 
 /**
- * Krijon ose kthen instancën aktive të persistent memory.
+ * Konfiguron Model Orchestrator për XSUS AI Core.
+ *
+ * Instance duhet të ofrojë:
+ * - generate(input)
+ *
+ * Kalimi i null çaktivizon integrimin me modelin.
+ *
+ * Ky konfigurim është në nivel moduli. Për konfigurime
+ * të ndryshme përdoruesish kërkohet izolim i instancave.
+ */
+export function configureAICoreModelOrchestrator(
+  instance = null
+) {
+  if (
+    instance !== null &&
+    (
+      typeof instance !== "object" ||
+      typeof instance.generate !== "function"
+    )
+  ) {
+    throw new TypeError(
+      "Model Orchestrator duhet të ofrojë metodën generate."
+    );
+  }
+
+  modelOrchestratorInstance = instance;
+}
+
+/**
+ * Kthen instancën aktive të persistent memory.
  */
 function getMemoryPersistence() {
   if (!memoryPersistenceInstance) {
@@ -125,12 +161,16 @@ function isPlainObject(value) {
     return false;
   }
 
-  const prototype = Object.getPrototypeOf(value);
+  try {
+    const prototype = Object.getPrototypeOf(value);
 
-  return (
-    prototype === Object.prototype ||
-    prototype === null
-  );
+    return (
+      prototype === Object.prototype ||
+      prototype === null
+    );
+  } catch {
+    return false;
+  }
 }
 
 function normalizeLanguage(value) {
@@ -416,15 +456,6 @@ function saveMemoryMessage(sessionId, role, content) {
 
 /**
  * Mbledh burimet pa shpikur metadata.
- *
- * - Vargjet ruhen si burime tekstuale.
- * - Objektet ruhen kur përmbajnë të paktën një fushë
- *   identifikuese ose përmbajtjeje.
- * - Objektet origjinale nuk modifikohen.
- * - Dublikimet hiqen duke përdorur përmbajtjen e
- *   fushave të njohura.
- *
- * Ky funksion nuk provon besueshmërinë e burimeve.
  */
 function collectSources(results, knowledge, responseResult) {
   const sources = [];
@@ -523,7 +554,6 @@ function collectSources(results, knowledge, responseResult) {
 
 /**
  * Ekspozon vetëm fushat publike të kontratës së cilësisë.
- * Detajet e verifikimit dhe raporti i brendshëm nuk ekspozohen.
  */
 function buildResponseQualityMetadata(responseQuality) {
   if (
@@ -567,6 +597,12 @@ function buildContextMetadata({
   };
 }
 
+/**
+ * Ndërton metadata-n kryesore.
+ *
+ * Metadata e modelit ruhet në një fushë të veçantë,
+ * pa mundësi për të mbishkruar fushat e Core.
+ */
 function buildMetadata({
   language,
   results = [],
@@ -577,12 +613,9 @@ function buildMetadata({
   conversationId,
   memoryEnabled,
   responseResult,
-  responseQuality
+  responseQuality,
+  modelResult = null
 }) {
-  /*
-   * Historia e kaluar këtu është historiku paraprak,
-   * jo mesazhi aktual që sapo u ruajt në RAM.
-   */
   const messages = Array.isArray(history)
     ? history
     : Array.isArray(context?.messages)
@@ -594,26 +627,42 @@ function buildMetadata({
     language,
     engine: "xsus-ai-core",
     version: AI_CORE_VERSION,
-    modelConnected: false,
+
+    modelConnected: Boolean(modelResult),
+
+    model: modelResult
+      ? {
+          modelId: modelResult.modelId,
+          finishReason: modelResult.finishReason,
+          usage: modelResult.usage,
+          metadata: modelResult.metadata
+        }
+      : null,
+
     knowledgeResults: Array.isArray(results)
       ? results.length
       : 0,
+
     sources: collectSources(
       results,
       knowledge,
       responseResult
     ),
+
     conversationId: conversationId || null,
     memoryEnabled: Boolean(memoryEnabled),
+
     context: buildContextMetadata({
       conversationId,
       history: messages
     }),
+
     responseEngine: {
       version: responseResult?.version || null,
       confidence: responseResult?.confidence ?? 0,
       success: Boolean(responseResult?.success)
     },
+
     responseQuality: buildResponseQualityMetadata(
       responseQuality
     )
@@ -633,6 +682,7 @@ function buildErrorMetadata({
     language,
     engine: "xsus-ai-core",
     version: AI_CORE_VERSION,
+    modelConnected: Boolean(modelOrchestratorInstance),
     knowledgeResults,
     sources: Array.isArray(sources) ? sources : [],
     conversationId: conversationId || null,
@@ -682,6 +732,186 @@ function createErrorResponse({
       engine: "xsus-ai-core",
       version: AI_CORE_VERSION
     }
+  };
+}
+
+/**
+ * Kufizon tekstin pa e ndryshuar llojin e tij.
+ */
+function truncateText(value, maxLength) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return value.slice(0, maxLength);
+}
+
+/**
+ * Nxjerr tekst të përdorshëm nga një rezultat Knowledge.
+ */
+function extractKnowledgeText(item) {
+  if (typeof item === "string") {
+    return item.trim();
+  }
+
+  if (
+    !item ||
+    typeof item !== "object" ||
+    Array.isArray(item)
+  ) {
+    return "";
+  }
+
+  return [
+    item.title,
+    item.content,
+    item.text
+  ]
+    .filter(value =>
+      typeof value === "string" &&
+      value.trim().length > 0
+    )
+    .map(value => value.trim())
+    .join("\n");
+}
+
+/**
+ * Ndërton kontekstin e njohurive për modelin.
+ */
+function buildKnowledgeContext(results) {
+  if (!Array.isArray(results)) {
+    return "";
+  }
+
+  return results
+    .map((item, index) => {
+      const content = extractKnowledgeText(item);
+
+      return content
+        ? `[Knowledge ${index + 1}]\n${content}`
+        : "";
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+/**
+ * Gjeneron përgjigje përmes Model Orchestrator.
+ *
+ * Përgjigjja validohet sipas Model Contracts.
+ * Metadata e modelit izolohet nga metadata e Core.
+ */
+async function generateWithModel({
+  contextualQuery,
+  language,
+  requestId,
+  conversationId,
+  history,
+  results,
+  input
+}) {
+  if (!modelOrchestratorInstance) {
+    return null;
+  }
+
+  const knowledgeContext = buildKnowledgeContext(results);
+
+  const systemPrompt = [
+    "You are the AI response engine of XSUS Studio.",
+    "Answer accurately and directly.",
+    "Use the supplied knowledge context when relevant.",
+    "Do not invent facts, citations, URLs, or sources.",
+    "If the supplied context is insufficient, be transparent.",
+    `Respond in language: ${language}.`
+  ].join("\n");
+
+  const promptParts = [
+    "Conversation context:",
+    contextualQuery,
+    knowledgeContext
+      ? `Knowledge context:\n${knowledgeContext}`
+      : ""
+  ].filter(Boolean);
+
+  let prompt = promptParts.join("\n\n");
+
+  /*
+   * Kontrata e modelit lejon maksimumi 32,000 karaktere.
+   * Kufiri ynë është më i ulët për të rezervuar hapësirë
+   * për systemPrompt dhe metadata.
+   */
+  if (prompt.length > MAX_MODEL_PROMPT_LENGTH) {
+    prompt = truncateText(
+      prompt,
+      MAX_MODEL_PROMPT_LENGTH
+    );
+  }
+
+  const modelParameters = isPlainObject(input.modelParameters)
+    ? input.modelParameters
+    : {};
+
+  const modelRequest = createModelRequest({
+    requestId,
+    conversationId: conversationId || null,
+    prompt,
+    systemPrompt,
+    language,
+    modelId: input.modelId ?? null,
+
+    context: {
+      messages: history,
+      knowledgeResults: Array.isArray(results)
+        ? results.length
+        : 0
+    },
+
+    metadata: {
+      engine: "xsus-ai-core",
+      coreVersion: AI_CORE_VERSION,
+      knowledgeResults: Array.isArray(results)
+        ? results.length
+        : 0
+    },
+
+    parameters: modelParameters
+  });
+
+  const modelResponse =
+    await modelOrchestratorInstance.generate(modelRequest);
+
+  if (
+    !isPlainObject(modelResponse) ||
+    modelResponse.success !== true ||
+    typeof modelResponse.text !== "string" ||
+    !modelResponse.text.trim() ||
+    typeof modelResponse.modelId !== "string" ||
+    !modelResponse.modelId.trim()
+  ) {
+    const error = new Error(
+      "Modeli nuk prodhoi një përgjigje të vlefshme."
+    );
+
+    error.code = MODEL_ERROR_CODES.INVALID_RESPONSE;
+
+    throw error;
+  }
+
+  return {
+    answer: modelResponse.text.trim(),
+    modelId: modelResponse.modelId,
+    language: normalizeLanguage(modelResponse.language) || language,
+    finishReason: modelResponse.finishReason,
+    usage: isPlainObject(modelResponse.usage)
+      ? { ...modelResponse.usage }
+      : {},
+    metadata: isPlainObject(modelResponse.metadata)
+      ? { ...modelResponse.metadata }
+      : {}
   };
 }
 
@@ -789,8 +1019,7 @@ export async function processAIRequest(input = {}) {
     );
 
     /*
-     * Përcakto historikun paraprak para se të shtohet
-     * mesazhi aktual i përdoruesit.
+     * Historiku paraprak lexohet para mesazhit aktual.
      */
     history = readConversationHistory(
       conversationId,
@@ -889,12 +1118,68 @@ export async function processAIRequest(input = {}) {
         ? knowledge.results
         : [];
 
-    const standardizedResponse = createResponse({
-      results,
-      language,
-      requestId,
-      conversationId: conversationId || null
-    });
+    let standardizedResponse;
+    let modelResult = null;
+    let responseSource = "xsus-knowledge-service";
+
+    /*
+     * Nëse Orchestrator është konfiguruar, përdoret modeli.
+     * Përndryshe ruhet Response Engine ekzistues.
+     */
+    if (modelOrchestratorInstance) {
+      try {
+        modelResult = await generateWithModel({
+          contextualQuery,
+          language,
+          requestId,
+          conversationId,
+          history,
+          results,
+          input
+        });
+
+        standardizedResponse = {
+          success: true,
+          answer: modelResult.answer,
+          confidence: 0,
+          version: "model-runtime",
+          metadata: {
+            modelId: modelResult.modelId,
+            finishReason: modelResult.finishReason,
+            usage: modelResult.usage
+          }
+        };
+
+        responseSource = "xsus-model-runtime";
+      } catch {
+        return createErrorResponse({
+          message: GENERIC_ERROR_MESSAGE,
+          requestId,
+          language,
+          code: AI_ERROR_CODES.INTERNAL_ERROR,
+          exposeMessage: false,
+          metadata: buildErrorMetadata({
+            requestId,
+            language,
+            conversationId,
+            history,
+            knowledgeResults: results.length,
+            sources: collectSources(
+              results,
+              knowledge,
+              null
+            )
+          })
+        });
+      }
+    } else {
+      standardizedResponse = createResponse({
+        results,
+        language,
+        requestId,
+        conversationId: conversationId || null
+      });
+    }
 
     const answer =
       typeof standardizedResponse?.answer === "string"
@@ -924,12 +1209,8 @@ export async function processAIRequest(input = {}) {
     }
 
     /*
-     * Vlerësimi kryhet nga pipeline-i i përbashkët.
-     * Burimet e strukturuara i jepen pipeline-it pa
-     * krijuar URL, tituj ose përmbajtje artificiale.
-     *
-     * Metadata publike ruan fushat ekzistuese të cilësisë.
-     * Gabimet e pipeline-it nuk e ndërpresin përgjigjen.
+     * Vlerësimi i cilësisë mbetet i përbashkët për të dyja
+     * mënyrat: Response Engine dhe Model Runtime.
      */
     const responseSources = collectSources(
       results,
@@ -969,10 +1250,6 @@ export async function processAIRequest(input = {}) {
       await persistMemorySession(conversationId);
     }
 
-    /*
-     * Metadata përdor historikun paraprak, para mesazhit
-     * aktual, për të ruajtur sjelljen ekzistuese.
-     */
     const metadata = buildMetadata({
       language,
       results,
@@ -986,15 +1263,22 @@ export async function processAIRequest(input = {}) {
       conversationId,
       memoryEnabled,
       responseResult: standardizedResponse,
-      responseQuality
+      responseQuality,
+      modelResult
     });
+
+    const confidence =
+      typeof standardizedResponse.confidence === "number" &&
+      Number.isFinite(standardizedResponse.confidence)
+        ? standardizedResponse.confidence
+        : 0;
 
     const response = createAIResponse({
       requestId,
       answer,
       language,
-      source: "xsus-knowledge-service",
-      confidence: standardizedResponse.confidence,
+      source: responseSource,
+      confidence,
       metadata
     });
 
@@ -1003,8 +1287,8 @@ export async function processAIRequest(input = {}) {
       requestId,
       answer,
       language,
-      source: "xsus-knowledge-service",
-      confidence: standardizedResponse.confidence,
+      source: responseSource,
+      confidence,
       version: AI_CORE_VERSION,
       timestamp: response.timestamp || new Date().toISOString(),
       metadata: {
