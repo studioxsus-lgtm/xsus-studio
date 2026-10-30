@@ -23,19 +23,24 @@ function createAdapter(id, overrides = {}) {
     available: true,
     languages: ["sq", "en"],
     capabilities: ["chat", "knowledge"],
+
     async initialize() {},
+
     async generate(input) {
       return {
-        text: `Përgjigjja për: ${input.query ?? "test"}`,
+        text: `Përgjigjja për: ${input.prompt ?? "test"}`,
       };
     },
+
     async close() {},
+
     ...overrides,
   };
 }
 
 function createSetup(adapters = [], options = {}) {
   const registry = createModelRegistry({ adapters });
+
   const selector = createModelSelector({
     registry,
     defaultModelId: options.defaultModelId ?? null,
@@ -49,7 +54,11 @@ function createSetup(adapters = [], options = {}) {
       : {}),
   });
 
-  return { registry, selector, orchestrator };
+  return {
+    registry,
+    selector,
+    orchestrator,
+  };
 }
 
 describe("XSUS AI Core — Model Orchestrator", () => {
@@ -57,6 +66,7 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     const { orchestrator } = createSetup();
 
     expect(MODEL_ORCHESTRATOR_VERSION).toBe("1.0.0");
+
     expect(orchestrator.getStatus().version).toBe("1.0.0");
   });
 
@@ -84,7 +94,9 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     expect(() =>
       createModelOrchestrator({
         registry: {},
-        selector: { select: vi.fn() },
+        selector: {
+          select: vi.fn(),
+        },
       }),
     ).toThrow(
       expect.objectContaining({
@@ -110,7 +122,10 @@ describe("XSUS AI Core — Model Orchestrator", () => {
 
   it("refuzon defaultModelId të pavlefshëm", () => {
     const registry = createModelRegistry();
-    const selector = createModelSelector({ registry });
+
+    const selector = createModelSelector({
+      registry,
+    });
 
     expect(() =>
       createModelOrchestrator({
@@ -127,22 +142,32 @@ describe("XSUS AI Core — Model Orchestrator", () => {
 
   it("inicializon një model të regjistruar", async () => {
     const adapter = createAdapter("model-a");
+
     const { orchestrator } = createSetup([adapter]);
 
     const result = await orchestrator.initialize("model-a");
 
     expect(result).toBeDefined();
-    expect(orchestrator.getRuntimeStatus("model-a")).not.toBeNull();
-    expect(orchestrator.getStatus().activeRuntimes).toBe(1);
+
+    expect(
+      orchestrator.getRuntimeStatus("model-a"),
+    ).not.toBeNull();
+
+    expect(
+      orchestrator.getStatus().activeRuntimes,
+    ).toBe(1);
   });
 
   it("inicializon modelin e përzgjedhur kur nuk jepet ID", async () => {
     const adapter = createAdapter("model-a");
+
     const { orchestrator } = createSetup([adapter]);
 
     await orchestrator.initialize();
 
-    expect(orchestrator.getRuntimeStatus("model-a")).not.toBeNull();
+    expect(
+      orchestrator.getRuntimeStatus("model-a"),
+    ).not.toBeNull();
   });
 
   it("kthen gabim kur modeli për inicializim nuk ekziston", async () => {
@@ -159,31 +184,37 @@ describe("XSUS AI Core — Model Orchestrator", () => {
 
   it("gjeneron përgjigje përmes runtime", async () => {
     const adapter = createAdapter("model-a");
+
     const { orchestrator } = createSetup([adapter]);
 
     const result = await orchestrator.generate({
       modelId: "model-a",
-      query: "Përshëndetje",
+      prompt: "Përshëndetje",
     });
 
     expect(result).toMatchObject({
       text: "Përgjigjja për: Përshëndetje",
     });
 
-    expect(orchestrator.getStatus().activeRuntimes).toBe(1);
+    expect(
+      orchestrator.getStatus().activeRuntimes,
+    ).toBe(1);
   });
 
   it("përdor modelin e parazgjedhur të orchestrator-it", async () => {
     const adapterA = createAdapter("model-a");
+
     const adapterB = createAdapter("model-b");
 
     const { orchestrator } = createSetup(
       [adapterA, adapterB],
-      { defaultModelId: "model-b" },
+      {
+        defaultModelId: "model-b",
+      },
     );
 
     const result = await orchestrator.generate({
-      query: "Test",
+      prompt: "Test",
     });
 
     expect(result).toMatchObject({
@@ -193,6 +224,10 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     expect(
       orchestrator.getRuntimeStatus("model-b"),
     ).not.toBeNull();
+
+    expect(
+      orchestrator.getRuntimeStatus("model-a"),
+    ).toBeNull();
   });
 
   it("refuzon kërkesat për gjenerim që nuk janë objekte të thjeshta", async () => {
@@ -221,7 +256,7 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     await expect(
       orchestrator.generate({
         modelId: "missing-model",
-        query: "Test",
+        prompt: "Test",
       }),
     ).rejects.toMatchObject({
       code: MODEL_ORCHESTRATOR_ERRORS.MODEL_NOT_FOUND,
@@ -235,12 +270,16 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     ]);
 
     await orchestrator.initialize("model-a");
+
     await orchestrator.initialize("model-b");
 
     const statuses = orchestrator.listRuntimeStatuses();
 
     expect(statuses).toHaveLength(2);
-    expect(statuses.map((status) => status.adapterId)).toEqual([
+
+    expect(
+      statuses.map((status) => status.adapterId),
+    ).toEqual([
       "model-a",
       "model-b",
     ]);
@@ -259,13 +298,13 @@ describe("XSUS AI Core — Model Orchestrator", () => {
   it("refuzon ID të pavlefshme në getRuntimeStatus", () => {
     const { orchestrator } = createSetup();
 
-    expect(() => orchestrator.getRuntimeStatus("")).toThrow(
-      TypeError,
-    );
+    expect(
+      () => orchestrator.getRuntimeStatus(""),
+    ).toThrow(TypeError);
 
-    expect(() => orchestrator.getRuntimeStatus("   ")).toThrow(
-      TypeError,
-    );
+    expect(
+      () => orchestrator.getRuntimeStatus("   "),
+    ).toThrow(TypeError);
   });
 
   it("mbyll runtime-t dhe raporton numrin e tyre", async () => {
@@ -275,6 +314,7 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     ]);
 
     await orchestrator.initialize("model-a");
+
     await orchestrator.initialize("model-b");
 
     const result = await orchestrator.close();
@@ -286,8 +326,13 @@ describe("XSUS AI Core — Model Orchestrator", () => {
       failures: [],
     });
 
-    expect(orchestrator.getStatus().closed).toBe(true);
-    expect(orchestrator.getStatus().activeRuntimes).toBe(0);
+    expect(
+      orchestrator.getStatus().closed,
+    ).toBe(true);
+
+    expect(
+      orchestrator.getStatus().activeRuntimes,
+    ).toBe(0);
   });
 
   it("lejon thirrje të përsëritura të close pa dështim", async () => {
@@ -298,9 +343,11 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     await orchestrator.initialize("model-a");
 
     const first = await orchestrator.close();
+
     const second = await orchestrator.close();
 
     expect(first.closed).toBe(true);
+
     expect(second.closed).toBe(true);
   });
 
@@ -326,7 +373,9 @@ describe("XSUS AI Core — Model Orchestrator", () => {
     await orchestrator.close();
 
     await expect(
-      orchestrator.generate({ query: "Test" }),
+      orchestrator.generate({
+        prompt: "Test",
+      }),
     ).rejects.toMatchObject({
       code: MODEL_ORCHESTRATOR_ERRORS.CLOSED,
     });
