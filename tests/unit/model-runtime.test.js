@@ -628,6 +628,91 @@ describe("XSUS AI Core — Model Runtime", () => {
         lastError: null,
       });
     });
+
+    it("ruan stabilitetin gjatë 100 gjenerimeve paralele", async () => {
+      const generate = vi.fn(async ({ prompt }) => ({
+        text: `Response: ${prompt}`,
+        finishReason: "stop",
+      }));
+
+      const implementation = createImplementation({ generate });
+      const runtime = createModelRuntime({ implementation });
+
+      await runtime.initialize();
+
+      const generations = Array.from(
+        { length: 100 },
+        (_, index) =>
+          runtime.generate({
+            prompt: `Stress request ${index}`,
+          }),
+      );
+
+      expect(runtime.getStatus().activeGenerations).toBe(100);
+
+      const responses = await Promise.all(generations);
+
+      expect(responses).toHaveLength(100);
+
+      responses.forEach((response, index) => {
+        expect(response.success).toBe(true);
+        expect(response.text).toBe(
+          `Response: Stress request ${index}`,
+        );
+      });
+
+      expect(generate).toHaveBeenCalledTimes(100);
+
+      expect(runtime.getStatus()).toMatchObject({
+        state: MODEL_RUNTIME_STATES.READY,
+        initialized: true,
+        activeGenerations: 0,
+        lastError: null,
+      });
+    });
+
+    it("ruan stabilitetin pas 10 cikleve me nga 20 gjenerime", async () => {
+      const generate = vi.fn(async ({ prompt }) => ({
+        text: `Response: ${prompt}`,
+        finishReason: "stop",
+      }));
+
+      const implementation = createImplementation({ generate });
+      const runtime = createModelRuntime({ implementation });
+
+      await runtime.initialize();
+
+      for (let cycle = 0; cycle < 10; cycle += 1) {
+        const generations = Array.from(
+          { length: 20 },
+          (_, index) =>
+            runtime.generate({
+              prompt: `Cycle ${cycle} request ${index}`,
+            }),
+        );
+
+        expect(runtime.getStatus().activeGenerations).toBe(20);
+
+        const responses = await Promise.all(generations);
+
+        expect(responses).toHaveLength(20);
+        expect(
+          responses.every((response) => response.success),
+        ).toBe(true);
+
+        expect(runtime.getStatus().activeGenerations).toBe(0);
+        expect(runtime.getState()).toBe(MODEL_RUNTIME_STATES.READY);
+      }
+
+      expect(generate).toHaveBeenCalledTimes(200);
+
+      expect(runtime.getStatus()).toMatchObject({
+        state: MODEL_RUNTIME_STATES.READY,
+        initialized: true,
+        activeGenerations: 0,
+        lastError: null,
+      });
+    });
   });
 
   describe("Mbyllja", () => {
