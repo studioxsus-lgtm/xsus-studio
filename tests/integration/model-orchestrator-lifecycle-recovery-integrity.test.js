@@ -172,11 +172,13 @@ describe("XSUS AI Core — Model Orchestrator Lifecycle & Failure Recovery Integ
     expect(firstClose.closed).toBe(true);
     expect(secondClose.closed).toBe(true);
 
-    expect(firstClose.failures).toBe(1);
+    expect(firstClose.failures).toHaveLength(1);
     expect(firstClose.success).toBe(false);
 
-    expect(secondClose.failures).toBe(1);
+    expect(secondClose.failures).toHaveLength(1);
     expect(secondClose.success).toBe(false);
+
+    expect(firstClose.failures[0].message).toBe("Close failure");
 
     expect(model.close).toHaveBeenCalledTimes(1);
     expect(orchestrator.getStatus().closed).toBe(true);
@@ -275,7 +277,7 @@ describe("XSUS AI Core — Model Orchestrator Lifecycle & Failure Recovery Integ
     expect(closeResult.closed).toBe(true);
     expect(closeResult.success).toBe(true);
     expect(closeResult.runtimesClosed).toBe(2);
-    expect(closeResult.failures).toBe(0);
+    expect(closeResult.failures).toHaveLength(0);
 
     expect(failingModel.close).toHaveBeenCalledTimes(1);
     expect(healthyModel.close).toHaveBeenCalledTimes(1);
@@ -325,8 +327,12 @@ describe("XSUS AI Core — Model Orchestrator Lifecycle & Failure Recovery Integ
     expect(firstClose.success).toBe(false);
     expect(secondClose.success).toBe(false);
 
-    expect(firstClose.failures).toBe(1);
-    expect(secondClose.failures).toBe(1);
+    expect(firstClose.failures).toHaveLength(1);
+    expect(secondClose.failures).toHaveLength(1);
+
+    expect(firstClose.failures[0].message).toBe(
+      "Parallel close failure",
+    );
 
     expect(failingModel.close).toHaveBeenCalledTimes(1);
     expect(healthyModel.close).toHaveBeenCalledTimes(1);
