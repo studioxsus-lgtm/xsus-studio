@@ -1,37 +1,39 @@
 name: XSUS AI API - CI
 
 on:
-push:
-branches:
-- feature/xsus-ai-core
-pull_request:
-branches:
-- feature/xsus-ai-core
-workflow_dispatch:
+  push:
+    branches:
+      - feature/xsus-ai-core
+
+  pull_request:
+    branches:
+      - feature/xsus-ai-core
+
+  workflow_dispatch:
 
 permissions:
-contents: read
+  contents: read
 
 jobs:
-test:
-name: Test XSUS AI Core
-runs-on: ubuntu-latest
+  test:
+    name: Test XSUS AI Core
+    runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  - name: Setup Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: 20
-      cache: npm
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
 
-  - name: Install dependencies
-    run: npm install
+      - name: Install dependencies
+        run: npm install
 
-  - name: Run tests
-    run: npm test
+      - name: Run tests
+        run: npm test
 
-  - name: Check server syntax
-    run: node --check server.js
+      - name: Check server syntax
+        run: node --check server.js
