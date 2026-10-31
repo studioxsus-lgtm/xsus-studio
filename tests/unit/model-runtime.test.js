@@ -549,6 +549,54 @@ describe("XSUS AI Core — Model Runtime", () => {
       );
       expect(runtime.getStatus().lastError).toBeNull();
     });
+
+    it("izolon dështimin e një gjenerimi nga gjenerimi tjetër paralel", async () => {
+      const failedGeneration = createDeferred();
+      const successfulGeneration = createDeferred();
+
+      const generate = vi.fn()
+        .mockImplementationOnce(() => failedGeneration.promise)
+        .mockImplementationOnce(() => successfulGeneration.promise);
+
+      const implementation = createImplementation({ generate });
+      const runtime = createModelRuntime({ implementation });
+
+      await runtime.initialize();
+
+      const first = runtime.generate({
+        prompt: "Failing request",
+      });
+
+      const second = runtime.generate({
+        prompt: "Successful request",
+      });
+
+      expect(runtime.getStatus().activeGenerations).toBe(2);
+
+      failedGeneration.reject(
+        new Error("Isolated generation failure"),
+      );
+
+      await expect(first).rejects.toThrow(
+        "Isolated generation failure",
+      );
+
+      expect(runtime.getStatus().activeGenerations).toBe(1);
+
+      successfulGeneration.resolve({
+        text: "Successful parallel response",
+        finishReason: "stop",
+      });
+
+      const response = await second;
+
+      expect(response.success).toBe(true);
+      expect(response.text).toBe(
+        "Successful parallel response",
+      );
+      expect(runtime.getStatus().activeGenerations).toBe(0);
+      expect(runtime.getStatus().lastError).toBeNull();
+    });
   });
 
   describe("Mbyllja", () => {
@@ -717,6 +765,46 @@ describe("XSUS AI Core — Model Runtime", () => {
           retryable: false,
         },
       });
+    });
+
+    it("ruan gabimin dhe nuk përsërit close pas dështimit", async () => {
+      const implementation = createImplementation({
+        close: vi.fn(async () => {
+          throw new Error("Persistent close failure");
+        }),
+      });
+
+      const runtime = createModelRuntime({ implementation });
+
+      await runtime.initialize();
+
+      const firstClose = runtime.close();
+
+      await expect(firstClose).rejects.toMatchObject({
+        code: MODEL_ERROR_CODES.INTERNAL_ERROR,
+        message: "Persistent close failure",
+      });
+
+      const secondClose = runtime.close();
+
+      await expect(secondClose).rejects.toMatchObject({
+        code: MODEL_ERROR_CODES.INTERNAL_ERROR,
+        message: "Persistent close failure",
+      });
+
+      expect(implementation.close).toHaveBeenCalledOnce();
+
+      expect(runtime.getStatus().lastError).toMatchObject({
+        success: false,
+        error: {
+          code: MODEL_ERROR_CODES.INTERNAL_ERROR,
+          message: "Persistent close failure",
+        },
+      });
+
+      expect(runtime.getState()).toBe(
+        MODEL_RUNTIME_STATES.CLOSED,
+      );
     });
 
     it("kthen statusin kur runtime është mbyllur tashmë", async () => {
