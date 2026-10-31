@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi } from "vitest";
 
 import {
@@ -683,6 +682,108 @@ describe("XSUS AI Core — Model Runtime", () => {
       expect(status.state).toBe(MODEL_RUNTIME_STATES.CLOSED);
       expect(implementation.close).toHaveBeenCalledOnce();
       expect(status.activeGenerations).toBe(0);
+    });
+
+    it("pret përfundimin e të gjitha gjenerimeve paralele para mbylljes", async () => {
+      const firstGeneration = createDeferred();
+      const secondGeneration = createDeferred();
+
+      const generate = vi.fn()
+        .mockImplementationOnce(() => firstGeneration.promise)
+        .mockImplementationOnce(() => secondGeneration.promise);
+
+      const implementation = createImplementation({ generate });
+      const runtime = createModelRuntime({ implementation });
+
+      await runtime.initialize();
+
+      const first = runtime.generate({ prompt: "First request" });
+      const second = runtime.generate({ prompt: "Second request" });
+
+      expect(runtime.getStatus().activeGenerations).toBe(2);
+
+      const closing = runtime.close();
+
+      expect(runtime.getState()).toBe(MODEL_RUNTIME_STATES.CLOSED);
+      expect(implementation.close).not.toHaveBeenCalled();
+
+      firstGeneration.resolve({ text: "First response" });
+
+      await expect(first).rejects.toMatchObject({
+        code: MODEL_ERROR_CODES.NOT_INITIALIZED,
+      });
+
+      expect(runtime.getStatus().activeGenerations).toBe(1);
+      expect(implementation.close).not.toHaveBeenCalled();
+
+      secondGeneration.resolve({ text: "Second response" });
+
+      await expect(second).rejects.toMatchObject({
+        code: MODEL_ERROR_CODES.NOT_INITIALIZED,
+      });
+
+      const status = await closing;
+
+      expect(status.state).toBe(MODEL_RUNTIME_STATES.CLOSED);
+      expect(status.activeGenerations).toBe(0);
+      expect(implementation.close).toHaveBeenCalledOnce();
+    });
+
+    it("ruan gjendjen CLOSED dhe pastron gjenerimet pas mbylljes paralele", async () => {
+      const firstGeneration = createDeferred();
+      const secondGeneration = createDeferred();
+
+      const generate = vi.fn()
+        .mockImplementationOnce(() => firstGeneration.promise)
+        .mockImplementationOnce(() => secondGeneration.promise);
+
+      const implementation = createImplementation({ generate });
+      const runtime = createModelRuntime({ implementation });
+
+      await runtime.initialize();
+
+      const first = runtime.generate({ prompt: "Request A" });
+      const second = runtime.generate({ prompt: "Request B" });
+
+      const firstClose = runtime.close();
+      const secondClose = runtime.close();
+
+      expect(runtime.getState()).toBe(MODEL_RUNTIME_STATES.CLOSED);
+
+      firstGeneration.resolve({ text: "Response A" });
+      secondGeneration.resolve({ text: "Response B" });
+
+      const results = await Promise.allSettled([
+        first,
+        second,
+        firstClose,
+        secondClose,
+      ]);
+
+      expect(results[0]).toMatchObject({
+        status: "rejected",
+        reason: {
+          code: MODEL_ERROR_CODES.NOT_INITIALIZED,
+        },
+      });
+
+      expect(results[1]).toMatchObject({
+        status: "rejected",
+        reason: {
+          code: MODEL_ERROR_CODES.NOT_INITIALIZED,
+        },
+      });
+
+      expect(results[2].status).toBe("fulfilled");
+      expect(results[3].status).toBe("fulfilled");
+
+      expect(runtime.getStatus()).toMatchObject({
+        state: MODEL_RUNTIME_STATES.CLOSED,
+        initialized: false,
+        activeGenerations: 0,
+      });
+
+      expect(implementation.close).toHaveBeenCalledOnce();
     });
 
     it("pret përfundimin e inicializimit aktiv", async () => {
