@@ -27,9 +27,10 @@ export default defineConfig({
 
       exclude: [
         'services/**',
+        'src/**/__tests__/**',
+        'src/**/*.test.js',
+        'src/**/*.spec.js',
         'tests/**',
-        '**/*.test.js',
-        '**/*.spec.js',
         '**/node_modules/**'
       ],
 
