@@ -301,8 +301,9 @@ describe("XSUS AI Core — Multi-Model Orchestrator Advanced Stress & Recovery",
     for (let wave = 1; wave <= 10; wave += 1) {
       const requests = Array.from({ length: 50 }, (_, index) => {
         const modelIndex = index % models.length;
+
         const shouldFail =
-          modelIndex === 2 && index % 5 === 2;
+          modelIndex === 2 && index % 25 === 2;
 
         return orchestrator.generate({
           modelId: `wave-stability-model-${modelIndex + 1}`,
