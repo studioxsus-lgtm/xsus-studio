@@ -240,7 +240,7 @@ describe("XSUS AI Core — Model Runtime Coverage Integrity", () => {
     });
   });
 
-  it("ruan të njëjtin proces mbylljeje edhe kur mbyllja dështon", async () => {
+  it("ruan procesin e vetëm të mbylljes edhe kur mbyllja dështon", async () => {
     const close = vi.fn(async () => {
       throw new Error("Persistent close failure");
     });
@@ -252,11 +252,41 @@ describe("XSUS AI Core — Model Runtime Coverage Integrity", () => {
     await runtime.initialize();
 
     const firstClose = runtime.close();
+
+    // Kapim refuzimin menjëherë për të shmangur Unhandled Rejection.
+    const firstOutcome = firstClose.then(
+      (value) => ({ status: "fulfilled", value }),
+      (error) => ({ status: "rejected", error }),
+    );
+
     const secondClose = runtime.close();
 
-    expect(firstClose).toBe(secondClose);
+    const secondOutcome = secondClose.then(
+      (value) => ({ status: "fulfilled", value }),
+      (error) => ({ status: "rejected", error }),
+    );
 
-    await expect(firstClose).rejects.toBeDefined();
+    const [firstResult, secondResult] = await Promise.all([
+      firstOutcome,
+      secondOutcome,
+    ]);
+
+    expect(firstResult.status).toBe("rejected");
+    expect(secondResult.status).toBe("rejected");
+
+    expect(firstResult.error).toBeInstanceOf(Error);
+    expect(secondResult.error).toBeInstanceOf(Error);
+
+    expect(firstResult.error.code).toBe(
+      MODEL_ERROR_CODES.INTERNAL_ERROR,
+    );
+
+    expect(secondResult.error.code).toBe(
+      MODEL_ERROR_CODES.INTERNAL_ERROR,
+    );
+
+    expect(firstResult.error.message).toBe("Persistent close failure");
+    expect(secondResult.error.message).toBe("Persistent close failure");
 
     expect(close).toHaveBeenCalledTimes(1);
     expect(runtime.getState()).toBe(MODEL_RUNTIME_STATES.CLOSED);
