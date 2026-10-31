@@ -306,9 +306,6 @@ export function createModelRuntime(options = {}) {
           /*
            * Nëse Runtime është mbyllur gjatë gjenerimit,
            * përgjigjja aktive nuk pranohet.
-           *
-           * close() pret përfundimin e këtij Promise
-           * përpara mbylljes së implementimit.
            */
           if (state === MODEL_RUNTIME_STATES.CLOSED) {
             throw createRuntimeError(
@@ -321,7 +318,7 @@ export function createModelRuntime(options = {}) {
            * Validimi dhe standardizimi i përgjigjes.
            */
           try {
-            return createModelResponse({
+            const response = createModelResponse({
               ...rawResponse,
               requestId:
                 rawResponse?.requestId ?? request.requestId,
@@ -335,6 +332,14 @@ export function createModelRuntime(options = {}) {
               language:
                 rawResponse?.language ?? request.language,
             });
+
+            /*
+             * Një gjenerim i suksesshëm konfirmon
+             * rikuperimin e Runtime nga gabimi i fundit.
+             */
+            lastError = null;
+
+            return response;
           } catch (error) {
             lastError = normalizeError(
               error,
@@ -385,7 +390,6 @@ export function createModelRuntime(options = {}) {
 
       /*
        * Prit përfundimin e të gjitha gjenerimeve aktive.
-       * Gjenerimet refuzohen nëse Runtime është CLOSED.
        */
       await Promise.allSettled([
         ...activeGenerationPromises,
@@ -399,11 +403,21 @@ export function createModelRuntime(options = {}) {
         selectedImplementation &&
         typeof selectedImplementation.close === "function"
       ) {
-        await selectedImplementation.close({
-          modelId:
-            selectedImplementation.modelId ?? modelId,
-          runtimeVersion: MODEL_RUNTIME_VERSION,
-        });
+        try {
+          await selectedImplementation.close({
+            modelId:
+              selectedImplementation.modelId ?? modelId,
+            runtimeVersion: MODEL_RUNTIME_VERSION,
+          });
+        } catch (error) {
+          lastError = normalizeError(
+            error,
+            MODEL_ERROR_CODES.INTERNAL_ERROR,
+            "Mbyllja e implementimit të modelit dështoi.",
+          );
+
+          throw toRuntimeError(lastError);
+        }
       }
 
       return getStatus();
