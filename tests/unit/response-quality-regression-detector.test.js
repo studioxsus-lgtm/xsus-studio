@@ -114,7 +114,7 @@ describe("XSUS AI Core — Response Quality Regression Detector", () => {
           createEvaluation()
         )
       ).toThrow(
-        "baseline.results duhet të jetë array."
+        "${label}.results duhet të jetë array."
       );
 
       expect(() =>
@@ -123,7 +123,7 @@ describe("XSUS AI Core — Response Quality Regression Detector", () => {
           {}
         )
       ).toThrow(
-        "current.results duhet të jetë array."
+        "${label}.results duhet të jetë array."
       );
     });
 
@@ -134,7 +134,7 @@ describe("XSUS AI Core — Response Quality Regression Detector", () => {
           createEvaluation()
         )
       ).toThrow(
-        "baseline përmban një rezultat të pavlefshëm."
+        "${label} përmban një rezultat të pavlefshëm."
       );
     });
 
