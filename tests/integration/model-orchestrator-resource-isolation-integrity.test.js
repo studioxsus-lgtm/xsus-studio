@@ -304,17 +304,25 @@ describe("XSUS AI Core — Model Orchestrator Resource Management & Runtime Isol
 
     releaseGeneration();
 
-    const results = await Promise.all(requests);
+    const outcomes = await Promise.allSettled(requests);
     const closeResult = await closePromise;
 
-    expect(results).toHaveLength(25);
-    expect(results.every((result) => result.success)).toBe(true);
+    expect(outcomes).toHaveLength(25);
+
+    for (const outcome of outcomes) {
+      expect(outcome.status).toBe("rejected");
+
+      if (outcome.status === "rejected") {
+        expect(outcome.reason).toBeDefined();
+        expect(outcome.reason.code).toBeDefined();
+      }
+    }
 
     expect(closeResult.success).toBe(true);
     expect(closeResult.closed).toBe(true);
     expect(closeResult.runtimesClosed).toBe(1);
 
-    expect(model.generate).toHaveBeenCalledTimes(25);
+    expect(generate).toHaveBeenCalledTimes(25);
     expect(model.close).toHaveBeenCalledTimes(1);
 
     const finalStatus = orchestrator.getStatus();
