@@ -21,9 +21,8 @@ function createTestAdapter({
   id,
   modelId = id,
   initialize = vi.fn(async () => ({ success: true })),
-  generate = vi.fn(async (request) => ({
+  generate = vi.fn(async () => ({
     text: `Response from ${modelId}`,
-    request,
   })),
   close = vi.fn(async () => ({ success: true })),
 } = {}) {
@@ -67,9 +66,14 @@ function createSystem({
 
 describe("XSUS AI Core — Model Orchestrator Integration Integrity", () => {
   it("përzgjedh modelin e kërkuar dhe gjeneron përgjigjen", async () => {
+    const generate = vi.fn(async () => ({
+      text: "Response from model-a",
+    }));
+
     const adapter = createTestAdapter({
       id: "model-a",
       modelId: "model-a",
+      generate,
     });
 
     const { orchestrator } = createSystem({
@@ -83,16 +87,27 @@ describe("XSUS AI Core — Model Orchestrator Integration Integrity", () => {
     });
 
     expect(result.text).toBe("Response from model-a");
-    expect(result.request.prompt).toBe("Hello XSUS");
-    expect(result.request.language).toBe("en");
+    expect(result.modelId).toBe("model-a");
+    expect(result.language).toBe("en");
+
+    const receivedRequest = generate.mock.calls[0][0];
+
+    expect(receivedRequest.prompt).toBe("Hello XSUS");
+    expect(receivedRequest.language).toBe("en");
+    expect(receivedRequest.modelId).toBe("model-a");
 
     await orchestrator.close();
   });
 
   it("përdor modelin e parazgjedhur kur nuk specifikohet modelId", async () => {
+    const generate = vi.fn(async () => ({
+      text: "Default model response",
+    }));
+
     const adapter = createTestAdapter({
       id: "default-model",
       modelId: "default-model",
+      generate,
     });
 
     const { orchestrator } = createSystem({
@@ -104,8 +119,13 @@ describe("XSUS AI Core — Model Orchestrator Integration Integrity", () => {
       prompt: "Default model request",
     });
 
-    expect(result.text).toBe("Response from default-model");
-    expect(result.request.modelId).toBe("default-model");
+    expect(result.text).toBe("Default model response");
+    expect(result.modelId).toBe("default-model");
+
+    const receivedRequest = generate.mock.calls[0][0];
+
+    expect(receivedRequest.modelId).toBe("default-model");
+    expect(receivedRequest.prompt).toBe("Default model request");
 
     await orchestrator.close();
   });
@@ -134,6 +154,7 @@ describe("XSUS AI Core — Model Orchestrator Integration Integrity", () => {
 
     expect(status).not.toBeNull();
     expect(status.initialized).toBe(true);
+    expect(status.state).toBe("ready");
 
     expect(
       orchestrator.listRuntimeStatuses(),
@@ -146,8 +167,9 @@ describe("XSUS AI Core — Model Orchestrator Integration Integrity", () => {
     const generate = vi.fn(async (request) => ({
       text: "Context preserved",
       conversationId: request.conversationId,
-      context: request.context,
-      metadata: request.metadata,
+      metadata: {
+        source: "integration-test",
+      },
     }));
 
     const adapter = createTestAdapter({
@@ -175,9 +197,17 @@ describe("XSUS AI Core — Model Orchestrator Integration Integrity", () => {
 
     const result = await orchestrator.generate(request);
 
+    expect(result.text).toBe("Context preserved");
     expect(result.conversationId).toBe("conversation-123");
-    expect(result.context).toEqual(request.context);
-    expect(result.metadata).toEqual(request.metadata);
+
+    const receivedRequest = generate.mock.calls[0][0];
+
+    expect(receivedRequest.prompt).toBe(request.prompt);
+    expect(receivedRequest.conversationId).toBe(
+      request.conversationId,
+    );
+    expect(receivedRequest.context).toEqual(request.context);
+    expect(receivedRequest.metadata).toEqual(request.metadata);
 
     await orchestrator.close();
   });
@@ -215,6 +245,7 @@ describe("XSUS AI Core — Model Orchestrator Integration Integrity", () => {
     });
 
     expect(result.text).toBe("Response from working-model");
+    expect(result.modelId).toBe("working-model");
 
     await orchestrator.close();
   });
@@ -251,9 +282,13 @@ describe("XSUS AI Core — Model Orchestrator Integration Integrity", () => {
       adapters: [adapter],
     });
 
-    const result = await orchestrator.initialize("initialize-model");
+    const result = await orchestrator.initialize(
+      "initialize-model",
+    );
 
-    expect(result.success).toBe(true);
+    expect(result.initialized).toBe(true);
+    expect(result.state).toBe("ready");
+    expect(result.modelId).toBe("initialize-model");
 
     const status = orchestrator.getRuntimeStatus(
       "initialize-model",
@@ -261,6 +296,7 @@ describe("XSUS AI Core — Model Orchestrator Integration Integrity", () => {
 
     expect(status).not.toBeNull();
     expect(status.initialized).toBe(true);
+    expect(status.state).toBe("ready");
 
     await orchestrator.close();
   });
