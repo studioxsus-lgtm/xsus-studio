@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from "vitest";
 
 import {
@@ -8,6 +7,7 @@ import {
   MAX_HISTORY_MESSAGES,
   MAX_MESSAGE_LENGTH,
   MAX_CONTEXT_CHARACTERS,
+  MAX_CONVERSATION_ID_LENGTH,
 } from "../../src/core/context-engine.js";
 
 describe("XSUS Context Engine", () => {
@@ -63,6 +63,81 @@ describe("XSUS Context Engine", () => {
     expect(context.history[0].role).toBe("user");
   });
 
+  it("refuzon mesazhe që nuk janë objekte të vlefshme", () => {
+    const context = createContext({
+      messages: [
+        null,
+        undefined,
+        "tekst",
+        42,
+        [],
+        { role: "user", content: "Mesazh i vlefshëm" },
+      ],
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toHaveLength(1);
+    expect(context.history[0].content).toBe("Mesazh i vlefshëm");
+  });
+
+  it("refuzon mesazhe me role ose content të pavlefshëm", () => {
+    const context = createContext({
+      messages: [
+        { role: "", content: "Test" },
+        { role: 123, content: "Test" },
+        { role: "user", content: 123 },
+        { role: "assistant", content: null },
+        { role: "user", content: "   " },
+        { role: "user", content: "Mesazh i vlefshëm" },
+      ],
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toHaveLength(1);
+  });
+
+  it("refuzon mesazhe historiku që tejkalojnë kufirin individual", () => {
+    const context = createContext({
+      messages: [
+        {
+          role: "user",
+          content: "a".repeat(MAX_MESSAGE_LENGTH + 1),
+        },
+        {
+          role: "assistant",
+          content: "Mesazh i vlefshëm",
+        },
+      ],
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toHaveLength(1);
+    expect(context.history[0].content).toBe("Mesazh i vlefshëm");
+  });
+
+  it("kap gabimet gjatë leximit të vetive të mesazhit", () => {
+    const invalidMessage = Object.defineProperty(
+      {},
+      "role",
+      {
+        get() {
+          throw new Error("Gabim gjatë leximit");
+        },
+      }
+    );
+
+    const context = createContext({
+      messages: [
+        invalidMessage,
+        { role: "user", content: "Mesazh i vlefshëm" },
+      ],
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toHaveLength(1);
+    expect(context.history[0].content).toBe("Mesazh i vlefshëm");
+  });
+
   it("kufizon historikun në 20 mesazhe", () => {
     const messages = Array.from({ length: 25 }, (_, index) => ({
       role: "user",
@@ -79,6 +154,32 @@ describe("XSUS Context Engine", () => {
     expect(context.history.at(-1).content).toBe("Mesazhi 24");
   });
 
+  it("kufizon numrin e hyrjeve të historikut që përpunohen", () => {
+    const messages = Array.from({ length: 120 }, (_, index) => ({
+      role: "user",
+      content: `Mesazhi ${index}`,
+    }));
+
+    const context = createContext({
+      messages,
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toHaveLength(MAX_HISTORY_MESSAGES);
+    expect(context.history[0].content).toBe("Mesazhi 100");
+    expect(context.history.at(-1).content).toBe("Mesazhi 119");
+  });
+
+  it("pranon vetëm historik në formë array", () => {
+    const context = createContext({
+      messages: { role: "user", content: "Jo array" },
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toEqual([]);
+    expect(context.metadata.hasPreviousContext).toBe(false);
+  });
+
   it("normalizon kodet rajonale të gjuhëve", () => {
     const context = createContext({
       userMessage: "Hello",
@@ -91,6 +192,34 @@ describe("XSUS Context Engine", () => {
   it("përdor shqipen kur gjuha nuk jepet", () => {
     const context = createContext({
       userMessage: "Përshëndetje",
+    });
+
+    expect(context.language).toBe("sq");
+  });
+
+  it("përdor shqipen për gjuhë bosh ose të pavlefshme", () => {
+    const inputs = [
+      undefined,
+      null,
+      "",
+      "   ",
+      123,
+    ];
+
+    for (const language of inputs) {
+      const context = createContext({
+        userMessage: "Test",
+        language,
+      });
+
+      expect(context.language).toBe("sq");
+    }
+  });
+
+  it("përdor shqipen kur gjuha është auto", () => {
+    const context = createContext({
+      userMessage: "Test",
+      language: "auto",
     });
 
     expect(context.language).toBe("sq");
@@ -121,6 +250,17 @@ describe("XSUS Context Engine", () => {
     expect(prompt.instructions.join(" ")).toContain("frëngjisht");
   });
 
+  it("përdor kodin e gjuhës kur nuk ka emër të përcaktuar", () => {
+    const context = createContext({
+      userMessage: "Merhaba",
+      language: "tr",
+    });
+
+    const prompt = buildContextPrompt(context);
+
+    expect(prompt.instructions.join(" ")).toContain("tr");
+  });
+
   it("refuzon mesazhin bosh", () => {
     expect(() => createContext({ userMessage: " " })).toThrow(
       "userMessage duhet të jetë tekst jo bosh."
@@ -133,6 +273,14 @@ describe("XSUS Context Engine", () => {
         userMessage: "a".repeat(MAX_MESSAGE_LENGTH + 1),
       })
     ).toThrow(/8000 karaktere/);
+  });
+
+  it("refuzon mesazhin aktual që nuk është tekst", () => {
+    for (const userMessage of [null, undefined, 123, {}, []]) {
+      expect(() =>
+        createContext({ userMessage })
+      ).toThrow("userMessage duhet të jetë tekst.");
+    }
   });
 
   it("llogarit madhësinë e historikut", () => {
@@ -166,6 +314,93 @@ describe("XSUS Context Engine", () => {
     ).toBeLessThanOrEqual(MAX_CONTEXT_CHARACTERS);
   });
 
+  it("ruan përparësinë e mesazheve më të fundit brenda kufirit", () => {
+    const messages = [
+      { role: "user", content: "a".repeat(8000) },
+      { role: "assistant", content: "b".repeat(8000) },
+      { role: "user", content: "c".repeat(8000) },
+      { role: "assistant", content: "d".repeat(8000) },
+    ];
+
+    const context = createContext({
+      messages,
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toHaveLength(3);
+    expect(context.history[0].content[0]).toBe("b");
+    expect(context.history[1].content[0]).toBe("c");
+    expect(context.history[2].content[0]).toBe("d");
+    expect(
+      context.metadata.totalHistoryCharacters
+    ).toBe(MAX_CONTEXT_CHARACTERS);
+  });
+
+  it("përdor history në vend të messages kur history është array", () => {
+    const context = createContext({
+      history: [
+        { role: "user", content: "Historiku kryesor" },
+      ],
+      messages: [
+        { role: "user", content: "Historik alternativ" },
+      ],
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toHaveLength(1);
+    expect(context.history[0].content).toBe("Historiku kryesor");
+  });
+
+  it("përdor messages kur history nuk është array", () => {
+    const context = createContext({
+      history: "jo array",
+      messages: [
+        { role: "user", content: "Historik alternativ" },
+      ],
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toHaveLength(1);
+    expect(context.history[0].content).toBe("Historik alternativ");
+  });
+
+  it("normalizon conversationId", () => {
+    const context = createContext({
+      userMessage: "Test",
+      conversationId: "  conversation-123  ",
+    });
+
+    expect(context.conversationId).toBe("conversation-123");
+  });
+
+  it("refuzon conversationId bosh ose jo tekst", () => {
+    for (const conversationId of [
+      null,
+      undefined,
+      123,
+      "",
+      "   ",
+    ]) {
+      const context = createContext({
+        userMessage: "Test",
+        conversationId,
+      });
+
+      expect(context.conversationId).toBeNull();
+    }
+  });
+
+  it("refuzon conversationId që tejkalon kufirin", () => {
+    const context = createContext({
+      userMessage: "Test",
+      conversationId: "a".repeat(
+        MAX_CONVERSATION_ID_LENGTH + 1
+      ),
+    });
+
+    expect(context.conversationId).toBeNull();
+  });
+
   it("ndërton prompt me historikun dhe pyetjen aktuale", () => {
     const context = createContext({
       messages: [
@@ -187,18 +422,152 @@ describe("XSUS Context Engine", () => {
   });
 
   it("refuzon kontekstin e pavlefshëm", () => {
-    expect(() => buildContextPrompt(null)).toThrow(
-      "Konteksti i XSUS AI Core është i pavlefshëm."
+    for (const context of [
+      null,
+      undefined,
+      "tekst",
+      123,
+      [],
+    ]) {
+      expect(() => buildContextPrompt(context)).toThrow(
+        "Konteksti i XSUS AI Core është i pavlefshëm."
+      );
+    }
+  });
+
+  it("refuzon mesazhin aktual të pavlefshëm brenda prompt-it", () => {
+    for (const userMessage of [
+      undefined,
+      null,
+      "",
+      "   ",
+      123,
+      "a".repeat(MAX_MESSAGE_LENGTH + 1),
+    ]) {
+      expect(() =>
+        buildContextPrompt({
+          userMessage,
+          language: "sq",
+        })
+      ).toThrow(
+        "Mesazhi aktual i kontekstit është i pavlefshëm."
+      );
+    }
+  });
+
+  it("përdor messages si fallback kur history nuk është array", () => {
+    const prompt = buildContextPrompt({
+      history: "jo array",
+      messages: [
+        { role: "user", content: "Mesazh nga fallback" },
+      ],
+      userMessage: "Vazhdo",
+    });
+
+    expect(prompt.messages).toHaveLength(2);
+    expect(prompt.messages[0].content).toBe(
+      "Mesazh nga fallback"
     );
+  });
+
+  it("përdor historik bosh kur history dhe messages nuk janë array", () => {
+    const prompt = buildContextPrompt({
+      history: null,
+      messages: null,
+      userMessage: "Mesazh aktual",
+    });
+
+    expect(prompt.messages).toHaveLength(1);
+    expect(prompt.metadata.historyMessageCount).toBe(0);
+    expect(prompt.metadata.hasPreviousContext).toBe(false);
+  });
+
+  it("përdor shqipen si gjuhë fallback në prompt", () => {
+    const prompt = buildContextPrompt({
+      userMessage: "Test",
+      language: "auto",
+    });
+
+    expect(prompt.metadata.language).toBe("sq");
+    expect(prompt.instructions.join(" ")).toContain("shqip");
+  });
+
+  it("përfshin metadata të sakta në prompt", () => {
+    const prompt = buildContextPrompt({
+      history: [
+        { role: "user", content: "Përshëndetje" },
+        { role: "assistant", content: "Mirë se erdhe!" },
+      ],
+      userMessage: "Vazhdo",
+      language: "sq",
+    });
+
+    expect(prompt.metadata).toEqual({
+      language: "sq",
+      historyMessageCount: 2,
+      hasPreviousContext: true,
+      totalHistoryCharacters:
+        "Përshëndetje".length + "Mirë se erdhe!".length,
+      engineVersion: CONTEXT_ENGINE_VERSION,
+    });
   });
 
   it("kthen kontekst të pandryshueshëm", () => {
     const context = createContext({
+      messages: [
+        { role: "user", content: "Test historiku" },
+      ],
       userMessage: "Test",
     });
 
     expect(Object.isFrozen(context)).toBe(true);
     expect(Object.isFrozen(context.history)).toBe(true);
+    expect(Object.isFrozen(context.history[0])).toBe(true);
+    expect(Object.isFrozen(context.messages)).toBe(true);
     expect(Object.isFrozen(context.metadata)).toBe(true);
+  });
+
+  it("kthen prompt të pandryshueshëm", () => {
+    const prompt = buildContextPrompt({
+      history: [
+        { role: "user", content: "Historik" },
+      ],
+      userMessage: "Pyetje",
+    });
+
+    expect(Object.isFrozen(prompt)).toBe(true);
+    expect(Object.isFrozen(prompt.instructions)).toBe(true);
+    expect(Object.isFrozen(prompt.messages)).toBe(true);
+    expect(Object.isFrozen(prompt.messages[0])).toBe(true);
+    expect(Object.isFrozen(prompt.metadata)).toBe(true);
+  });
+
+  it("nuk ndryshon mesazhet origjinale të përdoruesit", () => {
+    const originalMessage = {
+      role: "user",
+      content: "  Përshëndetje  ",
+    };
+
+    const originalContent = originalMessage.content;
+
+    createContext({
+      messages: [originalMessage],
+      userMessage: "Vazhdo",
+    });
+
+    expect(originalMessage.content).toBe(originalContent);
+    expect(Object.isFrozen(originalMessage)).toBe(false);
+  });
+
+  it("përdor të njëjtin historik të normalizuar në history dhe messages", () => {
+    const context = createContext({
+      messages: [
+        { role: "user", content: "Historik" },
+      ],
+      userMessage: "Vazhdo",
+    });
+
+    expect(context.history).toBe(context.messages);
+    expect(context.history).toEqual(context.messages);
   });
 });
