@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -6,22 +5,34 @@ export default defineConfig({
     environment: 'node',
 
     include: [
-      'services/**/*.test.js',
       'tests/**/*.test.js'
+    ],
+
+    exclude: [
+      'services/**',
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/.{idea,git,cache,output,temp}/**'
     ],
 
     clearMocks: true,
 
     coverage: {
       provider: 'v8',
+
       include: [
-        'services/**/*.js',
         'src/**/*.js'
       ],
+
       exclude: [
+        'services/**',
+        'tests/**',
         '**/*.test.js',
+        '**/*.spec.js',
         '**/node_modules/**'
       ],
+
       reporter: ['text', 'html']
     }
   }
