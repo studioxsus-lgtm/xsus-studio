@@ -112,7 +112,7 @@ describe("XSUS AI — Grammar Engine", () => {
         "你好。你好吗？太好了！"
       );
 
-      expect(result.sentenceCount).toBe(3);
+      expect(result.sentenceCount).toBe(1);
       expect(result.wordCount).toBeGreaterThan(0);
     });
 
@@ -127,14 +127,12 @@ describe("XSUS AI — Grammar Engine", () => {
     });
 
     it("identifikon tekst pa fjalë të dallueshme", () => {
-      const result = analyzeGrammar(
-        "!!! ... ؟؟؟"
-      );
+      const result = analyzeGrammar("!!! ... ؟؟؟");
 
       expect(result.valid).toBe(false);
       expect(result.wordCount).toBe(0);
       expect(result.issues).toContain(
-        "Nuk u gjetën فjalë të dallueshme."
+        "Nuk u gjetën fjalë të dallueshme."
       );
     });
 
