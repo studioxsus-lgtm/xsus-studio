@@ -596,6 +596,38 @@ describe("XSUS AI Core — Model Runtime", () => {
       expect(runtime.getStatus().activeGenerations).toBe(0);
       expect(runtime.getStatus().lastError).toBeNull();
     });
+
+    it("pastron gjenerimet aktive pas shumë kërkesave të njëpasnjëshme", async () => {
+      const generate = vi.fn(async ({ prompt }) => ({
+        text: `Response: ${prompt}`,
+        finishReason: "stop",
+      }));
+
+      const implementation = createImplementation({ generate });
+      const runtime = createModelRuntime({ implementation });
+
+      await runtime.initialize();
+
+      for (let index = 0; index < 50; index += 1) {
+        const response = await runtime.generate({
+          prompt: `Request ${index}`,
+        });
+
+        expect(response.success).toBe(true);
+        expect(response.text).toBe(`Response: Request ${index}`);
+
+        expect(runtime.getStatus().activeGenerations).toBe(0);
+      }
+
+      expect(generate).toHaveBeenCalledTimes(50);
+
+      expect(runtime.getStatus()).toMatchObject({
+        state: MODEL_RUNTIME_STATES.READY,
+        initialized: true,
+        activeGenerations: 0,
+        lastError: null,
+      });
+    });
   });
 
   describe("Mbyllja", () => {
@@ -906,6 +938,56 @@ describe("XSUS AI Core — Model Runtime", () => {
       expect(runtime.getState()).toBe(
         MODEL_RUNTIME_STATES.CLOSED,
       );
+    });
+
+    it("mbyll implementimin edhe kur disa gjenerime aktive dështojnë", async () => {
+      const firstGeneration = createDeferred();
+      const secondGeneration = createDeferred();
+
+      const generate = vi.fn()
+        .mockImplementationOnce(() => firstGeneration.promise)
+        .mockImplementationOnce(() => secondGeneration.promise);
+
+      const implementation = createImplementation({
+        generate,
+      });
+
+      const runtime = createModelRuntime({ implementation });
+
+      await runtime.initialize();
+
+      const first = runtime.generate({
+        prompt: "Failing request A",
+      });
+
+      const second = runtime.generate({
+        prompt: "Failing request B",
+      });
+
+      expect(runtime.getStatus().activeGenerations).toBe(2);
+
+      const closing = runtime.close();
+
+      firstGeneration.reject(new Error("Generation failure A"));
+      secondGeneration.reject(new Error("Generation failure B"));
+
+      const results = await Promise.allSettled([
+        first,
+        second,
+        closing,
+      ]);
+
+      expect(results[0].status).toBe("rejected");
+      expect(results[1].status).toBe("rejected");
+      expect(results[2].status).toBe("fulfilled");
+
+      expect(runtime.getStatus()).toMatchObject({
+        state: MODEL_RUNTIME_STATES.CLOSED,
+        initialized: false,
+        activeGenerations: 0,
+      });
+
+      expect(implementation.close).toHaveBeenCalledOnce();
     });
 
     it("kthen statusin kur runtime është mbyllur tashmë", async () => {
