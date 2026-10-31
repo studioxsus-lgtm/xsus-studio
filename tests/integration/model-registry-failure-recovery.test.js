@@ -34,6 +34,23 @@ function createRegistry(adapters = []) {
   return createModelRegistry({ adapters });
 }
 
+function createLanguageAdapter({
+  id,
+  language,
+}) {
+  return {
+    id,
+    modelId: `${id}-model`,
+    languages: [language],
+    capabilities: ["chat"],
+    available: true,
+    generate: vi.fn(async () => ({
+      text: `${language} response`,
+      finishReason: "stop",
+    })),
+  };
+}
+
 describe("XSUS AI Core — Registry Failure Recovery", () => {
   describe("Rikuperimi pas dështimit të regjistrimit", () => {
     it("ruan adapter-in origjinal pas një ID-je të dyfishtë", () => {
@@ -211,22 +228,25 @@ describe("XSUS AI Core — Registry Failure Recovery", () => {
     });
 
     it("ruan filtrimin sipas gjuhës pas ndryshimeve në Registry", () => {
-      const english = createAdapter({
+      const english = createLanguageAdapter({
         id: "english-adapter",
-        languages: ["en"],
+        language: "en",
       });
 
       const registry = createRegistry([english]);
-
       const selector = createModelSelector({ registry });
 
       expect(
         selector.listCompatible({ language: "sq" }),
       ).toHaveLength(0);
 
-      const albanian = createAdapter({
+      expect(
+        selector.listCompatible({ language: "en" }),
+      ).toEqual([english]);
+
+      const albanian = createLanguageAdapter({
         id: "albanian-adapter",
-        languages: ["sq"],
+        language: "sq",
       });
 
       registry.register(albanian);
@@ -240,6 +260,10 @@ describe("XSUS AI Core — Registry Failure Recovery", () => {
       expect(
         selector.listCompatible({ language: "sq" }),
       ).toHaveLength(0);
+
+      expect(
+        selector.listCompatible({ language: "en" }),
+      ).toEqual([english]);
     });
   });
 
