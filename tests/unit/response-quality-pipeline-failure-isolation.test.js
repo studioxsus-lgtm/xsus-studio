@@ -1,4 +1,11 @@
-import { describe, expect, test, vi } from "vitest";
+
+import {
+  describe,
+  expect,
+  test,
+  vi,
+  beforeEach
+} from "vitest";
 
 const mocks = vi.hoisted(() => ({
   evaluateResponseQuality: vi.fn(),
@@ -55,6 +62,10 @@ describe("XSUS AI Core — Pipeline Failure Isolation", () => {
     recommendations: [],
     warnings: []
   };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
 
   function configureSuccessfulComponents() {
     mocks.evaluateResponseQuality.mockReturnValue(validQuality);
