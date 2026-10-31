@@ -90,7 +90,9 @@ function createTestEnvironment(options = {}) {
         input.modelId &&
         input.modelId !== modelId
       ) {
-        throw new Error("Modeli i kërkuar nuk u gjet.");
+        throw new Error(
+          "Modeli i kërkuar nuk u gjet.",
+        );
       }
 
       return adapter;
@@ -113,229 +115,266 @@ function createTestEnvironment(options = {}) {
   };
 }
 
-describe("XSUS AI Core — Runtime End-to-End Integration", () => {
-  beforeEach(() => {
-    configureAICoreModelOrchestrator(null);
-  });
+describe(
+  "XSUS AI Core — Runtime End-to-End Integration",
+  () => {
+    beforeEach(() => {
+      configureAICoreModelOrchestrator(null);
+    });
 
-  afterEach(async () => {
-    configureAICoreModelOrchestrator(null);
-  });
+    afterEach(() => {
+      configureAICoreModelOrchestrator(null);
+    });
 
-  test("përpunon kërkesën nga AI Core deri te Model Adapter", async () => {
-    const generate = vi.fn(async () => ({
-      text: "Përgjigjja u krijua nga Model Adapter.",
-      finishReason: "stop",
-      metadata: {
-        provider: "xsus-e2e-test",
+    test(
+      "përpunon kërkesën nga AI Core deri te Model Adapter",
+      async () => {
+        const generate = vi.fn(async () => ({
+          text: "Përgjigjja u krijua nga Model Adapter.",
+          finishReason: "stop",
+          metadata: {
+            provider: "xsus-e2e-test",
+          },
+        }));
+
+        const environment = createTestEnvironment({
+          generate,
+        });
+
+        const result = await processAIRequest({
+          query: "Shpjego arkitekturën e XSUS AI.",
+          language: "sq",
+          modelId: "xsus-e2e-model",
+        });
+
+        expect(result.error).toBeUndefined();
+
+        expect(result.answer).toBe(
+          "Përgjigjja u krijua nga Model Adapter.",
+        );
+
+        expect(generate).toHaveBeenCalledTimes(1);
+
+        expect(environment.adapter.modelId).toBe(
+          "xsus-e2e-model",
+        );
+
+        expect(
+          environment.orchestrator.getRuntimeStatus(
+            "xsus-e2e-adapter",
+          ).initialized,
+        ).toBe(true);
       },
-    }));
-
-    const environment = createTestEnvironment({
-      generate,
-    });
-
-    const result = await processAIRequest({
-      query: "Shpjego arkitekturën e XSUS AI.",
-      language: "sq",
-      modelId: "xsus-e2e-model",
-    });
-
-    expect(result.success).toBe(true);
-    expect(result.answer).toBe(
-      "Përgjigjja u krijua nga Model Adapter.",
     );
 
-    expect(generate).toHaveBeenCalledTimes(1);
-    expect(
-      environment.adapter.modelId,
-    ).toBe("xsus-e2e-model");
+    test(
+      "inicializon adapter-in vetëm një herë për kërkesa të njëpasnjëshme",
+      async () => {
+        const initialize = vi.fn(async () => ({
+          success: true,
+        }));
 
-    expect(
-      environment.orchestrator.getRuntimeStatus(
-        "xsus-e2e-adapter",
-      ).initialized,
-    ).toBe(true);
-  });
+        const generate = vi.fn(async () => ({
+          text: "Përgjigje e vlefshme.",
+        }));
 
-  test("inicializon adapter-in vetëm një herë për kërkesa të njëpasnjëshme", async () => {
-    const initialize = vi.fn(async () => ({
-      success: true,
-    }));
+        createTestEnvironment({
+          initialize,
+          generate,
+        });
 
-    const generate = vi.fn(async () => ({
-      text: "Përgjigje e vlefshme.",
-    }));
+        const first = await processAIRequest({
+          query: "Pyetja e parë",
+          language: "sq",
+          modelId: "xsus-e2e-model",
+        });
 
-    createTestEnvironment({
-      initialize,
-      generate,
-    });
+        const second = await processAIRequest({
+          query: "Pyetja e dytë",
+          language: "sq",
+          modelId: "xsus-e2e-model",
+        });
 
-    const first = await processAIRequest({
-      query: "Pyetja e parë",
-      language: "sq",
-      modelId: "xsus-e2e-model",
-    });
+        expect(first.error).toBeUndefined();
+        expect(second.error).toBeUndefined();
 
-    const second = await processAIRequest({
-      query: "Pyetja e dytë",
-      language: "sq",
-      modelId: "xsus-e2e-model",
-    });
-
-    expect(first.success).toBe(true);
-    expect(second.success).toBe(true);
-    expect(initialize).toHaveBeenCalledTimes(1);
-    expect(generate).toHaveBeenCalledTimes(2);
-  });
-
-  test("përcjell dështimin e inicializimit pa ekzekutuar gjenerimin", async () => {
-    const initialize = vi.fn(async () => {
-      throw new Error("Initialization failed.");
-    });
-
-    const generate = vi.fn(async () => ({
-      text: "Nuk duhet të ekzekutohet.",
-    }));
-
-    createTestEnvironment({
-      initialize,
-      generate,
-    });
-
-    const result = await processAIRequest({
-      query: "Test i inicializimit",
-      language: "sq",
-      modelId: "xsus-e2e-model",
-    });
-
-    expect(result.success).toBe(false);
-    expect(generate).not.toHaveBeenCalled();
-  });
-
-  test("trajton dështimin e gjenerimit dhe lejon kërkesa të mëvonshme", async () => {
-    const generate = vi
-      .fn()
-      .mockRejectedValueOnce(
-        new Error("Inference failed."),
-      )
-      .mockResolvedValueOnce({
-        text: "Gjenerimi i dytë përfundoi me sukses.",
-      });
-
-    createTestEnvironment({
-      generate,
-    });
-
-    const failedResult = await processAIRequest({
-      query: "Kërkesa e parë",
-      language: "sq",
-      modelId: "xsus-e2e-model",
-    });
-
-    expect(failedResult.success).toBe(false);
-
-    const successfulResult = await processAIRequest({
-      query: "Kërkesa e dytë",
-      language: "sq",
-      modelId: "xsus-e2e-model",
-    });
-
-    expect(successfulResult.success).toBe(true);
-    expect(successfulResult.answer).toBe(
-      "Gjenerimi i dytë përfundoi me sukses.",
+        expect(initialize).toHaveBeenCalledTimes(1);
+        expect(generate).toHaveBeenCalledTimes(2);
+      },
     );
 
-    expect(generate).toHaveBeenCalledTimes(2);
-  });
+    test(
+      "përcjell dështimin e inicializimit pa ekzekutuar gjenerimin",
+      async () => {
+        const initialize = vi.fn(async () => {
+          throw new Error("Initialization failed.");
+        });
 
-  test("pret përfundimin e gjenerimit aktiv gjatë mbylljes", async () => {
-    const generation = createDeferred();
-    const close = vi.fn(async () => ({
-      success: true,
-      closed: true,
-    }));
+        const generate = vi.fn(async () => ({
+          text: "Nuk duhet të ekzekutohet.",
+        }));
 
-    const generate = vi.fn(
-      () => generation.promise,
+        createTestEnvironment({
+          initialize,
+          generate,
+        });
+
+        const result = await processAIRequest({
+          query: "Test i inicializimit",
+          language: "sq",
+          modelId: "xsus-e2e-model",
+        });
+
+        expect(result.error).toBeTruthy();
+        expect(generate).not.toHaveBeenCalled();
+      },
     );
 
-    const environment = createTestEnvironment({
-      generate,
-      close,
-    });
+    test(
+      "trajton dështimin e gjenerimit dhe lejon kërkesa të mëvonshme",
+      async () => {
+        const generate = vi
+          .fn()
+          .mockRejectedValueOnce(
+            new Error("Inference failed."),
+          )
+          .mockResolvedValueOnce({
+            text: "Gjenerimi i dytë përfundoi me sukses.",
+          });
 
-    const requestPromise = processAIRequest({
-      query: "Kërkesë gjatë mbylljes",
-      language: "sq",
-      modelId: "xsus-e2e-model",
-    });
+        createTestEnvironment({
+          generate,
+        });
 
-    while (generate.mock.calls.length === 0) {
-      await Promise.resolve();
-    }
+        const failedResult = await processAIRequest({
+          query: "Kërkesa e parë",
+          language: "sq",
+          modelId: "xsus-e2e-model",
+        });
 
-    const closePromise = environment.orchestrator.close();
+        expect(failedResult.error).toBeTruthy();
 
-    expect(close).not.toHaveBeenCalled();
+        const successfulResult = await processAIRequest({
+          query: "Kërkesa e dytë",
+          language: "sq",
+          modelId: "xsus-e2e-model",
+        });
 
-    generation.resolve({
-      text: "Gjenerimi përfundoi para mbylljes.",
-    });
+        expect(
+          successfulResult.error,
+        ).toBeUndefined();
 
-    const result = await requestPromise;
-    const closeResult = await closePromise;
+        expect(successfulResult.answer).toBe(
+          "Gjenerimi i dytë përfundoi me sukses.",
+        );
 
-    expect(result.success).toBe(true);
-    expect(closeResult.closed).toBe(true);
-    expect(close).toHaveBeenCalledTimes(1);
-    expect(
-      environment.orchestrator.getStatus().closed,
-    ).toBe(true);
-  });
+        expect(generate).toHaveBeenCalledTimes(2);
+      },
+    );
 
-  test("nuk pranon kërkesa të reja pas mbylljes së Orchestrator", async () => {
-    const environment = createTestEnvironment();
+    test(
+      "pret përfundimin e gjenerimit aktiv gjatë mbylljes",
+      async () => {
+        const generation = createDeferred();
 
-    await environment.orchestrator.close();
+        const close = vi.fn(async () => ({
+          success: true,
+          closed: true,
+        }));
 
-    await expect(
-      environment.orchestrator.generate({
-        prompt: "Kërkesë pas mbylljes",
-        modelId: "xsus-e2e-model",
-      }),
-    ).rejects.toMatchObject({
-      code: MODEL_ORCHESTRATOR_ERRORS.CLOSED,
-    });
-  });
+        const generate = vi.fn(
+          () => generation.promise,
+        );
 
-  test("mbyll adapter-in dhe pastron runtime-et aktive", async () => {
-    const close = vi.fn(async () => ({
-      success: true,
-      closed: true,
-    }));
+        const environment = createTestEnvironment({
+          generate,
+          close,
+        });
 
-    const environment = createTestEnvironment({
-      close,
-    });
+        const requestPromise = processAIRequest({
+          query: "Kërkesë gjatë mbylljes",
+          language: "sq",
+          modelId: "xsus-e2e-model",
+        });
 
-    await environment.orchestrator.generate({
-      prompt: "Inicializo runtime",
-      modelId: "xsus-e2e-model",
-    });
+        while (generate.mock.calls.length === 0) {
+          await Promise.resolve();
+        }
 
-    expect(
-      environment.orchestrator.getStatus().activeRuntimes,
-    ).toBe(1);
+        const closePromise =
+          environment.orchestrator.close();
 
-    const result = await environment.orchestrator.close();
+        expect(close).not.toHaveBeenCalled();
 
-    expect(result.success).toBe(true);
-    expect(result.runtimesClosed).toBe(1);
-    expect(close).toHaveBeenCalledTimes(1);
-    expect(
-      environment.orchestrator.getStatus().activeRuntimes,
-    ).toBe(0);
-  });
-});
+        generation.resolve({
+          text: "Gjenerimi përfundoi para mbylljes.",
+        });
+
+        const result = await requestPromise;
+        const closeResult = await closePromise;
+
+        expect(result.error).toBeUndefined();
+        expect(closeResult.closed).toBe(true);
+        expect(close).toHaveBeenCalledTimes(1);
+
+        expect(
+          environment.orchestrator.getStatus().closed,
+        ).toBe(true);
+      },
+    );
+
+    test(
+      "nuk pranon kërkesa të reja pas mbylljes së Orchestrator",
+      async () => {
+        const environment = createTestEnvironment();
+
+        await environment.orchestrator.close();
+
+        await expect(
+          environment.orchestrator.generate({
+            prompt: "Kërkesë pas mbylljes",
+            modelId: "xsus-e2e-model",
+          }),
+        ).rejects.toMatchObject({
+          code: MODEL_ORCHESTRATOR_ERRORS.CLOSED,
+        });
+      },
+    );
+
+    test(
+      "mbyll adapter-in dhe pastron runtime-et aktive",
+      async () => {
+        const close = vi.fn(async () => ({
+          success: true,
+          closed: true,
+        }));
+
+        const environment = createTestEnvironment({
+          close,
+        });
+
+        await environment.orchestrator.generate({
+          prompt: "Inicializo runtime",
+          modelId: "xsus-e2e-model",
+        });
+
+        expect(
+          environment.orchestrator.getStatus()
+            .activeRuntimes,
+        ).toBe(1);
+
+        const result =
+          await environment.orchestrator.close();
+
+        expect(result.success).toBe(true);
+        expect(result.runtimesClosed).toBe(1);
+        expect(close).toHaveBeenCalledTimes(1);
+
+        expect(
+          environment.orchestrator.getStatus()
+            .activeRuntimes,
+        ).toBe(0);
+      },
+    );
+  },
+);
