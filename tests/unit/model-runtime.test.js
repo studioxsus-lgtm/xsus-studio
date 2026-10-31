@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi } from "vitest";
 
 import {
@@ -515,6 +516,39 @@ describe("XSUS AI Core — Model Runtime", () => {
 
       expect(runtime.getStatus().activeGenerations).toBe(0);
     });
+
+    it("pastron lastError pas gjenerimit të suksesshëm", async () => {
+      const generate = vi.fn()
+        .mockRejectedValueOnce(new Error("Temporary failure"))
+        .mockResolvedValueOnce({
+          text: "Përgjigjja pas rikuperimit.",
+          finishReason: "stop",
+        });
+
+      const implementation = createImplementation({
+        generate,
+      });
+
+      const runtime = createModelRuntime({ implementation });
+
+      await runtime.initialize();
+
+      await expect(
+        runtime.generate({ prompt: "First request" }),
+      ).rejects.toThrow("Temporary failure");
+
+      expect(runtime.getStatus().lastError).not.toBeNull();
+
+      const response = await runtime.generate({
+        prompt: "Second request",
+      });
+
+      expect(response.success).toBe(true);
+      expect(response.text).toBe(
+        "Përgjigjja pas rikuperimit.",
+      );
+      expect(runtime.getStatus().lastError).toBeNull();
+    });
   });
 
   describe("Mbyllja", () => {
@@ -654,7 +688,7 @@ describe("XSUS AI Core — Model Runtime", () => {
       });
     });
 
-    it("regjistron gabimin kur close i implementimit dështon", async () => {
+    it("standardizon dhe regjistron gabimin kur close dështon", async () => {
       const implementation = createImplementation({
         close: vi.fn(async () => {
           throw new Error("Close failed");
@@ -665,9 +699,24 @@ describe("XSUS AI Core — Model Runtime", () => {
 
       await runtime.initialize();
 
-      await expect(runtime.close()).rejects.toThrow("Close failed");
+      await expect(runtime.close()).rejects.toMatchObject({
+        code: MODEL_ERROR_CODES.INTERNAL_ERROR,
+        message: "Close failed",
+        retryable: false,
+      });
 
-      expect(runtime.getState()).toBe(MODEL_RUNTIME_STATES.CLOSED);
+      expect(runtime.getState()).toBe(
+        MODEL_RUNTIME_STATES.CLOSED,
+      );
+
+      expect(runtime.getStatus().lastError).toMatchObject({
+        success: false,
+        error: {
+          code: MODEL_ERROR_CODES.INTERNAL_ERROR,
+          message: "Close failed",
+          retryable: false,
+        },
+      });
     });
 
     it("kthen statusin kur runtime është mbyllur tashmë", async () => {
