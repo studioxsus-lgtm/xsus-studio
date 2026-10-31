@@ -1,3 +1,4 @@
+
 /**
  * XSUS AI Core — Model Runtime
  * Version: 1.1.0
@@ -251,9 +252,8 @@ export function createModelRuntime(options = {}) {
 
   async function generate(input) {
     /*
-     * Kontrolli ndalon vetëm gjenerimet e reja.
-     * Gjenerimet e regjistruara më parë vazhdojnë
-     * edhe nëse Runtime kalon në gjendjen CLOSED.
+     * Ndalon gjenerimet e reja nëse Runtime
+     * nuk është në gjendjen READY.
      */
     if (state !== MODEL_RUNTIME_STATES.READY) {
       throw createRuntimeError(
@@ -280,7 +280,7 @@ export function createModelRuntime(options = {}) {
 
     /*
      * Regjistrimi në Set bëhet përpara ekzekutimit
-     * të implementimit, edhe në rast të një gabimi sinkron.
+     * të implementimit.
      */
     const generationPromise = Promise.resolve().then(
       async () => {
@@ -288,8 +288,7 @@ export function createModelRuntime(options = {}) {
           let rawResponse;
 
           /*
-           * Gabimet e implementimit klasifikohen
-           * si INFERENCE_FAILED.
+           * Ekzekutimi i implementimit.
            */
           try {
             rawResponse =
@@ -305,14 +304,21 @@ export function createModelRuntime(options = {}) {
           }
 
           /*
-           * Nuk ndërpritet përgjigjja nëse Runtime është
-           * mbyllur ndërkohë. close() pret këtë Promise
-           * përpara se të mbyllë implementimin.
+           * Nëse Runtime është mbyllur gjatë gjenerimit,
+           * përgjigjja aktive nuk pranohet.
+           *
+           * close() pret përfundimin e këtij Promise
+           * përpara mbylljes së implementimit.
            */
+          if (state === MODEL_RUNTIME_STATES.CLOSED) {
+            throw createRuntimeError(
+              MODEL_ERROR_CODES.NOT_INITIALIZED,
+              "Runtime u mbyll gjatë gjenerimit.",
+            );
+          }
 
           /*
-           * Gabimet gjatë validimit të përgjigjes
-           * klasifikohen si INVALID_RESPONSE.
+           * Validimi dhe standardizimi i përgjigjes.
            */
           try {
             return createModelResponse({
@@ -366,6 +372,9 @@ export function createModelRuntime(options = {}) {
     state = MODEL_RUNTIME_STATES.CLOSED;
 
     closePromise = (async () => {
+      /*
+       * Prit përfundimin e inicializimit aktiv.
+       */
       if (initializationPromise) {
         try {
           await initializationPromise;
@@ -376,11 +385,16 @@ export function createModelRuntime(options = {}) {
 
       /*
        * Prit përfundimin e të gjitha gjenerimeve aktive.
+       * Gjenerimet refuzohen nëse Runtime është CLOSED.
        */
       await Promise.allSettled([
         ...activeGenerationPromises,
       ]);
 
+      /*
+       * Implementimi mbyllet vetëm pasi përfundojnë
+       * inicializimi dhe të gjitha gjenerimet aktive.
+       */
       if (
         selectedImplementation &&
         typeof selectedImplementation.close === "function"
