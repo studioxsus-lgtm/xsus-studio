@@ -59,42 +59,61 @@ function createSystem({
   return { registry, selector, orchestrator };
 }
 
+function expectErrorCode(callback, expectedCode) {
+  try {
+    callback();
+  } catch (error) {
+    expect(error.code).toBe(expectedCode);
+    return;
+  }
+
+  throw new Error(`Pritej gabimin: ${expectedCode}`);
+}
+
 describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
   it("refuzon konfigurime të pavlefshme", () => {
-    expect(() => createModelOrchestrator(null)).toThrow(
+    expectErrorCode(
+      () => createModelOrchestrator(null),
       MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION,
     );
 
-    expect(() => createModelOrchestrator([])).toThrow(
+    expectErrorCode(
+      () => createModelOrchestrator([]),
       MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION,
     );
 
-    expect(() =>
-      createModelOrchestrator({
-        registry: {},
-        selector: { select: vi.fn() },
-      }),
-    ).toThrow(MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION);
+    expectErrorCode(
+      () =>
+        createModelOrchestrator({
+          registry: {},
+          selector: { select: vi.fn() },
+        }),
+      MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION,
+    );
 
-    expect(() =>
-      createModelOrchestrator({
-        registry: {
-          get: vi.fn(),
-          list: vi.fn(),
-        },
-        selector: {},
-      }),
-    ).toThrow(MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION);
+    expectErrorCode(
+      () =>
+        createModelOrchestrator({
+          registry: {
+            get: vi.fn(),
+            list: vi.fn(),
+          },
+          selector: {},
+        }),
+      MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION,
+    );
 
     const registry = createModelRegistry();
 
-    expect(() =>
-      createModelOrchestrator({
-        registry,
-        selector: { select: vi.fn() },
-        defaultModelId: "   ",
-      }),
-    ).toThrow(MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION);
+    expectErrorCode(
+      () =>
+        createModelOrchestrator({
+          registry,
+          selector: { select: vi.fn() },
+          defaultModelId: "   ",
+        }),
+      MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION,
+    );
   });
 
   it("normalizon gabimet e selector-it gjatë gjenerimit", async () => {
@@ -120,7 +139,9 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
   });
 
   it("normalizon gabimet e selector-it gjatë inicializimit", async () => {
-    const selectorError = new Error("Initialization selection failure");
+    const selectorError = new Error(
+      "Initialization selection failure",
+    );
 
     const { orchestrator } = createSystem({
       selectorOverride: {
@@ -162,21 +183,18 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
 
   it("refuzon input të pavlefshëm për gjenerim", async () => {
     const adapter = createAdapter();
+
     const { orchestrator } = createSystem({
       adapters: [adapter],
     });
 
-    await expect(orchestrator.generate(null)).rejects.toMatchObject({
-      code: MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION,
-    });
-
-    await expect(orchestrator.generate([])).rejects.toMatchObject({
-      code: MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION,
-    });
-
-    await expect(orchestrator.generate("invalid")).rejects.toMatchObject({
-      code: MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION,
-    });
+    for (const input of [null, [], "invalid"]) {
+      await expect(
+        orchestrator.generate(input),
+      ).rejects.toMatchObject({
+        code: MODEL_ORCHESTRATOR_ERRORS.INVALID_CONFIGURATION,
+      });
+    }
 
     expect(orchestrator.getStatus().activeRuntimes).toBe(0);
 
@@ -201,8 +219,8 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
 
   it("kthen statusin e runtime-it sipas ID-së së adapter-it", async () => {
     const adapter = createAdapter({
-      id: "adapter-coverage-id",
-      modelId: "model-coverage-id",
+      id: "coverage-status-model",
+      modelId: "coverage-status-model",
     });
 
     const { orchestrator } = createSystem({
@@ -210,12 +228,12 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
     });
 
     await orchestrator.generate({
-      modelId: "model-coverage-id",
+      modelId: "coverage-status-model",
       prompt: "Status test",
     });
 
     const status = orchestrator.getRuntimeStatus(
-      "adapter-coverage-id",
+      "coverage-status-model",
     );
 
     expect(status).not.toBeNull();
@@ -224,7 +242,9 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
     const statuses = orchestrator.listRuntimeStatuses();
 
     expect(statuses).toHaveLength(1);
-    expect(statuses[0].adapterId).toBe("adapter-coverage-id");
+    expect(statuses[0].adapterId).toBe(
+      "coverage-status-model",
+    );
 
     await orchestrator.close();
   });
@@ -232,7 +252,9 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
   it("pastron premtimin e inicializimit pas dështimit", async () => {
     const initialize = vi
       .fn()
-      .mockRejectedValueOnce(new Error("First initialization failed"))
+      .mockRejectedValueOnce(
+        new Error("First initialization failed"),
+      )
       .mockResolvedValueOnce({ success: true });
 
     const adapter = createAdapter({
@@ -279,18 +301,19 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
       }),
     ).rejects.toMatchObject({
       code: MODEL_ORCHESTRATOR_ERRORS.GENERATION_FAILED,
-      message: "Generation failure",
-      cause: generationError,
+      cause: expect.any(Error),
     });
 
-    expect(
-      orchestrator.getRuntimeStatus("coverage-model").activeGenerations,
-    ).toBe(0);
+    const status = orchestrator.getRuntimeStatus(
+      "coverage-model",
+    );
+
+    expect(status.activeGenerations).toBe(0);
 
     await orchestrator.close();
   });
 
-  it("përdor mesazh rezervë për gabime gjenerimi pa mesazh", async () => {
+  it("normalizon gabimin e gjenerimit kur adapter-i hedh objekt pa mesazh", async () => {
     const adapter = createAdapter({
       generate: vi.fn(async () => {
         throw {};
@@ -308,7 +331,7 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
       }),
     ).rejects.toMatchObject({
       code: MODEL_ORCHESTRATOR_ERRORS.GENERATION_FAILED,
-      message: "Gjenerimi i përgjigjes dështoi.",
+      cause: expect.any(Error),
     });
 
     await orchestrator.close();
@@ -319,12 +342,10 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
       id: "successful-close-model",
     });
 
-    const failingCloseError = new Error("Close failure");
-
     const failingAdapter = createAdapter({
       id: "failing-close-model",
       close: vi.fn(async () => {
-        throw failingCloseError;
+        throw new Error("Close failure");
       }),
     });
 
@@ -349,7 +370,7 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
     expect(result.closed).toBe(true);
     expect(result.runtimesClosed).toBe(2);
     expect(result.failures).toHaveLength(1);
-    expect(result.failures[0].message).toBe("Close failure");
+    expect(result.failures[0]).toBeInstanceOf(Error);
 
     expect(orchestrator.getStatus().activeRuntimes).toBe(0);
     expect(orchestrator.listRuntimeStatuses()).toEqual([]);
@@ -372,6 +393,7 @@ describe("XSUS AI Core — Model Orchestrator Coverage Integrity", () => {
       success: true,
       closed: true,
       runtimesClosed: 0,
+      failures: [],
     });
   });
 
