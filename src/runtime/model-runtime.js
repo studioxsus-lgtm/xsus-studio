@@ -81,8 +81,6 @@ function normalizeError(
 
 /**
  * Shndërron gabimin standard në Error për API-n e Runtime.
- *
- * createModelError() ruan detajet brenda objektit error.
  */
 function toRuntimeError(normalizedError) {
   const details = normalizedError.error;
@@ -252,10 +250,15 @@ export function createModelRuntime(options = {}) {
   }
 
   async function generate(input) {
+    /*
+     * Kontrolli ndalon vetëm gjenerimet e reja.
+     * Gjenerimet e regjistruara më parë vazhdojnë
+     * edhe nëse Runtime kalon në gjendjen CLOSED.
+     */
     if (state !== MODEL_RUNTIME_STATES.READY) {
       throw createRuntimeError(
         MODEL_ERROR_CODES.NOT_INITIALIZED,
-        "Model Runtime nuk është inicializuar. Thirr initialize() së pari.",
+        "Model Runtime nuk është inicializuar ose është mbyllur.",
       );
     }
 
@@ -301,12 +304,11 @@ export function createModelRuntime(options = {}) {
             throw toRuntimeError(lastError);
           }
 
-          if (state === MODEL_RUNTIME_STATES.CLOSED) {
-            throw createRuntimeError(
-              MODEL_ERROR_CODES.NOT_INITIALIZED,
-              "Runtime u mbyll gjatë gjenerimit.",
-            );
-          }
+          /*
+           * Nuk ndërpritet përgjigjja nëse Runtime është
+           * mbyllur ndërkohë. close() pret këtë Promise
+           * përpara se të mbyllë implementimin.
+           */
 
           /*
            * Gabimet gjatë validimit të përgjigjes
