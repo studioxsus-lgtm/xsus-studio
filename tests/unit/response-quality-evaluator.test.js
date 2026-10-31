@@ -6,17 +6,22 @@ import {
 } from "../../src/core/response-quality-evaluator.js";
 
 import {
-  RESPONSE_QUALITY_REPORT_STATUSES,
+  RESPONSE_QUALITY_REPORT_STATUSES as STATUSES,
 } from "../../src/core/response-quality-report.js";
-
-const STATUSES = RESPONSE_QUALITY_REPORT_STATUSES;
 
 function createQualityResult(overrides = {}) {
   return {
+    valid: true,
     score: 95,
-    passed: true,
-    checks: [],
-    ...(overrides ?? {}),
+    dimensions: {
+      completeness: 95,
+      clarity: 95,
+      language: 95,
+      sources: 95,
+    },
+    errors: [],
+    sourceCount: 0,
+    ...overrides,
   };
 }
 
@@ -42,10 +47,8 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
       expect(module.default).toBe(evaluateResponseQuality);
     });
 
-    it("returns the expected result structure", () => {
-      const result = evaluateResponseQuality([]);
-
-      expect(result).toEqual({
+    it("returns the expected result structure for an empty array", () => {
+      expect(evaluateResponseQuality([])).toEqual({
         version: "1.0.0",
         executed: 0,
         assessed: 0,
@@ -59,62 +62,43 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
   });
 
   describe("Input validation", () => {
-    it.each([
-      null,
-      undefined,
-      {},
-      "invalid",
-      123,
-      true,
-    ])("rejects invalid scenario collections: %s", (input) => {
-      expect(() => evaluateResponseQuality(input)).toThrow(
-        "Skenarët e vlerësimit duhet të jenë një array."
-      );
-    });
+    it.each([null, undefined, {}, "invalid", 123, true])(
+      "rejects invalid scenario collections",
+      (input) => {
+        expect(() => evaluateResponseQuality(input)).toThrow(
+          "Skenarët e vlerësimit duhet të jenë një array."
+        );
+      }
+    );
 
-    it.each([
-      null,
-      undefined,
-      [],
-      "invalid",
-      123,
-      new Date(),
-    ])("rejects non-plain scenario objects", (scenario) => {
-      expect(() =>
-        evaluateResponseQuality([scenario])
-      ).toThrow();
-    });
+    it.each([null, undefined, [], "invalid", 123, new Date()])(
+      "rejects non-plain scenarios",
+      (scenario) => {
+        expect(() =>
+          evaluateResponseQuality([scenario])
+        ).toThrow(TypeError);
+      }
+    );
 
-    it("rejects scenario objects with a custom prototype", () => {
-      const scenario = Object.create({
-        inherited: true,
-      });
-
+    it("rejects objects with custom prototypes", () => {
+      const scenario = Object.create({ inherited: true });
       scenario.id = "custom-prototype";
 
       expect(() =>
         evaluateResponseQuality([scenario])
-      ).toThrow();
+      ).toThrow(TypeError);
     });
 
-    it.each([
-      undefined,
-      null,
-      123,
-      true,
-      {},
-      [],
-      "",
-      "   ",
-    ])("rejects invalid scenario IDs", (id) => {
-      expect(() =>
-        evaluateResponseQuality([
-          createScenario(id),
-        ])
-      ).toThrow();
-    });
+    it.each([undefined, null, 123, true, {}, [], "", "   "])(
+      "rejects invalid IDs",
+      (id) => {
+        expect(() =>
+          evaluateResponseQuality([createScenario(id)])
+        ).toThrow(TypeError);
+      }
+    );
 
-    it("normalizes scenario IDs by trimming whitespace", () => {
+    it("normalizes IDs by trimming whitespace", () => {
       const result = evaluateResponseQuality([
         createScenario("  scenario-a  "),
       ]);
@@ -131,11 +115,31 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
       ).toThrow("ID e përsëritur e skenarit: scenario-a.");
     });
 
-    it("rejects invalid expected statuses", () => {
+    it("rejects an explicitly null expected status", () => {
+      expect(() =>
+        evaluateResponseQuality([
+          createScenario("null-status", {
+            expectedStatus: null,
+          }),
+        ])
+      ).toThrow(TypeError);
+    });
+
+    it("rejects an explicitly undefined expected status", () => {
+      expect(() =>
+        evaluateResponseQuality([
+          createScenario("undefined-status", {
+            expectedStatus: undefined,
+          }),
+        ])
+      ).toThrow(TypeError);
+    });
+
+    it("rejects unknown expected statuses", () => {
       expect(() =>
         evaluateResponseQuality([
           createScenario("invalid-status", {
-            expectedStatus: "unknown-status",
+            expectedStatus: "unknown",
           }),
         ])
       ).toThrow(
@@ -143,17 +147,7 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
       );
     });
 
-    it("rejects explicitly undefined expected status", () => {
-      expect(() =>
-        evaluateResponseQuality([
-          createScenario("undefined-status", {
-            expectedStatus: undefined,
-          }),
-        ])
-      ).toThrow();
-    });
-
-    it("accepts every declared report status", () => {
+    it("accepts all declared report statuses", () => {
       for (const status of Object.values(STATUSES)) {
         expect(() =>
           evaluateResponseQuality([
@@ -174,28 +168,14 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
 
       expect(result.executed).toBe(1);
       expect(result.assessed).toBe(0);
-      expect(result.passed).toBe(0);
-      expect(result.failed).toBe(0);
       expect(result.unassessed).toBe(1);
       expect(result.passRate).toBeNull();
 
       expect(result.results[0].passed).toBeNull();
       expect(result.results[0].expectedStatus).toBeNull();
-      expect(result.results[0].actualStatus).toBeTruthy();
+      expect(result.results[0].actualStatus).toBe(STATUSES.COMPLETE);
       expect(result.results[0].report).not.toBeNull();
       expect(result.results[0].error).toBeNull();
-    });
-
-    it("accepts an explicitly null expected status as unassessed", () => {
-      const result = evaluateResponseQuality([
-        createScenario("null-status", {
-          expectedStatus: null,
-        }),
-      ]);
-
-      expect(result.assessed).toBe(0);
-      expect(result.unassessed).toBe(1);
-      expect(result.results[0].passed).toBeNull();
     });
 
     it("marks a scenario as passed when statuses match", () => {
@@ -205,42 +185,43 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
         }),
       ]);
 
-      expect(result.results[0].expectedStatus).toBe(
-        STATUSES.COMPLETE
-      );
-
-      expect(result.results[0].actualStatus).toBe(
-        STATUSES.COMPLETE
-      );
-
       expect(result.results[0].passed).toBe(true);
+      expect(result.results[0].expectedStatus).toBe(STATUSES.COMPLETE);
+      expect(result.results[0].actualStatus).toBe(STATUSES.COMPLETE);
       expect(result.results[0].error).toBeNull();
     });
 
     it("marks a scenario as failed when statuses differ", () => {
-      const expectedStatus = Object.values(STATUSES).find(
-        (status) => status !== STATUSES.COMPLETE
-      );
-
       const result = evaluateResponseQuality([
         createScenario("mismatch", {
-          expectedStatus,
+          qualityResult: createQualityResult({
+            valid: false,
+            errors: ["Input error"],
+          }),
+          expectedStatus: STATUSES.COMPLETE,
         }),
       ]);
 
       expect(result.results[0].passed).toBe(false);
-      expect(result.results[0].expectedStatus).toBe(
-        expectedStatus
-      );
+      expect(result.results[0].expectedStatus).toBe(STATUSES.COMPLETE);
       expect(result.results[0].actualStatus).toBe(
-        STATUSES.COMPLETE
+        STATUSES.NEEDS_IMPROVEMENT
       );
     });
 
     it("passes source verification to the report factory", () => {
       const sourceVerification = {
-        verified: true,
-        sources: [],
+        results: [
+          {
+            status: "verified",
+            valid: true,
+            verified: true,
+            trustEstablished: true,
+            title: "Test source",
+            contentLength: 100,
+            errors: [],
+          },
+        ],
       };
 
       const result = evaluateResponseQuality([
@@ -249,21 +230,41 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
         }),
       ]);
 
-      expect(result.results[0].report).not.toBeNull();
-      expect(result.results[0].error).toBeNull();
+      expect(result.results[0].report.sources.available).toBe(true);
+      expect(result.results[0].report.sources.verifiedCount).toBe(1);
+      expect(result.results[0].report.sources.trustEstablishedCount).toBe(1);
     });
 
     it("normalizes missing source verification to null", () => {
       const result = evaluateResponseQuality([
-        createScenario("missing-source-verification"),
+        createScenario("missing-source"),
       ]);
 
-      expect(result.results[0].report).not.toBeNull();
+      expect(result.results[0].report.sources.available).toBe(false);
+      expect(result.results[0].report.sources.verificationResultCount).toBe(0);
+    });
+
+    it("preserves an insufficient-data report", () => {
+      const result = evaluateResponseQuality([
+        createScenario("insufficient", {
+          qualityResult: {
+            valid: true,
+            score: null,
+            dimensions: {},
+          },
+          expectedStatus: STATUSES.INSUFFICIENT_DATA,
+        }),
+      ]);
+
+      expect(result.results[0].actualStatus).toBe(
+        STATUSES.INSUFFICIENT_DATA
+      );
+      expect(result.results[0].passed).toBe(true);
     });
   });
 
   describe("Scenario failure isolation", () => {
-    it("records a failed report without stopping later scenarios", () => {
+    it("records a failed scenario without stopping later scenarios", () => {
       const result = evaluateResponseQuality([
         createScenario("valid-before"),
         {
@@ -276,28 +277,23 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
 
       expect(result.executed).toBe(3);
       expect(result.results).toHaveLength(3);
-
       expect(result.results[0].error).toBeNull();
 
       expect(result.results[1].passed).toBe(false);
       expect(result.results[1].actualStatus).toBeNull();
       expect(result.results[1].report).toBeNull();
-      expect(result.results[1].error).toBeTruthy();
+      expect(result.results[1].error).toBe(
+        "Rezultati i cilësisë duhet të jetë objekt."
+      );
 
       expect(result.results[2].error).toBeNull();
     });
 
     it("continues after multiple scenario failures", () => {
       const result = evaluateResponseQuality([
-        {
-          id: "failure-a",
-          qualityResult: null,
-        },
+        { id: "failure-a", qualityResult: null },
         createScenario("success-a"),
-        {
-          id: "failure-b",
-          qualityResult: undefined,
-        },
+        { id: "failure-b", qualityResult: undefined },
         createScenario("success-b"),
       ]);
 
@@ -308,31 +304,26 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
       expect(result.results[3].error).toBeNull();
     });
 
-    it("uses the original error message when the failure is an Error", () => {
-      const result = evaluateResponseQuality([
+    it("uses the fallback message for non-Error failures", () => {
+      const throwingQualityResult = new Proxy(
+        {},
         {
-          id: "invalid-report",
-          qualityResult: null,
-          expectedStatus: STATUSES.COMPLETE,
-        },
-      ]);
-
-      expect(result.results[0].error).toBeTruthy();
-      expect(result.results[0].passed).toBe(false);
-      expect(result.results[0].expectedStatus).toBe(
-        STATUSES.COMPLETE
+          get() {
+            throw "unexpected failure";
+          },
+        }
       );
-    });
 
-    it("uses a fallback message for non-Error failures when thrown", () => {
       const result = evaluateResponseQuality([
         {
-          id: "invalid-quality-value",
-          qualityResult: null,
+          id: "non-error-failure",
+          qualityResult: throwingQualityResult,
         },
       ]);
 
-      expect(result.results[0].error).toBeTruthy();
+      expect(result.results[0].error).toBe(
+        "Ndodhi një gabim i panjohur gjatë vlerësimit."
+      );
       expect(result.results[0].report).toBeNull();
     });
   });
@@ -346,7 +337,10 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
         createScenario("unassessed"),
         {
           id: "failed",
-          qualityResult: null,
+          qualityResult: createQualityResult({
+            valid: false,
+            errors: ["Invalid input"],
+          }),
           expectedStatus: STATUSES.COMPLETE,
         },
       ]);
@@ -359,7 +353,7 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
       expect(result.passRate).toBe(50);
     });
 
-    it("returns a 100 percent pass rate when all assessed scenarios pass", () => {
+    it("returns 100 percent when all assessed scenarios pass", () => {
       const result = evaluateResponseQuality([
         createScenario("pass-a", {
           expectedStatus: STATUSES.COMPLETE,
@@ -372,11 +366,14 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
       expect(result.passRate).toBe(100);
     });
 
-    it("returns a zero percent pass rate when all assessed scenarios fail", () => {
+    it("returns zero percent when all assessed scenarios fail", () => {
       const result = evaluateResponseQuality([
         {
           id: "fail-a",
-          qualityResult: null,
+          qualityResult: createQualityResult({
+            valid: false,
+            errors: ["Invalid"],
+          }),
           expectedStatus: STATUSES.COMPLETE,
         },
       ]);
@@ -387,7 +384,7 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
       expect(result.passRate).toBe(0);
     });
 
-    it("does not include unassessed scenarios in pass rate", () => {
+    it("excludes unassessed scenarios from pass rate", () => {
       const result = evaluateResponseQuality([
         createScenario("pass", {
           expectedStatus: STATUSES.COMPLETE,
@@ -408,15 +405,6 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
       ]);
 
       expect(result.assessed).toBe(0);
-      expect(result.passRate).toBeNull();
-    });
-
-    it("handles an empty scenario array", () => {
-      const result = evaluateResponseQuality([]);
-
-      expect(result.executed).toBe(0);
-      expect(result.assessed).toBe(0);
-      expect(result.unassessed).toBe(0);
       expect(result.passRate).toBeNull();
     });
   });
@@ -445,21 +433,21 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
       const report = result.results[0].report;
 
       expect(Object.isFrozen(report)).toBe(true);
-
-      for (const value of Object.values(report)) {
-        if (value && typeof value === "object") {
-          expect(Object.isFrozen(value)).toBe(true);
-        }
-      }
+      expect(Object.isFrozen(report.dimensions)).toBe(true);
+      expect(Object.isFrozen(report.sources)).toBe(true);
+      expect(Object.isFrozen(report.errors)).toBe(true);
+      expect(Object.isFrozen(report.warnings)).toBe(true);
+      expect(Object.isFrozen(report.recommendations)).toBe(true);
     });
 
-    it("does not freeze the original scenario object", () => {
+    it("does not freeze the original scenario or quality result", () => {
       const scenario = createScenario("original");
 
       evaluateResponseQuality([scenario]);
 
       expect(Object.isFrozen(scenario)).toBe(false);
       expect(Object.isFrozen(scenario.qualityResult)).toBe(false);
+      expect(Object.isFrozen(scenario.qualityResult.dimensions)).toBe(false);
     });
 
     it("does not modify the original scenarios array", () => {
@@ -468,11 +456,11 @@ describe("XSUS AI Core — Response Quality Evaluator", () => {
         createScenario("second"),
       ];
 
-      const originalSnapshot = structuredClone(scenarios);
+      const snapshot = structuredClone(scenarios);
 
       evaluateResponseQuality(scenarios);
 
-      expect(scenarios).toEqual(originalSnapshot);
+      expect(scenarios).toEqual(snapshot);
       expect(Object.isFrozen(scenarios)).toBe(false);
     });
 
