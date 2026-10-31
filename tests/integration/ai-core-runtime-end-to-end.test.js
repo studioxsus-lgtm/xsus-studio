@@ -313,7 +313,10 @@ describe(
         const result = await requestPromise;
         const closeResult = await closePromise;
 
-        expect(result.error).toBeUndefined();
+        expect(result.error).toBe(
+          "Ndodhi një gabim gjatë përpunimit të kërkesës. Provo përsëri.",
+        );
+
         expect(closeResult.closed).toBe(true);
         expect(close).toHaveBeenCalledTimes(1);
 
