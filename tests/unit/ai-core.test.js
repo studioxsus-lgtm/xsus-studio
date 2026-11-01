@@ -1,5 +1,25 @@
-import { describe, expect, test } from "vitest";
-import { processAIRequest } from "../../src/core/ai-core.js";
+import { afterEach, describe, expect, test } from "vitest";
+
+import {
+  processAIRequest,
+  configureAICoreMemoryPersistence,
+  configureAICoreModelOrchestrator,
+} from "../../src/core/ai-core.js";
+
+import {
+  createMemoryRetrievalEngine,
+} from "../../src/core/memory-retrieval-engine.js";
+
+import {
+  createMemorySession,
+  addMemoryMessage,
+  deleteMemorySession,
+} from "../../src/core/memory-engine.js";
+
+afterEach(() => {
+  configureAICoreMemoryPersistence(null);
+  configureAICoreModelOrchestrator(null);
+});
 
 describe("XSUS AI Core", () => {
   test("kthen gabim kur pyetja është bosh", async () => {
@@ -253,5 +273,150 @@ describe("XSUS AI Core", () => {
     expect(result.version).toBe("1.2.0");
     expect(result.metadata.version).toBe("1.2.0");
     expect(result.metadata.engine).toBe("xsus-ai-core");
+  });
+
+  // --------------------------------------------------
+  // PHASE 12.4.1 — INTELLIGENT MEMORY RETRIEVAL
+  // --------------------------------------------------
+
+  test("metadata raporton gjendjen e Memory Retrieval", async () => {
+    const conversationId =
+      "test-retrieval-metadata-12-4-1";
+
+    const result = await processAIRequest({
+      query: "Çfarë është programimi?",
+      language: "sq",
+      conversationId
+    });
+
+    expect(result.answer).toBeTruthy();
+
+    expect(result.metadata.memoryRetrieval).toEqual(
+      expect.objectContaining({
+        enabled: true,
+        retrievedCount: expect.any(Number)
+      })
+    );
+
+    expect(result.metadata.memoryRetrieval.retrievedCount)
+      .toBeGreaterThanOrEqual(0);
+  });
+
+  test("Memory Retrieval nuk aktivizohet pa conversationId", async () => {
+    const result = await processAIRequest({
+      query: "What is programming?",
+      language: "en"
+    });
+
+    expect(result.answer).toBeTruthy();
+
+    expect(result.metadata.memoryRetrieval).toEqual({
+      enabled: false,
+      retrievedCount: 0
+    });
+  });
+
+  test("kërkimi i memories kufizohet në sesionin aktual", async () => {
+    const firstSession =
+      "test-retrieval-isolation-a";
+
+    const secondSession =
+      "test-retrieval-isolation-b";
+
+    createMemorySession({
+      sessionId: firstSession,
+      language: "en"
+    });
+
+    createMemorySession({
+      sessionId: secondSession,
+      language: "en"
+    });
+
+    addMemoryMessage({
+      sessionId: firstSession,
+      role: "user",
+      content: "XSUS retrieval isolation unique quantum architecture"
+    });
+
+    addMemoryMessage({
+      sessionId: secondSession,
+      role: "user",
+      content: "XSUS retrieval isolation unique quantum architecture"
+    });
+
+    const engine = createMemoryRetrievalEngine();
+
+    const results = engine.searchMemories(
+      "quantum architecture",
+      {
+        sessionId: firstSession,
+        limit: 10
+      }
+    );
+
+    expect(results.length).toBeGreaterThan(0);
+
+    expect(
+      results.every(result => result.sessionId === firstSession)
+    ).toBe(true);
+
+    deleteMemorySession(firstSession);
+    deleteMemorySession(secondSession);
+  });
+
+  test("kërkimi i memories nuk e ndryshon numrin e mesazheve", async () => {
+    const conversationId =
+      "test-retrieval-message-integrity";
+
+    createMemorySession({
+      sessionId: conversationId,
+      language: "en"
+    });
+
+    addMemoryMessage({
+      sessionId: conversationId,
+      role: "user",
+      content: "XSUS memory integrity unique architecture"
+    });
+
+    const engine = createMemoryRetrievalEngine();
+
+    const before = engine.searchMemories(
+      "memory integrity architecture",
+      {
+        sessionId: conversationId,
+        limit: 10
+      }
+    );
+
+    const after = engine.searchMemories(
+      "memory integrity architecture",
+      {
+        sessionId: conversationId,
+        limit: 10
+      }
+    );
+
+    expect(after).toHaveLength(before.length);
+
+    expect(
+      after.map(item => item.content)
+    ).toEqual(
+      before.map(item => item.content)
+    );
+
+    deleteMemorySession(conversationId);
+  });
+
+  test("Memory Retrieval nuk ndryshon versionin publik të Core", async () => {
+    const result = await processAIRequest({
+      query: "What is artificial intelligence?",
+      language: "en",
+      conversationId: "test-retrieval-version"
+    });
+
+    expect(result.version).toBe("1.2.0");
+    expect(result.metadata.version).toBe("1.2.0");
   });
 });
