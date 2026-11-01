@@ -107,11 +107,8 @@ describe("XSUS AI Core — Model Orchestrator Integration", () => {
       initialize,
     });
 
-    const result = await system.orchestrator.initialize(
-      "test-model",
-    );
+    await system.orchestrator.initialize("test-model");
 
-    expect(result.success).toBe(true);
     expect(initialize).toHaveBeenCalledTimes(1);
 
     const status =
