@@ -16,6 +16,7 @@
  * - Pastrim dhe statistika të memories.
  * - Gjurmim i aktivitetit të fundit.
  * - Pastrim i sesioneve joaktive.
+ * - Listim i sesioneve aktive.
  *
  * Shënim:
  * Ky modul ruan të dhënat aktive në RAM.
@@ -284,6 +285,66 @@ export function createMemorySession(input) {
  */
 export function hasMemorySession(sessionId) {
   return getSessionOrNull(sessionId) !== null;
+}
+
+/**
+ * Kthen kopje të pavarura të të gjitha sesioneve aktive.
+ *
+ * - Nuk ekspozon Map-in e brendshëm.
+ * - Nuk ndryshon lastAccessedAt.
+ * - Nuk ndryshon updatedAt.
+ * - Përfshin historikun dhe metadata-n.
+ * - Ruhet izolimi i sesioneve.
+ *
+ * Opsionet:
+ * - limit: numri maksimal i sesioneve.
+ * - includeMessages: përfshin ose përjashton mesazhet.
+ */
+export function listMemorySessions(options = {}) {
+  if (
+    !options ||
+    typeof options !== "object" ||
+    Array.isArray(options)
+  ) {
+    throw new TypeError("Opsionet e listimit nuk janë të vlefshme.");
+  }
+
+  const {
+    limit,
+    includeMessages = true,
+  } = options;
+
+  if (
+    limit !== undefined &&
+    (!Number.isInteger(limit) || limit < 0)
+  ) {
+    throw new RangeError(
+      "limit duhet të jetë numër i plotë jo negativ."
+    );
+  }
+
+  if (typeof includeMessages !== "boolean") {
+    throw new TypeError(
+      "includeMessages duhet të jetë boolean."
+    );
+  }
+
+  const sessionsList = Array.from(sessions.values());
+
+  const selectedSessions =
+    limit === undefined
+      ? sessionsList
+      : sessionsList.slice(0, limit);
+
+  return selectedSessions.map((session) => {
+    const copy = cloneSession(session);
+
+    if (!includeMessages) {
+      copy.messages = [];
+    }
+
+    return copy;
+  });
 }
 
 /**
