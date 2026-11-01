@@ -1,3 +1,4 @@
+
 /**
  * XSUS AI Core — Request Orchestrator
  * Version: 1.2.0
@@ -1046,6 +1047,12 @@ function buildKnowledgeContext(results) {
     .join("\n\n");
 }
 
+/**
+ * XSUS AI Core — Model Request Bridge
+ *
+ * Përcjell kërkesën e normalizuar te Model Orchestrator.
+ * Ruhet konteksti i memories dhe i njohurive.
+ */
 async function generateWithModel({
   contextualQuery,
   language,
@@ -1102,9 +1109,23 @@ async function generateWithModel({
     );
   }
 
+  // Konteksti i dërguar nga klienti.
+  const callerContext = isPlainObject(input.context)
+    ? input.context
+    : {};
+
+  // Metadata e dërguara nga klienti.
+  const callerMetadata = isPlainObject(input.metadata)
+    ? input.metadata
+    : {};
+
+  // modelParameters është fusha primare.
+  // parameters mbështetet si alias për kompatibilitet.
   const modelParameters = isPlainObject(input.modelParameters)
     ? input.modelParameters
-    : {};
+    : isPlainObject(input.parameters)
+      ? input.parameters
+      : {};
 
   const modelRequest = createModelRequest({
     requestId,
@@ -1115,6 +1136,10 @@ async function generateWithModel({
     modelId: input.modelId ?? null,
 
     context: {
+      ...callerContext,
+
+      // Fushat e brendshme të Core janë autoritative.
+      conversationId: conversationId || null,
       messages: history,
       knowledgeResults: Array.isArray(results)
         ? results.length
@@ -1122,6 +1147,10 @@ async function generateWithModel({
     },
 
     metadata: {
+      ...callerMetadata,
+
+      // Metadata e besuar e Core nuk mbishkruhet
+      // nga metadata e klientit.
       engine: "xsus-ai-core",
       coreVersion: AI_CORE_VERSION,
       knowledgeResults: Array.isArray(results)
