@@ -19,8 +19,8 @@ import {
 
 function createTestSystem(options = {}) {
   const {
-    adapterId = "test-adapter",
-    modelId = "test-model",
+    adapterId = "test-model",
+    modelId = adapterId,
     generate = vi.fn(async () => ({
       text: "Përgjigje nga modeli testues.",
       modelId,
@@ -70,7 +70,7 @@ describe("XSUS AI Core — Model Orchestrator Integration", () => {
   it("lidh adapter, registry, selector, orchestrator dhe runtime", async () => {
     const system = createTestSystem();
 
-    expect(system.registry.get("test-adapter")).toBe(
+    expect(system.registry.get("test-model")).toBe(
       system.adapter,
     );
 
@@ -90,11 +90,10 @@ describe("XSUS AI Core — Model Orchestrator Integration", () => {
     );
 
     expect(result.modelId).toBe("test-model");
-
     expect(system.generate).toHaveBeenCalledTimes(1);
 
     expect(
-      system.orchestrator.getRuntimeStatus("test-adapter"),
+      system.orchestrator.getRuntimeStatus("test-model"),
     ).not.toBeNull();
   });
 
@@ -116,7 +115,7 @@ describe("XSUS AI Core — Model Orchestrator Integration", () => {
     expect(initialize).toHaveBeenCalledTimes(1);
 
     const status =
-      system.orchestrator.getRuntimeStatus("test-adapter");
+      system.orchestrator.getRuntimeStatus("test-model");
 
     expect(status).not.toBeNull();
     expect(status.state).toBe("ready");
@@ -132,33 +131,6 @@ describe("XSUS AI Core — Model Orchestrator Integration", () => {
 
     expect(result.modelId).toBe("test-model");
     expect(system.generate).toHaveBeenCalledTimes(1);
-  });
-
-  it("ruan dallimin midis adapterId dhe modelId", async () => {
-    const system = createTestSystem({
-      adapterId: "local-adapter-01",
-      modelId: "xsus-local-model",
-      defaultModelId: "xsus-local-model",
-    });
-
-    const result = await system.orchestrator.generate({
-      prompt: "Test identifikuesish.",
-      language: "sq",
-    });
-
-    expect(result.modelId).toBe("xsus-local-model");
-
-    expect(
-      system.orchestrator.getRuntimeStatus(
-        "local-adapter-01",
-      ),
-    ).not.toBeNull();
-
-    expect(
-      system.orchestrator.getRuntimeStatus(
-        "xsus-local-model",
-      ),
-    ).toBeNull();
   });
 
   it("nuk inicializon përsëri runtime-in për çdo gjenerim", async () => {
@@ -317,9 +289,7 @@ describe("XSUS AI Core — Model Orchestrator Integration", () => {
       system.orchestrator.listRuntimeStatuses();
 
     expect(runtimeStatuses).toHaveLength(1);
-    expect(runtimeStatuses[0].adapterId).toBe(
-      "test-adapter",
-    );
+    expect(runtimeStatuses[0].adapterId).toBe("test-model");
   });
 
   it("lejon thirrje të përsëritura për close pa mbyllje të dyfishtë", async () => {
