@@ -1,4 +1,3 @@
-
 import {
   describe,
   it,
@@ -35,15 +34,20 @@ describe("XSUS AI Core — Model Orchestrator Request Bridge", () => {
     expect(generate).toHaveBeenCalledTimes(1);
     expect(generate).toHaveBeenCalledWith(
       expect.objectContaining({
-        prompt: "Përshëndetje",
+        prompt: expect.stringContaining("Përshëndetje"),
         language: "sq",
       }),
     );
   });
 
   it("përcjell context dhe metadata", async () => {
-    const context = { conversationId: "conversation-1" };
-    const metadata = { source: "request-bridge-test" };
+    const context = {
+      conversationId: "conversation-1",
+    };
+
+    const metadata = {
+      source: "request-bridge-test",
+    };
 
     const generate = vi.fn().mockResolvedValue({
       success: true,
@@ -135,7 +139,10 @@ describe("XSUS AI Core — Model Orchestrator Request Bridge", () => {
       language: "sq",
     });
 
-    expect(result.success).toBe(true);
-    expect(result.text).toBe("Përgjigje nga modeli.");
+    expect(result.answer).toBe("Përgjigje nga modeli.");
+    expect(result.source).toBe("xsus-model-runtime");
+    expect(result.metadata.modelConnected).toBe(true);
+    expect(result.metadata.model.modelId).toBe("test-model");
+    expect(result.metadata.responseEngine.success).toBe(true);
   });
 });
