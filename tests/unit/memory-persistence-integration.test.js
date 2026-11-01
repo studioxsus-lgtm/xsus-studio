@@ -39,7 +39,10 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
     };
   }
 
-  function createSessionWithMessage(sessionId, content = "Përshëndetje XSUS AI") {
+  function createSessionWithMessage(
+    sessionId,
+    content = "Përshëndetje XSUS AI",
+  ) {
     createMemorySession(sessionId);
 
     addMemoryMessage({
@@ -50,7 +53,10 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
     });
   }
 
-  function createPersistence(storage, prefix = "xsus:integration:") {
+  function createPersistence(
+    storage,
+    prefix = "xsus:integration:",
+  ) {
     return createMemoryPersistence({ storage, prefix });
   }
 
@@ -76,12 +82,12 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
     createSessionWithMessage(sessionId);
 
     const persistence = createPersistence(storage);
-
     const result = await persistence.saveSession(sessionId);
 
     expect(result.success).toBe(true);
     expect(storage.set).toHaveBeenCalledOnce();
     expect(storage.records.size).toBe(1);
+
     expect(storage.set).toHaveBeenCalledWith(
       "xsus:integration:custom-storage-session",
       expect.objectContaining({
@@ -116,7 +122,7 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
     ).toThrow(TypeError);
   });
 
-  test("refuzon prefix bosh përmes persistent-memory", () => {
+  test("refuzon prefix bosh", () => {
     expect(() =>
       createMemoryPersistence({ prefix: "   " }),
     ).toThrow(TypeError);
@@ -125,7 +131,7 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
   test("refuzon storage null ose jo objekt", () => {
     expect(() =>
       createMemoryPersistence({ storage: null }),
-    ).not.toThrow();
+    ).toThrow(TypeError);
 
     expect(() =>
       createMemoryPersistence({ storage: 123 }),
@@ -172,12 +178,13 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
 
     expect(restoredSession).not.toBeNull();
     expect(restoredSession.messages).toHaveLength(1);
-    expect(restoredSession.messages[0].content)
-      .toBe("Përshëndetje XSUS AI");
+    expect(restoredSession.messages[0].content).toBe(
+      "Përshëndetje XSUS AI",
+    );
     expect(restoredSession.messages[0].metadata.language).toBe("sq");
   });
 
-  test("rikthen rezultatin SESSION_NOT_FOUND kur backup-i mungon", async () => {
+  test("rikthen SESSION_NOT_FOUND kur backup-i mungon", async () => {
     const storage = createTestStorage();
     const persistence = createPersistence(storage);
 
@@ -237,10 +244,9 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
 
   test("izolon sesionet me prefix të ndryshëm", async () => {
     const storage = createTestStorage();
-    const firstId = "isolated-session";
-    const secondId = "isolated-session";
+    const sessionId = "isolated-session";
 
-    createSessionWithMessage(firstId);
+    createSessionWithMessage(sessionId);
 
     const first = createMemoryPersistence({
       storage,
@@ -252,16 +258,18 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
       prefix: "xsus:second:",
     });
 
-    await first.saveSession(firstId);
-
-    expect(await first.hasSavedSession(firstId)).toBe(true);
-    expect(await second.hasSavedSession(secondId)).toBe(false);
-
-    await second.saveSession(secondId);
+    await first.saveSession(sessionId);
+    await second.saveSession(sessionId);
 
     expect(storage.records.size).toBe(2);
-    expect(await first.hasSavedSession(firstId)).toBe(true);
-    expect(await second.hasSavedSession(secondId)).toBe(true);
+
+    expect(await first.hasSavedSession(sessionId)).toBe(true);
+    expect(await second.hasSavedSession(sessionId)).toBe(true);
+
+    await first.deleteSavedSession(sessionId);
+
+    expect(await first.hasSavedSession(sessionId)).toBe(false);
+    expect(await second.hasSavedSession(sessionId)).toBe(true);
   });
 
   test("përdor prefix-in e personalizuar në të gjitha operacionet", async () => {
@@ -276,22 +284,34 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
     });
 
     await persistence.saveSession(sessionId);
-    await persistence.hasSavedSession(sessionId);
-    await persistence.restoreSession(sessionId);
-    await persistence.deleteSavedSession(sessionId);
 
     expect(storage.set).toHaveBeenCalledWith(
       "custom:prefix:prefix-session",
       expect.any(Object),
     );
 
+    expect(await persistence.hasSavedSession(sessionId)).toBe(true);
+
+    // Pastrojmë RAM-in para se të rikthejmë të njëjtin sesion.
+    clearAllMemory();
+
+    const restored = await persistence.restoreSession(sessionId);
+
+    expect(restored.success).toBe(true);
+    expect(restored.restored).toBe(true);
+    expect(getMemorySession(sessionId)).not.toBeNull();
+
     expect(storage.get).toHaveBeenCalledWith(
       "custom:prefix:prefix-session",
     );
 
+    await persistence.deleteSavedSession(sessionId);
+
     expect(storage.delete).toHaveBeenCalledWith(
       "custom:prefix:prefix-session",
     );
+
+    expect(await persistence.hasSavedSession(sessionId)).toBe(false);
   });
 
   test("izolon dështimin e storage gjatë ruajtjes", async () => {
@@ -300,7 +320,9 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
 
     createSessionWithMessage(sessionId);
 
-    storage.set.mockRejectedValueOnce(new Error("storage unavailable"));
+    storage.set.mockRejectedValueOnce(
+      new Error("storage unavailable"),
+    );
 
     const persistence = createPersistence(storage);
 
@@ -341,14 +363,15 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
 
   test("izolon dështimin e storage gjatë fshirjes", async () => {
     const storage = createTestStorage();
-    const sessionId = "delete-failure-session";
 
-    storage.delete.mockRejectedValueOnce(new Error("delete failure"));
+    storage.delete.mockRejectedValueOnce(
+      new Error("delete failure"),
+    );
 
     const persistence = createPersistence(storage);
 
     await expect(
-      persistence.deleteSavedSession(sessionId),
+      persistence.deleteSavedSession("delete-failure-session"),
     ).rejects.toMatchObject({
       code: "SESSION_DELETE_FAILED",
     });
@@ -360,7 +383,9 @@ describe("XSUS AI Core — Memory Persistence Integration", () => {
 
     createSessionWithMessage(sessionId);
 
-    storage.set.mockRejectedValueOnce(new Error("temporary failure"));
+    storage.set.mockRejectedValueOnce(
+      new Error("temporary failure"),
+    );
 
     const persistence = createPersistence(storage);
 
