@@ -456,9 +456,8 @@ function evaluateRetrievedMemories(memories) {
 /*
  * 12.4.7 — Memory Conflict Resolution
  *
- * Nuk shpallet një kujtim si i vërtetë vetëm sepse është më i ri.
- * Përmbajtjet e ndryshme ruhen si kontekst dhe udhëzohen të
- * mos mbivendosen mbi kërkesën aktuale.
+ * Ky kontroll identifikon konflikte të mundshme sipas rolit
+ * dhe përmbajtjes. Nuk pretendon zgjidhje semantike automatike.
  */
 function detectMemoryConflicts(memories) {
   const conflicts = [];
@@ -873,16 +872,33 @@ function buildMetadata({
     conversationId: conversationId || null,
     memoryEnabled: Boolean(memoryEnabled),
 
+    /*
+     * Struktura e memoryRetrieval ruhet kompatibile
+     * me kontratën ekzistuese dhe testet.
+     */
     memoryRetrieval: {
       enabled: Boolean(memoryEnabled && conversationId),
+      retrievedCount:
+        Number.isFinite(retrievedMemory.count) &&
+        retrievedMemory.count >= 0
+          ? retrievedMemory.count
+          : 0
+    },
+
+    /*
+     * Diagnostikimi shtesë mbahet veçmas,
+     * pa ndryshuar strukturën e memoryRetrieval.
+     */
+    memoryDiagnostics: {
       success: Boolean(retrievedMemory.success),
       recovered: Boolean(retrievedMemory.recovered),
-      retrievedCount: Number.isFinite(retrievedMemory.count)
-        ? retrievedMemory.count
-        : 0,
-      conflictCount: Number.isFinite(retrievedMemory.conflictCount)
-        ? retrievedMemory.conflictCount
-        : 0
+      conflictCount:
+        Number.isFinite(retrievedMemory.conflictCount)
+          ? retrievedMemory.conflictCount
+          : 0,
+      error: typeof retrievedMemory.error === "string"
+        ? retrievedMemory.error
+        : null
     },
 
     context: buildContextMetadata({
@@ -922,14 +938,25 @@ function buildErrorMetadata({
     sources: Array.isArray(sources) ? sources : [],
     conversationId: conversationId || null,
     memoryEnabled: Boolean(memoryEnabled),
+
     memoryRetrieval: {
       enabled: Boolean(memoryEnabled && conversationId),
+      retrievedCount:
+        Number.isFinite(retrievedMemory.count) &&
+        retrievedMemory.count >= 0
+          ? retrievedMemory.count
+          : 0
+    },
+
+    memoryDiagnostics: {
       success: Boolean(retrievedMemory.success),
       recovered: Boolean(retrievedMemory.recovered),
-      retrievedCount: Number.isFinite(retrievedMemory.count)
-        ? retrievedMemory.count
-        : 0
+      conflictCount:
+        Number.isFinite(retrievedMemory.conflictCount)
+          ? retrievedMemory.conflictCount
+          : 0
     },
+
     context: buildContextMetadata({
       conversationId,
       history
@@ -1162,6 +1189,7 @@ export async function processAIRequest(input = {}) {
   let conversationId = "";
   let history = [];
   let memoryEnabled = false;
+
   let retrievedMemory = {
     memories: [],
     count: 0,
