@@ -12,6 +12,7 @@
 import {
   processAIRequest,
   AI_CORE_VERSION,
+  configureAICoreModelOrchestrator,
 } from "./core/ai-core.js";
 
 import {
@@ -234,6 +235,7 @@ export const XSUSAI = Object.freeze({
   },
 
   processAIRequest,
+  configureAICoreModelOrchestrator,
 
   // ----------------------------------------------------------
   // CORE VERSIONS
@@ -463,6 +465,7 @@ export const XSUSAI = Object.freeze({
 // AI Core and contracts
 export {
   processAIRequest,
+  configureAICoreModelOrchestrator,
   AI_CORE_VERSION,
   XSUS_CORE_VERSION,
   SUPPORTED_LANGUAGES,
