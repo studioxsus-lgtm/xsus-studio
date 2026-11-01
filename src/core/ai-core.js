@@ -416,12 +416,6 @@ function saveMemoryMessage(sessionId, role, content) {
   }
 }
 
-/*
- * 12.4.3 — Memory Relevance & Confidence Evaluation
- *
- * Pikët e retrieval janë sinjale renditjeje, jo probabilitete
- * statistikore. Nuk interpretohen si siguri faktike.
- */
 function evaluateRetrievedMemories(memories) {
   if (!Array.isArray(memories)) {
     return [];
@@ -453,12 +447,6 @@ function evaluateRetrievedMemories(memories) {
     .slice(0, MAX_MEMORY_ITEMS);
 }
 
-/*
- * 12.4.7 — Memory Conflict Resolution
- *
- * Ky kontroll identifikon konflikte të mundshme sipas rolit
- * dhe përmbajtjes. Nuk pretendon zgjidhje semantike automatike.
- */
 function detectMemoryConflicts(memories) {
   const conflicts = [];
 
@@ -484,9 +472,6 @@ function detectMemoryConflicts(memories) {
   return conflicts;
 }
 
-/*
- * 12.4.4 — Context Prioritization Engine
- */
 function prioritizeContext({
   currentQuery,
   history,
@@ -513,9 +498,6 @@ function prioritizeContext({
   };
 }
 
-/*
- * 12.4.8 — Response Context Validation
- */
 function validateResponseContext(context) {
   if (!isPlainObject(context)) {
     return {
@@ -554,11 +536,6 @@ function validateResponseContext(context) {
   };
 }
 
-/*
- * 12.4.2, 12.4.5, 12.4.6
- * Ndërton kontekstin e modelit me vazhdimësi dhe
- * personalizim të kufizuar te kujtimet relevante.
- */
 function buildMemoryAwareContext(context) {
   const validation = validateResponseContext(context);
 
@@ -611,9 +588,6 @@ function buildMemoryAwareContext(context) {
   };
 }
 
-/*
- * 12.4.9 — Retrieval Failure & Recovery
- */
 function retrieveConversationMemory(
   query,
   conversationId,
@@ -667,10 +641,6 @@ function retrieveConversationMemory(
       error: null
     };
   } catch {
-    /*
-     * Fallback konservativ: nuk kërkojmë në sesione të tjera
-     * dhe nuk përdorim memorie globale.
-     */
     return {
       ...emptyResult,
       recovered: true,
@@ -822,6 +792,41 @@ function buildContextMetadata({
   };
 }
 
+/*
+ * Kontrata publike e memoryRetrieval:
+ * vetëm enabled dhe retrievedCount.
+ *
+ * Diagnostikimi mbahet në memoryDiagnostics.
+ */
+function buildMemoryRetrievalMetadata(
+  memoryEnabled,
+  conversationId,
+  retrievedMemory = {}
+) {
+  return {
+    enabled: Boolean(memoryEnabled && conversationId),
+    retrievedCount:
+      Number.isFinite(retrievedMemory.count) &&
+      retrievedMemory.count >= 0
+        ? retrievedMemory.count
+        : 0
+  };
+}
+
+function buildMemoryDiagnostics(retrievedMemory = {}) {
+  return {
+    success: Boolean(retrievedMemory.success),
+    recovered: Boolean(retrievedMemory.recovered),
+    conflictCount:
+      Number.isFinite(retrievedMemory.conflictCount)
+        ? retrievedMemory.conflictCount
+        : 0,
+    error: typeof retrievedMemory.error === "string"
+      ? retrievedMemory.error
+      : null
+  };
+}
+
 function buildMetadata({
   language,
   results = [],
@@ -872,34 +877,15 @@ function buildMetadata({
     conversationId: conversationId || null,
     memoryEnabled: Boolean(memoryEnabled),
 
-    /*
-     * Struktura e memoryRetrieval ruhet kompatibile
-     * me kontratën ekzistuese dhe testet.
-     */
-    memoryRetrieval: {
-      enabled: Boolean(memoryEnabled && conversationId),
-      retrievedCount:
-        Number.isFinite(retrievedMemory.count) &&
-        retrievedMemory.count >= 0
-          ? retrievedMemory.count
-          : 0
-    },
+    memoryRetrieval: buildMemoryRetrievalMetadata(
+      memoryEnabled,
+      conversationId,
+      retrievedMemory
+    ),
 
-    /*
-     * Diagnostikimi shtesë mbahet veçmas,
-     * pa ndryshuar strukturën e memoryRetrieval.
-     */
-    memoryDiagnostics: {
-      success: Boolean(retrievedMemory.success),
-      recovered: Boolean(retrievedMemory.recovered),
-      conflictCount:
-        Number.isFinite(retrievedMemory.conflictCount)
-          ? retrievedMemory.conflictCount
-          : 0,
-      error: typeof retrievedMemory.error === "string"
-        ? retrievedMemory.error
-        : null
-    },
+    memoryDiagnostics: buildMemoryDiagnostics(
+      retrievedMemory
+    ),
 
     context: buildContextMetadata({
       conversationId,
@@ -939,23 +925,15 @@ function buildErrorMetadata({
     conversationId: conversationId || null,
     memoryEnabled: Boolean(memoryEnabled),
 
-    memoryRetrieval: {
-      enabled: Boolean(memoryEnabled && conversationId),
-      retrievedCount:
-        Number.isFinite(retrievedMemory.count) &&
-        retrievedMemory.count >= 0
-          ? retrievedMemory.count
-          : 0
-    },
+    memoryRetrieval: buildMemoryRetrievalMetadata(
+      memoryEnabled,
+      conversationId,
+      retrievedMemory
+    ),
 
-    memoryDiagnostics: {
-      success: Boolean(retrievedMemory.success),
-      recovered: Boolean(retrievedMemory.recovered),
-      conflictCount:
-        Number.isFinite(retrievedMemory.conflictCount)
-          ? retrievedMemory.conflictCount
-          : 0
-    },
+    memoryDiagnostics: buildMemoryDiagnostics(
+      retrievedMemory
+    ),
 
     context: buildContextMetadata({
       conversationId,
@@ -998,6 +976,19 @@ function createErrorResponse({
     metadata: {
       ...response.metadata,
       ...metadata,
+      memoryRetrieval: metadata.memoryRetrieval
+        ? {
+            enabled: Boolean(metadata.memoryRetrieval.enabled),
+            retrievedCount:
+              Number.isFinite(metadata.memoryRetrieval.retrievedCount) &&
+              metadata.memoryRetrieval.retrievedCount >= 0
+                ? metadata.memoryRetrieval.retrievedCount
+                : 0
+          }
+        : {
+            enabled: false,
+            retrievedCount: 0
+          },
       requestId,
       language: safeLanguage,
       engine: "xsus-ai-core",
@@ -1055,9 +1046,6 @@ function buildKnowledgeContext(results) {
     .join("\n\n");
 }
 
-/*
- * 12.4.2 — Memory-Aware Response Generation
- */
 async function generateWithModel({
   contextualQuery,
   language,
@@ -1326,9 +1314,6 @@ export async function processAIRequest(input = {}) {
       });
     }
 
-    /*
-     * Retrieval ndodh para ruajtjes së mesazhit aktual.
-     */
     retrievedMemory = retrieveConversationMemory(
       requestContext.query,
       conversationId,
@@ -1341,10 +1326,6 @@ export async function processAIRequest(input = {}) {
       history
     );
 
-    /*
-     * Ruajtja e mesazhit aktual nuk ndikon në retrieval
-     * e kësaj kërkese.
-     */
     if (memoryEnabled) {
       saveMemoryMessage(
         conversationId,
@@ -1586,6 +1567,14 @@ export async function processAIRequest(input = {}) {
       metadata: {
         ...response.metadata,
         ...metadata,
+
+        // Forcojmë kontratën publike pas çdo merge.
+        memoryRetrieval: buildMemoryRetrievalMetadata(
+          memoryEnabled,
+          conversationId,
+          retrievedMemory
+        ),
+
         engine: "xsus-ai-core",
         version: AI_CORE_VERSION
       }
