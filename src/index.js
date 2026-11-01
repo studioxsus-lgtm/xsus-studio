@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI Core — Public API
  * Version: 1.4.0
@@ -70,6 +69,23 @@ import {
   hasKnowledgeSource,
   unregisterKnowledgeSource,
 } from "./knowledge/knowledge-service.js";
+
+// ============================================================
+// MEMORY ENGINE
+// ============================================================
+
+import {
+  listMemorySessions,
+} from "./core/memory-engine.js";
+
+// ============================================================
+// INTELLIGENT MEMORY RETRIEVAL ENGINE
+// ============================================================
+
+import {
+  createMemoryRetrievalEngine,
+  MEMORY_RETRIEVAL_ENGINE_VERSION,
+} from "./core/memory-retrieval-engine.js";
 
 // ============================================================
 // EXISTING RUNTIME
@@ -275,6 +291,19 @@ export const XSUSAI = Object.freeze({
   unregisterKnowledgeSource,
 
   // ----------------------------------------------------------
+  // MEMORY ENGINE
+  // ----------------------------------------------------------
+
+  listMemorySessions,
+
+  // ----------------------------------------------------------
+  // INTELLIGENT MEMORY RETRIEVAL
+  // ----------------------------------------------------------
+
+  createMemoryRetrievalEngine,
+  MEMORY_RETRIEVAL_ENGINE_VERSION,
+
+  // ----------------------------------------------------------
   // EXISTING RUNTIME
   // ----------------------------------------------------------
 
@@ -417,6 +446,14 @@ export const XSUSAI = Object.freeze({
   get modelOrchestratorVersion() {
     return MODEL_ORCHESTRATOR_VERSION;
   },
+
+  // ----------------------------------------------------------
+  // MEMORY VERSION GETTERS
+  // ----------------------------------------------------------
+
+  get memoryRetrievalEngineVersion() {
+    return MEMORY_RETRIEVAL_ENGINE_VERSION;
+  },
 });
 
 // ============================================================
@@ -468,6 +505,17 @@ export {
   listKnowledgeSources,
   hasKnowledgeSource,
   unregisterKnowledgeSource,
+};
+
+// Memory engine
+export {
+  listMemorySessions,
+};
+
+// Intelligent Memory Retrieval Engine
+export {
+  createMemoryRetrievalEngine,
+  MEMORY_RETRIEVAL_ENGINE_VERSION,
 };
 
 // Existing runtime
