@@ -10,6 +10,7 @@
  * - Përdorimi dhe kufizimi i historikut të bisedës.
  * - Kërkimi në bazën e njohurive.
  * - Integrimi opsional me Model Orchestrator.
+ * - Integrimi me Intelligent Memory Retrieval.
  * - Standardizimi i përgjigjeve.
  * - Vlerësimi i cilësisë përmes Response Quality Pipeline.
  * - Verifikimi strukturor i burimeve.
@@ -43,6 +44,10 @@ import {
 import {
   createMemoryPersistence
 } from "./memory-persistence-integration.js";
+
+import {
+  createMemoryRetrievalEngine
+} from "./memory-retrieval-engine.js";
 
 import {
   searchKnowledge
@@ -83,6 +88,16 @@ const MAX_MODEL_PROMPT_LENGTH = 30000;
 
 const responseQualityPipeline =
   createResponseQualityPipeline();
+
+/*
+ * Intelligent Memory Retrieval Engine.
+ *
+ * Instanca është në nivel moduli, njësoj si Response Quality
+ * Pipeline. Kërkimi kufizohet gjithmonë te conversationId
+ * i kërkesës aktive.
+ */
+const memoryRetrievalEngine =
+  createMemoryRetrievalEngine();
 
 let memoryPersistenceInstance = null;
 let modelOrchestratorInstance = null;
@@ -455,6 +470,76 @@ function saveMemoryMessage(sessionId, role, content) {
 }
 
 /**
+ * Kërkon kujtime relevante vetëm brenda sesionit aktiv.
+ *
+ * Kjo metodë është best-effort: gabimet e retrieval
+ * nuk duhet të ndërpresin përpunimin e kërkesës.
+ */
+function retrieveConversationMemory(query, conversationId, memoryEnabled) {
+  const emptyResult = {
+    memories: [],
+    count: 0,
+    contextText: ""
+  };
+
+  if (!memoryEnabled || !conversationId) {
+    return emptyResult;
+  }
+
+  try {
+    const result = memoryRetrievalEngine.retrieveContext(query, {
+      sessionId: conversationId,
+      limit: 5,
+      minScore: 0.05
+    });
+
+    if (!result || typeof result !== "object") {
+      return emptyResult;
+    }
+
+    const memories = Array.isArray(result.memories)
+      ? result.memories
+      : [];
+
+    return {
+      memories,
+      count: memories.length,
+      contextText:
+        typeof result.contextText === "string"
+          ? result.contextText.trim()
+          : ""
+    };
+  } catch {
+    return emptyResult;
+  }
+}
+
+/**
+ * Shton kujtimet relevante në prompt-in e modelit.
+ *
+ * Ky tekst nuk përdoret nga Knowledge Service.
+ */
+function buildModelContextualQuery(
+  contextualQuery,
+  retrievedMemory
+) {
+  const memoryText =
+    typeof retrievedMemory?.contextText === "string"
+      ? retrievedMemory.contextText.trim()
+      : "";
+
+  if (!memoryText) {
+    return contextualQuery;
+  }
+
+  return [
+    contextualQuery,
+    "Relevant previous memories:",
+    memoryText
+  ].join("\n\n");
+}
+
+/**
  * Mbledh burimet pa shpikur metadata.
  */
 function collectSources(results, knowledge, responseResult) {
@@ -612,6 +697,8 @@ function buildMetadata({
   requestId,
   conversationId,
   memoryEnabled,
+  retrievedMemoryCount = 0,
+  memoryRetrievalEnabled = false,
   responseResult,
   responseQuality,
   modelResult = null
@@ -651,6 +738,15 @@ function buildMetadata({
 
     conversationId: conversationId || null,
     memoryEnabled: Boolean(memoryEnabled),
+
+    memoryRetrieval: {
+      enabled: Boolean(memoryRetrievalEnabled),
+      retrievedCount:
+        Number.isFinite(retrievedMemoryCount) &&
+        retrievedMemoryCount >= 0
+          ? retrievedMemoryCount
+          : 0
+    },
 
     context: buildContextMetadata({
       conversationId,
@@ -1050,6 +1146,30 @@ export async function processAIRequest(input = {}) {
       });
     }
 
+    /*
+     * Memory Retrieval ekzekutohet para ruajtjes së pyetjes
+     * aktuale, në mënyrë që pyetja të mos rikthehet si kujtim
+     * i mëparshëm i vetvetes.
+     *
+     * Kërkimi kufizohet te conversationId aktual.
+     */
+    const retrievedMemory = retrieveConversationMemory(
+      requestContext.query,
+      conversationId,
+      memoryEnabled
+    );
+
+    /*
+     * Kërkimi i njohurive vazhdon të përdorë contextualQuery
+     * origjinal. Kujtimet nuk e ndotin Knowledge Service.
+     *
+     * Vetëm prompt-i i modelit merr kontekstin shtesë.
+     */
+    const modelContextualQuery = buildModelContextualQuery(
+      contextualQuery,
+      retrievedMemory
+    );
+
     if (memoryEnabled) {
       saveMemoryMessage(
         conversationId,
@@ -1129,7 +1249,7 @@ export async function processAIRequest(input = {}) {
     if (modelOrchestratorInstance) {
       try {
         modelResult = await generateWithModel({
-          contextualQuery,
+          contextualQuery: modelContextualQuery,
           language,
           requestId,
           conversationId,
@@ -1262,6 +1382,12 @@ export async function processAIRequest(input = {}) {
       requestId,
       conversationId,
       memoryEnabled,
+
+      retrievedMemoryCount: retrievedMemory.count,
+      memoryRetrievalEnabled: Boolean(
+        memoryEnabled && conversationId
+      ),
+
       responseResult: standardizedResponse,
       responseQuality,
       modelResult
