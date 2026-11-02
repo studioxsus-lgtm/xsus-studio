@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   createKnowledgeLinkEngine,
   KNOWLEDGE_LINK_ENGINE_VERSION,
-} from "../../engines/knowledge-link.engine.js";
+} from "../../../engines/knowledge-link.engine.js";
 
 function createLink(id, overrides = {}) {
   return {
@@ -36,10 +36,7 @@ describe("KnowledgeLink Engine", () => {
 
   it("krijon një KnowledgeLink", () => {
     const engine = createKnowledgeLinkEngine();
-
-    const link = engine.addLink(
-      createLink("link-1"),
-    );
+    const link = engine.addLink(createLink("link-1"));
 
     expect(link.id).toBe("link-1");
     expect(link.sourceId).toBe("entity-a");
@@ -65,19 +62,15 @@ describe("KnowledgeLink Engine", () => {
     });
   });
 
-  it("pranon lidhje me confidence në kufijtë e lejuar", () => {
+  it("pranon confidence në kufijtë e lejuar", () => {
     const engine = createKnowledgeLinkEngine();
 
     const low = engine.addLink(
-      createLink("link-low", {
-        confidence: 0,
-      }),
+      createLink("link-low", { confidence: 0 }),
     );
 
     const high = engine.addLink(
-      createLink("link-high", {
-        confidence: 1,
-      }),
+      createLink("link-high", { confidence: 1 }),
     );
 
     expect(low.confidence).toBe(0);
@@ -90,9 +83,7 @@ describe("KnowledgeLink Engine", () => {
 
     expect(() =>
       engine.addLink(
-        createLink("invalid-link", {
-          confidence: 2,
-        }),
+        createLink("invalid-link", { confidence: 2 }),
       ),
     ).toThrow();
 
@@ -102,19 +93,17 @@ describe("KnowledgeLink Engine", () => {
   it("raporton kodin e gabimit për validim të dështuar", () => {
     const engine = createKnowledgeLinkEngine();
 
-    try {
+    expect(() =>
       engine.addLink(
         createLink("invalid-validation", {
           confidence: -1,
         }),
-      );
-
-      throw new Error("Expected validation error.");
-    } catch (error) {
-      expect(error.code).toBe(
-        "KNOWLEDGE_LINK_ENGINE_VALIDATION_FAILED",
-      );
-    }
+      ),
+    ).toThrow(
+      expect.objectContaining({
+        code: "KNOWLEDGE_LINK_ENGINE_VALIDATION_FAILED",
+      }),
+    );
   });
 
   it("refuzon ID të përsëritur", () => {
@@ -136,15 +125,13 @@ describe("KnowledgeLink Engine", () => {
 
     engine.addLink(createLink("duplicate-code"));
 
-    try {
-      engine.addLink(createLink("duplicate-code"));
-
-      throw new Error("Expected duplicate error.");
-    } catch (error) {
-      expect(error.code).toBe(
-        "KNOWLEDGE_LINK_ENGINE_DUPLICATE_ID",
-      );
-    }
+    expect(() =>
+      engine.addLink(createLink("duplicate-code")),
+    ).toThrow(
+      expect.objectContaining({
+        code: "KNOWLEDGE_LINK_ENGINE_DUPLICATE_ID",
+      }),
+    );
   });
 
   it("shton disa KnowledgeLink në mënyrë atomike", () => {
@@ -169,9 +156,7 @@ describe("KnowledgeLink Engine", () => {
     expect(() =>
       engine.addLinks([
         createLink("atomic-1"),
-        createLink("atomic-2", {
-          confidence: 5,
-        }),
+        createLink("atomic-2", { confidence: 5 }),
       ]),
     ).toThrow();
 
@@ -194,18 +179,16 @@ describe("KnowledgeLink Engine", () => {
   it("raporton kodin e gabimit për ID të përsëritur në grup", () => {
     const engine = createKnowledgeLinkEngine();
 
-    try {
+    expect(() =>
       engine.addLinks([
         createLink("batch-duplicate"),
         createLink("batch-duplicate"),
-      ]);
-
-      throw new Error("Expected batch duplicate error.");
-    } catch (error) {
-      expect(error.code).toBe(
-        "KNOWLEDGE_LINK_ENGINE_DUPLICATE_BATCH_ID",
-      );
-    }
+      ]),
+    ).toThrow(
+      expect.objectContaining({
+        code: "KNOWLEDGE_LINK_ENGINE_DUPLICATE_BATCH_ID",
+      }),
+    );
   });
 
   it("refuzon hyrje që nuk janë array në addLinks", () => {
@@ -223,17 +206,15 @@ describe("KnowledgeLink Engine", () => {
 
     engine.addLink(createLink("find-link"));
 
-    expect(
-      engine.getLinkById("find-link").id,
-    ).toBe("find-link");
+    expect(engine.getLinkById("find-link").id).toBe(
+      "find-link",
+    );
   });
 
   it("kthen null kur ID-ja nuk ekziston", () => {
     const engine = createKnowledgeLinkEngine();
 
-    expect(
-      engine.getLinkById("missing-link"),
-    ).toBeNull();
+    expect(engine.getLinkById("missing-link")).toBeNull();
   });
 
   it("kthen listën e të gjitha lidhjeve", () => {
@@ -255,12 +236,8 @@ describe("KnowledgeLink Engine", () => {
     const engine = createKnowledgeLinkEngine();
 
     engine.addLinks([
-      createLink("source-1", {
-        sourceId: "entity-a",
-      }),
-      createLink("source-2", {
-        sourceId: "entity-b",
-      }),
+      createLink("source-1", { sourceId: "entity-a" }),
+      createLink("source-2", { sourceId: "entity-b" }),
     ]);
 
     const result = engine.search({
@@ -275,12 +252,8 @@ describe("KnowledgeLink Engine", () => {
     const engine = createKnowledgeLinkEngine();
 
     engine.addLinks([
-      createLink("target-1", {
-        targetId: "entity-x",
-      }),
-      createLink("target-2", {
-        targetId: "entity-y",
-      }),
+      createLink("target-1", { targetId: "entity-x" }),
+      createLink("target-2", { targetId: "entity-y" }),
     ]);
 
     const result = engine.search({
@@ -315,12 +288,8 @@ describe("KnowledgeLink Engine", () => {
     const engine = createKnowledgeLinkEngine();
 
     engine.addLinks([
-      createLink("strategy-1", {
-        sourceId: "entity-a",
-      }),
-      createLink("strategy-2", {
-        sourceId: "entity-b",
-      }),
+      createLink("strategy-1", { sourceId: "entity-a" }),
+      createLink("strategy-2", { sourceId: "entity-b" }),
     ]);
 
     const result = engine.searchByStrategy({
@@ -338,12 +307,8 @@ describe("KnowledgeLink Engine", () => {
     const engine = createKnowledgeLinkEngine();
 
     engine.addLinks([
-      createLink("confidence-1", {
-        confidence: 0.4,
-      }),
-      createLink("confidence-2", {
-        confidence: 0.8,
-      }),
+      createLink("confidence-1", { confidence: 0.4 }),
+      createLink("confidence-2", { confidence: 0.8 }),
     ]);
 
     const result = engine.searchByStrategy({
@@ -482,9 +447,7 @@ describe("KnowledgeLink Engine", () => {
   it("raporton versionin e policy në status", () => {
     const engine = createKnowledgeLinkEngine();
 
-    expect(engine.getStatus().policyVersion).toBe(
-      "1.0.0",
-    );
+    expect(engine.getStatus().policyVersion).toBe("1.0.0");
   });
 
   it("refuzon relationType që nuk lejohet nga policy", () => {
@@ -500,9 +463,7 @@ describe("KnowledgeLink Engine", () => {
           relationType: "depends_on",
         }),
       ),
-    ).toThrow(
-      "KnowledgeLink was rejected by policy.",
-    );
+    ).toThrow("KnowledgeLink was rejected by policy.");
 
     expect(engine.getStatus().size).toBe(0);
   });
@@ -514,19 +475,17 @@ describe("KnowledgeLink Engine", () => {
       },
     });
 
-    try {
+    expect(() =>
       engine.addLink(
         createLink("policy-error-code", {
           relationType: "causes",
         }),
-      );
-
-      throw new Error("Expected policy rejection.");
-    } catch (error) {
-      expect(error.code).toBe(
-        "KNOWLEDGE_LINK_ENGINE_POLICY_REJECTED",
-      );
-    }
+      ),
+    ).toThrow(
+      expect.objectContaining({
+        code: "KNOWLEDGE_LINK_ENGINE_POLICY_REJECTED",
+      }),
+    );
   });
 
   it("përfshin arsyet e refuzimit nga policy", () => {
@@ -542,16 +501,16 @@ describe("KnowledgeLink Engine", () => {
           relationType: "contradicts",
         }),
       );
-
-      throw new Error("Expected policy rejection.");
     } catch (error) {
       expect(error.code).toBe(
         "KNOWLEDGE_LINK_ENGINE_POLICY_REJECTED",
       );
-
       expect(error.details).toBeInstanceOf(Array);
       expect(error.details.length).toBeGreaterThan(0);
+      return;
     }
+
+    throw new Error("Expected policy rejection.");
   });
 
   it("refuzon confidence më të ulët se minimumConfidence i policy", () => {
@@ -567,9 +526,7 @@ describe("KnowledgeLink Engine", () => {
           confidence: 0.5,
         }),
       ),
-    ).toThrow(
-      "KnowledgeLink was rejected by policy.",
-    );
+    ).toThrow("KnowledgeLink was rejected by policy.");
 
     expect(engine.getStatus().size).toBe(0);
   });
@@ -591,7 +548,7 @@ describe("KnowledgeLink Engine", () => {
     expect(engine.getStatus().size).toBe(1);
   });
 
-  it("lejon vetëm relationType të konfiguruara në policy", () => {
+  it("lejon relationType të konfiguruara në policy", () => {
     const engine = createKnowledgeLinkEngine({
       policy: {
         allowedRelationTypes: [
@@ -634,17 +591,11 @@ describe("KnowledgeLink Engine", () => {
           relationType: "contradicts",
         }),
       ]),
-    ).toThrow(
-      "KnowledgeLink was rejected by policy.",
-    );
+    ).toThrow("KnowledgeLink was rejected by policy.");
 
     expect(engine.getStatus().size).toBe(0);
-    expect(
-      engine.getLinkById("policy-atomic-1"),
-    ).toBeNull();
-    expect(
-      engine.getLinkById("policy-atomic-2"),
-    ).toBeNull();
+    expect(engine.getLinkById("policy-atomic-1")).toBeNull();
+    expect(engine.getLinkById("policy-atomic-2")).toBeNull();
   });
 
   it("nuk ndryshon lidhjet ekzistuese kur një grup refuzohet nga policy", () => {
@@ -654,9 +605,7 @@ describe("KnowledgeLink Engine", () => {
       },
     });
 
-    engine.addLink(
-      createLink("policy-existing"),
-    );
+    engine.addLink(createLink("policy-existing"));
 
     expect(() =>
       engine.addLinks([
@@ -665,16 +614,10 @@ describe("KnowledgeLink Engine", () => {
           relationType: "causes",
         }),
       ]),
-    ).toThrow(
-      "KnowledgeLink was rejected by policy.",
-    );
+    ).toThrow("KnowledgeLink was rejected by policy.");
 
     expect(engine.getStatus().size).toBe(1);
-    expect(
-      engine.getLinkById("policy-existing"),
-    ).not.toBeNull();
-    expect(
-      engine.getLinkById("policy-new-1"),
-    ).toBeNull();
+    expect(engine.getLinkById("policy-existing")).not.toBeNull();
+    expect(engine.getLinkById("policy-new-1")).toBeNull();
   });
 });
