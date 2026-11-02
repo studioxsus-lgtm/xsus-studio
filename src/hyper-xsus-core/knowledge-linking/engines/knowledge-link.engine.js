@@ -11,6 +11,7 @@
  * - Indeksimi sipas sourceId, targetId dhe relationType.
  * - Ruajtja e rendit të futjes.
  * - Verifikimi dhe rindërtimi i indekseve.
+ * - Rikuperimi automatik i integritetit të indekseve.
  * - Menaxhimi i ciklit jetësor të lidhjeve.
  */
 
@@ -38,6 +39,7 @@ import {
 import {
   verifyKnowledgeLinkIndexes,
   rebuildKnowledgeLinkIndexes,
+  recoverKnowledgeLinkIndexes,
 } from "./knowledge-link.index-integrity.js";
 
 export const KNOWLEDGE_LINK_ENGINE_VERSION = "1.1.0";
@@ -376,6 +378,25 @@ export function createKnowledgeLinkEngine(options = {}) {
     });
   }
 
+  /**
+   * Verifikon dhe rikuperon automatikisht indekset.
+   *
+   * Koleksioni kryesor links mbetet autoritativ.
+   * insertionOrder nuk modifikohet.
+   */
+  function recoverIndexIntegrity() {
+    assertOpen();
+
+    return recoverKnowledgeLinkIndexes({
+      links,
+      indexes: {
+        sourceIdIndex,
+        targetIdIndex,
+        relationTypeIndex,
+      },
+    });
+  }
+
   function addLink(input) {
     assertOpen();
 
@@ -649,6 +670,7 @@ export function createKnowledgeLinkEngine(options = {}) {
     getStatus,
     verifyIndexIntegrity,
     rebuildIndexes,
+    recoverIndexIntegrity,
     close,
   });
 }
