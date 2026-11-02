@@ -114,6 +114,7 @@ describe("KnowledgeLink Engine — Stress & Scalability Integrity", () => {
     engine.addLinks(
       Array.from({ length: 1000 }, (_, index) =>
         createLink(`link-${index}`, {
+          sourceId: "entity-stress",
           confidence: index / 1000,
         }),
       ),
@@ -122,7 +123,7 @@ describe("KnowledgeLink Engine — Stress & Scalability Integrity", () => {
     const result = engine.searchByStrategy({
       type: "direct",
       filters: {
-        sourceId: "entity-1",
+        sourceId: "entity-stress",
       },
       minimumConfidence: 0.8,
       limit: 25,
@@ -132,9 +133,20 @@ describe("KnowledgeLink Engine — Stress & Scalability Integrity", () => {
 
     expect(
       result.links.every(
-        (link) => link.confidence >= 0.8,
+        (link) =>
+          link.sourceId === "entity-stress" &&
+          link.confidence >= 0.8,
       ),
     ).toBe(true);
+
+    expect(
+      result.links.map((link) => link.id),
+    ).toEqual(
+      Array.from(
+        { length: 25 },
+        (_, index) => `link-${800 + index}`,
+      ),
+    );
   });
 
   it("ruan integritetin pas shtimeve dhe fshirjeve të përsëritura", () => {
