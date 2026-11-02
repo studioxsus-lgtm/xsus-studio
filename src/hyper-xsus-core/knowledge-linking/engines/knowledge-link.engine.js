@@ -8,6 +8,7 @@
  * - Ruajtja e lidhjeve në memorien e engine-it.
  * - Kërkimi përmes Resolver.
  * - Përpunimi semantik i strategjive të kërkimit.
+ * - Indeksimi i lidhjeve sipas sourceId, targetId dhe relationType.
  * - Menaxhimi i ciklit jetësor të lidhjeve.
  */
 
@@ -73,7 +74,18 @@ export function createKnowledgeLinkEngine(options = {}) {
     options.policy ?? {},
   );
 
+  // Koleksioni kryesor ruan rendin e futjes.
   const links = new Map();
+
+  // Indekset dytësore.
+  const sourceIdIndex = new Map();
+  const targetIdIndex = new Map();
+  const relationTypeIndex = new Map();
+
+  // Ruajtja e rendit origjinal të çdo lidhjeje.
+  const insertionOrder = new Map();
+  let nextInsertionOrder = 0;
+
   let closed = false;
 
   function assertOpen() {
@@ -121,6 +133,169 @@ export function createKnowledgeLinkEngine(options = {}) {
     }
   }
 
+  function addToIndex(index, value, id) {
+    let ids = index.get(value);
+
+    if (!ids) {
+      ids = new Set();
+      index.set(value, ids);
+    }
+
+    ids.add(id);
+  }
+
+  function removeFromIndex(index, value, id) {
+    const ids = index.get(value);
+
+    if (!ids) {
+      return;
+    }
+
+    ids.delete(id);
+
+    if (ids.size === 0) {
+      index.delete(value);
+    }
+  }
+
+  function indexLink(link) {
+    addToIndex(sourceIdIndex, link.sourceId, link.id);
+    addToIndex(targetIdIndex, link.targetId, link.id);
+    addToIndex(
+      relationTypeIndex,
+      link.relationType,
+      link.id,
+    );
+  }
+
+  function unindexLink(link) {
+    removeFromIndex(
+      sourceIdIndex,
+      link.sourceId,
+      link.id,
+    );
+
+    removeFromIndex(
+      targetIdIndex,
+      link.targetId,
+      link.id,
+    );
+
+    removeFromIndex(
+      relationTypeIndex,
+      link.relationType,
+      link.id,
+    );
+
+    insertionOrder.delete(link.id);
+  }
+
+  function storeLink(link) {
+    links.set(link.id, link);
+
+    insertionOrder.set(
+      link.id,
+      nextInsertionOrder++,
+    );
+
+    indexLink(link);
+  }
+
+  function getIndexForFilter(field) {
+    switch (field) {
+      case "sourceId":
+        return sourceIdIndex;
+
+      case "targetId":
+        return targetIdIndex;
+
+      case "relationType":
+        return relationTypeIndex;
+
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Përzgjedh kandidatët përmes indekseve.
+   * Filtrat që nuk kanë indeks mbeten përgjegjësi
+   * e Resolver-it.
+   */
+  function getIndexedCandidateIds(filters = {}) {
+    const indexedFilters = [];
+
+    for (const field of [
+      "sourceId",
+      "targetId",
+      "relationType",
+    ]) {
+      if (
+        filters[field] === undefined ||
+        filters[field] === null
+      ) {
+        continue;
+      }
+
+      const index = getIndexForFilter(field);
+      const ids = index.get(filters[field]);
+
+      if (!ids) {
+        return new Set();
+      }
+
+      indexedFilters.push(ids);
+    }
+
+    if (indexedFilters.length === 0) {
+      return new Set(links.keys());
+    }
+
+    // Fillojmë me indeksin që përmban më pak kandidatë.
+    indexedFilters.sort(
+      (first, second) => first.size - second.size,
+    );
+
+    const candidates = new Set(indexedFilters[0]);
+
+    for (let index = 1; index < indexedFilters.length; index += 1) {
+      const allowedIds = indexedFilters[index];
+
+      for (const id of candidates) {
+        if (!allowedIds.has(id)) {
+          candidates.delete(id);
+        }
+      }
+
+      if (candidates.size === 0) {
+        break;
+      }
+    }
+
+    return candidates;
+  }
+
+  /**
+   * Rikthen kandidatët në rendin origjinal të futjes.
+   */
+  function getOrderedCandidateLinks(candidateIds) {
+    return [...candidateIds]
+      .map((id) => ({
+        id,
+        order: insertionOrder.get(id),
+      }))
+      .filter((entry) => entry.order !== undefined)
+      .sort((first, second) => first.order - second.order)
+      .map((entry) => links.get(entry.id))
+      .filter(Boolean);
+  }
+
+  function findCandidateLinks(filters = {}) {
+    const candidateIds = getIndexedCandidateIds(filters);
+
+    return getOrderedCandidateLinks(candidateIds);
+  }
+
   function addLink(input) {
     assertOpen();
 
@@ -128,7 +303,7 @@ export function createKnowledgeLinkEngine(options = {}) {
 
     assertUniqueId(link.id);
 
-    links.set(link.id, link);
+    storeLink(link);
 
     return link;
   }
@@ -152,7 +327,8 @@ export function createKnowledgeLinkEngine(options = {}) {
           `Duplicate ID in batch: ${link.id}.`,
         );
 
-        error.code = "KNOWLEDGE_LINK_ENGINE_DUPLICATE_BATCH_ID";
+        error.code =
+          "KNOWLEDGE_LINK_ENGINE_DUPLICATE_BATCH_ID";
 
         throw error;
       }
@@ -160,9 +336,10 @@ export function createKnowledgeLinkEngine(options = {}) {
       batchIds.add(link.id);
     }
 
-    // Ruajtja ndodh vetëm pasi i gjithë grupi kalon kontrollet.
+    // Mutacionet fillojnë vetëm pasi i gjithë grupi
+    // kalon validimin dhe kontrollet e dublikimit.
     for (const link of prepared) {
-      links.set(link.id, link);
+      storeLink(link);
     }
 
     return createResult(prepared);
@@ -185,21 +362,20 @@ export function createKnowledgeLinkEngine(options = {}) {
   function search(filters = {}) {
     assertOpen();
 
+    const candidates = findCandidateLinks(filters);
+
     return resolveKnowledgeLinks(
-      [...links.values()],
+      candidates,
       filters,
     );
   }
 
-  function resolveStrategyLinks(strategy, allLinks) {
+  function resolveStrategyLinks(strategy) {
     const filters = { ...strategy.filters };
 
     switch (strategy.type) {
       case "direct": {
-        return resolveKnowledgeLinks(
-          allLinks,
-          filters,
-        );
+        return findCandidateLinks(filters);
       }
 
       case "reverse": {
@@ -215,10 +391,7 @@ export function createKnowledgeLinkEngine(options = {}) {
           reverseFilters.targetId = originalSourceId;
         }
 
-        return resolveKnowledgeLinks(
-          allLinks,
-          reverseFilters,
-        );
+        return findCandidateLinks(reverseFilters);
       }
 
       case "bidirectional": {
@@ -226,16 +399,10 @@ export function createKnowledgeLinkEngine(options = {}) {
           filters.sourceId === undefined ||
           filters.targetId === undefined
         ) {
-          return resolveKnowledgeLinks(
-            allLinks,
-            filters,
-          );
+          return findCandidateLinks(filters);
         }
 
-        const forwardResult = resolveKnowledgeLinks(
-          allLinks,
-          filters,
-        );
+        const forwardIds = getIndexedCandidateIds(filters);
 
         const reverseFilters = {
           ...filters,
@@ -243,32 +410,23 @@ export function createKnowledgeLinkEngine(options = {}) {
           targetId: filters.sourceId,
         };
 
-        const reverseResult = resolveKnowledgeLinks(
-          allLinks,
+        const reverseIds = getIndexedCandidateIds(
           reverseFilters,
         );
 
         const matchingIds = new Set([
-          ...forwardResult.links.map((link) => link.id),
-          ...reverseResult.links.map((link) => link.id),
+          ...forwardIds,
+          ...reverseIds,
         ]);
 
-        // Ruajmë rendin origjinal dhe shmangim dublikimet.
-        const orderedResults = allLinks.filter(
-          (link) => matchingIds.has(link.id),
-        );
-
-        return createResult(orderedResults);
+        return getOrderedCandidateLinks(matchingIds);
       }
 
       case "relation":
       case "entity":
       case "combined":
       default: {
-        return resolveKnowledgeLinks(
-          allLinks,
-          filters,
-        );
+        return findCandidateLinks(filters);
       }
     }
   }
@@ -277,11 +435,12 @@ export function createKnowledgeLinkEngine(options = {}) {
     assertOpen();
 
     const strategy = createKnowledgeLinkStrategy(input);
-    const allLinks = [...links.values()];
 
-    let result = resolveStrategyLinks(
-      strategy,
-      allLinks,
+    const candidates = resolveStrategyLinks(strategy);
+
+    let result = resolveKnowledgeLinks(
+      candidates,
+      strategy.filters,
     );
 
     // Filtrimi sipas besueshmërisë.
@@ -308,15 +467,32 @@ export function createKnowledgeLinkEngine(options = {}) {
     assertOpen();
 
     const normalizedId = requireNonEmptyString(id, "id");
+    const link = links.get(normalizedId);
 
-    return links.delete(normalizedId);
+    if (!link) {
+      return false;
+    }
+
+    unindexLink(link);
+
+    links.delete(normalizedId);
+
+    return true;
   }
 
   function clear() {
     assertOpen();
 
     const removedCount = links.size;
+
     links.clear();
+
+    sourceIdIndex.clear();
+    targetIdIndex.clear();
+    relationTypeIndex.clear();
+    insertionOrder.clear();
+
+    nextInsertionOrder = 0;
 
     return Object.freeze({
       removedCount,
@@ -342,6 +518,14 @@ export function createKnowledgeLinkEngine(options = {}) {
     }
 
     links.clear();
+
+    sourceIdIndex.clear();
+    targetIdIndex.clear();
+    relationTypeIndex.clear();
+    insertionOrder.clear();
+
+    nextInsertionOrder = 0;
+
     closed = true;
 
     return Object.freeze({
