@@ -38,6 +38,35 @@ function requireNonEmptyString(value, fieldName) {
   return value.trim();
 }
 
+function validateConfidence(value) {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value < 0 ||
+    value > 1
+  ) {
+    throw new TypeError(
+      "KnowledgeLink: confidence must be a number between 0 and 1.",
+    );
+  }
+
+  return value;
+}
+
+function validateMetadata(value) {
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    throw new TypeError(
+      "KnowledgeLink: metadata must be an object.",
+    );
+  }
+
+  return Object.freeze({ ...value });
+}
+
 export function createKnowledgeLink(input) {
   if (
     input === null ||
@@ -49,11 +78,17 @@ export function createKnowledgeLink(input) {
     );
   }
 
-  for (const field of REQUIRED_TEXT_FIELDS) {
-    requireNonEmptyString(input[field], field);
-  }
+  const id = requireNonEmptyString(input.id, "id");
+  const sourceId = requireNonEmptyString(
+    input.sourceId,
+    "sourceId",
+  );
+  const targetId = requireNonEmptyString(
+    input.targetId,
+    "targetId",
+  );
 
-  if (input.sourceId === input.targetId) {
+  if (sourceId === targetId) {
     throw new TypeError(
       "KnowledgeLink: sourceId and targetId must be different.",
     );
@@ -70,20 +105,15 @@ export function createKnowledgeLink(input) {
     );
   }
 
-  const confidence = input.confidence ?? 1;
+  const confidence =
+    input.confidence === undefined
+      ? 1
+      : validateConfidence(input.confidence);
 
-  if (
-    typeof confidence !== "number" ||
-    !Number.isFinite(confidence) ||
-    confidence < 0 ||
-    confidence > 1
-  ) {
-    throw new TypeError(
-      "KnowledgeLink: confidence must be a number between 0 and 1.",
-    );
-  }
-
-  const createdAt = input.createdAt ?? new Date().toISOString();
+  const createdAt =
+    input.createdAt === undefined
+      ? new Date().toISOString()
+      : input.createdAt;
 
   if (
     typeof createdAt !== "string" ||
@@ -94,14 +124,19 @@ export function createKnowledgeLink(input) {
     );
   }
 
+  const metadata =
+    input.metadata === undefined
+      ? Object.freeze({})
+      : validateMetadata(input.metadata);
+
   const link = {
-    id: input.id.trim(),
-    sourceId: input.sourceId.trim(),
-    targetId: input.targetId.trim(),
+    id,
+    sourceId,
+    targetId,
     relationType,
     confidence,
     createdAt,
-    metadata: Object.freeze({ ...(input.metadata ?? {}) }),
+    metadata,
   };
 
   return Object.freeze(link);
