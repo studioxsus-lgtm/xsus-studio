@@ -46,14 +46,18 @@ describe("KnowledgeLink Engine — Concurrency & Race Condition Integrity", () =
 
     const results = await Promise.allSettled([
       Promise.resolve().then(() =>
-        engine.addLink(createLink("shared-id", {
-          confidence: 0.8,
-        })),
+        engine.addLink(
+          createLink("shared-id", {
+            confidence: 0.8,
+          }),
+        ),
       ),
       Promise.resolve().then(() =>
-        engine.addLink(createLink("shared-id", {
-          confidence: 0.95,
-        })),
+        engine.addLink(
+          createLink("shared-id", {
+            confidence: 0.95,
+          }),
+        ),
       ),
     ]);
 
@@ -93,7 +97,9 @@ describe("KnowledgeLink Engine — Concurrency & Race Condition Integrity", () =
     expect(results).toHaveLength(2);
     expect(engine.getStatus().size).toBe(4);
 
-    expect(engine.listLinks().links.map((link) => link.id)).toEqual([
+    expect(
+      engine.listLinks().links.map((link) => link.id),
+    ).toEqual([
       "batch-a1",
       "batch-a2",
       "batch-b1",
@@ -131,14 +137,24 @@ describe("KnowledgeLink Engine — Concurrency & Race Condition Integrity", () =
     expect(rejected).toHaveLength(1);
 
     expect(engine.getStatus().size).toBe(2);
-    expect(engine.getLinkById("shared-batch-id")).not.toBeNull();
+    expect(
+      engine.getLinkById("shared-batch-id"),
+    ).not.toBeNull();
 
-    const ids = engine.listLinks().links.map((link) => link.id);
-
-    expect(ids).not.toContain("group-a1") .toBe(
-      ids.includes("group-a1") === false ||
-      ids.includes("group-b1") === false,
+    const ids = engine.listLinks().links.map(
+      (link) => link.id,
     );
+
+    const groupAExists = ids.includes("group-a1");
+    const groupBExists = ids.includes("group-b1");
+
+    expect(groupAExists).not.toBe(groupBExists);
+
+    expect(
+      ids.filter((id) =>
+        ["group-a1", "group-b1"].includes(id),
+      ),
+    ).toHaveLength(1);
   });
 
   it("ruan integritetin gjatë kërkimit dhe shtimit të ndërthurur", async () => {
@@ -184,8 +200,13 @@ describe("KnowledgeLink Engine — Concurrency & Race Condition Integrity", () =
     expect(results[0].removedCount).toBe(1);
     expect(engine.getStatus().size).toBe(1);
 
-    expect(engine.getLinkById("before-clear")).toBeNull();
-    expect(engine.getLinkById("after-clear")).not.toBeNull();
+    expect(
+      engine.getLinkById("before-clear"),
+    ).toBeNull();
+
+    expect(
+      engine.getLinkById("after-clear"),
+    ).not.toBeNull();
   });
 
   it("refuzon shtimet e ndërthurura pas mbylljes së engine-it", async () => {
@@ -205,6 +226,9 @@ describe("KnowledgeLink Engine — Concurrency & Race Condition Integrity", () =
 
     expect(engine.getStatus().closed).toBe(true);
     expect(engine.getStatus().size).toBe(0);
-    expect(engine.getLinkById("after-close")).toBeNull();
+
+    expect(() => {
+      engine.getLinkById("after-close");
+    }).toThrow("KnowledgeLink Engine is closed.");
   });
 });
