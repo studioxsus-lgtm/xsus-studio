@@ -6,7 +6,7 @@ import {
   KNOWLEDGE_LINK_INTERFACE_METHODS,
   conformsToKnowledgeLinkInterface,
   getKnowledgeLinkInterfaceContract,
-} from "../../../interfaces/knowledge-link.interface.js";
+} from "../../interfaces/knowledge-link.interface.js";
 
 function createValidKnowledgeLink() {
   return {
