@@ -75,6 +75,8 @@ describe(
 
       expect(recovery.success).toBe(true);
       expect(after).toEqual(before);
+      expect(after.count).toBe(3);
+      expect(after.links).toHaveLength(3);
     });
 
     it("ruan rendin e futjes pas rikuperimit", () => {
@@ -86,11 +88,13 @@ describe(
         createLink("link-2"),
       ]);
 
-      const before = engine.listLinks();
+      const before = engine.listLinks().links;
 
-      engine.recoverIndexIntegrity();
+      const recovery = engine.recoverIndexIntegrity();
 
-      const after = engine.listLinks();
+      const after = engine.listLinks().links;
+
+      expect(recovery.success).toBe(true);
 
       expect(
         after.map((link) => link.id),
@@ -180,10 +184,13 @@ describe(
       engine.clear();
 
       const verification = engine.verifyIndexIntegrity();
+      const result = engine.listLinks();
 
       expect(verification.valid).toBe(true);
       expect(verification.checkedLinks).toBe(0);
-      expect(engine.listLinks()).toHaveLength(0);
+
+      expect(result.count).toBe(0);
+      expect(result.links).toHaveLength(0);
     });
 
     it("lejon rikuperime të përsëritura", () => {
