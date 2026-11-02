@@ -7,9 +7,12 @@
  * - Zbulimi i ID-ve që mungojnë.
  * - Zbulimi i ID-ve të tepërta.
  * - Zbulimi i referencave të pavlefshme.
- * - Rikonstruktimi i indekseve nga koleksioni kryesor.
+ * - Rindërtimi i indekseve nga koleksioni kryesor.
+ * - Rikuperimi automatik i indekseve.
+ * - Raportimi para dhe pas rikuperimit.
  * - Ruajtja e konsistencës së sourceId, targetId
  *   dhe relationType.
+ * - Mbrojtja e koleksionit kryesor gjatë rikuperimit.
  */
 
 export const KNOWLEDGE_LINK_INDEX_INTEGRITY_VERSION = "1.0.0";
@@ -59,9 +62,11 @@ function assertLinkCollection(links) {
     }
 
     for (const field of INDEX_FIELDS) {
+      const value = link[field.property];
+
       if (
-        typeof link[field.property] !== "string" ||
-        link[field.property].trim().length === 0
+        typeof value !== "string" ||
+        value.trim().length === 0
       ) {
         throw new TypeError(
           `Invalid ${field.property} in KnowledgeLink: ${id}.`,
@@ -81,7 +86,10 @@ function assertIndexes(indexes) {
   }
 
   for (const field of INDEX_FIELDS) {
-    assertMap(indexes[field.indexName], field.indexName);
+    assertMap(
+      indexes[field.indexName],
+      field.indexName,
+    );
   }
 }
 
@@ -101,21 +109,48 @@ function freezeReport(report) {
     valid: report.valid,
     checkedLinks: report.checkedLinks,
     checkedIndexes: report.checkedIndexes,
-    missingEntries: Object.freeze([
-      ...report.missingEntries,
-    ]),
-    staleEntries: Object.freeze([
-      ...report.staleEntries,
-    ]),
-    invalidEntries: Object.freeze([
-      ...report.invalidEntries,
-    ]),
+
+    missingEntries: Object.freeze(
+      report.missingEntries.map((entry) =>
+        Object.freeze({ ...entry }),
+      ),
+    ),
+
+    staleEntries: Object.freeze(
+      report.staleEntries.map((entry) =>
+        Object.freeze({ ...entry }),
+      ),
+    ),
+
+    invalidEntries: Object.freeze(
+      report.invalidEntries.map((entry) =>
+        Object.freeze({ ...entry }),
+      ),
+    ),
   });
 }
 
+function createIndexMaps() {
+  return {
+    sourceIdIndex: new Map(),
+    targetIdIndex: new Map(),
+    relationTypeIndex: new Map(),
+  };
+}
+
+function addToIndex(index, value, id) {
+  let ids = index.get(value);
+
+  if (!ids) {
+    ids = new Set();
+    index.set(value, ids);
+  }
+
+  ids.add(id);
+}
+
 /**
- * Kontrollon nëse një indeks përmban saktësisht
- * lidhjet që duhet të përmbajë.
+ * Kontrollon një indeks kundrejt koleksionit kryesor.
  */
 function verifySingleIndex(
   links,
@@ -140,7 +175,7 @@ function verifySingleIndex(
     expectedIds.add(id);
   }
 
-  // Kontrolli i hyrjeve që mungojnë.
+  // Hyrjet që mungojnë.
   for (const [value, expectedIds] of expectedEntries) {
     const actualIds = index.get(value);
 
@@ -155,7 +190,7 @@ function verifySingleIndex(
     }
   }
 
-  // Kontrolli i hyrjeve të tepërta dhe të pavlefshme.
+  // Hyrjet e tepërta dhe të pavlefshme.
   for (const [value, actualIds] of index) {
     if (!(actualIds instanceof Set)) {
       report.invalidEntries.push({
@@ -204,8 +239,38 @@ function verifySingleIndex(
 }
 
 /**
+ * Përgatit indekse të reja pa ndryshuar indekset aktive.
+ */
+function buildIndexMaps(links) {
+  const stagedIndexes = createIndexMaps();
+
+  for (const [id, link] of links) {
+    addToIndex(
+      stagedIndexes.sourceIdIndex,
+      link.sourceId,
+      id,
+    );
+
+    addToIndex(
+      stagedIndexes.targetIdIndex,
+      link.targetId,
+      id,
+    );
+
+    addToIndex(
+      stagedIndexes.relationTypeIndex,
+      link.relationType,
+      id,
+    );
+  }
+
+  return stagedIndexes;
+}
+
+/**
  * Verifikon integritetin e të tre indekseve.
  *
+ * Operacion vetëm-lexues.
  * Nuk ndryshon koleksionin kryesor ose indekset.
  */
 export function verifyKnowledgeLinkIndexes({
@@ -237,11 +302,13 @@ export function verifyKnowledgeLinkIndexes({
 }
 
 /**
- * Rindërton të gjithë indekset nga koleksioni kryesor.
+ * Rindërton indekset nga koleksioni kryesor.
  *
- * Koleksioni links nuk modifikohet.
- * Rendi i futjes nuk modifikohet.
- * Map-et e indekseve ruhen dhe pastrohen në vend.
+ * Indekset e reja përgatiten dhe verifikohen
+ * përpara se të ndryshohen indekset aktive.
+ *
+ * Koleksioni kryesor nuk modifikohet.
+ * Renditja e lidhjeve nuk modifikohet.
  */
 export function rebuildKnowledgeLinkIndexes({
   links,
@@ -250,35 +317,15 @@ export function rebuildKnowledgeLinkIndexes({
   assertLinkCollection(links);
   assertIndexes(indexes);
 
-  const rebuiltCounts = {};
+  const stagedIndexes = buildIndexMaps(links);
 
-  for (const field of INDEX_FIELDS) {
-    const index = indexes[field.indexName];
-
-    index.clear();
-
-    for (const [id, link] of links) {
-      const value = link[field.property];
-
-      let ids = index.get(value);
-
-      if (!ids) {
-        ids = new Set();
-        index.set(value, ids);
-      }
-
-      ids.add(id);
-    }
-
-    rebuiltCounts[field.name] = links.size;
-  }
-
-  const verification = verifyKnowledgeLinkIndexes({
+  // Verifikimi kryhet përpara ndryshimit të indekseve aktive.
+  const stagedVerification = verifyKnowledgeLinkIndexes({
     links,
-    indexes,
+    indexes: stagedIndexes,
   });
 
-  if (!verification.valid) {
+  if (!stagedVerification.valid) {
     const error = new Error(
       "KnowledgeLink index reconstruction failed.",
     );
@@ -286,16 +333,175 @@ export function rebuildKnowledgeLinkIndexes({
     error.code =
       "KNOWLEDGE_LINK_INDEX_REBUILD_FAILED";
 
-    error.details = verification;
+    error.details = stagedVerification;
 
     throw error;
   }
 
-  return Object.freeze({
-    success: true,
-    version: KNOWLEDGE_LINK_INDEX_INTEGRITY_VERSION,
-    rebuiltLinks: links.size,
-    rebuiltIndexes: Object.freeze(rebuiltCounts),
-    verification,
+  // Ruajmë gjendjen ekzistuese për rikthim në rast dështimi.
+  const previousIndexes = {};
+
+  for (const field of INDEX_FIELDS) {
+    const index = indexes[field.indexName];
+
+    previousIndexes[field.indexName] = new Map(
+      [...index.entries()].map(([value, ids]) => [
+        value,
+        ids instanceof Set ? new Set(ids) : ids,
+      ]),
+    );
+  }
+
+  try {
+    // Zëvendësimi i përmbajtjes së indekseve.
+    for (const field of INDEX_FIELDS) {
+      const activeIndex = indexes[field.indexName];
+      const stagedIndex = stagedIndexes[field.indexName];
+
+      activeIndex.clear();
+
+      for (const [value, ids] of stagedIndex) {
+        activeIndex.set(value, new Set(ids));
+      }
+    }
+
+    const verification = verifyKnowledgeLinkIndexes({
+      links,
+      indexes,
+    });
+
+    if (!verification.valid) {
+      const error = new Error(
+        "KnowledgeLink index verification failed after rebuild.",
+      );
+
+      error.code =
+        "KNOWLEDGE_LINK_INDEX_POST_REBUILD_FAILED";
+
+      error.details = verification;
+
+      throw error;
+    }
+
+    const rebuiltIndexes = {};
+
+    for (const field of INDEX_FIELDS) {
+      rebuiltIndexes[field.name] =
+        indexes[field.indexName].size;
+    }
+
+    return Object.freeze({
+      success: true,
+      version: KNOWLEDGE_LINK_INDEX_INTEGRITY_VERSION,
+      rebuiltLinks: links.size,
+      rebuiltIndexes: Object.freeze(rebuiltIndexes),
+      verification,
+    });
+  } catch (error) {
+    // Rikthejmë përmbajtjen e mëparshme të indekseve.
+    for (const field of INDEX_FIELDS) {
+      const activeIndex = indexes[field.indexName];
+
+      activeIndex.clear();
+
+      for (
+        const [value, ids] of
+        previousIndexes[field.indexName]
+      ) {
+        activeIndex.set(
+          value,
+          ids instanceof Set ? new Set(ids) : ids,
+        );
+      }
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Rikuperon automatikisht integritetin e indekseve.
+ *
+ * 1. Verifikon gjendjen fillestare.
+ * 2. Nëse indekset janë të sakta, nuk i ndryshon.
+ * 3. Nëse ka mospërputhje, rindërton indekset.
+ * 4. Verifikon gjendjen përfundimtare.
+ * 5. Kthen raport të plotë të procesit.
+ *
+ * Gabimet e validimit të koleksionit kryesor
+ * propagohen, sepse koleksioni kryesor është burimi
+ * autoritativ dhe nuk duhet të korrigjohet automatikisht.
+ */
+export function recoverKnowledgeLinkIndexes({
+  links,
+  indexes,
+} = {}) {
+  const before = verifyKnowledgeLinkIndexes({
+    links,
+    indexes,
   });
+
+  // Nuk nevojitet rikuperim.
+  if (before.valid) {
+    return Object.freeze({
+      success: true,
+      recovered: false,
+      version: KNOWLEDGE_LINK_INDEX_INTEGRITY_VERSION,
+      before,
+      after: before,
+      rebuild: null,
+    });
+  }
+
+  try {
+    const rebuild = rebuildKnowledgeLinkIndexes({
+      links,
+      indexes,
+    });
+
+    const after = verifyKnowledgeLinkIndexes({
+      links,
+      indexes,
+    });
+
+    if (!after.valid) {
+      return Object.freeze({
+        success: false,
+        recovered: false,
+        version: KNOWLEDGE_LINK_INDEX_INTEGRITY_VERSION,
+        before,
+        after,
+        rebuild,
+        error: Object.freeze({
+          code: "KNOWLEDGE_LINK_INDEX_RECOVERY_FAILED",
+          message:
+            "Index integrity could not be restored.",
+        }),
+      });
+    }
+
+    return Object.freeze({
+      success: true,
+      recovered: true,
+      version: KNOWLEDGE_LINK_INDEX_INTEGRITY_VERSION,
+      before,
+      after,
+      rebuild,
+    });
+  } catch (error) {
+    return Object.freeze({
+      success: false,
+      recovered: false,
+      version: KNOWLEDGE_LINK_INDEX_INTEGRITY_VERSION,
+      before,
+      after: null,
+      rebuild: null,
+      error: Object.freeze({
+        code:
+          error.code ??
+          "KNOWLEDGE_LINK_INDEX_RECOVERY_FAILED",
+        message: error.message,
+      }),
+    });
+  }
 }
