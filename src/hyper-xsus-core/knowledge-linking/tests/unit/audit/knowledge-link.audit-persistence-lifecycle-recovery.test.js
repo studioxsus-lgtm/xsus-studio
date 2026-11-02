@@ -252,12 +252,18 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
       signalSaveStarted = resolve;
     });
 
+    const originalSaveHistory =
+      storage.saveHistory.getMockImplementation();
+
     storage.saveHistory.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
+      async (history) => {
+        await new Promise((resolve) => {
           releaseSave = resolve;
           signalSaveStarted();
-        }),
+        });
+
+        return originalSaveHistory(history);
+      },
     );
 
     const persistence = await createInitializedPersistence(storage);
