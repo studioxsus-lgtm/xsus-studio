@@ -5,7 +5,8 @@ export default defineConfig({
     environment: 'node',
 
     include: [
-      'tests/**/*.test.js'
+      'tests/**/*.test.js',
+      'src/hyper-xsus-core/**/*.test.js'
     ],
 
     exclude: [
