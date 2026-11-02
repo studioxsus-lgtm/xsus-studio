@@ -1,6 +1,6 @@
 /**
  * XSUS Hyper Core — KnowledgeLink Index Integrity Manager
- * Version: 1.1.0
+ * Version: 1.0.0
  *
  * Përgjegjësitë:
  * - Verifikimi i integritetit të indekseve.
@@ -12,7 +12,7 @@
  * - Ruajtja e koleksionit kryesor dhe API-ve ekzistuese.
  */
 
-export const KNOWLEDGE_LINK_INDEX_INTEGRITY_VERSION = "1.1.0";
+export const KNOWLEDGE_LINK_INDEX_INTEGRITY_VERSION = "1.0.0";
 
 const INDEX_FIELDS = Object.freeze([
   Object.freeze({
@@ -105,12 +105,21 @@ function assertAuditTrail(auditTrail) {
   }
 }
 
+/**
+ * Auditimi është ndihmës:
+ * dështimi i tij nuk ndryshon rezultatin e operacionit
+ * kryesor të integritetit.
+ */
 function recordAuditEvent(auditTrail, event) {
   if (!auditTrail) {
     return null;
   }
 
-  return auditTrail.addEvent(event);
+  try {
+    return auditTrail.addEvent(event);
+  } catch {
+    return null;
+  }
 }
 
 function createEmptyReport() {
@@ -187,6 +196,7 @@ function verifySingleIndex(links, index, field, report) {
     expectedIds.add(id);
   }
 
+  // Hyrjet që mungojnë.
   for (const [value, expectedIds] of expectedEntries) {
     const actualIds = index.get(value);
 
@@ -201,6 +211,7 @@ function verifySingleIndex(links, index, field, report) {
     }
   }
 
+  // Hyrjet e tepërta dhe të pavlefshme.
   for (const [value, actualIds] of index) {
     if (!(actualIds instanceof Set)) {
       report.invalidEntries.push({
@@ -252,8 +263,18 @@ function buildIndexMaps(links) {
   const stagedIndexes = createIndexMaps();
 
   for (const [id, link] of links) {
-    addToIndex(stagedIndexes.sourceIdIndex, link.sourceId, id);
-    addToIndex(stagedIndexes.targetIdIndex, link.targetId, id);
+    addToIndex(
+      stagedIndexes.sourceIdIndex,
+      link.sourceId,
+      id,
+    );
+
+    addToIndex(
+      stagedIndexes.targetIdIndex,
+      link.targetId,
+      id,
+    );
+
     addToIndex(
       stagedIndexes.relationTypeIndex,
       link.relationType,
@@ -269,6 +290,7 @@ function verifyIndexesWithoutAudit({ links, indexes }) {
   assertIndexes(indexes);
 
   const report = createEmptyReport();
+
   report.checkedLinks = links.size;
 
   for (const field of INDEX_FIELDS) {
@@ -291,6 +313,9 @@ function verifyIndexesWithoutAudit({ links, indexes }) {
 /**
  * Verifikon integritetin.
  * auditTrail është opsional.
+ *
+ * Operacioni i verifikimit mbetet vetëm-lexues
+ * ndaj koleksionit dhe indekseve.
  */
 export function verifyKnowledgeLinkIndexes({
   links,
@@ -312,7 +337,8 @@ export function verifyKnowledgeLinkIndexes({
       status: "failure",
       details: {
         errorCode:
-          error.code ?? "KNOWLEDGE_LINK_INDEX_VERIFICATION_FAILED",
+          error.code ??
+          "KNOWLEDGE_LINK_INDEX_VERIFICATION_FAILED",
         message: error.message,
       },
     });
@@ -338,7 +364,12 @@ export function verifyKnowledgeLinkIndexes({
 
 /**
  * Rindërton indekset nga koleksioni kryesor.
- * Koleksioni kryesor nuk ndryshohet.
+ *
+ * Indekset përgatiten dhe verifikohen përpara
+ * ndryshimit të indekseve aktive.
+ *
+ * Koleksioni kryesor nuk modifikohet.
+ * Objektet Map aktive ruhen.
  */
 export function rebuildKnowledgeLinkIndexes({
   links,
@@ -363,12 +394,15 @@ export function rebuildKnowledgeLinkIndexes({
         "KnowledgeLink index reconstruction failed.",
       );
 
-      error.code = "KNOWLEDGE_LINK_INDEX_REBUILD_FAILED";
+      error.code =
+        "KNOWLEDGE_LINK_INDEX_REBUILD_FAILED";
+
       error.details = stagedVerification;
 
       throw error;
     }
 
+    // Snapshot i gjendjes ekzistuese.
     const previousIndexes = {};
 
     for (const field of INDEX_FIELDS) {
@@ -383,6 +417,7 @@ export function rebuildKnowledgeLinkIndexes({
     }
 
     try {
+      // Zëvendësimi i përmbajtjes së indekseve.
       for (const field of INDEX_FIELDS) {
         const activeIndex = indexes[field.indexName];
         const stagedIndex = stagedIndexes[field.indexName];
@@ -427,6 +462,7 @@ export function rebuildKnowledgeLinkIndexes({
         verification,
       });
 
+      // Regjistrimi bëhet pas përfundimit të rindërtimit.
       recordAuditEvent(auditTrail, {
         type: "rebuild",
         status: "success",
@@ -464,7 +500,8 @@ export function rebuildKnowledgeLinkIndexes({
       status: "failure",
       details: {
         errorCode:
-          error.code ?? "KNOWLEDGE_LINK_INDEX_REBUILD_FAILED",
+          error.code ??
+          "KNOWLEDGE_LINK_INDEX_REBUILD_FAILED",
         message: error.message,
       },
     });
@@ -475,6 +512,12 @@ export function rebuildKnowledgeLinkIndexes({
 
 /**
  * Rikuperon automatikisht integritetin e indekseve.
+ *
+ * 1. Verifikon gjendjen fillestare.
+ * 2. Nëse indekset janë të sakta, nuk i ndryshon.
+ * 3. Nëse ka mospërputhje, rindërton indekset.
+ * 4. Verifikon gjendjen përfundimtare.
+ * 5. Kthen raportin para dhe pas rikuperimit.
  */
 export function recoverKnowledgeLinkIndexes({
   links,
@@ -483,11 +526,28 @@ export function recoverKnowledgeLinkIndexes({
 } = {}) {
   assertAuditTrail(auditTrail);
 
-  const before = verifyKnowledgeLinkIndexes({
-    links,
-    indexes,
-    auditTrail,
-  });
+  let before;
+
+  try {
+    before = verifyKnowledgeLinkIndexes({
+      links,
+      indexes,
+      auditTrail,
+    });
+  } catch (error) {
+    recordAuditEvent(auditTrail, {
+      type: "recovery",
+      status: "failure",
+      details: {
+        errorCode:
+          error.code ??
+          "KNOWLEDGE_LINK_INDEX_RECOVERY_FAILED",
+        message: error.message,
+      },
+    });
+
+    throw error;
+  }
 
   if (before.valid) {
     const result = Object.freeze({
@@ -535,7 +595,8 @@ export function recoverKnowledgeLinkIndexes({
         rebuild,
         error: Object.freeze({
           code: "KNOWLEDGE_LINK_INDEX_RECOVERY_FAILED",
-          message: "Index integrity could not be restored.",
+          message:
+            "Index integrity could not be restored.",
         }),
       });
 
