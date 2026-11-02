@@ -3,10 +3,11 @@
  * Version: 1.0.0
  *
  * Përgjegjësitë:
- * - Rikthimi i historikut të auditimit nga storage.
+ * - Rikthimi i historikut nga storage.
  * - Ruajtja e ID-ve dhe timestamp-eve origjinale.
  * - Ruajtja e ndryshimeve në mënyrë të serializuar.
- * - Parandalimi i humbjes së ndryshimeve nga shkrimet paralele.
+ * - Rikuperimi i radhës pas dështimeve të storage-it.
+ * - Parandalimi i humbjes së ndryshimeve në RAM.
  * - Ofrimi i një API asinkrone për Audit Trail.
  */
 
@@ -120,6 +121,10 @@ function validateHistory(history) {
   }
 }
 
+function createDefaultEventId(sequence, timestamp) {
+  return `knowledge-link-audit-${timestamp}-${sequence}`;
+}
+
 export async function createKnowledgeLinkAuditPersistence(options = {}) {
   assertPlainObject(options, "options");
 
@@ -161,8 +166,9 @@ export async function createKnowledgeLinkAuditPersistence(options = {}) {
   validateHistory(loadedHistory);
 
   const history = loadedHistory.slice(-maxEvents);
+  const restoreIds = history.map((event) => event.id);
 
-  let pendingIds = [];
+  let restoreIndex = 0;
   let closed = false;
   let persistenceQueue = Promise.resolve();
   let lastPersistenceError = null;
@@ -170,24 +176,19 @@ export async function createKnowledgeLinkAuditPersistence(options = {}) {
   const auditTrail = createKnowledgeLinkAuditTrail({
     maxEvents,
 
-    idGenerator() {
-      const id = pendingIds.shift();
-
-      if (id === undefined) {
-        throw createPersistenceError(
-          "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_RESTORE_ID_MISSING",
-          "Nuk u gjet ID-ja origjinale gjatë rikthimit.",
-        );
+    idGenerator({ sequence, timestamp }) {
+      if (restoreIndex < restoreIds.length) {
+        const id = restoreIds[restoreIndex];
+        restoreIndex += 1;
+        return id;
       }
 
-      return id;
+      return createDefaultEventId(sequence, timestamp);
     },
   });
 
   try {
     for (const event of history) {
-      pendingIds.push(event.id);
-
       auditTrail.addEvent({
         type: event.type,
         status: event.status,
@@ -205,7 +206,7 @@ export async function createKnowledgeLinkAuditPersistence(options = {}) {
     );
   }
 
-  if (pendingIds.length !== 0) {
+  if (restoreIndex !== restoreIds.length) {
     auditTrail.close();
 
     throw createPersistenceError(
@@ -233,24 +234,30 @@ export async function createKnowledgeLinkAuditPersistence(options = {}) {
   }
 
   function enqueueSave() {
+    assertOpen();
+
     const snapshot = getSnapshot();
 
-    persistenceQueue = persistenceQueue.then(async () => {
-      try {
-        await storage.saveHistory(cloneHistory(snapshot));
-        lastPersistenceError = null;
-      } catch (cause) {
-        lastPersistenceError = cause;
+    const operation = persistenceQueue
+      .catch(() => undefined)
+      .then(async () => {
+        try {
+          await storage.saveHistory(cloneHistory(snapshot));
+          lastPersistenceError = null;
+        } catch (cause) {
+          lastPersistenceError = cause;
 
-        throw createPersistenceError(
-          "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_SAVE_FAILED",
-          "Ruajtja e historikut të auditimit dështoi.",
-          cause,
-        );
-      }
-    });
+          throw createPersistenceError(
+            "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_SAVE_FAILED",
+            "Ruajtja e historikut të auditimit dështoi.",
+            cause,
+          );
+        }
+      });
 
-    return persistenceQueue;
+    persistenceQueue = operation;
+
+    return operation;
   }
 
   async function addEvent(input) {
@@ -276,7 +283,11 @@ export async function createKnowledgeLinkAuditPersistence(options = {}) {
   async function flush() {
     assertOpen();
 
-    await persistenceQueue;
+    try {
+      await persistenceQueue;
+    } catch (cause) {
+      throw cause;
+    }
 
     return Object.freeze({
       success: true,
