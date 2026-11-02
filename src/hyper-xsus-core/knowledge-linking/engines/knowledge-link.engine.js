@@ -1,9 +1,10 @@
 /**
  * XSUS Hyper Core — KnowledgeLink Engine
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Përgjegjësitë:
  * - Krijimi dhe validimi i KnowledgeLink.
+ * - Zbatimi i KnowledgeLink Policy.
  * - Ruajtja e lidhjeve në memorien e engine-it.
  * - Kërkimi përmes Resolver.
  * - Përpunimi i strategjive të kërkimit.
@@ -26,7 +27,12 @@ import {
   createKnowledgeLinkStrategy,
 } from "../strategies/knowledge-link.strategy.js";
 
-export const KNOWLEDGE_LINK_ENGINE_VERSION = "1.0.0";
+import {
+  createKnowledgeLinkPolicy,
+  evaluateKnowledgeLinkPolicy,
+} from "../policies/knowledge-link.policy.js";
+
+export const KNOWLEDGE_LINK_ENGINE_VERSION = "1.1.0";
 
 function requireNonEmptyString(value, field) {
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -43,6 +49,17 @@ function createResult(links) {
   });
 }
 
+function createPolicyError(evaluation) {
+  const error = new Error(
+    "KnowledgeLink was rejected by policy.",
+  );
+
+  error.code = "KNOWLEDGE_LINK_ENGINE_POLICY_REJECTED";
+  error.details = evaluation.reasons;
+
+  return error;
+}
+
 export function createKnowledgeLinkEngine(options = {}) {
   if (
     options === null ||
@@ -51,6 +68,10 @@ export function createKnowledgeLinkEngine(options = {}) {
   ) {
     throw new TypeError("Engine options must be an object.");
   }
+
+  const policy = createKnowledgeLinkPolicy(
+    options.policy ?? {},
+  );
 
   const links = new Map();
   let closed = false;
@@ -61,9 +82,7 @@ export function createKnowledgeLinkEngine(options = {}) {
     }
   }
 
-  function addLink(input) {
-    assertOpen();
-
+  function prepareLink(input) {
     const link = createKnowledgeLink(input);
     const validation = validateKnowledgeLink(link);
 
@@ -78,15 +97,36 @@ export function createKnowledgeLinkEngine(options = {}) {
       throw error;
     }
 
-    if (links.has(link.id)) {
+    const evaluation = evaluateKnowledgeLinkPolicy(
+      link,
+      policy,
+    );
+
+    if (!evaluation.allowed) {
+      throw createPolicyError(evaluation);
+    }
+
+    return link;
+  }
+
+  function assertUniqueId(id) {
+    if (links.has(id)) {
       const error = new Error(
-        `KnowledgeLink already exists: ${link.id}.`,
+        `KnowledgeLink already exists: ${id}.`,
       );
 
       error.code = "KNOWLEDGE_LINK_ENGINE_DUPLICATE_ID";
 
       throw error;
     }
+  }
+
+  function addLink(input) {
+    assertOpen();
+
+    const link = prepareLink(input);
+
+    assertUniqueId(link.id);
 
     links.set(link.id, link);
 
@@ -100,38 +140,13 @@ export function createKnowledgeLinkEngine(options = {}) {
       throw new TypeError("inputs must be an array.");
     }
 
-    // Validimi dhe kontrolli i ID-ve kryhen para mutacionit.
-    const prepared = inputs.map((input) => {
-      const link = createKnowledgeLink(input);
-      const validation = validateKnowledgeLink(link);
-
-      if (!validation.valid) {
-        const error = new Error(
-          "KnowledgeLink validation failed.",
-        );
-
-        error.code = "KNOWLEDGE_LINK_ENGINE_VALIDATION_FAILED";
-        error.details = validation.errors;
-
-        throw error;
-      }
-
-      if (links.has(link.id)) {
-        const error = new Error(
-          `KnowledgeLink already exists: ${link.id}.`,
-        );
-
-        error.code = "KNOWLEDGE_LINK_ENGINE_DUPLICATE_ID";
-
-        throw error;
-      }
-
-      return link;
-    });
-
+    // Përgatitja dhe kontrollet kryhen para çdo mutacioni.
+    const prepared = inputs.map(prepareLink);
     const batchIds = new Set();
 
     for (const link of prepared) {
+      assertUniqueId(link.id);
+
       if (batchIds.has(link.id)) {
         const error = new Error(
           `Duplicate ID in batch: ${link.id}.`,
@@ -145,6 +160,7 @@ export function createKnowledgeLinkEngine(options = {}) {
       batchIds.add(link.id);
     }
 
+    // Ruajtja ndodh vetëm pasi i gjithë grupi kalon kontrollet.
     for (const link of prepared) {
       links.set(link.id, link);
     }
@@ -228,6 +244,7 @@ export function createKnowledgeLinkEngine(options = {}) {
       version: KNOWLEDGE_LINK_ENGINE_VERSION,
       closed,
       size: links.size,
+      policyVersion: policy.version,
     });
   }
 
