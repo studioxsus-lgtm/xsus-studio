@@ -55,7 +55,10 @@ function createIndexes(links) {
 function createHealthyState() {
   const links = new Map([
     ["link-1", createLink("link-1", "node-a", "node-b")],
-    ["link-2", createLink("link-2", "node-c", "node-d", "depends_on")],
+    [
+      "link-2",
+      createLink("link-2", "node-c", "node-d", "depends_on"),
+    ],
   ]);
 
   return {
@@ -70,7 +73,9 @@ function snapshotIndexes(indexes) {
       name,
       [...index.entries()]
         .map(([key, ids]) => [key, [...ids].sort()])
-        .sort(([a], [b]) => String(a).localeCompare(String(b))),
+        .sort(([a], [b]) =>
+          String(a).localeCompare(String(b)),
+        ),
     ]),
   );
 }
@@ -91,7 +96,7 @@ describe("XSUS Hyper Core — Index Integrity Contract", () => {
     expect(result).toMatchObject({
       valid: true,
       checkedLinks: 2,
-      checkedIndexes: 6,
+      checkedIndexes: 3,
       missingEntries: [],
       staleEntries: [],
       invalidEntries: [],
@@ -135,8 +140,15 @@ describe("XSUS Hyper Core — Index Integrity Contract", () => {
       KNOWLEDGE_LINK_INDEX_INTEGRITY_VERSION,
     );
     expect(result.rebuiltLinks).toBe(2);
-    expect(result.rebuiltIndexes).toBe(3);
+
+    expect(result.rebuiltIndexes).toEqual({
+      sourceId: 2,
+      targetId: 2,
+      relationType: 2,
+    });
+
     expect(result.verification.valid).toBe(true);
+
     expect(
       verifyKnowledgeLinkIndexes({ links, indexes }).valid,
     ).toBe(true);
