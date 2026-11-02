@@ -10,6 +10,7 @@
  * - Përpunimi semantik i strategjive të kërkimit.
  * - Indeksimi sipas sourceId, targetId dhe relationType.
  * - Ruajtja e rendit të futjes.
+ * - Verifikimi dhe rindërtimi i indekseve.
  * - Menaxhimi i ciklit jetësor të lidhjeve.
  */
 
@@ -34,11 +35,21 @@ import {
   evaluateKnowledgeLinkPolicy,
 } from "../policies/knowledge-link.policy.js";
 
+import {
+  verifyKnowledgeLinkIndexes,
+  rebuildKnowledgeLinkIndexes,
+} from "./knowledge-link.index-integrity.js";
+
 export const KNOWLEDGE_LINK_ENGINE_VERSION = "1.1.0";
 
 function requireNonEmptyString(value, field) {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    throw new TypeError(`${field} must be a non-empty string.`);
+  if (
+    typeof value !== "string" ||
+    value.trim().length === 0
+  ) {
+    throw new TypeError(
+      `${field} must be a non-empty string.`,
+    );
   }
 
   return value.trim();
@@ -68,7 +79,9 @@ export function createKnowledgeLinkEngine(options = {}) {
     typeof options !== "object" ||
     Array.isArray(options)
   ) {
-    throw new TypeError("Engine options must be an object.");
+    throw new TypeError(
+      "Engine options must be an object.",
+    );
   }
 
   const policy = createKnowledgeLinkPolicy(
@@ -85,13 +98,15 @@ export function createKnowledgeLinkEngine(options = {}) {
 
   // Pozicioni i secilës lidhje në rendin e futjes.
   const insertionOrder = new Map();
-  let nextInsertionOrder = 0;
 
+  let nextInsertionOrder = 0;
   let closed = false;
 
   function assertOpen() {
     if (closed) {
-      throw new Error("KnowledgeLink Engine is closed.");
+      throw new Error(
+        "KnowledgeLink Engine is closed.",
+      );
     }
   }
 
@@ -104,7 +119,9 @@ export function createKnowledgeLinkEngine(options = {}) {
         "KnowledgeLink validation failed.",
       );
 
-      error.code = "KNOWLEDGE_LINK_ENGINE_VALIDATION_FAILED";
+      error.code =
+        "KNOWLEDGE_LINK_ENGINE_VALIDATION_FAILED";
+
       error.details = validation.errors;
 
       throw error;
@@ -128,7 +145,8 @@ export function createKnowledgeLinkEngine(options = {}) {
         `KnowledgeLink already exists: ${id}.`,
       );
 
-      error.code = "KNOWLEDGE_LINK_ENGINE_DUPLICATE_ID";
+      error.code =
+        "KNOWLEDGE_LINK_ENGINE_DUPLICATE_ID";
 
       throw error;
     }
@@ -311,7 +329,8 @@ export function createKnowledgeLinkEngine(options = {}) {
   }
 
   function findCandidateLinks(filters = {}) {
-    const candidateIds = getIndexedCandidateIds(filters);
+    const candidateIds =
+      getIndexedCandidateIds(filters);
 
     return getOrderedCandidateLinks(candidateIds);
   }
@@ -321,6 +340,40 @@ export function createKnowledgeLinkEngine(options = {}) {
       findCandidateLinks(filters),
       filters,
     );
+  }
+
+  /**
+   * Kontrollon integritetin e indekseve.
+   * Operacioni nuk ndryshon gjendjen e Engine.
+   */
+  function verifyIndexIntegrity() {
+    assertOpen();
+
+    return verifyKnowledgeLinkIndexes({
+      links,
+      indexes: {
+        sourceIdIndex,
+        targetIdIndex,
+        relationTypeIndex,
+      },
+    });
+  }
+
+  /**
+   * Rindërton indekset nga koleksioni kryesor.
+   * Koleksioni kryesor dhe rendi i futjes ruhen.
+   */
+  function rebuildIndexes() {
+    assertOpen();
+
+    return rebuildKnowledgeLinkIndexes({
+      links,
+      indexes: {
+        sourceIdIndex,
+        targetIdIndex,
+        relationTypeIndex,
+      },
+    });
   }
 
   function addLink(input) {
@@ -339,7 +392,9 @@ export function createKnowledgeLinkEngine(options = {}) {
     assertOpen();
 
     if (!Array.isArray(inputs)) {
-      throw new TypeError("inputs must be an array.");
+      throw new TypeError(
+        "inputs must be an array.",
+      );
     }
 
     // Përgatitja kryhet përpara çdo mutacioni.
@@ -363,8 +418,8 @@ export function createKnowledgeLinkEngine(options = {}) {
       batchIds.add(link.id);
     }
 
-    // Ruajtja kryhet vetëm pasi i gjithë grupi
-    // kalon kontrollet.
+    // Ruajtja fillon vetëm pasi i gjithë grupi
+    // kalon validimin dhe kontrollet e dublikimit.
     for (const link of prepared) {
       storeLink(link);
     }
@@ -375,7 +430,10 @@ export function createKnowledgeLinkEngine(options = {}) {
   function getLinkById(id) {
     assertOpen();
 
-    const normalizedId = requireNonEmptyString(id, "id");
+    const normalizedId = requireNonEmptyString(
+      id,
+      "id",
+    );
 
     return links.get(normalizedId) ?? null;
   }
@@ -394,8 +452,8 @@ export function createKnowledgeLinkEngine(options = {}) {
 
   /**
    * Çdo strategji kthen rezultatet e saj përfundimtare.
-   * Nuk duhet të riaplikohen filtrat origjinalë pas
-   * zgjidhjes semantike të drejtimit.
+   * Filtrat origjinalë nuk riaplikohen pas zgjidhjes
+   * semantike të drejtimit.
    */
   function resolveStrategyLinks(strategy) {
     const filters = { ...strategy.filters };
@@ -433,9 +491,8 @@ export function createKnowledgeLinkEngine(options = {}) {
           return resolveIndexedFilters(filters);
         }
 
-        const forwardResult = resolveIndexedFilters(
-          filters,
-        );
+        const forwardResult =
+          resolveIndexedFilters(filters);
 
         const reverseFilters = {
           ...filters,
@@ -443,9 +500,12 @@ export function createKnowledgeLinkEngine(options = {}) {
           targetId: filters.sourceId,
         };
 
-        const reverseResult = resolveIndexedFilters(
-          reverseFilters,
-        );
+        // Drejtimi i kundërt nuk duhet të humbasë
+        // lidhjet vetëm sepse kanë relationType tjetër.
+        delete reverseFilters.relationType;
+
+        const reverseResult =
+          resolveIndexedFilters(reverseFilters);
 
         const matchingIds = new Set([
           ...forwardResult.links.map(
@@ -456,8 +516,7 @@ export function createKnowledgeLinkEngine(options = {}) {
           ),
         ]);
 
-        // Bashkon të dy drejtimet pa dublikime
-        // dhe ruan rendin e koleksionit kryesor.
+        // Bashkim pa dublikime, në rendin origjinal.
         const orderedResults = [
           ...links.values(),
         ].filter(
@@ -479,17 +538,17 @@ export function createKnowledgeLinkEngine(options = {}) {
   function searchByStrategy(input) {
     assertOpen();
 
-    const strategy = createKnowledgeLinkStrategy(input);
+    const strategy =
+      createKnowledgeLinkStrategy(input);
 
-    // Rezultati është tashmë i filtruar sipas
-    // semantikës së strategjisë.
     let result = resolveStrategyLinks(strategy);
 
     if (strategy.minimumConfidence !== null) {
       result = createResult(
         result.links.filter(
           (link) =>
-            link.confidence >= strategy.minimumConfidence,
+            link.confidence >=
+            strategy.minimumConfidence,
         ),
       );
     }
@@ -506,14 +565,17 @@ export function createKnowledgeLinkEngine(options = {}) {
   function removeLink(id) {
     assertOpen();
 
-    const normalizedId = requireNonEmptyString(id, "id");
+    const normalizedId = requireNonEmptyString(
+      id,
+      "id",
+    );
+
     const link = links.get(normalizedId);
 
     if (!link) {
       return false;
     }
 
-    // Përditësojmë indekset dhe koleksionin.
     unindexLink(link);
     links.delete(normalizedId);
 
@@ -585,6 +647,8 @@ export function createKnowledgeLinkEngine(options = {}) {
     removeLink,
     clear,
     getStatus,
+    verifyIndexIntegrity,
+    rebuildIndexes,
     close,
   });
 }
