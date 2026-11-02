@@ -123,8 +123,10 @@ describe("XSUS Hyper Core — Audit Persistence Fault Recovery", () => {
     });
 
     expect(persistence.getStatus().persistenceFailed).toBe(true);
+
+    // Statusi ruan mesazhin origjinal të gabimit të storage-it.
     expect(persistence.getStatus().lastPersistenceError).toBe(
-      "Ruajtja e historikut të auditimit dështoi.",
+      "Storage temporarily unavailable",
     );
 
     await persistence.addEvent(createEvent(2));
