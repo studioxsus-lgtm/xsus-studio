@@ -8,7 +8,8 @@
  * - Ruajtja e lidhjeve në memorien e engine-it.
  * - Kërkimi përmes Resolver.
  * - Përpunimi semantik i strategjive të kërkimit.
- * - Indeksimi i lidhjeve sipas sourceId, targetId dhe relationType.
+ * - Indeksimi sipas sourceId, targetId dhe relationType.
+ * - Ruajtja e rendit të futjes.
  * - Menaxhimi i ciklit jetësor të lidhjeve.
  */
 
@@ -82,7 +83,7 @@ export function createKnowledgeLinkEngine(options = {}) {
   const targetIdIndex = new Map();
   const relationTypeIndex = new Map();
 
-  // Ruajtja e rendit origjinal të çdo lidhjeje.
+  // Pozicioni i secilës lidhje në rendin e futjes.
   const insertionOrder = new Map();
   let nextInsertionOrder = 0;
 
@@ -159,8 +160,18 @@ export function createKnowledgeLinkEngine(options = {}) {
   }
 
   function indexLink(link) {
-    addToIndex(sourceIdIndex, link.sourceId, link.id);
-    addToIndex(targetIdIndex, link.targetId, link.id);
+    addToIndex(
+      sourceIdIndex,
+      link.sourceId,
+      link.id,
+    );
+
+    addToIndex(
+      targetIdIndex,
+      link.targetId,
+      link.id,
+    );
+
     addToIndex(
       relationTypeIndex,
       link.relationType,
@@ -219,8 +230,7 @@ export function createKnowledgeLinkEngine(options = {}) {
 
   /**
    * Përzgjedh kandidatët përmes indekseve.
-   * Filtrat që nuk kanë indeks mbeten përgjegjësi
-   * e Resolver-it.
+   * Filtrat e tjerë kontrollohen nga Resolver.
    */
   function getIndexedCandidateIds(filters = {}) {
     const indexedFilters = [];
@@ -251,14 +261,18 @@ export function createKnowledgeLinkEngine(options = {}) {
       return new Set(links.keys());
     }
 
-    // Fillojmë me indeksin që përmban më pak kandidatë.
+    // Fillimisht përdorim indeksin më selektiv.
     indexedFilters.sort(
       (first, second) => first.size - second.size,
     );
 
     const candidates = new Set(indexedFilters[0]);
 
-    for (let index = 1; index < indexedFilters.length; index += 1) {
+    for (
+      let index = 1;
+      index < indexedFilters.length;
+      index += 1
+    ) {
       const allowedIds = indexedFilters[index];
 
       for (const id of candidates) {
@@ -276,7 +290,7 @@ export function createKnowledgeLinkEngine(options = {}) {
   }
 
   /**
-   * Rikthen kandidatët në rendin origjinal të futjes.
+   * Rikthen lidhjet në rendin origjinal të futjes.
    */
   function getOrderedCandidateLinks(candidateIds) {
     return [...candidateIds]
@@ -284,9 +298,15 @@ export function createKnowledgeLinkEngine(options = {}) {
         id,
         order: insertionOrder.get(id),
       }))
-      .filter((entry) => entry.order !== undefined)
-      .sort((first, second) => first.order - second.order)
-      .map((entry) => links.get(entry.id))
+      .filter(
+        (entry) => entry.order !== undefined,
+      )
+      .sort(
+        (first, second) => first.order - second.order,
+      )
+      .map(
+        (entry) => links.get(entry.id),
+      )
       .filter(Boolean);
   }
 
@@ -294,6 +314,13 @@ export function createKnowledgeLinkEngine(options = {}) {
     const candidateIds = getIndexedCandidateIds(filters);
 
     return getOrderedCandidateLinks(candidateIds);
+  }
+
+  function resolveIndexedFilters(filters = {}) {
+    return resolveKnowledgeLinks(
+      findCandidateLinks(filters),
+      filters,
+    );
   }
 
   function addLink(input) {
@@ -315,7 +342,7 @@ export function createKnowledgeLinkEngine(options = {}) {
       throw new TypeError("inputs must be an array.");
     }
 
-    // Përgatitja dhe kontrollet kryhen para çdo mutacioni.
+    // Përgatitja kryhet përpara çdo mutacioni.
     const prepared = inputs.map(prepareLink);
     const batchIds = new Set();
 
@@ -336,8 +363,8 @@ export function createKnowledgeLinkEngine(options = {}) {
       batchIds.add(link.id);
     }
 
-    // Mutacionet fillojnë vetëm pasi i gjithë grupi
-    // kalon validimin dhe kontrollet e dublikimit.
+    // Ruajtja kryhet vetëm pasi i gjithë grupi
+    // kalon kontrollet.
     for (const link of prepared) {
       storeLink(link);
     }
@@ -362,20 +389,20 @@ export function createKnowledgeLinkEngine(options = {}) {
   function search(filters = {}) {
     assertOpen();
 
-    const candidates = findCandidateLinks(filters);
-
-    return resolveKnowledgeLinks(
-      candidates,
-      filters,
-    );
+    return resolveIndexedFilters(filters);
   }
 
+  /**
+   * Çdo strategji kthen rezultatet e saj përfundimtare.
+   * Nuk duhet të riaplikohen filtrat origjinalë pas
+   * zgjidhjes semantike të drejtimit.
+   */
   function resolveStrategyLinks(strategy) {
     const filters = { ...strategy.filters };
 
     switch (strategy.type) {
       case "direct": {
-        return findCandidateLinks(filters);
+        return resolveIndexedFilters(filters);
       }
 
       case "reverse": {
@@ -385,13 +412,17 @@ export function createKnowledgeLinkEngine(options = {}) {
           reverseFilters.sourceId !== undefined &&
           reverseFilters.targetId !== undefined
         ) {
-          const originalSourceId = reverseFilters.sourceId;
+          const originalSourceId =
+            reverseFilters.sourceId;
 
-          reverseFilters.sourceId = reverseFilters.targetId;
-          reverseFilters.targetId = originalSourceId;
+          reverseFilters.sourceId =
+            reverseFilters.targetId;
+
+          reverseFilters.targetId =
+            originalSourceId;
         }
 
-        return findCandidateLinks(reverseFilters);
+        return resolveIndexedFilters(reverseFilters);
       }
 
       case "bidirectional": {
@@ -399,10 +430,12 @@ export function createKnowledgeLinkEngine(options = {}) {
           filters.sourceId === undefined ||
           filters.targetId === undefined
         ) {
-          return findCandidateLinks(filters);
+          return resolveIndexedFilters(filters);
         }
 
-        const forwardIds = getIndexedCandidateIds(filters);
+        const forwardResult = resolveIndexedFilters(
+          filters,
+        );
 
         const reverseFilters = {
           ...filters,
@@ -410,23 +443,35 @@ export function createKnowledgeLinkEngine(options = {}) {
           targetId: filters.sourceId,
         };
 
-        const reverseIds = getIndexedCandidateIds(
+        const reverseResult = resolveIndexedFilters(
           reverseFilters,
         );
 
         const matchingIds = new Set([
-          ...forwardIds,
-          ...reverseIds,
+          ...forwardResult.links.map(
+            (link) => link.id,
+          ),
+          ...reverseResult.links.map(
+            (link) => link.id,
+          ),
         ]);
 
-        return getOrderedCandidateLinks(matchingIds);
+        // Bashkon të dy drejtimet pa dublikime
+        // dhe ruan rendin e koleksionit kryesor.
+        const orderedResults = [
+          ...links.values(),
+        ].filter(
+          (link) => matchingIds.has(link.id),
+        );
+
+        return createResult(orderedResults);
       }
 
       case "relation":
       case "entity":
       case "combined":
       default: {
-        return findCandidateLinks(filters);
+        return resolveIndexedFilters(filters);
       }
     }
   }
@@ -436,14 +481,10 @@ export function createKnowledgeLinkEngine(options = {}) {
 
     const strategy = createKnowledgeLinkStrategy(input);
 
-    const candidates = resolveStrategyLinks(strategy);
+    // Rezultati është tashmë i filtruar sipas
+    // semantikës së strategjisë.
+    let result = resolveStrategyLinks(strategy);
 
-    let result = resolveKnowledgeLinks(
-      candidates,
-      strategy.filters,
-    );
-
-    // Filtrimi sipas besueshmërisë.
     if (strategy.minimumConfidence !== null) {
       result = createResult(
         result.links.filter(
@@ -453,7 +494,6 @@ export function createKnowledgeLinkEngine(options = {}) {
       );
     }
 
-    // Kufizimi i numrit të rezultateve.
     if (strategy.limit !== null) {
       result = createResult(
         result.links.slice(0, strategy.limit),
@@ -473,8 +513,8 @@ export function createKnowledgeLinkEngine(options = {}) {
       return false;
     }
 
+    // Përditësojmë indekset dhe koleksionin.
     unindexLink(link);
-
     links.delete(normalizedId);
 
     return true;
