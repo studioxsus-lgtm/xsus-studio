@@ -1,6 +1,6 @@
 /**
  * XSUS Hyper Core — KnowledgeLink Engine
- * Version: 1.2.0
+ * Version: 1.1.0
  *
  * Përgjegjësitë:
  * - Krijimi dhe validimi i KnowledgeLink.
@@ -32,7 +32,7 @@ import {
   evaluateKnowledgeLinkPolicy,
 } from "../policies/knowledge-link.policy.js";
 
-export const KNOWLEDGE_LINK_ENGINE_VERSION = "1.2.0";
+export const KNOWLEDGE_LINK_ENGINE_VERSION = "1.1.0";
 
 function requireNonEmptyString(value, field) {
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -284,6 +284,7 @@ export function createKnowledgeLinkEngine(options = {}) {
       allLinks,
     );
 
+    // Filtrimi sipas besueshmërisë.
     if (strategy.minimumConfidence !== null) {
       result = createResult(
         result.links.filter(
@@ -293,6 +294,7 @@ export function createKnowledgeLinkEngine(options = {}) {
       );
     }
 
+    // Kufizimi i numrit të rezultateve.
     if (strategy.limit !== null) {
       result = createResult(
         result.links.slice(0, strategy.limit),
