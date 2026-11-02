@@ -397,28 +397,34 @@ describe("KnowledgeLink Engine", () => {
     const engine = createKnowledgeLinkEngine();
 
     engine.addLinks([
-      createLink("limit-1"),
+      createLink("limit-1", {
+        sourceId: "entity-a",
+        targetId: "entity-b",
+      }),
       createLink("limit-2", {
-        sourceId: "entity-c",
-        targetId: "entity-d",
+        sourceId: "entity-a",
+        targetId: "entity-c",
       }),
       createLink("limit-3", {
-        sourceId: "entity-e",
-        targetId: "entity-f",
+        sourceId: "entity-a",
+        targetId: "entity-d",
       }),
     ]);
 
     const result = engine.searchByStrategy({
       type: "combined",
       filters: {
+        sourceId: "entity-a",
         relationType: "supports",
-        entityId: "entity-a",
       },
       limit: 2,
     });
 
     expect(result.count).toBe(2);
     expect(result.links).toHaveLength(2);
+    expect(
+      result.links.map((link) => link.id),
+    ).toEqual(["limit-1", "limit-2"]);
   });
 
   it("fshin një KnowledgeLink", () => {
