@@ -1,13 +1,13 @@
 /**
  * XSUS Hyper Core — KnowledgeLink Engine
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Përgjegjësitë:
  * - Krijimi dhe validimi i KnowledgeLink.
  * - Zbatimi i KnowledgeLink Policy.
  * - Ruajtja e lidhjeve në memorien e engine-it.
  * - Kërkimi përmes Resolver.
- * - Përpunimi i strategjive të kërkimit.
+ * - Përpunimi semantik i strategjive të kërkimit.
  * - Menaxhimi i ciklit jetësor të lidhjeve.
  */
 
@@ -32,7 +32,7 @@ import {
   evaluateKnowledgeLinkPolicy,
 } from "../policies/knowledge-link.policy.js";
 
-export const KNOWLEDGE_LINK_ENGINE_VERSION = "1.1.0";
+export const KNOWLEDGE_LINK_ENGINE_VERSION = "1.2.0";
 
 function requireNonEmptyString(value, field) {
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -191,15 +191,97 @@ export function createKnowledgeLinkEngine(options = {}) {
     );
   }
 
+  function resolveStrategyLinks(strategy, allLinks) {
+    const filters = { ...strategy.filters };
+
+    switch (strategy.type) {
+      case "direct": {
+        return resolveKnowledgeLinks(
+          allLinks,
+          filters,
+        );
+      }
+
+      case "reverse": {
+        const reverseFilters = { ...filters };
+
+        if (
+          reverseFilters.sourceId !== undefined &&
+          reverseFilters.targetId !== undefined
+        ) {
+          const originalSourceId = reverseFilters.sourceId;
+
+          reverseFilters.sourceId = reverseFilters.targetId;
+          reverseFilters.targetId = originalSourceId;
+        }
+
+        return resolveKnowledgeLinks(
+          allLinks,
+          reverseFilters,
+        );
+      }
+
+      case "bidirectional": {
+        if (
+          filters.sourceId === undefined ||
+          filters.targetId === undefined
+        ) {
+          return resolveKnowledgeLinks(
+            allLinks,
+            filters,
+          );
+        }
+
+        const forwardResult = resolveKnowledgeLinks(
+          allLinks,
+          filters,
+        );
+
+        const reverseFilters = {
+          ...filters,
+          sourceId: filters.targetId,
+          targetId: filters.sourceId,
+        };
+
+        const reverseResult = resolveKnowledgeLinks(
+          allLinks,
+          reverseFilters,
+        );
+
+        const matchingIds = new Set([
+          ...forwardResult.links.map((link) => link.id),
+          ...reverseResult.links.map((link) => link.id),
+        ]);
+
+        // Ruajmë rendin origjinal dhe shmangim dublikimet.
+        const orderedResults = allLinks.filter(
+          (link) => matchingIds.has(link.id),
+        );
+
+        return createResult(orderedResults);
+      }
+
+      case "relation":
+      case "entity":
+      case "combined":
+      default: {
+        return resolveKnowledgeLinks(
+          allLinks,
+          filters,
+        );
+      }
+    }
+  }
+
   function searchByStrategy(input) {
     assertOpen();
 
     const strategy = createKnowledgeLinkStrategy(input);
-    const filters = { ...strategy.filters };
+    const allLinks = [...links.values()];
 
-    let result = resolveKnowledgeLinks(
-      [...links.values()],
-      filters,
+    let result = resolveStrategyLinks(
+      strategy,
+      allLinks,
     );
 
     if (strategy.minimumConfidence !== null) {
