@@ -20,7 +20,7 @@ function createEvent(overrides = {}) {
 function createStorage(initialHistory = []) {
   let history = structuredClone(initialHistory);
 
-  const storage = {
+  return {
     loadHistory: vi.fn(async () => structuredClone(history)),
 
     saveHistory: vi.fn(async (nextHistory) => {
@@ -31,17 +31,13 @@ function createStorage(initialHistory = []) {
       return structuredClone(history);
     },
   };
-
-  return storage;
 }
 
 async function createInitializedPersistence(storage, options = {}) {
-  const persistence = await createKnowledgeLinkAuditPersistence({
+  return createKnowledgeLinkAuditPersistence({
     storage,
     ...options,
   });
-
-  return persistence;
 }
 
 describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
@@ -51,7 +47,6 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
 
   it("rikthen historikun dhe ruan ID-të origjinale", async () => {
     const storage = createStorage();
-
     const first = await createInitializedPersistence(storage);
 
     const original = await first.addEvent(
@@ -63,7 +58,6 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
     await first.close();
 
     const restored = await createInitializedPersistence(storage);
-
     const recovered = restored.getEventById(original.id);
 
     expect(recovered).not.toBeNull();
@@ -76,7 +70,6 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
 
   it("lejon shtimin e eventeve të reja pas restaurimit", async () => {
     const storage = createStorage();
-
     const first = await createInitializedPersistence(storage);
 
     const original = await first.addEvent(
@@ -97,23 +90,22 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
     );
 
     expect(next.id).not.toBe(original.id);
-    expect(restored.listEvents({
-      newestFirst: false,
-      limit: 10,
-    }).count).toBe(2);
+    expect(
+      restored.listEvents({
+        newestFirst: false,
+        limit: 10,
+      }).count,
+    ).toBe(2);
 
     await restored.close();
   });
 
   it("ruan rendin e eventeve pas disa cikleve restaurimi", async () => {
     const storage = createStorage();
-
     const first = await createInitializedPersistence(storage);
 
     const firstEvent = await first.addEvent(
-      createEvent({
-        details: { order: 1 },
-      }),
+      createEvent({ details: { order: 1 } }),
     );
 
     const secondEvent = await first.addEvent(
@@ -160,13 +152,10 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
 
   it("pastron historikun në RAM dhe storage", async () => {
     const storage = createStorage();
-
     const persistence = await createInitializedPersistence(storage);
 
     await persistence.addEvent(createEvent());
-    await persistence.addEvent(
-      createEvent({ type: "rebuild" }),
-    );
+    await persistence.addEvent(createEvent({ type: "rebuild" }));
 
     const result = await persistence.clear();
 
@@ -179,7 +168,6 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
 
   it("ruan gjendjen bosh pas restaurimit të një historiku të pastruar", async () => {
     const storage = createStorage();
-
     const first = await createInitializedPersistence(storage);
 
     await first.addEvent(createEvent());
@@ -229,7 +217,6 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
 
   it("ruan gjendjen përfundimtare pas pastrimit kur ruajtja paraprake dështon", async () => {
     const storage = createStorage();
-
     const persistence = await createInitializedPersistence(storage);
 
     storage.saveHistory.mockRejectedValueOnce(
@@ -259,11 +246,17 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
     const storage = createStorage();
 
     let releaseSave;
+    let signalSaveStarted;
+
+    const saveStarted = new Promise((resolve) => {
+      signalSaveStarted = resolve;
+    });
 
     storage.saveHistory.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
           releaseSave = resolve;
+          signalSaveStarted();
         }),
     );
 
@@ -271,10 +264,14 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
 
     const addOperation = persistence.addEvent(createEvent());
 
+    // Prit derisa saveHistory të ketë nisur realisht.
+    await saveStarted;
+
     const closeOperation = persistence.close();
 
     expect(persistence.getStatus().closed).toBe(false);
 
+    // Përfundo ruajtjen e eventit.
     releaseSave();
 
     await addOperation;
@@ -314,7 +311,6 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
 
   it("lejon restaurimin pas mbylljes së suksesshme", async () => {
     const storage = createStorage();
-
     const first = await createInitializedPersistence(storage);
 
     const event = await first.addEvent(
@@ -335,7 +331,6 @@ describe("XSUS Hyper Core — Audit Persistence Lifecycle & Recovery", () => {
 
   it("e trajton mbylljen e përsëritur si operacion idempotent", async () => {
     const storage = createStorage();
-
     const persistence = await createInitializedPersistence(storage);
 
     await persistence.addEvent(createEvent());
