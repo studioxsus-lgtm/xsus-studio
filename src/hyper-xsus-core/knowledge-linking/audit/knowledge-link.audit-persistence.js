@@ -8,6 +8,7 @@
  * - Ruajtja e ndryshimeve në mënyrë të serializuar.
  * - Rikuperimi i radhës pas dështimeve të storage-it.
  * - Parandalimi i humbjes së ndryshimeve në RAM.
+ * - Restaurimi eksplicit i historikut.
  * - Ofrimi i një API asinkrone për Audit Trail.
  */
 
@@ -81,26 +82,29 @@ function validateHistory(history) {
   for (const event of history) {
     assertPlainObject(event, "event");
 
-    if (
-      typeof event.id !== "string" ||
-      event.id.trim().length === 0
-    ) {
-      throw createPersistenceError(
-        "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_INVALID_EVENT_ID",
-        "Ngjarja përmban ID të pavlefshme.",
-      );
+    if (event.id !== undefined) {
+      if (
+        typeof event.id !== "string" ||
+        event.id.trim().length === 0
+      ) {
+        throw createPersistenceError(
+          "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_INVALID_EVENT_ID",
+          "Ngjarja përmban ID të pavlefshme.",
+        );
+      }
+
+      if (ids.has(event.id)) {
+        throw createPersistenceError(
+          "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_DUPLICATE_EVENT_ID",
+          "Historiku përmban ID të përsëritura.",
+        );
+      }
+
+      ids.add(event.id);
     }
 
-    if (ids.has(event.id)) {
-      throw createPersistenceError(
-        "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_DUPLICATE_EVENT_ID",
-        "Historiku përmban ID të përsëritura.",
-      );
-    }
-
-    ids.add(event.id);
-
     if (
+      event.version !== undefined &&
       event.version !== KNOWLEDGE_LINK_AUDIT_TRAIL_VERSION
     ) {
       throw createPersistenceError(
@@ -110,8 +114,11 @@ function validateHistory(history) {
     }
 
     if (
-      typeof event.timestamp !== "string" ||
-      Number.isNaN(Date.parse(event.timestamp))
+      event.timestamp !== undefined &&
+      (
+        typeof event.timestamp !== "string" ||
+        Number.isNaN(Date.parse(event.timestamp))
+      )
     ) {
       throw createPersistenceError(
         "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_INVALID_TIMESTAMP",
@@ -123,6 +130,69 @@ function validateHistory(history) {
 
 function createDefaultEventId(sequence, timestamp) {
   return `knowledge-link-audit-${timestamp}-${sequence}`;
+}
+
+function createTemporaryTrail(maxEvents) {
+  return createKnowledgeLinkAuditTrail({
+    maxEvents,
+    idGenerator({ sequence, timestamp }) {
+      return createDefaultEventId(sequence, timestamp);
+    },
+  });
+}
+
+/**
+ * Normalizon dhe verifikon historikun përpara se
+ * ai të vendoset në motorin aktiv.
+ *
+ * Ngjarjet e vjetra pa ID marrin ID të reja.
+ * Ngjarjet ekzistuese ruajnë ID-të origjinale.
+ */
+function prepareHistory(history, maxEvents) {
+  validateHistory(history);
+
+  const temporaryTrail = createTemporaryTrail(maxEvents);
+
+  try {
+    for (const event of history.slice(-maxEvents)) {
+      if (typeof event.id === "string") {
+        temporaryTrail.restoreEvent({
+          id: event.id,
+          type: event.type,
+          status: event.status,
+          timestamp: event.timestamp,
+          details: event.details ?? {},
+        });
+      } else {
+        temporaryTrail.addEvent({
+          type: event.type,
+          status: event.status,
+          timestamp: event.timestamp,
+          details: event.details ?? {},
+        });
+      }
+    }
+
+    return temporaryTrail.listEvents({
+      limit: maxEvents,
+      newestFirst: false,
+    }).events.map((event) => ({
+      id: event.id,
+      type: event.type,
+      status: event.status,
+      timestamp: event.timestamp,
+      version: event.version,
+      details: cloneHistory([event])[0].details,
+    }));
+  } catch (cause) {
+    throw createPersistenceError(
+      "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_RESTORE_FAILED",
+      "Historiku nuk mund të normalizohet ose rikthehet.",
+      cause,
+    );
+  } finally {
+    temporaryTrail.close();
+  }
 }
 
 export async function createKnowledgeLinkAuditPersistence(options = {}) {
@@ -163,57 +233,35 @@ export async function createKnowledgeLinkAuditPersistence(options = {}) {
     loadedHistory = [];
   }
 
-  validateHistory(loadedHistory);
-
-  const history = loadedHistory.slice(-maxEvents);
-  const restoreIds = history.map((event) => event.id);
-
-  let restoreIndex = 0;
-  let closed = false;
-  let persistenceQueue = Promise.resolve();
-  let lastPersistenceError = null;
+  const preparedHistory = prepareHistory(
+    loadedHistory,
+    maxEvents,
+  );
 
   const auditTrail = createKnowledgeLinkAuditTrail({
     maxEvents,
-
-    idGenerator({ sequence, timestamp }) {
-      if (restoreIndex < restoreIds.length) {
-        const id = restoreIds[restoreIndex];
-        restoreIndex += 1;
-        return id;
-      }
-
-      return createDefaultEventId(sequence, timestamp);
-    },
   });
 
   try {
-    for (const event of history) {
-      auditTrail.addEvent({
-        type: event.type,
-        status: event.status,
-        timestamp: event.timestamp,
-        details: event.details,
-      });
+    for (const event of preparedHistory) {
+      auditTrail.restoreEvent(event);
     }
   } catch (cause) {
     auditTrail.close();
 
     throw createPersistenceError(
       "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_RESTORE_FAILED",
-      "Rikthimi i historikut të auditimit dështoi.",
+      "Rikthimi fillestar i historikut dështoi.",
       cause,
     );
   }
 
-  if (restoreIndex !== restoreIds.length) {
-    auditTrail.close();
+  let restoreIndex = preparedHistory.length;
+  let closed = false;
 
-    throw createPersistenceError(
-      "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_RESTORE_INCOMPLETE",
-      "Jo të gjitha ID-të origjinale u rikthyen.",
-    );
-  }
+  let persistenceQueue = Promise.resolve();
+  let pendingOperations = 0;
+  let lastPersistenceError = null;
 
   function assertOpen() {
     if (closed) {
@@ -233,60 +281,119 @@ export async function createKnowledgeLinkAuditPersistence(options = {}) {
     return cloneHistory(result.events);
   }
 
-  function enqueueSave() {
+  /**
+   * Ekzekuton një operacion brenda radhës së përbashkët.
+   * Operacioni i ardhshëm pret përfundimin e atij paraprak,
+   * edhe në rast dështimi.
+   */
+  function schedule(operation) {
     assertOpen();
 
+    pendingOperations += 1;
+
+    const currentOperation = persistenceQueue.then(
+      async () => operation(),
+      async () => operation(),
+    );
+
+    persistenceQueue = currentOperation.then(
+      () => undefined,
+      () => undefined,
+    );
+
+    return currentOperation.finally(() => {
+      pendingOperations -= 1;
+    });
+  }
+
+  async function persistCurrentState() {
     const snapshot = getSnapshot();
 
-    const operation = persistenceQueue
-      .catch(() => undefined)
-      .then(async () => {
-        try {
-          await storage.saveHistory(cloneHistory(snapshot));
-          lastPersistenceError = null;
-        } catch (cause) {
-          lastPersistenceError = cause;
+    try {
+      await storage.saveHistory(cloneHistory(snapshot));
 
-          throw createPersistenceError(
-            "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_SAVE_FAILED",
-            "Ruajtja e historikut të auditimit dështoi.",
-            cause,
-          );
-        }
-      });
+      lastPersistenceError = null;
+    } catch (cause) {
+      lastPersistenceError = cause;
 
-    persistenceQueue = operation;
-
-    return operation;
+      throw createPersistenceError(
+        "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_SAVE_FAILED",
+        "Ruajtja e historikut të auditimit dështoi.",
+        cause,
+      );
+    }
   }
 
   async function addEvent(input) {
-    assertOpen();
+    return schedule(async () => {
+      const event = auditTrail.addEvent(input);
 
-    const event = auditTrail.addEvent(input);
+      await persistCurrentState();
 
-    await enqueueSave();
-
-    return event;
+      return event;
+    });
   }
 
   async function clear() {
-    assertOpen();
+    return schedule(async () => {
+      const result = auditTrail.clear();
 
-    const result = auditTrail.clear();
+      await persistCurrentState();
 
-    await enqueueSave();
+      return result;
+    });
+  }
 
-    return result;
+  async function restore() {
+    return schedule(async () => {
+      let history;
+
+      try {
+        history = await storage.loadHistory();
+      } catch (cause) {
+        throw createPersistenceError(
+          "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_LOAD_FAILED",
+          "Rikthimi nga storage dështoi.",
+          cause,
+        );
+      }
+
+      if (history === null || history === undefined) {
+        history = [];
+      }
+
+      // Përgatitja bëhet përpara ndryshimit të RAM-it.
+      const prepared = prepareHistory(history, maxEvents);
+
+      // Vetëm pas validimit të plotë ndryshohet gjendja aktive.
+      auditTrail.clear();
+
+      for (const event of prepared) {
+        auditTrail.restoreEvent(event);
+      }
+
+      restoreIndex = prepared.length;
+      lastPersistenceError = null;
+
+      return Object.freeze({
+        success: true,
+        restoredEvents: prepared.length,
+        eventCount: auditTrail.getStatus().eventCount,
+      });
+    });
   }
 
   async function flush() {
     assertOpen();
 
-    try {
-      await persistenceQueue;
-    } catch (cause) {
-      throw cause;
+    await persistenceQueue;
+
+    if (lastPersistenceError !== null) {
+      throw createPersistenceError(
+        "KNOWLEDGE_LINK_AUDIT_PERSISTENCE_SAVE_FAILED",
+        "Ekziston një ruajtje e fundit e pasuksesshme.",
+        lastPersistenceError,
+      );
     }
 
     return Object.freeze({
@@ -320,7 +427,7 @@ export async function createKnowledgeLinkAuditPersistence(options = {}) {
       initialized: true,
       eventCount: engineStatus.eventCount,
       maxEvents,
-      persistencePending: false,
+      persistencePending: pendingOperations > 0,
       persistenceFailed: lastPersistenceError !== null,
       lastPersistenceError: lastPersistenceError
         ? lastPersistenceError.message
@@ -355,6 +462,7 @@ export async function createKnowledgeLinkAuditPersistence(options = {}) {
     listEvents,
     searchEvents,
     clear,
+    restore,
     flush,
     getStatus,
     close,
