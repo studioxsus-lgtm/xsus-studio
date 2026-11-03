@@ -1,5 +1,5 @@
 
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   KNOWLEDGE_LINK_AUDIT_EVENT_TYPES,
@@ -17,9 +17,7 @@ describe("Knowledge Link Audit Trail — Configuration", () => {
     const trail = createKnowledgeLinkAuditTrail();
     const status = trail.getStatus();
 
-    expect(status.version).toBe(
-      KNOWLEDGE_LINK_AUDIT_TRAIL_VERSION,
-    );
+    expect(status.version).toBe(KNOWLEDGE_LINK_AUDIT_TRAIL_VERSION);
     expect(status.closed).toBe(false);
     expect(status.eventCount).toBe(0);
     expect(status.maxEvents).toBe(1000);
@@ -32,14 +30,9 @@ describe("Knowledge Link Audit Trail — Configuration", () => {
   });
 
   it("refuzon options që nuk janë objekt i vlefshëm", () => {
-    expect(() => createKnowledgeLinkAuditTrail(null))
-      .toThrow();
-
-    expect(() => createKnowledgeLinkAuditTrail([]))
-      .toThrow();
-
-    expect(() => createKnowledgeLinkAuditTrail(new Date()))
-      .toThrow();
+    expect(() => createKnowledgeLinkAuditTrail(null)).toThrow();
+    expect(() => createKnowledgeLinkAuditTrail([])).toThrow();
+    expect(() => createKnowledgeLinkAuditTrail(new Date())).toThrow();
   });
 
   it.each([0, -1, 1.5, "10", null])(
@@ -52,26 +45,19 @@ describe("Knowledge Link Audit Trail — Configuration", () => {
   );
 
   it("pranon maxEvents pozitiv", () => {
-    const trail = createKnowledgeLinkAuditTrail({
-      maxEvents: 5,
-    });
-
+    const trail = createKnowledgeLinkAuditTrail({ maxEvents: 5 });
     expect(trail.getStatus().maxEvents).toBe(5);
   });
 
   it("refuzon idGenerator që nuk është funksion", () => {
     expect(() =>
-      createKnowledgeLinkAuditTrail({
-        idGenerator: "invalid",
-      }),
+      createKnowledgeLinkAuditTrail({ idGenerator: "invalid" }),
     ).toThrow();
   });
 
   it("refuzon clock që nuk është funksion", () => {
     expect(() =>
-      createKnowledgeLinkAuditTrail({
-        clock: "invalid",
-      }),
+      createKnowledgeLinkAuditTrail({ clock: "invalid" }),
     ).toThrow();
   });
 });
@@ -91,9 +77,7 @@ describe("Knowledge Link Audit Trail — Event Creation", () => {
     const event = trail.addEvent({
       type: "verification",
       status: "success",
-      details: {
-        source: "unit-test",
-      },
+      details: { source: "unit-test" },
     });
 
     expect(event).toMatchObject({
@@ -101,9 +85,7 @@ describe("Knowledge Link Audit Trail — Event Creation", () => {
       status: "success",
       timestamp,
       version: KNOWLEDGE_LINK_AUDIT_TRAIL_VERSION,
-      details: {
-        source: "unit-test",
-      },
+      details: { source: "unit-test" },
     });
 
     expect(event.id).toBeTruthy();
@@ -251,9 +233,7 @@ describe("Knowledge Link Audit Trail — Event Creation", () => {
       trail.addEvent({
         type: "verification",
         status: "success",
-        details: {
-          invalid: undefined,
-        },
+        details: { invalid: undefined },
       }),
     ).toThrow();
 
@@ -261,9 +241,7 @@ describe("Knowledge Link Audit Trail — Event Creation", () => {
       trail.addEvent({
         type: "verification",
         status: "success",
-        details: {
-          invalid: () => {},
-        },
+        details: { invalid: () => {} },
       }),
     ).toThrow();
 
@@ -271,9 +249,7 @@ describe("Knowledge Link Audit Trail — Event Creation", () => {
       trail.addEvent({
         type: "verification",
         status: "success",
-        details: {
-          invalid: Symbol("unsupported"),
-        },
+        details: { invalid: Symbol("unsupported") },
       }),
     ).toThrow();
 
@@ -281,9 +257,7 @@ describe("Knowledge Link Audit Trail — Event Creation", () => {
       trail.addEvent({
         type: "verification",
         status: "success",
-        details: {
-          invalid: 10n,
-        },
+        details: { invalid: 10n },
       }),
     ).toThrow();
   });
@@ -331,7 +305,6 @@ describe("Knowledge Link Audit Trail — Restore & History Integrity", () => {
 
   it("rikthen një ngjarje duke ruajtur ID origjinale", () => {
     const trail = createKnowledgeLinkAuditTrail();
-
     const restored = trail.restoreEvent(createRestoredEvent());
 
     expect(restored.id).toBe("original-audit-event-1");
@@ -398,9 +371,7 @@ describe("Knowledge Link Audit Trail — Restore & History Integrity", () => {
   });
 
   it("respekton maxEvents gjatë shtimit të ngjarjeve", () => {
-    const trail = createKnowledgeLinkAuditTrail({
-      maxEvents: 2,
-    });
+    const trail = createKnowledgeLinkAuditTrail({ maxEvents: 2 });
 
     const first = trail.addEvent({
       type: "verification",
@@ -427,14 +398,10 @@ describe("Knowledge Link Audit Trail — Restore & History Integrity", () => {
   });
 
   it("respekton maxEvents gjatë restore", () => {
-    const trail = createKnowledgeLinkAuditTrail({
-      maxEvents: 2,
-    });
+    const trail = createKnowledgeLinkAuditTrail({ maxEvents: 2 });
 
     const first = trail.restoreEvent(
-      createRestoredEvent({
-        id: "restore-1",
-      }),
+      createRestoredEvent({ id: "restore-1" }),
     );
 
     const second = trail.restoreEvent(
@@ -501,6 +468,9 @@ describe("Knowledge Link Audit Trail — Restore & History Integrity", () => {
   });
 });
 
+// ============================================================
+// LIFECYCLE & CLOSE INTEGRITY
+// ============================================================
 
 describe("Knowledge Link Audit Trail — Lifecycle & Close Integrity", () => {
   const timestamp = "2026-04-01T12:00:00.000Z";
@@ -525,7 +495,6 @@ describe("Knowledge Link Audit Trail — Lifecycle & Close Integrity", () => {
 
   it("mbyll engine-in me sukses", () => {
     const trail = createKnowledgeLinkAuditTrail();
-
     const result = trail.close();
 
     expect(result).toEqual({
@@ -579,10 +548,7 @@ describe("Knowledge Link Audit Trail — Lifecycle & Close Integrity", () => {
 
     expect(status.closed).toBe(true);
     expect(status.eventCount).toBe(0);
-    expect(status.version).toBe(
-      KNOWLEDGE_LINK_AUDIT_TRAIL_VERSION,
-    );
-
+    expect(status.version).toBe(KNOWLEDGE_LINK_AUDIT_TRAIL_VERSION);
     expect(Object.isFrozen(status)).toBe(true);
   });
 
@@ -620,9 +586,7 @@ describe("Knowledge Link Audit Trail — Lifecycle & Close Integrity", () => {
 
     trail.close();
 
-    expect(() =>
-      trail.getEventById("some-id"),
-    ).toThrow();
+    expect(() => trail.getEventById("some-id")).toThrow();
   });
 
   it("refuzon listEvents pas mbylljes", () => {
@@ -680,7 +644,6 @@ describe("Knowledge Link Audit Trail — Lifecycle & Close Integrity", () => {
   });
 });
 
-
 // ============================================================
 // SEARCH, FILTERING, DATE RANGES & ORDERING
 // ============================================================
@@ -737,9 +700,7 @@ describe("Knowledge Link Audit Trail — Search & Filtering", () => {
   });
 
   it("listEvents mbështet renditjen oldest-first", () => {
-    const result = createTrail().listEvents({
-      newestFirst: false,
-    });
+    const result = createTrail().listEvents({ newestFirst: false });
 
     expect(result.events.map((event) => event.timestamp)).toEqual(dates);
   });
@@ -777,9 +738,7 @@ describe("Knowledge Link Audit Trail — Search & Filtering", () => {
   });
 
   it("respekton limit", () => {
-    const result = createTrail().listEvents({
-      limit: 2,
-    });
+    const result = createTrail().listEvents({ limit: 2 });
 
     expect(result.count).toBe(2);
     expect(result.total).toBe(4);
@@ -819,9 +778,7 @@ describe("Knowledge Link Audit Trail — Search & Filtering", () => {
   it.each([0, -1, 1.5, "2", null])(
     "refuzon limit të pavlefshëm në listEvents: %s",
     (limit) => {
-      expect(() => createTrail().listEvents({
-        limit,
-      })).toThrow();
+      expect(() => createTrail().listEvents({ limit })).toThrow();
     },
   );
 
@@ -832,18 +789,14 @@ describe("Knowledge Link Audit Trail — Search & Filtering", () => {
   });
 
   it("searchEvents filtron nga data fillestare", () => {
-    const result = createTrail().searchEvents({
-      from: dates[1],
-    });
+    const result = createTrail().searchEvents({ from: dates[1] });
 
     expect(result.total).toBe(3);
     expect(result.events).toHaveLength(3);
   });
 
   it("searchEvents filtron deri në datën përfundimtare", () => {
-    const result = createTrail().searchEvents({
-      to: dates[1],
-    });
+    const result = createTrail().searchEvents({ to: dates[1] });
 
     expect(result.total).toBe(2);
     expect(result.events).toHaveLength(2);
@@ -876,9 +829,7 @@ describe("Knowledge Link Audit Trail — Search & Filtering", () => {
   });
 
   it("respekton limit gjatë kërkimit", () => {
-    const result = createTrail().searchEvents({
-      limit: 2,
-    });
+    const result = createTrail().searchEvents({ limit: 2 });
 
     expect(result.count).toBe(2);
     expect(result.total).toBe(4);
@@ -956,6 +907,9 @@ describe("Knowledge Link Audit Trail — Search & Filtering", () => {
   });
 });
 
+// ============================================================
+// CLOCK & TIMESTAMP VALIDATION
+// ============================================================
 
 describe("Clock & Timestamp Validation Coverage", () => {
   it("refuzon clock që kthen timestamp të pavlefshëm", () => {
@@ -993,6 +947,10 @@ describe("Clock & Timestamp Validation Coverage", () => {
   });
 });
 
+// ============================================================
+// SEARCH DATE RANGE VALIDATION
+// ============================================================
+
 describe("Search Date Range Validation Coverage", () => {
   let audit;
 
@@ -1008,9 +966,7 @@ describe("Search Date Range Validation Coverage", () => {
 
   it("refuzon from me datë të pavlefshme", () => {
     expect(() =>
-      audit.searchEvents({
-        from: "not-a-date",
-      }),
+      audit.searchEvents({ from: "not-a-date" }),
     ).toThrow(
       expect.objectContaining({
         code: "KNOWLEDGE_LINK_AUDIT_INVALID_DATE_RANGE",
@@ -1020,9 +976,7 @@ describe("Search Date Range Validation Coverage", () => {
 
   it("refuzon to me datë të pavlefshme", () => {
     expect(() =>
-      audit.searchEvents({
-        to: "not-a-date",
-      }),
+      audit.searchEvents({ to: "not-a-date" }),
     ).toThrow(
       expect.objectContaining({
         code: "KNOWLEDGE_LINK_AUDIT_INVALID_DATE_RANGE",
