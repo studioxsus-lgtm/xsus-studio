@@ -1,3 +1,4 @@
+
 /**
  * Hyper XSUS Core
  * KnowledgeLink Interface Contract
@@ -7,6 +8,10 @@
  * Përcakton kontratën standarde për objektet KnowledgeLink.
  * Kjo kontratë përdoret nga modelet, validatorët, resolver-at
  * dhe komponentët e tjerë të Knowledge Linking.
+ *
+ * Fushat kanonike:
+ * id, sourceId, targetId, relationType,
+ * confidence, createdAt, metadata.
  */
 
 export const KNOWLEDGE_LINK_INTERFACE_VERSION = "1.0.0";
@@ -27,6 +32,10 @@ export const KNOWLEDGE_LINK_INTERFACE_METHODS = Object.freeze([
   "resolve",
   "serialize",
 ]);
+
+const ALLOWED_FIELDS = new Set(
+  KNOWLEDGE_LINK_REQUIRED_FIELDS,
+);
 
 /**
  * Kontrollon nëse një vlerë është objekt i zakonshëm.
@@ -49,14 +58,36 @@ function isPlainObject(value) {
 }
 
 /**
- * Kontrollon strukturën bazë të një KnowledgeLink.
+ * Kontrollon nëse objekti përmban vetëm fushat kanonike.
  *
- * Ky kontroll verifikon kontratën strukturore.
- * Rregullat e hollësishme të validimit mbeten përgjegjësi
+ * Refuzon:
+ * - Fusha shtesë.
+ * - Çelësa Symbol.
+ */
+function hasOnlyAllowedFields(value) {
+  const keys = Reflect.ownKeys(value);
+
+  return keys.every(
+    (key) =>
+      typeof key === "string" &&
+      ALLOWED_FIELDS.has(key),
+  );
+}
+
+/**
+ * Kontrollon nëse objekti përmban të gjitha fushat
+ * e detyrueshme dhe nuk ka fusha shtesë.
+ *
+ * Ky kontroll verifikon vetëm strukturën e kontratës.
+ * Validimi i vlerave mbetet përgjegjësi
  * e KnowledgeLink Validators.
  */
 export function conformsToKnowledgeLinkInterface(value) {
   if (!isPlainObject(value)) {
+    return false;
+  }
+
+  if (!hasOnlyAllowedFields(value)) {
     return false;
   }
 
