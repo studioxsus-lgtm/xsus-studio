@@ -500,3 +500,182 @@ describe("Knowledge Link Audit Trail — Restore & History Integrity", () => {
     });
   });
 });
+
+
+describe("Knowledge Link Audit Trail — Lifecycle & Close Integrity", () => {
+  const timestamp = "2026-04-01T12:00:00.000Z";
+
+  function createPopulatedTrail() {
+    const trail = createKnowledgeLinkAuditTrail();
+
+    trail.addEvent({
+      type: "verification",
+      status: "success",
+      timestamp,
+    });
+
+    trail.addEvent({
+      type: "rebuild",
+      status: "failure",
+      timestamp,
+    });
+
+    return trail;
+  }
+
+  it("mbyll engine-in me sukses", () => {
+    const trail = createKnowledgeLinkAuditTrail();
+
+    const result = trail.close();
+
+    expect(result).toEqual({
+      success: true,
+      closed: true,
+      alreadyClosed: false,
+    });
+
+    expect(Object.isFrozen(result)).toBe(true);
+    expect(trail.getStatus().closed).toBe(true);
+  });
+
+  it("pastron historikun gjatë mbylljes", () => {
+    const trail = createPopulatedTrail();
+
+    expect(trail.getStatus().eventCount).toBe(2);
+
+    trail.close();
+
+    expect(trail.getStatus().eventCount).toBe(0);
+    expect(trail.getStatus().closed).toBe(true);
+  });
+
+  it("close është idempotent", () => {
+    const trail = createPopulatedTrail();
+
+    const first = trail.close();
+    const second = trail.close();
+
+    expect(first).toEqual({
+      success: true,
+      closed: true,
+      alreadyClosed: false,
+    });
+
+    expect(second).toEqual({
+      success: true,
+      closed: true,
+      alreadyClosed: true,
+    });
+
+    expect(Object.isFrozen(second)).toBe(true);
+  });
+
+  it("getStatus mbetet i disponueshëm pas mbylljes", () => {
+    const trail = createPopulatedTrail();
+
+    trail.close();
+
+    const status = trail.getStatus();
+
+    expect(status.closed).toBe(true);
+    expect(status.eventCount).toBe(0);
+    expect(status.version).toBe(
+      KNOWLEDGE_LINK_AUDIT_TRAIL_VERSION,
+    );
+
+    expect(Object.isFrozen(status)).toBe(true);
+  });
+
+  it("refuzon addEvent pas mbylljes", () => {
+    const trail = createKnowledgeLinkAuditTrail();
+
+    trail.close();
+
+    expect(() =>
+      trail.addEvent({
+        type: "verification",
+        status: "success",
+        timestamp,
+      }),
+    ).toThrow();
+  });
+
+  it("refuzon restoreEvent pas mbylljes", () => {
+    const trail = createKnowledgeLinkAuditTrail();
+
+    trail.close();
+
+    expect(() =>
+      trail.restoreEvent({
+        id: "restored-after-close",
+        type: "verification",
+        status: "success",
+        timestamp,
+      }),
+    ).toThrow();
+  });
+
+  it("refuzon getEventById pas mbylljes", () => {
+    const trail = createKnowledgeLinkAuditTrail();
+
+    trail.close();
+
+    expect(() =>
+      trail.getEventById("some-id"),
+    ).toThrow();
+  });
+
+  it("refuzon listEvents pas mbylljes", () => {
+    const trail = createKnowledgeLinkAuditTrail();
+
+    trail.close();
+
+    expect(() => trail.listEvents()).toThrow();
+  });
+
+  it("refuzon searchEvents pas mbylljes", () => {
+    const trail = createKnowledgeLinkAuditTrail();
+
+    trail.close();
+
+    expect(() => trail.searchEvents()).toThrow();
+  });
+
+  it("refuzon clear pas mbylljes", () => {
+    const trail = createKnowledgeLinkAuditTrail();
+
+    trail.close();
+
+    expect(() => trail.clear()).toThrow();
+  });
+
+  it("nuk lejon rikthimin e engine-it pas mbylljes", () => {
+    const trail = createKnowledgeLinkAuditTrail();
+
+    trail.close();
+
+    expect(() =>
+      trail.addEvent({
+        type: "recovery",
+        status: "success",
+        timestamp,
+      }),
+    ).toThrow();
+
+    expect(trail.getStatus().eventCount).toBe(0);
+  });
+
+  it("mbyllja e dytë nuk ndryshon gjendjen e engine-it", () => {
+    const trail = createPopulatedTrail();
+
+    trail.close();
+
+    const firstStatus = trail.getStatus();
+
+    trail.close();
+
+    const secondStatus = trail.getStatus();
+
+    expect(secondStatus).toEqual(firstStatus);
+  });
+});
