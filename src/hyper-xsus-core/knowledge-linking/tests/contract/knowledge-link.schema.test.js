@@ -1,3 +1,4 @@
+
 import { describe, it, expect } from "vitest";
 
 import {
@@ -40,7 +41,9 @@ describe("KnowledgeLink Schema Contract", () => {
   });
 
   it("përcakton kufijtë e confidence", () => {
-    expect(KNOWLEDGE_LINK_SCHEMA.properties.confidence).toEqual({
+    expect(
+      KNOWLEDGE_LINK_SCHEMA.properties.confidence,
+    ).toEqual({
       type: "number",
       minimum: 0,
       maximum: 1,
@@ -60,16 +63,75 @@ describe("KnowledgeLink Schema Contract", () => {
   });
 
   it("lejon metadata fleksibile në formë objekti", () => {
-    expect(
-      KNOWLEDGE_LINK_SCHEMA.properties.metadata.type,
-    ).toBe("object");
+    const metadataSchema =
+      KNOWLEDGE_LINK_SCHEMA.properties.metadata;
+
+    expect(metadataSchema.type).toBe("object");
+
+    expect(metadataSchema.additionalProperties).toEqual({
+      $ref: "#/$defs/jsonValue",
+    });
+  });
+
+  it("përcakton vlerat JSON-compatible për metadata", () => {
+    const jsonValueSchema =
+      KNOWLEDGE_LINK_SCHEMA.$defs.jsonValue;
+
+    expect(jsonValueSchema).toBeDefined();
+    expect(jsonValueSchema.anyOf).toBeDefined();
 
     expect(
-      KNOWLEDGE_LINK_SCHEMA.properties.metadata.additionalProperties,
+      jsonValueSchema.anyOf.some(
+        (definition) => definition.type === "string",
+      ),
+    ).toBe(true);
+
+    expect(
+      jsonValueSchema.anyOf.some(
+        (definition) => definition.type === "number",
+      ),
+    ).toBe(true);
+
+    expect(
+      jsonValueSchema.anyOf.some(
+        (definition) => definition.type === "boolean",
+      ),
+    ).toBe(true);
+
+    expect(
+      jsonValueSchema.anyOf.some(
+        (definition) => definition.type === "null",
+      ),
+    ).toBe(true);
+
+    expect(
+      jsonValueSchema.anyOf.some(
+        (definition) => definition.type === "array",
+      ),
+    ).toBe(true);
+
+    expect(
+      jsonValueSchema.anyOf.some(
+        (definition) => definition.type === "object",
+      ),
     ).toBe(true);
   });
 
   it("ruan skemën si objekt të pandryshueshëm në nivelin kryesor", () => {
     expect(Object.isFrozen(KNOWLEDGE_LINK_SCHEMA)).toBe(true);
+  });
+
+  it("ruan edhe metadata schema si objekt të pandryshueshëm", () => {
+    expect(
+      Object.isFrozen(
+        KNOWLEDGE_LINK_SCHEMA.properties.metadata,
+      ),
+    ).toBe(true);
+  });
+
+  it("ruan JSON value schema si objekt të pandryshueshëm", () => {
+    expect(
+      Object.isFrozen(KNOWLEDGE_LINK_SCHEMA.$defs.jsonValue),
+    ).toBe(true);
   });
 });
