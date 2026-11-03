@@ -272,7 +272,7 @@ export function countConnectedComponents(
  * Kontrollon nëse grafi është i lidhur.
  *
  * both:
- * Grafi është i lidhur nëse ka maksimumi
+ * Grafi është i lidhur nëse ka saktësisht
  * një komponent të padrejtuar.
  *
  * outgoing:
@@ -282,7 +282,7 @@ export function countConnectedComponents(
  * Të gjitha nyjet duhet të mund të arrijnë
  * secilën nyje.
  *
- * Për një graf të drejtuar, këto dy kushtet
+ * Për një graf të drejtuar, këto dy kushte
  * janë ekuivalente me lidhshmërinë e fortë.
  *
  * Grafi bosh konsiderohet i lidhur.
