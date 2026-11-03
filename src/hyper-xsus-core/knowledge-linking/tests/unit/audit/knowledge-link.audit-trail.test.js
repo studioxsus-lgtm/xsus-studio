@@ -679,3 +679,279 @@ describe("Knowledge Link Audit Trail — Lifecycle & Close Integrity", () => {
     expect(secondStatus).toEqual(firstStatus);
   });
 });
+
+
+// ============================================================
+// SEARCH, FILTERING, DATE RANGES & ORDERING
+// ============================================================
+
+describe("Knowledge Link Audit Trail — Search & Filtering", () => {
+  const dates = [
+    "2026-05-01T10:00:00.000Z",
+    "2026-05-02T10:00:00.000Z",
+    "2026-05-03T10:00:00.000Z",
+    "2026-05-04T10:00:00.000Z",
+  ];
+
+  function createTrail() {
+    const trail = createKnowledgeLinkAuditTrail();
+
+    trail.addEvent({
+      type: "verification",
+      status: "success",
+      timestamp: dates[0],
+    });
+
+    trail.addEvent({
+      type: "rebuild",
+      status: "failure",
+      timestamp: dates[1],
+    });
+
+    trail.addEvent({
+      type: "recovery",
+      status: "success",
+      timestamp: dates[2],
+    });
+
+    trail.addEvent({
+      type: "verification",
+      status: "failure",
+      timestamp: dates[3],
+    });
+
+    return trail;
+  }
+
+  it("listEvents kthen ngjarjet më të reja të parat", () => {
+    const result = createTrail().listEvents();
+
+    expect(result.count).toBe(4);
+    expect(result.total).toBe(4);
+    expect(result.events.map((event) => event.timestamp)).toEqual([
+      dates[3],
+      dates[2],
+      dates[1],
+      dates[0],
+    ]);
+  });
+
+  it("listEvents mbështet renditjen oldest-first", () => {
+    const result = createTrail().listEvents({
+      newestFirst: false,
+    });
+
+    expect(result.events.map((event) => event.timestamp)).toEqual(dates);
+  });
+
+  it("filtron sipas event type", () => {
+    const result = createTrail().listEvents({
+      type: "verification",
+    });
+
+    expect(result.total).toBe(2);
+    expect(result.events.every(
+      (event) => event.type === "verification",
+    )).toBe(true);
+  });
+
+  it("filtron sipas status", () => {
+    const result = createTrail().listEvents({
+      status: "failure",
+    });
+
+    expect(result.total).toBe(2);
+    expect(result.events.every(
+      (event) => event.status === "failure",
+    )).toBe(true);
+  });
+
+  it("kombinon filtrat type dhe status", () => {
+    const result = createTrail().listEvents({
+      type: "verification",
+      status: "failure",
+    });
+
+    expect(result.total).toBe(1);
+    expect(result.events[0].timestamp).toBe(dates[3]);
+  });
+
+  it("respekton limit", () => {
+    const result = createTrail().listEvents({
+      limit: 2,
+    });
+
+    expect(result.count).toBe(2);
+    expect(result.total).toBe(4);
+    expect(result.events).toHaveLength(2);
+  });
+
+  it("kthen rezultat bosh kur nuk ka përputhje", () => {
+    const result = createTrail().listEvents({
+      type: "rebuild",
+      status: "success",
+    });
+
+    expect(result.count).toBe(0);
+    expect(result.total).toBe(0);
+    expect(result.events).toEqual([]);
+  });
+
+  it("refuzon options të pavlefshme", () => {
+    const trail = createTrail();
+
+    expect(() => trail.listEvents(null)).toThrow();
+    expect(() => trail.listEvents([])).toThrow();
+  });
+
+  it("refuzon event type të pavlefshëm në listEvents", () => {
+    expect(() => createTrail().listEvents({
+      type: "invalid",
+    })).toThrow();
+  });
+
+  it("refuzon status të pavlefshëm në listEvents", () => {
+    expect(() => createTrail().listEvents({
+      status: "pending",
+    })).toThrow();
+  });
+
+  it.each([0, -1, 1.5, "2", null])(
+    "refuzon limit të pavlefshëm në listEvents: %s",
+    (limit) => {
+      expect(() => createTrail().listEvents({
+        limit,
+      })).toThrow();
+    },
+  );
+
+  it("refuzon newestFirst që nuk është boolean", () => {
+    expect(() => createTrail().listEvents({
+      newestFirst: "true",
+    })).toThrow();
+  });
+
+  it("searchEvents filtron nga data fillestare", () => {
+    const result = createTrail().searchEvents({
+      from: dates[1],
+    });
+
+    expect(result.total).toBe(3);
+    expect(result.events).toHaveLength(3);
+  });
+
+  it("searchEvents filtron deri në datën përfundimtare", () => {
+    const result = createTrail().searchEvents({
+      to: dates[1],
+    });
+
+    expect(result.total).toBe(2);
+    expect(result.events).toHaveLength(2);
+  });
+
+  it("përfshin kufijtë kohorë from dhe to", () => {
+    const result = createTrail().searchEvents({
+      from: dates[1],
+      to: dates[2],
+      newestFirst: false,
+    });
+
+    expect(result.total).toBe(2);
+    expect(result.events.map((event) => event.timestamp)).toEqual([
+      dates[1],
+      dates[2],
+    ]);
+  });
+
+  it("kombinon filtrat kohorë, type dhe status", () => {
+    const result = createTrail().searchEvents({
+      type: "verification",
+      status: "success",
+      from: dates[0],
+      to: dates[2],
+    });
+
+    expect(result.total).toBe(1);
+    expect(result.events[0].timestamp).toBe(dates[0]);
+  });
+
+  it("respekton limit gjatë kërkimit", () => {
+    const result = createTrail().searchEvents({
+      limit: 2,
+    });
+
+    expect(result.count).toBe(2);
+    expect(result.total).toBe(4);
+  });
+
+  it("refuzon datën fillestare të pavlefshme", () => {
+    expect(() => createTrail().searchEvents({
+      from: "invalid-date",
+    })).toThrow();
+  });
+
+  it("refuzon datën përfundimtare të pavlefshme", () => {
+    expect(() => createTrail().searchEvents({
+      to: "invalid-date",
+    })).toThrow();
+  });
+
+  it("refuzon intervalin kur from është pas to", () => {
+    expect(() => createTrail().searchEvents({
+      from: dates[3],
+      to: dates[0],
+    })).toThrow();
+  });
+
+  it("refuzon filters që nuk janë objekt", () => {
+    const trail = createTrail();
+
+    expect(() => trail.searchEvents(null)).toThrow();
+    expect(() => trail.searchEvents([])).toThrow();
+  });
+
+  it("refuzon event type të pavlefshëm në searchEvents", () => {
+    expect(() => createTrail().searchEvents({
+      type: "invalid",
+    })).toThrow();
+  });
+
+  it("refuzon status të pavlefshëm në searchEvents", () => {
+    expect(() => createTrail().searchEvents({
+      status: "pending",
+    })).toThrow();
+  });
+
+  it("refuzon newestFirst jo-boolean në searchEvents", () => {
+    expect(() => createTrail().searchEvents({
+      newestFirst: 1,
+    })).toThrow();
+  });
+
+  it("kthen rezultat bosh për kërkim pa përputhje", () => {
+    const result = createTrail().searchEvents({
+      from: "2027-01-01T00:00:00.000Z",
+    });
+
+    expect(result.count).toBe(0);
+    expect(result.total).toBe(0);
+    expect(result.events).toEqual([]);
+  });
+
+  it("kthen rezultate dhe listë ngjarjesh të ngrira", () => {
+    const result = createTrail().searchEvents();
+
+    expect(Object.isFrozen(result)).toBe(true);
+    expect(Object.isFrozen(result.events)).toBe(true);
+    expect(result.events.every(
+      (event) => Object.isFrozen(event),
+    )).toBe(true);
+  });
+
+  it("listEvents kthen rezultate të ngrira", () => {
+    const result = createTrail().listEvents();
+
+    expect(Object.isFrozen(result)).toBe(true);
+    expect(Object.isFrozen(result.events)).toBe(true);
+  });
+});
