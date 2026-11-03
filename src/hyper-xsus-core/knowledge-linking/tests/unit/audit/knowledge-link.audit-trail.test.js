@@ -955,3 +955,101 @@ describe("Knowledge Link Audit Trail — Search & Filtering", () => {
     expect(Object.isFrozen(result.events)).toBe(true);
   });
 });
+
+
+describe("Clock & Timestamp Validation Coverage", () => {
+  it("refuzon clock që kthen timestamp të pavlefshëm", () => {
+    const audit = createKnowledgeLinkAuditTrail({
+      clock: () => "invalid-timestamp",
+    });
+
+    expect(() =>
+      audit.addEvent({
+        type: "verification",
+        status: "success",
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "KNOWLEDGE_LINK_AUDIT_INVALID_TIMESTAMP",
+      }),
+    );
+  });
+
+  it("refuzon clock që kthen vlerë jo-string", () => {
+    const audit = createKnowledgeLinkAuditTrail({
+      clock: () => 12345,
+    });
+
+    expect(() =>
+      audit.addEvent({
+        type: "verification",
+        status: "success",
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "KNOWLEDGE_LINK_AUDIT_INVALID_TIMESTAMP",
+      }),
+    );
+  });
+});
+
+describe("Search Date Range Validation Coverage", () => {
+  let audit;
+
+  beforeEach(() => {
+    audit = createKnowledgeLinkAuditTrail();
+
+    audit.addEvent({
+      type: "verification",
+      status: "success",
+      timestamp: "2026-01-10T10:00:00.000Z",
+    });
+  });
+
+  it("refuzon from me datë të pavlefshme", () => {
+    expect(() =>
+      audit.searchEvents({
+        from: "not-a-date",
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "KNOWLEDGE_LINK_AUDIT_INVALID_DATE_RANGE",
+      }),
+    );
+  });
+
+  it("refuzon to me datë të pavlefshme", () => {
+    expect(() =>
+      audit.searchEvents({
+        to: "not-a-date",
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "KNOWLEDGE_LINK_AUDIT_INVALID_DATE_RANGE",
+      }),
+    );
+  });
+
+  it("refuzon interval kur from është pas to", () => {
+    expect(() =>
+      audit.searchEvents({
+        from: "2026-01-11T00:00:00.000Z",
+        to: "2026-01-10T00:00:00.000Z",
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "KNOWLEDGE_LINK_AUDIT_INVALID_DATE_RANGE",
+      }),
+    );
+  });
+
+  it("pranon interval me kufij kohorë të barabartë", () => {
+    const result = audit.searchEvents({
+      from: "2026-01-10T10:00:00.000Z",
+      to: "2026-01-10T10:00:00.000Z",
+    });
+
+    expect(result.count).toBe(1);
+    expect(result.total).toBe(1);
+  });
+});
