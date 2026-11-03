@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi } from "vitest";
 
 import {
@@ -61,10 +62,7 @@ describe("XSUS AI Core — Audit Persistence Transaction Integrity", () => {
 
     expect(saved).toHaveLength(4);
     expect(saved.map((event) => event.details.order)).toEqual([
-      1,
-      2,
-      3,
-      4,
+      1, 2, 3, 4,
     ]);
 
     await persistence.close();
@@ -92,9 +90,7 @@ describe("XSUS AI Core — Audit Persistence Transaction Integrity", () => {
 
     expect(saved).toHaveLength(3);
     expect(saved.map((event) => event.details.order)).toEqual([
-      1,
-      2,
-      3,
+      1, 2, 3,
     ]);
 
     await persistence.close();
@@ -114,9 +110,7 @@ describe("XSUS AI Core — Audit Persistence Transaction Integrity", () => {
     const saved = storage.getSnapshot();
 
     expect(saved.map((event) => event.details.order)).toEqual([
-      1,
-      2,
-      3,
+      1, 2, 3,
     ]);
 
     await persistence.close();
@@ -125,12 +119,15 @@ describe("XSUS AI Core — Audit Persistence Transaction Integrity", () => {
   it("rikuperon integritetin pas dështimit të një ruajtjeje ndërmjet operacioneve", async () => {
     const storage = createStorage();
 
+    const originalSaveHistory =
+      storage.saveHistory.getMockImplementation();
+
     storage.saveHistory
-      .mockResolvedValueOnce(undefined)
+      .mockImplementationOnce(originalSaveHistory)
       .mockRejectedValueOnce(
         new Error("Transaction save failure"),
       )
-      .mockResolvedValue(undefined);
+      .mockImplementation(originalSaveHistory);
 
     const persistence = await createPersistence(storage);
 
@@ -149,9 +146,7 @@ describe("XSUS AI Core — Audit Persistence Transaction Integrity", () => {
 
     expect(saved).toHaveLength(3);
     expect(saved.map((event) => event.details.order)).toEqual([
-      1,
-      2,
-      3,
+      1, 2, 3,
     ]);
 
     expect(persistence.getStatus().persistenceFailed).toBe(false);
@@ -203,9 +198,7 @@ describe("XSUS AI Core — Audit Persistence Transaction Integrity", () => {
 
     expect(saved).toHaveLength(3);
     expect(saved.map((event) => event.details.order)).toEqual([
-      1,
-      2,
-      3,
+      1, 2, 3,
     ]);
 
     await restored.close();
