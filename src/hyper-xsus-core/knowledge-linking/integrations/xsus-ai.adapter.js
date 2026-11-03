@@ -57,12 +57,6 @@ function validateKnowledgeAPI(api) {
       );
     }
   }
-
-  if (api.version !== "1.0.0") {
-    throw new TypeError(
-      "Unsupported KnowledgeLink API version.",
-    );
-  }
 }
 
 /**
@@ -142,8 +136,8 @@ export function createXsusAIKnowledgeAdapter(api) {
     findByStrategy,
     findRelatedEntities,
     removeLink,
-    getStatus,
 
+    getStatus,
     close,
   });
 }
