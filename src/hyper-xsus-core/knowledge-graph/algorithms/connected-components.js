@@ -3,15 +3,24 @@
  * XSUS Hyper Core — Knowledge Graph Connected Components
  * Version: 1.0.0
  *
- * Identifikon komponentët e lidhur në Knowledge Graph.
+ * Përgjegjësitë:
+ * - Identifikimi i komponentëve të lidhur.
+ * - Llogaritja e arritshmërisë në grafe të drejtuara.
+ * - Mbështetja e drejtimeve outgoing, incoming dhe both.
+ * - Numërimi i komponentëve.
+ * - Kontrollimi nëse grafi është i lidhur.
  *
  * Drejtimet:
- * - outgoing: lidhjet nga sourceId te targetId.
- * - incoming: lidhjet nga targetId te sourceId.
+ * - outgoing: sourceId -> targetId.
+ * - incoming: targetId -> sourceId.
  * - both: graf i trajtuar si i padrejtuar.
  *
- * Një komponent përmban të gjitha nyjet që mund të
- * arrihen nga njëra-tjetra sipas drejtimit të zgjedhur.
+ * Shënim:
+ * Në outgoing dhe incoming, llogaritet grupi i
+ * arritshmërisë veçmas për çdo nyje fillestare.
+ * Këto grupe mund të mbivendosen.
+ *
+ * Në both, kthehen komponentët unikë të lidhur.
  */
 
 export const CONNECTED_COMPONENTS_VERSION = "1.0.0";
@@ -22,10 +31,14 @@ const VALID_DIRECTIONS = new Set([
   "both"
 ]);
 
+/**
+ * Validon strukturën bazë të grafit.
+ */
 function validateGraph(graph) {
   if (
     !graph ||
     typeof graph !== "object" ||
+    Array.isArray(graph) ||
     !Array.isArray(graph.nodes) ||
     !Array.isArray(graph.links)
   ) {
@@ -37,6 +50,8 @@ function validateGraph(graph) {
   for (const node of graph.nodes) {
     if (
       !node ||
+      typeof node !== "object" ||
+      Array.isArray(node) ||
       typeof node.id !== "string" ||
       !node.id.trim()
     ) {
@@ -53,6 +68,8 @@ function validateGraph(graph) {
   for (const link of graph.links) {
     if (
       !link ||
+      typeof link !== "object" ||
+      Array.isArray(link) ||
       typeof link.sourceId !== "string" ||
       typeof link.targetId !== "string" ||
       !nodeIds.has(link.sourceId) ||
@@ -65,6 +82,9 @@ function validateGraph(graph) {
   return nodeIds;
 }
 
+/**
+ * Validon drejtimin e kërkimit.
+ */
 function validateDirection(direction) {
   if (!VALID_DIRECTIONS.has(direction)) {
     throw new TypeError("Invalid traversal direction.");
@@ -73,6 +93,30 @@ function validateDirection(direction) {
   return direction;
 }
 
+/**
+ * Validon opsionet e algoritmit.
+ */
+function validateOptions(options = {}) {
+  if (
+    !options ||
+    typeof options !== "object" ||
+    Array.isArray(options)
+  ) {
+    throw new TypeError(
+      "Invalid connected components options."
+    );
+  }
+
+  const direction = validateDirection(
+    options.direction ?? "both"
+  );
+
+  return { direction };
+}
+
+/**
+ * Ndërton adjacency list sipas drejtimit.
+ */
 function buildAdjacency(graph, direction) {
   const adjacency = new Map();
 
@@ -102,15 +146,49 @@ function buildAdjacency(graph, direction) {
 }
 
 /**
- * Gjen komponentët e arritshëm sipas drejtimit.
+ * Gjen të gjitha nyjet e arritshme nga një nyje
+ * fillestare duke përdorur BFS.
+ */
+function findReachableNodes(startId, adjacency) {
+  const visited = new Set([startId]);
+  const component = [];
+  const queue = [startId];
+
+  let head = 0;
+
+  while (head < queue.length) {
+    const currentId = queue[head++];
+
+    component.push(currentId);
+
+    const neighbors = adjacency.get(currentId) ?? [];
+
+    for (const neighborId of neighbors) {
+      if (visited.has(neighborId)) {
+        continue;
+      }
+
+      visited.add(neighborId);
+      queue.push(neighborId);
+    }
+  }
+
+  return component;
+}
+
+/**
+ * Gjen komponentët e lidhur ose grupet e arritshmërisë.
  *
- * Në outgoing/incoming, rezultatet janë grupe
- * të nyjeve të arritshme nga secila nyje e papërpunuar.
- * Në grafet e drejtuara këto grupe mund të mbivendosen
- * ose të mos përfaqësojnë komponentë unikë matematikorë.
+ * both:
+ * - Kthen komponentët unikë të grafit të padrejtuar.
  *
- * Në both, rezultatet janë komponentë të lidhur
- * të grafit të trajtuar si i padrejtuar.
+ * outgoing:
+ * - Kthen grupin e nyjeve të arritshme nga secila nyje.
+ *
+ * incoming:
+ * - Kthen grupin e nyjeve që mund të arrijnë secilën nyje.
+ *
+ * Rezultatet ruajnë rendin e nyjeve në graf.
  */
 export function findConnectedComponents(
   graph,
@@ -118,55 +196,69 @@ export function findConnectedComponents(
 ) {
   validateGraph(graph);
 
-  if (
-    !options ||
-    typeof options !== "object" ||
-    Array.isArray(options)
-  ) {
-    throw new TypeError("Invalid connected components options.");
-  }
-
-  const direction = validateDirection(
-    options.direction ?? "both"
-  );
+  const { direction } = validateOptions(options);
 
   const adjacency = buildAdjacency(graph, direction);
-  const visited = new Set();
+
+  // Komponentët klasikë të grafit të padrejtuar.
+  if (direction === "both") {
+    const visited = new Set();
+    const components = [];
+
+    for (const node of graph.nodes) {
+      if (visited.has(node.id)) {
+        continue;
+      }
+
+      const component = [];
+      const queue = [node.id];
+
+      visited.add(node.id);
+
+      let head = 0;
+
+      while (head < queue.length) {
+        const currentId = queue[head++];
+
+        component.push(currentId);
+
+        const neighbors = adjacency.get(currentId) ?? [];
+
+        for (const neighborId of neighbors) {
+          if (visited.has(neighborId)) {
+            continue;
+          }
+
+          visited.add(neighborId);
+          queue.push(neighborId);
+        }
+      }
+
+      components.push(component);
+    }
+
+    return components;
+  }
+
+  // Në grafin e drejtuar, çdo nyje është
+  // një pikënisje e pavarur për BFS.
   const components = [];
 
   for (const node of graph.nodes) {
-    if (visited.has(node.id)) {
-      continue;
-    }
-
-    const component = [];
-    const queue = [node.id];
-
-    visited.add(node.id);
-
-    while (queue.length > 0) {
-      const currentId = queue.shift();
-
-      component.push(currentId);
-
-      for (const neighborId of adjacency.get(currentId) ?? []) {
-        if (visited.has(neighborId)) {
-          continue;
-        }
-
-        visited.add(neighborId);
-        queue.push(neighborId);
-      }
-    }
-
-    components.push(component);
+    components.push(
+      findReachableNodes(node.id, adjacency)
+    );
   }
 
   return components;
 }
 
 /**
- * Kthen numrin e komponentëve.
+ * Kthen numrin e komponentëve ose grupeve
+ * të arritshmërisë sipas drejtimit.
+ *
+ * Në outgoing/incoming, numërohen grupet
+ * e arritshmërisë për çdo nyje.
  */
 export function countConnectedComponents(
   graph,
@@ -181,8 +273,16 @@ export function countConnectedComponents(
 /**
  * Kontrollon nëse grafi është i lidhur.
  *
- * Grafi bosh konsiderohet i lidhur sipas
- * këtij kontrakti operacional.
+ * Në both:
+ * Grafi konsiderohet i lidhur nëse ka maksimumi
+ * një komponent të padrejtuar.
+ *
+ * Në outgoing/incoming:
+ * Grafi konsiderohet i lidhur nëse çdo nyje
+ * mund të arrijë të gjitha nyjet e tjera sipas
+ * drejtimit të zgjedhur.
+ *
+ * Grafi bosh konsiderohet i lidhur.
  */
 export function isConnectedGraph(
   graph,
@@ -193,7 +293,13 @@ export function isConnectedGraph(
     options
   );
 
-  return components.length <= 1;
+  if (components.length === 0) {
+    return true;
+  }
+
+  return components.every(
+    (component) => component.length === components.length
+  );
 }
 
 /**
