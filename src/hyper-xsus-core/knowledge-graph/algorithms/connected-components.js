@@ -8,19 +8,19 @@
  * - Llogaritja e arritshmërisë në grafe të drejtuara.
  * - Mbështetja e drejtimeve outgoing, incoming dhe both.
  * - Numërimi i komponentëve.
- * - Kontrollimi nëse grafi është i lidhur.
+ * - Kontrollimi i lidhshmërisë së grafit.
  *
  * Drejtimet:
  * - outgoing: sourceId -> targetId.
  * - incoming: targetId -> sourceId.
  * - both: graf i trajtuar si i padrejtuar.
  *
- * Shënim:
- * Në outgoing dhe incoming, llogaritet grupi i
- * arritshmërisë veçmas për çdo nyje fillestare.
- * Këto grupe mund të mbivendosen.
+ * Në outgoing/incoming:
+ * Llogaritet grupi i arritshmërisë veçmas
+ * për çdo nyje fillestare.
  *
- * Në both, kthehen komponentët unikë të lidhur.
+ * Në both:
+ * Kthehen komponentët unikë të lidhur.
  */
 
 export const CONNECTED_COMPONENTS_VERSION = "1.0.0";
@@ -146,12 +146,12 @@ function buildAdjacency(graph, direction) {
 }
 
 /**
- * Gjen të gjitha nyjet e arritshme nga një nyje
- * fillestare duke përdorur BFS.
+ * Gjen të gjitha nyjet e arritshme nga një
+ * nyje fillestare duke përdorur BFS.
  */
 function findReachableNodes(startId, adjacency) {
   const visited = new Set([startId]);
-  const component = [];
+  const reachable = [];
   const queue = [startId];
 
   let head = 0;
@@ -159,7 +159,7 @@ function findReachableNodes(startId, adjacency) {
   while (head < queue.length) {
     const currentId = queue[head++];
 
-    component.push(currentId);
+    reachable.push(currentId);
 
     const neighbors = adjacency.get(currentId) ?? [];
 
@@ -173,20 +173,21 @@ function findReachableNodes(startId, adjacency) {
     }
   }
 
-  return component;
+  return reachable;
 }
 
 /**
- * Gjen komponentët e lidhur ose grupet e arritshmërisë.
+ * Gjen komponentët e lidhur ose grupet
+ * e arritshmërisë sipas drejtimit.
  *
  * both:
- * - Kthen komponentët unikë të grafit të padrejtuar.
+ * - Komponentët unikë të grafit të padrejtuar.
  *
  * outgoing:
- * - Kthen grupin e nyjeve të arritshme nga secila nyje.
+ * - Nyjet e arritshme nga secila nyje.
  *
  * incoming:
- * - Kthen grupin e nyjeve që mund të arrijnë secilën nyje.
+ * - Nyjet që mund të arrijnë secilën nyje.
  *
  * Rezultatet ruajnë rendin e nyjeve në graf.
  */
@@ -200,7 +201,7 @@ export function findConnectedComponents(
 
   const adjacency = buildAdjacency(graph, direction);
 
-  // Komponentët klasikë të grafit të padrejtuar.
+  // Komponentët unikë të grafit të padrejtuar.
   if (direction === "both") {
     const visited = new Set();
     const components = [];
@@ -240,8 +241,8 @@ export function findConnectedComponents(
     return components;
   }
 
-  // Në grafin e drejtuar, çdo nyje është
-  // një pikënisje e pavarur për BFS.
+  // Në grafet e drejtuara çdo nyje ka
+  // kërkimin e vet të pavarur.
   const components = [];
 
   for (const node of graph.nodes) {
@@ -256,9 +257,6 @@ export function findConnectedComponents(
 /**
  * Kthen numrin e komponentëve ose grupeve
  * të arritshmërisë sipas drejtimit.
- *
- * Në outgoing/incoming, numërohen grupet
- * e arritshmërisë për çdo nyje.
  */
 export function countConnectedComponents(
   graph,
@@ -273,14 +271,19 @@ export function countConnectedComponents(
 /**
  * Kontrollon nëse grafi është i lidhur.
  *
- * Në both:
- * Grafi konsiderohet i lidhur nëse ka maksimumi
+ * both:
+ * Grafi është i lidhur nëse ka maksimumi
  * një komponent të padrejtuar.
  *
- * Në outgoing/incoming:
- * Grafi konsiderohet i lidhur nëse çdo nyje
- * mund të arrijë të gjitha nyjet e tjera sipas
- * drejtimit të zgjedhur.
+ * outgoing:
+ * Çdo nyje duhet të arrijë të gjitha nyjet.
+ *
+ * incoming:
+ * Të gjitha nyjet duhet të mund të arrijnë
+ * secilën nyje.
+ *
+ * Për një graf të drejtuar, këto dy kushtet
+ * janë ekuivalente me lidhshmërinë e fortë.
  *
  * Grafi bosh konsiderohet i lidhur.
  */
@@ -288,17 +291,26 @@ export function isConnectedGraph(
   graph,
   options = {}
 ) {
-  const components = findConnectedComponents(
-    graph,
-    options
-  );
+  const nodeIds = validateGraph(graph);
+  const { direction } = validateOptions(options);
 
-  if (components.length === 0) {
+  if (nodeIds.size === 0) {
     return true;
   }
 
+  const components = findConnectedComponents(
+    graph,
+    { direction }
+  );
+
+  if (direction === "both") {
+    return components.length === 1;
+  }
+
+  const totalNodes = nodeIds.size;
+
   return components.every(
-    (component) => component.length === components.length
+    (component) => component.length === totalNodes
   );
 }
 
