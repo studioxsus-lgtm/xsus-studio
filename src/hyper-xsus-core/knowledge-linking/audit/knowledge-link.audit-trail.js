@@ -5,10 +5,11 @@
  * Përgjegjësitë:
  * - Regjistrimi i ngjarjeve të integritetit.
  * - Gjenerimi i identifikuesve unikë.
+ * - Rikthimi i ngjarjeve me ID origjinale.
  * - Ruajtja e historikut në RAM.
  * - Kërkimi dhe filtrimi i ngjarjeve.
  * - Kufizimi i madhësisë së historikut.
- * - Mbrojtja e të dhënave të regjistruara nga modifikimi.
+ * - Mbrojtja e të dhënave nga modifikimi.
  */
 
 export const KNOWLEDGE_LINK_AUDIT_TRAIL_VERSION = "1.0.0";
@@ -192,10 +193,7 @@ export function createKnowledgeLinkAuditTrail(options = {}) {
     sequence += 1;
 
     const id = idGenerator
-      ? idGenerator({
-          sequence,
-          timestamp,
-        })
+      ? idGenerator({ sequence, timestamp })
       : createEventId(sequence, timestamp);
 
     if (
@@ -218,8 +216,7 @@ export function createKnowledgeLinkAuditTrail(options = {}) {
     return id;
   }
 
-  function addEvent(input) {
-    assertOpen();
+  function createEvent(input, restoredId) {
     assertPlainObject(input, "event");
 
     const {
@@ -234,10 +231,31 @@ export function createKnowledgeLinkAuditTrail(options = {}) {
     assertPlainObject(details, "details");
 
     const normalizedTimestamp = getTimestamp(timestamp);
-    const id = generateId(normalizedTimestamp);
+
+    const id = restoredId === undefined
+      ? generateId(normalizedTimestamp)
+      : restoredId;
+
+    if (
+      typeof id !== "string" ||
+      id.trim().length === 0
+    ) {
+      throw createAuditError(
+        "KNOWLEDGE_LINK_AUDIT_INVALID_ID",
+        "ID-ja e ngjarjes nuk është e vlefshme.",
+      );
+    }
+
+    if (events.has(id)) {
+      throw createAuditError(
+        "KNOWLEDGE_LINK_AUDIT_DUPLICATE_ID",
+        "ID-ja e ngjarjes ekziston tashmë.",
+      );
+    }
+
     const frozenDetails = cloneAndFreeze(details);
 
-    const event = Object.freeze({
+    return Object.freeze({
       id,
       type,
       status,
@@ -245,8 +263,46 @@ export function createKnowledgeLinkAuditTrail(options = {}) {
       version: KNOWLEDGE_LINK_AUDIT_TRAIL_VERSION,
       details: frozenDetails,
     });
+  }
 
-    events.set(id, event);
+  function addEvent(input) {
+    assertOpen();
+
+    const event = createEvent(input);
+
+    events.set(event.id, event);
+
+    while (events.size > maxEvents) {
+      const oldestId = events.keys().next().value;
+      events.delete(oldestId);
+    }
+
+    return event;
+  }
+
+  /**
+   * Rikthen një ngjarje me ID origjinale.
+   * Përdoret nga Persistence gjatë restore().
+   */
+  function restoreEvent(input) {
+    assertOpen();
+    assertPlainObject(input, "event");
+
+    if (
+      typeof input.id !== "string" ||
+      input.id.trim().length === 0
+    ) {
+      throw createAuditError(
+        "KNOWLEDGE_LINK_AUDIT_INVALID_ID",
+        "ID-ja origjinale e ngjarjes nuk është e vlefshme.",
+      );
+    }
+
+    const event = createEvent(input, input.id);
+
+    sequence += 1;
+
+    events.set(event.id, event);
 
     while (events.size > maxEvents) {
       const oldestId = events.keys().next().value;
@@ -339,6 +395,13 @@ export function createKnowledgeLinkAuditTrail(options = {}) {
     }
 
     validatePositiveInteger(limit, "limit");
+
+    if (typeof newestFirst !== "boolean") {
+      throw createAuditError(
+        "KNOWLEDGE_LINK_AUDIT_INVALID_ORDER",
+        "newestFirst duhet të jetë boolean.",
+      );
+    }
 
     const fromTime =
       from === undefined ? null : Date.parse(from);
@@ -446,6 +509,7 @@ export function createKnowledgeLinkAuditTrail(options = {}) {
 
   return Object.freeze({
     addEvent,
+    restoreEvent,
     getEventById,
     listEvents,
     searchEvents,
