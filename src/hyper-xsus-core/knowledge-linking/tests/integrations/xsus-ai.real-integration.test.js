@@ -1,7 +1,9 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-import { createKnowledgeLinkAPI } from "../../public/knowledge-link.api.js";
+import {
+  createKnowledgeLinkAPI,
+} from "../../public/knowledge-link.api.js";
 
 import {
   createXsusAIKnowledgeAdapter,
@@ -18,7 +20,9 @@ describe("XSUS AI — Real KnowledgeLink Integration", () => {
       targetId: "knowledge-engine",
       relationType: "implements",
       confidence: 0.99,
-      metadata: { domain: "technology" },
+      metadata: {
+        domain: "technology",
+      },
     },
     {
       id: "link-002",
@@ -26,7 +30,9 @@ describe("XSUS AI — Real KnowledgeLink Integration", () => {
       targetId: "knowledge-base",
       relationType: "depends_on",
       confidence: 0.95,
-      metadata: { domain: "knowledge" },
+      metadata: {
+        domain: "knowledge",
+      },
     },
     {
       id: "link-003",
@@ -34,7 +40,9 @@ describe("XSUS AI — Real KnowledgeLink Integration", () => {
       targetId: "xsus-ai",
       relationType: "supports",
       confidence: 0.91,
-      metadata: { domain: "ai" },
+      metadata: {
+        domain: "ai",
+      },
     },
   ];
 
@@ -95,8 +103,9 @@ describe("XSUS AI — Real KnowledgeLink Integration", () => {
         sourceId: "xsus-ai",
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("link-001");
+      expect(result.count).toBe(1);
+      expect(result.links).toHaveLength(1);
+      expect(result.links[0].id).toBe("link-001");
     });
 
     it("finds links by targetId", () => {
@@ -104,8 +113,9 @@ describe("XSUS AI — Real KnowledgeLink Integration", () => {
         targetId: "xsus-ai",
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("link-003");
+      expect(result.count).toBe(1);
+      expect(result.links).toHaveLength(1);
+      expect(result.links[0].id).toBe("link-003");
     });
 
     it("finds links by relationType", () => {
@@ -113,17 +123,21 @@ describe("XSUS AI — Real KnowledgeLink Integration", () => {
         relationType: "depends_on",
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("link-002");
+      expect(result.count).toBe(1);
+      expect(result.links).toHaveLength(1);
+      expect(result.links[0].id).toBe("link-002");
     });
 
     it("finds links by entity", () => {
-      const result = adapter.findRelatedEntities("knowledge-engine");
+      const result = adapter.findRelatedEntities(
+        "knowledge-engine",
+      );
 
-      expect(result.length).toBeGreaterThan(0);
+      expect(result.count).toBeGreaterThan(0);
+      expect(result.links.length).toBeGreaterThan(0);
 
       expect(
-        result.some(
+        result.links.some(
           (link) =>
             link.sourceId === "knowledge-engine" ||
             link.targetId === "knowledge-engine",
@@ -139,8 +153,9 @@ describe("XSUS AI — Real KnowledgeLink Integration", () => {
         },
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("link-001");
+      expect(result.count).toBe(1);
+      expect(result.links).toHaveLength(1);
+      expect(result.links[0].id).toBe("link-001");
     });
   });
 
@@ -179,9 +194,7 @@ describe("XSUS AI — Real KnowledgeLink Integration", () => {
 
       expect(() => adapter.getStatus()).toThrow();
 
-      expect(
-        api.getById("link-001"),
-      ).toBeDefined();
+      expect(api.getById("link-001")).toBeDefined();
     });
 
     it("clears links through the API", () => {
