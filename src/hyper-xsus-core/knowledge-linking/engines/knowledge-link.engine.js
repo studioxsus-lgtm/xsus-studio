@@ -1,3 +1,4 @@
+
 /**
  * XSUS Hyper Core — KnowledgeLink Engine
  * Version: 1.1.0
@@ -112,8 +113,57 @@ export function createKnowledgeLinkEngine(options = {}) {
     }
   }
 
+  /**
+   * Normalizon të dhënat hyrëse dhe përgatit KnowledgeLink.
+   *
+   * Përputhshmëria:
+   * - timestamp është alias i vjetër për createdAt.
+   * - timestamp nuk ruhet në KnowledgeLink final.
+   * - Model-i vazhdon të kontrollojë fushat kanonike.
+   * - Inputi origjinal nuk mutuohet.
+   */
   function prepareLink(input) {
-    const link = createKnowledgeLink(input);
+    let normalizedInput = input;
+
+    if (
+      input !== null &&
+      typeof input === "object" &&
+      !Array.isArray(input) &&
+      Object.prototype.hasOwnProperty.call(
+        input,
+        "timestamp",
+      )
+    ) {
+      const {
+        timestamp,
+        ...canonicalInput
+      } = input;
+
+      const hasCreatedAt =
+        Object.prototype.hasOwnProperty.call(
+          canonicalInput,
+          "createdAt",
+        );
+
+      if (hasCreatedAt) {
+        if (
+          typeof timestamp !== "string" ||
+          typeof canonicalInput.createdAt !== "string" ||
+          timestamp.trim() !== canonicalInput.createdAt.trim()
+        ) {
+          throw new TypeError(
+            "KnowledgeLink Engine: timestamp conflicts with createdAt.",
+          );
+        }
+      } else {
+        canonicalInput.createdAt = timestamp;
+      }
+
+      normalizedInput = canonicalInput;
+    }
+
+    const link = createKnowledgeLink(normalizedInput);
+
     const validation = validateKnowledgeLink(link);
 
     if (!validation.valid) {
