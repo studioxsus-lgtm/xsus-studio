@@ -1,11 +1,25 @@
 import { describe, it, expect, vi } from "vitest";
 
-import {
+// Ngarkimi diagnostik i XSUS App Frontend Builder.
+const frontendBuilderModule = await import(
+  "../../apps/app/frontend/frontend-builder.js"
+).catch((error) => {
+  throw new Error(
+    [
+      "XSUS App Frontend Builder could not be loaded.",
+      "Expected file: apps/app/frontend/frontend-builder.js",
+      "Test file: tests/app/frontend-builder.test.js",
+      `Original error: ${error.message}`
+    ].join("\n")
+  );
+});
+
+const {
   APP_FRONTEND_BUILDER_VERSION,
   APP_FRONTEND_CAPABILITIES,
   APP_FRONTEND_FRAMEWORKS,
   createFrontendBuilder
-} from "../../apps/app/frontend/frontend-builder.js";
+} = frontendBuilderModule;
 
 describe("XSUS App Frontend Builder", () => {
   const validRequest = {
@@ -567,7 +581,10 @@ describe("XSUS App Frontend Builder", () => {
     it("duhet të pranojë path relativ brenda projektit", async () => {
       const builder = createFrontendBuilder({
         provider: createProvider([
-          { fileName: "src/components/Header.jsx", content: "export default 1;" }
+          {
+            fileName: "src/components/Header.jsx",
+            content: "export default 1;"
+          }
         ])
       });
 
