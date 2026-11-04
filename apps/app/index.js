@@ -1,11 +1,12 @@
 /**
 
 * XSUS App — Public Entry Point
-* Version: 1.2.0
+* Version: 1.3.0
 * 
 * Public API for the independent XSUS App Engine.
   */
 
+// Main Engine
 export {
 createAppEngine,
 XSUS_APP_ENGINE_VERSION,
@@ -28,6 +29,7 @@ isAppResponse
 export {
 APP_ARCHITECT_VERSION,
 APP_ARCHITECT_TYPES,
+APP_ARCHITECT_PLATFORMS,
 APP_ARCHITECT_LAYERS,
 createAppArchitecture,
 getAppArchitectCapabilities
