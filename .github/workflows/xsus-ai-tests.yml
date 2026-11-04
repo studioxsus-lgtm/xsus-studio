@@ -1,3 +1,4 @@
+
 name: XSUS AI Tests
 
 on:
@@ -25,6 +26,24 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+
+      - name: Verify XSUS App Frontend Builder
+        run: |
+          echo "Current branch:"
+          git branch --show-current
+
+          echo "Current commit:"
+          git rev-parse HEAD
+
+          echo "Frontend directory:"
+          ls -la apps/app/frontend/ || true
+
+          echo "Tracked frontend files:"
+          git ls-files apps/app/frontend/
+
+          echo "Checking expected file:"
+          test -f apps/app/frontend/frontend-builder.js
+          echo "Frontend Builder file exists."
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
