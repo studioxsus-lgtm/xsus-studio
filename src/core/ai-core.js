@@ -13,6 +13,12 @@
  * - 12.4.8 Response Context Validation
  * - 12.4.9 Retrieval Failure & Recovery
  * - 12.4.10 End-to-End Memory-Aware Integration
+ *
+ * Knowledge Integration:
+ * - Hyper XSUS Core Primary Retrieval
+ * - XSUS Knowledge Service Fallback
+ * - Injectable Knowledge Adapter
+ * - Standardized Retrieval Metadata
  */
 
 import {
@@ -48,6 +54,10 @@ import {
 import {
   searchKnowledge
 } from "../knowledge/knowledge-service.js";
+
+import {
+  createKnowledgeRetrievalRouter
+} from "./knowledge-retrieval-router.js";
 
 import {
   detectLanguage
@@ -89,6 +99,13 @@ const memoryRetrievalEngine =
 let memoryPersistenceInstance = null;
 let modelOrchestratorInstance = null;
 
+// Hyper XSUS Core integration.
+let hyperKnowledgeAdapterInstance = null;
+let knowledgeRetrievalRouterInstance = null;
+
+/**
+ * Configures the memory persistence adapter.
+ */
 export function configureAICoreMemoryPersistence(
   instance = null
 ) {
@@ -108,6 +125,9 @@ export function configureAICoreMemoryPersistence(
   memoryPersistenceInstance = instance;
 }
 
+/**
+ * Configures the model orchestrator.
+ */
 export function configureAICoreModelOrchestrator(
   instance = null
 ) {
@@ -124,6 +144,54 @@ export function configureAICoreModelOrchestrator(
   }
 
   modelOrchestratorInstance = instance;
+}
+
+/**
+ * Configures the Hyper XSUS Core Knowledge Adapter.
+ *
+ * The adapter must be initialized and populated by the
+ * Hyper XSUS Core integration layer before injection.
+ *
+ * Passing null disables Hyper retrieval and leaves the
+ * existing XSUS Knowledge Service as the retrieval source.
+ */
+export function configureAICoreKnowledgeAdapter(
+  instance = null
+) {
+  if (
+    instance !== null &&
+    (
+      typeof instance !== "object" ||
+      typeof instance.retrieve !== "function"
+    )
+  ) {
+    throw new TypeError(
+      "Hyper Knowledge Adapter duhet të ofrojë metodën retrieve."
+    );
+  }
+
+  hyperKnowledgeAdapterInstance = instance;
+
+  // Recreate the router on its next use.
+  knowledgeRetrievalRouterInstance = null;
+}
+
+/**
+ * Lazily creates the Knowledge Retrieval Router.
+ *
+ * Hyper XSUS Core is the primary source when configured.
+ * XSUS Knowledge Service is retained as automatic fallback.
+ */
+function getKnowledgeRetrievalRouter() {
+  if (!knowledgeRetrievalRouterInstance) {
+    knowledgeRetrievalRouterInstance =
+      createKnowledgeRetrievalRouter({
+        hyperAdapter: hyperKnowledgeAdapterInstance,
+        fallbackSearch: searchKnowledge
+      });
+  }
+
+  return knowledgeRetrievalRouterInstance;
 }
 
 function getMemoryPersistence() {
@@ -415,6 +483,16 @@ function saveMemoryMessage(sessionId, role, content) {
   } catch {
     return false;
   }
+}
+
+function truncateText(value, maxLength) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.length <= maxLength
+    ? value
+    : value.slice(0, maxLength);
 }
 
 function evaluateRetrievedMemories(memories) {
@@ -794,10 +872,10 @@ function buildContextMetadata({
 }
 
 /*
- * Kontrata publike e memoryRetrieval:
- * vetëm enabled dhe retrievedCount.
+ * Public memoryRetrieval contract:
+ * only enabled and retrievedCount.
  *
- * Diagnostikimi mbahet në memoryDiagnostics.
+ * Diagnostics are kept in memoryDiagnostics.
  */
 function buildMemoryRetrievalMetadata(
   memoryEnabled,
@@ -868,6 +946,14 @@ function buildMetadata({
     knowledgeResults: Array.isArray(results)
       ? results.length
       : 0,
+
+    knowledgeRetrieval: {
+      source: knowledge?.metadata?.retrievalSource || null,
+      fallbackUsed: Boolean(
+        knowledge?.metadata?.fallbackUsed
+      ),
+      error: knowledge?.metadata?.retrievalError || null
+    },
 
     sources: collectSources(
       results,
@@ -998,16 +1084,6 @@ function createErrorResponse({
   };
 }
 
-function truncateText(value, maxLength) {
-  if (typeof value !== "string") {
-    return "";
-  }
-
-  return value.length <= maxLength
-    ? value
-    : value.slice(0, maxLength);
-}
-
 function extractKnowledgeText(item) {
   if (typeof item === "string") {
     return item.trim();
@@ -1050,8 +1126,8 @@ function buildKnowledgeContext(results) {
 /**
  * XSUS AI Core — Model Request Bridge
  *
- * Përcjell kërkesën e normalizuar te Model Orchestrator.
- * Ruhet konteksti i memories dhe i njohurive.
+ * Forwards normalized requests to the Model Orchestrator.
+ * Preserves memory and knowledge context.
  */
 async function generateWithModel({
   contextualQuery,
@@ -1109,18 +1185,14 @@ async function generateWithModel({
     );
   }
 
-  // Konteksti i dërguar nga klienti.
   const callerContext = isPlainObject(input.context)
     ? input.context
     : {};
 
-  // Metadata e dërguara nga klienti.
   const callerMetadata = isPlainObject(input.metadata)
     ? input.metadata
     : {};
 
-  // modelParameters është fusha primare.
-  // parameters mbështetet si alias për kompatibilitet.
   const modelParameters = isPlainObject(input.modelParameters)
     ? input.modelParameters
     : isPlainObject(input.parameters)
@@ -1137,8 +1209,6 @@ async function generateWithModel({
 
     context: {
       ...callerContext,
-
-      // Fushat e brendshme të Core janë autoritative.
       conversationId: conversationId || null,
       messages: history,
       knowledgeResults: Array.isArray(results)
@@ -1148,9 +1218,6 @@ async function generateWithModel({
 
     metadata: {
       ...callerMetadata,
-
-      // Metadata e besuar e Core nuk mbishkruhet
-      // nga metadata e klientit.
       engine: "xsus-ai-core",
       coreVersion: AI_CORE_VERSION,
       knowledgeResults: Array.isArray(results)
@@ -1200,6 +1267,9 @@ async function generateWithModel({
   };
 }
 
+/**
+ * Processes an XSUS AI Core request.
+ */
 export async function processAIRequest(input = {}) {
   let requestId = null;
   let language = "sq";
@@ -1365,19 +1435,30 @@ export async function processAIRequest(input = {}) {
       await persistMemorySession(conversationId);
     }
 
-    let knowledge;
+    // --------------------------------------------------
+    // Knowledge Retrieval
+    //
+    // Primary: Hyper XSUS Core
+    // Fallback: XSUS Knowledge Service
+    // --------------------------------------------------
+
+    let retrieval;
 
     try {
-      knowledge = await searchKnowledge(contextualQuery, {
-        language: requestContext.language,
-        limit: 5,
-        metadata: {
-          requestId: requestContext.requestId,
-          moduleName: requestContext.moduleName,
-          conversationId: conversationId || null,
-          historyMessageCount: history.length
+      retrieval = await getKnowledgeRetrievalRouter().retrieve(
+        contextualQuery,
+        {
+          language: requestContext.language,
+          limit: 5,
+          minimumScore: 0.1,
+          metadata: {
+            requestId: requestContext.requestId,
+            moduleName: requestContext.moduleName,
+            conversationId: conversationId || null,
+            historyMessageCount: history.length
+          }
         }
-      });
+      );
     } catch {
       return createErrorResponse({
         message: GENERIC_ERROR_MESSAGE,
@@ -1396,35 +1477,44 @@ export async function processAIRequest(input = {}) {
       });
     }
 
-    if (knowledge?.success === false) {
-      const knowledgeError =
-        typeof knowledge.error === "string" &&
-        knowledge.error.trim()
-          ? knowledge.error.trim()
-          : GENERIC_ERROR_MESSAGE;
-
+    if (
+      !isPlainObject(retrieval) ||
+      retrieval.success !== true ||
+      !Array.isArray(retrieval.results)
+    ) {
       return createErrorResponse({
-        message: knowledgeError,
+        message: GENERIC_ERROR_MESSAGE,
         requestId,
         language,
         code: AI_ERROR_CODES.KNOWLEDGE_SERVICE_ERROR,
+        exposeMessage: false,
         metadata: buildErrorMetadata({
           requestId,
           language,
           conversationId,
           history,
           memoryEnabled,
-          retrievedMemory,
-          sources: knowledge.sources
+          retrievedMemory
         })
       });
     }
 
-    const results = Array.isArray(knowledge)
-      ? knowledge
-      : Array.isArray(knowledge?.results)
-        ? knowledge.results
-        : [];
+    const results = retrieval.results;
+
+    const knowledge = {
+      success: true,
+      results,
+      sources: [],
+      metadata: {
+        retrievalSource: retrieval.source || "none",
+        fallbackUsed: Boolean(retrieval.fallbackUsed),
+        retrievalError: retrieval.error || null
+      }
+    };
+
+    // --------------------------------------------------
+    // Response Generation
+    // --------------------------------------------------
 
     let standardizedResponse;
     let modelResult = null;
@@ -1597,7 +1687,7 @@ export async function processAIRequest(input = {}) {
         ...response.metadata,
         ...metadata,
 
-        // Forcojmë kontratën publike pas çdo merge.
+        // Preserve the public memory contract.
         memoryRetrieval: buildMemoryRetrievalMetadata(
           memoryEnabled,
           conversationId,
