@@ -43,11 +43,31 @@ describe("XSUS App Contracts", () => {
     });
 
     it("defines application error codes", () => {
-      expect(APP_ERROR_CODES).toBeDefined();
-      expect(APP_ERROR_CODES.INVALID_PROJECT).toBeDefined();
-      expect(APP_ERROR_CODES.PROJECT_NOT_FOUND).toBeDefined();
-      expect(APP_ERROR_CODES.WORKSPACE_FAILURE).toBeDefined();
-      expect(APP_ERROR_CODES.INTEGRATION_FAILURE).toBeDefined();
+      expect(Array.isArray(APP_ERROR_CODES)).toBe(true);
+
+      expect(APP_ERROR_CODES).toEqual(
+        expect.arrayContaining([
+          "INVALID_REQUEST",
+          "PROMPT_TOO_LONG",
+          "UNSUPPORTED_PLATFORM",
+          "ARCHITECT_NOT_CONFIGURED",
+          "ARCHITECTURE_FAILED",
+          "APP_ENGINE_FAILURE",
+          "GENERATION_FAILED",
+          "VALIDATION_FAILED",
+          "EXPORT_FAILED",
+          "INVALID_PROJECT",
+          "PROJECT_NOT_FOUND",
+          "WORKSPACE_FAILURE",
+          "INTEGRATION_FAILURE",
+        ])
+      );
+    });
+
+    it("exposes immutable contract definitions", () => {
+      expect(Object.isFrozen(APP_REQUEST_TYPES)).toBe(true);
+      expect(Object.isFrozen(APP_PLATFORMS)).toBe(true);
+      expect(Object.isFrozen(APP_ERROR_CODES)).toBe(true);
     });
   });
 
@@ -76,6 +96,30 @@ describe("XSUS App Contracts", () => {
 
       expect(isAppRequest(request)).toBe(true);
       expect(request.platform).toBe("android");
+    });
+
+    it("uses default request values", () => {
+      const request = createAppRequest({
+        type: "architecture",
+        prompt: "Create an application",
+      });
+
+      expect(request.platform).toBe("web");
+      expect(request.language).toBe("auto");
+      expect(request.projectId).toBeNull();
+      expect(request.requirements).toEqual([]);
+    });
+
+    it("normalizes prompt and language whitespace", () => {
+      const request = createAppRequest({
+        type: "architecture",
+        prompt: "  Create an application  ",
+        platform: "web",
+        language: " en ",
+      });
+
+      expect(request.prompt).toBe("Create an application");
+      expect(request.language).toBe("en");
     });
 
     it("rejects an unsupported request type", () => {
@@ -111,6 +155,17 @@ describe("XSUS App Contracts", () => {
       ).toThrow();
     });
 
+    it("rejects a whitespace-only prompt", () => {
+      expect(() =>
+        createAppRequest({
+          type: "architecture",
+          prompt: "   ",
+          platform: "web",
+          language: "en",
+        })
+      ).toThrow();
+    });
+
     it("rejects an invalid language", () => {
       expect(() =>
         createAppRequest({
@@ -118,6 +173,18 @@ describe("XSUS App Contracts", () => {
           prompt: "Test",
           platform: "web",
           language: "",
+        })
+      ).toThrow();
+    });
+
+    it("rejects an invalid project identifier", () => {
+      expect(() =>
+        createAppRequest({
+          type: "architecture",
+          prompt: "Test",
+          platform: "web",
+          language: "en",
+          projectId: "",
         })
       ).toThrow();
     });
@@ -132,6 +199,17 @@ describe("XSUS App Contracts", () => {
           requirements: "not-an-array",
         })
       ).toThrow();
+    });
+
+    it("creates an immutable request", () => {
+      const request = createAppRequest({
+        type: "architecture",
+        prompt: "Create an application",
+        requirements: ["authentication"],
+      });
+
+      expect(Object.isFrozen(request)).toBe(true);
+      expect(Object.isFrozen(request.requirements)).toBe(true);
     });
   });
 
@@ -166,6 +244,16 @@ describe("XSUS App Contracts", () => {
       expect(response.error.message).toBe("Test failure");
     });
 
+    it("accepts a non-empty string as an error", () => {
+      const response = createAppResponse({
+        success: false,
+        error: "Application failed",
+      });
+
+      expect(isAppResponse(response)).toBe(true);
+      expect(response.error).toBe("Application failed");
+    });
+
     it("rejects a response without a boolean success value", () => {
       expect(() =>
         createAppResponse({
@@ -184,6 +272,17 @@ describe("XSUS App Contracts", () => {
       ).toThrow();
     });
 
+    it("rejects an invalid error object", () => {
+      expect(() =>
+        createAppResponse({
+          success: false,
+          error: {
+            message: "",
+          },
+        })
+      ).toThrow();
+    });
+
     it("rejects a successful response containing an error", () => {
       expect(() =>
         createAppResponse({
@@ -194,19 +293,104 @@ describe("XSUS App Contracts", () => {
         })
       ).toThrow();
     });
+
+    it("rejects an invalid request identifier", () => {
+      expect(() =>
+        createAppResponse({
+          success: true,
+          requestId: "",
+        })
+      ).toThrow();
+    });
+
+    it("rejects an invalid project identifier", () => {
+      expect(() =>
+        createAppResponse({
+          success: true,
+          projectId: "",
+        })
+      ).toThrow();
+    });
+
+    it("creates an immutable response", () => {
+      const response = createAppResponse({
+        success: true,
+        data: {
+          status: "created",
+        },
+      });
+
+      expect(Object.isFrozen(response)).toBe(true);
+    });
   });
 
   describe("Contract validation", () => {
+    it("accepts a valid request", () => {
+      const request = createAppRequest({
+        type: "architecture",
+        prompt: "Create a web application",
+      });
+
+      expect(isAppRequest(request)).toBe(true);
+    });
+
     it("rejects an invalid request object", () => {
       expect(isAppRequest(null)).toBe(false);
       expect(isAppRequest({})).toBe(false);
       expect(isAppRequest("invalid")).toBe(false);
+      expect(isAppRequest([])).toBe(false);
+    });
+
+    it("rejects a request with an incorrect contract version", () => {
+      const request = createAppRequest({
+        type: "architecture",
+        prompt: "Test",
+      });
+
+      expect(
+        isAppRequest({
+          ...request,
+          contractVersion: "invalid",
+        })
+      ).toBe(false);
+    });
+
+    it("accepts a valid successful response", () => {
+      const response = createAppResponse({
+        success: true,
+        requestId: "request-001",
+      });
+
+      expect(isAppResponse(response)).toBe(true);
+    });
+
+    it("accepts a valid failure response", () => {
+      const response = createAppResponse({
+        success: false,
+        error: "Test failure",
+      });
+
+      expect(isAppResponse(response)).toBe(true);
     });
 
     it("rejects an invalid response object", () => {
       expect(isAppResponse(null)).toBe(false);
       expect(isAppResponse({})).toBe(false);
       expect(isAppResponse("invalid")).toBe(false);
+      expect(isAppResponse([])).toBe(false);
+    });
+
+    it("rejects a response with an incorrect contract version", () => {
+      const response = createAppResponse({
+        success: true,
+      });
+
+      expect(
+        isAppResponse({
+          ...response,
+          contractVersion: "invalid",
+        })
+      ).toBe(false);
     });
   });
 });
