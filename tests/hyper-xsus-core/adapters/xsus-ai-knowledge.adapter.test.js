@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest";
 import {
   createXsusAIKnowledgeAdapter,
   XSUS_AI_KNOWLEDGE_ADAPTER_VERSION,
-} from "../../../src/hyper-xsus-core/knowledge-link/adapters/xsus-ai-knowledge.adapter.js";
+} from "../../../src/hyper-xsus-core/knowledge-linking/adapters/xsus-ai-knowledge.adapter.js";
 
 describe("XSUS AI Knowledge Adapter v1.1.0", () => {
   it("exposes the expected version", () => {
