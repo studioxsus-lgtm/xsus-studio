@@ -4,12 +4,11 @@ import { describe, it, expect } from "vitest";
 import {
   createXsusAIKnowledgeAdapter,
   XSUS_AI_KNOWLEDGE_ADAPTER_VERSION,
-} from "../../../../src/hyper-xsus-core/knowledge-link/adapters/xsus-ai-knowledge.adapter.js";
+} from "../../../src/hyper-xsus-core/knowledge-link/adapters/xsus-ai-knowledge.adapter.js";
 
 describe("XSUS AI Knowledge Adapter v1.1.0", () => {
   it("exposes the expected version", () => {
-    expect(XSUS_AI_KNOWLEDGE_ADAPTER_VERSION)
-      .toBe("1.1.0");
+    expect(XSUS_AI_KNOWLEDGE_ADAPTER_VERSION).toBe("1.1.0");
   });
 
   it("initializes KnowledgeLink and KnowledgeGraph", () => {
@@ -58,12 +57,10 @@ describe("XSUS AI Knowledge Adapter v1.1.0", () => {
     );
 
     expect(result.count).toBe(1);
-    expect(result.results[0].id)
-      .toBe("python_variables");
+    expect(result.results[0].id).toBe("python_variables");
     expect(result.results[0].content)
       .toBe("Variables in Python store values.");
-    expect(result.results[0].matchedDirectly)
-      .toBe(true);
+    expect(result.results[0].matchedDirectly).toBe(true);
 
     adapter.close();
   });
@@ -165,11 +162,8 @@ describe("XSUS AI Knowledge Adapter v1.1.0", () => {
   it("rejects invalid queries", () => {
     const adapter = createXsusAIKnowledgeAdapter();
 
-    expect(() => adapter.retrieve(""))
-      .toThrow(TypeError);
-
-    expect(() => adapter.retrieve(null))
-      .toThrow(TypeError);
+    expect(() => adapter.retrieve("")).toThrow(TypeError);
+    expect(() => adapter.retrieve(null)).toThrow(TypeError);
 
     adapter.close();
   });
