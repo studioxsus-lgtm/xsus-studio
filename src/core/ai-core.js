@@ -1459,21 +1459,35 @@ export async function processAIRequest(input = {}) {
           }
         }
       );
-    } catch {
+    } catch (error) {
       return createErrorResponse({
-        message: GENERIC_ERROR_MESSAGE,
+        message:
+          typeof error?.message === "string" &&
+          error.message.trim()
+            ? error.message
+            : GENERIC_ERROR_MESSAGE,
         requestId,
         language,
         code: AI_ERROR_CODES.KNOWLEDGE_SERVICE_ERROR,
-        exposeMessage: false,
-        metadata: buildErrorMetadata({
-          requestId,
-          language,
-          conversationId,
-          history,
-          memoryEnabled,
-          retrievedMemory
-        })
+        exposeMessage: true,
+        metadata: {
+          ...buildErrorMetadata({
+            requestId,
+            language,
+            conversationId,
+            history,
+            memoryEnabled,
+            retrievedMemory
+          }),
+          knowledgeRetrieval: {
+            source: "none",
+            fallbackUsed: Boolean(hyperKnowledgeAdapterInstance),
+            error:
+              typeof error?.message === "string"
+                ? error.message
+                : "knowledge-retrieval-failed"
+          }
+        }
       });
     }
 
@@ -1483,19 +1497,30 @@ export async function processAIRequest(input = {}) {
       !Array.isArray(retrieval.results)
     ) {
       return createErrorResponse({
-        message: GENERIC_ERROR_MESSAGE,
+        message:
+          typeof retrieval?.error === "string" &&
+          retrieval.error.trim()
+            ? retrieval.error
+            : GENERIC_ERROR_MESSAGE,
         requestId,
         language,
         code: AI_ERROR_CODES.KNOWLEDGE_SERVICE_ERROR,
-        exposeMessage: false,
-        metadata: buildErrorMetadata({
-          requestId,
-          language,
-          conversationId,
-          history,
-          memoryEnabled,
-          retrievedMemory
-        })
+        exposeMessage: true,
+        metadata: {
+          ...buildErrorMetadata({
+            requestId,
+            language,
+            conversationId,
+            history,
+            memoryEnabled,
+            retrievedMemory
+          }),
+          knowledgeRetrieval: {
+            source: retrieval?.source || "none",
+            fallbackUsed: Boolean(retrieval?.fallbackUsed),
+            error: retrieval?.error || null
+          }
+        }
       });
     }
 
