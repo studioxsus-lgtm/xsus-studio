@@ -1,7 +1,7 @@
 /**
 
 * XSUS App — Main Application Engine
-* Version: 1.4.0
+* Version: 1.5.0
 * 
 * Coordinates independent XSUS App modules.
 * Integrates XSUS AI Core and Hyper XSUS Core
@@ -9,6 +9,9 @@
   */
 
 import { createAppArchitecture } from "../architect/app-architect.js";
+import { APP_ARCHITECT_TYPES } from "../architect/app-architect.js";
+import { APP_PLATFORMS } from "../contracts/app-contracts.js";
+
 import { createCodeGenerator } from "../code-generator/code-generator.js";
 import { createFrontendBuilder } from "../frontend/frontend-builder.js";
 import { createBackendBuilder } from "../backend/backend-builder.js";
@@ -19,7 +22,7 @@ import { createTestingEngine } from "../testing/testing-engine.js";
 import { createApplicationExporter } from "../export/application-exporter.js";
 import { createAppIntelligence } from "../integration/app-intelligence.js";
 
-export const XSUS_APP_ENGINE_VERSION = "1.4.0";
+export const XSUS_APP_ENGINE_VERSION = "1.5.0";
 
 export const APP_ENGINE_CAPABILITIES = Object.freeze([
 "app-architecture",
@@ -33,20 +36,30 @@ export const APP_ENGINE_CAPABILITIES = Object.freeze([
 "application-export",
 "xsus-ai-core-integration",
 "hyper-xsus-core-integration",
-"knowledge-retrieval"
+"knowledge-retrieval",
+"android-platform",
+"ios-platform",
+"desktop-platform",
+"web-platform",
+"engine-lifecycle-management",
+"module-failure-reporting"
 ]);
 
 const DEFAULT_CONFIG = Object.freeze({
 name: "XSUS App Engine",
 version: XSUS_APP_ENGINE_VERSION,
 maxPromptLength: 12000,
-supportedPlatforms: ["web", "mobile", "desktop", "fullstack"]
+supportedPlatforms: APP_PLATFORMS
 });
 
 function createError(code, message, details = null) {
 return {
 success: false,
-error: { code, message, details }
+error: {
+code,
+message,
+details
+}
 };
 }
 
@@ -64,7 +77,9 @@ typeof request.prompt === "string"
 ? request.prompt.trim()
 : "";
 
-if (!prompt) return null;
+if (!prompt) {
+return null;
+}
 
 const modules =
 request.modules &&
@@ -76,30 +91,45 @@ typeof request.modules === "object" &&
 return {
 prompt,
 platform: request.platform || "web",
+architectureType: request.architectureType || null,
 language: request.language || "auto",
 projectId: request.projectId || null,
+
 requirements: Array.isArray(request.requirements)
-? [...request.requirements]
-: [],
+  ? [...request.requirements]
+  : [],
+
 modules: { ...modules },
+
 codeLanguage: request.codeLanguage || "typescript",
 framework: request.framework || null,
 projectType: request.projectType || "application",
 database: request.database || "postgresql",
 apiStyle: request.apiStyle || "rest",
 testType: request.testType || "unit",
-sourceCode: typeof request.sourceCode === "string"
-? request.sourceCode
-: null,
+
+sourceCode:
+  typeof request.sourceCode === "string"
+    ? request.sourceCode
+    : null,
+
 fileName: request.fileName || "generated-file",
-exportTarget: request.exportTarget || request.platform || "web",
+
+exportTarget:
+  request.exportTarget ||
+  request.platform ||
+  "web",
+
 exportFormat: request.exportFormat || "source",
 projectName: request.projectName || "xsus-app",
+
 artifacts: Array.isArray(request.artifacts)
-? request.artifacts
-: [],
+  ? request.artifacts
+  : [],
+
 useIntelligence: request.useIntelligence === true,
 retrieveKnowledge: request.retrieveKnowledge === true
+
 };
 }
 
@@ -161,19 +191,59 @@ applicationExporter:
 export function createAppEngine(options = {}) {
 const config = Object.freeze({
 ...DEFAULT_CONFIG,
-...options.config
+...options.config,
+supportedPlatforms: Object.freeze([
+...(options.config?.supportedPlatforms || APP_PLATFORMS)
+])
 });
+
+if (
+!Number.isInteger(config.maxPromptLength) ||
+config.maxPromptLength < 1
+) {
+throw new TypeError(
+"maxPromptLength must be a positive integer."
+);
+}
+
+if (
+!Array.isArray(config.supportedPlatforms) ||
+config.supportedPlatforms.length === 0 ||
+config.supportedPlatforms.some(
+platform => !APP_PLATFORMS.includes(platform)
+)
+) {
+throw new TypeError(
+"Engine configuration contains unsupported platforms."
+);
+}
 
 const architect = options.architect || createAppArchitecture;
 const modules = createModules(options);
 
-const intelligence = options.intelligence === false
+const intelligence =
+options.intelligence === false
 ? null
-: options.intelligenceInstance || createAppIntelligence(
-options.intelligenceOptions || {}
-);
+: options.intelligenceInstance ||
+createAppIntelligence(options.intelligenceOptions || {});
+
+let closed = false;
+let closeError = null;
+
+function assertOpen() {
+if (closed) {
+throw new Error("XSUS App Engine is closed.");
+}
+}
 
 async function processRequest(request) {
+if (closed) {
+return createError(
+"ENGINE_CLOSED",
+"XSUS App Engine is closed and cannot process requests."
+);
+}
+
 const normalized = normalizeRequest(request);
 
 if (!normalized) {
@@ -197,10 +267,21 @@ if (!config.supportedPlatforms.includes(normalized.platform)) {
   );
 }
 
+if (
+  normalized.architectureType !== null &&
+  !APP_ARCHITECT_TYPES.includes(normalized.architectureType)
+) {
+  return createError(
+    "UNSUPPORTED_ARCHITECTURE",
+    `Unsupported architecture type: ${normalized.architectureType}`
+  );
+}
+
 try {
   const architecture = await architect({
     prompt: normalized.prompt,
     platform: normalized.platform,
+    architectureType: normalized.architectureType,
     language: normalized.language,
     projectId: normalized.projectId,
     requirements: normalized.requirements
@@ -364,11 +445,13 @@ try {
   }
 
   const failedModules = Object.entries(results)
-    .filter(([, result]) => !result || result.success !== true)
+    .filter(([, result]) => {
+      return !result || result.success !== true;
+    })
     .map(([name]) => name);
 
-  return Object.freeze({
-    success: true,
+  const response = {
+    success: failedModules.length === 0,
     data: Object.freeze({
       projectId: normalized.projectId,
       architecture,
@@ -378,11 +461,27 @@ try {
       engine: config.name,
       version: config.version,
       platform: normalized.platform,
+      architectureType:
+        architecture.architecture?.type || null,
       executedModules: Object.keys(results),
       failedModules,
-      intelligenceEnabled: intelligence !== null
+      intelligenceEnabled: intelligence !== null,
+      engineStatus: "active"
     })
-  });
+  };
+
+  if (failedModules.length > 0) {
+    response.error = {
+      code: "MODULE_EXECUTION_FAILED",
+      message: "One or more application modules failed.",
+      details: {
+        failedModules
+      }
+    };
+  }
+
+  return Object.freeze(response);
+
 } catch {
   return createError(
     "APP_ENGINE_FAILURE",
@@ -397,16 +496,33 @@ return Object.freeze({
 name: config.name,
 version: config.version,
 capabilities: APP_ENGINE_CAPABILITIES,
-intelligence: intelligence
+status: closed ? "closed" : "active",
+intelligenceEnabled: intelligence !== null,
+intelligence: !closed && intelligence
 ? intelligence.getStatus()
+: null,
+closeError: closeError
+? closeError.message
 : null
 });
 }
 
 function close() {
-if (intelligence) {
-intelligence.close();
+if (closed) {
+return;
 }
+
+closed = true;
+
+if (intelligence) {
+  try {
+    intelligence.close();
+  } catch (error) {
+    closeError = error;
+    throw error;
+  }
+}
+
 }
 
 return Object.freeze({
