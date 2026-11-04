@@ -114,7 +114,13 @@ describe("KnowledgeGraph — Integration", () => {
       relationType: "contains"
     });
 
-    expect(api.verifyIntegrity()).toBe(true);
+    const integrity = api.verifyIntegrity();
+
+    expect(integrity).toBeTruthy();
+    expect(integrity.valid).toBe(true);
+    expect(integrity.errors).toEqual([]);
+    expect(integrity.nodeCount).toBe(2);
+    expect(integrity.linkCount).toBe(1);
 
     const status = api.getStatus();
 
