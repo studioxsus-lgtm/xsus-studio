@@ -1,7 +1,7 @@
 /**
 
 * XSUS App — Intelligence Integration
-* Version: 1.1.0
+* Version: 1.2.0
 * 
 * Koordinon:
 * - XSUS AI Core
@@ -9,28 +9,47 @@
 * 
 * Hyper XSUS Core konfigurohet si burim kryesor
 * i njohurive për XSUS AI Core.
+* 
+* Menaxhon pronësinë e konfigurimit global
+* për të shmangur konfliktet ndërmjet instancave.
   */
 
 import {
-configureAICoreKnowledgeAdapter,
+configureAICoreKnowledgeAdapter
 } from "../../../src/core/ai-core.js";
 
 import {
-createXsusAICoreAdapter,
+createXsusAICoreAdapter
 } from "../adapters/xsus-ai-core-adapter.js";
 
 import {
-createHyperXsusCoreAdapter,
+createHyperXsusCoreAdapter
 } from "../adapters/hyper-xsus-core-adapter.js";
 
-export const APP_INTELLIGENCE_VERSION = "1.1.0";
+export const APP_INTELLIGENCE_VERSION = "1.2.0";
+
+let activeKnowledgeOwner = null;
+
+function createIntegrationError(code, message) {
+const error = new Error(message);
+error.code = code;
+return error;
+}
 
 export function createAppIntelligence(options = {}) {
+if (activeKnowledgeOwner !== null) {
+throw createIntegrationError(
+"APP_INTELLIGENCE_ALREADY_ACTIVE",
+"Një instancë tjetër XSUS App Intelligence është aktive."
+);
+}
+
+const owner = Object.freeze({});
 const aiCore = createXsusAICoreAdapter(
 options.aiCore || {}
 );
 
-let hyperCore;
+let hyperCore = null;
 let closed = false;
 let knowledgeConfigured = false;
 
@@ -40,7 +59,9 @@ options.hyperCore || {}
 );
 
 configureAICoreKnowledgeAdapter(hyperCore);
+
 knowledgeConfigured = true;
+activeKnowledgeOwner = owner;
 
 } catch (error) {
 if (hyperCore) {
@@ -57,7 +78,8 @@ throw error;
 
 function assertOpen() {
 if (closed) {
-throw new Error(
+throw createIntegrationError(
+"APP_INTELLIGENCE_CLOSED",
 "XSUS App Intelligence is closed."
 );
 }
@@ -65,7 +87,9 @@ throw new Error(
 
 async function processRequest(input = {}) {
 assertOpen();
+
 return aiCore.processRequest(input);
+
 }
 
 function retrieveKnowledge(query, retrieveOptions = {}) {
@@ -86,7 +110,7 @@ return Object.freeze({
   connected: true,
   aiCore: aiCore.getCapabilities(),
   hyperCore: hyperCore.getStatus(),
-  knowledgeIntegration: knowledgeConfigured,
+  knowledgeIntegration: knowledgeConfigured
 });
 
 }
@@ -98,14 +122,20 @@ return;
 
 let firstError = null;
 
-// Hiq lidhjen globale vetëm kur kjo instancë
-// është përgjegjëse për konfigurimin e saj.
-if (knowledgeConfigured) {
+// Vetëm pronari aktual mund ta heqë
+// konfigurimin global të XSUS AI Core.
+if (
+  knowledgeConfigured &&
+  activeKnowledgeOwner === owner
+) {
   try {
     configureAICoreKnowledgeAdapter(null);
   } catch (error) {
     firstError = error;
   }
+
+  activeKnowledgeOwner = null;
+  knowledgeConfigured = false;
 }
 
 try {
@@ -128,6 +158,6 @@ return Object.freeze({
 processRequest,
 retrieveKnowledge,
 getStatus,
-close,
+close
 });
 }
