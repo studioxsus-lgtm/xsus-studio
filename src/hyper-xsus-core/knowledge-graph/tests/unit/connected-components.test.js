@@ -91,7 +91,10 @@ describe("Knowledge Graph Connected Components", () => {
       })
     ).toEqual([
       ["A", "B", "C"],
+      ["B", "C"],
+      ["C"],
       ["D", "E"],
+      ["E"],
       ["F"]
     ]);
   });
