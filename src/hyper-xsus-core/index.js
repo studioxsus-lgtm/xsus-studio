@@ -9,8 +9,8 @@
 
 export const HYPER_XSUS_CORE_VERSION = "1.0.0";
 
-// KnowledgeLink
-export * from "./knowledge-link/index.js";
+// KnowledgeLinking
+export * from "./knowledge-linking/index.js";
 
 // KnowledgeGraph
 export * from "./knowledge-graph/index.js";
@@ -19,4 +19,4 @@ export * from "./knowledge-graph/index.js";
 export {
   createXsusAIKnowledgeAdapter,
   XSUS_AI_KNOWLEDGE_ADAPTER_VERSION,
-} from "./knowledge-link/adapters/xsus-ai-knowledge.adapter.js";
+} from "./knowledge-linking/adapters/xsus-ai-knowledge.adapter.js";
