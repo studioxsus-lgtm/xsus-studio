@@ -1,7 +1,7 @@
 
 /**
  * XSUS Hyper Core — XSUS AI Knowledge Adapter
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Integrimi zyrtar ndërmjet:
  * - XSUS AI Core
@@ -10,12 +10,15 @@
  *
  * Përgjegjësitë:
  * - Inicializimi i API-ve publike.
- * - Ekspozimi i një ndërfaqeje të përbashkët.
- * - Izolimi i XSUS AI Core nga implementimi i Hyper Core.
+ * - Kërkimi tekstual në njohuritë e KnowledgeGraph.
+ * - Zgjerimi i kontekstit përmes KnowledgeLink.
+ * - Standardizimi i rezultateve për XSUS AI Core.
+ * - Izolimi i AI Core nga implementimi i Hyper Core.
  * - Menaxhimi i ciklit të jetës së integrimit.
  *
- * Nuk implementon logjikë të brendshme të KnowledgeLink
- * ose KnowledgeGraph.
+ * Shënim:
+ * Ky version përdor kërkim tekstual me vlerësim përputhjeje.
+ * Nuk implementon embeddings ose kërkim semantik.
  */
 
 import {
@@ -26,14 +29,214 @@ import {
   createKnowledgeGraphAPI,
 } from "../../knowledge-graph/public/knowledge-graph.api.js";
 
-export const XSUS_AI_KNOWLEDGE_ADAPTER_VERSION = "1.0.0";
+export const XSUS_AI_KNOWLEDGE_ADAPTER_VERSION = "1.1.0";
+
+const DEFAULT_LIMIT = 5;
+const DEFAULT_MINIMUM_SCORE = 0.1;
+const RELATED_NODE_SCORE_FACTOR = 0.5;
+
+function isPlainObject(value) {
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
+}
+
+function normalizeText(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function tokenize(value) {
+  const normalized = normalizeText(value);
+
+  if (!normalized) {
+    return [];
+  }
+
+  return [...new Set(
+    normalized
+      .split(/\s+/u)
+      .filter((token) => token.length > 1)
+  )];
+}
+
+function getLocalizedContent(metadata, language) {
+  const content = metadata?.content;
+
+  if (typeof content === "string") {
+    return content;
+  }
+
+  if (!isPlainObject(content)) {
+    return "";
+  }
+
+  const normalizedLanguage =
+    typeof language === "string"
+      ? language.toLowerCase().split("-")[0]
+      : "";
+
+  const candidates = [
+    normalizedLanguage,
+    "en",
+    "sq",
+    "fr",
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (typeof content[candidate] === "string") {
+      return content[candidate];
+    }
+  }
+
+  const firstText = Object.values(content).find(
+    (value) => typeof value === "string"
+  );
+
+  return firstText || "";
+}
+
+function getKeywords(metadata) {
+  const keywords = metadata?.keywords;
+
+  if (!Array.isArray(keywords)) {
+    return [];
+  }
+
+  return keywords.filter(
+    (keyword) => typeof keyword === "string"
+  );
+}
+
+function calculateMatchScore(query, node, language) {
+  const metadata = isPlainObject(node?.metadata)
+    ? node.metadata
+    : {};
+
+  const label = typeof node?.label === "string"
+    ? node.label
+    : "";
+
+  const content = getLocalizedContent(
+    metadata,
+    language
+  );
+
+  const keywords = getKeywords(metadata);
+
+  const queryTokens = tokenize(query);
+
+  if (queryTokens.length === 0) {
+    return 0;
+  }
+
+  const normalizedQuery = normalizeText(query);
+  const normalizedLabel = normalizeText(label);
+  const normalizedContent = normalizeText(content);
+
+  const normalizedKeywords = keywords.map(
+    normalizeText
+  );
+
+  let score = 0;
+
+  if (
+    normalizedLabel &&
+    normalizedLabel === normalizedQuery
+  ) {
+    score += 5;
+  } else if (
+    normalizedLabel &&
+    normalizedLabel.includes(normalizedQuery)
+  ) {
+    score += 3;
+  }
+
+  if (
+    normalizedContent &&
+    normalizedContent.includes(normalizedQuery)
+  ) {
+    score += 2;
+  }
+
+  for (const token of queryTokens) {
+    if (normalizedLabel.includes(token)) {
+      score += 2;
+    }
+
+    if (normalizedKeywords.some(
+      (keyword) => keyword.includes(token)
+    )) {
+      score += 2;
+    }
+
+    if (normalizedContent.includes(token)) {
+      score += 1;
+    }
+  }
+
+  const maximumScore = queryTokens.length * 5 + 5;
+
+  return Math.min(score / maximumScore, 1);
+}
+
+function normalizeLimit(value) {
+  if (value === undefined || value === null) {
+    return DEFAULT_LIMIT;
+  }
+
+  if (
+    !Number.isInteger(value) ||
+    value < 1 ||
+    value > 100
+  ) {
+    throw new TypeError(
+      "retrieve limit must be an integer between 1 and 100."
+    );
+  }
+
+  return value;
+}
+
+function normalizeMinimumScore(value) {
+  if (value === undefined || value === null) {
+    return DEFAULT_MINIMUM_SCORE;
+  }
+
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value < 0 ||
+    value > 1
+  ) {
+    throw new TypeError(
+      "minimumScore must be a number between 0 and 1."
+    );
+  }
+
+  return value;
+}
 
 export function createXsusAIKnowledgeAdapter(options = {}) {
-  if (
-    options === null ||
-    typeof options !== "object" ||
-    Array.isArray(options)
-  ) {
+  if (!isPlainObject(options)) {
     throw new TypeError(
       "Adapter options must be a plain object."
     );
@@ -43,6 +246,15 @@ export function createXsusAIKnowledgeAdapter(options = {}) {
     knowledgeLink: knowledgeLinkOptions = {},
     knowledgeGraph: knowledgeGraphOptions = {},
   } = options;
+
+  if (
+    !isPlainObject(knowledgeLinkOptions) ||
+    !isPlainObject(knowledgeGraphOptions)
+  ) {
+    throw new TypeError(
+      "KnowledgeLink and KnowledgeGraph options must be plain objects."
+    );
+  }
 
   const knowledgeLink = createKnowledgeLinkAPI(
     knowledgeLinkOptions
@@ -201,12 +413,192 @@ export function createXsusAIKnowledgeAdapter(options = {}) {
     },
   });
 
+  /**
+   * Kërkon njohuri në KnowledgeGraph dhe zgjeron
+   * kontekstin përmes KnowledgeLink.
+   *
+   * @param {string} query
+   * @param {object} options
+   * @returns {object}
+   */
+  function retrieve(query, retrieveOptions = {}) {
+    assertOpen();
+
+    if (
+      typeof query !== "string" ||
+      !query.trim()
+    ) {
+      throw new TypeError(
+        "retrieve query must be a non-empty string."
+      );
+    }
+
+    if (!isPlainObject(retrieveOptions)) {
+      throw new TypeError(
+        "retrieve options must be a plain object."
+      );
+    }
+
+    const {
+      language = "en",
+      limit,
+      minimumScore,
+      includeRelated = true,
+    } = retrieveOptions;
+
+    if (
+      typeof language !== "string" ||
+      !language.trim()
+    ) {
+      throw new TypeError(
+        "retrieve language must be a non-empty string."
+      );
+    }
+
+    if (typeof includeRelated !== "boolean") {
+      throw new TypeError(
+        "includeRelated must be a boolean."
+      );
+    }
+
+    const resultLimit = normalizeLimit(limit);
+    const minimum = normalizeMinimumScore(
+      minimumScore
+    );
+
+    const graphData = knowledgeGraph.getGraph();
+
+    const nodes = Array.isArray(graphData?.nodes)
+      ? graphData.nodes
+      : [];
+
+    const scoredNodes = nodes
+      .map((node) => ({
+        node,
+        score: calculateMatchScore(
+          query,
+          node,
+          language
+        ),
+      }))
+      .filter((item) => item.score >= minimum)
+      .sort((a, b) => b.score - a.score);
+
+    const selected = new Map();
+
+    for (const item of scoredNodes) {
+      if (selected.size >= resultLimit) {
+        break;
+      }
+
+      selected.set(item.node.id, {
+        node: item.node,
+        score: item.score,
+        matchedDirectly: true,
+        relations: [],
+      });
+    }
+
+    if (includeRelated && selected.size > 0) {
+      const directMatches = [...selected.values()];
+
+      for (const match of directMatches) {
+        const linkResult = knowledgeLink.findByEntity(
+          match.node.id
+        );
+
+        const links = Array.isArray(linkResult)
+          ? linkResult
+          : Array.isArray(linkResult?.links)
+            ? linkResult.links
+            : [];
+
+        for (const relation of links) {
+          const relatedId =
+            relation.sourceId === match.node.id
+              ? relation.targetId
+              : relation.sourceId;
+
+          if (
+            !relatedId ||
+            selected.has(relatedId) ||
+            selected.size >= resultLimit
+          ) {
+            continue;
+          }
+
+          const relatedNode = knowledgeGraph.getNode(
+            relatedId
+          );
+
+          if (!relatedNode) {
+            continue;
+          }
+
+          selected.set(relatedId, {
+            node: relatedNode,
+            score: match.score * RELATED_NODE_SCORE_FACTOR,
+            matchedDirectly: false,
+            relations: [relation],
+          });
+        }
+      }
+    }
+
+    const results = [...selected.values()]
+      .map((item) => {
+        const metadata = isPlainObject(
+          item.node.metadata
+        )
+          ? item.node.metadata
+          : {};
+
+        return Object.freeze({
+          id: item.node.id,
+          title: item.node.label || item.node.id,
+          type: item.node.type || "concept",
+          content: getLocalizedContent(
+            metadata,
+            language
+          ),
+          language,
+          domain: metadata.domain || null,
+          keywords: Object.freeze(
+            getKeywords(metadata)
+          ),
+          source: metadata.source || null,
+          version: metadata.version || null,
+          score: item.score,
+          matchedDirectly: item.matchedDirectly,
+          relations: Object.freeze(
+            item.relations
+          ),
+          metadata,
+        });
+      })
+      .sort((a, b) => b.score - a.score);
+
+    return Object.freeze({
+      version: XSUS_AI_KNOWLEDGE_ADAPTER_VERSION,
+      query,
+      language,
+      count: results.length,
+      results: Object.freeze(results),
+      source: "hyper-xsus-core",
+    });
+  }
+
   function getStatus() {
     assertOpen();
 
     return Object.freeze({
       version: XSUS_AI_KNOWLEDGE_ADAPTER_VERSION,
       connected: true,
+      capabilities: Object.freeze({
+        textRetrieval: true,
+        relatedKnowledgeExpansion: true,
+        semanticEmbeddings: false,
+      }),
       knowledgeLink: knowledgeLink.getStatus(),
       knowledgeGraph: knowledgeGraph.getStatus(),
     });
@@ -245,6 +637,8 @@ export function createXsusAIKnowledgeAdapter(options = {}) {
 
     link,
     graph,
+
+    retrieve,
 
     getStatus,
     close,
