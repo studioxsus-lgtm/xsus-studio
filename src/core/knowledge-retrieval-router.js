@@ -8,6 +8,7 @@
  * - Fallback te Knowledge Service ekzistues.
  * - Standardizimi i rezultateve.
  * - Izolimi i gabimeve të retrieval.
+ * - Ruajtja e gabimeve origjinale të fallback.
  */
 
 function isPlainObject(value) {
@@ -40,6 +41,22 @@ function normalizeResults(result) {
   }
 
   return [];
+}
+
+function normalizeError(error, fallbackMessage) {
+  if (typeof error === "string" && error.trim()) {
+    return error.trim();
+  }
+
+  if (
+    isPlainObject(error) &&
+    typeof error.message === "string" &&
+    error.message.trim()
+  ) {
+    return error.message.trim();
+  }
+
+  return fallbackMessage;
 }
 
 function createRetrievalResult({
@@ -132,7 +149,28 @@ export function createKnowledgeRetrievalRouter({
       );
     }
 
+    if (
+      typeof minimumScore !== "number" ||
+      !Number.isFinite(minimumScore) ||
+      minimumScore < 0 ||
+      minimumScore > 1
+    ) {
+      throw new TypeError(
+        "MinimumScore duhet të jetë numër ndërmjet 0 dhe 1."
+      );
+    }
+
+    if (!isPlainObject(metadata)) {
+      throw new TypeError(
+        "Metadata duhet të jetë objekt i vlefshëm."
+      );
+    }
+
     let hyperError = null;
+
+    // --------------------------------------------------
+    // 1. Primary Retrieval — Hyper XSUS Core
+    // --------------------------------------------------
 
     if (hyperAdapter) {
       try {
@@ -145,8 +183,6 @@ export function createKnowledgeRetrievalRouter({
           }
         );
 
-        const results = normalizeResults(hyperResult);
-
         if (
           isPlainObject(hyperResult) &&
           hyperResult.success === false
@@ -156,16 +192,25 @@ export function createKnowledgeRetrievalRouter({
           );
         }
 
+        const results = normalizeResults(hyperResult);
+
         if (results.length > 0) {
           return createRetrievalResult({
             results: results.slice(0, limit),
-            source: "hyper-xsus-core"
+            source: "hyper-xsus-core",
+            success: true,
+            fallbackUsed: false,
+            error: null
           });
         }
       } catch {
         hyperError = "hyper-retrieval-unavailable";
       }
     }
+
+    // --------------------------------------------------
+    // 2. Fallback Retrieval — XSUS Knowledge Service
+    // --------------------------------------------------
 
     if (fallbackSearch) {
       try {
@@ -187,7 +232,10 @@ export function createKnowledgeRetrievalRouter({
             source: "xsus-knowledge-service",
             success: false,
             fallbackUsed: true,
-            error: "fallback-retrieval-failed"
+            error: normalizeError(
+              fallbackResult.error,
+              "fallback-retrieval-failed"
+            )
           });
         }
 
@@ -195,19 +243,27 @@ export function createKnowledgeRetrievalRouter({
           results: normalizeResults(fallbackResult)
             .slice(0, limit),
           source: "xsus-knowledge-service",
+          success: true,
           fallbackUsed: true,
           error: hyperError
         });
-      } catch {
+      } catch (error) {
         return createRetrievalResult({
           results: [],
           source: "none",
           success: false,
           fallbackUsed: true,
-          error: "knowledge-retrieval-failed"
+          error: normalizeError(
+            error,
+            "knowledge-retrieval-failed"
+          )
         });
       }
     }
+
+    // --------------------------------------------------
+    // 3. No Fallback Available
+    // --------------------------------------------------
 
     return createRetrievalResult({
       results: [],
