@@ -1460,16 +1460,13 @@ export async function processAIRequest(input = {}) {
         }
       );
     } catch (error) {
+      // Unexpected internal errors must not be exposed.
       return createErrorResponse({
-        message:
-          typeof error?.message === "string" &&
-          error.message.trim()
-            ? error.message
-            : GENERIC_ERROR_MESSAGE,
+        message: GENERIC_ERROR_MESSAGE,
         requestId,
         language,
         code: AI_ERROR_CODES.KNOWLEDGE_SERVICE_ERROR,
-        exposeMessage: true,
+        exposeMessage: false,
         metadata: {
           ...buildErrorMetadata({
             requestId,
@@ -1496,16 +1493,24 @@ export async function processAIRequest(input = {}) {
       retrieval.success !== true ||
       !Array.isArray(retrieval.results)
     ) {
+      const retrievalError =
+        typeof retrieval?.error === "string" &&
+        retrieval.error.trim()
+          ? retrieval.error.trim()
+          : null;
+
+      const isUnexpectedRetrievalError =
+        !retrievalError ||
+        retrievalError === "knowledge-retrieval-failed";
+
       return createErrorResponse({
-        message:
-          typeof retrieval?.error === "string" &&
-          retrieval.error.trim()
-            ? retrieval.error
-            : GENERIC_ERROR_MESSAGE,
+        message: isUnexpectedRetrievalError
+          ? GENERIC_ERROR_MESSAGE
+          : retrievalError,
         requestId,
         language,
         code: AI_ERROR_CODES.KNOWLEDGE_SERVICE_ERROR,
-        exposeMessage: true,
+        exposeMessage: !isUnexpectedRetrievalError,
         metadata: {
           ...buildErrorMetadata({
             requestId,
@@ -1518,7 +1523,7 @@ export async function processAIRequest(input = {}) {
           knowledgeRetrieval: {
             source: retrieval?.source || "none",
             fallbackUsed: Boolean(retrieval?.fallbackUsed),
-            error: retrieval?.error || null
+            error: retrievalError
           }
         }
       });
