@@ -18,7 +18,6 @@ import {
   SECURITY_INTEGRATION_VERSION,
   SECURITY_INTEGRATION_ACTIONS,
   SECURITY_INTEGRATION_ERRORS,
-  SECURITY_INTEGRATION_DEFAULTS,
   validateSecurityIntegrationConfig,
   validateSecurityIntegrationIdentity,
   validateSecurityIntegrationResource,
@@ -229,8 +228,15 @@ export function createSecurityIntegrationEngine(options = {}) {
     const visited = new Set();
 
     const visit = async (role) => {
-      if (!role || typeof role.id !== "string") {
-        return;
+      if (
+        !role ||
+        typeof role.id !== "string" ||
+        !role.id.trim()
+      ) {
+        throw createSecurityIntegrationError(
+          SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
+          "RBAC Engine returned an invalid role."
+        );
       }
 
       if (visited.has(role.id)) {
@@ -245,11 +251,26 @@ export function createSecurityIntegrationEngine(options = {}) {
       }
 
       for (const inheritedId of role.inherits) {
+        if (
+          typeof inheritedId !== "string" ||
+          !inheritedId.trim()
+        ) {
+          throw createSecurityIntegrationError(
+            SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
+            "RBAC Engine returned an invalid inherited role reference."
+          );
+        }
+
         const inherited = await rbacEngine.getRole(inheritedId);
 
-        if (inherited?.data) {
-          await visit(inherited.data);
+        if (!inherited?.data) {
+          throw createSecurityIntegrationError(
+            SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
+            "RBAC Engine could not resolve an inherited role."
+          );
         }
+
+        await visit(inherited.data);
       }
     };
 
@@ -260,46 +281,73 @@ export function createSecurityIntegrationEngine(options = {}) {
     return roles;
   };
 
+  /**
+   * Merr lejet vetëm nga Permission Engine.
+   * Çdo përgjigje dhe çdo leje validohet.
+   * Përgjigjet e pavlefshme nuk trajtohen si lista bosh.
+   */
   const resolvePermissions = async (userId, roles) => {
-    const permissions = [];
+    const permissionsById = new Map();
 
-    const direct = await permissionEngine.getSubjectPermissions({
+    const collect = async (subject) => {
+      let result;
+
+      try {
+        result = await permissionEngine.getSubjectPermissions(subject);
+      } catch (error) {
+        throw createSecurityIntegrationError(
+          SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
+          `Permission Engine request failed: ${error?.message || "Unknown error."}`
+        );
+      }
+
+      if (!Array.isArray(result)) {
+        throw createSecurityIntegrationError(
+          SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
+          "Permission Engine returned an invalid permission collection."
+        );
+      }
+
+      for (const permission of result) {
+        if (
+          !isObject(permission) ||
+          typeof permission.id !== "string" ||
+          !permission.id.trim() ||
+          typeof permission.resource !== "string" ||
+          !permission.resource.trim() ||
+          typeof permission.action !== "string" ||
+          !permission.action.trim()
+        ) {
+          throw createSecurityIntegrationError(
+            SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
+            "Permission Engine returned an invalid permission."
+          );
+        }
+
+        permissionsById.set(permission.id, permission);
+      }
+    };
+
+    await collect({
       id: userId,
       type: "user",
     });
 
-    if (!Array.isArray(direct)) {
-      throw createSecurityIntegrationError(
-        SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
-        "Permission Engine returned invalid user permissions."
-      );
-    }
-
-    permissions.push(...direct);
-
     for (const role of roles) {
-      const assigned = await permissionEngine.getSubjectPermissions({
+      await collect({
         id: role.id,
         type: "role",
       });
-
-      if (!Array.isArray(assigned)) {
-        throw createSecurityIntegrationError(
-          SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
-          "Permission Engine returned invalid role permissions."
-        );
-      }
-
-      permissions.push(...assigned);
     }
 
-    return uniqueById(permissions);
+    return [...permissionsById.values()];
   };
 
   const buildTrustedIdentity = async (payload) => {
     const verified = await verifyIdentity(payload);
 
     const roles = await resolveRoles(verified.id);
+
     const permissions = await resolvePermissions(
       verified.id,
       roles
@@ -309,7 +357,9 @@ export function createSecurityIntegrationEngine(options = {}) {
       id: verified.id,
       verified: true,
       roles: roles.map((role) => role.id),
-      permissions: permissions.map((permission) => permission.id),
+      permissions: permissions.map(
+        (permission) => permission.id
+      ),
     };
 
     validateSecurityIntegrationIdentity(identity);
@@ -352,7 +402,17 @@ export function createSecurityIntegrationEngine(options = {}) {
       );
     }
 
-    const allowed = authorization?.allowed === true;
+    if (
+      !authorization ||
+      typeof authorization.allowed !== "boolean"
+    ) {
+      throw createSecurityIntegrationError(
+        SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
+        "Authorization Manager returned an invalid decision."
+      );
+    }
+
+    const allowed = authorization.allowed;
 
     const event = {
       type: "SECURITY_AUTHORIZATION",
@@ -368,7 +428,7 @@ export function createSecurityIntegrationEngine(options = {}) {
       metadata: {
         allowed,
         reason:
-          typeof authorization?.reason === "string"
+          typeof authorization.reason === "string"
             ? authorization.reason
             : null,
       },
@@ -386,7 +446,7 @@ export function createSecurityIntegrationEngine(options = {}) {
     return createSecurityIntegrationResponse({
       action: SECURITY_INTEGRATION_ACTIONS.AUTHORIZE,
       allowed,
-      reason: authorization?.reason || null,
+      reason: authorization.reason || null,
       data: {
         identity,
         resource,
@@ -416,7 +476,14 @@ export function createSecurityIntegrationEngine(options = {}) {
       context: request.context || {},
     });
 
-    const allowed = result?.allowed === true;
+    if (!result || typeof result.allowed !== "boolean") {
+      throw createSecurityIntegrationError(
+        SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
+        "Authorization Manager returned an invalid permission decision."
+      );
+    }
+
+    const allowed = result.allowed;
 
     await audit({
       type: "SECURITY_PERMISSION_CHECK",
@@ -437,7 +504,7 @@ export function createSecurityIntegrationEngine(options = {}) {
     return createSecurityIntegrationResponse({
       action: SECURITY_INTEGRATION_ACTIONS.CHECK_PERMISSION,
       allowed,
-      reason: result?.reason || null,
+      reason: result.reason || null,
     });
   };
 
@@ -463,7 +530,14 @@ export function createSecurityIntegrationEngine(options = {}) {
       context: request.context || {},
     });
 
-    const allowed = result?.allowed === true;
+    if (!result || typeof result.allowed !== "boolean") {
+      throw createSecurityIntegrationError(
+        SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
+        "Authorization Manager returned an invalid role decision."
+      );
+    }
+
+    const allowed = result.allowed;
 
     await audit({
       type: "SECURITY_ROLE_CHECK",
@@ -484,7 +558,7 @@ export function createSecurityIntegrationEngine(options = {}) {
     return createSecurityIntegrationResponse({
       action: SECURITY_INTEGRATION_ACTIONS.CHECK_ROLE,
       allowed,
-      reason: result?.reason || null,
+      reason: result.reason || null,
     });
   };
 
