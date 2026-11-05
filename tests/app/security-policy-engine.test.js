@@ -1,4 +1,3 @@
-
 import { describe, it, expect } from "vitest";
 
 import {
@@ -9,7 +8,6 @@ import {
 describe("Security Policy Engine", () => {
   function setup(options = {}) {
     const engine = createSecurityPolicyEngine(options);
-
     return { engine };
   }
 
@@ -54,6 +52,7 @@ describe("Security Policy Engine", () => {
     return {
       subject,
       resource,
+      action: "read",
       requestedAction: "read",
       ...overrides,
     };
@@ -91,16 +90,13 @@ describe("Security Policy Engine", () => {
     });
 
     it("rejects invalid options", () => {
-      expect(() =>
-        createSecurityPolicyEngine(null)
-      ).toThrowError(/INVALID_CONFIG/);
+      expect(() => createSecurityPolicyEngine(null))
+        .toThrowError(/INVALID_CONFIG/);
     });
 
     it("rejects a non-function clock", () => {
       expect(() =>
-        createSecurityPolicyEngine({
-          now: 123,
-        })
+        createSecurityPolicyEngine({ now: 123 })
       ).toThrowError(/INVALID_CONFIG/);
     });
 
@@ -121,7 +117,6 @@ describe("Security Policy Engine", () => {
   describe("createPolicy", () => {
     it("creates a valid policy", () => {
       const { engine } = setup();
-
       const result = engine.createPolicy(allowPolicy);
 
       expect(result.id).toBe("policy-allow");
@@ -131,10 +126,7 @@ describe("Security Policy Engine", () => {
     });
 
     it("adds creation timestamps", () => {
-      const { engine } = setup({
-        now: () => 1000,
-      });
-
+      const { engine } = setup({ now: () => 1000 });
       const result = engine.createPolicy(allowPolicy);
 
       expect(result.createdAt).toBe(1000);
@@ -143,7 +135,6 @@ describe("Security Policy Engine", () => {
 
     it("does not modify the original policy", () => {
       const { engine } = setup();
-
       const input = structuredClone(allowPolicy);
 
       engine.createPolicy(input);
@@ -154,7 +145,6 @@ describe("Security Policy Engine", () => {
 
     it("returns an independent policy copy", () => {
       const { engine } = setup();
-
       const result = engine.createPolicy(allowPolicy);
 
       result.name = "Changed externally";
@@ -168,27 +158,22 @@ describe("Security Policy Engine", () => {
 
     it("rejects duplicate policy IDs", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
-      expect(() =>
-        engine.createPolicy(allowPolicy)
-      ).toThrowError(/POLICY_ALREADY_EXISTS/);
+      expect(() => engine.createPolicy(allowPolicy))
+        .toThrowError(/POLICY_ALREADY_EXISTS/);
     });
 
     it("rejects invalid policies", () => {
       const { engine } = setup();
 
-      expect(() =>
-        engine.createPolicy({})
-      ).toThrowError(/INVALID_POLICY/);
+      expect(() => engine.createPolicy({}))
+        .toThrowError(/INVALID_POLICY/);
     });
 
     it("enforces the maximum policy count", () => {
       const { engine } = setup({
-        config: {
-          maxPolicies: 1,
-        },
+        config: { maxPolicies: 1 },
       });
 
       engine.createPolicy(allowPolicy);
@@ -203,9 +188,7 @@ describe("Security Policy Engine", () => {
 
     it("enforces the maximum number of rules", () => {
       const { engine } = setup({
-        config: {
-          maxRulesPerPolicy: 1,
-        },
+        config: { maxRulesPerPolicy: 1 },
       });
 
       expect(() =>
@@ -213,10 +196,7 @@ describe("Security Policy Engine", () => {
           ...allowPolicy,
           rules: [
             validRule,
-            {
-              ...validRule,
-              id: "rule-2",
-            },
+            { ...validRule, id: "rule-2" },
           ],
         })
       ).toThrowError(/INVALID_POLICY/);
@@ -224,46 +204,38 @@ describe("Security Policy Engine", () => {
 
     it("records policy creation", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       expect(engine.getHistory()).toHaveLength(1);
-      expect(engine.getHistory()[0].type).toBe(
-        "POLICY_CREATED"
-      );
+      expect(engine.getHistory()[0].type).toBe("POLICY_CREATED");
     });
   });
 
   describe("getPolicy and listPolicies", () => {
     it("retrieves an existing policy", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
-      expect(
-        engine.getPolicy("policy-allow").id
-      ).toBe("policy-allow");
+      expect(engine.getPolicy("policy-allow").id)
+        .toBe("policy-allow");
     });
 
     it("rejects missing policy IDs", () => {
       const { engine } = setup();
 
-      expect(() =>
-        engine.getPolicy("")
-      ).toThrowError(/INVALID_REQUEST/);
+      expect(() => engine.getPolicy(""))
+        .toThrowError(/INVALID_REQUEST/);
     });
 
     it("rejects unknown policy IDs", () => {
       const { engine } = setup();
 
-      expect(() =>
-        engine.getPolicy("unknown")
-      ).toThrowError(/POLICY_NOT_FOUND/);
+      expect(() => engine.getPolicy("unknown"))
+        .toThrowError(/POLICY_NOT_FOUND/);
     });
 
     it("returns all policies", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
       engine.createPolicy(denyPolicy);
 
@@ -272,54 +244,40 @@ describe("Security Policy Engine", () => {
 
     it("returns independent policy copies in the list", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       const policies = engine.listPolicies();
-
       policies[0].name = "External change";
 
-      expect(
-        engine.getPolicy("policy-allow").name
-      ).toBe("Allow read access");
+      expect(engine.getPolicy("policy-allow").name)
+        .toBe("Allow read access");
     });
   });
 
   describe("updatePolicy", () => {
     it("updates an existing policy", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
-      const updated = engine.updatePolicy(
-        "policy-allow",
-        {
-          ...allowPolicy,
-          name: "Updated policy",
-        }
-      );
+      const updated = engine.updatePolicy("policy-allow", {
+        ...allowPolicy,
+        name: "Updated policy",
+      });
 
       expect(updated.name).toBe("Updated policy");
     });
 
     it("preserves the original creation timestamp", () => {
       let currentTime = 1000;
-
-      const { engine } = setup({
-        now: () => currentTime,
-      });
+      const { engine } = setup({ now: () => currentTime });
 
       engine.createPolicy(allowPolicy);
-
       currentTime = 2000;
 
-      const updated = engine.updatePolicy(
-        "policy-allow",
-        {
-          ...allowPolicy,
-          name: "Updated policy",
-        }
-      );
+      const updated = engine.updatePolicy("policy-allow", {
+        ...allowPolicy,
+        name: "Updated policy",
+      });
 
       expect(updated.createdAt).toBe(1000);
       expect(updated.updatedAt).toBe(2000);
@@ -327,7 +285,6 @@ describe("Security Policy Engine", () => {
 
     it("rejects changing the policy ID", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       expect(() =>
@@ -341,24 +298,20 @@ describe("Security Policy Engine", () => {
     it("rejects updating an unknown policy", () => {
       const { engine } = setup();
 
-      expect(() =>
-        engine.updatePolicy("unknown", allowPolicy)
-      ).toThrowError(/POLICY_NOT_FOUND/);
+      expect(() => engine.updatePolicy("unknown", allowPolicy))
+        .toThrowError(/POLICY_NOT_FOUND/);
     });
 
     it("rejects invalid updated policies", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
-      expect(() =>
-        engine.updatePolicy("policy-allow", {})
-      ).toThrowError(/INVALID_POLICY/);
+      expect(() => engine.updatePolicy("policy-allow", {}))
+        .toThrowError(/INVALID_POLICY/);
     });
 
     it("records policy updates", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       engine.updatePolicy("policy-allow", {
@@ -366,16 +319,14 @@ describe("Security Policy Engine", () => {
         name: "Updated",
       });
 
-      expect(engine.getHistory().at(-1).type).toBe(
-        "POLICY_UPDATED"
-      );
+      expect(engine.getHistory().at(-1).type)
+        .toBe("POLICY_UPDATED");
     });
   });
 
   describe("deletePolicy", () => {
     it("deletes an existing policy", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       expect(engine.deletePolicy("policy-allow")).toBe(true);
@@ -385,65 +336,54 @@ describe("Security Policy Engine", () => {
     it("rejects deleting an unknown policy", () => {
       const { engine } = setup();
 
-      expect(() =>
-        engine.deletePolicy("unknown")
-      ).toThrowError(/POLICY_NOT_FOUND/);
+      expect(() => engine.deletePolicy("unknown"))
+        .toThrowError(/POLICY_NOT_FOUND/);
     });
 
     it("records policy deletion", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
       engine.deletePolicy("policy-allow");
 
-      expect(engine.getHistory().at(-1).type).toBe(
-        "POLICY_DELETED"
-      );
+      expect(engine.getHistory().at(-1).type)
+        .toBe("POLICY_DELETED");
     });
   });
 
   describe("enablePolicy and disablePolicy", () => {
     it("disables an enabled policy", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
-      const result = engine.disablePolicy("policy-allow");
-
-      expect(result.enabled).toBe(false);
+      expect(engine.disablePolicy("policy-allow").enabled)
+        .toBe(false);
     });
 
     it("enables a disabled policy", () => {
       const { engine } = setup();
-
       engine.createPolicy({
         ...allowPolicy,
         enabled: false,
       });
 
-      const result = engine.enablePolicy("policy-allow");
-
-      expect(result.enabled).toBe(true);
+      expect(engine.enablePolicy("policy-allow").enabled)
+        .toBe(true);
     });
 
     it("rejects disabling an unknown policy", () => {
       const { engine } = setup();
 
-      expect(() =>
-        engine.disablePolicy("unknown")
-      ).toThrowError(/POLICY_NOT_FOUND/);
+      expect(() => engine.disablePolicy("unknown"))
+        .toThrowError(/POLICY_NOT_FOUND/);
     });
 
     it("records enable and disable events", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
       engine.disablePolicy("policy-allow");
       engine.enablePolicy("policy-allow");
 
-      const types = engine.getHistory().map(
-        (entry) => entry.type
-      );
+      const types = engine.getHistory().map((entry) => entry.type);
 
       expect(types).toContain("POLICY_DISABLED");
       expect(types).toContain("POLICY_ENABLED");
@@ -453,12 +393,9 @@ describe("Security Policy Engine", () => {
   describe("rule evaluation", () => {
     it("allows an action when an allow policy matches", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
-      const result = engine.evaluatePolicy(
-        evaluationRequest()
-      );
+      const result = engine.evaluatePolicy(evaluationRequest());
 
       expect(result.allowed).toBe(true);
       expect(result.effect).toBe("allow");
@@ -467,10 +404,7 @@ describe("Security Policy Engine", () => {
 
     it("denies by default when no policy matches", () => {
       const { engine } = setup();
-
-      const result = engine.evaluatePolicy(
-        evaluationRequest()
-      );
+      const result = engine.evaluatePolicy(evaluationRequest());
 
       expect(result.allowed).toBe(false);
       expect(result.effect).toBe("deny");
@@ -479,12 +413,9 @@ describe("Security Policy Engine", () => {
 
     it("denies when a matching deny policy exists", () => {
       const { engine } = setup();
-
       engine.createPolicy(denyPolicy);
 
-      const result = engine.evaluatePolicy(
-        evaluationRequest()
-      );
+      const result = engine.evaluatePolicy(evaluationRequest());
 
       expect(result.allowed).toBe(false);
       expect(result.reason).toBe("EXPLICIT_DENY");
@@ -492,13 +423,10 @@ describe("Security Policy Engine", () => {
 
     it("gives deny policies priority over allow policies", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
       engine.createPolicy(denyPolicy);
 
-      const result = engine.evaluatePolicy(
-        evaluationRequest()
-      );
+      const result = engine.evaluatePolicy(evaluationRequest());
 
       expect(result.allowed).toBe(false);
       expect(result.reason).toBe("EXPLICIT_DENY");
@@ -507,13 +435,10 @@ describe("Security Policy Engine", () => {
 
     it("does not match a policy for a different action", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       const result = engine.evaluatePolicy(
-        evaluationRequest({
-          requestedAction: "write",
-        })
+        evaluationRequest({ action: "write", requestedAction: "write" })
       );
 
       expect(result.allowed).toBe(false);
@@ -522,15 +447,11 @@ describe("Security Policy Engine", () => {
 
     it("does not match a policy for a different subject type", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       const result = engine.evaluatePolicy(
         evaluationRequest({
-          subject: {
-            id: "service-1",
-            type: "service",
-          },
+          subject: { id: "service-1", type: "service" },
         })
       );
 
@@ -539,15 +460,11 @@ describe("Security Policy Engine", () => {
 
     it("does not match a policy for a different resource type", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       const result = engine.evaluatePolicy(
         evaluationRequest({
-          resource: {
-            id: "database-1",
-            type: "database",
-          },
+          resource: { id: "database-1", type: "database" },
         })
       );
 
@@ -556,15 +473,12 @@ describe("Security Policy Engine", () => {
 
     it("ignores disabled policies", () => {
       const { engine } = setup();
-
       engine.createPolicy({
         ...allowPolicy,
         enabled: false,
       });
 
-      const result = engine.evaluatePolicy(
-        evaluationRequest()
-      );
+      const result = engine.evaluatePolicy(evaluationRequest());
 
       expect(result.allowed).toBe(false);
       expect(result.reason).toBe("DEFAULT_DENY");
@@ -572,24 +486,19 @@ describe("Security Policy Engine", () => {
 
     it("evaluates nested attributes", () => {
       const { engine } = setup();
-
       engine.createPolicy({
         ...allowPolicy,
-        rules: [
-          {
-            id: "nested-rule",
-            attribute: "context.environment",
-            operator: "equals",
-            value: "production",
-          },
-        ],
+        rules: [{
+          id: "nested-rule",
+          attribute: "context.environment",
+          operator: "equals",
+          value: "production",
+        }],
       });
 
       const result = engine.evaluatePolicy(
         evaluationRequest({
-          context: {
-            environment: "production",
-          },
+          context: { environment: "production" },
         })
       );
 
@@ -598,24 +507,17 @@ describe("Security Policy Engine", () => {
 
     it("evaluates exists operator", () => {
       const { engine } = setup();
-
       engine.createPolicy({
         ...allowPolicy,
-        rules: [
-          {
-            id: "exists-rule",
-            attribute: "context.verified",
-            operator: "exists",
-          },
-        ],
+        rules: [{
+          id: "exists-rule",
+          attribute: "context.verified",
+          operator: "exists",
+        }],
       });
 
       const result = engine.evaluatePolicy(
-        evaluationRequest({
-          context: {
-            verified: true,
-          },
-        })
+        evaluationRequest({ context: { verified: true } })
       );
 
       expect(result.allowed).toBe(true);
@@ -623,22 +525,17 @@ describe("Security Policy Engine", () => {
 
     it("evaluates notExists operator", () => {
       const { engine } = setup();
-
       engine.createPolicy({
         ...allowPolicy,
-        rules: [
-          {
-            id: "not-exists-rule",
-            attribute: "context.blocked",
-            operator: "notExists",
-          },
-        ],
+        rules: [{
+          id: "not-exists-rule",
+          attribute: "context.blocked",
+          operator: "notExists",
+        }],
       });
 
       const result = engine.evaluatePolicy(
-        evaluationRequest({
-          context: {},
-        })
+        evaluationRequest({ context: {} })
       );
 
       expect(result.allowed).toBe(true);
@@ -646,24 +543,19 @@ describe("Security Policy Engine", () => {
 
     it("evaluates contains operator", () => {
       const { engine } = setup();
-
       engine.createPolicy({
         ...allowPolicy,
-        rules: [
-          {
-            id: "contains-rule",
-            attribute: "context.tags",
-            operator: "contains",
-            value: "trusted",
-          },
-        ],
+        rules: [{
+          id: "contains-rule",
+          attribute: "context.tags",
+          operator: "contains",
+          value: "trusted",
+        }],
       });
 
       const result = engine.evaluatePolicy(
         evaluationRequest({
-          context: {
-            tags: ["trusted", "internal"],
-          },
+          context: { tags: ["trusted", "internal"] },
         })
       );
 
@@ -672,25 +564,18 @@ describe("Security Policy Engine", () => {
 
     it("evaluates in operator", () => {
       const { engine } = setup();
-
       engine.createPolicy({
         ...allowPolicy,
-        rules: [
-          {
-            id: "in-rule",
-            attribute: "context.level",
-            operator: "in",
-            value: [1, 2, 3],
-          },
-        ],
+        rules: [{
+          id: "in-rule",
+          attribute: "context.level",
+          operator: "in",
+          value: [1, 2, 3],
+        }],
       });
 
       const result = engine.evaluatePolicy(
-        evaluationRequest({
-          context: {
-            level: 2,
-          },
-        })
+        evaluationRequest({ context: { level: 2 } })
       );
 
       expect(result.allowed).toBe(true);
@@ -710,22 +595,16 @@ describe("Security Policy Engine", () => {
         engine.createPolicy({
           ...allowPolicy,
           id: `policy-${operator}`,
-          rules: [
-            {
-              id: `rule-${operator}`,
-              attribute: "context.score",
-              operator,
-              value: expected,
-            },
-          ],
+          rules: [{
+            id: `rule-${operator}`,
+            attribute: "context.score",
+            operator,
+            value: expected,
+          }],
         });
 
         const result = engine.evaluatePolicy(
-          evaluationRequest({
-            context: {
-              score: actual,
-            },
-          })
+          evaluationRequest({ context: { score: actual } })
         );
 
         expect(result.allowed).toBe(true);
@@ -734,7 +613,6 @@ describe("Security Policy Engine", () => {
 
     it("requires all rules in a policy to match", () => {
       const { engine } = setup();
-
       engine.createPolicy({
         ...allowPolicy,
         rules: [
@@ -749,11 +627,7 @@ describe("Security Policy Engine", () => {
       });
 
       const result = engine.evaluatePolicy(
-        evaluationRequest({
-          context: {
-            verified: false,
-          },
-        })
+        evaluationRequest({ context: { verified: false } })
       );
 
       expect(result.allowed).toBe(false);
@@ -761,26 +635,18 @@ describe("Security Policy Engine", () => {
 
     it("returns matched policy IDs", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
-      const result = engine.evaluatePolicy(
-        evaluationRequest()
-      );
+      const result = engine.evaluatePolicy(evaluationRequest());
 
-      expect(result.matchedPolicyIds).toEqual([
-        "policy-allow",
-      ]);
+      expect(result.matchedPolicyIds).toEqual(["policy-allow"]);
     });
 
-    it("freezes the internal evaluation result", () => {
+    it("returns an independent evaluation result", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
-      const result = engine.evaluatePolicy(
-        evaluationRequest()
-      );
+      const result = engine.evaluatePolicy(evaluationRequest());
 
       expect(Object.isFrozen(result)).toBe(false);
       expect(result.allowed).toBe(true);
@@ -792,11 +658,7 @@ describe("Security Policy Engine", () => {
       const { engine } = setup();
 
       expect(() =>
-        engine.evaluatePolicy(
-          evaluationRequest({
-            subject: null,
-          })
-        )
+        engine.evaluatePolicy(evaluationRequest({ subject: null }))
       ).toThrowError(/INVALID_SUBJECT/);
     });
 
@@ -804,11 +666,7 @@ describe("Security Policy Engine", () => {
       const { engine } = setup();
 
       expect(() =>
-        engine.evaluatePolicy(
-          evaluationRequest({
-            resource: null,
-          })
-        )
+        engine.evaluatePolicy(evaluationRequest({ resource: null }))
       ).toThrowError(/INVALID_RESOURCE/);
     });
 
@@ -819,6 +677,7 @@ describe("Security Policy Engine", () => {
         engine.evaluatePolicy({
           subject,
           resource,
+          action: "read",
         })
       ).toThrowError(/INVALID_REQUEST/);
     });
@@ -828,9 +687,7 @@ describe("Security Policy Engine", () => {
 
       expect(() =>
         engine.evaluatePolicy(
-          evaluationRequest({
-            context: "invalid",
-          })
+          evaluationRequest({ context: "invalid" })
         )
       ).toThrowError(/INVALID_CONTEXT/);
     });
@@ -839,19 +696,15 @@ describe("Security Policy Engine", () => {
   describe("history", () => {
     it("records policy evaluation events", () => {
       const { engine } = setup();
-
       engine.evaluatePolicy(evaluationRequest());
 
-      expect(
-        engine.getHistory().at(-1).type
-      ).toBe("POLICY_EVALUATED");
+      expect(engine.getHistory().at(-1).type)
+        .toBe("POLICY_EVALUATED");
     });
 
     it("limits history size", () => {
       const { engine } = setup({
-        config: {
-          maxHistory: 2,
-        },
+        config: { maxHistory: 2 },
       });
 
       engine.createPolicy(allowPolicy);
@@ -863,16 +716,13 @@ describe("Security Policy Engine", () => {
 
     it("returns independent history entries", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       const history = engine.getHistory();
-
       history[0].type = "CHANGED";
 
-      expect(engine.getHistory()[0].type).toBe(
-        "POLICY_CREATED"
-      );
+      expect(engine.getHistory()[0].type)
+        .toBe("POLICY_CREATED");
     });
   });
 
@@ -890,7 +740,6 @@ describe("Security Policy Engine", () => {
 
     it("processes getPolicy requests", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       const result = engine.processRequest({
@@ -903,7 +752,6 @@ describe("Security Policy Engine", () => {
 
     it("processes listPolicies requests", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       const result = engine.processRequest({
@@ -915,7 +763,6 @@ describe("Security Policy Engine", () => {
 
     it("processes updatePolicy requests", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       const result = engine.processRequest({
@@ -932,20 +779,16 @@ describe("Security Policy Engine", () => {
 
     it("processes deletePolicy requests", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
-      expect(
-        engine.processRequest({
-          action: "deletePolicy",
-          id: "policy-allow",
-        })
-      ).toBe(true);
+      expect(engine.processRequest({
+        action: "deletePolicy",
+        id: "policy-allow",
+      })).toBe(true);
     });
 
     it("processes enablePolicy requests", () => {
       const { engine } = setup();
-
       engine.createPolicy({
         ...allowPolicy,
         enabled: false,
@@ -961,7 +804,6 @@ describe("Security Policy Engine", () => {
 
     it("processes disablePolicy requests", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       const result = engine.processRequest({
@@ -974,7 +816,6 @@ describe("Security Policy Engine", () => {
 
     it("processes evaluatePolicy requests", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
 
       const result = engine.processRequest({
@@ -1001,9 +842,7 @@ describe("Security Policy Engine", () => {
       const { engine } = setup();
 
       expect(() =>
-        engine.processRequest({
-          action: "unknown",
-        })
+        engine.processRequest({ action: "unknown" })
       ).toThrowError(/INVALID_ACTION/);
     });
   });
@@ -1011,7 +850,6 @@ describe("Security Policy Engine", () => {
   describe("status", () => {
     it("reports policy counts", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
       engine.createPolicy({
         ...denyPolicy,
@@ -1034,41 +872,33 @@ describe("Security Policy Engine", () => {
 
     it("clears policies and history", () => {
       const { engine } = setup();
-
       engine.createPolicy(allowPolicy);
       engine.close();
 
-      expect(() =>
-        engine.getStatus()
-      ).toThrowError(/ALREADY_CLOSED/);
+      expect(() => engine.getStatus())
+        .toThrowError(/ALREADY_CLOSED/);
     });
 
     it("rejects operations after close", () => {
       const { engine } = setup();
-
       engine.close();
 
-      expect(() =>
-        engine.createPolicy(allowPolicy)
-      ).toThrowError(/ALREADY_CLOSED/);
+      expect(() => engine.createPolicy(allowPolicy))
+        .toThrowError(/ALREADY_CLOSED/);
 
-      expect(() =>
-        engine.listPolicies()
-      ).toThrowError(/ALREADY_CLOSED/);
+      expect(() => engine.listPolicies())
+        .toThrowError(/ALREADY_CLOSED/);
 
-      expect(() =>
-        engine.evaluatePolicy(evaluationRequest())
-      ).toThrowError(/ALREADY_CLOSED/);
+      expect(() => engine.evaluatePolicy(evaluationRequest()))
+        .toThrowError(/ALREADY_CLOSED/);
     });
 
     it("rejects closing the engine twice", () => {
       const { engine } = setup();
-
       engine.close();
 
-      expect(() =>
-        engine.close()
-      ).toThrowError(/ALREADY_CLOSED/);
+      expect(() => engine.close())
+        .toThrowError(/ALREADY_CLOSED/);
     });
   });
 });
