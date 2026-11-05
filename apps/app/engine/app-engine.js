@@ -11,6 +11,7 @@
  * - Database Designer
  * - Schema Manager
  * - Migration Manager
+ * - Database Version Control
  */
 
 import { createAppArchitecture } from "../architect/app-architect.js";
@@ -24,6 +25,9 @@ import { createBackendBuilder } from "../backend/backend-builder.js";
 import { createDatabaseDesigner } from "../database/database-designer.js";
 import { createSchemaManager } from "../database/schema-manager.js";
 import { createMigrationManager } from "../database/migration-manager.js";
+import {
+  createDatabaseVersionControl
+} from "../database/database-version-control.js";
 
 import { createApiGenerator } from "../api/api-generator.js";
 import { createDebuggingEngine } from "../debugging/debugging-engine.js";
@@ -41,6 +45,7 @@ export const APP_ENGINE_CAPABILITIES = Object.freeze([
   "database-design",
   "database-schema-management",
   "database-migration-management",
+  "database-version-control",
   "api-generation",
   "debugging",
   "testing",
@@ -179,6 +184,40 @@ function normalizeRequest(request) {
     migrationId:
       typeof request.migrationId === "string"
         ? request.migrationId
+        : null,
+
+    databaseVersionAction:
+      typeof request.databaseVersionAction === "string"
+        ? request.databaseVersionAction.trim().toLowerCase()
+        : "register",
+
+    databaseVersionId:
+      typeof request.databaseVersionId === "string"
+        ? request.databaseVersionId
+        : null,
+
+    databaseVersionInput:
+      request.databaseVersionInput &&
+      typeof request.databaseVersionInput === "object" &&
+      !Array.isArray(request.databaseVersionInput)
+        ? request.databaseVersionInput
+        : null,
+
+    databaseVersionSourceId:
+      typeof request.databaseVersionSourceId === "string"
+        ? request.databaseVersionSourceId
+        : null,
+
+    databaseVersionTargetId:
+      typeof request.databaseVersionTargetId === "string"
+        ? request.databaseVersionTargetId
+        : null,
+
+    databaseVersionChange:
+      request.databaseVersionChange &&
+      typeof request.databaseVersionChange === "object" &&
+      !Array.isArray(request.databaseVersionChange)
+        ? request.databaseVersionChange
         : null
   };
 }
@@ -201,6 +240,18 @@ function createModules(options) {
           })
         : null
     );
+
+  const databaseVersionRestoreProvider =
+    options.databaseVersionRestoreProvider ||
+    providers.databaseVersionRestore ||
+    null;
+
+  const databaseVersionControl =
+    options.databaseVersionControl ||
+    createDatabaseVersionControl({
+      config: options.databaseVersionControlConfig,
+      restoreProvider: databaseVersionRestoreProvider
+    });
 
   return Object.freeze({
     codeGenerator:
@@ -234,6 +285,8 @@ function createModules(options) {
       }),
 
     migrationManager,
+
+    databaseVersionControl,
 
     apiGenerator:
       options.apiGenerator ||
@@ -595,6 +648,78 @@ export function createAppEngine(options = {}) {
         },
 
         {
+          key: "databaseVersionControl",
+          enabled: normalized.modules.databaseVersionControl === true,
+          run: async () => {
+            const manager = modules.databaseVersionControl;
+
+            if (!manager) {
+              return createError(
+                "DATABASE_VERSION_CONTROL_UNAVAILABLE",
+                "Database Version Control is unavailable."
+              );
+            }
+
+            switch (normalized.databaseVersionAction) {
+              case "register":
+                return manager.register(
+                  normalized.databaseVersionInput
+                );
+
+              case "get":
+                return manager.get(
+                  normalized.databaseVersionId
+                );
+
+              case "list":
+                return manager.list();
+
+              case "compare":
+                return manager.compare(
+                  normalized.databaseVersionSourceId,
+                  normalized.databaseVersionTargetId
+                );
+
+              case "track-change":
+                return manager.trackChange({
+                  versionId: normalized.databaseVersionId,
+                  change: normalized.databaseVersionChange
+                });
+
+              case "check-compatibility":
+                return manager.checkCompatibility(
+                  normalized.databaseVersionSourceId,
+                  normalized.databaseVersionTargetId
+                );
+
+              case "history":
+                return manager.getHistory();
+
+              case "plan-restore":
+                return manager.planRestore(
+                  normalized.databaseVersionTargetId ||
+                  normalized.databaseVersionId
+                );
+
+              case "restore":
+                return await manager.restore(
+                  normalized.databaseVersionTargetId ||
+                  normalized.databaseVersionId
+                );
+
+              case "status":
+                return manager.getStatus();
+
+              default:
+                return createError(
+                  "INVALID_DATABASE_VERSION_ACTION",
+                  "Unsupported database version control action."
+                );
+            }
+          }
+        },
+
+        {
           key: "api",
           enabled: normalized.modules.api === true,
           run: () => modules.apiGenerator.generate({
@@ -751,6 +876,19 @@ export function createAppEngine(options = {}) {
       }
     }
 
+    let databaseVersionControlStatus = null;
+
+    if (!closed) {
+      try {
+        databaseVersionControlStatus =
+          modules.databaseVersionControl.getStatus();
+      } catch {
+        databaseVersionControlStatus = {
+          status: "unavailable"
+        };
+      }
+    }
+
     return Object.freeze({
       name: config.name,
       version: config.version,
@@ -760,6 +898,7 @@ export function createAppEngine(options = {}) {
       intelligence: intelligenceStatus,
       schemaManager: schemaManagerStatus,
       migrationManager: migrationManagerStatus,
+      databaseVersionControl: databaseVersionControlStatus,
       closeError: closeError
         ? closeError.message
         : null
@@ -800,6 +939,17 @@ export function createAppEngine(options = {}) {
     ) {
       try {
         modules.migrationManager.close();
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+
+    if (
+      modules.databaseVersionControl &&
+      typeof modules.databaseVersionControl.close === "function"
+    ) {
+      try {
+        modules.databaseVersionControl.close();
       } catch (error) {
         errors.push(error);
       }
