@@ -39,8 +39,38 @@ function createError(code, message) {
   };
 }
 
+function isPlainObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
+function cloneAndFreeze(value, seen = new WeakMap()) {
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  if (seen.has(value)) {
+    return seen.get(value);
+  }
+
+  const clone = Array.isArray(value) ? [] : {};
+
+  seen.set(value, clone);
+
+  for (const key of Object.keys(value)) {
+    clone[key] = cloneAndFreeze(value[key], seen);
+  }
+
+  return Object.freeze(clone);
+}
+
 function normalizeRequest(request) {
-  if (!request || typeof request !== "object" || Array.isArray(request)) {
+  if (!isPlainObject(request)) {
     return null;
   }
 
@@ -49,18 +79,69 @@ function normalizeRequest(request) {
       ? request.prompt.trim()
       : "";
 
-  if (!prompt) return null;
+  if (!prompt) {
+    return null;
+  }
+
+  const engine =
+    typeof request.engine === "string" && request.engine.trim()
+      ? request.engine.trim().toLowerCase()
+      : DEFAULT_CONFIG.defaultEngine;
+
+  const projectType =
+    typeof request.projectType === "string" &&
+    request.projectType.trim()
+      ? request.projectType.trim()
+      : "application";
+
+  const requirements = Array.isArray(request.requirements)
+    ? request.requirements.filter(
+        (item) => typeof item === "string" && item.trim()
+      ).map((item) => item.trim())
+    : [];
 
   return {
     prompt,
-    engine: request.engine || DEFAULT_CONFIG.defaultEngine,
-    projectType: request.projectType || "application",
-    requirements: Array.isArray(request.requirements)
-      ? [...request.requirements]
-      : [],
+    engine,
+    projectType,
+    requirements,
     includeIndexes: request.includeIndexes !== false,
     includeMigrations: request.includeMigrations !== false
   };
+}
+
+function validateConfig(config) {
+  if (
+    !Number.isInteger(config.maxPromptLength) ||
+    config.maxPromptLength < 1
+  ) {
+    return createError(
+      "INVALID_CONFIG",
+      "maxPromptLength must be a positive integer."
+    );
+  }
+
+  if (
+    !Number.isInteger(config.maxTables) ||
+    config.maxTables < 1
+  ) {
+    return createError(
+      "INVALID_CONFIG",
+      "maxTables must be a positive integer."
+    );
+  }
+
+  if (
+    typeof config.defaultEngine !== "string" ||
+    !APP_DATABASE_ENGINES.includes(config.defaultEngine)
+  ) {
+    return createError(
+      "INVALID_CONFIG",
+      "The default database engine is not supported."
+    );
+  }
+
+  return null;
 }
 
 function validateRequest(request, config) {
@@ -89,7 +170,7 @@ function validateRequest(request, config) {
 }
 
 function validateSchema(schema, maxTables) {
-  if (!schema || typeof schema !== "object" || Array.isArray(schema)) {
+  if (!isPlainObject(schema)) {
     return createError(
       "INVALID_SCHEMA",
       "The provider must return a valid schema object."
@@ -110,11 +191,11 @@ function validateSchema(schema, maxTables) {
     );
   }
 
-  const names = new Set();
+  const tableNames = new Set();
 
   for (const table of schema.tables) {
     if (
-      !table ||
+      !isPlainObject(table) ||
       typeof table.name !== "string" ||
       !table.name.trim() ||
       !Array.isArray(table.columns)
@@ -125,22 +206,22 @@ function validateSchema(schema, maxTables) {
       );
     }
 
-    const name = table.name.trim().toLowerCase();
+    const tableName = table.name.trim().toLowerCase();
 
-    if (names.has(name)) {
+    if (tableNames.has(tableName)) {
       return createError(
         "DUPLICATE_TABLE",
         `Duplicate database table: ${table.name}`
       );
     }
 
-    names.add(name);
+    tableNames.add(tableName);
 
     const columnNames = new Set();
 
     for (const column of table.columns) {
       if (
-        !column ||
+        !isPlainObject(column) ||
         typeof column.name !== "string" ||
         !column.name.trim() ||
         typeof column.type !== "string" ||
@@ -167,35 +248,54 @@ function validateSchema(schema, maxTables) {
 
   return {
     success: true,
-    schema: Object.freeze({
-      ...schema,
-      tables: Object.freeze(
-        schema.tables.map((table) =>
-          Object.freeze({
-            ...table,
-            columns: Object.freeze(
-              table.columns.map((column) => Object.freeze({ ...column }))
-            )
-          })
-        )
-      )
-    })
+    schema: cloneAndFreeze(schema)
+  };
+}
+
+function validateProviderList(value, fieldName) {
+  if (value === undefined || value === null) {
+    return {
+      success: true,
+      value: Object.freeze([])
+    };
+  }
+
+  if (!Array.isArray(value)) {
+    return createError(
+      "INVALID_PROVIDER_RESPONSE",
+      `Provider ${fieldName} must be an array.`
+    );
+  }
+
+  return {
+    success: true,
+    value: cloneAndFreeze(value)
   };
 }
 
 export function createDatabaseDesigner(options = {}) {
+  const safeOptions = isPlainObject(options) ? options : {};
+
   const config = Object.freeze({
     ...DEFAULT_CONFIG,
-    ...options.config
+    ...(isPlainObject(safeOptions.config) ? safeOptions.config : {})
   });
 
-  const provider = options.provider || null;
+  const configError = validateConfig(config);
+
+  const provider = safeOptions.provider || null;
 
   async function design(request) {
+    if (configError) {
+      return configError;
+    }
+
     const normalized = normalizeRequest(request);
     const validationError = validateRequest(normalized, config);
 
-    if (validationError) return validationError;
+    if (validationError) {
+      return validationError;
+    }
 
     if (!provider || typeof provider.design !== "function") {
       return createError(
@@ -209,12 +309,12 @@ export function createDatabaseDesigner(options = {}) {
         prompt: normalized.prompt,
         engine: normalized.engine,
         projectType: normalized.projectType,
-        requirements: normalized.requirements,
+        requirements: [...normalized.requirements],
         includeIndexes: normalized.includeIndexes,
         includeMigrations: normalized.includeMigrations
       });
 
-      if (!result || typeof result !== "object") {
+      if (!isPlainObject(result)) {
         return createError(
           "INVALID_PROVIDER_RESPONSE",
           "The database provider returned an invalid response."
@@ -226,19 +326,35 @@ export function createDatabaseDesigner(options = {}) {
         config.maxTables
       );
 
-      if (!validation.success) return validation;
+      if (!validation.success) {
+        return validation;
+      }
+
+      const indexes = validateProviderList(
+        result.indexes,
+        "indexes"
+      );
+
+      if (!indexes.success) {
+        return indexes;
+      }
+
+      const migrations = validateProviderList(
+        result.migrations,
+        "migrations"
+      );
+
+      if (!migrations.success) {
+        return migrations;
+      }
 
       return Object.freeze({
         success: true,
         data: Object.freeze({
           engine: normalized.engine,
           schema: validation.schema,
-          indexes: Array.isArray(result.indexes)
-            ? Object.freeze([...result.indexes])
-            : Object.freeze([]),
-          migrations: Array.isArray(result.migrations)
-            ? Object.freeze([...result.migrations])
-            : Object.freeze([])
+          indexes: indexes.value,
+          migrations: migrations.value
         }),
         metadata: Object.freeze({
           designerVersion: APP_DATABASE_DESIGNER_VERSION,
