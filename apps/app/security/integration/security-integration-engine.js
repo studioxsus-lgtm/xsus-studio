@@ -214,6 +214,14 @@ export function createSecurityIntegrationEngine(options = {}) {
     return identity;
   };
 
+  /**
+   * Zgjidh rolet direkte dhe rolet e trashëguara.
+   *
+   * Ciklet ndalen përmes Set-it "visited".
+   * Kontrolli i ciklit kryhet para getRole(),
+   * në mënyrë që një referencë e vizituar të mos
+   * interpretohet si rol i pazgjidhur.
+   */
   const resolveRoles = async (userId) => {
     const response = await rbacEngine.getUserRoles(userId);
 
@@ -239,6 +247,7 @@ export function createSecurityIntegrationEngine(options = {}) {
         );
       }
 
+      // Një rol i vizituar nuk përpunohet përsëri.
       if (visited.has(role.id)) {
         return;
       }
@@ -259,6 +268,12 @@ export function createSecurityIntegrationEngine(options = {}) {
             SECURITY_INTEGRATION_ERRORS.PROVIDER_ERROR,
             "RBAC Engine returned an invalid inherited role reference."
           );
+        }
+
+        // KORRIGJIMI:
+        // Kontrollohet cikli para kërkesës te RBAC Engine.
+        if (visited.has(inheritedId)) {
+          continue;
         }
 
         const inherited = await rbacEngine.getRole(inheritedId);
