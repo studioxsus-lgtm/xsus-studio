@@ -47,6 +47,9 @@ export const SECURITY_INTEGRATION_DEFAULTS = Object.freeze({
   maxHistory: 100,
 });
 
+/**
+ * Kontrollon nëse vlera është objekt i thjeshtë.
+ */
 export function isPlainObject(value) {
   if (
     value === null ||
@@ -64,6 +67,9 @@ export function isPlainObject(value) {
   );
 }
 
+/**
+ * Krijon gabim të brendshëm standard.
+ */
 function createError(code, message, details = {}) {
   const error = new Error(message);
 
@@ -114,6 +120,7 @@ function cloneValue(value, seen = new WeakMap()) {
 
   if (Array.isArray(value)) {
     const result = [];
+
     seen.set(value, result);
 
     for (const item of value) {
@@ -131,6 +138,7 @@ function cloneValue(value, seen = new WeakMap()) {
   }
 
   const result = {};
+
   seen.set(value, result);
 
   for (const key of Reflect.ownKeys(value)) {
@@ -170,6 +178,10 @@ function cloneValue(value, seen = new WeakMap()) {
   return result;
 }
 
+/**
+ * Ngrin në mënyrë rekursive objektet dhe array.
+ * Mbështet referencat ciklike.
+ */
 function deepFreeze(value, seen = new WeakSet()) {
   if (
     value === null ||
@@ -201,6 +213,9 @@ function deepFreeze(value, seen = new WeakSet()) {
   return Object.freeze(value);
 }
 
+/**
+ * Validon boolean.
+ */
 function requireBoolean(value, field) {
   if (typeof value !== "boolean") {
     throw createError(
@@ -212,6 +227,9 @@ function requireBoolean(value, field) {
   return value;
 }
 
+/**
+ * Validon numër të plotë pozitiv.
+ */
 function requirePositiveInteger(value, field) {
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw createError(
@@ -223,6 +241,9 @@ function requirePositiveInteger(value, field) {
   return value;
 }
 
+/**
+ * Validon string jo bosh.
+ */
 function requireNonEmptyString(value, field, errorCode) {
   if (
     typeof value !== "string" ||
@@ -255,7 +276,10 @@ export function validateSecurityIntegrationConfig(config = {}) {
     ...config,
   };
 
-  requireBoolean(normalized.denyByDefault, "denyByDefault");
+  requireBoolean(
+    normalized.denyByDefault,
+    "denyByDefault"
+  );
 
   requireBoolean(
     normalized.requireVerifiedIdentity,
@@ -365,7 +389,9 @@ export function validateSecurityIntegrationIdentity(identity) {
     id,
     verified: true,
     roles: Object.freeze([
-      ...new Set(roles.map((role) => role.trim())),
+      ...new Set(
+        roles.map((role) => role.trim())
+      ),
     ]),
     permissions: Object.freeze([
       ...new Set(
@@ -430,10 +456,43 @@ export function validateSecurityIntegrationRequest(request) {
     );
   }
 
+  /**
+   * SECURITY CHECK:
+   *
+   * Identiteti nuk lejohet të vijë nga klienti.
+   *
+   * Nëse klienti dërgon identity:
+   * 1. Identiteti kontrollohet për të ruajtur
+   *    gabimet e sakta të validimit.
+   * 2. Identiteti i paverifikuar refuzohet.
+   * 3. Edhe identiteti i verifikuar refuzohet
+   *    sepse nuk është burim autoritativ.
+   *
+   * Integration Engine duhet të përdorë
+   * Authentication Manager për identitetin.
+   */
+  if (
+    Object.prototype.hasOwnProperty.call(
+      request,
+      "identity"
+    )
+  ) {
+    validateSecurityIntegrationIdentity(
+      request.identity
+    );
+
+    throw createError(
+      SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST,
+      "Identity nuk lejohet në kërkesën publike. Përdoret sesioni i verifikuar."
+    );
+  }
+
   const action = request.action;
 
   if (
-    !Object.values(SECURITY_INTEGRATION_ACTIONS).includes(action)
+    !Object.values(
+      SECURITY_INTEGRATION_ACTIONS
+    ).includes(action)
   ) {
     throw createError(
       SECURITY_INTEGRATION_ERRORS.INVALID_ACTION,
@@ -441,13 +500,17 @@ export function validateSecurityIntegrationRequest(request) {
     );
   }
 
-  if (action === SECURITY_INTEGRATION_ACTIONS.GET_STATUS) {
+  if (
+    action === SECURITY_INTEGRATION_ACTIONS.GET_STATUS
+  ) {
     return Object.freeze({
       action,
     });
   }
 
-  if (action === SECURITY_INTEGRATION_ACTIONS.CHECK_ROLE) {
+  if (
+    action === SECURITY_INTEGRATION_ACTIONS.CHECK_ROLE
+  ) {
     const role = requireNonEmptyString(
       request.role,
       "role",
@@ -548,7 +611,9 @@ export function createSecurityIntegrationResponse({
 
   if (data !== null && data !== undefined) {
     try {
-      normalizedData = deepFreeze(cloneValue(data));
+      normalizedData = deepFreeze(
+        cloneValue(data)
+      );
     } catch {
       throw createError(
         SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST,
@@ -585,5 +650,9 @@ export function createSecurityIntegrationError(
     );
   }
 
-  return createError(code, message, details);
+  return createError(
+    code,
+    message,
+    details
+  );
 }
