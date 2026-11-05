@@ -9,6 +9,7 @@ const createDependencies = ({
   directRoles = [],
   inheritedRoles = {},
   permissions = {},
+  permissionEngine,
 } = {}) => ({
   authenticationManager: {
     verify: vi.fn(async () => ({
@@ -34,7 +35,7 @@ const createDependencies = ({
     })),
   },
 
-  permissionEngine: {
+  permissionEngine: permissionEngine || {
     getSubjectPermissions: vi.fn(async (subject) => {
       const key = `${subject.type}:${subject.id}`;
       return permissions[key] || [];
