@@ -33,6 +33,17 @@ jobs:
           test -f package.json
           test -f server.js
 
+      - name: Verify security integration file
+        run: |
+          echo "Current commit:"
+          git rev-parse HEAD
+
+          echo "Security integration files:"
+          find apps/app/security -type f | sort
+
+          echo "Expected file:"
+          test -f apps/app/security/integration/security-integration-contracts.js
+
       - name: Install dependencies
         run: npm install
 
