@@ -6,12 +6,20 @@
  * Përgjegjësitë:
  * - Standardizimi i kërkesave të integrimit.
  * - Validimi i konfigurimit.
- * - Validimi i identitetit të verifikuar nga Authentication Manager.
+ * - Validimi i identitetit.
  * - Validimi i resource dhe operation.
  * - Mbrojtja e strukturave të të dhënave nga ndryshimet e jashtme.
  * - Standardizimi i gabimeve dhe përgjigjeve.
  *
  * Ky modul nuk krijon ose ndryshon motorët e sigurisë.
+ *
+ * SECURITY BOUNDARY:
+ * Identiteti në request validohet për përputhshmëri
+ * me kontratën, por nuk është burim autoritativ.
+ *
+ * Security Integration Engine duhet të verifikojë
+ * sesionin përmes Authentication Manager dhe të përdorë
+ * identitetin e kthyer prej tij për vendimet e autorizimit.
  */
 
 export const SECURITY_INTEGRATION_VERSION = "1.0.0";
@@ -68,24 +76,15 @@ export function isPlainObject(value) {
 }
 
 /**
- * Krijon gabim të brendshëm standard.
- */
-function createError(code, message, details = {}) {
-  const error = new Error(message);
-
-  error.code = code;
-
-  if (isPlainObject(details)) {
-    error.details = deepFreeze(cloneValue(details));
-  }
-
-  return error;
-}
-
-/**
  * Kopjon primitive, array dhe objekte të thjeshta.
- * Mbështet referencat ciklike.
- * Nuk përdor structuredClone().
+ *
+ * Karakteristikat:
+ * - Mbështet referencat ciklike.
+ * - Refuzon funksionet dhe tipet e pambështetura.
+ * - Refuzon objektet që nuk janë plain objects.
+ * - Refuzon accessor properties.
+ * - Përdor defineProperty për të shmangur
+ *   caktimin e drejtpërdrejtë të çelësave specialë.
  */
 function cloneValue(value, seen = new WeakMap()) {
   if (
@@ -98,8 +97,7 @@ function cloneValue(value, seen = new WeakMap()) {
 
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw createError(
-        SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST,
+      throw new TypeError(
         "Vlerat numerike duhet të jenë finite."
       );
     }
@@ -108,8 +106,7 @@ function cloneValue(value, seen = new WeakMap()) {
   }
 
   if (typeof value !== "object") {
-    throw createError(
-      SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST,
+    throw new TypeError(
       "Struktura përmban një tip të pambështetur."
     );
   }
@@ -131,8 +128,7 @@ function cloneValue(value, seen = new WeakMap()) {
   }
 
   if (!isPlainObject(value)) {
-    throw createError(
-      SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST,
+    throw new TypeError(
       "Lejohen vetëm objekte të thjeshta."
     );
   }
@@ -143,8 +139,7 @@ function cloneValue(value, seen = new WeakMap()) {
 
   for (const key of Reflect.ownKeys(value)) {
     if (typeof key !== "string") {
-      throw createError(
-        SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST,
+      throw new TypeError(
         "Lejohen vetëm çelësa string."
       );
     }
@@ -161,8 +156,7 @@ function cloneValue(value, seen = new WeakMap()) {
         "value"
       )
     ) {
-      throw createError(
-        SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST,
+      throw new TypeError(
         "Accessor properties nuk lejohen."
       );
     }
@@ -211,6 +205,21 @@ function deepFreeze(value, seen = new WeakSet()) {
   }
 
   return Object.freeze(value);
+}
+
+/**
+ * Krijon gabim të brendshëm standard.
+ */
+function createError(code, message, details = {}) {
+  const error = new Error(message);
+
+  error.code = code;
+
+  if (isPlainObject(details)) {
+    error.details = deepFreeze(cloneValue(details));
+  }
+
+  return error;
 }
 
 /**
@@ -271,10 +280,19 @@ export function validateSecurityIntegrationConfig(config = {}) {
     );
   }
 
-  const normalized = {
-    ...SECURITY_INTEGRATION_DEFAULTS,
-    ...config,
-  };
+  let normalized;
+
+  try {
+    normalized = {
+      ...SECURITY_INTEGRATION_DEFAULTS,
+      ...cloneValue(config),
+    };
+  } catch {
+    throw createError(
+      SECURITY_INTEGRATION_ERRORS.INVALID_CONFIG,
+      "Config përmban strukturë të pavlefshme."
+    );
+  }
 
   requireBoolean(
     normalized.denyByDefault,
@@ -313,17 +331,18 @@ export function validateSecurityIntegrationConfig(config = {}) {
     );
   }
 
-  return Object.freeze(normalized);
+  return deepFreeze(normalized);
 }
 
 /**
- * Validon identitetin e marrë nga Authentication Manager.
+ * Validon identitetin.
  *
- * Ky funksion nuk duhet të përdoret për t'i besuar
- * identitetit të dërguar nga klienti.
+ * Në Integration Engine ky funksion duhet të përdoret
+ * mbi identitetin e marrë nga Authentication Manager.
  *
  * roles dhe permissions janë metadata.
- * RBAC dhe Permission Engine mbeten autoritetet.
+ * RBAC dhe Permission Engine mbeten autoritetet
+ * përkatëse për vendimet e autorizimit.
  */
 export function validateSecurityIntegrationIdentity(identity) {
   if (!isPlainObject(identity)) {
@@ -385,19 +404,19 @@ export function validateSecurityIntegrationIdentity(identity) {
     );
   }
 
-  return Object.freeze({
+  return deepFreeze({
     id,
     verified: true,
-    roles: Object.freeze([
+    roles: [
       ...new Set(
         roles.map((role) => role.trim())
       ),
-    ]),
-    permissions: Object.freeze([
+    ],
+    permissions: [
       ...new Set(
         permissions.map((permission) => permission.trim())
       ),
-    ]),
+    ],
   });
 }
 
@@ -442,48 +461,23 @@ export function validateSecurityIntegrationResource(resource) {
 }
 
 /**
- * Validon kërkesën publike të integrimit.
+ * Validon kërkesën e integrimit.
  *
- * Identiteti nuk pranohet nga request.
- * Integration Engine duhet ta marrë atë nga
- * Authentication Manager.
+ * Përputhshmëria:
+ * - Pranon identity opsionale në request.
+ * - E validon identitetin nëse është i pranishëm.
+ * - Refuzon identitetet e pavlefshme ose të paverifikuara.
+ *
+ * Kufiri i sigurisë:
+ * Integration Engine nuk duhet ta përdorë identity
+ * të request si identitet autoritativ.
+ * Duhet ta verifikojë sesionin përmes Authentication Manager.
  */
 export function validateSecurityIntegrationRequest(request) {
   if (!isPlainObject(request)) {
     throw createError(
       SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST,
       "Request duhet të jetë objekt."
-    );
-  }
-
-  /**
-   * SECURITY CHECK:
-   *
-   * Identiteti nuk lejohet të vijë nga klienti.
-   *
-   * Nëse klienti dërgon identity:
-   * 1. Identiteti kontrollohet për të ruajtur
-   *    gabimet e sakta të validimit.
-   * 2. Identiteti i paverifikuar refuzohet.
-   * 3. Edhe identiteti i verifikuar refuzohet
-   *    sepse nuk është burim autoritativ.
-   *
-   * Integration Engine duhet të përdorë
-   * Authentication Manager për identitetin.
-   */
-  if (
-    Object.prototype.hasOwnProperty.call(
-      request,
-      "identity"
-    )
-  ) {
-    validateSecurityIntegrationIdentity(
-      request.identity
-    );
-
-    throw createError(
-      SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST,
-      "Identity nuk lejohet në kërkesën publike. Përdoret sesioni i verifikuar."
     );
   }
 
@@ -500,10 +494,27 @@ export function validateSecurityIntegrationRequest(request) {
     );
   }
 
+  /**
+   * Identity është opsionale për status.
+   * Për veprimet e tjera validohet kur dërgohet.
+   */
+  let identity = null;
+
+  if (
+    Object.prototype.hasOwnProperty.call(
+      request,
+      "identity"
+    )
+  ) {
+    identity = validateSecurityIntegrationIdentity(
+      request.identity
+    );
+  }
+
   if (
     action === SECURITY_INTEGRATION_ACTIONS.GET_STATUS
   ) {
-    return Object.freeze({
+    return deepFreeze({
       action,
     });
   }
@@ -517,8 +528,9 @@ export function validateSecurityIntegrationRequest(request) {
       SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST
     );
 
-    return Object.freeze({
+    return deepFreeze({
       action,
+      identity,
       role,
     });
   }
@@ -532,8 +544,9 @@ export function validateSecurityIntegrationRequest(request) {
       SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST
     );
 
-    return Object.freeze({
+    return deepFreeze({
       action,
+      identity,
       permission,
     });
   }
@@ -568,11 +581,12 @@ export function validateSecurityIntegrationRequest(request) {
     }
   }
 
-  return Object.freeze({
+  return deepFreeze({
     action,
+    identity,
     resource,
     operation,
-    context: deepFreeze(context),
+    context,
   });
 }
 
@@ -611,9 +625,7 @@ export function createSecurityIntegrationResponse({
 
   if (data !== null && data !== undefined) {
     try {
-      normalizedData = deepFreeze(
-        cloneValue(data)
-      );
+      normalizedData = deepFreeze(cloneValue(data));
     } catch {
       throw createError(
         SECURITY_INTEGRATION_ERRORS.INVALID_REQUEST,
@@ -622,7 +634,7 @@ export function createSecurityIntegrationResponse({
     }
   }
 
-  return Object.freeze({
+  return deepFreeze({
     version: SECURITY_INTEGRATION_VERSION,
     action: action.trim(),
     allowed,
