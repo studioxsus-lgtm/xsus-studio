@@ -31,7 +31,6 @@ describe("Session Manager", () => {
 
   it("creates a session", () => {
     const { manager } = setup();
-
     const session = manager.createSession("user-1");
 
     expect(session.id).toBe("session-1");
@@ -42,7 +41,6 @@ describe("Session Manager", () => {
 
   it("stores session metadata", () => {
     const { manager } = setup();
-
     const session = manager.createSession("user-1", {
       source: "web",
     });
@@ -68,7 +66,6 @@ describe("Session Manager", () => {
   it("verifies an active session", () => {
     const { manager } = setup();
     const session = manager.createSession("user-1");
-
     const result = manager.verifySession(session.id);
 
     expect(result.valid).toBe(true);
@@ -80,6 +77,7 @@ describe("Session Manager", () => {
     const session = manager.createSession("user-1");
 
     advance(5000);
+
     const result = manager.verifySession(session.id);
 
     expect(result.session.lastActivityAt).toBe(1005000);
@@ -91,7 +89,6 @@ describe("Session Manager", () => {
     });
 
     const session = manager.createSession("user-1");
-
     advance(1000);
 
     expect(() => manager.verifySession(session.id))
@@ -104,7 +101,6 @@ describe("Session Manager", () => {
     });
 
     const session = manager.createSession("user-1");
-
     advance(999);
 
     expect(manager.verifySession(session.id).valid).toBe(true);
@@ -116,7 +112,6 @@ describe("Session Manager", () => {
     });
 
     const session = manager.createSession("user-1");
-
     advance(500);
 
     const refreshed = manager.refreshSession(session.id);
@@ -131,7 +126,6 @@ describe("Session Manager", () => {
     });
 
     const session = manager.createSession("user-1");
-
     advance(1000);
 
     expect(() => manager.refreshSession(session.id))
@@ -216,7 +210,7 @@ describe("Session Manager", () => {
 
   it("enforces the global session limit", () => {
     const { manager } = setup({
-      maxSessionsPerUser: 5,
+      maxSessionsPerUser: 1,
       maxSessions: 1,
     });
 
