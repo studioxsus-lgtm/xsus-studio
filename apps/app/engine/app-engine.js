@@ -6,6 +6,11 @@
  * Coordinates independent XSUS App modules.
  * Integrates XSUS AI Core and Hyper XSUS Core
  * through the App Intelligence integration layer.
+ *
+ * Database modules:
+ * - Database Designer
+ * - Schema Manager
+ * - Migration Manager
  */
 
 import { createAppArchitecture } from "../architect/app-architect.js";
@@ -15,8 +20,11 @@ import { APP_PLATFORMS } from "../contracts/app-contracts.js";
 import { createCodeGenerator } from "../code-generator/code-generator.js";
 import { createFrontendBuilder } from "../frontend/frontend-builder.js";
 import { createBackendBuilder } from "../backend/backend-builder.js";
+
 import { createDatabaseDesigner } from "../database/database-designer.js";
 import { createSchemaManager } from "../database/schema-manager.js";
+import { createMigrationManager } from "../database/migration-manager.js";
+
 import { createApiGenerator } from "../api/api-generator.js";
 import { createDebuggingEngine } from "../debugging/debugging-engine.js";
 import { createTestingEngine } from "../testing/testing-engine.js";
@@ -32,6 +40,7 @@ export const APP_ENGINE_CAPABILITIES = Object.freeze([
   "backend-generation",
   "database-design",
   "database-schema-management",
+  "database-migration-management",
   "api-generation",
   "debugging",
   "testing",
@@ -147,12 +156,51 @@ function normalizeRequest(request) {
       typeof request.schemaInput === "object" &&
       !Array.isArray(request.schemaInput)
         ? request.schemaInput
+        : null,
+
+    migrationAction:
+      typeof request.migrationAction === "string"
+        ? request.migrationAction.trim().toLowerCase()
+        : "plan",
+
+    migrationTargetVersion:
+      request.migrationTargetVersion !== undefined &&
+      request.migrationTargetVersion !== null
+        ? request.migrationTargetVersion
+        : null,
+
+    migrationInput:
+      request.migrationInput &&
+      typeof request.migrationInput === "object" &&
+      !Array.isArray(request.migrationInput)
+        ? request.migrationInput
+        : null,
+
+    migrationId:
+      typeof request.migrationId === "string"
+        ? request.migrationId
         : null
   };
 }
 
 function createModules(options) {
   const providers = options.providers || {};
+
+  const migrationProvider =
+    options.migrationProvider ||
+    providers.migration ||
+    null;
+
+  const migrationManager =
+    options.migrationManager ||
+    (
+      migrationProvider
+        ? createMigrationManager({
+            config: options.migrationManagerConfig,
+            provider: migrationProvider
+          })
+        : null
+    );
 
   return Object.freeze({
     codeGenerator:
@@ -184,6 +232,8 @@ function createModules(options) {
       createSchemaManager({
         config: options.schemaManagerConfig
       }),
+
+    migrationManager,
 
     apiGenerator:
       options.apiGenerator ||
@@ -471,6 +521,80 @@ export function createAppEngine(options = {}) {
         },
 
         {
+          key: "migrationManagement",
+          enabled: normalized.modules.migrationManagement === true,
+          run: () => {
+            const manager = modules.migrationManager;
+
+            if (!manager) {
+              return createError(
+                "MIGRATION_MANAGER_UNAVAILABLE",
+                "Migration Manager requires a configured migration provider."
+              );
+            }
+
+            switch (normalized.migrationAction) {
+              case "register":
+                return manager.register(normalized.migrationInput);
+
+              case "get":
+                return manager.get(normalized.migrationId);
+
+              case "list":
+                return manager.list();
+
+              case "plan":
+                if (normalized.migrationTargetVersion === null) {
+                  return createError(
+                    "INVALID_MIGRATION_TARGET",
+                    "A valid migration target version is required."
+                  );
+                }
+
+                return manager.plan(
+                  normalized.migrationTargetVersion
+                );
+
+              case "migrate":
+                if (normalized.migrationTargetVersion === null) {
+                  return createError(
+                    "INVALID_MIGRATION_TARGET",
+                    "A valid migration target version is required."
+                  );
+                }
+
+                return manager.migrate(
+                  normalized.migrationTargetVersion
+                );
+
+              case "rollback":
+                if (normalized.migrationTargetVersion === null) {
+                  return createError(
+                    "INVALID_MIGRATION_TARGET",
+                    "A valid rollback target version is required."
+                  );
+                }
+
+                return manager.rollback(
+                  normalized.migrationTargetVersion
+                );
+
+              case "history":
+                return manager.getHistory();
+
+              case "status":
+                return manager.getStatus();
+
+              default:
+                return createError(
+                  "INVALID_MIGRATION_ACTION",
+                  "Unsupported migration management action."
+                );
+            }
+          }
+        },
+
+        {
           key: "api",
           enabled: normalized.modules.api === true,
           run: () => modules.apiGenerator.generate({
@@ -607,6 +731,26 @@ export function createAppEngine(options = {}) {
       }
     }
 
+    let migrationManagerStatus = null;
+
+    if (!closed) {
+      if (!modules.migrationManager) {
+        migrationManagerStatus = {
+          status: "unavailable",
+          reason: "Migration provider is not configured."
+        };
+      } else {
+        try {
+          migrationManagerStatus =
+            modules.migrationManager.getStatus();
+        } catch {
+          migrationManagerStatus = {
+            status: "unavailable"
+          };
+        }
+      }
+    }
+
     return Object.freeze({
       name: config.name,
       version: config.version,
@@ -615,6 +759,7 @@ export function createAppEngine(options = {}) {
       intelligenceEnabled: intelligence !== null,
       intelligence: intelligenceStatus,
       schemaManager: schemaManagerStatus,
+      migrationManager: migrationManagerStatus,
       closeError: closeError
         ? closeError.message
         : null
@@ -649,9 +794,19 @@ export function createAppEngine(options = {}) {
       }
     }
 
+    if (
+      modules.migrationManager &&
+      typeof modules.migrationManager.close === "function"
+    ) {
+      try {
+        modules.migrationManager.close();
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+
     if (errors.length > 0) {
       closeError = errors[0];
-
       throw closeError;
     }
   }
