@@ -1,3 +1,4 @@
+
 /**
  * XSUS App — Database Designer
  * Version: 1.0.0
@@ -69,7 +70,11 @@ function cloneAndFreeze(value, seen = new WeakMap()) {
   return Object.freeze(clone);
 }
 
-function normalizeRequest(request) {
+/**
+ * Normalizes a database design request.
+ * Uses the configured default engine when none is supplied.
+ */
+function normalizeRequest(request, config) {
   if (!isPlainObject(request)) {
     return null;
   }
@@ -86,7 +91,7 @@ function normalizeRequest(request) {
   const engine =
     typeof request.engine === "string" && request.engine.trim()
       ? request.engine.trim().toLowerCase()
-      : DEFAULT_CONFIG.defaultEngine;
+      : config.defaultEngine;
 
   const projectType =
     typeof request.projectType === "string" &&
@@ -95,9 +100,11 @@ function normalizeRequest(request) {
       : "application";
 
   const requirements = Array.isArray(request.requirements)
-    ? request.requirements.filter(
-        (item) => typeof item === "string" && item.trim()
-      ).map((item) => item.trim())
+    ? request.requirements
+        .filter(
+          (item) => typeof item === "string" && item.trim()
+        )
+        .map((item) => item.trim())
     : [];
 
   return {
@@ -290,7 +297,7 @@ export function createDatabaseDesigner(options = {}) {
       return configError;
     }
 
-    const normalized = normalizeRequest(request);
+    const normalized = normalizeRequest(request, config);
     const validationError = validateRequest(normalized, config);
 
     if (validationError) {
