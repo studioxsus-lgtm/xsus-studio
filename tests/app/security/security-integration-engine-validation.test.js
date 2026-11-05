@@ -40,7 +40,7 @@ describe("Security Integration Engine — Validation", () => {
     expect(SECURITY_INTEGRATION_ENGINE_VERSION).toBe("1.0.0");
   });
 
-  it("krijohet me të gjitha varësitë e vlefshme", () => {
+  it("krijohet me të gjitha varësitë e vlefshme", async () => {
     const engine = createSecurityIntegrationEngine(
       createDependencies()
     );
@@ -51,7 +51,7 @@ describe("Security Integration Engine — Validation", () => {
     expect(typeof engine.checkPermission).toBe("function");
     expect(typeof engine.checkRole).toBe("function");
 
-    expect(engine.close()).resolves.toBe(true);
+    await expect(engine.close()).resolves.toBe(true);
   });
 
   it("refuzon konfigurimin që nuk është objekt", () => {
