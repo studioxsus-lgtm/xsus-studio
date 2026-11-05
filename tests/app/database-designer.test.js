@@ -1,380 +1,628 @@
 
-/**
- * XSUS App — Database Designer
- * Version: 1.0.0
- *
- * Independent database architecture and schema generation module.
- * Uses an injected provider without direct dependency on XSUS AI Core.
- */
+import { describe, it, expect, vi } from "vitest";
 
-export const APP_DATABASE_DESIGNER_VERSION = "1.0.0";
+import {
+  APP_DATABASE_DESIGNER_VERSION,
+  APP_DATABASE_CAPABILITIES,
+  APP_DATABASE_ENGINES,
+  createDatabaseDesigner
+} from "../../apps/app/database/database-designer.js";
 
-export const APP_DATABASE_CAPABILITIES = Object.freeze([
-  "database-architecture",
-  "schema-design",
-  "table-design",
-  "relationship-design",
-  "index-planning",
-  "migration-generation"
-]);
-
-export const APP_DATABASE_ENGINES = Object.freeze([
-  "postgresql",
-  "mysql",
-  "sqlite",
-  "mongodb",
-  "mariadb",
-  "sql-server"
-]);
-
-const DEFAULT_CONFIG = Object.freeze({
-  maxPromptLength: 12000,
-  maxTables: 200,
-  defaultEngine: "postgresql"
-});
-
-function createError(code, message) {
+function createValidSchema() {
   return {
-    success: false,
-    error: { code, message }
-  };
-}
-
-function isPlainObject(value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return false;
-  }
-
-  const prototype = Object.getPrototypeOf(value);
-
-  return prototype === Object.prototype || prototype === null;
-}
-
-function cloneAndFreeze(value, seen = new WeakMap()) {
-  if (!value || typeof value !== "object") {
-    return value;
-  }
-
-  if (seen.has(value)) {
-    return seen.get(value);
-  }
-
-  const clone = Array.isArray(value) ? [] : {};
-
-  seen.set(value, clone);
-
-  for (const key of Object.keys(value)) {
-    clone[key] = cloneAndFreeze(value[key], seen);
-  }
-
-  return Object.freeze(clone);
-}
-
-function normalizeRequest(request, config) {
-  if (!isPlainObject(request)) {
-    return null;
-  }
-
-  const prompt =
-    typeof request.prompt === "string"
-      ? request.prompt.trim()
-      : "";
-
-  if (!prompt) {
-    return null;
-  }
-
-  const engine =
-    typeof request.engine === "string" && request.engine.trim()
-      ? request.engine.trim().toLowerCase()
-      : config.defaultEngine;
-
-  const projectType =
-    typeof request.projectType === "string" &&
-    request.projectType.trim()
-      ? request.projectType.trim()
-      : "application";
-
-  const requirements = Array.isArray(request.requirements)
-    ? request.requirements
-        .filter((item) => typeof item === "string" && item.trim())
-        .map((item) => item.trim())
-    : [];
-
-  return {
-    prompt,
-    engine,
-    projectType,
-    requirements,
-    includeIndexes: request.includeIndexes !== false,
-    includeMigrations: request.includeMigrations !== false
-  };
-}
-
-function validateConfig(config) {
-  if (
-    !Number.isInteger(config.maxPromptLength) ||
-    config.maxPromptLength < 1
-  ) {
-    return createError(
-      "INVALID_CONFIG",
-      "maxPromptLength must be a positive integer."
-    );
-  }
-
-  if (
-    !Number.isInteger(config.maxTables) ||
-    config.maxTables < 1
-  ) {
-    return createError(
-      "INVALID_CONFIG",
-      "maxTables must be a positive integer."
-    );
-  }
-
-  if (
-    typeof config.defaultEngine !== "string" ||
-    !APP_DATABASE_ENGINES.includes(config.defaultEngine)
-  ) {
-    return createError(
-      "INVALID_CONFIG",
-      "The default database engine is not supported."
-    );
-  }
-
-  return null;
-}
-
-function validateRequest(request, config) {
-  if (!request) {
-    return createError(
-      "INVALID_REQUEST",
-      "A valid database design request is required."
-    );
-  }
-
-  if (request.prompt.length > config.maxPromptLength) {
-    return createError(
-      "PROMPT_TOO_LONG",
-      "The database prompt exceeds the allowed length."
-    );
-  }
-
-  if (!APP_DATABASE_ENGINES.includes(request.engine)) {
-    return createError(
-      "UNSUPPORTED_DATABASE",
-      `Unsupported database engine: ${request.engine}`
-    );
-  }
-
-  return null;
-}
-
-function validateSchema(schema, maxTables) {
-  if (!isPlainObject(schema)) {
-    return createError(
-      "INVALID_SCHEMA",
-      "The provider must return a valid schema object."
-    );
-  }
-
-  if (!Array.isArray(schema.tables)) {
-    return createError(
-      "INVALID_TABLES",
-      "The database schema must contain a tables array."
-    );
-  }
-
-  if (schema.tables.length > maxTables) {
-    return createError(
-      "TABLE_LIMIT_EXCEEDED",
-      "The database schema exceeds the maximum table count."
-    );
-  }
-
-  const tableNames = new Set();
-
-  for (const table of schema.tables) {
-    if (
-      !isPlainObject(table) ||
-      typeof table.name !== "string" ||
-      !table.name.trim() ||
-      !Array.isArray(table.columns)
-    ) {
-      return createError(
-        "INVALID_TABLE",
-        "Every table must have a name and columns array."
-      );
-    }
-
-    const tableName = table.name.trim().toLowerCase();
-
-    if (tableNames.has(tableName)) {
-      return createError(
-        "DUPLICATE_TABLE",
-        `Duplicate database table: ${table.name}`
-      );
-    }
-
-    tableNames.add(tableName);
-
-    const columnNames = new Set();
-
-    for (const column of table.columns) {
-      if (
-        !isPlainObject(column) ||
-        typeof column.name !== "string" ||
-        !column.name.trim() ||
-        typeof column.type !== "string" ||
-        !column.type.trim()
-      ) {
-        return createError(
-          "INVALID_COLUMN",
-          `Table ${table.name} contains an invalid column.`
-        );
+    tables: [
+      {
+        name: "users",
+        columns: [
+          { name: "id", type: "integer" },
+          { name: "email", type: "varchar" }
+        ]
       }
-
-      const columnName = column.name.trim().toLowerCase();
-
-      if (columnNames.has(columnName)) {
-        return createError(
-          "DUPLICATE_COLUMN",
-          `Duplicate column in table ${table.name}: ${column.name}`
-        );
-      }
-
-      columnNames.add(columnName);
-    }
-  }
-
-  return {
-    success: true,
-    schema: cloneAndFreeze(schema)
+    ]
   };
 }
 
-function validateProviderList(value, fieldName) {
-  if (value === undefined || value === null) {
-    return {
-      success: true,
-      value: Object.freeze([])
-    };
-  }
-
-  if (!Array.isArray(value)) {
-    return createError(
-      "INVALID_PROVIDER_RESPONSE",
-      `Provider ${fieldName} must be an array.`
-    );
-  }
-
+function createProvider(overrides = {}) {
   return {
-    success: true,
-    value: cloneAndFreeze(value)
+    design: vi.fn(async () => ({
+      schema: createValidSchema(),
+      indexes: [{ table: "users", columns: ["email"] }],
+      migrations: [{ version: "001", name: "create_users" }],
+      ...overrides
+    }))
   };
 }
 
-export function createDatabaseDesigner(options = {}) {
-  const safeOptions = isPlainObject(options) ? options : {};
+describe("XSUS App Database Designer", () => {
+  describe("exports and initialization", () => {
+    it("exposes the expected version", () => {
+      expect(APP_DATABASE_DESIGNER_VERSION).toBe("1.0.0");
+    });
 
-  const config = Object.freeze({
-    ...DEFAULT_CONFIG,
-    ...(isPlainObject(safeOptions.config) ? safeOptions.config : {})
+    it("exposes database capabilities", () => {
+      expect(APP_DATABASE_CAPABILITIES).toEqual(
+        expect.arrayContaining([
+          "database-architecture",
+          "schema-design",
+          "table-design",
+          "relationship-design",
+          "index-planning",
+          "migration-generation"
+        ])
+      );
+    });
+
+    it("exposes supported database engines", () => {
+      expect(APP_DATABASE_ENGINES).toEqual(
+        expect.arrayContaining([
+          "postgresql",
+          "mysql",
+          "sqlite",
+          "mongodb",
+          "mariadb",
+          "sql-server"
+        ])
+      );
+    });
+
+    it("freezes exported configuration arrays", () => {
+      expect(Object.isFrozen(APP_DATABASE_CAPABILITIES)).toBe(true);
+      expect(Object.isFrozen(APP_DATABASE_ENGINES)).toBe(true);
+    });
+
+    it("creates a designer instance", () => {
+      const designer = createDatabaseDesigner();
+
+      expect(designer.name).toBe("XSUS App Database Designer");
+      expect(designer.version).toBe("1.0.0");
+      expect(typeof designer.design).toBe("function");
+      expect(Object.isFrozen(designer)).toBe(true);
+    });
   });
 
-  const configError = validateConfig(config);
-  const provider = safeOptions.provider || null;
+  describe("configuration validation", () => {
+    it("uses the default PostgreSQL engine", async () => {
+      const provider = createProvider();
+      const designer = createDatabaseDesigner({ provider });
 
-  async function design(request) {
-    if (configError) {
-      return configError;
-    }
-
-    // Korrigjim: përdor konfigurimin aktual, jo DEFAULT_CONFIG.
-    const normalized = normalizeRequest(request, config);
-
-    const validationError = validateRequest(normalized, config);
-
-    if (validationError) {
-      return validationError;
-    }
-
-    if (!provider || typeof provider.design !== "function") {
-      return createError(
-        "DATABASE_PROVIDER_UNAVAILABLE",
-        "No database design provider has been configured."
-      );
-    }
-
-    try {
-      const result = await provider.design({
-        prompt: normalized.prompt,
-        engine: normalized.engine,
-        projectType: normalized.projectType,
-        requirements: [...normalized.requirements],
-        includeIndexes: normalized.includeIndexes,
-        includeMigrations: normalized.includeMigrations
+      const result = await designer.design({
+        prompt: "Create a user database"
       });
 
-      if (!isPlainObject(result)) {
-        return createError(
-          "INVALID_PROVIDER_RESPONSE",
-          "The database provider returned an invalid response."
-        );
-      }
+      expect(result.success).toBe(true);
+      expect(result.data.engine).toBe("postgresql");
+    });
 
-      const validation = validateSchema(
-        result.schema,
-        config.maxTables
+    it("uses a custom valid default engine", async () => {
+      const provider = createProvider();
+      const designer = createDatabaseDesigner({
+        config: { defaultEngine: "mysql" },
+        provider
+      });
+
+      const result = await designer.design({
+        prompt: "Create a user database"
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.engine).toBe("mysql");
+    });
+
+    it("rejects an invalid maxPromptLength", async () => {
+      const designer = createDatabaseDesigner({
+        config: { maxPromptLength: 0 }
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_CONFIG");
+    });
+
+    it("rejects an invalid maxTables", async () => {
+      const designer = createDatabaseDesigner({
+        config: { maxTables: -1 }
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_CONFIG");
+    });
+
+    it("rejects an unsupported default engine", async () => {
+      const designer = createDatabaseDesigner({
+        config: { defaultEngine: "oracle" }
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_CONFIG");
+    });
+  });
+
+  describe("request validation", () => {
+    it("rejects a null request", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider()
+      });
+
+      const result = await designer.design(null);
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_REQUEST");
+    });
+
+    it("rejects an array request", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider()
+      });
+
+      const result = await designer.design([]);
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_REQUEST");
+    });
+
+    it("rejects an empty prompt", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider()
+      });
+
+      const result = await designer.design({ prompt: "   " });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_REQUEST");
+    });
+
+    it("rejects a prompt exceeding the configured limit", async () => {
+      const designer = createDatabaseDesigner({
+        config: { maxPromptLength: 5 },
+        provider: createProvider()
+      });
+
+      const result = await designer.design({
+        prompt: "123456"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("PROMPT_TOO_LONG");
+    });
+
+    it("rejects an unsupported database engine", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider()
+      });
+
+      const result = await designer.design({
+        prompt: "Create database",
+        engine: "oracle"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("UNSUPPORTED_DATABASE");
+    });
+
+    it("normalizes the requested engine", async () => {
+      const provider = createProvider();
+      const designer = createDatabaseDesigner({ provider });
+
+      const result = await designer.design({
+        prompt: "Create database",
+        engine: "MYSQL"
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.engine).toBe("mysql");
+    });
+
+    it("trims the prompt and project type", async () => {
+      const provider = createProvider();
+      const designer = createDatabaseDesigner({ provider });
+
+      await designer.design({
+        prompt: "  Create database  ",
+        projectType: "  ecommerce  "
+      });
+
+      expect(provider.design).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: "Create database",
+          projectType: "ecommerce"
+        })
       );
+    });
 
-      if (!validation.success) {
-        return validation;
-      }
+    it("normalizes requirements", async () => {
+      const provider = createProvider();
+      const designer = createDatabaseDesigner({ provider });
 
-      const indexes = validateProviderList(
-        result.indexes,
-        "indexes"
+      await designer.design({
+        prompt: "Create database",
+        requirements: [
+          " authentication ",
+          "",
+          123,
+          " reporting "
+        ]
+      });
+
+      expect(provider.design).toHaveBeenCalledWith(
+        expect.objectContaining({
+          requirements: ["authentication", "reporting"]
+        })
       );
+    });
 
-      if (!indexes.success) {
-        return indexes;
-      }
+    it("supports disabling indexes and migrations", async () => {
+      const provider = createProvider();
+      const designer = createDatabaseDesigner({ provider });
 
-      const migrations = validateProviderList(
-        result.migrations,
-        "migrations"
+      await designer.design({
+        prompt: "Create database",
+        includeIndexes: false,
+        includeMigrations: false
+      });
+
+      expect(provider.design).toHaveBeenCalledWith(
+        expect.objectContaining({
+          includeIndexes: false,
+          includeMigrations: false
+        })
       );
+    });
+  });
 
-      if (!migrations.success) {
-        return migrations;
-      }
+  describe("provider handling", () => {
+    it("returns an error when the provider is unavailable", async () => {
+      const designer = createDatabaseDesigner();
 
-      return Object.freeze({
-        success: true,
-        data: Object.freeze({
-          engine: normalized.engine,
-          schema: validation.schema,
-          indexes: indexes.value,
-          migrations: migrations.value
-        }),
-        metadata: Object.freeze({
-          designerVersion: APP_DATABASE_DESIGNER_VERSION,
-          tableCount: validation.schema.tables.length
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("DATABASE_PROVIDER_UNAVAILABLE");
+    });
+
+    it("calls the provider with normalized input", async () => {
+      const provider = createProvider();
+      const designer = createDatabaseDesigner({ provider });
+
+      await designer.design({
+        prompt: " Create database ",
+        engine: "MYSQL"
+      });
+
+      expect(provider.design).toHaveBeenCalledTimes(1);
+      expect(provider.design).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: "Create database",
+          engine: "mysql"
+        })
+      );
+    });
+
+    it("rejects an invalid provider response", async () => {
+      const provider = {
+        design: vi.fn(async () => null)
+      };
+
+      const designer = createDatabaseDesigner({ provider });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_PROVIDER_RESPONSE");
+    });
+
+    it("handles provider exceptions", async () => {
+      const provider = {
+        design: vi.fn(async () => {
+          throw new Error("Provider failure");
+        })
+      };
+
+      const designer = createDatabaseDesigner({ provider });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("DATABASE_DESIGN_FAILED");
+    });
+  });
+
+  describe("schema validation", () => {
+    it("accepts a valid schema", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider()
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.schema.tables).toHaveLength(1);
+    });
+
+    it("rejects a non-object schema", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider({ schema: null })
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_SCHEMA");
+    });
+
+    it("rejects a schema without a tables array", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider({
+          schema: { name: "invalid" }
         })
       });
-    } catch {
-      return createError(
-        "DATABASE_DESIGN_FAILED",
-        "Database design failed. Please try again."
-      );
-    }
-  }
 
-  return Object.freeze({
-    name: "XSUS App Database Designer",
-    version: APP_DATABASE_DESIGNER_VERSION,
-    capabilities: APP_DATABASE_CAPABILITIES,
-    design
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_TABLES");
+    });
+
+    it("rejects a schema exceeding the table limit", async () => {
+      const designer = createDatabaseDesigner({
+        config: { maxTables: 1 },
+        provider: createProvider({
+          schema: {
+            tables: [
+              { name: "users", columns: [] },
+              { name: "orders", columns: [] }
+            ]
+          })
+        })
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("TABLE_LIMIT_EXCEEDED");
+    });
+
+    it("rejects an invalid table", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider({
+          schema: { tables: [{ name: "", columns: [] }] }
+        })
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_TABLE");
+    });
+
+    it("rejects duplicate table names case-insensitively", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider({
+          schema: {
+            tables: [
+              { name: "users", columns: [] },
+              { name: "USERS", columns: [] }
+            ]
+          }
+        })
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("DUPLICATE_TABLE");
+    });
+
+    it("rejects invalid columns", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider({
+          schema: {
+            tables: [
+              {
+                name: "users",
+                columns: [{ name: "id", type: "" }]
+              }
+            ]
+          }
+        })
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_COLUMN");
+    });
+
+    it("rejects duplicate column names case-insensitively", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider({
+          schema: {
+            tables: [
+              {
+                name: "users",
+                columns: [
+                  { name: "email", type: "varchar" },
+                  { name: "EMAIL", type: "text" }
+                ]
+              }
+            ]
+          }
+        })
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("DUPLICATE_COLUMN");
+    });
   });
-}
+
+  describe("indexes and migrations", () => {
+    it("returns provider indexes", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider()
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.indexes).toEqual([
+        { table: "users", columns: ["email"] }
+      ]);
+    });
+
+    it("returns provider migrations", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider()
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.migrations).toEqual([
+        { version: "001", name: "create_users" }
+      ]);
+    });
+
+    it("uses empty arrays when indexes are omitted", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider({ indexes: undefined })
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.indexes).toEqual([]);
+    });
+
+    it("uses empty arrays when migrations are omitted", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider({ migrations: undefined })
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.migrations).toEqual([]);
+    });
+
+    it("rejects invalid indexes", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider({ indexes: {} })
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_PROVIDER_RESPONSE");
+    });
+
+    it("rejects invalid migrations", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider({ migrations: "invalid" })
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe("INVALID_PROVIDER_RESPONSE");
+    });
+  });
+
+  describe("metadata and immutability", () => {
+    it("returns correct metadata", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider()
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.metadata).toEqual({
+        designerVersion: "1.0.0",
+        tableCount: 1
+      });
+    });
+
+    it("freezes the result and nested schema", async () => {
+      const designer = createDatabaseDesigner({
+        provider: createProvider()
+      });
+
+      const result = await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(Object.isFrozen(result)).toBe(true);
+      expect(Object.isFrozen(result.data)).toBe(true);
+      expect(Object.isFrozen(result.data.schema)).toBe(true);
+      expect(Object.isFrozen(result.data.schema.tables)).toBe(true);
+      expect(Object.isFrozen(result.data.schema.tables[0])).toBe(true);
+      expect(Object.isFrozen(result.data.schema.tables[0].columns)).toBe(true);
+      expect(Object.isFrozen(result.data.schema.tables[0].columns[0])).toBe(true);
+      expect(Object.isFrozen(result.data.indexes)).toBe(true);
+      expect(Object.isFrozen(result.data.migrations)).toBe(true);
+      expect(Object.isFrozen(result.metadata)).toBe(true);
+    });
+
+    it("does not mutate the provider schema", async () => {
+      const schema = createValidSchema();
+      const provider = createProvider({ schema });
+      const designer = createDatabaseDesigner({ provider });
+
+      await designer.design({
+        prompt: "Create database"
+      });
+
+      expect(Object.isFrozen(schema)).toBe(false);
+      expect(Object.isFrozen(schema.tables)).toBe(false);
+      expect(Object.isFrozen(schema.tables[0])).toBe(false);
+    });
+  });
+});
