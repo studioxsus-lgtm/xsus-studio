@@ -7,6 +7,38 @@ import {
   MIGRATION_MANAGER_ERRORS,
 } from "../../apps/app/database/migration-manager.js";
 
+/**
+ * Kontrollon kodin e gabimit, jo tekstin e mesazhit.
+ */
+function toThrowErrorCode(callback, expectedCode) {
+  let thrownError;
+
+  try {
+    callback();
+  } catch (error) {
+    thrownError = error;
+  }
+
+  expect(thrownError).toBeInstanceOf(Error);
+  expect(thrownError.code).toBe(expectedCode);
+}
+
+/**
+ * Kontrollon kodin e gabimit për operacione asinkrone.
+ */
+async function toRejectWithErrorCode(promise, expectedCode) {
+  let rejectedError;
+
+  try {
+    await promise;
+  } catch (error) {
+    rejectedError = error;
+  }
+
+  expect(rejectedError).toBeInstanceOf(Error);
+  expect(rejectedError.code).toBe(expectedCode);
+}
+
 describe("Migration Manager", () => {
   const createMigration = (overrides = {}) => ({
     id: "migration-1",
@@ -46,25 +78,27 @@ describe("Migration Manager", () => {
     });
 
     it("rejects invalid configuration", () => {
-      expect(() =>
-        createMigrationManager({
-          config: { maxMigrations: 0 },
-        })
-      ).toThrow(MIGRATION_MANAGER_ERRORS.INVALID_CONFIG);
+      toThrowErrorCode(
+        () =>
+          createMigrationManager({
+            config: { maxMigrations: 0 },
+          }),
+        MIGRATION_MANAGER_ERRORS.INVALID_CONFIG
+      );
     });
 
     it("rejects invalid options", () => {
-      expect(() =>
-        createMigrationManager(null)
-      ).toThrow();
+      expect(() => createMigrationManager(null)).toThrow();
     });
 
     it("rejects an invalid provider", () => {
-      expect(() =>
-        createMigrationManager({
-          provider: {},
-        })
-      ).toThrow(MIGRATION_MANAGER_ERRORS.INVALID_PROVIDER);
+      toThrowErrorCode(
+        () =>
+          createMigrationManager({
+            provider: {},
+          }),
+        MIGRATION_MANAGER_ERRORS.INVALID_PROVIDER
+      );
     });
   });
 
@@ -72,9 +106,7 @@ describe("Migration Manager", () => {
     it("registers a valid migration", () => {
       const manager = createMigrationManager();
 
-      const migration = manager.register(
-        createMigration()
-      );
+      const migration = manager.register(createMigration());
 
       expect(migration).toMatchObject({
         id: "migration-1",
@@ -98,50 +130,54 @@ describe("Migration Manager", () => {
     it("rejects a missing identifier", () => {
       const manager = createMigrationManager();
 
-      expect(() =>
-        manager.register(createMigration({ id: " " }))
-      ).toThrow(MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION);
+      toThrowErrorCode(
+        () => manager.register(createMigration({ id: " " })),
+        MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION
+      );
     });
 
     it("rejects invalid migration objects", () => {
       const manager = createMigrationManager();
 
-      expect(() =>
-        manager.register(null)
-      ).toThrow(MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION);
+      toThrowErrorCode(
+        () => manager.register(null),
+        MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION
+      );
     });
 
     it("rejects negative versions", () => {
       const manager = createMigrationManager();
 
       expect(() =>
-        manager.register(
-          createMigration({ fromVersion: -1 })
-        )
+        manager.register(createMigration({ fromVersion: -1 }))
       ).toThrow();
     });
 
     it("rejects non-integer versions", () => {
       const manager = createMigrationManager();
 
-      expect(() =>
-        manager.register(
-          createMigration({ toVersion: 1.5 })
-        )
-      ).toThrow(MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION_VERSION);
+      toThrowErrorCode(
+        () =>
+          manager.register(
+            createMigration({ toVersion: 1.5 })
+          ),
+        MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION_VERSION
+      );
     });
 
     it("rejects a target version not greater than the source", () => {
       const manager = createMigrationManager();
 
-      expect(() =>
-        manager.register(
-          createMigration({
-            fromVersion: 2,
-            toVersion: 2,
-          })
-        )
-      ).toThrow(MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION_VERSION);
+      toThrowErrorCode(
+        () =>
+          manager.register(
+            createMigration({
+              fromVersion: 2,
+              toVersion: 2,
+            })
+          ),
+        MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION_VERSION
+      );
     });
 
     it("rejects duplicate migration identifiers", () => {
@@ -149,9 +185,10 @@ describe("Migration Manager", () => {
 
       manager.register(createMigration());
 
-      expect(() =>
-        manager.register(createMigration())
-      ).toThrow(MIGRATION_MANAGER_ERRORS.DUPLICATE_MIGRATION);
+      toThrowErrorCode(
+        () => manager.register(createMigration()),
+        MIGRATION_MANAGER_ERRORS.DUPLICATE_MIGRATION
+      );
     });
 
     it("rejects conflicting version transitions", () => {
@@ -159,25 +196,29 @@ describe("Migration Manager", () => {
 
       manager.register(createMigration());
 
-      expect(() =>
-        manager.register(
-          createMigration({
-            id: "migration-2",
-            fromVersion: 0,
-            toVersion: 2,
-          })
-        )
-      ).toThrow(MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION);
+      toThrowErrorCode(
+        () =>
+          manager.register(
+            createMigration({
+              id: "migration-2",
+              fromVersion: 0,
+              toVersion: 2,
+            })
+          ),
+        MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION
+      );
     });
 
     it("rejects invalid metadata", () => {
       const manager = createMigrationManager();
 
-      expect(() =>
-        manager.register(
-          createMigration({ metadata: [] })
-        )
-      ).toThrow(MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION);
+      toThrowErrorCode(
+        () =>
+          manager.register(
+            createMigration({ metadata: [] })
+          ),
+        MIGRATION_MANAGER_ERRORS.INVALID_MIGRATION
+      );
     });
 
     it("returns immutable migration records", () => {
@@ -248,7 +289,8 @@ describe("Migration Manager", () => {
         config: { initialVersion: 2 },
       });
 
-      expect(() => manager.plan(1)).toThrow(
+      toThrowErrorCode(
+        () => manager.plan(1),
         MIGRATION_MANAGER_ERRORS.INVALID_VERSION
       );
     });
@@ -263,7 +305,8 @@ describe("Migration Manager", () => {
         })
       );
 
-      expect(() => manager.plan(3)).toThrow(
+      toThrowErrorCode(
+        () => manager.plan(3),
         MIGRATION_MANAGER_ERRORS.INVALID_VERSION
       );
     });
@@ -312,9 +355,10 @@ describe("Migration Manager", () => {
 
       manager.register(createMigration());
 
-      await expect(manager.migrate(1)).rejects.toMatchObject({
-        code: MIGRATION_MANAGER_ERRORS.PROVIDER_UNAVAILABLE,
-      });
+      await toRejectWithErrorCode(
+        manager.migrate(1),
+        MIGRATION_MANAGER_ERRORS.PROVIDER_UNAVAILABLE
+      );
     });
 
     it("records successful migrations in history", async () => {
@@ -357,9 +401,10 @@ describe("Migration Manager", () => {
         })
       );
 
-      await expect(manager.migrate(2)).rejects.toMatchObject({
-        code: MIGRATION_MANAGER_ERRORS.MIGRATION_FAILED,
-      });
+      await toRejectWithErrorCode(
+        manager.migrate(2),
+        MIGRATION_MANAGER_ERRORS.MIGRATION_FAILED
+      );
 
       expect(manager.getStatus().currentVersion).toBe(1);
 
@@ -430,9 +475,10 @@ describe("Migration Manager", () => {
 
       await manager.migrate(1);
 
-      await expect(manager.rollback(0)).rejects.toMatchObject({
-        code: MIGRATION_MANAGER_ERRORS.ROLLBACK_UNSUPPORTED,
-      });
+      await toRejectWithErrorCode(
+        manager.rollback(0),
+        MIGRATION_MANAGER_ERRORS.ROLLBACK_UNSUPPORTED
+      );
     });
 
     it("rejects rollback to the current or a higher version", async () => {
@@ -447,9 +493,10 @@ describe("Migration Manager", () => {
 
       await manager.migrate(1);
 
-      await expect(manager.rollback(1)).rejects.toMatchObject({
-        code: MIGRATION_MANAGER_ERRORS.INVALID_VERSION,
-      });
+      await toRejectWithErrorCode(
+        manager.rollback(1),
+        MIGRATION_MANAGER_ERRORS.INVALID_VERSION
+      );
     });
 
     it("records rollback history", async () => {
@@ -483,9 +530,10 @@ describe("Migration Manager", () => {
 
       await manager.migrate(1);
 
-      await expect(manager.rollback(0)).rejects.toMatchObject({
-        code: MIGRATION_MANAGER_ERRORS.ROLLBACK_FAILED,
-      });
+      await toRejectWithErrorCode(
+        manager.rollback(0),
+        MIGRATION_MANAGER_ERRORS.ROLLBACK_FAILED
+      );
 
       expect(manager.getStatus().operationInProgress).toBe(false);
       expect(manager.getStatus().currentVersion).toBe(1);
@@ -559,7 +607,8 @@ describe("Migration Manager", () => {
 
       manager.close();
 
-      expect(() => manager.list()).toThrow(
+      toThrowErrorCode(
+        () => manager.list(),
         MIGRATION_MANAGER_ERRORS.MANAGER_CLOSED
       );
     });
@@ -583,7 +632,8 @@ describe("Migration Manager", () => {
 
       await Promise.resolve();
 
-      expect(() => manager.close()).toThrow(
+      toThrowErrorCode(
+        () => manager.close(),
         MIGRATION_MANAGER_ERRORS.OPERATION_IN_PROGRESS
       );
 
