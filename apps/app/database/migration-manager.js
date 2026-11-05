@@ -21,6 +21,7 @@ export const MIGRATION_MANAGER_ERRORS = Object.freeze({
   DUPLICATE_MIGRATION: "DUPLICATE_MIGRATION",
   MIGRATION_NOT_FOUND: "MIGRATION_NOT_FOUND",
   INVALID_VERSION: "INVALID_MIGRATION_VERSION",
+  INVALID_MIGRATION_VERSION: "INVALID_MIGRATION_VERSION",
   PROVIDER_UNAVAILABLE: "MIGRATION_PROVIDER_UNAVAILABLE",
   INVALID_PROVIDER: "INVALID_MIGRATION_PROVIDER",
   MIGRATION_FAILED: "MIGRATION_FAILED",
@@ -43,15 +44,36 @@ function isPlainObject(value) {
 
   const prototype = Object.getPrototypeOf(value);
 
-  return prototype === Object.prototype || prototype === null;
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
 }
 
-function normalizeVersion(value, fieldName = "version") {
+function createError(code, message, cause) {
+  const error = new Error(`${code}: ${message}`);
+
+  error.name = "MigrationManagerError";
+  error.code = code;
+
+  if (cause !== undefined) {
+    error.cause = cause;
+  }
+
+  return error;
+}
+
+function normalizeVersion(
+  value,
+  fieldName = "version",
+  errorCode = MIGRATION_MANAGER_ERRORS.INVALID_VERSION
+) {
   if (
     !Number.isSafeInteger(value) ||
     value < 0
   ) {
-    throw new TypeError(
+    throw createError(
+      errorCode,
       `${fieldName} must be a non-negative safe integer.`
     );
   }
@@ -68,31 +90,34 @@ function cloneRecord(record) {
   });
 }
 
-function createError(code, message, cause) {
-  const error = new Error(message);
-
-  error.code = code;
-
-  if (cause !== undefined) {
-    error.cause = cause;
-  }
-
-  return error;
-}
-
 export function createMigrationManager(options = {}) {
   if (!isPlainObject(options)) {
-    throw new TypeError(
-      MIGRATION_MANAGER_ERRORS.INVALID_CONFIG
+    throw createError(
+      MIGRATION_MANAGER_ERRORS.INVALID_CONFIG,
+      "Migration Manager options must be a plain object."
+    );
+  }
+
+  if (
+    options.config !== undefined &&
+    !isPlainObject(options.config)
+  ) {
+    throw createError(
+      MIGRATION_MANAGER_ERRORS.INVALID_CONFIG,
+      "Migration Manager configuration must be a plain object."
     );
   }
 
   const config = {
     ...DEFAULT_CONFIG,
-    ...(isPlainObject(options.config) ? options.config : {}),
+    ...(options.config || {}),
   };
 
-  normalizeVersion(config.initialVersion, "initialVersion");
+  normalizeVersion(
+    config.initialVersion,
+    "initialVersion",
+    MIGRATION_MANAGER_ERRORS.INVALID_CONFIG
+  );
 
   if (
     !Number.isSafeInteger(config.maxMigrations) ||
@@ -100,22 +125,28 @@ export function createMigrationManager(options = {}) {
     !Number.isSafeInteger(config.maxHistoryEntries) ||
     config.maxHistoryEntries < 1
   ) {
-    throw new TypeError(
-      MIGRATION_MANAGER_ERRORS.INVALID_CONFIG
+    throw createError(
+      MIGRATION_MANAGER_ERRORS.INVALID_CONFIG,
+      "Migration Manager limits must be positive safe integers."
     );
   }
 
-  const provider = options.provider || null;
+  const provider = options.provider ?? null;
 
   if (
     provider !== null &&
     (
-      typeof provider !== "object" ||
-      typeof provider.apply !== "function"
+      !isPlainObject(provider) ||
+      typeof provider.apply !== "function" ||
+      (
+        provider.rollback !== undefined &&
+        typeof provider.rollback !== "function"
+      )
     )
   ) {
-    throw new TypeError(
-      MIGRATION_MANAGER_ERRORS.INVALID_PROVIDER
+    throw createError(
+      MIGRATION_MANAGER_ERRORS.INVALID_PROVIDER,
+      "Provider must expose an apply function and an optional rollback function."
     );
   }
 
@@ -265,9 +296,7 @@ export function createMigrationManager(options = {}) {
   function get(id) {
     assertOpen();
 
-    const migration = migrations.get(id);
-
-    return migration || null;
+    return migrations.get(id) || null;
   }
 
   function list() {
@@ -294,11 +323,13 @@ export function createMigrationManager(options = {}) {
     }
 
     const ordered = [...migrations.values()].sort(
-      (a, b) => a.fromVersion - b.fromVersion
+      (a, b) =>
+        a.fromVersion - b.fromVersion ||
+        a.toVersion - b.toVersion
     );
 
     let plannedVersion = currentVersion;
-    const plan = [];
+    const migrationPlan = [];
 
     while (plannedVersion < target) {
       const next = ordered.find(
@@ -314,7 +345,7 @@ export function createMigrationManager(options = {}) {
         );
       }
 
-      plan.push(next);
+      migrationPlan.push(next);
       plannedVersion = next.toVersion;
     }
 
@@ -325,19 +356,21 @@ export function createMigrationManager(options = {}) {
       );
     }
 
-    return Object.freeze([...plan]);
+    return Object.freeze([...migrationPlan]);
   }
 
   function plan(targetVersion) {
     assertOpen();
 
+    const target = normalizeVersion(
+      targetVersion,
+      "targetVersion"
+    );
+
     return Object.freeze({
       fromVersion: currentVersion,
-      targetVersion: normalizeVersion(
-        targetVersion,
-        "targetVersion"
-      ),
-      migrations: buildPlan(targetVersion),
+      targetVersion: target,
+      migrations: buildPlan(target),
     });
   }
 
@@ -359,7 +392,7 @@ export function createMigrationManager(options = {}) {
         success: true,
         fromVersion: currentVersion,
         currentVersion,
-        executed: [],
+        executed: Object.freeze([]),
       });
     }
 
@@ -416,7 +449,10 @@ export function createMigrationManager(options = {}) {
     assertOpen();
     assertIdle();
 
-    if (!provider || typeof provider.rollback !== "function") {
+    if (
+      !provider ||
+      typeof provider.rollback !== "function"
+    ) {
       throw createError(
         MIGRATION_MANAGER_ERRORS.ROLLBACK_UNSUPPORTED,
         "The configured provider does not support rollback."
@@ -436,7 +472,11 @@ export function createMigrationManager(options = {}) {
     }
 
     const applied = history
-      .filter((entry) => entry.action === "apply" && entry.status === "success")
+      .filter(
+        (entry) =>
+          entry.action === "apply" &&
+          entry.status === "success"
+      )
       .map((entry) => entry.migrationId);
 
     const candidates = [...migrations.values()]
@@ -446,7 +486,9 @@ export function createMigrationManager(options = {}) {
           migration.toVersion <= currentVersion &&
           migration.fromVersion >= target
       )
-      .sort((a, b) => b.fromVersion - a.fromVersion);
+      .sort(
+        (a, b) => b.fromVersion - a.fromVersion
+      );
 
     let rollbackVersion = currentVersion;
     const rollbackPlan = [];
@@ -535,7 +577,8 @@ export function createMigrationManager(options = {}) {
       operationInProgress,
       providerAvailable: Boolean(provider),
       rollbackSupported: Boolean(
-        provider && typeof provider.rollback === "function"
+        provider &&
+        typeof provider.rollback === "function"
       ),
       closed,
     });
