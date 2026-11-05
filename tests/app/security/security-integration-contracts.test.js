@@ -11,7 +11,7 @@ import {
   validateSecurityIntegrationRequest,
   createSecurityIntegrationResponse,
   createSecurityIntegrationError,
-} from "../../apps/app/security/integration/security-integration-contracts.js";
+} from "../../../apps/app/security/integration/security-integration-contracts.js";
 
 describe("Security Integration Contracts", () => {
   it("ka versionin e pritshëm", () => {
@@ -49,14 +49,12 @@ describe("Security Integration Contracts", () => {
     expect(config.requireAudit).toBe(false);
   });
 
-  it.each([
-    null,
-    [],
-    "invalid",
-  ])("refuzon konfigurim jo-objekt: %s", (config) => {
-    expect(() => validateSecurityIntegrationConfig(config))
-      .toThrow();
-  });
+  it.each([null, [], "invalid"])(
+    "refuzon konfigurim jo-objekt: %s",
+    (config) => {
+      expect(() => validateSecurityIntegrationConfig(config)).toThrow();
+    },
+  );
 
   it("refuzon maxHistory të pavlefshëm", () => {
     expect(() =>
