@@ -8,6 +8,10 @@ import {
   createDatabaseDesigner
 } from "../../apps/app/database/database-designer.js";
 
+// --------------------------------------------------
+// Test helpers
+// --------------------------------------------------
+
 function createValidSchema() {
   return {
     tables: [
@@ -26,16 +30,39 @@ function createProvider(overrides = {}) {
   return {
     design: vi.fn(async () => ({
       schema: createValidSchema(),
-      indexes: [{ table: "users", columns: ["email"] }],
-      migrations: [{ version: "001", name: "create_users" }],
+      indexes: [
+        { table: "users", columns: ["email"] }
+      ],
+      migrations: [
+        { version: "001", name: "create_users" }
+      ],
       ...overrides
     }))
   };
 }
 
+async function runDesign(options = {}, request = {}) {
+  const designer = createDatabaseDesigner(options);
+
+  return designer.design({
+    prompt: "Create database",
+    ...request
+  });
+}
+
+// --------------------------------------------------
+// Main test suite
+// --------------------------------------------------
+
 describe("XSUS App Database Designer", () => {
+
+  // ------------------------------------------------
+  // 1. Exports and initialization
+  // ------------------------------------------------
+
   describe("exports and initialization", () => {
-    it("exposes the expected version", () => {
+
+    it("exposes the correct version", () => {
       expect(APP_DATABASE_DESIGNER_VERSION).toBe("1.0.0");
     });
 
@@ -65,12 +92,12 @@ describe("XSUS App Database Designer", () => {
       );
     });
 
-    it("freezes exported configuration arrays", () => {
+    it("freezes exported arrays", () => {
       expect(Object.isFrozen(APP_DATABASE_CAPABILITIES)).toBe(true);
       expect(Object.isFrozen(APP_DATABASE_ENGINES)).toBe(true);
     });
 
-    it("creates a designer instance", () => {
+    it("creates a valid designer instance", () => {
       const designer = createDatabaseDesigner();
 
       expect(designer.name).toBe("XSUS App Database Designer");
@@ -78,56 +105,46 @@ describe("XSUS App Database Designer", () => {
       expect(typeof designer.design).toBe("function");
       expect(Object.isFrozen(designer)).toBe(true);
     });
+
   });
 
-  describe("configuration validation", () => {
-    it("uses the default PostgreSQL engine", async () => {
-      const provider = createProvider();
-      const designer = createDatabaseDesigner({ provider });
+  // ------------------------------------------------
+  // 2. Configuration validation
+  // ------------------------------------------------
 
-      const result = await designer.design({
-        prompt: "Create a user database"
+  describe("configuration validation", () => {
+
+    it("uses PostgreSQL as the default engine", async () => {
+      const result = await runDesign({
+        provider: createProvider()
       });
 
       expect(result.success).toBe(true);
       expect(result.data.engine).toBe("postgresql");
     });
 
-    it("uses a custom valid default engine", async () => {
-      const provider = createProvider();
-      const designer = createDatabaseDesigner({
+    it("supports a custom default engine", async () => {
+      const result = await runDesign({
         config: { defaultEngine: "mysql" },
-        provider
-      });
-
-      const result = await designer.design({
-        prompt: "Create a user database"
+        provider: createProvider()
       });
 
       expect(result.success).toBe(true);
       expect(result.data.engine).toBe("mysql");
     });
 
-    it("rejects an invalid maxPromptLength", async () => {
-      const designer = createDatabaseDesigner({
+    it("rejects invalid maxPromptLength", async () => {
+      const result = await runDesign({
         config: { maxPromptLength: 0 }
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
       });
 
       expect(result.success).toBe(false);
       expect(result.error.code).toBe("INVALID_CONFIG");
     });
 
-    it("rejects an invalid maxTables", async () => {
-      const designer = createDatabaseDesigner({
+    it("rejects invalid maxTables", async () => {
+      const result = await runDesign({
         config: { maxTables: -1 }
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
       });
 
       expect(result.success).toBe(false);
@@ -135,20 +152,22 @@ describe("XSUS App Database Designer", () => {
     });
 
     it("rejects an unsupported default engine", async () => {
-      const designer = createDatabaseDesigner({
+      const result = await runDesign({
         config: { defaultEngine: "oracle" }
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
       });
 
       expect(result.success).toBe(false);
       expect(result.error.code).toBe("INVALID_CONFIG");
     });
+
   });
 
+  // ------------------------------------------------
+  // 3. Request validation
+  // ------------------------------------------------
+
   describe("request validation", () => {
+
     it("rejects a null request", async () => {
       const designer = createDatabaseDesigner({
         provider: createProvider()
@@ -172,23 +191,21 @@ describe("XSUS App Database Designer", () => {
     });
 
     it("rejects an empty prompt", async () => {
-      const designer = createDatabaseDesigner({
+      const result = await runDesign({
         provider: createProvider()
+      }, {
+        prompt: "   "
       });
-
-      const result = await designer.design({ prompt: "   " });
 
       expect(result.success).toBe(false);
       expect(result.error.code).toBe("INVALID_REQUEST");
     });
 
     it("rejects a prompt exceeding the configured limit", async () => {
-      const designer = createDatabaseDesigner({
+      const result = await runDesign({
         config: { maxPromptLength: 5 },
         provider: createProvider()
-      });
-
-      const result = await designer.design({
+      }, {
         prompt: "123456"
       });
 
@@ -196,13 +213,10 @@ describe("XSUS App Database Designer", () => {
       expect(result.error.code).toBe("PROMPT_TOO_LONG");
     });
 
-    it("rejects an unsupported database engine", async () => {
-      const designer = createDatabaseDesigner({
+    it("rejects unsupported database engines", async () => {
+      const result = await runDesign({
         provider: createProvider()
-      });
-
-      const result = await designer.design({
-        prompt: "Create database",
+      }, {
         engine: "oracle"
       });
 
@@ -210,12 +224,10 @@ describe("XSUS App Database Designer", () => {
       expect(result.error.code).toBe("UNSUPPORTED_DATABASE");
     });
 
-    it("normalizes the requested engine", async () => {
-      const provider = createProvider();
-      const designer = createDatabaseDesigner({ provider });
-
-      const result = await designer.design({
-        prompt: "Create database",
+    it("normalizes database engine names", async () => {
+      const result = await runDesign({
+        provider: createProvider()
+      }, {
         engine: "MYSQL"
       });
 
@@ -223,11 +235,10 @@ describe("XSUS App Database Designer", () => {
       expect(result.data.engine).toBe("mysql");
     });
 
-    it("trims the prompt and project type", async () => {
+    it("trims prompt and project type", async () => {
       const provider = createProvider();
-      const designer = createDatabaseDesigner({ provider });
 
-      await designer.design({
+      await runDesign({ provider }, {
         prompt: "  Create database  ",
         projectType: "  ecommerce  "
       });
@@ -242,10 +253,8 @@ describe("XSUS App Database Designer", () => {
 
     it("normalizes requirements", async () => {
       const provider = createProvider();
-      const designer = createDatabaseDesigner({ provider });
 
-      await designer.design({
-        prompt: "Create database",
+      await runDesign({ provider }, {
         requirements: [
           " authentication ",
           "",
@@ -263,10 +272,8 @@ describe("XSUS App Database Designer", () => {
 
     it("supports disabling indexes and migrations", async () => {
       const provider = createProvider();
-      const designer = createDatabaseDesigner({ provider });
 
-      await designer.design({
-        prompt: "Create database",
+      await runDesign({ provider }, {
         includeIndexes: false,
         includeMigrations: false
       });
@@ -278,30 +285,34 @@ describe("XSUS App Database Designer", () => {
         })
       );
     });
+
   });
 
-  describe("provider handling", () => {
-    it("returns an error when the provider is unavailable", async () => {
-      const designer = createDatabaseDesigner();
+  // ------------------------------------------------
+  // 4. Provider handling
+  // ------------------------------------------------
 
-      const result = await designer.design({
-        prompt: "Create database"
-      });
+  describe("provider handling", () => {
+
+    it("reports an unavailable provider", async () => {
+      const result = await runDesign();
 
       expect(result.success).toBe(false);
-      expect(result.error.code).toBe("DATABASE_PROVIDER_UNAVAILABLE");
+      expect(result.error.code).toBe(
+        "DATABASE_PROVIDER_UNAVAILABLE"
+      );
     });
 
     it("calls the provider with normalized input", async () => {
       const provider = createProvider();
-      const designer = createDatabaseDesigner({ provider });
 
-      await designer.design({
+      await runDesign({ provider }, {
         prompt: " Create database ",
         engine: "MYSQL"
       });
 
       expect(provider.design).toHaveBeenCalledTimes(1);
+
       expect(provider.design).toHaveBeenCalledWith(
         expect.objectContaining({
           prompt: "Create database",
@@ -315,14 +326,12 @@ describe("XSUS App Database Designer", () => {
         design: vi.fn(async () => null)
       };
 
-      const designer = createDatabaseDesigner({ provider });
-
-      const result = await designer.design({
-        prompt: "Create database"
-      });
+      const result = await runDesign({ provider });
 
       expect(result.success).toBe(false);
-      expect(result.error.code).toBe("INVALID_PROVIDER_RESPONSE");
+      expect(result.error.code).toBe(
+        "INVALID_PROVIDER_RESPONSE"
+      );
     });
 
     it("handles provider exceptions", async () => {
@@ -332,25 +341,25 @@ describe("XSUS App Database Designer", () => {
         })
       };
 
-      const designer = createDatabaseDesigner({ provider });
-
-      const result = await designer.design({
-        prompt: "Create database"
-      });
+      const result = await runDesign({ provider });
 
       expect(result.success).toBe(false);
-      expect(result.error.code).toBe("DATABASE_DESIGN_FAILED");
+      expect(result.error.code).toBe(
+        "DATABASE_DESIGN_FAILED"
+      );
     });
+
   });
 
-  describe("schema validation", () => {
-    it("accepts a valid schema", async () => {
-      const designer = createDatabaseDesigner({
-        provider: createProvider()
-      });
+  // ------------------------------------------------
+  // 5. Schema validation
+  // ------------------------------------------------
 
-      const result = await designer.design({
-        prompt: "Create database"
+  describe("schema validation", () => {
+
+    it("accepts a valid schema", async () => {
+      const result = await runDesign({
+        provider: createProvider()
       });
 
       expect(result.success).toBe(true);
@@ -358,35 +367,29 @@ describe("XSUS App Database Designer", () => {
     });
 
     it("rejects a non-object schema", async () => {
-      const designer = createDatabaseDesigner({
-        provider: createProvider({ schema: null })
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
+      const result = await runDesign({
+        provider: createProvider({
+          schema: null
+        })
       });
 
       expect(result.success).toBe(false);
       expect(result.error.code).toBe("INVALID_SCHEMA");
     });
 
-    it("rejects a schema without a tables array", async () => {
-      const designer = createDatabaseDesigner({
+    it("rejects a schema without tables", async () => {
+      const result = await runDesign({
         provider: createProvider({
           schema: { name: "invalid" }
         })
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
       });
 
       expect(result.success).toBe(false);
       expect(result.error.code).toBe("INVALID_TABLES");
     });
 
-    it("rejects a schema exceeding the table limit", async () => {
-      const designer = createDatabaseDesigner({
+    it("rejects schemas exceeding the table limit", async () => {
+      const result = await runDesign({
         config: { maxTables: 1 },
         provider: createProvider({
           schema: {
@@ -394,35 +397,31 @@ describe("XSUS App Database Designer", () => {
               { name: "users", columns: [] },
               { name: "orders", columns: [] }
             ]
-          })
+          }
         })
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
       });
 
       expect(result.success).toBe(false);
       expect(result.error.code).toBe("TABLE_LIMIT_EXCEEDED");
     });
 
-    it("rejects an invalid table", async () => {
-      const designer = createDatabaseDesigner({
+    it("rejects invalid tables", async () => {
+      const result = await runDesign({
         provider: createProvider({
-          schema: { tables: [{ name: "", columns: [] }] }
+          schema: {
+            tables: [
+              { name: "", columns: [] }
+            ]
+          }
         })
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
       });
 
       expect(result.success).toBe(false);
       expect(result.error.code).toBe("INVALID_TABLE");
     });
 
-    it("rejects duplicate table names case-insensitively", async () => {
-      const designer = createDatabaseDesigner({
+    it("rejects duplicate table names", async () => {
+      const result = await runDesign({
         provider: createProvider({
           schema: {
             tables: [
@@ -433,38 +432,32 @@ describe("XSUS App Database Designer", () => {
         })
       });
 
-      const result = await designer.design({
-        prompt: "Create database"
-      });
-
       expect(result.success).toBe(false);
       expect(result.error.code).toBe("DUPLICATE_TABLE");
     });
 
     it("rejects invalid columns", async () => {
-      const designer = createDatabaseDesigner({
+      const result = await runDesign({
         provider: createProvider({
           schema: {
             tables: [
               {
                 name: "users",
-                columns: [{ name: "id", type: "" }]
+                columns: [
+                  { name: "id", type: "" }
+                ]
               }
             ]
           }
         })
       });
 
-      const result = await designer.design({
-        prompt: "Create database"
-      });
-
       expect(result.success).toBe(false);
       expect(result.error.code).toBe("INVALID_COLUMN");
     });
 
-    it("rejects duplicate column names case-insensitively", async () => {
-      const designer = createDatabaseDesigner({
+    it("rejects duplicate column names", async () => {
+      const result = await runDesign({
         provider: createProvider({
           schema: {
             tables: [
@@ -480,23 +473,21 @@ describe("XSUS App Database Designer", () => {
         })
       });
 
-      const result = await designer.design({
-        prompt: "Create database"
-      });
-
       expect(result.success).toBe(false);
       expect(result.error.code).toBe("DUPLICATE_COLUMN");
     });
+
   });
 
-  describe("indexes and migrations", () => {
-    it("returns provider indexes", async () => {
-      const designer = createDatabaseDesigner({
-        provider: createProvider()
-      });
+  // ------------------------------------------------
+  // 6. Indexes and migrations
+  // ------------------------------------------------
 
-      const result = await designer.design({
-        prompt: "Create database"
+  describe("indexes and migrations", () => {
+
+    it("returns provider indexes", async () => {
+      const result = await runDesign({
+        provider: createProvider()
       });
 
       expect(result.success).toBe(true);
@@ -506,12 +497,8 @@ describe("XSUS App Database Designer", () => {
     });
 
     it("returns provider migrations", async () => {
-      const designer = createDatabaseDesigner({
+      const result = await runDesign({
         provider: createProvider()
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
       });
 
       expect(result.success).toBe(true);
@@ -520,26 +507,22 @@ describe("XSUS App Database Designer", () => {
       ]);
     });
 
-    it("uses empty arrays when indexes are omitted", async () => {
-      const designer = createDatabaseDesigner({
-        provider: createProvider({ indexes: undefined })
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
+    it("uses empty indexes when omitted", async () => {
+      const result = await runDesign({
+        provider: createProvider({
+          indexes: undefined
+        })
       });
 
       expect(result.success).toBe(true);
       expect(result.data.indexes).toEqual([]);
     });
 
-    it("uses empty arrays when migrations are omitted", async () => {
-      const designer = createDatabaseDesigner({
-        provider: createProvider({ migrations: undefined })
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
+    it("uses empty migrations when omitted", async () => {
+      const result = await runDesign({
+        provider: createProvider({
+          migrations: undefined
+        })
       });
 
       expect(result.success).toBe(true);
@@ -547,43 +530,46 @@ describe("XSUS App Database Designer", () => {
     });
 
     it("rejects invalid indexes", async () => {
-      const designer = createDatabaseDesigner({
-        provider: createProvider({ indexes: {} })
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
+      const result = await runDesign({
+        provider: createProvider({
+          indexes: {}
+        })
       });
 
       expect(result.success).toBe(false);
-      expect(result.error.code).toBe("INVALID_PROVIDER_RESPONSE");
+      expect(result.error.code).toBe(
+        "INVALID_PROVIDER_RESPONSE"
+      );
     });
 
     it("rejects invalid migrations", async () => {
-      const designer = createDatabaseDesigner({
-        provider: createProvider({ migrations: "invalid" })
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
+      const result = await runDesign({
+        provider: createProvider({
+          migrations: "invalid"
+        })
       });
 
       expect(result.success).toBe(false);
-      expect(result.error.code).toBe("INVALID_PROVIDER_RESPONSE");
+      expect(result.error.code).toBe(
+        "INVALID_PROVIDER_RESPONSE"
+      );
     });
+
   });
 
+  // ------------------------------------------------
+  // 7. Metadata and immutability
+  // ------------------------------------------------
+
   describe("metadata and immutability", () => {
+
     it("returns correct metadata", async () => {
-      const designer = createDatabaseDesigner({
+      const result = await runDesign({
         provider: createProvider()
       });
 
-      const result = await designer.design({
-        prompt: "Create database"
-      });
-
       expect(result.success).toBe(true);
+
       expect(result.metadata).toEqual({
         designerVersion: "1.0.0",
         tableCount: 1
@@ -591,21 +577,29 @@ describe("XSUS App Database Designer", () => {
     });
 
     it("freezes the result and nested schema", async () => {
-      const designer = createDatabaseDesigner({
+      const result = await runDesign({
         provider: createProvider()
-      });
-
-      const result = await designer.design({
-        prompt: "Create database"
       });
 
       expect(Object.isFrozen(result)).toBe(true);
       expect(Object.isFrozen(result.data)).toBe(true);
       expect(Object.isFrozen(result.data.schema)).toBe(true);
       expect(Object.isFrozen(result.data.schema.tables)).toBe(true);
-      expect(Object.isFrozen(result.data.schema.tables[0])).toBe(true);
-      expect(Object.isFrozen(result.data.schema.tables[0].columns)).toBe(true);
-      expect(Object.isFrozen(result.data.schema.tables[0].columns[0])).toBe(true);
+
+      expect(
+        Object.isFrozen(result.data.schema.tables[0])
+      ).toBe(true);
+
+      expect(
+        Object.isFrozen(result.data.schema.tables[0].columns)
+      ).toBe(true);
+
+      expect(
+        Object.isFrozen(
+          result.data.schema.tables[0].columns[0]
+        )
+      ).toBe(true);
+
       expect(Object.isFrozen(result.data.indexes)).toBe(true);
       expect(Object.isFrozen(result.data.migrations)).toBe(true);
       expect(Object.isFrozen(result.metadata)).toBe(true);
@@ -614,15 +608,14 @@ describe("XSUS App Database Designer", () => {
     it("does not mutate the provider schema", async () => {
       const schema = createValidSchema();
       const provider = createProvider({ schema });
-      const designer = createDatabaseDesigner({ provider });
 
-      await designer.design({
-        prompt: "Create database"
-      });
+      await runDesign({ provider });
 
       expect(Object.isFrozen(schema)).toBe(false);
       expect(Object.isFrozen(schema.tables)).toBe(false);
       expect(Object.isFrozen(schema.tables[0])).toBe(false);
     });
+
   });
+
 });
