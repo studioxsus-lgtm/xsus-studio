@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   createHyperXsusCoreAdapter: vi.fn()
 }));
 
-vi.mock("../../../src/core/ai-core.js", () => ({
+vi.mock("../../src/core/ai-core.js", () => ({
   configureAICoreKnowledgeAdapter:
     mocks.configureAICoreKnowledgeAdapter
 }));
@@ -34,6 +34,7 @@ describe("XSUS App Intelligence Integration", () => {
         success: true,
         data: { answer: "AI response" }
       }),
+
       getCapabilities: vi.fn().mockReturnValue({
         operations: ["processRequest"]
       })
@@ -44,9 +45,11 @@ describe("XSUS App Intelligence Integration", () => {
         success: true,
         results: [{ id: "knowledge-001" }]
       }),
+
       getStatus: vi.fn().mockReturnValue({
         connected: true
       }),
+
       close: vi.fn()
     };
 
@@ -81,6 +84,10 @@ describe("XSUS App Intelligence Integration", () => {
 
     expect(
       mocks.configureAICoreKnowledgeAdapter
+    ).toHaveBeenCalledTimes(1);
+
+    expect(
+      mocks.configureAICoreKnowledgeAdapter
     ).toHaveBeenCalledWith(hyperCore);
   });
 
@@ -108,7 +115,7 @@ describe("XSUS App Intelligence Integration", () => {
 
     expect(hyperCore.retrieve).toHaveBeenCalledWith(
       "application architecture",
-      undefined
+      {}
     );
 
     expect(result.success).toBe(true);
@@ -141,6 +148,7 @@ describe("XSUS App Intelligence Integration", () => {
 
     expect(status).toBeDefined();
     expect(typeof status).toBe("object");
+
     expect(aiCore.getCapabilities).toHaveBeenCalled();
     expect(hyperCore.getStatus).toHaveBeenCalled();
   });
@@ -158,7 +166,7 @@ describe("XSUS App Intelligence Integration", () => {
     expect(hyperCore.close).toHaveBeenCalledTimes(1);
   });
 
-  it("nuk krijon dy pronarë aktivë të integrimit", () => {
+  it("nuk lejon dy pronarë aktivë të integrimit", () => {
     intelligenceModule.createAppIntelligence();
 
     expect(() =>
@@ -166,7 +174,7 @@ describe("XSUS App Intelligence Integration", () => {
     ).toThrow();
   });
 
-  it("lejon krijimin e një integrimi të ri pas mbylljes", async () => {
+  it("lejon krijimin e integrimit të ri pas mbylljes", async () => {
     const first =
       intelligenceModule.createAppIntelligence();
 
@@ -179,6 +187,10 @@ describe("XSUS App Intelligence Integration", () => {
 
     expect(
       mocks.createXsusAICoreAdapter
+    ).toHaveBeenCalledTimes(2);
+
+    expect(
+      mocks.createHyperXsusCoreAdapter
     ).toHaveBeenCalledTimes(2);
   });
 });
