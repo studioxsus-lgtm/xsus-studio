@@ -159,7 +159,7 @@ describe("Security Integration Engine — Audit Integration", () => {
     }
   });
 
-  it("nuk lejon qasjen kur Audit Engine dështon dhe requireAudit është aktiv", async () => {
+  it("refuzon kërkesën me AUDIT_UNAVAILABLE kur Audit Engine dështon dhe requireAudit është aktiv", async () => {
     const { dependencies } = createDependencies({
       authorizationResult: {
         allowed: true,
@@ -173,11 +173,11 @@ describe("Security Integration Engine — Audit Integration", () => {
     });
 
     try {
-      const result = await engine.authorize(
-        createAuthorizeRequest()
-      );
-
-      expect(result.allowed).toBe(false);
+      await expect(
+        engine.authorize(createAuthorizeRequest())
+      ).rejects.toMatchObject({
+        code: "AUDIT_UNAVAILABLE",
+      });
     } finally {
       await engine.close();
     }
