@@ -5,9 +5,11 @@ on:
   push:
     branches:
       - feature/xsus-ai-core
+
   pull_request:
     branches:
       - feature/xsus-ai-core
+
   workflow_dispatch:
 
 permissions:
@@ -19,7 +21,7 @@ concurrency:
 
 jobs:
   test:
-    name: Run tests and coverage
+    name: Run tests, build and coverage
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -81,6 +83,9 @@ jobs:
 
       - name: Run all tests
         run: npm test
+
+      - name: Build XSUS Studio
+        run: npm run build
 
       - name: Run test coverage
         run: npm run test:coverage
