@@ -1,0 +1,106 @@
+
+/* =========================================
+   XSUS APP FRONTIER
+   Responsive System — v1.0.0
+   ========================================= */
+
+/* Large screens */
+
+@media (min-width: 1600px) {
+  .xsus-content {
+    padding: 40px 48px;
+  }
+
+  .xsus-grid {
+    gap: 24px;
+  }
+}
+
+/* Tablets and compact desktops */
+
+@media (max-width: 1100px) {
+  .xsus-sidebar {
+    padding: 20px 12px;
+  }
+
+  .xsus-topbar {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+}
+
+/* Tablets */
+
+@media (max-width: 760px) {
+  .xsus-content {
+    padding: 20px 16px;
+  }
+
+  .xsus-page-header {
+    margin-bottom: 24px;
+  }
+
+  .xsus-card {
+    padding: 18px;
+    border-radius: var(--xsus-radius-md);
+  }
+
+  .xsus-topbar-actions {
+    gap: 8px;
+  }
+
+  .xsus-button {
+    min-height: 40px;
+    padding: 0 13px;
+  }
+}
+
+/* Mobile phones */
+
+@media (max-width: 480px) {
+  .xsus-topbar {
+    min-height: 58px;
+    padding: 10px 12px;
+  }
+
+  .xsus-content {
+    padding: 16px 12px;
+  }
+
+  .xsus-page-title {
+    font-size: 25px;
+  }
+
+  .xsus-page-description {
+    font-size: 13px;
+  }
+
+  .xsus-card {
+    padding: 16px;
+  }
+
+  .xsus-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .xsus-button {
+    font-size: 12px;
+  }
+
+  .xsus-metric-value {
+    font-size: 27px;
+  }
+}
+
+/* Touch devices */
+
+@media (hover: none) {
+  .xsus-card:hover {
+    transform: none;
+  }
+
+  .xsus-button:hover {
+    filter: none;
+  }
+}
