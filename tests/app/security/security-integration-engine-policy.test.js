@@ -252,18 +252,18 @@ describe("Security Integration Engine — Policy Integration", () => {
     await engine.close();
   });
 
-  it("nuk e konsideron mungesën e vendimit si leje", async () => {
+  it("refuzon përgjigjen e pavlefshme nga Authorization Manager", async () => {
     const { dependencies } = createDependencies({
       authorizationResult: {},
     });
 
     const engine = createSecurityIntegrationEngine(dependencies);
 
-    const result = await engine.authorize(
-      createAuthorizeRequest()
-    );
-
-    expect(result.allowed).toBe(false);
+    await expect(
+      engine.authorize(createAuthorizeRequest())
+    ).rejects.toMatchObject({
+      code: "PROVIDER_ERROR",
+    });
 
     await engine.close();
   });
