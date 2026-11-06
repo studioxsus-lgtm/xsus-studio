@@ -1,3 +1,4 @@
+
 // services/sports-service.js
 
 const FOOTBALL_API_BASE =
@@ -194,13 +195,29 @@ export function detectLanguage(query = "") {
   const text = normalize(query);
 
   const albanianWords = [
-    "ndeshje", "neser", "sot", "ekipi", "rezultati", 
-    "renditja", "lajme", "futboll", "kampionati", "kush fitoi", "sa me sa"
+    "ndeshje",
+    "neser",
+    "sot",
+    "ekipi",
+    "rezultati",
+    "renditja",
+    "lajme",
+    "futboll",
+    "kampionati",
+    "kush fitoi",
+    "sa me sa",
   ];
 
   const frenchWords = [
-    "match", "matches", "aujourd hui", "demain", 
-    "classement", "actualites", "football", "resultat", "prochain"
+    "match",
+    "matches",
+    "aujourd hui",
+    "demain",
+    "classement",
+    "actualites",
+    "football",
+    "resultat",
+    "prochain",
   ];
 
   if (albanianWords.some((word) => text.includes(normalize(word)))) {
@@ -221,19 +238,33 @@ function getTranslations(language = "en") {
 function detectIntent(query = "") {
   const text = normalize(query);
 
-  if (/\b(news|lajme|actualites|transfer|transfers|transferime)\b/.test(text)) {
+  if (
+    /\b(news|lajme|actualites|transfer|transfers|transferime)\b/.test(text)
+  ) {
     return "news";
   }
 
-  if (/\b(standings|table|classification|classement|renditja|tabela|points table)\b/.test(text)) {
+  if (
+    /\b(standings|table|classification|classement|renditja|tabela|points table)\b/.test(
+      text
+    )
+  ) {
     return "standings";
   }
 
-  if (/\b(upcoming|fixtures|schedule|next match|next matches|prochains|prochain match|ndeshjet e ardhshme|ndeshja e ardhshme|neser|tomorrow|demain)\b/.test(text)) {
+  if (
+    /\b(upcoming|fixtures|schedule|next match|next matches|prochains|prochain match|ndeshjet e ardhshme|ndeshja e ardhshme|neser|tomorrow|demain)\b/.test(
+      text
+    )
+  ) {
     return "upcoming";
   }
 
-  if (/\b(live|livescore|live score|scores|score en direct|en direct|rezultatet live|rezultati live|rezultatet|rezultati|sa me sa|ndeshje tani)\b/.test(text)) {
+  if (
+    /\b(live|livescore|live score|scores|score en direct|en direct|rezultatet live|rezultati live|rezultatet|rezultati|sa me sa|ndeshje tani)\b/.test(
+      text
+    )
+  ) {
     return "live";
   }
 
@@ -242,29 +273,40 @@ function detectIntent(query = "") {
 
 function findCompetition(query = "") {
   const text = normalize(query);
-  return COMPETITIONS.find((competition) =>
-    competition.names.some((name) => {
-      const normalizedName = normalize(name);
-      return text === normalizedName || text.includes(normalizedName);
-    })
-  ) || null;
+
+  return (
+    COMPETITIONS.find((competition) =>
+      competition.names.some((name) => {
+        const normalizedName = normalize(name);
+        return text === normalizedName || text.includes(normalizedName);
+      })
+    ) || null
+  );
 }
 
 function findTeam(query = "") {
   const text = normalize(query);
+
   for (const [team, aliases] of Object.entries(TEAM_ALIASES)) {
     const names = [team, ...aliases];
-    if (names.some((name) => {
-      const normalizedName = normalize(name);
-      return text === normalizedName || text.includes(normalizedName);
-    })) {
+
+    if (
+      names.some((name) => {
+        const normalizedName = normalize(name);
+        return text === normalizedName || text.includes(normalizedName);
+      })
+    ) {
       return team;
     }
   }
+
   return null;
 }
 
-async function requestJson(url, { headers = {}, timeout = REQUEST_TIMEOUT_MS } = {}) {
+async function requestJson(
+  url,
+  { headers = {}, timeout = REQUEST_TIMEOUT_MS } = {}
+) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
@@ -289,9 +331,13 @@ async function requestJson(url, { headers = {}, timeout = REQUEST_TIMEOUT_MS } =
 
 async function footballRequest(path) {
   if (!FOOTBALL_API_TOKEN) {
-    throw new Error("FOOTBALL_DATA_TOKEN is missing from environment variables.");
+    throw new Error(
+      "FOOTBALL_DATA_TOKEN is missing from environment variables."
+    );
   }
+
   const url = `${FOOTBALL_API_BASE}${path}`;
+
   return requestJson(url, {
     headers: {
       "X-Auth-Token": FOOTBALL_API_TOKEN,
@@ -302,10 +348,13 @@ async function footballRequest(path) {
 
 function formatKickoff(dateValue, language = "en") {
   if (!dateValue) return "—";
+
   const date = new Date(dateValue);
   if (Number.isNaN(date.getTime())) return "—";
 
-  const locale = language === "sq" ? "sq-AL" : language === "fr" ? "fr-FR" : "en-GB";
+  const locale =
+    language === "sq" ? "sq-AL" : language === "fr" ? "fr-FR" : "en-GB";
+
   return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
@@ -315,8 +364,10 @@ function formatKickoff(dateValue, language = "en") {
 
 function getMatchStatus(match, t) {
   const status = match.status;
+
   if (["IN_PLAY", "PAUSED", "LIVE"].includes(status)) return t.liveLabel;
   if (status === "FINISHED") return t.finished;
+
   return t.scheduled;
 }
 
@@ -327,7 +378,12 @@ function formatMatch(match, language = "en") {
   const homeScore = match.score?.fullTime?.home;
   const awayScore = match.score?.fullTime?.away;
 
-  const hasScore = homeScore !== null && homeScore !== undefined && awayScore !== null && awayScore !== undefined;
+  const hasScore =
+    homeScore !== null &&
+    homeScore !== undefined &&
+    awayScore !== null &&
+    awayScore !== undefined;
+
   const score = hasScore ? `${homeScore} - ${awayScore}` : t.vs;
   const status = getMatchStatus(match, t);
   const kickoff = formatKickoff(match.utcDate, language);
@@ -337,9 +393,14 @@ function formatMatch(match, language = "en") {
 
 function deduplicateMatches(matches = []) {
   const seen = new Set();
+
   return matches.filter((match) => {
-    const key = match.id ?? [match.utcDate, match.homeTeam?.name, match.awayTeam?.name].join("-");
+    const key =
+      match.id ??
+      [match.utcDate, match.homeTeam?.name, match.awayTeam?.name].join("-");
+
     if (seen.has(key)) return false;
+
     seen.add(key);
     return true;
   });
@@ -350,25 +411,37 @@ function isLiveMatch(match) {
 }
 
 function isUpcomingMatch(match) {
-  return ["SCHEDULED", "TIMED"].includes(match.status) && new Date(match.utcDate).getTime() >= Date.now();
+  return (
+    ["SCHEDULED", "TIMED"].includes(match.status) &&
+    new Date(match.utcDate).getTime() >= Date.now()
+  );
 }
 
 function getDateRange(days = 7) {
   const now = new Date();
   const end = new Date(now);
+
   end.setUTCDate(end.getUTCDate() + days);
+
   return {
     dateFrom: now.toISOString().slice(0, 10),
     dateTo: end.toISOString().slice(0, 10),
   };
 }
 
-async function getMatches({ intent = "live", competition = null, team = null } = {}) {
+async function getMatches({
+  intent = "live",
+  competition = null,
+  team = null,
+} = {}) {
   let path;
+
   if (competition) {
     path = `/competitions/${encodeURIComponent(competition.code)}/matches`;
-    if (intent === "live") path += "?status=LIVE";
-    else if (intent === "upcoming") {
+
+    if (intent === "live") {
+      path += "?status=LIVE";
+    } else if (intent === "upcoming") {
       const { dateFrom, dateTo } = getDateRange(14);
       path += `?dateFrom=${dateFrom}&dateTo=${dateTo}`;
     }
@@ -382,17 +455,29 @@ async function getMatches({ intent = "live", competition = null, team = null } =
   const data = await footballRequest(path);
   let matches = Array.isArray(data.matches) ? data.matches : [];
 
-  if (intent === "live") matches = matches.filter(isLiveMatch);
-  else if (intent === "upcoming") matches = matches.filter(isUpcomingMatch);
+  if (intent === "live") {
+    matches = matches.filter(isLiveMatch);
+  } else if (intent === "upcoming") {
+    matches = matches.filter(isUpcomingMatch);
+  }
 
   if (team) {
     const normalizedTeam = normalize(team);
     const aliases = TEAM_ALIASES[team] || [];
+
     matches = matches.filter((match) => {
       const home = normalize(match.homeTeam?.name || "");
       const away = normalize(match.awayTeam?.name || "");
-      return home.includes(normalizedTeam) || away.includes(normalizedTeam) ||
-             aliases.some(a => home.includes(normalize(a)) || away.includes(normalize(a)));
+
+      return (
+        home.includes(normalizedTeam) ||
+        away.includes(normalizedTeam) ||
+        aliases.some(
+          (alias) =>
+            home.includes(normalize(alias)) ||
+            away.includes(normalize(alias))
+        )
+      );
     });
   }
 
@@ -400,14 +485,24 @@ async function getMatches({ intent = "live", competition = null, team = null } =
 }
 
 async function getStandings(competition) {
-  if (!competition) throw new Error("A competition is required for standings.");
-  const data = await footballRequest(`/competitions/${encodeURIComponent(competition.code)}/standings`);
-  const table = data.standings?.find((standing) => standing.type === "TOTAL")?.table;
+  if (!competition) {
+    throw new Error("A competition is required for standings.");
+  }
+
+  const data = await footballRequest(
+    `/competitions/${encodeURIComponent(competition.code)}/standings`
+  );
+
+  const table = data.standings?.find(
+    (standing) => standing.type === "TOTAL"
+  )?.table;
+
   return Array.isArray(table) ? table : [];
 }
 
 function formatStandings(table = [], language = "en") {
   const t = getTranslations(language);
+
   if (!table.length) return t.noStandings;
 
   const rows = table.slice(0, 20).map((entry) => {
@@ -419,7 +514,8 @@ function formatStandings(table = [], language = "en") {
     const drawn = entry.draw ?? 0;
     const lost = entry.lost ?? 0;
     const gd = entry.goalDifference ?? 0;
-    return `${position}. ${team} — ${points} ${t.points} | ${t.played}: ${played} | ${t.won}: ${won} | ${t.drawn}: ${drawn} | ${t.lost}: ${lost} | GD: ${gd}`;
+
+    return `${position}. ${team} — ${points} ${t.points} | ${t.played}: ${played} | ${t.won}: ${won} | ${t.drawn}: ${draw} | ${t.lost}: ${lost} | GD: ${gd}`;
   });
 
   return `${t.standings}\n\n${rows.join("\n")}`;
@@ -433,20 +529,35 @@ function buildNewsUrl(query, language = "en") {
   }[language] || { hl: "en-GB", gl: "GB", ceid: "GB:en" };
 
   const search = encodeURIComponent(query || "football");
+
   const rssUrl = `https://news.google.com/rss/search?q=${search}&hl=${config.hl}&gl=${config.gl}&ceid=${config.ceid}`;
+
   return `${RSS2JSON_BASE}?rss_url=${encodeURIComponent(rssUrl)}`;
 }
 
 async function getNews(query = "football", language = "en") {
   const t = getTranslations(language);
+
   try {
     const url = buildNewsUrl(query, language);
     const data = await requestJson(url);
-    if (data.status !== "ok" || !Array.isArray(data.items)) return t.noNews;
+
+    if (data.status !== "ok" || !Array.isArray(data.items)) {
+      return t.noNews;
+    }
+
     const items = data.items.slice(0, MAX_NEWS_ITEMS);
+
     if (!items.length) return t.noNews;
 
-    return `${t.news}\n\n${items.map((item, index) => `${index + 1}. ${item.title \vert{}\vert{} "Untitled"}${item.link ? `\n${item.link}` : ""}`).join("\n\n")}`;
+    return `${t.news}\n\n${items
+      .map(
+        (item, index) =>
+          `${index + 1}. ${item.title || "Untitled"}${
+            item.link ? `\n${item.link}` : ""
+          }`
+      )
+      .join("\n\n")}`;
   } catch {
     return t.noNews;
   }
@@ -454,10 +565,15 @@ async function getNews(query = "football", language = "en") {
 
 export async function checkSports(userQuery = "") {
   const query = String(userQuery || "").trim();
+
   if (!query) return null;
 
-  // Kontrollojmë nëse ka lidhje me sportin para se të kthejmë diçka tjetër
-  const isSports = /\b(sport|futboll|soccer|football|match|ndeshje|rezultat|renditja|standings|league|champions|premier|serie a|la liga|bundesliga)\b/i.test(query);
+  // Kontrollojmë nëse ka lidhje me sportin para se të kthejmë diçka tjetër.
+  const isSports =
+    /\b(sport|futboll|soccer|football|match|ndeshje|rezultat|renditja|standings|league|champions|premier|serie a|la liga|bundesliga)\b/i.test(
+      query
+    );
+
   if (!isSports) return null;
 
   const language = detectLanguage(query);
@@ -467,28 +583,43 @@ export async function checkSports(userQuery = "") {
   try {
     if (intent === "standings") {
       const competition = findCompetition(query);
+
       if (!competition) return t.unknownCompetition;
+
       const table = await getStandings(competition);
+
       return formatStandings(table, language);
     }
 
     const competition = findCompetition(query);
     const team = findTeam(query);
-    const matches = await getMatches({ intent, competition, team });
+
+    const matches = await getMatches({
+      intent,
+      competition,
+      team,
+    });
 
     if (intent === "live") {
       if (!matches.length) return t.noLive;
-      return `${t.live}\n\n${matches.map(m => formatMatch(m, language)).join("\n")}`;
+
+      return `${t.live}\n\n${matches
+        .map((match) => formatMatch(match, language))
+        .join("\n")}`;
     }
 
     if (intent === "upcoming") {
       if (!matches.length) return t.noUpcoming;
-      return `${t.upcoming}\n\n${matches.map(m => formatMatch(m, language)).join("\n")}`;
+
+      return `${t.upcoming}\n\n${matches
+        .map((match) => formatMatch(match, language))
+        .join("\n")}`;
     }
 
     return await getNews(query, language);
   } catch (error) {
     console.error("[sports-service] Error:", error.message);
+
     return t.apiError;
   }
 }
