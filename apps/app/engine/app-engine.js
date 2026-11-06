@@ -477,14 +477,15 @@ export function createAppEngine(options = {}) {
           );
         } else {
           try {
-            results.knowledge = intelligence.retrieveKnowledge(
-              normalized.prompt,
-              {
-                language: normalized.language,
-                limit: 5,
-                includeRelated: true
-              }
-            );
+            results.knowledge =
+              await intelligence.retrieveKnowledge(
+                normalized.prompt,
+                {
+                  language: normalized.language,
+                  limit: 5,
+                  includeRelated: true
+                }
+              );
           } catch {
             results.knowledge = createError(
               "KNOWLEDGE_RETRIEVAL_FAILED",
@@ -524,7 +525,6 @@ export function createAppEngine(options = {}) {
           run: () => modules.backendBuilder.build({
             prompt: normalized.prompt,
             framework: normalized.framework || "express",
-            database: normalized.database,
             requirements: normalized.requirements
           })
         },
