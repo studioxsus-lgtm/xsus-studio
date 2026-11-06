@@ -10,7 +10,10 @@ import {
 } from "../../../apps/app/security/integration/adapters/resource-adapter.js";
 
 const createDependencies = ({
-  authorizationResult = { allowed: true, reason: "POLICY_ALLOWED" },
+  authorizationResult = {
+    allowed: true,
+    reason: "POLICY_ALLOWED",
+  },
   onAuthorize = null,
 } = {}) => {
   const calls = {
@@ -46,13 +49,23 @@ const createDependencies = ({
         return authorizationResult;
       },
 
-      checkPermission: async () => ({ allowed: true }),
-      checkRole: async () => ({ allowed: true }),
+      checkPermission: async () => ({
+        allowed: true,
+      }),
+
+      checkRole: async () => ({
+        allowed: true,
+      }),
     },
 
     rbacEngine: {
-      getUserRoles: async () => ({ data: [] }),
-      getRole: async () => ({ data: null }),
+      getUserRoles: async () => ({
+        data: [],
+      }),
+
+      getRole: async () => ({
+        data: null,
+      }),
     },
 
     permissionEngine: {
@@ -62,15 +75,22 @@ const createDependencies = ({
     auditEngine: {
       logEvent: async (event) => {
         calls.audit.push(event);
-        return { id: `audit-${calls.audit.length}` };
+
+        return {
+          id: `audit-${calls.audit.length}`,
+        };
       },
     },
   };
 
-  return { dependencies, calls };
+  return {
+    dependencies,
+    calls,
+  };
 };
 
 const createAuthorizeRequest = (overrides = {}) => ({
+  action: "authorize",
   session: "session-1",
   resource: {
     id: "document-1",
@@ -111,9 +131,14 @@ describe("Security Integration Engine — Policy Integration", () => {
     const encodedResource = calls.authorize[0].resource;
 
     expect(typeof encodedResource).toBe("string");
-    expect(encodedResource.startsWith("xsus-resource:v1:")).toBe(true);
 
-    expect(decodeSecurityResource(encodedResource)).toEqual({
+    expect(
+      encodedResource.startsWith("xsus-resource:v1:")
+    ).toBe(true);
+
+    expect(
+      decodeSecurityResource(encodedResource)
+    ).toEqual({
       id: "document-1",
       type: "file",
     });
@@ -149,7 +174,9 @@ describe("Security Integration Engine — Policy Integration", () => {
     const engine = createSecurityIntegrationEngine(dependencies);
 
     await engine.authorize(
-      createAuthorizeRequest({ context })
+      createAuthorizeRequest({
+        context,
+      })
     );
 
     expect(calls.authorize).toHaveLength(1);
@@ -176,8 +203,13 @@ describe("Security Integration Engine — Policy Integration", () => {
 
     expect(calls.authorize).toHaveLength(1);
 
-    expect(calls.authorize[0].identity.id).toBe("user-1");
-    expect(calls.authorize[0].identity.id).not.toBe("attacker");
+    expect(
+      calls.authorize[0].identity.id
+    ).toBe("user-1");
+
+    expect(
+      calls.authorize[0].identity.id
+    ).not.toBe("attacker");
 
     await engine.close();
   });
