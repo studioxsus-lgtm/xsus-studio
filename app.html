@@ -1,424 +1,423 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#050811">
-  <meta name="description" content="XSUS App — Independent application architecture and development platform.">
-  <title>XSUS App | XSUS Studio</title>
+  <meta name="description" content="XSUS App Frontier — Independent application architecture and development platform.">
 
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #050811;
-      --panel: rgba(13, 22, 42, .82);
-      --border: rgba(0, 220, 255, .18);
-      --cyan: #00eaff;
-      --blue: #397bff;
-      --purple: #9b5cff;
-      --text: #edf5ff;
-      --muted: #8b9bb5;
-    }
+  <title>XSUS App Frontier | XSUS Studio</title>
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      color: var(--text);
-      background:
-        radial-gradient(ellipse at 15% 5%, rgba(0, 180, 255, .13), transparent 35%),
-        radial-gradient(ellipse at 90% 20%, rgba(125, 55, 255, .13), transparent 35%),
-        var(--bg);
-      font-family: Inter, system-ui, -apple-system, sans-serif;
-    }
-
-    button, textarea, select { font: inherit; }
-
-    a { color: inherit; text-decoration: none; }
-
-    .container {
-      width: min(1120px, calc(100% - 36px));
-      margin: auto;
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      border-bottom: 1px solid var(--border);
-      background: rgba(5, 8, 17, .88);
-      backdrop-filter: blur(18px);
-    }
-
-    .header-inner {
-      min-height: 76px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .brand {
-      font-size: 19px;
-      font-weight: 900;
-      letter-spacing: 2px;
-    }
-
-    .brand span {
-      color: var(--cyan);
-    }
-
-    .brand small {
-      display: block;
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 9px;
-      letter-spacing: 3px;
-    }
-
-    nav {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    nav a:hover { color: var(--cyan); }
-
-    .hero {
-      padding: 68px 0 35px;
-      text-align: center;
-    }
-
-    .eyebrow {
-      display: inline-block;
-      padding: 8px 14px;
-      border: 1px solid var(--border);
-      border-radius: 30px;
-      color: var(--cyan);
-      background: rgba(0, 220, 255, .06);
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      margin: 22px 0 12px;
-      font-size: clamp(36px, 7vw, 62px);
-      line-height: 1.08;
-      letter-spacing: -2px;
-    }
-
-    h1 span {
-      background: linear-gradient(90deg, var(--cyan), #7186ff, #bd6bff);
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero p {
-      max-width: 650px;
-      margin: auto;
-      color: var(--muted);
-      line-height: 1.8;
-    }
-
-    .workspace {
-      display: grid;
-      grid-template-columns: minmax(0, 1.5fr) minmax(260px, .8fr);
-      gap: 20px;
-      padding: 25px 0 70px;
-    }
-
-    .panel {
-      min-width: 0;
-      padding: 25px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: var(--panel);
-      box-shadow: 0 15px 55px rgba(0, 0, 0, .2);
-      backdrop-filter: blur(16px);
-    }
-
-    .panel h2 {
-      margin: 0 0 8px;
-      font-size: 19px;
-    }
-
-    .description {
-      margin: 0 0 24px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
-    }
-
-    label {
-      display: block;
-      margin: 18px 0 9px;
-      color: #c8d7ee;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    textarea, select {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid rgba(130, 165, 220, .2);
-      border-radius: 12px;
-      outline: none;
-      color: var(--text);
-      background: rgba(3, 9, 22, .8);
-    }
-
-    textarea {
-      min-height: 155px;
-      resize: vertical;
-      line-height: 1.6;
-    }
-
-    textarea:focus, select:focus {
-      border-color: var(--cyan);
-      box-shadow: 0 0 0 3px rgba(0, 234, 255, .08);
-    }
-
-    select option {
-      background: #0b1427;
-    }
-
-    .primary-button {
-      width: 100%;
-      margin-top: 20px;
-      padding: 15px;
-      border: 0;
-      border-radius: 12px;
-      color: #03101b;
-      background: linear-gradient(100deg, var(--cyan), #688aff);
-      font-weight: 900;
-      cursor: pointer;
-      transition: .2s;
-    }
-
-    .primary-button:hover {
-      filter: brightness(1.12);
-      transform: translateY(-1px);
-    }
-
-    .primary-button:disabled {
-      opacity: .55;
-      cursor: wait;
-      transform: none;
-    }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 20px 0;
-      padding: 13px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: rgba(0, 0, 0, .15);
-      font-size: 12px;
-    }
-
-    .status-dot {
-      width: 9px;
-      height: 9px;
-      flex: 0 0 auto;
-      border-radius: 50%;
-      background: #8995a8;
-    }
-
-    .status-dot.connected {
-      background: #35e6a1;
-      box-shadow: 0 0 12px #35e6a1;
-    }
-
-    .status-dot.error {
-      background: #ff647c;
-    }
-
-    .status-text {
-      color: var(--muted);
-    }
-
-    .architecture {
-      display: grid;
-      gap: 10px;
-      margin-top: 22px;
-    }
-
-    .architecture-item {
-      padding: 15px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: rgba(4, 12, 27, .65);
-    }
-
-    .architecture-item strong {
-      display: block;
-      font-size: 13px;
-    }
-
-    .architecture-item small {
-      display: block;
-      margin-top: 5px;
-      color: var(--muted);
-      font-size: 11px;
-    }
-
-    .architecture-arrow {
-      color: var(--cyan);
-      text-align: center;
-    }
-
-    .result {
-      min-height: 190px;
-      max-height: 520px;
-      overflow: auto;
-      padding: 16px;
-      border: 1px solid rgba(130, 165, 220, .16);
-      border-radius: 12px;
-      color: #b9d4ef;
-      background: #030812;
-      font-family: ui-monospace, monospace;
-      font-size: 12px;
-      line-height: 1.7;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    .result.empty {
-      color: #74839b;
-      font-family: inherit;
-    }
-
-    .message {
-      min-height: 20px;
-      margin-top: 12px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    footer {
-      padding: 25px 0;
-      border-top: 1px solid var(--border);
-      color: var(--muted);
-      text-align: center;
-      font-size: 11px;
-      letter-spacing: 1px;
-    }
-
-    @media (max-width: 760px) {
-      .header-inner {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 17px 0;
-      }
-
-      nav { gap: 13px; }
-
-      .hero { padding-top: 48px; }
-
-      .workspace { grid-template-columns: 1fr; }
-
-      .panel { padding: 20px; }
-    }
-  </style>
+  <link rel="stylesheet" href="./app-ui/styles/design-system.css">
+  <link rel="stylesheet" href="./app-ui/styles/layout.css">
+  <link rel="stylesheet" href="./app-ui/styles/components.css">
+  <link rel="stylesheet" href="./app-ui/styles/responsive.css">
 </head>
 
 <body>
-  <header>
-    <div class="container header-inner">
-      <a class="brand" href="index.html">
-        XSUS <span>STUDIO</span>
-        <small>THE X IDENTITY</small>
+
+<div id="xsus-app">
+
+  <!-- SIDEBAR -->
+  <aside class="xsus-sidebar">
+
+    <a class="xsus-brand" href="index.html">
+      <div class="xsus-brand-mark"></div>
+
+      <div>
+        <div class="xsus-brand-name">XSUS APP</div>
+        <div class="xsus-brand-tagline">THE X IDENTITY</div>
+      </div>
+    </a>
+
+    <nav class="xsus-navigation" aria-label="XSUS App navigation">
+
+      <div class="xsus-nav-section">Workspace</div>
+
+      <a class="xsus-nav-item active" href="#overview">
+        <span>◈</span>
+        Command Center
       </a>
 
-      <nav aria-label="Main navigation">
-        <a href="index.html">Studio</a>
-        <a href="ai.html">XSUS AI</a>
-        <a href="app.html">XSUS App</a>
-        <a href="web.html">XSUS Web</a>
-        <a href="game.html">XSUS Game</a>
-        <a href="logo.html">XSUS Logo</a>
-        <a href="domain.html">XSUS Domain</a>
-      </nav>
-    </div>
-  </header>
+      <a class="xsus-nav-item" href="#architect">
+        <span>⌘</span>
+        Application Architect
+      </a>
 
-  <main class="container">
-    <section class="hero">
-      <span class="eyebrow">Independent Application Platform</span>
-      <h1>Build with <span>XSUS App</span></h1>
-      <p>
-        Describe your application. XSUS App coordinates its own
-        architecture and development engines through its public API.
+      <a class="xsus-nav-item" href="#workspace">
+        <span>▣</span>
+        Development Workspace
+      </a>
+
+      <div class="xsus-nav-section">Intelligence</div>
+
+      <a class="xsus-nav-item" href="#nexus">
+        <span>✧</span>
+        XSUS NEXUS
+      </a>
+
+      <a class="xsus-nav-item" href="#architecture">
+        <span>⬡</span>
+        System Architecture
+      </a>
+
+    </nav>
+
+    <div style="margin-top:auto;padding:18px 10px 4px">
+      <div class="xsus-divider"></div>
+
+      <p style="color:var(--xsus-text-muted);font-size:11px;line-height:1.7;margin-top:16px">
+        Independent Intelligence Infrastructure
       </p>
-    </section>
 
-    <section class="workspace">
-      <div class="panel">
-        <h2>Application Workspace</h2>
-        <p class="description">
-          Send a project request to the XSUS App Engine.
-          Your request is processed through the XSUS App Bridge.
-        </p>
-
-        <form id="app-form">
-          <label for="prompt">Describe your application</label>
-          <textarea
-            id="prompt"
-            name="prompt"
-            placeholder="Example: Create a secure e-commerce web application with user accounts, product management and an administration dashboard."
-            required
-          ></textarea>
-
-          <label for="platform">Target platform</label>
-          <select id="platform" name="platform">
-            <option value="web">Web</option>
-            <option value="android">Android</option>
-            <option value="ios">iOS</option>
-            <option value="desktop">Desktop</option>
-          </select>
-
-          <button class="primary-button" id="generate-button" type="submit">
-            Generate Application Architecture
-          </button>
-        </form>
-
-        <p class="message" id="message" role="status"></p>
-
-        <label>Engine response</label>
-        <pre class="result empty" id="result">Your XSUS App response will appear here.</pre>
+      <div class="xsus-status">
+        <span class="xsus-status-dot"></span>
+        Frontier Interface
       </div>
+    </div>
 
-      <aside>
-        <div class="panel">
-          <h2>Connection Status</h2>
-          <p class="description">
-            The Studio interface communicates only with XSUS App.
-          </p>
+  </aside>
 
-          <div class="status-row">
-            <span class="status-dot" id="status-dot"></span>
-            <span class="status-text" id="status-text">
-              XSUS App is not initialized.
-            </span>
-          </div>
+  <!-- MAIN -->
+  <div class="xsus-main">
+
+    <!-- TOPBAR -->
+    <header class="xsus-topbar">
+
+      <div>
+        <div style="font-size:12px;color:var(--xsus-text-muted)">
+          XSUS STUDIO / XSUS APP
         </div>
 
-        <div class="panel" style="margin-top:20px">
-          <h2>System Architecture</h2>
-          <p class="description">
-            Independent systems connected through controlled interfaces.
+        <div style="font-size:15px;font-weight:700;margin-top:4px">
+          Frontier Command
+        </div>
+      </div>
+
+      <div class="xsus-topbar-actions">
+
+        <span class="xsus-status">
+          <span class="xsus-status-dot"></span>
+          Independent Platform
+        </span>
+
+        <a class="xsus-button xsus-button-ghost"
+           href="index.html">
+          Studio
+        </a>
+
+      </div>
+
+    </header>
+
+    <!-- CONTENT -->
+    <main class="xsus-content">
+
+      <!-- COMMAND CENTER -->
+      <section id="overview">
+
+        <div class="xsus-page-header">
+
+          <div class="xsus-eyebrow"
+               style="color:var(--xsus-cyan);font-size:11px;letter-spacing:2px">
+            XSUS APP / FRONTIER ENVIRONMENT
+          </div>
+
+          <h1 class="xsus-page-title" style="margin-top:14px">
+            Build beyond <span class="xsus-gradient-text">limitations.</span>
+          </h1>
+
+          <p class="xsus-page-description">
+            Design, architect and develop intelligent applications
+            through an independent application platform.
           </p>
 
+        </div>
+
+        <div class="xsus-grid">
+
+          <div class="xsus-grid-12">
+            <div class="xsus-card xsus-glow">
+
+              <div class="xsus-card-header">
+                <div>
+                  <h2 class="xsus-card-title">Application Intelligence</h2>
+
+                  <p class="xsus-card-description">
+                    Transform an application idea into a structured
+                    engineering request.
+                  </p>
+                </div>
+
+                <span class="xsus-status xsus-status-active">
+                  Request Interface
+                </span>
+              </div>
+
+              <a class="xsus-button xsus-button-primary"
+                 href="#architect">
+                Open Application Architect →
+              </a>
+
+            </div>
+          </div>
+
+          <div class="xsus-grid-4">
+            <div class="xsus-card">
+              <div class="xsus-metric-label">Platform</div>
+              <div class="xsus-metric-value xsus-gradient-text">XSUS</div>
+              <div class="xsus-card-description">
+                Independent application environment
+              </div>
+            </div>
+          </div>
+
+          <div class="xsus-grid-4">
+            <div class="xsus-card">
+              <div class="xsus-metric-label">Integration</div>
+              <div class="xsus-metric-value">Bridge</div>
+              <div class="xsus-card-description">
+                Controlled communication interface
+              </div>
+            </div>
+          </div>
+
+          <div class="xsus-grid-4">
+            <div class="xsus-card">
+              <div class="xsus-metric-label">Development</div>
+              <div class="xsus-metric-value">Frontier</div>
+              <div class="xsus-card-description">
+                Modular engineering environment
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- APPLICATION ARCHITECT -->
+      <section id="architect" style="margin-top:42px">
+
+        <div class="xsus-page-header">
+          <h2 class="xsus-page-title" style="font-size:25px">
+            Application Architect
+          </h2>
+
+          <p class="xsus-page-description">
+            Describe your application and submit a request
+            to the XSUS App Engine.
+          </p>
+        </div>
+
+        <div class="xsus-grid">
+
+          <div class="xsus-grid-8">
+
+            <div class="xsus-card">
+
+              <div class="xsus-card-header">
+                <h3 class="xsus-card-title">New Application Request</h3>
+
+                <span class="xsus-status xsus-status-active">
+                  Engine Interface
+                </span>
+              </div>
+
+              <form id="app-form">
+
+                <label for="prompt">
+                  Application specification
+                </label>
+
+                <textarea
+                  class="xsus-textarea"
+                  id="prompt"
+                  name="prompt"
+                  placeholder="Describe your application, its purpose, architecture, features, security requirements and expected behavior..."
+                  required
+                ></textarea>
+
+                <label for="platform">
+                  Target platform
+                </label>
+
+                <select
+                  class="xsus-select"
+                  id="platform"
+                  name="platform"
+                >
+                  <option value="web">Web</option>
+                  <option value="android">Android</option>
+                  <option value="ios">iOS</option>
+                  <option value="desktop">Desktop</option>
+                </select>
+
+                <button
+                  class="xsus-button xsus-button-primary"
+                  id="generate-button"
+                  type="submit"
+                  style="width:100%;margin-top:22px"
+                >
+                  Generate Application Architecture →
+                </button>
+
+              </form>
+
+              <p
+                class="message"
+                id="message"
+                role="status"
+                aria-live="polite"
+                style="color:var(--xsus-text-secondary);font-size:12px;margin-top:14px"
+              ></p>
+
+            </div>
+
+          </div>
+
+          <!-- ENGINE RESPONSE -->
+          <div class="xsus-grid-4">
+
+            <div class="xsus-card">
+
+              <h3 class="xsus-card-title">Engine Response</h3>
+
+              <p class="xsus-card-description">
+                Actual response returned by XSUS App.
+              </p>
+
+              <pre
+                class="result empty"
+                id="result"
+                style="min-height:240px;max-height:520px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--xsus-text-secondary);font-size:11px"
+              >Your XSUS App response will appear here.</pre>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- WORKSPACE -->
+      <section id="workspace" style="margin-top:42px">
+
+        <div class="xsus-page-header">
+          <h2 class="xsus-page-title" style="font-size:25px">
+            Development Workspace
+          </h2>
+
+          <p class="xsus-page-description">
+            The central environment for future application
+            development and engineering workflows.
+          </p>
+        </div>
+
+        <div class="xsus-card">
+
+          <div class="xsus-card-header">
+            <h3 class="xsus-card-title">Workspace Foundation</h3>
+
+            <span class="xsus-status xsus-status-development">
+              In development
+            </span>
+          </div>
+
+          <p class="xsus-card-description">
+            Advanced project workspace capabilities will be
+            introduced through separately implemented and
+            verified modules.
+          </p>
+
+        </div>
+
+      </section>
+
+      <!-- NEXUS -->
+      <section id="nexus" style="margin-top:42px">
+
+        <div class="xsus-page-header">
+          <h2 class="xsus-page-title" style="font-size:25px">
+            XSUS NEXUS
+          </h2>
+
+          <p class="xsus-page-description">
+            Integration and platform connection status.
+          </p>
+        </div>
+
+        <div class="xsus-grid">
+
+          <div class="xsus-grid-6">
+
+            <div class="xsus-card">
+
+              <h3 class="xsus-card-title">XSUS App Bridge</h3>
+
+              <p class="xsus-card-description">
+                Connection state reported by the existing bridge.
+              </p>
+
+              <div class="xsus-status" style="margin-top:18px">
+                <span class="xsus-status-dot" id="status-dot"></span>
+
+                <span id="status-text">
+                  Checking XSUS App connection...
+                </span>
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="xsus-grid-6">
+
+            <div class="xsus-card">
+
+              <h3 class="xsus-card-title">Platform Independence</h3>
+
+              <p class="xsus-card-description">
+                XSUS App coordinates integrations through
+                controlled interfaces. Its connected systems
+                retain their independent ownership.
+              </p>
+
+              <span class="xsus-status xsus-status-active">
+                Architecture principle
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ARCHITECTURE -->
+      <section id="architecture" style="margin-top:42px">
+
+        <div class="xsus-page-header">
+          <h2 class="xsus-page-title" style="font-size:25px">
+            System Architecture
+          </h2>
+
+          <p class="xsus-page-description">
+            Independent systems connected through controlled
+            integration boundaries.
+          </p>
+        </div>
+
+        <div class="xsus-card">
+
           <div class="architecture">
+
             <div class="architecture-item">
               <strong>XSUS STUDIO</strong>
-              <small>Platform and user interface</small>
+              <small>Platform and user entry point</small>
             </div>
 
             <div class="architecture-arrow">↓</div>
@@ -428,116 +427,155 @@
               <small>Application engine and integration coordinator</small>
             </div>
 
+            <div class="architecture-arrow">↓</div>
+
+            <div class="architecture-item">
+              <strong>XSUS APP CONTROLLED ADAPTERS</strong>
+              <small>Integration boundary owned by XSUS App</small>
+            </div>
+
             <div class="architecture-arrow">↙ &nbsp;&nbsp; ↘</div>
 
-            <div class="architecture-item">
-              <strong>XSUS AI CORE</strong>
-              <small>Independent AI system</small>
+            <div class="xsus-grid">
+
+              <div class="xsus-grid-6">
+                <div class="architecture-item">
+                  <strong>XSUS AI CORE</strong>
+                  <small>Independent AI system</small>
+                </div>
+              </div>
+
+              <div class="xsus-grid-6">
+                <div class="architecture-item">
+                  <strong>HYPER XSUS CORE</strong>
+                  <small>Independent knowledge system</small>
+                </div>
+              </div>
+
             </div>
 
-            <div class="architecture-item">
-              <strong>HYPER XSUS CORE</strong>
-              <small>Independent knowledge system</small>
-            </div>
           </div>
+
         </div>
-      </aside>
-    </section>
-  </main>
 
-  <footer>
-    XSUS STUDIO · THE X IDENTITY · © 2026
-  </footer>
+      </section>
 
-  <script type="module">
-    import {
-      processXsusAppRequest,
-      getXsusAppBridgeStatus
-    } from "./platform/xsus-app/xsus-app-bridge.js";
+    </main>
 
-    const form = document.getElementById("app-form");
-    const promptInput = document.getElementById("prompt");
-    const platformInput = document.getElementById("platform");
-    const generateButton = document.getElementById("generate-button");
-    const resultElement = document.getElementById("result");
-    const messageElement = document.getElementById("message");
-    const statusDot = document.getElementById("status-dot");
-    const statusText = document.getElementById("status-text");
+    <footer style="padding:24px 32px;border-top:1px solid var(--xsus-border);color:var(--xsus-text-muted);font-size:11px;text-align:center;letter-spacing:1px">
+      XSUS STUDIO · THE X IDENTITY · © 2026
+    </footer>
 
-    function updateStatus() {
+  </div>
+
+</div>
+
+<script type="module">
+
+  import {
+    processXsusAppRequest,
+    getXsusAppBridgeStatus
+  } from "./platform/xsus-app/xsus-app-bridge.js";
+
+  const form = document.getElementById("app-form");
+  const promptInput = document.getElementById("prompt");
+  const platformInput = document.getElementById("platform");
+  const generateButton = document.getElementById("generate-button");
+
+  const resultElement = document.getElementById("result");
+  const messageElement = document.getElementById("message");
+
+  const statusDot = document.getElementById("status-dot");
+  const statusText = document.getElementById("status-text");
+
+  function updateStatus() {
+    try {
       const status = getXsusAppBridgeStatus();
 
       if (status.connected) {
-        statusDot.className = "status-dot connected";
+        statusDot.className = "xsus-status-dot xsus-status-active";
         statusText.textContent = "XSUS App Engine connected.";
       } else if (status.initializationError || status.error) {
-        statusDot.className = "status-dot error";
+        statusDot.className = "xsus-status-dot";
         statusText.textContent =
           status.initializationError ||
           status.error ||
           "XSUS App connection failed.";
       } else {
-        statusDot.className = "status-dot";
+        statusDot.className = "xsus-status-dot";
         statusText.textContent = "XSUS App is not initialized.";
       }
+    } catch (error) {
+      statusDot.className = "xsus-status-dot";
+      statusText.textContent = "Bridge status unavailable.";
     }
+  }
 
-    function displayResult(value) {
-      resultElement.textContent = JSON.stringify(value, null, 2);
-      resultElement.classList.remove("empty");
-    }
+  function displayResult(value) {
+    resultElement.textContent = JSON.stringify(value, null, 2);
+    resultElement.classList.remove("empty");
+  }
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-      const prompt = promptInput.value.trim();
+    const prompt = promptInput.value.trim();
 
-      if (!prompt) {
-        messageElement.textContent =
-          "Please enter an application description.";
-        return;
-      }
-
-      generateButton.disabled = true;
-      generateButton.textContent = "Processing...";
+    if (!prompt) {
       messageElement.textContent =
-        "Sending request to XSUS App Engine...";
+        "Please enter an application description.";
+      return;
+    }
 
-      try {
-        const response = await processXsusAppRequest({
-          prompt,
-          platform: platformInput.value,
-          useIntelligence: true,
-          retrieveKnowledge: true
-        });
+    generateButton.disabled = true;
+    generateButton.textContent = "Processing...";
 
-        displayResult(response);
-        updateStatus();
+    messageElement.textContent =
+      "Sending request to XSUS App Engine...";
 
-        messageElement.textContent = response.success
-          ? "Request processed by XSUS App."
-          : "XSUS App returned an unsuccessful response.";
-      } catch (error) {
-        displayResult({
-          success: false,
-          error: {
-            message: error.message,
-            code: error.code || "APP_REQUEST_FAILED"
-          }
-        });
+    try {
+      const response = await processXsusAppRequest({
+        prompt,
+        platform: platformInput.value,
+        useIntelligence: true,
+        retrieveKnowledge: true
+      });
 
-        messageElement.textContent =
-          "The request could not be completed.";
+      displayResult(response);
+      updateStatus();
 
-        updateStatus();
-      } finally {
-        generateButton.disabled = false;
-        generateButton.textContent =
-          "Generate Application Architecture";
-      }
-    });
+      messageElement.textContent = response.success
+        ? "Request processed by XSUS App."
+        : "XSUS App returned an unsuccessful response.";
 
-    updateStatus();
-  </script>
+    } catch (error) {
+
+      displayResult({
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || "APP_REQUEST_FAILED"
+        }
+      });
+
+      messageElement.textContent =
+        "The request could not be completed.";
+
+      updateStatus();
+
+    } finally {
+
+      generateButton.disabled = false;
+
+      generateButton.textContent =
+        "Generate Application Architecture";
+
+    }
+  });
+
+  updateStatus();
+
+</script>
+
 </body>
 </html>
