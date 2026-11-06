@@ -1,6 +1,7 @@
+
 // services/router.js
 // XSUS Studio — Smart Service Router
-// Version: 2.4.0
+// Version: 2.4.1
 
 import { studioCore } from './xsus-core.js';
 
@@ -29,8 +30,21 @@ import { checkQRCode } from './qr-service.js';
 import { checkWeather } from './weather-service.js';
 import { checkFinance } from './finance-service.js';
 import { checkTranslation } from './translation-service.js';
-import { checkConverter } from './converter-service.js';
 import { checkImageGeneration } from './image-service.js';
+
+// Converter Service — ngarkim fleksibël.
+// Nëse skedari nuk ekziston, router-i vazhdon pa të.
+const converterModules = import.meta.glob(
+    ['./*converter*.js', './*Converter*.js'],
+    { eager: true }
+);
+
+const converterModule = Object.values(converterModules).find(
+    (module) => typeof module?.checkConverter === 'function'
+);
+
+const checkConverter =
+    converterModule?.checkConverter ?? null;
 
 // -------------------------------------------------------------
 // KONFIGURIMI
@@ -83,7 +97,6 @@ function initializeCustomKnowledge() {
     return customKnowledgeLoadPromise;
 }
 
-// Ngarkimi fillestar pa bllokuar importimin.
 void initializeCustomKnowledge();
 
 // -------------------------------------------------------------
@@ -311,32 +324,13 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
     const clean = normalizeText(userQuery);
 
     const prayerKeywords = [
-        'namaz',
-        'falje',
-        'orari i namazit',
-        'sabah',
-        'sabahu',
-        'sabahit',
-        'drek',
-        'dreka',
-        'drekes',
-        'ikindi',
-        'ikindia',
-        'aksham',
-        'akshami',
-        'jaci',
-        'jacia',
-        'fejr',
-        'dhuhr',
-        'asr',
-        'maghrib',
-        'isha',
-        'prayer times',
-        'salat',
-        'heures de priere',
-        'priere',
-        'fajr',
-        'dhohr'
+        'namaz', 'falje', 'orari i namazit',
+        'sabah', 'sabahu', 'sabahit',
+        'drek', 'dreka', 'drekes',
+        'ikindi', 'ikindia', 'aksham', 'akshami',
+        'jaci', 'jacia', 'fejr', 'dhuhr', 'asr',
+        'maghrib', 'isha', 'prayer times', 'salat',
+        'heures de priere', 'priere', 'fajr', 'dhohr'
     ];
 
     if (includesAny(clean, prayerKeywords)) {
@@ -373,16 +367,9 @@ function checkIslamicKnowledge(userQuery, lang = 'sq') {
     }
 
     const ramadanKeywords = [
-        'ramazan',
-        'ramadan',
-        'agjerim',
-        'agjerimi',
-        'fasting',
-        'jeune',
-        'imsak',
-        'iftar',
-        'syfyr',
-        'syfyri'
+        'ramazan', 'ramadan', 'agjerim',
+        'agjerimi', 'fasting', 'jeune',
+        'imsak', 'iftar', 'syfyr', 'syfyri'
     ];
 
     if (includesAny(clean, ramadanKeywords)) {
@@ -401,11 +388,7 @@ Le Ramadan est le mois islamique du jeûne et du recueillement. Le jeûne commen
     }
 
     const zakatKeywords = [
-        'zeqat',
-        'zeqati',
-        'zekat',
-        'zakat',
-        'alms'
+        'zeqat', 'zeqati', 'zekat', 'zakat', 'alms'
     ];
 
     if (includesAny(clean, zakatKeywords)) {
@@ -424,14 +407,8 @@ La zakat est une aumône obligatoire pour les musulmans concernés. Le taux cour
     }
 
     const hajjKeywords = [
-        'haxh',
-        'haxhi',
-        'hajj',
-        'pelerinage',
-        'mecca',
-        'meke',
-        'qabe',
-        'kaaba'
+        'haxh', 'haxhi', 'hajj',
+        'pelerinage', 'mecca', 'meke', 'qabe', 'kaaba'
     ];
 
     if (includesAny(clean, hajjKeywords)) {
@@ -647,7 +624,7 @@ export async function smartRouter(
     );
 
     // ---------------------------------------------------------
-    // MOTI — KONTROLLI PARA XSUS CORE
+    // MOTI
     // ---------------------------------------------------------
 
     try {
@@ -688,9 +665,7 @@ export async function smartRouter(
             lowerQuery.includes(normalizeText(keyword))
         ) ||
         (
-            (
-                lowerQuery.includes('me jep')
-            ) &&
+            lowerQuery.includes('me jep') &&
             lowerQuery.includes('rast')
         );
 
