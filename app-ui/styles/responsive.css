@@ -1,106 +1,527 @@
 
-/* =========================================
-   XSUS APP FRONTIER
-   Responsive System — v1.0.0
-   ========================================= */
+/* =========================================================
+   XSUS APP — RESPONSIVE SYSTEM
+   Version: 1.0.0
+   Purpose:
+   - Desktop, tablet and mobile adaptation
+   - Responsive navigation and workspace
+   - Touch-friendly controls
+   - Overflow and modal management
+   - Accessibility and reduced motion
+   ========================================================= */
 
-/* Large screens */
+/* ---------------------------------------------------------
+   1. RESPONSIVE BASE
+   --------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  min-width: 320px;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+body {
+  width: 100%;
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+/* ---------------------------------------------------------
+   2. LARGE DESKTOP
+   --------------------------------------------------------- */
 
 @media (min-width: 1600px) {
-  .xsus-content {
-    padding: 40px 48px;
+  .xsus-app-shell {
+    max-width: 2200px;
+    margin-inline: auto;
   }
 
-  .xsus-grid {
-    gap: 24px;
+  .xsus-dashboard-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .xsus-engine-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .xsus-main-content {
+    padding: 32px;
+  }
+
+  .xsus-section {
+    margin-bottom: 36px;
   }
 }
 
-/* Tablets and compact desktops */
+/* ---------------------------------------------------------
+   3. DESKTOP AND LAPTOP
+   --------------------------------------------------------- */
 
-@media (max-width: 1100px) {
+@media (max-width: 1279px) {
+  .xsus-dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .xsus-engine-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .xsus-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .xsus-architecture-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .xsus-nexus-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .xsus-engineering-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .xsus-sidebar {
-    padding: 20px 12px;
-  }
-
-  .xsus-topbar {
-    padding-left: 22px;
-    padding-right: 22px;
+    width: 230px;
   }
 }
 
-/* Tablets */
+/* ---------------------------------------------------------
+   4. TABLET
+   --------------------------------------------------------- */
 
-@media (max-width: 760px) {
-  .xsus-content {
-    padding: 20px 16px;
+@media (max-width: 1023px) {
+  .xsus-app-shell {
+    grid-template-columns: 1fr;
   }
 
-  .xsus-page-header {
-    margin-bottom: 24px;
+  .xsus-sidebar {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    max-height: none;
+    overflow: visible;
   }
 
-  .xsus-card {
-    padding: 18px;
-    border-radius: var(--xsus-radius-md);
+  .xsus-sidebar-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
   }
 
-  .xsus-topbar-actions {
+  .xsus-sidebar-nav {
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
-  .xsus-button {
-    min-height: 40px;
-    padding: 0 13px;
+  .xsus-main-content {
+    width: 100%;
+    min-width: 0;
+    padding: 24px;
+  }
+
+  .xsus-topbar {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .xsus-topbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .xsus-command-center {
+    grid-template-columns: 1fr;
+  }
+
+  .xsus-monitoring-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .xsus-timeline {
+    overflow-x: auto;
+  }
+
+  .xsus-architecture-canvas {
+    min-height: 380px;
+    overflow: auto;
+  }
+
+  .xsus-panel {
+    min-width: 0;
   }
 }
 
-/* Mobile phones */
+/* ---------------------------------------------------------
+   5. MOBILE
+   --------------------------------------------------------- */
 
-@media (max-width: 480px) {
-  .xsus-topbar {
-    min-height: 58px;
-    padding: 10px 12px;
+@media (max-width: 767px) {
+  html {
+    font-size: 15px;
   }
 
-  .xsus-content {
-    padding: 16px 12px;
+  .xsus-app-shell {
+    display: block;
+    min-height: 100vh;
   }
 
-  .xsus-page-title {
-    font-size: 25px;
+  .xsus-sidebar {
+    padding: 14px;
   }
 
-  .xsus-page-description {
-    font-size: 13px;
+  .xsus-sidebar-content {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .xsus-card {
+  .xsus-sidebar-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .xsus-sidebar-nav a,
+  .xsus-sidebar-nav button {
+    min-height: 42px;
+  }
+
+  .xsus-main-content {
     padding: 16px;
   }
 
-  .xsus-card-header {
+  .xsus-topbar {
     align-items: flex-start;
     flex-direction: column;
+    padding: 14px;
   }
 
-  .xsus-button {
-    font-size: 12px;
+  .xsus-topbar-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
   }
 
-  .xsus-metric-value {
-    font-size: 27px;
+  .xsus-topbar-actions button {
+    flex: 1 1 auto;
+  }
+
+  .xsus-section {
+    margin-bottom: 22px;
+  }
+
+  .xsus-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .xsus-dashboard-grid,
+  .xsus-engine-grid,
+  .xsus-monitoring-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .xsus-metric-card,
+  .xsus-engine-card,
+  .xsus-panel {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .xsus-command-center {
+    grid-template-columns: 1fr;
+  }
+
+  .xsus-command-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .xsus-workspace,
+  .xsus-architecture-layout,
+  .xsus-engineering-workspace,
+  .xsus-nexus-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .xsus-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .xsus-tabs {
+    display: flex;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: thin;
+  }
+
+  .xsus-code-viewer,
+  .xsus-output-viewer,
+  .xsus-event-log {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .xsus-architecture-canvas {
+    min-height: 300px;
+    overflow: auto;
+  }
+
+  .xsus-timeline {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .xsus-modal {
+    width: calc(100% - 24px);
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+
+  .xsus-form {
+    width: 100%;
+  }
+
+  .xsus-form input,
+  .xsus-form select,
+  .xsus-form textarea {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .xsus-button,
+  .xsus-button-primary,
+  .xsus-button-secondary {
+    min-height: 44px;
   }
 }
 
-/* Touch devices */
+/* ---------------------------------------------------------
+   6. SMALL MOBILE
+   --------------------------------------------------------- */
 
-@media (hover: none) {
-  .xsus-card:hover {
-    transform: none;
+@media (max-width: 480px) {
+  .xsus-main-content {
+    padding: 12px;
   }
 
-  .xsus-button:hover {
-    filter: none;
+  .xsus-sidebar {
+    padding: 10px;
+  }
+
+  .xsus-sidebar-nav {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .xsus-topbar {
+    padding: 12px;
+  }
+
+  .xsus-section-header h1,
+  .xsus-section-header h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .xsus-engine-card,
+  .xsus-metric-card,
+  .xsus-panel {
+    padding: 14px;
+  }
+
+  .xsus-toolbar button {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .xsus-status-badge,
+  .xsus-badge {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .xsus-command-input {
+    min-height: 48px;
+  }
+
+  .xsus-modal {
+    width: calc(100% - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+}
+
+/* ---------------------------------------------------------
+   7. VERY SMALL SCREENS
+   --------------------------------------------------------- */
+
+@media (max-width: 360px) {
+  .xsus-sidebar-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .xsus-main-content {
+    padding: 10px;
+  }
+
+  .xsus-topbar-actions {
+    flex-direction: column;
+  }
+
+  .xsus-topbar-actions button {
+    width: 100%;
+  }
+
+  .xsus-toolbar button {
+    flex-basis: 100%;
+  }
+}
+
+/* ---------------------------------------------------------
+   8. LANDSCAPE MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .xsus-modal {
+    max-height: 90dvh;
+  }
+
+  .xsus-architecture-canvas {
+    min-height: 280px;
+  }
+}
+
+/* ---------------------------------------------------------
+   9. TOUCH DEVICES
+   --------------------------------------------------------- */
+
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  button,
+  .xsus-button,
+  .xsus-button-primary,
+  .xsus-button-secondary {
+    min-height: 44px;
+  }
+
+  .xsus-tooltip {
+    display: none;
+  }
+
+  .xsus-engine-card:hover,
+  .xsus-panel:hover,
+  .xsus-metric-card:hover {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------
+   10. REDUCED MOTION
+   --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------
+   11. HIGH CONTRAST
+   --------------------------------------------------------- */
+
+@media (prefers-contrast: more) {
+  .xsus-panel,
+  .xsus-engine-card,
+  .xsus-metric-card {
+    border-width: 2px;
+  }
+
+  .xsus-status-badge,
+  .xsus-badge {
+    border: 1px solid currentColor;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 3px;
+  }
+}
+
+/* ---------------------------------------------------------
+   12. PRINT
+   --------------------------------------------------------- */
+
+@media print {
+  .xsus-sidebar,
+  .xsus-topbar-actions,
+  .xsus-toolbar,
+  .xsus-modal,
+  .xsus-tooltip {
+    display: none !important;
+  }
+
+  .xsus-app-shell {
+    display: block;
+  }
+
+  .xsus-main-content {
+    width: 100%;
+    padding: 0;
+  }
+
+  .xsus-panel,
+  .xsus-engine-card,
+  .xsus-metric-card {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
   }
 }
