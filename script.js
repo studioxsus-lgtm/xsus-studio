@@ -1,5 +1,4 @@
-
-import { smartRouter } from "./services/router.js";
+import { processAIRequest } from "./src/core/ai-core.js";
 
 /**
  * XSUS Studio — Main Frontend Controller
@@ -8,8 +7,8 @@ import { smartRouter } from "./services/router.js";
  * - Përkthimi EN / FR / SQ.
  * - Përputhshmëria me index.html dhe atributet data-i18n.
  * - Navigimi dhe përditësimi i ndërfaqes.
- * - Menaxhimi i bisedës me XSUS AI përmes smartRouter.
- * - Përgjigjet rezervë kur router-i nuk kthen përgjigje.
+ * - Komunikimi me XSUS AI Core përmes API-së publike processAIRequest.
+ * - Përgjigjet rezervë kur XSUS AI Core nuk kthen përgjigje të përdorshme.
  * - Ruajtja e funksioneve publike të përdorura nga HTML-ja.
  */
 
@@ -188,13 +187,6 @@ const translations = {
   }
 };
 
-let currentLang = getInitialLanguage();
-let chatIsProcessing = false;
-
-/**
- * Merr gjuhën e ruajtur pa lejuar që një problem me localStorage
- * të pengojë ngarkimin e faqes.
- */
 function getInitialLanguage() {
   try {
     const savedLanguage = localStorage.getItem("xsus_language");
@@ -208,9 +200,9 @@ function getInitialLanguage() {
   }
 }
 
-/**
- * Merr përkthimin për gjuhën aktive.
- */
+let currentLang = getInitialLanguage();
+let chatIsProcessing = false;
+
 function getTranslation(key, language = currentLang) {
   const languageDictionary = translations[language] || translations.en;
 
@@ -219,9 +211,6 @@ function getTranslation(key, language = currentLang) {
     key;
 }
 
-/**
- * Përditëson tekstin duke ruajtur ikonat dhe elementet HTML.
- */
 function translateElement(element, value) {
   if (!element || value === undefined || value === null) {
     return;
@@ -250,9 +239,6 @@ function translateElement(element, value) {
   element.textContent = value;
 }
 
-/**
- * Përkthen të gjithë elementet që përdorin data-i18n.
- */
 function translateDataAttributes() {
   document.querySelectorAll("[data-i18n]").forEach(element => {
     const key = element.getAttribute("data-i18n");
@@ -267,7 +253,6 @@ function translateDataAttributes() {
 
     if (!key) return;
 
-    // HTML përdoret vetëm për përkthimet e kontrolluara.
     element.innerHTML = getTranslation(key);
   });
 
@@ -296,9 +281,6 @@ function translateDataAttributes() {
   });
 }
 
-/**
- * Përditëson një element përmes ID-së.
- */
 function setTextById(id, value) {
   const element = document.getElementById(id);
 
@@ -307,9 +289,6 @@ function setTextById(id, value) {
   }
 }
 
-/**
- * Përditëson butonat klasikë të gjuhëve.
- */
 function updateLanguageButtons() {
   SUPPORTED_LANGUAGES.forEach(language => {
     const button = document.getElementById(`lang-${language}`);
@@ -336,9 +315,6 @@ function updateLanguageButtons() {
   }
 }
 
-/**
- * Përkthen kartat e moduleve.
- */
 function translateModuleCards() {
   const cards = [
     { selector: ".xsus-card-ai", key: "cardAI" },
@@ -383,9 +359,6 @@ function translateModuleCards() {
   });
 }
 
-/**
- * Përkthen footer-in.
- */
 function translateFooter() {
   const footer = document.querySelector("footer");
 
@@ -409,9 +382,6 @@ function translateFooter() {
   }
 }
 
-/**
- * Ndërron gjuhën e të gjithë ndërfaqes.
- */
 function setLanguage(language) {
   if (!SUPPORTED_LANGUAGES.includes(language)) {
     return;
@@ -473,9 +443,6 @@ function setLanguage(language) {
   window.lucide?.createIcons();
 }
 
-/**
- * Ndryshon temën e mockup-it të telefonit.
- */
 function setAppTheme(theme) {
   const screen = document.getElementById("phoneScreen");
 
@@ -494,9 +461,6 @@ function setAppTheme(theme) {
     `flex-1 bg-slate-900 rounded-[28px] p-4 flex flex-col justify-between border ${colors[theme]} shadow-lg`;
 }
 
-/**
- * Përditëson elementet e mockup-it sipas checkbox-eve.
- */
 function updateMockup() {
   ["ai", "scripts", "logo", "games"].forEach(name => {
     const checkbox = document.getElementById(`chk-${name}`);
@@ -508,9 +472,6 @@ function updateMockup() {
   });
 }
 
-/**
- * Lëviz në mënyrë të butë te një seksion.
- */
 function scrollToSection(id) {
   if (!id) return;
 
@@ -520,10 +481,6 @@ function scrollToSection(id) {
   });
 }
 
-/**
- * Shmang injektimin e HTML-së nga mesazhet e përdoruesit
- * ose përgjigjet e router-it.
- */
 function escapeHtml(value) {
   const entities = {
     "&": "&amp;",
@@ -538,9 +495,6 @@ function escapeHtml(value) {
   });
 }
 
-/**
- * Pastron bisedën dhe rikthen mesazhin fillestar.
- */
 function clearChat() {
   const stream = document.getElementById("chatStream");
 
@@ -581,7 +535,7 @@ function clearChat() {
 }
 
 /**
- * Merr tekstin e përgjigjes nga formatet e mundshme të router-it.
+ * Nxjerr tekstin nga formatet e përgjigjes së XSUS AI Core.
  */
 function extractResponseText(response) {
   if (typeof response === "string") {
@@ -593,8 +547,8 @@ function extractResponseText(response) {
   }
 
   const candidates = [
-    response.text,
     response.answer,
+    response.text,
     response.response,
     response.content,
     response.message
@@ -609,9 +563,6 @@ function extractResponseText(response) {
   return "";
 }
 
-/**
- * Krijon dhe shton një mesazh të përdoruesit.
- */
 function appendUserMessage(message) {
   const stream = document.getElementById("chatStream");
 
@@ -642,9 +593,6 @@ function appendUserMessage(message) {
   stream.scrollTop = stream.scrollHeight;
 }
 
-/**
- * Shfaq përgjigjen e AI-së.
- */
 function appendAiMessage(message) {
   const stream = document.getElementById("chatStream");
 
@@ -684,9 +632,6 @@ function appendAiMessage(message) {
   stream.scrollTop = stream.scrollHeight;
 }
 
-/**
- * Zbulim bazë i shqipes për ndërfaqen aktuale.
- */
 function detectMessageLanguage(text) {
   const value = String(text).toLowerCase();
 
@@ -712,10 +657,8 @@ function detectMessageLanguage(text) {
 }
 
 /**
- * Përgjigje rezervë kur router-i nuk prodhon tekst.
- *
- * Kjo është përgjigje lokale dhe nuk pretendon se është
- * kryer inferencë nga një model AI.
+ * Përgjigje rezervë lokale.
+ * Nuk pretendon se është kryer inferencë nga një model AI.
  */
 function generateSmartAiResponse(userPrompt, activeLang = currentLang) {
   const prompt = String(userPrompt).toLowerCase();
@@ -744,19 +687,16 @@ function generateSmartAiResponse(userPrompt, activeLang = currentLang) {
       ].join("\n");
     }
 
-    return `E mora kërkesën tënde: "${userPrompt}".\n\nPër momentin, router-i nuk dha një përgjigje të përdorshme. Provo përsëri ose kontrollo konfigurimin e shërbimit XSUS AI.`;
+    return `E mora kërkesën tënde: "${userPrompt}".\n\nPër momentin, XSUS AI Core nuk dha një përgjigje të përdorshme. Provo përsëri.`;
   }
 
   if (activeLang === "fr") {
-    return `J’ai reçu votre demande : "${userPrompt}".\n\nLe routeur n’a pas fourni de réponse exploitable. Veuillez réessayer ou vérifier la configuration du service XSUS AI.`;
+    return `J’ai reçu votre demande : "${userPrompt}".\n\nXSUS AI Core n’a pas fourni de réponse exploitable. Veuillez réessayer.`;
   }
 
-  return `I received your request: "${userPrompt}".\n\nThe router did not provide a usable response. Please try again or check the XSUS AI service configuration.`;
+  return `I received your request: "${userPrompt}".\n\nXSUS AI Core did not provide a usable response. Please try again.`;
 }
 
-/**
- * Aktivizon ose çaktivizon kontrollet e dërgimit.
- */
 function setChatControlsDisabled(disabled) {
   const form =
     document.getElementById("chatForm") ||
@@ -773,7 +713,7 @@ function setChatControlsDisabled(disabled) {
 }
 
 /**
- * Përpunon kërkesën e përdoruesit.
+ * Përpunon kërkesën drejtpërdrejt përmes API-së publike të XSUS AI Core.
  */
 async function handleChatSubmit(event) {
   event?.preventDefault();
@@ -793,7 +733,6 @@ async function handleChatSubmit(event) {
   setChatControlsDisabled(true);
 
   appendUserMessage(userText);
-
   input.value = "";
 
   const targetLang = detectMessageLanguage(userText);
@@ -801,10 +740,12 @@ async function handleChatSubmit(event) {
   let responseText = "";
 
   try {
-    // Router-i ekzistues mbetet rruga kryesore e përpunimit.
-    const routerResponse = await smartRouter(userText, targetLang);
+    const aiResponse = await processAIRequest({
+      query: userText,
+      language: targetLang
+    });
 
-    responseText = extractResponseText(routerResponse);
+    responseText = extractResponseText(aiResponse);
 
     if (!responseText) {
       responseText = generateSmartAiResponse(
@@ -813,7 +754,7 @@ async function handleChatSubmit(event) {
       );
     }
   } catch (error) {
-    console.error("XSUS AI router error:", error);
+    console.error("XSUS AI Core request error:", error);
 
     responseText = getTranslation("error", targetLang);
   } finally {
@@ -828,9 +769,6 @@ async function handleChatSubmit(event) {
   input.focus();
 }
 
-/**
- * Lidh kontrollin e gjuhës.
- */
 function initializeLanguageControls() {
   const selector = document.getElementById("languageSelect");
 
@@ -857,9 +795,6 @@ function initializeLanguageControls() {
   });
 }
 
-/**
- * Inicializimi i ndërfaqes.
- */
 function initializeXSUSStudio() {
   initializeLanguageControls();
 
@@ -882,8 +817,6 @@ function initializeXSUSStudio() {
         !event.isComposing
       ) {
         event.preventDefault();
-
-        // Përdor vetëm rrugën e përbashkët të dërgimit.
         handleChatSubmit(event);
       }
     });
