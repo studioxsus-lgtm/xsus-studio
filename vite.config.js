@@ -4,8 +4,31 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
+const nodeMemoryIntegration = fileURLToPath(
+  new URL(
+    './src/core/memory-persistence-integration.js',
+    import.meta.url
+  )
+);
+
+const browserMemoryIntegration = fileURLToPath(
+  new URL(
+    './src/core/browser-memory-persistence-integration.js',
+    import.meta.url
+  )
+);
+
 export default defineConfig({
   root,
+
+  resolve: {
+    alias: [
+      {
+        find: nodeMemoryIntegration,
+        replacement: browserMemoryIntegration
+      }
+    ]
+  },
 
   server: {
     host: '0.0.0.0',
