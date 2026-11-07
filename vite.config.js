@@ -4,13 +4,6 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
-const nodeMemoryIntegration = fileURLToPath(
-  new URL(
-    './src/core/memory-persistence-integration.js',
-    import.meta.url
-  )
-);
-
 const browserMemoryIntegration = fileURLToPath(
   new URL(
     './src/core/browser-memory-persistence-integration.js',
@@ -18,16 +11,16 @@ const browserMemoryIntegration = fileURLToPath(
   )
 );
 
-export default defineConfig({
-  root,
-
+export default defineConfig(({ command }) => ({
   resolve: {
-    alias: [
-      {
-        find: nodeMemoryIntegration,
-        replacement: browserMemoryIntegration
-      }
-    ]
+    alias: command === 'build'
+      ? [
+          {
+            find: './memory-persistence-integration.js',
+            replacement: browserMemoryIntegration
+          }
+        ]
+      : []
   },
 
   server: {
@@ -38,7 +31,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-
     rollupOptions: {
       input: {
         home: `${root}index.html`,
@@ -55,12 +47,10 @@ export default defineConfig({
 
   test: {
     environment: 'node',
-
     include: [
       'tests/**/*.test.js',
       'src/hyper-xsus-core/**/*.test.js'
     ],
-
     exclude: [
       'services/**',
       '**/node_modules/**',
@@ -68,16 +58,10 @@ export default defineConfig({
       '**/cypress/**',
       '**/.{idea,git,cache,output,temp}/**'
     ],
-
     clearMocks: true,
-
     coverage: {
       provider: 'v8',
-
-      include: [
-        'src/**/*.js'
-      ],
-
+      include: ['src/**/*.js'],
       exclude: [
         'services/**',
         'src/**/__tests__/**',
@@ -86,8 +70,7 @@ export default defineConfig({
         'tests/**',
         '**/node_modules/**'
       ],
-
       reporter: ['text', 'html']
     }
   }
-});
+}));
