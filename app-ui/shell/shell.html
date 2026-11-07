@@ -1,0 +1,279 @@
+<!--
+  XSUS APP — HYPER NEXUS SHELL
+  Version: 1.0.0
+  Module: Core UI Shell
+  Status: Initial implementation
+-->
+
+<div class="xsus-app-shell" id="xsus-app">
+
+  <!-- SIDEBAR -->
+  <aside
+    class="xsus-sidebar"
+    id="hyper-nexus-sidebar"
+    aria-label="Hyper Nexus sidebar"
+  >
+
+    <div class="xsus-sidebar-content">
+
+      <!-- BRAND -->
+      <a class="xsus-brand" href="index.html" aria-label="XSUS Studio home">
+
+        <div class="xsus-brand-mark" aria-hidden="true"></div>
+
+        <div>
+          <div class="xsus-brand-name">XSUS APP</div>
+          <div class="xsus-brand-tagline">THE X IDENTITY</div>
+        </div>
+
+      </a>
+
+      <!-- NAVIGATION -->
+      <nav class="xsus-sidebar-nav" aria-label="Hyper Nexus navigation">
+
+        <div class="xsus-nav-section">CONTROL CENTER</div>
+
+        <a
+          class="xsus-nav-item active"
+          href="#overview"
+          data-module-link="overview"
+          aria-current="page"
+        >
+          <span aria-hidden="true">◈</span>
+          <span>Overview</span>
+        </a>
+
+        <a
+          class="xsus-nav-item"
+          href="#command-center"
+          data-module-link="command-center"
+        >
+          <span aria-hidden="true">⌘</span>
+          <span>Command Center</span>
+        </a>
+
+        <a
+          class="xsus-nav-item"
+          href="#living-workspace"
+          data-module-link="living-workspace"
+        >
+          <span aria-hidden="true">▣</span>
+          <span>Living Workspace</span>
+        </a>
+
+        <div class="xsus-nav-section">INTELLIGENCE</div>
+
+        <a
+          class="xsus-nav-item"
+          href="#multi-agent"
+          data-module-link="multi-agent"
+        >
+          <span aria-hidden="true">✧</span>
+          <span>Multi-Agent Center</span>
+        </a>
+
+        <a
+          class="xsus-nav-item"
+          href="#workflow-studio"
+          data-module-link="workflow-studio"
+        >
+          <span aria-hidden="true">⟳</span>
+          <span>Workflow Studio</span>
+        </a>
+
+        <a
+          class="xsus-nav-item"
+          href="#knowledge-graph"
+          data-module-link="knowledge-graph"
+        >
+          <span aria-hidden="true">⬡</span>
+          <span>Knowledge Graph</span>
+        </a>
+
+        <div class="xsus-nav-section">SYSTEMS</div>
+
+        <a
+          class="xsus-nav-item"
+          href="#system-control"
+          data-module-link="system-control"
+        >
+          <span aria-hidden="true">◉</span>
+          <span>System Control</span>
+        </a>
+
+        <a
+          class="xsus-nav-item"
+          href="#integration-layer"
+          data-module-link="integration-layer"
+        >
+          <span aria-hidden="true">⇄</span>
+          <span>Integration Layer</span>
+        </a>
+
+        <a
+          class="xsus-nav-item"
+          href="#architecture"
+          data-module-link="architecture"
+        >
+          <span aria-hidden="true">⌬</span>
+          <span>Architecture</span>
+        </a>
+
+      </nav>
+
+      <!-- SIDEBAR FOOTER -->
+      <div class="xsus-sidebar-footer">
+
+        <div class="xsus-divider"></div>
+
+        <p>INDEPENDENT INTELLIGENCE INFRASTRUCTURE</p>
+
+        <span class="xsus-badge">
+          HYPER NEXUS ENVIRONMENT
+        </span>
+
+      </div>
+
+    </div>
+
+  </aside>
+
+  <!-- MAIN APPLICATION AREA -->
+  <div class="xsus-main-content">
+
+    <!-- TOPBAR -->
+    <header class="xsus-topbar">
+
+      <div class="xsus-topbar-heading">
+
+        <div class="xsus-eyebrow">
+          XSUS STUDIO / XSUS APP
+        </div>
+
+        <div
+          class="xsus-topbar-title"
+          id="hyper-nexus-page-title"
+        >
+          Hyper Nexus
+        </div>
+
+      </div>
+
+      <div class="xsus-topbar-actions">
+
+        <!-- INTERFACE STATUS ONLY -->
+        <span class="xsus-status" id="hyper-nexus-ui-status">
+
+          <span class="xsus-status-dot"></span>
+
+          Interface Ready
+
+        </span>
+
+        <!-- MOBILE SIDEBAR CONTROL -->
+        <button
+          type="button"
+          class="xsus-button-secondary"
+          id="hyper-nexus-menu-toggle"
+          aria-label="Toggle navigation"
+          aria-controls="hyper-nexus-sidebar"
+          aria-expanded="false"
+        >
+          ☰
+        </button>
+
+        <a
+          class="xsus-button-secondary"
+          href="index.html"
+        >
+          ← Studio
+        </a>
+
+      </div>
+
+    </header>
+
+    <!-- MODULE DISPLAY AREA -->
+    <main
+      class="xsus-content"
+      id="hyper-nexus-module-container"
+      tabindex="-1"
+    >
+
+      <!-- MODULES WILL BE LOADED HERE -->
+
+      <section
+        class="xsus-section"
+        id="overview"
+        data-module="overview"
+      >
+
+        <div class="xsus-page-header">
+
+          <div class="xsus-eyebrow">
+            XSUS APP / HYPER NEXUS
+          </div>
+
+          <h1 class="xsus-page-title">
+            Welcome to
+            <span class="xsus-gradient-text">
+              Hyper Nexus.
+            </span>
+          </h1>
+
+          <p class="xsus-page-description">
+            Your central environment for application engineering,
+            workspace management and controlled system orchestration.
+          </p>
+
+        </div>
+
+        <div class="xsus-panel">
+
+          <span class="xsus-badge">
+            HYPER NEXUS SHELL
+          </span>
+
+          <h2>Unified Application Environment</h2>
+
+          <p>
+            The central interface is initialized.
+            Application modules will become available as their
+            individual implementations are completed and registered.
+          </p>
+
+        </div>
+
+      </section>
+
+      <!-- FUTURE MODULES: REGISTERED AND LOADED SEPARATELY -->
+
+      <div
+        id="hyper-nexus-module-loading"
+        role="status"
+        aria-live="polite"
+        hidden
+      >
+        Loading module...
+      </div>
+
+      <div
+        id="hyper-nexus-module-error"
+        role="alert"
+        hidden
+      >
+        The requested module could not be loaded.
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="xsus-footer">
+
+      XSUS STUDIO · THE X IDENTITY · © 2026
+
+    </footer>
+
+  </div>
+
+</div>
