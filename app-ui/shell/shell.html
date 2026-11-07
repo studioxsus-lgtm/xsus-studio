@@ -1,279 +1,436 @@
-<!--
-  XSUS APP — HYPER NEXUS SHELL
-  Version: 1.0.0
-  Module: Core UI Shell
-  Status: Initial implementation
--->
-
-<div class="xsus-app-shell" id="xsus-app">
-
-  <!-- SIDEBAR -->
-  <aside
-    class="xsus-sidebar"
-    id="hyper-nexus-sidebar"
-    aria-label="Hyper Nexus sidebar"
-  >
-
-    <div class="xsus-sidebar-content">
-
-      <!-- BRAND -->
-      <a class="xsus-brand" href="index.html" aria-label="XSUS Studio home">
-
-        <div class="xsus-brand-mark" aria-hidden="true"></div>
-
-        <div>
-          <div class="xsus-brand-name">XSUS APP</div>
-          <div class="xsus-brand-tagline">THE X IDENTITY</div>
-        </div>
-
-      </a>
-
-      <!-- NAVIGATION -->
-      <nav class="xsus-sidebar-nav" aria-label="Hyper Nexus navigation">
-
-        <div class="xsus-nav-section">CONTROL CENTER</div>
-
-        <a
-          class="xsus-nav-item active"
-          href="#overview"
-          data-module-link="overview"
-          aria-current="page"
-        >
-          <span aria-hidden="true">◈</span>
-          <span>Overview</span>
-        </a>
-
-        <a
-          class="xsus-nav-item"
-          href="#command-center"
-          data-module-link="command-center"
-        >
-          <span aria-hidden="true">⌘</span>
-          <span>Command Center</span>
-        </a>
-
-        <a
-          class="xsus-nav-item"
-          href="#living-workspace"
-          data-module-link="living-workspace"
-        >
-          <span aria-hidden="true">▣</span>
-          <span>Living Workspace</span>
-        </a>
-
-        <div class="xsus-nav-section">INTELLIGENCE</div>
-
-        <a
-          class="xsus-nav-item"
-          href="#multi-agent"
-          data-module-link="multi-agent"
-        >
-          <span aria-hidden="true">✧</span>
-          <span>Multi-Agent Center</span>
-        </a>
-
-        <a
-          class="xsus-nav-item"
-          href="#workflow-studio"
-          data-module-link="workflow-studio"
-        >
-          <span aria-hidden="true">⟳</span>
-          <span>Workflow Studio</span>
-        </a>
-
-        <a
-          class="xsus-nav-item"
-          href="#knowledge-graph"
-          data-module-link="knowledge-graph"
-        >
-          <span aria-hidden="true">⬡</span>
-          <span>Knowledge Graph</span>
-        </a>
-
-        <div class="xsus-nav-section">SYSTEMS</div>
-
-        <a
-          class="xsus-nav-item"
-          href="#system-control"
-          data-module-link="system-control"
-        >
-          <span aria-hidden="true">◉</span>
-          <span>System Control</span>
-        </a>
+/**
+
+* XSUS APP — HYPER NEXUS SHELL
+* Version: 1.2.0
+* Module: Shell Controller
+* 
+* Responsibilities:
+* - Shell interface initialization
+* - Centralized navigation
+* - Static Overview presentation
+* - Dynamic module loading
+* - Mobile sidebar
+* - Page title management
+* 
+* Module metadata is managed by Module Registry.
+* Navigation is managed by Navigation Controller.
+* Dynamic views are managed by Module Loader.
+* 
+* Does not connect to XSUS AI Core or Hyper XSUS Core.
+  */
+
+import {
+DEFAULT_NAVIGATION_MODULE,
+createNavigationController
+} from "./navigation.js";
+
+import {
+getModuleDefinition,
+isModuleAvailable
+} from "../modules/module-registry.js";
+
+import {
+createModuleLoader
+} from "./module-loader.js";
+
+/**
+
+* Initializes the Hyper Nexus Shell.
+* 
+* @param {Document|HTMLElement} root
+* @returns {object|null}
+  */
+  export function initializeHyperNexusShell(root = document) {
+  if (!root || typeof root.querySelector !== "function") {
+  return null;
+  }
+
+const shell = root.querySelector("#xsus-app");
+
+if (!shell) {
+return null;
+}
+
+const sidebar = shell.querySelector(
+"#hyper-nexus-sidebar"
+);
+
+const menuToggle = shell.querySelector(
+"#hyper-nexus-menu-toggle"
+);
+
+const pageTitle = shell.querySelector(
+"#hyper-nexus-page-title"
+);
+
+const moduleContainer = shell.querySelector(
+"#hyper-nexus-module-container"
+);
+
+const loadingState = shell.querySelector(
+"#hyper-nexus-module-loading"
+);
+
+const errorState = shell.querySelector(
+"#hyper-nexus-module-error"
+);
+
+const overviewSection = moduleContainer?.querySelector(
+'[data-module="overview"]'
+);
+
+if (
+!sidebar ||
+!menuToggle ||
+!pageTitle ||
+!moduleContainer ||
+!overviewSection ||
+!loadingState ||
+!errorState
+) {
+console.error(
+"[Hyper Nexus Shell] Required shell elements are missing."
+);
+
+return null;
+
+}
+
+const windowRef =
+root.defaultView ||
+(typeof window !== "undefined" ? window : null);
+
+if (!windowRef) {
+return null;
+}
+
+let currentModule = DEFAULT_NAVIGATION_MODULE;
+let destroyed = false;
+
+const moduleLoader = createModuleLoader({
+container: moduleContainer,
+loadingElement: loadingState,
+errorElement: errorState
+});
+
+/**
+
+* Closes the mobile sidebar.
+  */
+  function closeSidebar() {
+  shell.classList.remove("is-sidebar-open");
+
+menuToggle.setAttribute(
+  "aria-expanded",
+  "false"
+);
+
+}
+
+/**
+
+* Toggles the mobile sidebar.
+  */
+  function toggleSidebar() {
+  const isOpen = shell.classList.toggle(
+  "is-sidebar-open"
+  );
+
+menuToggle.setAttribute(
+  "aria-expanded",
+  String(isOpen)
+);
 
-        <a
-          class="xsus-nav-item"
-          href="#integration-layer"
-          data-module-link="integration-layer"
-        >
-          <span aria-hidden="true">⇄</span>
-          <span>Integration Layer</span>
-        </a>
+}
 
-        <a
-          class="xsus-nav-item"
-          href="#architecture"
-          data-module-link="architecture"
-        >
-          <span aria-hidden="true">⌬</span>
-          <span>Architecture</span>
-        </a>
+/**
 
-      </nav>
+* Removes an existing unavailable-module placeholder.
+  */
+  function removeUnavailablePlaceholder() {
+  moduleContainer.querySelector(
+  "#hyper-nexus-unavailable-module"
+  )?.remove();
+  }
 
-      <!-- SIDEBAR FOOTER -->
-      <div class="xsus-sidebar-footer">
+/**
 
-        <div class="xsus-divider"></div>
+* Displays a safe placeholder for modules
+* that do not yet have a registered factory.
+  */
+  function renderUnavailableModule(title) {
+  const placeholder = document.createElement("section");
 
-        <p>INDEPENDENT INTELLIGENCE INFRASTRUCTURE</p>
+placeholder.id = "hyper-nexus-unavailable-module";
+placeholder.className = "xsus-panel";
+placeholder.setAttribute("role", "status");
 
-        <span class="xsus-badge">
-          HYPER NEXUS ENVIRONMENT
-        </span>
+const heading = document.createElement("h2");
+heading.textContent = title;
 
-      </div>
+const description = document.createElement("p");
 
-    </div>
+description.textContent =
+  "This module is not yet available. " +
+  "Its implementation and runtime registration " +
+  "must be completed and verified first.";
 
-  </aside>
+placeholder.append(heading, description);
+moduleContainer.appendChild(placeholder);
 
-  <!-- MAIN APPLICATION AREA -->
-  <div class="xsus-main-content">
+}
 
-    <!-- TOPBAR -->
-    <header class="xsus-topbar">
+/**
 
-      <div class="xsus-topbar-heading">
+* Updates active navigation links.
+  */
+  function updateNavigationUI(moduleId) {
+  shell.querySelectorAll("[data-module-link]")
+  .forEach((link) => {
+  const isActive =
+  link.dataset.moduleLink === moduleId;
+  
+  link.classList.toggle("active", isActive);
+  
+  if (isActive) {
+  link.setAttribute("aria-current", "page");
+  } else {
+  link.removeAttribute("aria-current");
+  }
+  });
+  }
 
-        <div class="xsus-eyebrow">
-          XSUS STUDIO / XSUS APP
-        </div>
+/**
 
-        <div
-          class="xsus-topbar-title"
-          id="hyper-nexus-page-title"
-        >
-          Hyper Nexus
-        </div>
+* Renders the selected module.
+  */
+  async function renderModule(navigationState) {
+  if (destroyed || !navigationState) {
+  return;
+  }
 
-      </div>
+const moduleId = navigationState.id;
+const definition = getModuleDefinition(moduleId);
 
-      <div class="xsus-topbar-actions">
+if (!definition) {
+  console.error(
+    `[Hyper Nexus Shell] Unknown module: ${moduleId}`
+  );
 
-        <!-- INTERFACE STATUS ONLY -->
-        <span class="xsus-status" id="hyper-nexus-ui-status">
+  return;
+}
 
-          <span class="xsus-status-dot"></span>
+currentModule = moduleId;
 
-          Interface Ready
+pageTitle.textContent =
+  definition.title || definition.name || moduleId;
 
-        </span>
+updateNavigationUI(moduleId);
+removeUnavailablePlaceholder();
 
-        <!-- MOBILE SIDEBAR CONTROL -->
-        <button
-          type="button"
-          class="xsus-button-secondary"
-          id="hyper-nexus-menu-toggle"
-          aria-label="Toggle navigation"
-          aria-controls="hyper-nexus-sidebar"
-          aria-expanded="false"
-        >
-          ☰
-        </button>
+closeSidebar();
 
-        <a
-          class="xsus-button-secondary"
-          href="index.html"
-        >
-          ← Studio
-        </a>
+if (moduleId === DEFAULT_NAVIGATION_MODULE) {
+  moduleLoader.unloadModule();
 
-      </div>
+  overviewSection.hidden = false;
+  moduleContainer.focus({ preventScroll: true });
 
-    </header>
+  return;
+}
 
-    <!-- MODULE DISPLAY AREA -->
-    <main
-      class="xsus-content"
-      id="hyper-nexus-module-container"
-      tabindex="-1"
-    >
+overviewSection.hidden = true;
 
-      <!-- MODULES WILL BE LOADED HERE -->
+if (
+  !isModuleAvailable(moduleId) ||
+  !moduleLoader.isRegistered(moduleId)
+) {
+  moduleLoader.unloadModule();
 
-      <section
-        class="xsus-section"
-        id="overview"
-        data-module="overview"
-      >
+  renderUnavailableModule(pageTitle.textContent);
 
-        <div class="xsus-page-header">
+  moduleContainer.focus({ preventScroll: true });
 
-          <div class="xsus-eyebrow">
-            XSUS APP / HYPER NEXUS
-          </div>
+  return;
+}
 
-          <h1 class="xsus-page-title">
-            Welcome to
-            <span class="xsus-gradient-text">
-              Hyper Nexus.
-            </span>
-          </h1>
+const result = await moduleLoader.loadModule(moduleId);
 
-          <p class="xsus-page-description">
-            Your central environment for application engineering,
-            workspace management and controlled system orchestration.
-          </p>
+if (destroyed || currentModule !== moduleId) {
+  return;
+}
 
-        </div>
+if (!result.success) {
+  console.error(
+    `[Hyper Nexus Shell] Module "${moduleId}" was not loaded.`,
+    result.reason
+  );
+}
 
-        <div class="xsus-panel">
+moduleContainer.focus({ preventScroll: true });
 
-          <span class="xsus-badge">
-            HYPER NEXUS SHELL
-          </span>
+}
 
-          <h2>Unified Application Environment</h2>
+/**
 
-          <p>
-            The central interface is initialized.
-            Application modules will become available as their
-            individual implementations are completed and registered.
-          </p>
+* Creates the centralized navigation controller.
+  */
+  const navigationController = createNavigationController({
+  windowRef,
 
-        </div>
+onNavigate(navigationState) {
+  void renderModule(navigationState);
+}
 
-      </section>
+});
 
-      <!-- FUTURE MODULES: REGISTERED AND LOADED SEPARATELY -->
+/**
 
-      <div
-        id="hyper-nexus-module-loading"
-        role="status"
-        aria-live="polite"
-        hidden
-      >
-        Loading module...
-      </div>
+* Handles navigation clicks.
+  */
+  function handleNavigation(event) {
+  const target = event.target;
 
-      <div
-        id="hyper-nexus-module-error"
-        role="alert"
-        hidden
-      >
-        The requested module could not be loaded.
-      </div>
+if (!target || typeof target.closest !== "function") {
+  return;
+}
 
-    </main>
+const link = target.closest("[data-module-link]");
 
-    <!-- FOOTER -->
-    <footer class="xsus-footer">
+if (!link || !shell.contains(link)) {
+  return;
+}
 
-      XSUS STUDIO · THE X IDENTITY · © 2026
+event.preventDefault();
 
-    </footer>
+navigationController.navigate(
+  link.dataset.moduleLink
+);
 
-  </div>
+}
 
-</div>
+function handleMenuClick() {
+toggleSidebar();
+}
+
+function handleKeydown(event) {
+if (event.key === "Escape") {
+closeSidebar();
+}
+}
+
+function handleResize() {
+if (windowRef.innerWidth > 760) {
+closeSidebar();
+}
+}
+
+shell.addEventListener(
+"click",
+handleNavigation
+);
+
+menuToggle.addEventListener(
+"click",
+handleMenuClick
+);
+
+windowRef.addEventListener(
+"keydown",
+handleKeydown
+);
+
+windowRef.addEventListener(
+"resize",
+handleResize
+);
+
+try {
+navigationController.initialize();
+} catch (error) {
+shell.removeEventListener("click", handleNavigation);
+menuToggle.removeEventListener("click", handleMenuClick);
+
+windowRef.removeEventListener("keydown", handleKeydown);
+windowRef.removeEventListener("resize", handleResize);
+
+navigationController.destroy();
+moduleLoader.unloadModule();
+
+console.error(
+  "[Hyper Nexus Shell] Initialization failed.",
+  error
+);
+
+return null;
+
+}
+
+console.info(
+"[Hyper Nexus Shell] Initialized successfully."
+);
+
+/**
+
+* Cleanup.
+  */
+  function destroy() {
+  if (destroyed) {
+  return;
+  }
+
+destroyed = true;
+
+shell.removeEventListener(
+  "click",
+  handleNavigation
+);
+
+menuToggle.removeEventListener(
+  "click",
+  handleMenuClick
+);
+
+windowRef.removeEventListener(
+  "keydown",
+  handleKeydown
+);
+
+windowRef.removeEventListener(
+  "resize",
+  handleResize
+);
+
+navigationController.destroy();
+moduleLoader.unloadModule();
+
+closeSidebar();
+
+console.info(
+  "[Hyper Nexus Shell] Destroyed."
+);
+
+}
+
+return Object.freeze({
+destroy,
+
+getCurrentModule() {
+  return currentModule;
+},
+
+registerModule(moduleId, factory) {
+  if (destroyed) {
+    throw new Error(
+      "Hyper Nexus Shell has been destroyed."
+    );
+  }
+
+  return moduleLoader.registerModule(
+    moduleId,
+    factory
+  );
+}
+
+});
+}
