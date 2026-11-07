@@ -1,237 +1,275 @@
-
 /*
- * XSUS APP — HYPER NEXUS
- * Navigation Controller
- * Version: 1.0.0
- *
- * Responsibilities:
- * - Validate navigation identifiers
- * - Manage active navigation item
- * - Handle browser history
- * - Notify the Shell when navigation changes
- *
- * Does not load modules or connect to Core systems.
- */
 
-export const DEFAULT_NAVIGATION_MODULE = "overview";
+* XSUS APP — HYPER NEXUS
+* Navigation Controller
+* Version: 1.1.0
+* 
+* Responsibilities:
+* - Validate navigation identifiers through Module Registry
+* - Resolve module metadata
+* - Manage active navigation item
+* - Handle browser history
+* - Notify the Shell when navigation changes
+* 
+* Module Registry is the single source of truth.
+* 
+* Does not load modules or connect to Core systems.
+  */
 
-export const HYPER_NEXUS_NAVIGATION = Object.freeze({
-  overview: {
-    title: "Hyper Nexus",
-    available: true
-  },
-
-  "command-center": {
-    title: "Command Center",
-    available: false
-  },
-
-  "living-workspace": {
-    title: "Living Workspace",
-    available: false
-  },
-
-  "multi-agent": {
-    title: "Multi-Agent Center",
-    available: false
-  },
-
-  "workflow-studio": {
-    title: "Workflow Studio",
-    available: false
-  },
-
-  "knowledge-graph": {
-    title: "Knowledge Graph Explorer",
-    available: false
-  },
-
-  "system-control": {
-    title: "System Control",
-    available: false
-  },
-
-  "integration-layer": {
-    title: "Integration Layer",
-    available: false
-  },
-
-  architecture: {
-    title: "Architecture",
-    available: false
-  }
-});
+import {
+getAllModuleDefinitions,
+getModuleDefinition,
+isModuleRegistered,
+isModuleAvailable
+} from "../modules/module-registry.js";
 
 /**
- * Validates a navigation identifier.
- *
- * @param {string} identifier
- * @returns {boolean}
- */
-export function isValidNavigationModule(identifier) {
-  return (
-    typeof identifier === "string" &&
-    Object.prototype.hasOwnProperty.call(
-      HYPER_NEXUS_NAVIGATION,
-      identifier
-    )
+
+* Default navigation module.
+  */
+  export const DEFAULT_NAVIGATION_MODULE = "overview";
+
+/**
+
+* Compatibility export.
+* 
+* This object is derived from the central registry.
+* It is not an independent module definition source.
+  */
+  export const HYPER_NEXUS_NAVIGATION = Object.freeze(
+  Object.fromEntries(
+  getAllModuleDefinitions().map((module) => [
+  module.id,
+  Object.freeze({
+  title: module.title,
+  available: isModuleAvailable(module.id)
+  })
+  ])
+  )
   );
-}
 
 /**
- * Resolves an identifier to a valid module.
- *
- * @param {string} identifier
- * @returns {string}
- */
-export function resolveNavigationModule(identifier) {
+
+* Validates a navigation identifier.
+* 
+* @param {string} identifier
+* @returns {boolean}
+  */
+  export function isValidNavigationModule(identifier) {
+  return isModuleRegistered(identifier);
+  }
+
+/**
+
+* Resolves an identifier to a registered module.
+* 
+* @param {string} identifier
+* @returns {string}
+  */
+  export function resolveNavigationModule(identifier) {
   return isValidNavigationModule(identifier)
-    ? identifier
-    : DEFAULT_NAVIGATION_MODULE;
-}
+  ? identifier
+  : DEFAULT_NAVIGATION_MODULE;
+  }
 
 /**
- * Reads the current module from the URL.
- *
- * @param {Location} location
- * @returns {string}
- */
-export function getNavigationFromLocation(
+
+* Reads the current module from the URL.
+* 
+* @param {Location} location
+* @returns {string}
+  */
+  export function getNavigationFromLocation(
   location = window.location
-) {
+  ) {
   const identifier = location.hash.replace(/^#/, "");
 
-  return resolveNavigationModule(
-    identifier || DEFAULT_NAVIGATION_MODULE
-  );
+return resolveNavigationModule(
+identifier || DEFAULT_NAVIGATION_MODULE
+);
 }
 
 /**
- * Creates an independent navigation controller.
- *
- * @param {object} options
- * @param {Window} options.windowRef
- * @param {Function} options.onNavigate
- * @returns {object}
- */
-export function createNavigationController({
+
+* Creates an independent navigation controller.
+* 
+* @param {object} options
+* @param {Window} options.windowRef
+* @param {Function} options.onNavigate
+* @returns {object}
+  */
+  export function createNavigationController({
   windowRef = window,
   onNavigate = () => {}
-} = {}) {
-  if (typeof onNavigate !== "function") {
-    throw new TypeError(
-      "onNavigate must be a function."
-    );
+  } = {}) {
+  if (
+  !windowRef ||
+  !windowRef.location ||
+  !windowRef.history ||
+  typeof windowRef.addEventListener !== "function" ||
+  typeof windowRef.removeEventListener !== "function"
+  ) {
+  throw new TypeError(
+  "A valid browser window reference is required."
+  );
   }
 
-  let currentModule = DEFAULT_NAVIGATION_MODULE;
-  let initialized = false;
+if (typeof onNavigate !== "function") {
+throw new TypeError(
+"onNavigate must be a function."
+);
+}
 
-  /**
-   * Navigates to a registered module.
-   *
-   * @param {string} identifier
-   * @param {object} options
-   */
+let currentModule = DEFAULT_NAVIGATION_MODULE;
+let initialized = false;
+
+/**
+
+* Notifies the Shell with authoritative registry metadata.
+* 
+* @param {string} moduleId
+  */
+  function notifyNavigation(moduleId) {
+  const definition = getModuleDefinition(moduleId);
+
+if (!definition) {
+  return;
+}
+
+onNavigate({
+  ...definition,
+  available: isModuleAvailable(moduleId)
+});
+
+}
+
+/**
+
+* Navigates to a registered module.
+* 
+* @param {string} identifier
+* @param {object} options
+* @returns {string}
+  */
   function navigate(identifier, options = {}) {
-    const moduleId = resolveNavigationModule(identifier);
+  const moduleId = resolveNavigationModule(identifier);
 
-    const {
-      updateHistory = true,
-      replaceHistory = false
-    } = options;
+const {
+  updateHistory = true,
+  replaceHistory = false,
+  forceNotify = false
+} = options;
 
-    const nextHash = `#${moduleId}`;
+const nextHash = `#${moduleId}`;
 
-    if (updateHistory) {
-      if (windowRef.location.hash !== nextHash) {
-        const historyMethod = replaceHistory
-          ? "replaceState"
-          : "pushState";
+if (updateHistory && windowRef.location.hash !== nextHash) {
+  const historyMethod = replaceHistory
+    ? "replaceState"
+    : "pushState";
 
-        windowRef.history[historyMethod](
-          { module: moduleId },
-          "",
-          nextHash
-        );
-      }
-    }
+  windowRef.history[historyMethod](
+    { module: moduleId },
+    "",
+    nextHash
+  );
+}
 
-    currentModule = moduleId;
+const hasChanged = currentModule !== moduleId;
 
-    onNavigate({
-      id: moduleId,
-      ...HYPER_NEXUS_NAVIGATION[moduleId]
-    });
+currentModule = moduleId;
 
-    return moduleId;
-  }
+if (hasChanged || forceNotify) {
+  notifyNavigation(moduleId);
+}
 
-  /**
-   * Synchronizes navigation with browser history.
-   */
+return moduleId;
+
+}
+
+/**
+
+* Synchronizes navigation with browser history.
+* 
+* Duplicate notifications are avoided when both
+* popstate and hashchange report the same destination.
+  */
   function handleHistoryChange() {
-    navigate(
-      getNavigationFromLocation(windowRef.location),
-      { updateHistory: false }
-    );
-  }
+  const requestedModule = getNavigationFromLocation(
+  windowRef.location
+  );
 
-  /**
-   * Initializes history listeners and initial state.
-   */
+if (requestedModule === currentModule) {
+  return;
+}
+
+navigate(requestedModule, {
+  updateHistory: false
+});
+
+}
+
+/**
+
+* Initializes history listeners and initial state.
+* 
+* @returns {string}
+  */
   function initialize() {
-    if (initialized) {
-      return currentModule;
-    }
-
-    windowRef.addEventListener(
-      "popstate",
-      handleHistoryChange
-    );
-
-    windowRef.addEventListener(
-      "hashchange",
-      handleHistoryChange
-    );
-
-    initialized = true;
-
-    return navigate(
-      getNavigationFromLocation(windowRef.location),
-      {
-        updateHistory: true,
-        replaceHistory: true
-      }
-    );
+  if (initialized) {
+  return currentModule;
   }
 
-  /**
-   * Removes registered listeners.
-   */
+windowRef.addEventListener(
+  "popstate",
+  handleHistoryChange
+);
+
+windowRef.addEventListener(
+  "hashchange",
+  handleHistoryChange
+);
+
+initialized = true;
+
+return navigate(
+  getNavigationFromLocation(windowRef.location),
+  {
+    updateHistory: true,
+    replaceHistory: true,
+    forceNotify: true
+  }
+);
+
+}
+
+/**
+
+* Removes registered listeners.
+  */
   function destroy() {
-    if (!initialized) {
-      return;
-    }
-
-    windowRef.removeEventListener(
-      "popstate",
-      handleHistoryChange
-    );
-
-    windowRef.removeEventListener(
-      "hashchange",
-      handleHistoryChange
-    );
-
-    initialized = false;
+  if (!initialized) {
+  return;
   }
 
-  return Object.freeze({
-    initialize,
-    navigate,
-    destroy,
-    getCurrentModule: () => currentModule,
-    isInitialized: () => initialized
-  });
+windowRef.removeEventListener(
+  "popstate",
+  handleHistoryChange
+);
+
+windowRef.removeEventListener(
+  "hashchange",
+  handleHistoryChange
+);
+
+initialized = false;
+
+}
+
+return Object.freeze({
+initialize,
+navigate,
+destroy,
+getCurrentModule: () => currentModule,
+isInitialized: () => initialized
+});
 }
