@@ -1,0 +1,566 @@
+
+/*
+ * XSUS APP — Advanced UI Components
+ * Version: 1.0.0
+ * Frontier Intelligent Engineering Ecosystem
+ */
+
+/* BUTTON SYSTEM */
+
+.xsus-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 10px 17px;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-md);
+  background: var(--xsus-surface-raised);
+  color: var(--xsus-text);
+  font-size: var(--xsus-text-sm);
+  font-weight: 650;
+  cursor: pointer;
+  transition: all var(--xsus-transition);
+}
+
+.xsus-btn:hover {
+  border-color: var(--xsus-border-active);
+  transform: translateY(-2px);
+  box-shadow: var(--xsus-shadow-glow);
+}
+
+.xsus-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.xsus-btn-primary {
+  color: #03101b;
+  background: var(--xsus-gradient-brand);
+  border-color: transparent;
+  font-weight: 800;
+}
+
+.xsus-btn-primary:hover {
+  filter: brightness(1.12);
+  box-shadow: var(--xsus-shadow-active);
+}
+
+.xsus-btn-secondary {
+  background: rgba(54, 120, 255, 0.10);
+  border-color: rgba(54, 120, 255, 0.30);
+}
+
+.xsus-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--xsus-text-secondary);
+}
+
+.xsus-btn-danger {
+  color: var(--xsus-danger);
+  background: rgba(255, 85, 120, 0.08);
+  border-color: rgba(255, 85, 120, 0.25);
+}
+
+.xsus-btn-icon {
+  width: 42px;
+  min-width: 42px;
+  padding: 0;
+}
+
+/* METRIC CARDS */
+
+.xsus-metric-card {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  padding: var(--xsus-space-5);
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-lg);
+  background: var(--xsus-gradient-surface);
+  transition: border-color var(--xsus-transition),
+              transform var(--xsus-transition);
+}
+
+.xsus-metric-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--xsus-border-active);
+}
+
+.xsus-metric-label {
+  color: var(--xsus-text-muted);
+  font-size: var(--xsus-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.xsus-metric-value {
+  margin-top: 10px;
+  color: var(--xsus-text);
+  font-size: var(--xsus-text-3xl);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.xsus-metric-detail {
+  margin-top: 9px;
+  color: var(--xsus-text-secondary);
+  font-size: var(--xsus-text-xs);
+}
+
+/* ENGINE CARDS */
+
+.xsus-engine-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--xsus-space-4);
+  min-width: 0;
+  padding: var(--xsus-space-5);
+  overflow: hidden;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-lg);
+  background: var(--xsus-gradient-surface);
+  transition: all var(--xsus-transition);
+}
+
+.xsus-engine-card:hover {
+  border-color: var(--xsus-border-active);
+  box-shadow: var(--xsus-shadow-glow);
+  transform: translateY(-3px);
+}
+
+.xsus-engine-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--xsus-border-strong);
+  border-radius: var(--xsus-radius-md);
+  color: var(--xsus-cyan);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.xsus-engine-title {
+  font-size: var(--xsus-text-lg);
+  font-weight: 750;
+}
+
+.xsus-engine-description {
+  color: var(--xsus-text-muted);
+  font-size: var(--xsus-text-sm);
+}
+
+/* STATUS INDICATORS */
+
+.xsus-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 5px 10px;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-full);
+  color: var(--xsus-text-secondary);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: var(--xsus-text-xs);
+  font-weight: 650;
+}
+
+.xsus-status-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--xsus-text-muted);
+}
+
+.xsus-status-online .xsus-status-dot {
+  background: var(--xsus-success);
+  box-shadow: 0 0 12px rgba(40, 224, 161, 0.6);
+}
+
+.xsus-status-warning .xsus-status-dot {
+  background: var(--xsus-warning);
+}
+
+.xsus-status-error .xsus-status-dot {
+  background: var(--xsus-danger);
+}
+
+.xsus-status-info .xsus-status-dot {
+  background: var(--xsus-info);
+}
+
+/* BADGES */
+
+.xsus-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 9px;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-full);
+  color: var(--xsus-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+}
+
+.xsus-badge-planned {
+  color: var(--xsus-warning);
+  border-color: rgba(255, 189, 89, 0.25);
+  background: rgba(255, 189, 89, 0.07);
+}
+
+.xsus-badge-active {
+  color: var(--xsus-success);
+  border-color: rgba(40, 224, 161, 0.25);
+  background: rgba(40, 224, 161, 0.07);
+}
+
+.xsus-badge-experimental {
+  color: var(--xsus-violet);
+  border-color: rgba(129, 87, 255, 0.3);
+  background: rgba(129, 87, 255, 0.08);
+}
+
+/* FORM CONTROLS */
+
+.xsus-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.xsus-label {
+  color: var(--xsus-text-secondary);
+  font-size: var(--xsus-text-sm);
+  font-weight: 650;
+}
+
+.xsus-input,
+.xsus-select,
+.xsus-textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 13px;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-md);
+  outline: none;
+  color: var(--xsus-text);
+  background: rgba(4, 9, 20, 0.85);
+  transition: border-color var(--xsus-transition),
+              box-shadow var(--xsus-transition);
+}
+
+.xsus-input:focus,
+.xsus-select:focus,
+.xsus-textarea:focus {
+  border-color: var(--xsus-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.09);
+}
+
+.xsus-input::placeholder,
+.xsus-textarea::placeholder {
+  color: var(--xsus-text-disabled);
+}
+
+.xsus-textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.xsus-select option {
+  color: var(--xsus-text);
+  background: var(--xsus-surface);
+}
+
+/* COMMAND INPUT */
+
+.xsus-command-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--xsus-border-strong);
+  border-radius: var(--xsus-radius-lg);
+  background: rgba(4, 10, 22, 0.88);
+  box-shadow: var(--xsus-shadow-glow);
+}
+
+.xsus-command-input input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  border: 0;
+  outline: 0;
+  color: var(--xsus-text);
+  background: transparent;
+}
+
+/* PROGRESS SYSTEM */
+
+.xsus-progress {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border-radius: var(--xsus-radius-full);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.xsus-progress-bar {
+  width: var(--progress, 0%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--xsus-gradient-brand);
+  transition: width 400ms ease;
+}
+
+/* MONITORING METRICS */
+
+.xsus-monitor-value {
+  color: var(--xsus-cyan);
+  font-family: var(--xsus-font-mono);
+  font-size: var(--xsus-text-xl);
+  font-weight: 750;
+}
+
+.xsus-monitor-label {
+  color: var(--xsus-text-muted);
+  font-size: var(--xsus-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* EVENT LOG */
+
+.xsus-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 5px;
+}
+
+.xsus-log-entry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.xsus-log-time {
+  color: var(--xsus-text-muted);
+  font-family: var(--xsus-font-mono);
+  font-size: 0.7rem;
+}
+
+/* CODE AND OUTPUT VIEWERS */
+
+.xsus-code-viewer,
+.xsus-output-viewer {
+  min-width: 0;
+  overflow: auto;
+  padding: var(--xsus-space-5);
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-lg);
+  background: #030711;
+  color: #c7d7f5;
+  font-family: var(--xsus-font-mono);
+  font-size: var(--xsus-text-sm);
+  line-height: 1.8;
+  tab-size: 2;
+}
+
+.xsus-output-viewer {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ARCHITECTURE NODES */
+
+.xsus-architecture-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 130px;
+  padding: var(--xsus-space-4);
+  border: 1px solid var(--xsus-border-strong);
+  border-radius: var(--xsus-radius-md);
+  background: rgba(12, 24, 43, 0.95);
+  box-shadow: var(--xsus-shadow-glow);
+}
+
+.xsus-architecture-node-title {
+  color: var(--xsus-cyan);
+  font-size: var(--xsus-text-sm);
+  font-weight: 750;
+}
+
+.xsus-architecture-node-detail {
+  color: var(--xsus-text-muted);
+  font-size: var(--xsus-text-xs);
+}
+
+/* TOOLBAR */
+
+.xsus-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-md);
+  background: rgba(10, 17, 31, 0.8);
+}
+
+/* TABS */
+
+.xsus-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-md);
+  background: rgba(4, 9, 20, 0.7);
+}
+
+.xsus-tab {
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: var(--xsus-radius-sm);
+  color: var(--xsus-text-muted);
+  background: transparent;
+  font-size: var(--xsus-text-sm);
+  cursor: pointer;
+}
+
+.xsus-tab:hover {
+  color: var(--xsus-text);
+}
+
+.xsus-tab.active {
+  color: var(--xsus-cyan);
+  border-color: var(--xsus-border-strong);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+/* TOOLTIP */
+
+.xsus-tooltip {
+  position: relative;
+}
+
+.xsus-tooltip[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  z-index: 20;
+  width: max-content;
+  max-width: 220px;
+  padding: 7px 10px;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-sm);
+  color: var(--xsus-text);
+  background: var(--xsus-surface-raised);
+  font-size: var(--xsus-text-xs);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition: all var(--xsus-transition);
+}
+
+.xsus-tooltip:hover::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* EMPTY STATES */
+
+.xsus-empty-state {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  min-height: 180px;
+  padding: var(--xsus-space-6);
+  text-align: center;
+  border: 1px dashed var(--xsus-border);
+  border-radius: var(--xsus-radius-lg);
+  color: var(--xsus-text-muted);
+}
+
+/* LOADING */
+
+.xsus-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--xsus-text-secondary);
+  font-size: var(--xsus-text-sm);
+}
+
+.xsus-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 229, 255, 0.2);
+  border-top-color: var(--xsus-cyan);
+  border-radius: 50%;
+  animation: xsus-spin 800ms linear infinite;
+}
+
+@keyframes xsus-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* SCROLLBARS */
+
+.xsus-log,
+.xsus-code-viewer,
+.xsus-output-viewer {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 229, 255, 0.28) transparent;
+}
+
+.xsus-log::-webkit-scrollbar,
+.xsus-code-viewer::-webkit-scrollbar,
+.xsus-output-viewer::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.xsus-log::-webkit-scrollbar-thumb,
+.xsus-code-viewer::-webkit-scrollbar-thumb,
+.xsus-output-viewer::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: rgba(0, 229, 255, 0.28);
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .xsus-spinner {
+    animation: none;
+  }
+
+  .xsus-btn,
+  .xsus-engine-card,
+  .xsus-metric-card {
+    transition: none;
+  }
+}
