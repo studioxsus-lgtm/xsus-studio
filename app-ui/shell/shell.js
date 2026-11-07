@@ -1,17 +1,20 @@
 /**
 
 * XSUS APP — HYPER NEXUS SHELL
-* Version: 1.1.0
+* Version: 1.2.0
 * Module: Shell Controller
 * 
 * Responsibilities:
 * - Shell interface initialization
-* - Module presentation
+* - Centralized navigation
+* - Static Overview presentation
+* - Dynamic module loading
 * - Mobile sidebar
 * - Page title management
 * 
-* Navigation is managed by navigation.js.
-* Module metadata is managed by module-registry.js.
+* Module metadata is managed by Module Registry.
+* Navigation is managed by Navigation Controller.
+* Dynamic views are managed by Module Loader.
 * 
 * Does not connect to XSUS AI Core or Hyper XSUS Core.
   */
@@ -26,15 +29,16 @@ getModuleDefinition,
 isModuleAvailable
 } from "../modules/module-registry.js";
 
+import {
+createModuleLoader
+} from "./module-loader.js";
+
 /**
 
 * Initializes the Hyper Nexus Shell.
 * 
 * @param {Document|HTMLElement} root
-* @returns {{
-* destroy: Function,
-* getCurrentModule: Function
-* } | null}
+* @returns {object|null}
   */
   export function initializeHyperNexusShell(root = document) {
   if (!root || typeof root.querySelector !== "function") {
@@ -80,7 +84,9 @@ if (
 !menuToggle ||
 !pageTitle ||
 !moduleContainer ||
-!overviewSection
+!overviewSection ||
+!loadingState ||
+!errorState
 ) {
 console.error(
 "[Hyper Nexus Shell] Required shell elements are missing."
@@ -90,20 +96,22 @@ return null;
 
 }
 
-const windowRef = root.defaultView ||
+const windowRef =
+root.defaultView ||
 (typeof window !== "undefined" ? window : null);
 
 if (!windowRef) {
-console.error(
-"[Hyper Nexus Shell] Browser environment is unavailable."
-);
-
 return null;
-
 }
 
 let currentModule = DEFAULT_NAVIGATION_MODULE;
 let destroyed = false;
+
+const moduleLoader = createModuleLoader({
+container: moduleContainer,
+loadingElement: loadingState,
+errorElement: errorState
+});
 
 /**
 
@@ -140,20 +148,15 @@ menuToggle.setAttribute(
 * Removes an existing unavailable-module placeholder.
   */
   function removeUnavailablePlaceholder() {
-  const placeholder = moduleContainer.querySelector(
+  moduleContainer.querySelector(
   "#hyper-nexus-unavailable-module"
-  );
-
-placeholder?.remove();
-
-}
+  )?.remove();
+  }
 
 /**
 
-* Creates a safe placeholder for modules
-* that are not yet available.
-* 
-* @param {string} title
+* Displays a safe placeholder for modules
+* that do not yet have a registered factory.
   */
   function renderUnavailableModule(title) {
   const placeholder = document.createElement("section");
@@ -168,8 +171,9 @@ heading.textContent = title;
 const description = document.createElement("p");
 
 description.textContent =
-  "This module has not been implemented and verified yet. " +
-  "It will become available after its development and testing.";
+  "This module is not yet available. " +
+  "Its implementation and runtime registration " +
+  "must be completed and verified first.";
 
 placeholder.append(heading, description);
 moduleContainer.appendChild(placeholder);
@@ -179,10 +183,6 @@ moduleContainer.appendChild(placeholder);
 /**
 
 * Updates active navigation links.
-
-* 
-
-* @param {string} moduleId
   */
   function updateNavigationUI(moduleId) {
   shell.querySelectorAll("[data-module-link]")
@@ -202,21 +202,19 @@ moduleContainer.appendChild(placeholder);
 
 /**
 
-* Renders a module using registry metadata.
-* 
-* @param {{id: string}} navigationState
+* Renders the selected module.
   */
-  function renderModule(navigationState) {
+  async function renderModule(navigationState) {
   if (destroyed || !navigationState) {
   return;
   }
 
 const moduleId = navigationState.id;
-const moduleDefinition = getModuleDefinition(moduleId);
+const definition = getModuleDefinition(moduleId);
 
-if (!moduleDefinition) {
+if (!definition) {
   console.error(
-    `[Hyper Nexus Shell] Module definition not found: ${moduleId}`
+    `[Hyper Nexus Shell] Unknown module: ${moduleId}`
   );
 
   return;
@@ -224,49 +222,64 @@ if (!moduleDefinition) {
 
 currentModule = moduleId;
 
-pageTitle.textContent = moduleDefinition.title ||
-  moduleDefinition.name ||
-  moduleId;
-
-if (loadingState) {
-  loadingState.hidden = true;
-}
-
-if (errorState) {
-  errorState.hidden = true;
-}
+pageTitle.textContent =
+  definition.title || definition.name || moduleId;
 
 updateNavigationUI(moduleId);
-
-overviewSection.hidden =
-  moduleId !== DEFAULT_NAVIGATION_MODULE;
-
 removeUnavailablePlaceholder();
-
-if (!isModuleAvailable(moduleId)) {
-  renderUnavailableModule(
-    pageTitle.textContent
-  );
-}
 
 closeSidebar();
 
-moduleContainer.focus({
-  preventScroll: true
-});
+if (moduleId === DEFAULT_NAVIGATION_MODULE) {
+  moduleLoader.unloadModule();
+
+  overviewSection.hidden = false;
+  moduleContainer.focus({ preventScroll: true });
+
+  return;
+}
+
+overviewSection.hidden = true;
+
+if (
+  !isModuleAvailable(moduleId) ||
+  !moduleLoader.isRegistered(moduleId)
+) {
+  moduleLoader.unloadModule();
+
+  renderUnavailableModule(pageTitle.textContent);
+
+  moduleContainer.focus({ preventScroll: true });
+
+  return;
+}
+
+const result = await moduleLoader.loadModule(moduleId);
+
+if (destroyed || currentModule !== moduleId) {
+  return;
+}
+
+if (!result.success) {
+  console.error(
+    `[Hyper Nexus Shell] Module "${moduleId}" was not loaded.`,
+    result.reason
+  );
+}
+
+moduleContainer.focus({ preventScroll: true });
 
 }
 
 /**
 
-* Navigation controller.
-* Owns hash navigation and browser history.
+* Creates the centralized navigation controller.
   */
   const navigationController = createNavigationController({
   windowRef,
 
 onNavigate(navigationState) {
-  renderModule(navigationState);
+  void renderModule(navigationState);
 }
 
 });
@@ -296,42 +309,26 @@ navigationController.navigate(
 
 }
 
-/**
+function handleMenuClick() {
+toggleSidebar();
+}
 
-* Handles mobile menu click.
-  */
-  function handleMenuClick() {
-  toggleSidebar();
-  }
+function handleKeydown(event) {
+if (event.key === "Escape") {
+closeSidebar();
+}
+}
 
-/**
+function handleResize() {
+if (windowRef.innerWidth > 760) {
+closeSidebar();
+}
+}
 
-* Handles Escape key.
-  */
-  function handleKeydown(event) {
-  if (event.key === "Escape") {
-  closeSidebar();
-  }
-  }
-
-/**
-
-* Handles viewport changes.
-  */
-  function handleResize() {
-  if (windowRef.innerWidth > 760) {
-  closeSidebar();
-  }
-  }
-
-/**
-
-* Register Shell-specific events.
-  */
-  shell.addEventListener(
-  "click",
-  handleNavigation
-  );
+shell.addEventListener(
+"click",
+handleNavigation
+);
 
 menuToggle.addEventListener(
 "click",
@@ -348,34 +345,17 @@ windowRef.addEventListener(
 handleResize
 );
 
-/**
+try {
+navigationController.initialize();
+} catch (error) {
+shell.removeEventListener("click", handleNavigation);
+menuToggle.removeEventListener("click", handleMenuClick);
 
-* Initialize centralized navigation.
-  */
-  try {
-  navigationController.initialize();
-  } catch (error) {
-  shell.removeEventListener(
-  "click",
-  handleNavigation
-  );
-
-menuToggle.removeEventListener(
-  "click",
-  handleMenuClick
-);
-
-windowRef.removeEventListener(
-  "keydown",
-  handleKeydown
-);
-
-windowRef.removeEventListener(
-  "resize",
-  handleResize
-);
+windowRef.removeEventListener("keydown", handleKeydown);
+windowRef.removeEventListener("resize", handleResize);
 
 navigationController.destroy();
+moduleLoader.unloadModule();
 
 console.error(
   "[Hyper Nexus Shell] Initialization failed.",
@@ -422,9 +402,9 @@ windowRef.removeEventListener(
 );
 
 navigationController.destroy();
+moduleLoader.unloadModule();
 
 closeSidebar();
-removeUnavailablePlaceholder();
 
 console.info(
   "[Hyper Nexus Shell] Destroyed."
@@ -432,12 +412,25 @@ console.info(
 
 }
 
-return {
+return Object.freeze({
 destroy,
 
 getCurrentModule() {
   return currentModule;
+},
+
+registerModule(moduleId, factory) {
+  if (destroyed) {
+    throw new Error(
+      "Hyper Nexus Shell has been destroyed."
+    );
+  }
+
+  return moduleLoader.registerModule(
+    moduleId,
+    factory
+  );
 }
 
-};
+});
 }
