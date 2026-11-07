@@ -2,14 +2,13 @@
 /**
  * XSUS APP — HYPER NEXUS
  * Navigation Controller
- * Version: 1.2.0
+ * Version: 1.3.0
  *
  * Responsibilities:
  * - Validate navigation identifiers
- * - Resolve legacy Frontier routes
- * - Resolve authoritative module metadata
- * - Manage active navigation state
- * - Handle browser history
+ * - Resolve native and legacy Frontier routes
+ * - Preserve Frontier route identity in history.state
+ * - Manage browser history and Back/Forward
  * - Notify Hyper Nexus Shell
  *
  * Module Registry remains the source of truth.
@@ -29,13 +28,14 @@ import {
   resolveLegacyRoute
 } from "./legacy-route-resolver.js";
 
-export const NAVIGATION_CONTROLLER_VERSION = "1.2.0";
+import {
+  resolveFrontierNavigationContext
+} from "./frontier-navigation-context.js";
+
+export const NAVIGATION_CONTROLLER_VERSION = "1.3.0";
 
 export const DEFAULT_NAVIGATION_MODULE = "overview";
 
-/**
- * Compatibility export derived from Module Registry.
- */
 export const HYPER_NEXUS_NAVIGATION = Object.freeze(
   Object.fromEntries(
     getAllModuleDefinitions().map((module) => [
@@ -48,20 +48,10 @@ export const HYPER_NEXUS_NAVIGATION = Object.freeze(
   )
 );
 
-/**
- * Validates native module identifiers.
- *
- * Legacy routes are resolved separately.
- */
 export function isValidNavigationModule(identifier) {
   return isModuleRegistered(identifier);
 }
 
-/**
- * Resolves native and legacy navigation routes.
- *
- * Unknown routes fall back to Overview.
- */
 export function resolveNavigationModule(identifier) {
   const resolved = resolveLegacyRoute(identifier);
 
@@ -70,9 +60,6 @@ export function resolveNavigationModule(identifier) {
     : DEFAULT_NAVIGATION_MODULE;
 }
 
-/**
- * Reads navigation state from a location object.
- */
 export function getNavigationFromLocation(
   location = window.location
 ) {
@@ -84,6 +71,80 @@ export function getNavigationFromLocation(
   return resolveNavigationModule(
     hash || DEFAULT_NAVIGATION_MODULE
   );
+}
+
+function isObject(value) {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  );
+}
+
+function resolveNavigationIdentity(identifier) {
+  const context =
+    resolveFrontierNavigationContext(identifier);
+
+  return {
+    moduleId: context.moduleId,
+    frontierRoute: context.frontierRoute
+  };
+}
+
+function getHistoryIdentity(windowRef) {
+  const state = windowRef.history.state;
+
+  if (!isObject(state)) {
+    return null;
+  }
+
+  if (typeof state.module !== "string") {
+    return null;
+  }
+
+  const moduleId =
+    resolveNavigationModule(state.module);
+
+  if (moduleId !== state.module) {
+    return null;
+  }
+
+  let frontierRoute = null;
+
+  if (typeof state.frontierRoute === "string") {
+    const context =
+      resolveFrontierNavigationContext(
+        state.frontierRoute
+      );
+
+    if (
+      context.isFrontierRoute &&
+      context.moduleId === moduleId
+    ) {
+      frontierRoute = context.frontierRoute;
+    }
+  }
+
+  return {
+    moduleId,
+    frontierRoute
+  };
+}
+
+function createHistoryState(
+  moduleId,
+  frontierRoute,
+  previousState = null
+) {
+  const base = isObject(previousState)
+    ? previousState
+    : {};
+
+  return {
+    ...base,
+    module: moduleId,
+    frontierRoute
+  };
 }
 
 /**
@@ -112,12 +173,10 @@ export function createNavigationController({
   }
 
   let currentModule = DEFAULT_NAVIGATION_MODULE;
+  let currentFrontierRoute = null;
   let initialized = false;
 
-  /**
-   * Sends registry metadata to the Shell.
-   */
-  function notifyNavigation(moduleId) {
+  function notifyNavigation(moduleId, frontierRoute) {
     const definition = getModuleDefinition(moduleId);
 
     if (!definition) {
@@ -126,15 +185,36 @@ export function createNavigationController({
 
     onNavigate({
       ...definition,
-      available: isModuleAvailable(moduleId)
+      available: isModuleAvailable(moduleId),
+      frontierRoute
     });
+  }
+
+  function applyNavigation(
+    moduleId,
+    frontierRoute,
+    forceNotify = false
+  ) {
+    const hasChanged =
+      currentModule !== moduleId ||
+      currentFrontierRoute !== frontierRoute;
+
+    currentModule = moduleId;
+    currentFrontierRoute = frontierRoute;
+
+    if (hasChanged || forceNotify) {
+      notifyNavigation(moduleId, frontierRoute);
+    }
+
+    return moduleId;
   }
 
   /**
    * Navigate to a native or legacy route.
    */
   function navigate(identifier, options = {}) {
-    const moduleId = resolveNavigationModule(identifier);
+    const identity =
+      resolveNavigationIdentity(identifier);
 
     const {
       updateHistory = true,
@@ -142,69 +222,103 @@ export function createNavigationController({
       forceNotify = false
     } = options;
 
+    const moduleId = identity.moduleId;
+    const frontierRoute = identity.frontierRoute;
+
     const nextHash = `#${moduleId}`;
+
+    const existingIdentity =
+      getHistoryIdentity(windowRef);
+
+    const historyIdentityChanged =
+      !existingIdentity ||
+      existingIdentity.moduleId !== moduleId ||
+      existingIdentity.frontierRoute !== frontierRoute;
+
+    const hashChanged =
+      windowRef.location.hash !== nextHash;
 
     if (
       updateHistory &&
-      windowRef.location.hash !== nextHash
+      (hashChanged || historyIdentityChanged)
     ) {
       const historyMethod = replaceHistory
         ? "replaceState"
         : "pushState";
 
       windowRef.history[historyMethod](
-        { module: moduleId },
+        createHistoryState(
+          moduleId,
+          frontierRoute,
+          windowRef.history.state
+        ),
         "",
         nextHash
       );
     }
 
-    const hasChanged = currentModule !== moduleId;
-
-    currentModule = moduleId;
-
-    if (hasChanged || forceNotify) {
-      notifyNavigation(moduleId);
-    }
-
-    return moduleId;
+    return applyNavigation(
+      moduleId,
+      frontierRoute,
+      forceNotify
+    );
   }
 
   /**
    * Synchronizes browser history.
-   *
-   * Legacy routes are normalized through the
-   * central route resolver.
    */
   function handleHistoryChange() {
-    const requestedModule = getNavigationFromLocation(
-      windowRef.location
-    );
+    const moduleId =
+      getNavigationFromLocation(windowRef.location);
 
-    const canonicalHash = `#${requestedModule}`;
+    const historyIdentity =
+      getHistoryIdentity(windowRef);
 
-    if (windowRef.location.hash !== canonicalHash) {
+    const frontierRoute =
+      historyIdentity?.moduleId === moduleId
+        ? historyIdentity.frontierRoute
+        : null;
+
+    const canonicalHash = `#${moduleId}`;
+
+    const hashChanged =
+      windowRef.location.hash !== canonicalHash;
+
+    if (hashChanged) {
+      const hashContext =
+        resolveFrontierNavigationContext(
+          windowRef.location.hash
+        );
+
+      const resolvedFrontierRoute =
+        hashContext.moduleId === moduleId
+          ? hashContext.frontierRoute
+          : null;
+
       windowRef.history.replaceState(
-        { module: requestedModule },
+        createHistoryState(
+          moduleId,
+          resolvedFrontierRoute,
+          windowRef.history.state
+        ),
         "",
         canonicalHash
       );
+
+      return applyNavigation(
+        moduleId,
+        resolvedFrontierRoute
+      );
     }
 
-    if (requestedModule === currentModule) {
-      return;
-    }
-
-    navigate(requestedModule, {
-      updateHistory: false
-    });
+    return applyNavigation(
+      moduleId,
+      frontierRoute
+    );
   }
 
   /**
-   * Initializes the controller.
-   *
-   * Existing API and initialization behavior
-   * are preserved.
+   * Initializes navigation.
    */
   function initialize() {
     if (initialized) {
@@ -223,18 +337,42 @@ export function createNavigationController({
 
     initialized = true;
 
-    return navigate(
-      getNavigationFromLocation(windowRef.location),
-      {
-        updateHistory: true,
-        replaceHistory: true,
-        forceNotify: true
-      }
+    const moduleId =
+      getNavigationFromLocation(windowRef.location);
+
+    const historyIdentity =
+      getHistoryIdentity(windowRef);
+
+    const hashContext =
+      resolveFrontierNavigationContext(
+        windowRef.location.hash ||
+        DEFAULT_NAVIGATION_MODULE
+      );
+
+    const frontierRoute =
+      historyIdentity?.moduleId === moduleId
+        ? historyIdentity.frontierRoute
+        : hashContext.frontierRoute;
+
+    windowRef.history.replaceState(
+      createHistoryState(
+        moduleId,
+        frontierRoute,
+        windowRef.history.state
+      ),
+      "",
+      `#${moduleId}`
+    );
+
+    return applyNavigation(
+      moduleId,
+      frontierRoute,
+      true
     );
   }
 
   /**
-   * Removes history listeners.
+   * Removes browser listeners.
    */
   function destroy() {
     if (!initialized) {
@@ -258,7 +396,17 @@ export function createNavigationController({
     initialize,
     navigate,
     destroy,
-    getCurrentModule: () => currentModule,
-    isInitialized: () => initialized
+
+    getCurrentModule() {
+      return currentModule;
+    },
+
+    getCurrentFrontierRoute() {
+      return currentFrontierRoute;
+    },
+
+    isInitialized() {
+      return initialized;
+    }
   });
 }
