@@ -1,431 +1,722 @@
+
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xsus App | AI App Hub & Mini-Tools Studio</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        cyber: {
-                            blue: '#00f0ff',
-                            purple: '#7000ff',
-                            pink: '#ff007f',
-                            dark: '#0a0a12',
-                            card: 'rgba(18, 18, 35, 0.6)'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        .glass-panel {
-            background: rgba(18, 18, 35, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .text-gradient {
-            background: linear-gradient(135deg, #00f0ff 0%, #7000ff 50%, #ff007f 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050811">
+  <meta name="description" content="XSUS App Frontier — Independent application engineering and intelligence platform.">
+
+  <title>XSUS App Frontier | XSUS Studio</title>
+
+  <link rel="stylesheet" href="./app-ui/styles/design-system.css">
+  <link rel="stylesheet" href="./app-ui/styles/layout.css">
+  <link rel="stylesheet" href="./app-ui/styles/components.css">
+  <link rel="stylesheet" href="./app-ui/styles/responsive.css">
 </head>
-<body class="bg-[#06060c] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-cyber-blue selection:text-black">
 
-    <!-- NAVIGATION BAR -->
-    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-4 md:px-6 py-4">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-2">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-bold text-black text-lg shadow-[0_0_15px_rgba(0,240,255,0.4)]">
-                    X
-                </div>
-                <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">APP</span></span>
-            </a>
+<body>
 
-            <!-- Desktop Menu -->
-            <div class="hidden lg:flex items-center gap-6 font-medium text-xs text-slate-300">
-                <a href="ai.html" class="hover:text-cyber-blue transition">Xsus AI</a>
-                <a href="app.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Xsus App</a>
-                <a href="web.html" class="hover:text-cyber-blue transition">Xsus Web</a>
-                <a href="game.html" class="hover:text-cyber-blue transition">Xsus Game</a>
-                <a href="logo.html" class="hover:text-cyber-blue transition">Xsus Logo</a>
-                <a href="domain.html" class="hover:text-cyber-blue transition">Xsus Domain</a>
-            </div>
+<div class="xsus-app-shell" id="xsus-app">
 
-            <!-- Language Selector & CTA -->
-            <div class="flex items-center gap-3">
-                <div class="glass-panel px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-300">
-                    <i data-lucide="globe" class="w-3.5 h-3.5 text-cyber-blue"></i>
-                    <select id="language-select" class="bg-transparent text-white outline-none cursor-pointer">
-                        <option value="en" class="bg-[#0a0a12] text-white">EN</option>
-                        <option value="sq" class="bg-[#0a0a12] text-white">SQ</option>
-                        <option value="fr" class="bg-[#0a0a12] text-white">FR</option>
-                    </select>
-                </div>
+  <!-- SIDEBAR -->
+  <aside class="xsus-sidebar">
 
-                <a href="#app-hub-section" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-xs hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
-                    <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-                    <span data-i18n="nav-explore">Explore Apps</span>
-                </a>
-            </div>
+    <div class="xsus-sidebar-content">
+
+      <a class="xsus-brand" href="index.html">
+        <div class="xsus-brand-mark" aria-hidden="true"></div>
+        <div>
+          <div class="xsus-brand-name">XSUS APP</div>
+          <div class="xsus-brand-tagline">THE X IDENTITY</div>
         </div>
-    </nav>
+      </a>
 
-    <!-- HERO SECTION -->
-    <header class="pt-36 pb-12 px-6 relative overflow-hidden">
-        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyber-blue/15 rounded-full blur-[140px] pointer-events-none"></div>
-        
-        <div class="max-w-4xl mx-auto text-center relative z-10">
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyber-blue/30 text-cyber-blue text-xs font-semibold uppercase tracking-widest mb-6">
-                <i data-lucide="cpu" class="w-4 h-4"></i> <span data-i18n="hero-badge">AI App Hub & Productivity Tools</span>
-            </div>
-            <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
-                <span data-i18n="hero-title1">Smart Digital Tools.</span> <br><span class="text-gradient" data-i18n="hero-title2">Powered by AI & Web Utils.</span>
-            </h1>
-            <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mb-8 leading-relaxed" data-i18n="hero-desc">
-                Generate custom software architectures with AI, create QR codes, build color palettes, and take instant notes in your browser.
-            </p>
-        </div>
+      <nav class="xsus-sidebar-nav" aria-label="Main navigation">
+
+        <div class="xsus-nav-section">CONTROL CENTER</div>
+
+        <a class="xsus-nav-item active" href="#overview">
+          <span>◈</span> Overview
+        </a>
+
+        <a class="xsus-nav-item" href="#architect">
+          <span>⌘</span> Application Architect
+        </a>
+
+        <a class="xsus-nav-item" href="#workspace">
+          <span>▣</span> Engineering Workspace
+        </a>
+
+        <div class="xsus-nav-section">INTELLIGENCE</div>
+
+        <a class="xsus-nav-item" href="#nexus">
+          <span>✧</span> XSUS NEXUS
+        </a>
+
+        <a class="xsus-nav-item" href="#engines">
+          <span>⬡</span> Frontier Engines
+        </a>
+
+        <a class="xsus-nav-item" href="#architecture">
+          <span>⌬</span> Architecture
+        </a>
+
+        <a class="xsus-nav-item" href="#monitoring">
+          <span>◉</span> System Monitoring
+        </a>
+
+      </nav>
+
+      <div class="xsus-sidebar-footer">
+        <div class="xsus-divider"></div>
+        <p>INDEPENDENT INTELLIGENCE INFRASTRUCTURE</p>
+        <span class="xsus-badge">FRONTIER ENVIRONMENT</span>
+      </div>
+
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="xsus-main-content">
+
+    <!-- TOPBAR -->
+    <header class="xsus-topbar">
+
+      <div>
+        <div class="xsus-eyebrow">XSUS STUDIO / XSUS APP</div>
+        <div class="xsus-topbar-title">Frontier Command Center</div>
+      </div>
+
+      <div class="xsus-topbar-actions">
+
+        <span class="xsus-status">
+          <span class="xsus-status-dot"></span>
+          Independent Platform
+        </span>
+
+        <a class="xsus-button-secondary" href="index.html">
+          ← Studio
+        </a>
+
+      </div>
+
     </header>
 
-    <!-- MAIN APP HUB SECTION -->
-    <section id="app-hub-section" class="py-6 px-4 md:px-6 max-w-7xl mx-auto w-full mb-20">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            <!-- LEFT: AI APP CONCEPT GENERATOR -->
-            <div class="lg:col-span-5 glass-panel p-6 rounded-3xl border border-cyber-blue/30 shadow-[0_0_40px_rgba(0,240,255,0.15)] space-y-4">
-                <div class="flex items-center gap-3 pb-3 border-b border-white/10">
-                    <div class="w-9 h-9 rounded-xl bg-cyber-blue/20 border border-cyber-blue/40 flex items-center justify-center text-cyber-blue">
-                        <i data-lucide="sparkles" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-bold text-white" data-i18n="gen-title">AI App Architect</h2>
-                        <p class="text-xs text-slate-400" data-i18n="gen-subtitle">Design your application blueprint</p>
-                    </div>
-                </div>
+    <main class="xsus-content">
 
-                <!-- Prompt Input -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5" data-i18n="label-prompt">App Idea / Concept</label>
-                    <textarea id="app-prompt" rows="3" class="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-sm text-white outline-none focus:border-cyber-blue resize-none" data-i18n-placeholder="place-prompt" placeholder="e.g. A crypto portfolio tracker with real-time alerts..."></textarea>
-                </div>
+      <!-- OVERVIEW -->
+      <section class="xsus-section" id="overview">
 
-                <!-- App Category -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5" data-i18n="label-category">App Category</label>
-                    <select id="app-category" class="w-full bg-black/80 border border-white/15 rounded-xl p-3 text-sm text-white outline-none focus:border-cyber-blue cursor-pointer">
-                        <option value="productivity" selected>Productivity & Utilities</option>
-                        <option value="fintech">Fintech & Crypto</option>
-                        <option value="content">Content Creation & AI</option>
-                        <option value="ecommerce">E-Commerce & Shop</option>
-                    </select>
-                </div>
+        <div class="xsus-page-header">
 
-                <!-- Generate Button -->
-                <button id="generate-app-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue via-cyber-purple to-cyber-pink text-black font-extrabold text-sm hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)] flex items-center justify-center gap-2">
-                    <i data-lucide="cpu" class="w-4 h-4"></i>
-                    <span data-i18n="btn-generate">Generate App Architecture</span>
-                </button>
+          <div class="xsus-eyebrow">
+            XSUS APP / FRONTIER ENVIRONMENT
+          </div>
 
-                <!-- AI Output Box -->
-                <div id="ai-app-output" class="hidden p-4 rounded-2xl bg-black/50 border border-white/10 text-xs text-slate-300 space-y-2 leading-relaxed max-h-[260px] overflow-y-auto">
-                    <!-- AI response populates here -->
-                </div>
-            </div>
+          <h1 class="xsus-page-title">
+            Build beyond
+            <span class="xsus-gradient-text">limitations.</span>
+          </h1>
 
-            <!-- RIGHT: INTERACTIVE MINI-TOOLS -->
-            <div class="lg:col-span-7 space-y-6">
-                
-                <!-- Tab Switcher for Mini-Tools -->
-                <div class="glass-panel p-2 rounded-2xl border border-white/10 flex items-center gap-2">
-                    <button onclick="switchTab('qr')" id="tab-qr" class="flex-1 py-2 rounded-xl bg-cyber-blue text-black font-bold text-xs transition flex items-center justify-center gap-1.5">
-                        <i data-lucide="qr-code" class="w-4 h-4"></i> <span data-i18n="tool-qr">QR Code Generator</span>
-                    </button>
-                    <button onclick="switchTab('palette')" id="tab-palette" class="flex-1 py-2 rounded-xl bg-transparent hover:bg-white/5 text-slate-300 font-semibold text-xs transition flex items-center justify-center gap-1.5">
-                        <i data-lucide="palette" class="w-4 h-4"></i> <span data-i18n="tool-palette">Color Palette</span>
-                    </button>
-                    <button onclick="switchTab('notes')" id="tab-notes" class="flex-1 py-2 rounded-xl bg-transparent hover:bg-white/5 text-slate-300 font-semibold text-xs transition flex items-center justify-center gap-1.5">
-                        <i data-lucide="file-text" class="w-4 h-4"></i> <span data-i18n="tool-notes">Quick Notes</span>
-                    </button>
-                </div>
-
-                <!-- TOOL 1: QR CODE GENERATOR -->
-                <div id="panel-qr" class="glass-panel p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl space-y-4">
-                    <h3 class="text-base font-bold text-white flex items-center gap-2">
-                        <i data-lucide="qr-code" class="text-cyber-blue w-5 h-5"></i> <span data-i18n="qr-heading">Instant QR Code Studio</span>
-                    </h3>
-                    <div class="space-y-3">
-                        <input type="text" id="qr-input" value="https://xsusstudio.com" data-i18n-placeholder="place-qr" placeholder="Enter URL or text..." class="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-sm text-white outline-none focus:border-cyber-blue">
-                        <div class="flex justify-center p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <img id="qr-img" src="" alt="QR Code" class="w-40 h-40 rounded-xl shadow-lg bg-white p-2">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TOOL 2: COLOR PALETTE GENERATOR (Hidden by default) -->
-                <div id="panel-palette" class="glass-panel p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl space-y-4 hidden">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <i data-lucide="palette" class="text-cyber-pink w-5 h-5"></i> <span data-i18n="palette-heading">Cyber Neon Color Palettes</span>
-                        </h3>
-                        <button onclick="generatePalette()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition flex items-center gap-1">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> <span data-i18n="btn-shuffle">Shuffle</span>
-                        </button>
-                    </div>
-                    <div id="palette-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-                        <!-- Palette boxes populate here -->
-                    </div>
-                </div>
-
-                <!-- TOOL 3: QUICK NOTES (Hidden by default) -->
-                <div id="panel-notes" class="glass-panel p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl space-y-4 hidden">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <i data-lucide="file-text" class="text-cyber-purple w-5 h-5"></i> <span data-i18n="notes-heading">Browser Scratchpad</span>
-                        </h3>
-                        <span id="save-status" class="text-[10px] text-cyber-blue font-semibold uppercase tracking-wider"></span>
-                    </div>
-                    <textarea id="notes-input" rows="5" class="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-sm text-white outline-none focus:border-cyber-purple resize-none" data-i18n-placeholder="place-notes" placeholder="Type your ideas here... (Auto-saved)"></textarea>
-                </div>
-
-            </div>
+          <p class="xsus-page-description">
+            An independent environment for application architecture,
+            engineering, intelligence orchestration and system evolution.
+          </p>
 
         </div>
-    </section>
 
-    <!-- FOOTER -->
-    <footer class="mt-auto py-8 border-t border-white/10 glass-panel text-center text-xs text-slate-500">
-        <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
+        <!-- HERO COMMAND PANEL -->
+        <div class="xsus-panel xsus-command-center">
+
+          <div>
+            <span class="xsus-badge">FRONTIER COMMAND</span>
+
+            <h2>From intent to architecture.</h2>
+
+            <p>
+              Define an application, describe its requirements and
+              submit an engineering request through the existing
+              XSUS App interface.
+            </p>
+
+            <a class="xsus-button-primary" href="#architect">
+              Open Application Architect →
+            </a>
+          </div>
+
+          <div class="xsus-command-visual" aria-hidden="true">
+            <div class="xsus-command-orbit">
+              <div class="xsus-command-core">X</div>
+              <span class="xsus-orbit-point point-one"></span>
+              <span class="xsus-orbit-point point-two"></span>
+              <span class="xsus-orbit-point point-three"></span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- PLATFORM METRICS -->
+        <div class="xsus-dashboard-grid">
+
+          <article class="xsus-metric-card">
+            <div class="xsus-metric-label">PLATFORM</div>
+            <div class="xsus-metric-value xsus-gradient-text">XSUS</div>
+            <p>Independent application environment</p>
+          </article>
+
+          <article class="xsus-metric-card">
+            <div class="xsus-metric-label">ARCHITECTURE</div>
+            <div class="xsus-metric-value">Modular</div>
+            <p>Separated systems and controlled boundaries</p>
+          </article>
+
+          <article class="xsus-metric-card">
+            <div class="xsus-metric-label">INTELLIGENCE</div>
+            <div class="xsus-metric-value">Frontier</div>
+            <p>Advanced capabilities roadmap</p>
+          </article>
+
+          <article class="xsus-metric-card">
+            <div class="xsus-metric-label">BRIDGE</div>
+            <div class="xsus-metric-value" id="bridge-metric">Checking</div>
+            <p>Existing integration interface</p>
+          </article>
+
+        </div>
+
+      </section>
+
+      <!-- APPLICATION ARCHITECT -->
+      <section class="xsus-section" id="architect">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">ENGINEERING INTERFACE</div>
+            <h2>Application Architect</h2>
+            <p>
+              Transform an application specification into an
+              engineering request.
+            </p>
+          </div>
+
+          <span class="xsus-badge">REQUEST INTERFACE</span>
+        </div>
+
+        <div class="xsus-workspace">
+
+          <div class="xsus-panel">
+
+            <div class="xsus-panel-header">
+              <div>
+                <h3>New Application Request</h3>
+                <p>Describe the system you want to design.</p>
+              </div>
+              <span class="xsus-badge">XSUS APP</span>
+            </div>
+
+            <form id="app-form" class="xsus-form">
+
+              <label for="prompt">
+                Application specification
+              </label>
+
+              <textarea
+                id="prompt"
+                name="prompt"
+                class="xsus-command-input"
+                rows="8"
+                placeholder="Describe your application, purpose, architecture, features, security requirements and expected behavior..."
+                required
+              ></textarea>
+
+              <label for="platform">
+                Target platform
+              </label>
+
+              <select
+                id="platform"
+                name="platform"
+                class="xsus-select"
+              >
+                <option value="web">Web</option>
+                <option value="android">Android</option>
+                <option value="ios">iOS</option>
+                <option value="desktop">Desktop</option>
+              </select>
+
+              <button
+                class="xsus-button-primary"
+                id="generate-button"
+                type="submit"
+              >
+                Generate Application Architecture →
+              </button>
+
+            </form>
+
+            <p
+              id="message"
+              role="status"
+              aria-live="polite"
+            ></p>
+
+          </div>
+
+          <!-- RESPONSE -->
+          <div class="xsus-panel">
+
+            <div class="xsus-panel-header">
+              <div>
+                <h3>Engine Response</h3>
+                <p>Response returned by the existing XSUS App Bridge.</p>
+              </div>
+
+              <span class="xsus-badge">OUTPUT</span>
+            </div>
+
+            <pre
+              id="result"
+              class="xsus-output-viewer"
+            >Your XSUS App response will appear here.</pre>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- DEVELOPMENT WORKSPACE -->
+      <section class="xsus-section" id="workspace">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">ENGINEERING ENVIRONMENT</div>
+            <h2>Development Workspace</h2>
+            <p>
+              A foundation for future application engineering workflows.
+            </p>
+          </div>
+
+          <span class="xsus-badge">IN DEVELOPMENT</span>
+        </div>
+
+        <div class="xsus-dashboard-grid">
+
+          <article class="xsus-panel">
+            <span class="xsus-badge">PLANNED</span>
+            <h3>Project Workspace</h3>
+            <p>Centralized application project organization.</p>
+          </article>
+
+          <article class="xsus-panel">
+            <span class="xsus-badge">PLANNED</span>
+            <h3>Visual Architecture</h3>
+            <p>Visual representation of application structures.</p>
+          </article>
+
+          <article class="xsus-panel">
+            <span class="xsus-badge">PLANNED</span>
+            <h3>Engineering Pipeline</h3>
+            <p>Structured development and verification workflows.</p>
+          </article>
+
+          <article class="xsus-panel">
+            <span class="xsus-badge">PLANNED</span>
+            <h3>Simulation Environment</h3>
+            <p>Future simulation and optimization capabilities.</p>
+          </article>
+
+        </div>
+
+      </section>
+
+      <!-- NEXUS -->
+      <section class="xsus-section" id="nexus">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">CENTRAL ORCHESTRATION</div>
+            <h2>XSUS NEXUS</h2>
+            <p>
+              The intended control and coordination center of XSUS APP.
+            </p>
+          </div>
+
+          <span class="xsus-badge">FOUNDATION</span>
+        </div>
+
+        <div class="xsus-dashboard-grid">
+
+          <article class="xsus-panel">
+            <h3>XSUS App Bridge</h3>
+            <p>Connection state reported by the existing bridge.</p>
+
+            <div class="xsus-status">
+              <span class="xsus-status-dot" id="status-dot"></span>
+              <span id="status-text">Checking connection...</span>
+            </div>
+          </article>
+
+          <article class="xsus-panel">
+            <h3>System Independence</h3>
+            <p>
+              Connected systems retain their own architecture,
+              ownership, APIs and development lifecycle.
+            </p>
+            <span class="xsus-badge">ARCHITECTURE PRINCIPLE</span>
+          </article>
+
+          <article class="xsus-panel">
+            <h3>Controlled Integration</h3>
+            <p>
+              Future integrations will use explicitly defined
+              interfaces and adapters.
+            </p>
+            <span class="xsus-badge">PLANNED</span>
+          </article>
+
+        </div>
+
+      </section>
+
+      <!-- FRONTIER ENGINES -->
+      <section class="xsus-section" id="engines">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">FRONTIER ENGINE ECOSYSTEM</div>
+            <h2>Intelligence Engines</h2>
+            <p>
+              Proposed specialized capabilities from the
+              XSUS APP Frontier Blueprint.
+            </p>
+          </div>
+
+          <span class="xsus-badge">ROADMAP</span>
+        </div>
+
+        <div class="xsus-engine-grid">
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">✧</div>
+            <h3>Evolution Engine</h3>
+            <p>Future system evolution and improvement.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⌘</div>
+            <h3>Autonomous Engineering</h3>
+            <p>Future controlled engineering automation.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">◉</div>
+            <h3>Reality Simulator</h3>
+            <p>Future system simulation and scenario testing.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⟳</div>
+            <h3>Self-Healing Architecture</h3>
+            <p>Future recovery and resilience mechanisms.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⬡</div>
+            <h3>Knowledge Intelligence Fabric</h3>
+            <p>Future knowledge-aware system coordination.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⌬</div>
+            <h3>Intent-to-System Compiler</h3>
+            <p>Future translation of intent into system designs.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">◈</div>
+            <h3>Predictive Intelligence</h3>
+            <p>Future prediction and decision-support capabilities.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">◎</div>
+            <h3>Synthetic Universe</h3>
+            <p>Future virtual environments and system models.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⇄</div>
+            <h3>Model Intelligence Router</h3>
+            <p>Future model selection and orchestration.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">▤</div>
+            <h3>Software Genome</h3>
+            <p>Future software structure and lineage intelligence.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⛨</div>
+            <h3>Security Intelligence</h3>
+            <p>Future security analysis and protection workflows.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⇧</div>
+            <h3>Universal Portability</h3>
+            <p>Future portable application environments.</p>
+          </article>
+
+        </div>
+
+      </section>
+
+      <!-- MONITORING -->
+      <section class="xsus-section" id="monitoring">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">OBSERVABILITY FOUNDATION</div>
+            <h2>System Monitoring</h2>
+            <p>
+              The interface for future operational monitoring.
+              No simulated telemetry is displayed.
+            </p>
+          </div>
+
+          <span class="xsus-badge">FOUNDATION</span>
+        </div>
+
+        <div class="xsus-panel">
+
+          <h3>Monitoring Infrastructure</h3>
+
+          <p>
+            Live performance metrics, resource utilization,
+            event streams and engine diagnostics will appear
+            here after their respective monitoring services
+            are implemented and connected.
+          </p>
+
+          <div class="xsus-empty-state">
+            <div class="xsus-empty-icon">◉</div>
+            <h3>No monitoring data connected</h3>
+            <p>
+              No operational telemetry is currently being reported
+              by this interface.
+            </p>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ARCHITECTURE -->
+      <section class="xsus-section" id="architecture">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">SYSTEM DESIGN</div>
+            <h2>Independent Architecture</h2>
+            <p>
+              XSUS APP coordinates integrations without absorbing
+              or replacing connected systems.
+            </p>
+          </div>
+
+          <span class="xsus-badge">ARCHITECTURE PRINCIPLE</span>
+        </div>
+
+        <div class="xsus-panel">
+
+          <div class="xsus-architecture-canvas">
+
+            <div class="xsus-architecture-node">
+              <strong>XSUS STUDIO</strong>
+              <span>User entry point</span>
+            </div>
+
+            <div class="xsus-architecture-connector">↓</div>
+
+            <div class="xsus-architecture-node">
+              <strong>XSUS APP</strong>
+              <span>Application coordination layer</span>
+            </div>
+
+            <div class="xsus-architecture-connector">↓</div>
+
+            <div class="xsus-architecture-node">
+              <strong>CONTROLLED ADAPTERS</strong>
+              <span>Independent integration boundaries</span>
+            </div>
+
+            <div class="xsus-architecture-connector">↙ &nbsp;&nbsp; ↘</div>
+
+            <div class="xsus-dashboard-grid">
+
+              <div class="xsus-architecture-node">
+                <strong>XSUS AI CORE</strong>
+                <span>Independent AI system</span>
+              </div>
+
+              <div class="xsus-architecture-node">
+                <strong>HYPER XSUS CORE</strong>
+                <span>Independent knowledge system</span>
+              </div>
+
+            </div>
+
+          </div>
+
+          <p class="xsus-card-description">
+            This diagram represents the intended architecture.
+            It does not claim that all future adapters or integrations
+            are already implemented.
+          </p>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <footer class="xsus-footer">
+      XSUS STUDIO · THE X IDENTITY · © 2026
     </footer>
 
-    <!-- INTERACTIVE JAVASCRIPT LOGIC -->
-    <script>
-        lucide.createIcons();
+  </div>
 
-        // 1. MULTI-LANGUAGE DICTIONARY (EN, SQ, FR)
-        const i18nData = {
-            en: {
-                "nav-explore": "Explore Apps",
-                "hero-badge": "AI App Hub & Productivity Tools",
-                "hero-title1": "Smart Digital Tools.",
-                "hero-title2": "Powered by AI & Web Utils.",
-                "hero-desc": "Generate custom software architectures with AI, create QR codes, build color palettes, and take instant notes in your browser.",
-                "gen-title": "AI App Architect",
-                "gen-subtitle": "Design your application blueprint",
-                "label-prompt": "App Idea / Concept",
-                "place-prompt": "e.g. A crypto portfolio tracker with real-time alerts...",
-                "label-category": "App Category",
-                "btn-generate": "Generate App Architecture",
-                "tool-qr": "QR Code Generator",
-                "tool-palette": "Color Palette",
-                "tool-notes": "Quick Notes",
-                "qr-heading": "Instant QR Code Studio",
-                "place-qr": "Enter URL or text...",
-                "palette-heading": "Cyber Neon Color Palettes",
-                "btn-shuffle": "Shuffle",
-                "notes-heading": "Browser Scratchpad",
-                "place-notes": "Type your ideas here... (Auto-saved)"
-            },
-            sq: {
-                "nav-explore": "Eksploro Aplikacionet",
-                "hero-badge": "Qendra e Aplikacioneve AI & Mjete Pune",
-                "hero-title1": "Mjete Dixhitale të Mençura.",
-                "hero-title2": "Fuqizuar nga AI & Web Mjete.",
-                "hero-desc": "Gjenero arkitekturë softuerike me AI, krijo kode QR, ndërto paleta ngjyrash dhe mbaj shënime të shpejta në shfletues.",
-                "gen-title": "Arkitekti i Aplikacioneve AI",
-                "gen-subtitle": "Dizajno skemën e aplikacionit tënd",
-                "label-prompt": "Ideja / Koncepti i App",
-                "place-prompt": "p.sh. Një gjurmues portofoli kriptomonedhash...",
-                "label-category": "Kategoria e Aplikacionit",
-                "btn-generate": "Gjenero Arkitekturën e Aplikacionit",
-                "tool-qr": "Gjenerues Kodi QR",
-                "tool-palette": "Paleta Ngjyrash",
-                "tool-notes": "Shënime të Shpejta",
-                "qr-heading": "Studio e Kodeve QR",
-                "place-qr": "Vendos URL ose tekst...",
-                "palette-heading": "Paleta Ngjyrash Cyber Neon",
-                "btn-shuffle": "Përziej",
-                "notes-heading": "Bllok Shënimesh",
-                "place-notes": "Shkruaj idetë e tua këtu... (Ruajtje automatike)"
-            },
-            fr: {
-                "nav-explore": "Explorer les Apps",
-                "hero-badge": "Hub d'Applications IA & Outils",
-                "hero-title1": "Outils Numériques Intelligents.",
-                "hero-title2": "Propulsé par l'IA et le Web.",
-                "hero-desc": "Générez des architectures logicielles avec l'IA, créez des codes QR, des palettes de couleurs et prenez des notes instantanées.",
-                "gen-title": "Architecte d'App IA",
-                "gen-subtitle": "Concevez votre plan d'application",
-                "label-prompt": "Idée / Concept d'App",
-                "place-prompt": "ex: Un suivi de portefeuille crypto en temps réel...",
-                "label-category": "Catégorie d'App",
-                "btn-generate": "Générer l'Architecture",
-                "tool-qr": "Générateur de QR Code",
-                "tool-palette": "Palette de Couleurs",
-                "tool-notes": "Notes Rapides",
-                "qr-heading": "Studio de QR Code",
-                "place-qr": "Entrer une URL ou du texte...",
-                "palette-heading": "Palettes Cyber Neon",
-                "btn-shuffle": "Mélanger",
-                "notes-heading": "Bloc-notes Navigateur",
-                "place-notes": "Écrivez vos idées ici... (Enregistrement auto)"
-            }
-        };
+</div>
 
-        const langSelect = document.getElementById('language-select');
-        let currentLang = 'en';
+<!-- EXISTING XSUS APP BRIDGE -->
+<script type="module">
 
-        function setLanguage(lang) {
-            currentLang = lang;
-            const dict = i18nData[lang] || i18nData['en'];
+  import {
+    processXsusAppRequest,
+    getXsusAppBridgeStatus
+  } from "./platform/xsus-app/xsus-app-bridge.js";
 
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (dict[key]) el.textContent = dict[key];
-            });
+  const form = document.getElementById("app-form");
+  const promptInput = document.getElementById("prompt");
+  const platformInput = document.getElementById("platform");
+  const generateButton = document.getElementById("generate-button");
 
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-i18n-placeholder');
-                if (dict[key]) el.placeholder = dict[key];
-            });
+  const resultElement = document.getElementById("result");
+  const messageElement = document.getElementById("message");
 
-            document.documentElement.lang = lang;
-            if (langSelect) langSelect.value = lang;
+  const statusDot = document.getElementById("status-dot");
+  const statusText = document.getElementById("status-text");
+  const bridgeMetric = document.getElementById("bridge-metric");
+
+  function updateStatus() {
+    try {
+      const status = getXsusAppBridgeStatus();
+
+      if (status.connected) {
+        statusDot.className = "xsus-status-dot xsus-status-active";
+        statusText.textContent = "XSUS App Engine connected.";
+        bridgeMetric.textContent = "Connected";
+      } else if (status.initializationError || status.error) {
+        statusDot.className = "xsus-status-dot";
+        statusText.textContent =
+          status.initializationError ||
+          status.error ||
+          "XSUS App connection failed.";
+
+        bridgeMetric.textContent = "Error";
+      } else {
+        statusDot.className = "xsus-status-dot";
+        statusText.textContent = "XSUS App is not initialized.";
+        bridgeMetric.textContent = "Inactive";
+      }
+
+    } catch (error) {
+      statusDot.className = "xsus-status-dot";
+      statusText.textContent = "Bridge status unavailable.";
+      bridgeMetric.textContent = "Unavailable";
+    }
+  }
+
+  function displayResult(value) {
+    resultElement.textContent = JSON.stringify(value, null, 2);
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const prompt = promptInput.value.trim();
+
+    if (!prompt) {
+      messageElement.textContent =
+        "Please enter an application description.";
+      return;
+    }
+
+    generateButton.disabled = true;
+    generateButton.textContent = "Processing...";
+
+    messageElement.textContent =
+      "Sending request to XSUS App Engine...";
+
+    try {
+
+      const response = await processXsusAppRequest({
+        prompt,
+        platform: platformInput.value,
+        useIntelligence: true,
+        retrieveKnowledge: true
+      });
+
+      displayResult(response);
+      updateStatus();
+
+      messageElement.textContent = response.success
+        ? "Request processed by XSUS App."
+        : "XSUS App returned an unsuccessful response.";
+
+    } catch (error) {
+
+      displayResult({
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || "APP_REQUEST_FAILED"
         }
+      });
 
-        langSelect?.addEventListener('change', (e) => setLanguage(e.target.value));
+      messageElement.textContent =
+        "The request could not be completed.";
 
-        const userBrowserLang = navigator.language.slice(0, 2);
-        if (['sq', 'fr', 'en'].includes(userBrowserLang)) setLanguage(userBrowserLang);
+      updateStatus();
 
-        function formatMarkdownToHTML(text) {
-            return text
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em class="text-slate-300">$1</em>')
-                .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc text-slate-300">$1</li>')
-                .replace(/\n\n/g, '<br><br>')
-                .replace(/\n/g, '<br>');
-        }
+    } finally {
 
-        // 2. AI APP GENERATOR LOGIC
-        const appPrompt = document.getElementById('app-prompt');
-        const appCategory = document.getElementById('app-category');
-        const generateAppBtn = document.getElementById('generate-app-btn');
-        const aiAppOutput = document.getElementById('ai-app-output');
+      generateButton.disabled = false;
+      generateButton.textContent =
+        "Generate Application Architecture →";
 
-        generateAppBtn?.addEventListener('click', async () => {
-            const promptText = appPrompt.value.trim() || 'A modern productivity dashboard app';
-            const category = appCategory.value;
+    }
+  });
 
-            aiAppOutput.classList.remove('hidden');
-            aiAppOutput.innerHTML = `<div class="animate-pulse text-cyber-blue">${currentLang === 'sq' ? 'Duke gjeneruar arkitekturën e aplikacionit...' : currentLang === 'fr' ? 'Génération de l\'architecture...' : 'Generating app architecture...'}</div>`;
+  updateStatus();
 
-            const targetLanguageName = currentLang === 'sq' ? 'Albanian' : currentLang === 'fr' ? 'French' : 'English';
+</script>
 
-            try {
-                const response = await fetch('https://text.pollinations.ai/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        messages: [
-                            { role: 'system', content: `You are an expert software architect and product manager. Give a short, structured software blueprint (Core Features, Tech Stack, User Flow, UI Design) in ${targetLanguageName}.` },
-                            { role: 'user', content: `Create an app architecture for this concept: "${promptText}" (Category: ${category}) written entirely in ${targetLanguageName}.` }
-                        ],
-                        model: 'openai'
-                    })
-                });
-
-                if (response.ok) {
-                    const text = await response.text();
-                    const formattedHTML = formatMarkdownToHTML(text);
-                    aiAppOutput.innerHTML = `<strong class="text-cyber-pink block mb-2 text-sm">AI Software Blueprint:</strong><div class="space-y-1">${formattedHTML}</div>`;
-                } else {
-                    aiAppOutput.innerHTML = `<span class="text-rose-400">Unable to generate app blueprint at this moment.</span>`;
-                }
-            } catch (err) {
-                aiAppOutput.innerHTML = `<span class="text-rose-400">Network connection error.</span>`;
-            }
-        });
-
-        // 3. TAB SWITCHER FOR MINI-TOOLS
-        function switchTab(tab) {
-            document.getElementById('panel-qr').classList.add('hidden');
-            document.getElementById('panel-palette').classList.add('hidden');
-            document.getElementById('panel-notes').classList.add('hidden');
-
-            document.getElementById('tab-qr').className = "flex-1 py-2 rounded-xl bg-transparent hover:bg-white/5 text-slate-300 font-semibold text-xs transition flex items-center justify-center gap-1.5";
-            document.getElementById('tab-palette').className = "flex-1 py-2 rounded-xl bg-transparent hover:bg-white/5 text-slate-300 font-semibold text-xs transition flex items-center justify-center gap-1.5";
-            document.getElementById('tab-notes').className = "flex-1 py-2 rounded-xl bg-transparent hover:bg-white/5 text-slate-300 font-semibold text-xs transition flex items-center justify-center gap-1.5";
-
-            if (tab === 'qr') {
-                document.getElementById('panel-qr').classList.remove('hidden');
-                document.getElementById('tab-qr').className = "flex-1 py-2 rounded-xl bg-cyber-blue text-black font-bold text-xs transition flex items-center justify-center gap-1.5";
-            } else if (tab === 'palette') {
-                document.getElementById('panel-palette').classList.remove('hidden');
-                document.getElementById('tab-palette').className = "flex-1 py-2 rounded-xl bg-cyber-pink text-white font-bold text-xs transition flex items-center justify-center gap-1.5";
-                generatePalette();
-            } else if (tab === 'notes') {
-                document.getElementById('panel-notes').classList.remove('hidden');
-                document.getElementById('tab-notes').className = "flex-1 py-2 rounded-xl bg-cyber-purple text-white font-bold text-xs transition flex items-center justify-center gap-1.5";
-            }
-        }
-
-        // TOOL A: QR CODE GENERATOR
-        const qrInput = document.getElementById('qr-input');
-        const qrImg = document.getElementById('qr-img');
-
-        function updateQR() {
-            const val = qrInput.value.trim() || 'https://xsusstudio.com';
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(val)}`;
-        }
-        qrInput?.addEventListener('input', updateQR);
-        updateQR();
-
-        // TOOL B: COLOR PALETTE GENERATOR
-        function generatePalette() {
-            const container = document.getElementById('palette-container');
-            container.innerHTML = '';
-            const colors = ['#00f0ff', '#7000ff', '#ff007f', '#0a0a12', '#38bdf8', '#a855f7', '#f43f5e', '#10b981', '#f59e0b', '#6366f1'];
-            
-            // Pick 4 random colors
-            const selected = [];
-            for(let i=0; i<4; i++) {
-                const randomColor = colors[Math.floor(Math.random() * colors.length)];
-                selected.push(randomColor);
-            }
-
-            selected.forEach(hex => {
-                const div = document.createElement('div');
-                div.className = "flex flex-col items-center p-3 rounded-2xl bg-black/40 border border-white/10";
-                div.innerHTML = `
-                    <div class="w-full h-20 rounded-xl mb-2 shadow-inner" style="background-color: ${hex};"></div>
-                    <span class="text-xs font-mono font-bold text-slate-200">${hex}</span>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // TOOL C: QUICK NOTES
-        const notesInput = document.getElementById('notes-input');
-        const saveStatus = document.getElementById('save-status');
-        notesInput.value = localStorage.getItem('xsus_quick_notes') || '';
-
-        notesInput?.addEventListener('input', () => {
-            localStorage.setItem('xsus_quick_notes', notesInput.value);
-            saveStatus.textContent = currentLang === 'sq' ? 'U ruajt' : currentLang === 'fr' ? 'Enregistré' : 'Saved';
-            setTimeout(() => { saveStatus.textContent = ''; }, 1500);
-        });
-    </script>
-    <script src="script.js"></script>
 </body>
 </html>
