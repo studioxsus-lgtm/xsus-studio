@@ -1,11 +1,11 @@
-
 /*
  * XSUS APP — HYPER NEXUS
  * Module Loader
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Responsibilities:
- * - Register approved modules
+ * - Register approved module factories
+ * - Validate modules through the central Module Registry
  * - Load registered module views
  * - Replace previously loaded module views
  * - Handle loading and error states
@@ -13,10 +13,16 @@
  * Security:
  * - No arbitrary HTML injection
  * - No execution of downloaded scripts
- * - Only registered module factories are accepted
+ * - Only centrally approved module factories are accepted
+ *
+ * Does not connect to XSUS AI Core or Hyper XSUS Core.
  */
 
-const MODULE_ID_PATTERN = /^[a-z][a-z0-9-]{1,63}$/;
+import {
+  getModuleDefinition,
+  isModuleRegistered,
+  isModuleAvailable
+} from "../modules/module-registry.js";
 
 /**
  * Creates an independent module loader.
@@ -46,12 +52,22 @@ export function createModuleLoader({
   let loadSequence = 0;
 
   /**
-   * Validates module identifiers.
+   * Validates an identifier against the central registry.
    */
   function isValidModuleId(moduleId) {
     return (
       typeof moduleId === "string" &&
-      MODULE_ID_PATTERN.test(moduleId)
+      isModuleRegistered(moduleId)
+    );
+  }
+
+  /**
+   * Checks whether a module is approved for loading.
+   */
+  function isModuleApproved(moduleId) {
+    return (
+      isValidModuleId(moduleId) &&
+      isModuleAvailable(moduleId)
     );
   }
 
@@ -63,7 +79,13 @@ export function createModuleLoader({
   function registerModule(moduleId, factory) {
     if (!isValidModuleId(moduleId)) {
       throw new TypeError(
-        "Invalid module identifier."
+        "Module is not defined in the central registry."
+      );
+    }
+
+    if (!isModuleApproved(moduleId)) {
+      throw new Error(
+        "Module is not marked as available."
       );
     }
 
@@ -85,10 +107,13 @@ export function createModuleLoader({
   }
 
   /**
-   * Checks whether a module is registered.
+   * Checks whether an approved factory is registered.
    */
   function isRegistered(moduleId) {
-    return registry.has(moduleId);
+    return (
+      isModuleApproved(moduleId) &&
+      registry.has(moduleId)
+    );
   }
 
   /**
@@ -126,23 +151,47 @@ export function createModuleLoader({
   }
 
   /**
-   * Loads a registered module.
+   * Loads a centrally approved module.
    *
-   * The latest load request wins. Earlier asynchronous
-   * requests cannot replace a newer module.
+   * The latest load request wins.
+   * Older asynchronous requests cannot replace newer views.
    */
   async function loadModule(moduleId, context = {}) {
+    const currentSequence = ++loadSequence;
+
     if (!isValidModuleId(moduleId)) {
-      throw new TypeError(
-        "Invalid module identifier."
+      hideLoading();
+
+      showError(
+        "This module is not defined in the central registry."
       );
+
+      throw new TypeError(
+        "Invalid or unregistered module identifier."
+      );
+    }
+
+    if (!isModuleApproved(moduleId)) {
+      hideLoading();
+
+      showError(
+        "This module is not currently available."
+      );
+
+      return {
+        success: false,
+        moduleId,
+        reason: "MODULE_NOT_AVAILABLE"
+      };
     }
 
     const factory = registry.get(moduleId);
 
     if (!factory) {
+      hideLoading();
+
       showError(
-        "This module is not registered."
+        "This module has no registered runtime factory."
       );
 
       return {
@@ -151,8 +200,6 @@ export function createModuleLoader({
         reason: "MODULE_NOT_REGISTERED"
       };
     }
-
-    const currentSequence = ++loadSequence;
 
     showLoading();
 
@@ -186,6 +233,25 @@ export function createModuleLoader({
         throw new TypeError(
           "Module element belongs to another document."
         );
+      }
+
+      if (
+        moduleElement === container ||
+        moduleElement.contains(container)
+      ) {
+        throw new TypeError(
+          "Module element cannot contain its own module container."
+        );
+      }
+
+      const moduleDefinition = getModuleDefinition(moduleId);
+
+      if (!moduleDefinition || !isModuleAvailable(moduleId)) {
+        return {
+          success: false,
+          moduleId,
+          reason: "MODULE_NOT_AVAILABLE"
+        };
       }
 
       if (activeModuleElement) {
@@ -268,10 +334,11 @@ export function createModuleLoader({
   }
 
   /**
-   * Returns registered module identifiers.
+   * Returns registered and currently approved factories.
    */
   function listRegisteredModules() {
-    return Array.from(registry.keys());
+    return Array.from(registry.keys())
+      .filter((moduleId) => isModuleApproved(moduleId));
   }
 
   return Object.freeze({
