@@ -1,385 +1,443 @@
+/**
 
-/*
- * XSUS APP — HYPER NEXUS SHELL
- * Version: 1.0.0
- * Module: Shell Controller
- *
- * Responsibilities:
- * - Navigation state
- * - Mobile sidebar
- * - Page title management
- * - Hash-based navigation
- *
- * Does not connect to XSUS AI Core or Hyper XSUS Core.
- */
+* XSUS APP — HYPER NEXUS SHELL
+* Version: 1.1.0
+* Module: Shell Controller
+* 
+* Responsibilities:
+* - Shell interface initialization
+* - Module presentation
+* - Mobile sidebar
+* - Page title management
+* 
+* Navigation is managed by navigation.js.
+* Module metadata is managed by module-registry.js.
+* 
+* Does not connect to XSUS AI Core or Hyper XSUS Core.
+  */
 
-const HYPER_NEXUS_MODULES = Object.freeze({
-  overview: {
-    title: "Hyper Nexus",
-    available: true
-  },
+import {
+DEFAULT_NAVIGATION_MODULE,
+createNavigationController
+} from "./navigation.js";
 
-  "command-center": {
-    title: "Command Center",
-    available: false
-  },
-
-  "living-workspace": {
-    title: "Living Workspace",
-    available: false
-  },
-
-  "multi-agent": {
-    title: "Multi-Agent Center",
-    available: false
-  },
-
-  "workflow-studio": {
-    title: "Workflow Studio",
-    available: false
-  },
-
-  "knowledge-graph": {
-    title: "Knowledge Graph Explorer",
-    available: false
-  },
-
-  "system-control": {
-    title: "System Control",
-    available: false
-  },
-
-  "integration-layer": {
-    title: "Integration Layer",
-    available: false
-  },
-
-  architecture: {
-    title: "Architecture",
-    available: false
-  }
-});
-
-const DEFAULT_MODULE = "overview";
+import {
+getModuleDefinition,
+isModuleAvailable
+} from "../modules/module-registry.js";
 
 /**
- * Initializes the Hyper Nexus Shell.
- *
- * @param {HTMLElement} root
- * @returns {{ destroy: Function } | null}
- */
-export function initializeHyperNexusShell(root = document) {
-  const shell = root.querySelector("#xsus-app");
 
-  if (!shell) {
-    return null;
+* Initializes the Hyper Nexus Shell.
+* 
+* @param {Document|HTMLElement} root
+* @returns {{
+* destroy: Function,
+* getCurrentModule: Function
+* } | null}
+  */
+  export function initializeHyperNexusShell(root = document) {
+  if (!root || typeof root.querySelector !== "function") {
+  return null;
   }
 
-  const sidebar = shell.querySelector("#hyper-nexus-sidebar");
-  const menuToggle = shell.querySelector(
-    "#hyper-nexus-menu-toggle"
-  );
+const shell = root.querySelector("#xsus-app");
 
-  const pageTitle = shell.querySelector(
-    "#hyper-nexus-page-title"
-  );
+if (!shell) {
+return null;
+}
 
-  const moduleContainer = shell.querySelector(
-    "#hyper-nexus-module-container"
-  );
+const sidebar = shell.querySelector(
+"#hyper-nexus-sidebar"
+);
 
-  const loadingState = shell.querySelector(
-    "#hyper-nexus-module-loading"
-  );
+const menuToggle = shell.querySelector(
+"#hyper-nexus-menu-toggle"
+);
 
-  const errorState = shell.querySelector(
-    "#hyper-nexus-module-error"
-  );
+const pageTitle = shell.querySelector(
+"#hyper-nexus-page-title"
+);
 
-  const overviewSection = moduleContainer?.querySelector(
-    '[data-module="overview"]'
-  );
+const moduleContainer = shell.querySelector(
+"#hyper-nexus-module-container"
+);
 
-  if (
-    !sidebar ||
-    !menuToggle ||
-    !pageTitle ||
-    !moduleContainer ||
-    !overviewSection
-  ) {
-    console.error(
-      "[Hyper Nexus Shell] Required shell elements are missing."
-    );
+const loadingState = shell.querySelector(
+"#hyper-nexus-module-loading"
+);
 
-    return null;
-  }
+const errorState = shell.querySelector(
+"#hyper-nexus-module-error"
+);
 
-  let currentModule = DEFAULT_MODULE;
+const overviewSection = moduleContainer?.querySelector(
+'[data-module="overview"]'
+);
 
-  /**
-   * Resolves a valid module identifier.
-   */
-  function resolveModule(identifier) {
-    if (
-      typeof identifier !== "string" ||
-      !Object.prototype.hasOwnProperty.call(
-        HYPER_NEXUS_MODULES,
-        identifier
-      )
-    ) {
-      return DEFAULT_MODULE;
-    }
+if (
+!sidebar ||
+!menuToggle ||
+!pageTitle ||
+!moduleContainer ||
+!overviewSection
+) {
+console.error(
+"[Hyper Nexus Shell] Required shell elements are missing."
+);
 
-    return identifier;
-  }
+return null;
 
-  /**
-   * Closes the mobile sidebar.
-   */
+}
+
+const windowRef = root.defaultView ||
+(typeof window !== "undefined" ? window : null);
+
+if (!windowRef) {
+console.error(
+"[Hyper Nexus Shell] Browser environment is unavailable."
+);
+
+return null;
+
+}
+
+let currentModule = DEFAULT_NAVIGATION_MODULE;
+let destroyed = false;
+
+/**
+
+* Closes the mobile sidebar.
+  */
   function closeSidebar() {
-    shell.classList.remove("is-sidebar-open");
+  shell.classList.remove("is-sidebar-open");
 
-    menuToggle.setAttribute(
-      "aria-expanded",
-      "false"
-    );
-  }
+menuToggle.setAttribute(
+  "aria-expanded",
+  "false"
+);
 
-  /**
-   * Toggles the mobile sidebar.
-   */
+}
+
+/**
+
+* Toggles the mobile sidebar.
+  */
   function toggleSidebar() {
-    const isOpen = shell.classList.toggle(
-      "is-sidebar-open"
-    );
+  const isOpen = shell.classList.toggle(
+  "is-sidebar-open"
+  );
 
-    menuToggle.setAttribute(
-      "aria-expanded",
-      String(isOpen)
-    );
+menuToggle.setAttribute(
+  "aria-expanded",
+  String(isOpen)
+);
+
+}
+
+/**
+
+* Removes an existing unavailable-module placeholder.
+  */
+  function removeUnavailablePlaceholder() {
+  const placeholder = moduleContainer.querySelector(
+  "#hyper-nexus-unavailable-module"
+  );
+
+placeholder?.remove();
+
+}
+
+/**
+
+* Creates a safe placeholder for modules
+* that are not yet available.
+* 
+* @param {string} title
+  */
+  function renderUnavailableModule(title) {
+  const placeholder = document.createElement("section");
+
+placeholder.id = "hyper-nexus-unavailable-module";
+placeholder.className = "xsus-panel";
+placeholder.setAttribute("role", "status");
+
+const heading = document.createElement("h2");
+heading.textContent = title;
+
+const description = document.createElement("p");
+
+description.textContent =
+  "This module has not been implemented and verified yet. " +
+  "It will become available after its development and testing.";
+
+placeholder.append(heading, description);
+moduleContainer.appendChild(placeholder);
+
+}
+
+/**
+
+* Updates active navigation links.
+
+* 
+
+* @param {string} moduleId
+  */
+  function updateNavigationUI(moduleId) {
+  shell.querySelectorAll("[data-module-link]")
+  .forEach((link) => {
+  const isActive =
+  link.dataset.moduleLink === moduleId;
+  
+  link.classList.toggle("active", isActive);
+  
+  if (isActive) {
+  link.setAttribute("aria-current", "page");
+  } else {
+  link.removeAttribute("aria-current");
+  }
+  });
   }
 
-  /**
-   * Displays the selected module state.
-   *
-   * Future modules will be loaded through the
-   * controlled module loader.
-   */
-  function renderModule(identifier) {
-    const moduleId = resolveModule(identifier);
-    const module = HYPER_NEXUS_MODULES[moduleId];
+/**
 
-    currentModule = moduleId;
-
-    pageTitle.textContent = module.title;
-
-    loadingState.hidden = true;
-    errorState.hidden = true;
-
-    shell.querySelectorAll("[data-module-link]")
-      .forEach((link) => {
-        const isActive =
-          link.dataset.moduleLink === moduleId;
-
-        link.classList.toggle("active", isActive);
-
-        if (isActive) {
-          link.setAttribute("aria-current", "page");
-        } else {
-          link.removeAttribute("aria-current");
-        }
-      });
-
-    overviewSection.hidden = moduleId !== DEFAULT_MODULE;
-
-    const existingPlaceholder = moduleContainer.querySelector(
-      "#hyper-nexus-unavailable-module"
-    );
-
-    if (existingPlaceholder) {
-      existingPlaceholder.remove();
-    }
-
-    if (!module.available) {
-      const placeholder = document.createElement("section");
-
-      placeholder.id = "hyper-nexus-unavailable-module";
-      placeholder.className = "xsus-panel";
-      placeholder.setAttribute("role", "status");
-
-      const heading = document.createElement("h2");
-      heading.textContent = module.title;
-
-      const description = document.createElement("p");
-      description.textContent =
-        "This module has not been implemented and registered yet. " +
-        "It will become available after its development and verification.";
-
-      placeholder.append(heading, description);
-      moduleContainer.appendChild(placeholder);
-    }
-
-    closeSidebar();
-
-    moduleContainer.focus({
-      preventScroll: true
-    });
+* Renders a module using registry metadata.
+* 
+* @param {{id: string}} navigationState
+  */
+  function renderModule(navigationState) {
+  if (destroyed || !navigationState) {
+  return;
   }
 
-  /**
-   * Handles navigation clicks.
-   */
+const moduleId = navigationState.id;
+const moduleDefinition = getModuleDefinition(moduleId);
+
+if (!moduleDefinition) {
+  console.error(
+    `[Hyper Nexus Shell] Module definition not found: ${moduleId}`
+  );
+
+  return;
+}
+
+currentModule = moduleId;
+
+pageTitle.textContent = moduleDefinition.title ||
+  moduleDefinition.name ||
+  moduleId;
+
+if (loadingState) {
+  loadingState.hidden = true;
+}
+
+if (errorState) {
+  errorState.hidden = true;
+}
+
+updateNavigationUI(moduleId);
+
+overviewSection.hidden =
+  moduleId !== DEFAULT_NAVIGATION_MODULE;
+
+removeUnavailablePlaceholder();
+
+if (!isModuleAvailable(moduleId)) {
+  renderUnavailableModule(
+    pageTitle.textContent
+  );
+}
+
+closeSidebar();
+
+moduleContainer.focus({
+  preventScroll: true
+});
+
+}
+
+/**
+
+* Navigation controller.
+* Owns hash navigation and browser history.
+  */
+  const navigationController = createNavigationController({
+  windowRef,
+
+onNavigate(navigationState) {
+  renderModule(navigationState);
+}
+
+});
+
+/**
+
+* Handles navigation clicks.
+  */
   function handleNavigation(event) {
-    const link = event.target.closest(
-      "[data-module-link]"
-    );
+  const target = event.target;
 
-    if (!link || !shell.contains(link)) {
-      return;
-    }
+if (!target || typeof target.closest !== "function") {
+  return;
+}
 
-    event.preventDefault();
+const link = target.closest("[data-module-link]");
 
-    const requestedModule = resolveModule(
-      link.dataset.moduleLink
-    );
+if (!link || !shell.contains(link)) {
+  return;
+}
 
-    const nextHash = `#${requestedModule}`;
+event.preventDefault();
 
-    if (window.location.hash !== nextHash) {
-      window.history.pushState(
-        { module: requestedModule },
-        "",
-        nextHash
-      );
-    }
+navigationController.navigate(
+  link.dataset.moduleLink
+);
 
-    renderModule(requestedModule);
-  }
+}
 
-  /**
-   * Handles browser back and forward navigation.
-   */
-  function handleHistoryChange() {
-    const requestedModule = resolveModule(
-      window.location.hash.replace(/^#/, "")
-    );
+/**
 
-    renderModule(requestedModule);
-  }
-
-  /**
-   * Handles Escape key for mobile navigation.
-   */
-  function handleKeydown(event) {
-    if (event.key === "Escape") {
-      closeSidebar();
-    }
-  }
-
-  /**
-   * Handles viewport changes.
-   */
-  function handleResize() {
-    if (window.innerWidth > 760) {
-      closeSidebar();
-    }
-  }
-
-  /**
-   * Event registration.
-   */
+* Handles mobile menu click.
+  */
   function handleMenuClick() {
-    toggleSidebar();
+  toggleSidebar();
   }
 
+/**
+
+* Handles Escape key.
+  */
+  function handleKeydown(event) {
+  if (event.key === "Escape") {
+  closeSidebar();
+  }
+  }
+
+/**
+
+* Handles viewport changes.
+  */
+  function handleResize() {
+  if (windowRef.innerWidth > 760) {
+  closeSidebar();
+  }
+  }
+
+/**
+
+* Register Shell-specific events.
+  */
   shell.addEventListener(
-    "click",
-    handleNavigation
+  "click",
+  handleNavigation
   );
 
-  menuToggle.addEventListener(
-    "click",
-    handleMenuClick
+menuToggle.addEventListener(
+"click",
+handleMenuClick
+);
+
+windowRef.addEventListener(
+"keydown",
+handleKeydown
+);
+
+windowRef.addEventListener(
+"resize",
+handleResize
+);
+
+/**
+
+* Initialize centralized navigation.
+  */
+  try {
+  navigationController.initialize();
+  } catch (error) {
+  shell.removeEventListener(
+  "click",
+  handleNavigation
   );
 
-  window.addEventListener(
-    "popstate",
-    handleHistoryChange
-  );
+menuToggle.removeEventListener(
+  "click",
+  handleMenuClick
+);
 
-  window.addEventListener(
-    "hashchange",
-    handleHistoryChange
-  );
+windowRef.removeEventListener(
+  "keydown",
+  handleKeydown
+);
 
-  window.addEventListener(
-    "keydown",
-    handleKeydown
-  );
+windowRef.removeEventListener(
+  "resize",
+  handleResize
+);
 
-  window.addEventListener(
-    "resize",
-    handleResize
-  );
+navigationController.destroy();
 
-  /**
-   * Initial module.
-   */
-  const initialModule = resolveModule(
-    window.location.hash.replace(/^#/, "") ||
-    DEFAULT_MODULE
-  );
+console.error(
+  "[Hyper Nexus Shell] Initialization failed.",
+  error
+);
 
-  renderModule(initialModule);
+return null;
 
-  console.info(
-    "[Hyper Nexus Shell] Initialized successfully."
-  );
+}
 
-  /**
-   * Cleanup.
-   */
+console.info(
+"[Hyper Nexus Shell] Initialized successfully."
+);
+
+/**
+
+* Cleanup.
+  */
   function destroy() {
-    shell.removeEventListener(
-      "click",
-      handleNavigation
-    );
-
-    menuToggle.removeEventListener(
-      "click",
-      handleMenuClick
-    );
-
-    window.removeEventListener(
-      "popstate",
-      handleHistoryChange
-    );
-
-    window.removeEventListener(
-      "hashchange",
-      handleHistoryChange
-    );
-
-    window.removeEventListener(
-      "keydown",
-      handleKeydown
-    );
-
-    window.removeEventListener(
-      "resize",
-      handleResize
-    );
-
-    closeSidebar();
-
-    console.info(
-      "[Hyper Nexus Shell] Destroyed."
-    );
+  if (destroyed) {
+  return;
   }
 
-  return {
-    destroy,
-    getCurrentModule: () => currentModule
-  };
+destroyed = true;
+
+shell.removeEventListener(
+  "click",
+  handleNavigation
+);
+
+menuToggle.removeEventListener(
+  "click",
+  handleMenuClick
+);
+
+windowRef.removeEventListener(
+  "keydown",
+  handleKeydown
+);
+
+windowRef.removeEventListener(
+  "resize",
+  handleResize
+);
+
+navigationController.destroy();
+
+closeSidebar();
+removeUnavailablePlaceholder();
+
+console.info(
+  "[Hyper Nexus Shell] Destroyed."
+);
+
+}
+
+return {
+destroy,
+
+getCurrentModule() {
+  return currentModule;
+}
+
+};
 }
