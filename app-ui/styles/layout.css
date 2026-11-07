@@ -1,0 +1,496 @@
+
+/*
+ * XSUS APP — Advanced Interface Layout
+ * Version: 1.0.0
+ * Foundation: XSUS Design System
+ */
+
+#xsus-app {
+  display: grid;
+  grid-template-columns: var(--xsus-sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+/* SIDEBAR */
+
+.xsus-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  width: var(--xsus-sidebar-width);
+  height: 100vh;
+  padding: var(--xsus-space-6) var(--xsus-space-4);
+  background: rgba(5, 9, 19, 0.94);
+  border-right: 1px solid var(--xsus-border);
+  backdrop-filter: var(--xsus-blur);
+  z-index: 50;
+}
+
+.xsus-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 var(--xsus-space-2) var(--xsus-space-8);
+}
+
+.xsus-sidebar-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: var(--xsus-radius-md);
+  background: var(--xsus-gradient-brand);
+  color: #ffffff;
+  box-shadow: var(--xsus-shadow-active);
+  font-weight: 900;
+}
+
+.xsus-sidebar-brand-name {
+  font-size: var(--xsus-text-lg);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.xsus-sidebar-brand-caption {
+  color: var(--xsus-text-muted);
+  font-size: var(--xsus-text-xs);
+  letter-spacing: 0.16em;
+}
+
+.xsus-sidebar-section {
+  margin: var(--xsus-space-5) 0 var(--xsus-space-2);
+  padding: 0 var(--xsus-space-3);
+  color: var(--xsus-text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.xsus-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.xsus-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 13px;
+  border: 1px solid transparent;
+  border-radius: var(--xsus-radius-md);
+  color: var(--xsus-text-secondary);
+  font-size: var(--xsus-text-sm);
+  transition:
+    color var(--xsus-transition),
+    background var(--xsus-transition),
+    border-color var(--xsus-transition),
+    transform var(--xsus-transition);
+}
+
+.xsus-sidebar-link:hover {
+  color: var(--xsus-text);
+  background: rgba(54, 120, 255, 0.09);
+  border-color: var(--xsus-border);
+  transform: translateX(2px);
+}
+
+.xsus-sidebar-link.active {
+  color: var(--xsus-cyan);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 229, 255, 0.12),
+    rgba(54, 120, 255, 0.06)
+  );
+  border-color: rgba(0, 229, 255, 0.2);
+  box-shadow: inset 3px 0 var(--xsus-cyan);
+}
+
+.xsus-sidebar-footer {
+  margin-top: auto;
+  padding-top: var(--xsus-space-5);
+  border-top: 1px solid var(--xsus-border);
+}
+
+/* MAIN APPLICATION */
+
+.xsus-main {
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.xsus-main-inner {
+  width: min(100%, var(--xsus-content-max));
+  margin-inline: auto;
+  padding: 0 var(--xsus-space-8) var(--xsus-space-12);
+}
+
+/* TOPBAR */
+
+.xsus-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--xsus-topbar-height);
+  gap: var(--xsus-space-4);
+  padding: 12px var(--xsus-space-8);
+  background: rgba(5, 8, 17, 0.82);
+  border-bottom: 1px solid var(--xsus-border);
+  backdrop-filter: var(--xsus-blur);
+}
+
+.xsus-topbar-left,
+.xsus-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--xsus-space-4);
+  min-width: 0;
+}
+
+.xsus-topbar-title {
+  font-size: var(--xsus-text-sm);
+  font-weight: 700;
+}
+
+.xsus-topbar-subtitle {
+  color: var(--xsus-text-muted);
+  font-size: var(--xsus-text-xs);
+}
+
+/* PAGE SECTIONS */
+
+.xsus-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xsus-space-8);
+  padding-top: var(--xsus-space-8);
+}
+
+.xsus-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xsus-space-5);
+  min-width: 0;
+  scroll-margin-top: calc(var(--xsus-topbar-height) + 20px);
+}
+
+.xsus-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--xsus-space-4);
+}
+
+.xsus-section-heading {
+  font-size: var(--xsus-text-2xl);
+  letter-spacing: -0.04em;
+}
+
+.xsus-section-description {
+  max-width: 680px;
+  margin-top: 7px;
+  color: var(--xsus-text-muted);
+  font-size: var(--xsus-text-sm);
+}
+
+/* COMMAND CENTER */
+
+.xsus-command-center {
+  position: relative;
+  overflow: hidden;
+  padding: var(--xsus-space-8);
+  border: 1px solid var(--xsus-border-strong);
+  border-radius: var(--xsus-radius-xl);
+  background:
+    radial-gradient(
+      ellipse at 85% 10%,
+      rgba(129, 87, 255, 0.18),
+      transparent 40%
+    ),
+    radial-gradient(
+      ellipse at 10% 100%,
+      rgba(0, 229, 255, 0.12),
+      transparent 45%
+    ),
+    var(--xsus-gradient-surface);
+  box-shadow: var(--xsus-shadow-card);
+}
+
+.xsus-command-center-content {
+  position: relative;
+  z-index: 1;
+  max-width: 850px;
+}
+
+.xsus-command-center-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--xsus-space-4);
+}
+
+/* DASHBOARD GRID */
+
+.xsus-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--xsus-space-5);
+}
+
+.xsus-col-3 {
+  grid-column: span 3;
+}
+
+.xsus-col-4 {
+  grid-column: span 4;
+}
+
+.xsus-col-6 {
+  grid-column: span 6;
+}
+
+.xsus-col-8 {
+  grid-column: span 8;
+}
+
+.xsus-col-12 {
+  grid-column: span 12;
+}
+
+/* PANELS */
+
+.xsus-panel {
+  min-width: 0;
+  padding: var(--xsus-space-6);
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-lg);
+  background: var(--xsus-gradient-surface);
+  box-shadow: var(--xsus-shadow-card);
+}
+
+.xsus-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--xsus-space-3);
+  margin-bottom: var(--xsus-space-5);
+}
+
+.xsus-panel-title {
+  font-size: var(--xsus-text-lg);
+  font-weight: 700;
+}
+
+/* WORKSPACE */
+
+.xsus-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--xsus-space-5);
+  min-width: 0;
+}
+
+.xsus-workspace-main,
+.xsus-workspace-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xsus-space-5);
+  min-width: 0;
+}
+
+/* ARCHITECTURE CANVAS */
+
+.xsus-architecture-canvas {
+  position: relative;
+  min-height: 420px;
+  overflow: hidden;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-lg);
+  background-color: rgba(4, 9, 20, 0.8);
+  background-image:
+    linear-gradient(rgba(90, 130, 190, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(90, 130, 190, 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ENGINEERING WORKSPACE */
+
+.xsus-engineering-workspace {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 280px;
+  min-height: 560px;
+  overflow: hidden;
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-xl);
+  background: rgba(5, 10, 22, 0.85);
+}
+
+.xsus-workspace-sidebar,
+.xsus-workspace-inspector {
+  min-width: 0;
+  padding: var(--xsus-space-5);
+  background: rgba(12, 20, 36, 0.75);
+}
+
+.xsus-workspace-sidebar {
+  border-right: 1px solid var(--xsus-border);
+}
+
+.xsus-workspace-inspector {
+  border-left: 1px solid var(--xsus-border);
+}
+
+.xsus-workspace-canvas {
+  min-width: 0;
+  padding: var(--xsus-space-5);
+}
+
+/* NEXUS CONTROL CENTER */
+
+.xsus-nexus-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--xsus-space-5);
+}
+
+.xsus-nexus-monitor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--xsus-space-4);
+}
+
+/* TIMELINE / EVENT STREAM */
+
+.xsus-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xsus-space-4);
+  min-width: 0;
+}
+
+.xsus-timeline-item {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  gap: var(--xsus-space-3);
+}
+
+/* MODAL / OVERLAY LAYOUT */
+
+.xsus-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--xsus-space-5);
+  background: rgba(2, 5, 12, 0.78);
+  backdrop-filter: blur(12px);
+}
+
+.xsus-modal {
+  width: min(100%, 720px);
+  max-height: min(85vh, 900px);
+  overflow: auto;
+}
+
+/* RESPONSIVE STRUCTURE */
+
+@media (max-width: 1200px) {
+  :root {
+    --xsus-sidebar-width: 230px;
+  }
+
+  .xsus-workspace {
+    grid-template-columns: minmax(0, 1fr) 260px;
+  }
+
+  .xsus-engineering-workspace {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+
+  .xsus-workspace-inspector {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  #xsus-app {
+    grid-template-columns: 1fr;
+  }
+
+  .xsus-sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+  }
+
+  .xsus-sidebar-footer {
+    margin-top: var(--xsus-space-5);
+  }
+
+  .xsus-workspace,
+  .xsus-nexus-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .xsus-command-center-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .xsus-col-3,
+  .xsus-col-4 {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 600px) {
+  .xsus-main-inner {
+    padding-inline: var(--xsus-space-4);
+  }
+
+  .xsus-topbar {
+    padding-inline: var(--xsus-space-4);
+  }
+
+  .xsus-command-center {
+    padding: var(--xsus-space-5);
+  }
+
+  .xsus-command-center-grid,
+  .xsus-nexus-monitor {
+    grid-template-columns: 1fr;
+  }
+
+  .xsus-col-3,
+  .xsus-col-4,
+  .xsus-col-6,
+  .xsus-col-8 {
+    grid-column: span 12;
+  }
+
+  .xsus-engineering-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .xsus-workspace-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--xsus-border);
+  }
+
+  .xsus-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .xsus-panel {
+    padding: var(--xsus-space-4);
+  }
+}
