@@ -3,11 +3,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   >
+
   <meta name="theme-color" content="#060a18">
+
   <meta
     name="description"
     content="XSUS Studio — The X Identity. AI, apps, web, games, logos and domains."
@@ -19,9 +22,32 @@
   <link rel="stylesheet" href="assets/css/studio.css">
   <link rel="stylesheet" href="assets/css/header.css">
   <link rel="stylesheet" href="assets/css/hero.css">
-  <link rel="stylesheet" href="assets/css/globi-v4.css">
+  <link rel="stylesheet" href="assets/css/globi-v4.css?v=421">
   <link rel="stylesheet" href="assets/css/modules.css">
   <link rel="stylesheet" href="assets/css/responsive.css">
+
+  <!-- OFFICIAL BRAND LOGO STYLING -->
+  <style>
+    .xsus-header-logo {
+      display: block;
+      width: 47px;
+      height: 47px;
+      flex-shrink: 0;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 12px;
+      border: 1px solid rgba(32, 232, 255, 0.3);
+      background: #050a18;
+    }
+
+    @media (max-width: 520px) {
+      .xsus-header-logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+      }
+    }
+  </style>
 
   <!-- XSUS STUDIO ENGINES -->
   <script src="assets/js/navigation.js" defer></script>
@@ -36,19 +62,30 @@
   <header class="header">
     <div class="topbar">
 
+      <!-- OFFICIAL XSUS BRAND -->
       <a
         class="brand"
         href="index-v2.html"
         aria-label="XSUS Studio Home"
       >
-        <div class="mark" aria-hidden="true">X</div>
+
+        <img
+          src="assets/images/xsus-studio-logo.png"
+          alt=""
+          class="xsus-header-logo"
+          width="47"
+          height="47"
+          decoding="async"
+        >
 
         <div>
           <div class="brand-name">XSUS STUDIO</div>
           <div class="brand-tag">THE X IDENTITY</div>
         </div>
+
       </a>
 
+      <!-- HEADER ACTIONS -->
       <div class="actions">
 
         <select id="language" aria-label="Language">
@@ -89,6 +126,7 @@
       id="navigation"
       aria-label="Main navigation"
     >
+
       <a
         href="index-v2.html"
         aria-current="page"
@@ -103,6 +141,7 @@
       <a href="game.html">XSUS Game</a>
       <a href="logo.html">XSUS Logo</a>
       <a href="domain.html">XSUS Domain</a>
+
     </nav>
   </header>
 
@@ -110,6 +149,7 @@
 
     <!-- HERO -->
     <section class="hero">
+
       <div class="hero-content">
 
         <div class="eyebrow">
@@ -150,6 +190,7 @@
 
       <!-- XSUS INTERACTIVE GLOBE -->
       <div class="globe-wrap">
+
         <div
           class="xsus-globe"
           id="xsusInteractiveGlobe"
@@ -157,7 +198,9 @@
           tabindex="0"
           aria-label="Interactive XSUS globe. Drag to rotate. Use arrow keys to adjust rotation."
         ></div>
+
       </div>
+
     </section>
 
     <!-- SIX XSUS PRODUCTS -->
@@ -175,61 +218,85 @@
 
         <!-- XSUS AI -->
         <a class="card" href="ai.html">
+
           <div class="card-icon" aria-hidden="true">✦</div>
+
           <h3>XSUS AI</h3>
+
           <p data-t="ai">
             Intelligence, knowledge and AI-powered experiences.
           </p>
+
           <span data-t="cardExplore">Explore →</span>
         </a>
 
         <!-- XSUS APP -->
         <a class="card" href="app.html">
+
           <div class="card-icon" aria-hidden="true">▣</div>
+
           <h3>XSUS App</h3>
+
           <p data-t="app">
             Create and develop modern digital applications.
           </p>
+
           <span data-t="cardExplore">Explore →</span>
         </a>
 
         <!-- XSUS WEB -->
         <a class="card" href="web.html">
+
           <div class="card-icon" aria-hidden="true">◎</div>
+
           <h3>XSUS Web</h3>
+
           <p data-t="web">
             Design and build modern websites.
           </p>
+
           <span data-t="cardExplore">Explore →</span>
         </a>
 
         <!-- XSUS GAME -->
         <a class="card" href="game.html">
+
           <div class="card-icon" aria-hidden="true">◈</div>
+
           <h3>XSUS Game</h3>
+
           <p data-t="game">
             Explore interactive game development.
           </p>
+
           <span data-t="cardExplore">Explore →</span>
         </a>
 
         <!-- XSUS LOGO -->
         <a class="card" href="logo.html">
+
           <div class="card-icon" aria-hidden="true">◇</div>
+
           <h3>XSUS Logo</h3>
+
           <p data-t="logo">
             Create distinctive visual identities.
           </p>
+
           <span data-t="cardExplore">Explore →</span>
         </a>
 
         <!-- XSUS DOMAIN -->
         <a class="card" href="domain.html">
+
           <div class="card-icon" aria-hidden="true">◉</div>
+
           <h3>XSUS Domain</h3>
+
           <p data-t="domain">
             Explore domains and digital identity.
           </p>
+
           <span data-t="cardExplore">Explore →</span>
         </a>
 
