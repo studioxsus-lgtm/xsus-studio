@@ -1,17 +1,19 @@
 
 /**
  * XSUS AI V3 — Chat & Plus Menu
- * Version: 3.0.0
+ * Version: 3.1.1
  * Brand: THE X IDENTITY
  *
  * Requires: base.css, workspace.css
+ * Compatible with plus-menu.js v3.1.0
  *
- * Layout:
- * LEFT  — Plus menu
- * RIGHT — Voice and Send
+ * LEFT: Plus menu
+ * RIGHT: Voice and Send
  *
- * CSS presentation only.
- * Interactions will be implemented in JavaScript.
+ * Attachment previews:
+ * - Image thumbnails 48 × 48
+ * - Document preview tiles 48 × 48
+ * - Responsive attachment cards
  */
 
 /* ========================================
@@ -22,7 +24,6 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-
   width: 100%;
   min-width: 0;
 }
@@ -35,14 +36,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
   width: 34px;
   height: 34px;
   flex-shrink: 0;
-
   border: 1px solid var(--xsus-border);
   border-radius: 12px;
-
   background: var(--xsus-surface);
   color: var(--xsus-cyan);
 }
@@ -56,14 +54,11 @@
 .xsus-chat-bubble {
   max-width: min(85%, 720px);
   min-width: 0;
-
   padding: 14px 18px;
   border-radius: 18px;
-
   color: var(--xsus-text);
   font-size: 14px;
   line-height: 1.7;
-
   overflow-wrap: anywhere;
 }
 
@@ -73,7 +68,6 @@
     rgba(66, 133, 255, 0.22),
     rgba(149, 102, 255, 0.16)
   );
-
   border: 1px solid rgba(149, 102, 255, 0.25);
   border-bottom-right-radius: 6px;
 }
@@ -91,12 +85,9 @@
 .xsus-chat-bubble pre {
   max-width: 100%;
   padding: 14px;
-
   overflow-x: auto;
-
   border: 1px solid var(--xsus-border);
   border-radius: 12px;
-
   background: rgba(0, 0, 0, 0.3);
 }
 
@@ -117,7 +108,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-
   margin-top: 8px;
 }
 
@@ -125,13 +115,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   width: 34px;
   height: 34px;
-
   border: 1px solid transparent;
   border-radius: 9px;
-
   background: transparent;
   color: var(--xsus-text-muted);
 }
@@ -152,22 +139,17 @@
 
 .xsus-chat-composer {
   position: relative;
-
   display: flex;
   flex-direction: column;
   gap: 10px;
-
   width: 100%;
+  min-width: 0;
   padding: 14px;
-
   border: 1px solid var(--xsus-border);
   border-radius: 22px;
-
   background: rgba(16, 27, 48, 0.92);
-
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.18);
-
   transition:
     border-color var(--xsus-transition),
     box-shadow var(--xsus-transition);
@@ -182,20 +164,16 @@
 
 .xsus-chat-input {
   display: block;
-
   width: 100%;
+  min-width: 0;
   min-height: 42px;
   max-height: 180px;
-
   padding: 8px 6px;
-
   border: 0;
   outline: none;
   resize: none;
-
   background: transparent;
   color: var(--xsus-text);
-
   font-size: 14px;
   line-height: 1.6;
 }
@@ -213,6 +191,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
 }
 
 .xsus-chat-toolbar-left,
@@ -234,19 +213,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   width: 42px;
   height: 42px;
   flex-shrink: 0;
-
   padding: 0;
-
   border: 1px solid var(--xsus-border);
   border-radius: 13px;
-
   background: rgba(255, 255, 255, 0.035);
   color: var(--xsus-text-secondary);
-
   transition:
     background var(--xsus-transition),
     color var(--xsus-transition),
@@ -271,10 +245,8 @@
 
 .xsus-plus-button {
   border-radius: 50%;
-
   background: rgba(32, 232, 255, 0.07);
   color: var(--xsus-cyan);
-
   border-color: rgba(32, 232, 255, 0.22);
 }
 
@@ -282,7 +254,6 @@
 .xsus-plus-button[aria-expanded="true"] {
   background: rgba(32, 232, 255, 0.16);
   border-color: var(--xsus-cyan);
-
   box-shadow: var(--xsus-glow);
 }
 
@@ -300,7 +271,6 @@
 
 .xsus-voice-button {
   border-radius: 50%;
-
   color: var(--xsus-text);
   background: rgba(149, 102, 255, 0.08);
 }
@@ -314,17 +284,19 @@
   color: #ffffff;
   background: rgba(230, 90, 255, 0.2);
   border-color: var(--xsus-pink);
-
-  animation: xsus-voice-pulse 1.5s ease-in-out infinite;
+  animation:
+    xsus-voice-pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes xsus-voice-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(230, 90, 255, 0.3);
+    box-shadow:
+      0 0 0 0 rgba(230, 90, 255, 0.3);
   }
 
   50% {
-    box-shadow: 0 0 0 9px rgba(230, 90, 255, 0);
+    box-shadow:
+      0 0 0 9px rgba(230, 90, 255, 0);
   }
 }
 
@@ -334,24 +306,19 @@
 
 .xsus-send-button {
   border-radius: 50%;
-
   border-color: transparent;
-
   background: linear-gradient(
     135deg,
     var(--xsus-cyan),
     var(--xsus-blue)
   );
-
   color: #061020;
 }
 
 .xsus-send-button:hover {
   color: #061020;
   border-color: transparent;
-
   transform: translateY(-1px);
-
   box-shadow:
     0 0 20px rgba(32, 232, 255, 0.25);
 }
@@ -371,24 +338,17 @@
   bottom: calc(100% + 12px);
   left: 0;
   z-index: 80;
-
   width: min(370px, 100%);
   max-height: min(520px, 65dvh);
-
   padding: 12px;
-
   overflow-y: auto;
   overscroll-behavior: contain;
-
   border: 1px solid var(--xsus-border);
   border-radius: 20px;
-
   background: rgba(10, 18, 36, 0.98);
-
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.4),
     0 0 30px rgba(32, 232, 255, 0.05);
-
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
 }
@@ -406,17 +366,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-
   padding: 8px 10px 12px;
 }
 
 .xsus-plus-menu-title {
   margin: 0;
-
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.08em;
-
   color: var(--xsus-text);
 }
 
@@ -424,13 +381,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   width: 32px;
   height: 32px;
-
   border: 0;
   border-radius: 9px;
-
   background: transparent;
   color: var(--xsus-text-muted);
 }
@@ -447,16 +401,12 @@
 .xsus-plus-search {
   width: 100%;
   min-height: 42px;
-
   margin-bottom: 12px;
   padding: 10px 12px;
-
   border: 1px solid var(--xsus-border);
   border-radius: 12px;
-
   background: var(--xsus-surface);
   color: var(--xsus-text);
-
   font-size: 12px;
 }
 
@@ -480,9 +430,7 @@
 .xsus-plus-group-title {
   margin: 0 0 8px;
   padding: 0 10px;
-
   color: var(--xsus-text-muted);
-
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -497,20 +445,15 @@
   display: flex;
   align-items: center;
   gap: 12px;
-
   width: 100%;
   min-height: 48px;
   padding: 10px;
-
   border: 1px solid transparent;
   border-radius: 12px;
-
   background: transparent;
   color: var(--xsus-text);
-
   text-align: left;
   cursor: pointer;
-
   transition:
     background var(--xsus-transition),
     border-color var(--xsus-transition);
@@ -525,13 +468,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   width: 36px;
   height: 36px;
   flex-shrink: 0;
-
   border-radius: 11px;
-
   background: rgba(32, 232, 255, 0.08);
   color: var(--xsus-cyan);
 }
@@ -545,7 +485,6 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-
   flex: 1;
   min-width: 0;
 }
@@ -557,21 +496,16 @@
 
 .xsus-plus-item-description {
   color: var(--xsus-text-muted);
-
   font-size: 10px;
   line-height: 1.5;
 }
 
 .xsus-plus-item-status {
   flex-shrink: 0;
-
   padding: 4px 7px;
-
   border-radius: 7px;
-
   background: rgba(149, 102, 255, 0.12);
   color: var(--xsus-violet);
-
   font-size: 9px;
   font-weight: 700;
 }
@@ -599,63 +533,191 @@
 }
 
 /* ========================================
-   ATTACHMENT PREVIEW
+   ATTACHMENT PREVIEW — V3.1.1
 ======================================== */
 
 .xsus-chat-attachments {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .xsus-chat-attachments:empty {
   display: none;
 }
 
+.xsus-chat-attachments
+> .xsus-chat-attachment {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  flex: 0 1 250px;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 66px;
+  padding: 8px 10px;
+  border: 1px solid rgba(66, 133, 255, 0.24);
+  border-radius: 13px;
+  background: rgba(12, 23, 44, 0.85);
+  color: var(--xsus-text-secondary);
+  font-size: 11px;
+  overflow: hidden;
+}
+
+/* Keep old message attachments compatible */
+
 .xsus-chat-attachment {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-
   max-width: 100%;
   padding: 7px 10px;
-
   border: 1px solid var(--xsus-border);
   border-radius: 10px;
-
   background: var(--xsus-surface);
   color: var(--xsus-text-secondary);
-
   font-size: 11px;
 }
 
-.xsus-chat-attachment-name {
-  min-width: 0;
-  max-width: 180px;
+/* Thumbnail wrapper */
 
+.xsus-chat-attachment
+.xsus-attachment-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px;
+  min-height: 48px;
+  max-width: 48px;
+  max-height: 48px;
+  flex: 0 0 48px;
+  overflow: hidden;
+  border-radius: 9px;
+}
+
+/* Image */
+
+.xsus-chat-attachment
+.xsus-attachment-thumbnail {
+  display: block;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px;
+  min-height: 48px;
+  max-width: 48px;
+  max-height: 48px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 9px;
+}
+
+/* PDF, Word, Excel and other documents */
+
+.xsus-chat-attachment
+.xsus-attachment-document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 48px !important;
+  height: 48px !important;
+  flex: 0 0 48px;
+  border: 1px solid rgba(66, 133, 255, 0.28);
+  background: rgba(66, 133, 255, 0.12);
+  color: var(--xsus-cyan);
+}
+
+.xsus-attachment-document-icon,
+.xsus-attachment-document-icon svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.xsus-attachment-extension {
+  display: block;
+  max-width: 44px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
 }
+
+/* File information */
+
+.xsus-chat-attachment
+.xsus-attachment-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.xsus-chat-attachment-name {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.xsus-attachment-size {
+  display: block;
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--xsus-text-muted);
+}
+
+/* Remove button */
 
 .xsus-chat-attachment-remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   width: 26px;
   height: 26px;
-
+  min-width: 26px;
+  min-height: 26px;
+  flex: 0 0 26px;
+  padding: 0;
   border: 0;
-  border-radius: 7px;
-
+  border-radius: 8px;
   background: transparent;
   color: var(--xsus-text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .xsus-chat-attachment-remove:hover {
   background: var(--xsus-surface-hover);
-  color: var(--xsus-text);
+  color: var(--xsus-cyan);
+}
+
+.xsus-chat-attachment-remove:focus-visible {
+  outline: 2px solid var(--xsus-cyan);
+  outline-offset: 2px;
 }
 
 /* ========================================
@@ -666,18 +728,16 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-
   padding: 12px;
 }
 
 .xsus-chat-typing span {
   width: 7px;
   height: 7px;
-
   border-radius: 50%;
   background: var(--xsus-cyan);
-
-  animation: xsus-typing 1.2s infinite ease-in-out;
+  animation:
+    xsus-typing 1.2s infinite ease-in-out;
 }
 
 .xsus-chat-typing span:nth-child(2) {
@@ -701,6 +761,17 @@
 }
 
 /* ========================================
+   RESPONSIVE — TABLET
+======================================== */
+
+@media (max-width: 900px) {
+  .xsus-chat-attachments
+  > .xsus-chat-attachment {
+    flex-basis: 230px;
+  }
+}
+
+/* ========================================
    RESPONSIVE — MOBILE
 ======================================== */
 
@@ -718,7 +789,6 @@
   .xsus-chat-bubble {
     max-width: 90%;
     padding: 11px 13px;
-
     font-size: 12px;
     line-height: 1.65;
   }
@@ -747,6 +817,32 @@
 
   .xsus-plus-item {
     min-height: 46px;
+  }
+
+  .xsus-chat-attachments {
+    gap: 8px;
+  }
+
+  .xsus-chat-attachments
+  > .xsus-chat-attachment {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+    min-height: 66px;
+    padding: 8px;
+    gap: 9px;
+  }
+}
+
+/* ========================================
+   RESPONSIVE — SMALL MOBILE
+======================================== */
+
+@media (max-width: 360px) {
+  .xsus-chat-attachments
+  > .xsus-chat-attachment {
+    gap: 6px;
+    padding: 7px;
   }
 }
 
