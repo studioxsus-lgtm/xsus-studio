@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI V3 — Chat Controller
- * Version: 3.0.0
+ * Version: 3.1.0
  * Brand: THE X IDENTITY
  *
  * Responsibilities:
@@ -9,6 +9,7 @@
  * - Send and render messages
  * - Maintain local conversation history
  * - Support file attachments
+ * - Display official XSUS AI assistant avatar
  * - Prepare controlled AI integration
  * - Handle loading and errors
  *
@@ -16,9 +17,12 @@
  * or Hyper XSUS Core.
  */
 
-export const CHAT_VERSION = "3.0.0";
+export const CHAT_VERSION = "3.1.0";
 
 const STORAGE_KEY = "xsus-ai-v3-conversations";
+
+const ASSISTANT_LOGO_PATH =
+  "assets/images/xsus-ai-logo.png";
 
 const MAX_CONVERSATIONS = 100;
 const MAX_MESSAGES = 200;
@@ -179,6 +183,57 @@ function createElement(tag, className, text) {
   return element;
 }
 
+/**
+ * Create avatar for assistant/system messages.
+ *
+ * Assistant:
+ * Official XSUS AI logo.
+ *
+ * System:
+ * Original informational symbol.
+ *
+ * The image is presentation-only.
+ * It does not modify messages or storage.
+ */
+function createMessageAvatar(role) {
+  const avatar = createElement(
+    "div",
+    "xsus-chat-avatar"
+  );
+
+  if (role === "assistant") {
+    avatar.classList.add(
+      "xsus-chat-avatar-assistant"
+    );
+
+    avatar.setAttribute(
+      "aria-label",
+      "XSUS AI"
+    );
+
+    const image = document.createElement("img");
+
+    image.src = ASSISTANT_LOGO_PATH;
+    image.alt = "XSUS AI";
+    image.width = 34;
+    image.height = 34;
+    image.decoding = "async";
+
+    image.style.display = "block";
+    image.style.width = "100%";
+    image.style.height = "100%";
+    image.style.objectFit = "contain";
+
+    avatar.append(image);
+
+    return avatar;
+  }
+
+  avatar.textContent = "i";
+
+  return avatar;
+}
+
 export function createChatController(options = {}) {
   const {
     messagesContainer,
@@ -283,13 +338,9 @@ export function createChatController(options = {}) {
     wrapper.dataset.messageId = message.id;
 
     if (message.role !== "user") {
-      const avatar = createElement(
-        "div",
-        "xsus-chat-avatar",
-        message.role === "assistant" ? "✦" : "i"
+      wrapper.append(
+        createMessageAvatar(message.role)
       );
-
-      wrapper.append(avatar);
     }
 
     const bubble = createElement(
@@ -366,7 +417,9 @@ export function createChatController(options = {}) {
     }
 
     const workspace =
-      messagesContainer.closest(".xsus-ai-workspace");
+      messagesContainer.closest(
+        ".xsus-ai-workspace"
+      );
 
     if (workspace) {
       workspace.classList.toggle(
@@ -394,7 +447,8 @@ export function createChatController(options = {}) {
       );
 
       item.type = "button";
-      item.dataset.conversationId = conversation.id;
+      item.dataset.conversationId =
+        conversation.id;
 
       item.classList.toggle(
         "is-active",
@@ -487,7 +541,9 @@ export function createChatController(options = {}) {
     const conversation = getActiveConversation();
 
     if (!conversation) {
-      throw new Error("No active conversation.");
+      throw new Error(
+        "No active conversation."
+      );
     }
 
     const message = createMessage(
@@ -526,10 +582,9 @@ export function createChatController(options = {}) {
 
     wrapper.dataset.typing = "true";
 
-    const avatar = createElement(
-      "div",
-      "xsus-chat-avatar",
-      "✦"
+    // Official XSUS AI avatar during loading.
+    const avatar = createMessageAvatar(
+      "assistant"
     );
 
     const typing = createElement(
@@ -602,10 +657,12 @@ export function createChatController(options = {}) {
         conversationId: conversation.id,
         message: userMessage.content,
         attachments: files,
-        history: conversation.messages.map(item => ({
-          role: item.role,
-          content: item.content
-        }))
+        history: conversation.messages.map(
+          item => ({
+            role: item.role,
+            content: item.content
+          })
+        )
       });
 
       if (
@@ -653,13 +710,29 @@ export function createChatController(options = {}) {
     }
   }
 
-  listen(input, "input", updateSendButton);
+  listen(
+    input,
+    "input",
+    updateSendButton
+  );
 
-  listen(input, "keydown", handleInputKeydown);
+  listen(
+    input,
+    "keydown",
+    handleInputKeydown
+  );
 
-  listen(sendButton, "click", sendMessage);
+  listen(
+    sendButton,
+    "click",
+    sendMessage
+  );
 
-  listen(newChatButton, "click", newConversation);
+  listen(
+    newChatButton,
+    "click",
+    newConversation
+  );
 
   refresh();
 
@@ -694,7 +767,9 @@ export function createChatController(options = {}) {
 
       destroyed = true;
 
-      cleanups.forEach(cleanup => cleanup());
+      cleanups.forEach(
+        cleanup => cleanup()
+      );
 
       messagesContainer.replaceChildren();
     }
