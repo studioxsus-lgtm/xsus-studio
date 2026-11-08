@@ -1,9 +1,14 @@
 
 /**
- * XSUS STUDIO — GLOBI V4.2
- * Official XSUS Logo Integration
- * Interactive Neon Globe
+ * XSUS STUDIO — GLOBI V4.2.1
+ * Clean Interactive Neon Globe
  * THE X IDENTITY
+ *
+ * Compatible with:
+ * - index-v2.html
+ * - assets/js/globe-engine.js
+ *
+ * No embedded logo image.
  */
 
 :root {
@@ -20,8 +25,10 @@
 .globe-wrap,
 .xsus-globe-scene {
   position: relative;
+
   display: grid;
   place-items: center;
+
   min-height: 400px;
   perspective: 1000px;
   isolation: isolate;
@@ -31,8 +38,10 @@
    BACKGROUND GLOW
 ===================================== */
 
-.globe-wrap::before {
+.globe-wrap::before,
+.xsus-globe-scene::before {
   content: "";
+
   position: absolute;
 
   width: min(90%, 430px);
@@ -42,12 +51,13 @@
 
   background: radial-gradient(
     circle,
-    #20e8ff25 0%,
-    #a26cff12 45%,
+    rgba(32, 232, 255, 0.15) 0%,
+    rgba(162, 108, 255, 0.08) 45%,
     transparent 70%
   );
 
   filter: blur(25px);
+
   z-index: -1;
   pointer-events: none;
 }
@@ -69,30 +79,30 @@
   border-radius: 50%;
   overflow: hidden;
 
-  border: 1px solid #20e8ff99;
+  border: 1px solid rgba(32, 232, 255, 0.6);
 
   background:
     radial-gradient(
       circle at 30% 25%,
-      #35eaff77,
+      rgba(53, 234, 255, 0.47),
       transparent 35%
     ),
     radial-gradient(
       circle at 75% 80%,
-      #a26cff66,
+      rgba(162, 108, 255, 0.4),
       transparent 45%
     ),
     radial-gradient(
       circle at center,
-      #12376a,
+      #12376a 0%,
       #050a18 75%
     );
 
   box-shadow:
     inset -35px -25px 70px #020512,
-    inset 20px 20px 45px #20e8ff22,
-    0 0 50px #20e8ff44,
-    0 0 110px #a26cff33;
+    inset 20px 20px 45px rgba(32, 232, 255, 0.13),
+    0 0 50px rgba(32, 232, 255, 0.27),
+    0 0 110px rgba(162, 108, 255, 0.2);
 
   cursor: grab;
   touch-action: none;
@@ -114,9 +124,10 @@
 
 .xsus-globe::before {
   content: "";
-  position: absolute;
 
+  position: absolute;
   inset: -35%;
+
   border-radius: 50%;
 
   pointer-events: none;
@@ -125,13 +136,13 @@
     repeating-linear-gradient(
       0deg,
       transparent 0 32px,
-      #20e8ff38 33px,
+      rgba(32, 232, 255, 0.22) 33px,
       transparent 34px
     ),
     repeating-linear-gradient(
       90deg,
       transparent 0 43px,
-      #20e8ff2d 44px,
+      rgba(32, 232, 255, 0.18) 44px,
       transparent 45px
     );
 
@@ -145,30 +156,26 @@
 }
 
 /* =====================================
-   OFFICIAL XSUS STUDIO LOGO
+   CLEAN GLOBE CENTER
+   No text or cropped logo
 ===================================== */
 
 .xsus-globe::after {
   content: "";
 
   position: absolute;
-  z-index: 2;
+  inset: 0;
 
-  inset: 17%;
   border-radius: 50%;
 
-  background-image:
-    url("../images/xsus-studio-logo.png");
-
-  background-position: center 28%;
-  background-size: 150% auto;
-  background-repeat: no-repeat;
+  background: radial-gradient(
+    circle at center,
+    rgba(32, 232, 255, 0.08) 0%,
+    rgba(52, 120, 255, 0.04) 35%,
+    transparent 65%
+  );
 
   pointer-events: none;
-
-  filter:
-    drop-shadow(0 0 12px #20e8ff66)
-    drop-shadow(0 0 25px #a26cff33);
 }
 
 /* =====================================
@@ -214,19 +221,18 @@
   .xsus-globe {
     width: min(75vw, 290px);
   }
-
-  .xsus-globe::after {
-    inset: 16%;
-    background-size: 150% auto;
-  }
 }
 
 /* =====================================
-   REDUCED MOTION
+   ACCESSIBILITY
 ===================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .xsus-globe {
     animation: none;
+  }
+
+  .xsus-globe::before {
+    will-change: auto;
   }
 }
