@@ -1,194 +1,128 @@
 
-/**
- * XSUS STUDIO — MODULE CARDS
- * Version: 1.0.0
- * Six independent products
- */
+/* XSUS STUDIO — SIX MODULES */
 
 .modules {
-  width: min(100% - 32px, 1250px);
-  margin: 0 auto;
-  padding: 40px 0 75px;
+  max-width: 1200px;
+  margin: auto;
+  padding: 35px 22px 90px;
 }
 
-.modules-title {
-  margin: 0 0 12px;
+.section-title {
   text-align: center;
-  font-size: clamp(25px, 4vw, 38px);
-  font-weight: 850;
-  color: #f4f8ff;
+  font-size: clamp(27px, 4vw, 35px);
+  margin-bottom: 12px;
 }
 
-.modules-description {
-  max-width: 650px;
-  margin: 0 auto 35px;
+.section-desc {
   text-align: center;
-  color: #a8b8d1;
-  line-height: 1.7;
+  color: var(--muted);
+  margin-bottom: 35px;
 }
 
-.modules-grid {
+.grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+  gap: 17px;
 }
 
-.module-card {
-  --module-color: #20e8ff;
-
-  position: relative;
-  display: flex;
-  flex-direction: column;
+.card {
+  display: block;
   min-width: 0;
-  min-height: 230px;
-  padding: 26px;
-  overflow: hidden;
-
-  border: 1px solid
-    color-mix(in srgb, var(--module-color) 30%, transparent);
-
-  border-radius: 20px;
-
+  border: 1px solid #ffffff20;
+  border-radius: 19px;
+  padding: 25px;
   background: linear-gradient(
     145deg,
-    #14223b,
-    #0b1224 80%
+    #14213bdf,
+    #0b1024e8
   );
-
-  box-shadow: 0 12px 35px #00000025;
-
   transition:
-    transform .25s ease,
-    border-color .25s ease,
-    box-shadow .25s ease;
+    transform .2s,
+    border-color .2s,
+    box-shadow .2s;
 }
 
-.module-card:hover {
-  transform: translateY(-5px);
-
-  border-color: var(--module-color);
-
-  box-shadow:
-    0 15px 40px #00000040,
-    0 0 25px
-      color-mix(in srgb, var(--module-color) 15%, transparent);
+.card:hover {
+  transform: translateY(-4px);
+  border-color: #23dfff88;
+  box-shadow: 0 12px 35px #00000035;
 }
 
-.module-card:focus-visible {
-  outline: 2px solid var(--module-color);
-  outline-offset: 4px;
-}
-
-.module-icon {
+.card-icon {
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 51px;
+  height: 51px;
+  border-radius: 14px;
+  font-size: 25px;
+  background: #1b3150;
   margin-bottom: 20px;
-
-  border-radius: 15px;
-
-  color: var(--module-color);
-
-  background:
-    color-mix(in srgb, var(--module-color) 12%, #101b30);
-
-  border: 1px solid
-    color-mix(in srgb, var(--module-color) 30%, transparent);
 }
 
-.module-icon svg,
-.module-icon img {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
+.card:nth-child(1) .card-icon {
+  color: #20e8ff;
+  background: #0c3546;
 }
 
-.module-card h3 {
-  margin: 0 0 12px;
-  color: #ffffff;
-  font-size: 20px;
-  font-weight: 800;
+.card:nth-child(2) .card-icon {
+  color: #9e85ff;
+  background: #29204c;
 }
 
-.module-card p {
-  margin: 0;
-  color: #a8b8d1;
-  font-size: 14px;
-  line-height: 1.7;
+.card:nth-child(3) .card-icon {
+  color: #49a5ff;
+  background: #132c50;
+}
+
+.card:nth-child(4) .card-icon {
+  color: #ff70c6;
+  background: #451b43;
+}
+
+.card:nth-child(5) .card-icon {
+  color: #ffca6b;
+  background: #44331c;
+}
+
+.card:nth-child(6) .card-icon {
+  color: #65edbd;
+  background: #173b39;
+}
+
+.card h3 {
+  font-size: 21px;
+  margin: 0 0 10px;
+}
+
+.card p {
+  color: var(--muted);
+  line-height: 1.65;
   overflow-wrap: anywhere;
 }
 
-.module-card .module-arrow {
-  margin-top: auto;
-  padding-top: 20px;
-  color: var(--module-color);
-  font-weight: 700;
+.card span {
+  color: var(--cyan);
   font-size: 13px;
 }
 
-/* MODULE IDENTITIES */
-
-.module-ai {
-  --module-color: #20e8ff;
-}
-
-.module-app {
-  --module-color: #a26cff;
-}
-
-.module-web {
-  --module-color: #28b8ff;
-}
-
-.module-game {
-  --module-color: #ff55c8;
-}
-
-.module-logo {
-  --module-color: #ffb84d;
-}
-
-.module-domain {
-  --module-color: #48e6ad;
-}
-
-/* RESPONSIVE */
-
-@media (max-width: 900px) {
-  .modules-grid {
+@media (max-width: 800px) {
+  .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 580px) {
-  .modules {
-    padding: 30px 0 55px;
-  }
-
-  .modules-grid {
+@media (max-width: 520px) {
+  .grid {
     grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  .module-card {
-    min-height: 190px;
-    padding: 22px;
-  }
-
-  .module-icon {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 15px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .module-card {
+  .card {
     transition: none;
   }
 
-  .module-card:hover {
+  .card:hover {
     transform: none;
   }
 }
