@@ -1,0 +1,138 @@
+
+/* XSUS STUDIO — HERO & FOOTER */
+
+.hero {
+  max-width: 1200px;
+  margin: auto;
+  padding: 60px 22px 50px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 30px;
+}
+
+.hero-content {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: inline-block;
+  border: 1px solid #20e8ff55;
+  background: #0c2c3d;
+  color: var(--cyan);
+  border-radius: 30px;
+  padding: 9px 15px;
+  font-size: 12px;
+  letter-spacing: 1.2px;
+}
+
+h1 {
+  font-size: clamp(44px, 6vw, 78px);
+  line-height: 1.05;
+  letter-spacing: -2px;
+  margin: 24px 0;
+}
+
+.gradient {
+  background: linear-gradient(
+    90deg,
+    var(--cyan),
+    #83a9ff,
+    #d178ff
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.hero p {
+  max-width: 560px;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.hero-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  border: 1px solid #49617e;
+  background: #14233b;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px #00000035;
+}
+
+.btn.primary {
+  background: linear-gradient(110deg, #08b9dc, #7147ed);
+  border-color: transparent;
+}
+
+footer {
+  border-top: 1px solid #ffffff18;
+  padding: 30px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+footer strong {
+  display: block;
+  color: white;
+  margin-bottom: 7px;
+  letter-spacing: 2px;
+}
+
+@media (max-width: 800px) {
+  .hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding-top: 48px;
+  }
+
+  .hero p {
+    margin-inline: auto;
+  }
+
+  .hero-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero {
+    padding-inline: 18px;
+  }
+
+  h1 {
+    font-size: clamp(39px, 11vw, 47px);
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: .6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+
+  .btn:hover {
+    transform: none;
+  }
+}
