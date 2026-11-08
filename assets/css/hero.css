@@ -1,5 +1,15 @@
 
-/* XSUS STUDIO — HERO & FOOTER */
+/*
+ * XSUS STUDIO — HERO & FOOTER
+ * THE X IDENTITY
+ *
+ * Mobile refinement:
+ * - Smaller hero description on phones
+ * - Improved line spacing
+ * - Existing design preserved
+ */
+
+/* HERO */
 
 .hero {
   max-width: 1200px;
@@ -15,6 +25,8 @@
   min-width: 0;
 }
 
+/* EYEBROW */
+
 .eyebrow {
   display: inline-block;
   border: 1px solid #20e8ff55;
@@ -26,12 +38,16 @@
   letter-spacing: 1.2px;
 }
 
+/* HERO TITLE */
+
 h1 {
   font-size: clamp(44px, 6vw, 78px);
   line-height: 1.05;
   letter-spacing: -2px;
   margin: 24px 0;
 }
+
+/* GRADIENT TEXT */
 
 .gradient {
   background: linear-gradient(
@@ -45,12 +61,16 @@ h1 {
   color: transparent;
 }
 
+/* HERO DESCRIPTION */
+
 .hero p {
   max-width: 560px;
   color: var(--muted);
   font-size: 17px;
   line-height: 1.8;
 }
+
+/* HERO BUTTONS */
 
 .hero-buttons {
   display: flex;
@@ -77,9 +97,15 @@ h1 {
 }
 
 .btn.primary {
-  background: linear-gradient(110deg, #08b9dc, #7147ed);
+  background: linear-gradient(
+    110deg,
+    #08b9dc,
+    #7147ed
+  );
   border-color: transparent;
 }
+
+/* LEGACY FOOTER STYLES */
 
 footer {
   border-top: 1px solid #ffffff18;
@@ -95,6 +121,8 @@ footer strong {
   margin-bottom: 7px;
   letter-spacing: 2px;
 }
+
+/* TABLET */
 
 @media (max-width: 800px) {
   .hero {
@@ -112,6 +140,8 @@ footer strong {
   }
 }
 
+/* MOBILE */
+
 @media (max-width: 520px) {
   .hero {
     padding-inline: 18px;
@@ -125,7 +155,15 @@ footer strong {
     font-size: 10px;
     letter-spacing: .6px;
   }
+
+  /* MOBILE DESCRIPTION REFINEMENT */
+  .hero p {
+    font-size: 15px;
+    line-height: 1.6;
+  }
 }
+
+/* ACCESSIBILITY */
 
 @media (prefers-reduced-motion: reduce) {
   .btn {
