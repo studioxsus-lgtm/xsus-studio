@@ -1,0 +1,634 @@
+
+/**
+ * XSUS AI V3 — Intelligent Workspace
+ * Version: 3.0.0
+ * Brand: THE X IDENTITY
+ *
+ * Requires:
+ * - base.css
+ * - header.css
+ * - sidebar.css
+ *
+ * Presentation only.
+ * No XSUS AI Core dependencies.
+ */
+
+/* ========================================
+   APPLICATION LAYOUT
+======================================== */
+
+.xsus-ai-app {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  isolation: isolate;
+}
+
+.xsus-ai-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* ========================================
+   MAIN WORKSPACE
+======================================== */
+
+.xsus-ai-workspace {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+
+  min-width: 0;
+  min-height: 0;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 25%,
+      rgba(32, 232, 255, 0.035),
+      transparent 55%
+    );
+}
+
+.xsus-workspace-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+
+  width: 100%;
+  max-width: 1100px;
+  min-width: 0;
+
+  margin: 0 auto;
+  padding: 24px 32px;
+}
+
+/* ========================================
+   WORKSPACE TOP BAR
+======================================== */
+
+.xsus-workspace-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  min-height: 44px;
+  margin-bottom: 20px;
+}
+
+.xsus-workspace-heading {
+  margin: 0;
+
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  color: var(--xsus-text-secondary);
+}
+
+.xsus-workspace-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.xsus-workspace-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+  padding: 0;
+
+  border: 1px solid var(--xsus-border);
+  border-radius: 12px;
+
+  background: var(--xsus-glass);
+  color: var(--xsus-text-secondary);
+
+  transition:
+    color var(--xsus-transition),
+    background var(--xsus-transition),
+    border-color var(--xsus-transition);
+}
+
+.xsus-workspace-icon-button:hover {
+  color: var(--xsus-cyan);
+  background: var(--xsus-surface-hover);
+  border-color: var(--xsus-border-active);
+}
+
+.xsus-workspace-icon-button svg {
+  width: 19px;
+  height: 19px;
+}
+
+/* ========================================
+   WELCOME SCREEN
+======================================== */
+
+.xsus-ai-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  flex: 1;
+
+  width: 100%;
+  max-width: 780px;
+
+  margin: 0 auto;
+  padding: 24px 0;
+
+  text-align: center;
+}
+
+/* ========================================
+   OFFICIAL XSUS AI LOGO
+======================================== */
+
+.xsus-welcome-logo-wrap {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 132px;
+  height: 132px;
+
+  margin-bottom: 22px;
+}
+
+.xsus-welcome-logo-wrap::before {
+  content: "";
+
+  position: absolute;
+  inset: 5px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(32, 232, 255, 0.14),
+      rgba(149, 102, 255, 0.07) 55%,
+      transparent 75%
+    );
+
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.xsus-welcome-logo {
+  position: relative;
+  z-index: 1;
+
+  display: block;
+
+  width: 112px;
+  height: 112px;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(
+      0 0 18px rgba(32, 232, 255, 0.22)
+    );
+}
+
+/* ========================================
+   WELCOME TYPOGRAPHY
+======================================== */
+
+.xsus-welcome-eyebrow {
+  margin-bottom: 10px;
+
+  color: var(--xsus-cyan);
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.xsus-welcome-title {
+  margin: 0 0 12px;
+
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 800;
+
+  line-height: 1.16;
+  letter-spacing: -0.045em;
+
+  color: var(--xsus-text);
+}
+
+.xsus-welcome-description {
+  max-width: 560px;
+  margin: 0 auto;
+
+  color: var(--xsus-text-secondary);
+
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.xsus-welcome-tagline {
+  margin-top: 14px;
+
+  color: var(--xsus-text-muted);
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ========================================
+   SUGGESTED PROMPTS
+======================================== */
+
+.xsus-suggestions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+
+  width: 100%;
+  max-width: 680px;
+
+  margin-top: 32px;
+}
+
+.xsus-suggestion-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  min-width: 0;
+  min-height: 78px;
+
+  padding: 16px;
+
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-md);
+
+  background: rgba(16, 27, 48, 0.58);
+  color: var(--xsus-text);
+
+  text-align: left;
+  cursor: pointer;
+
+  transition:
+    background var(--xsus-transition),
+    border-color var(--xsus-transition),
+    transform var(--xsus-transition);
+}
+
+.xsus-suggestion-card:hover {
+  background: var(--xsus-surface-hover);
+  border-color: var(--xsus-border-active);
+  transform: translateY(-2px);
+}
+
+.xsus-suggestion-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+
+  flex-shrink: 0;
+
+  border-radius: 11px;
+
+  background: rgba(32, 232, 255, 0.09);
+  color: var(--xsus-cyan);
+}
+
+.xsus-suggestion-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.xsus-suggestion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  min-width: 0;
+}
+
+.xsus-suggestion-title {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.xsus-suggestion-description {
+  color: var(--xsus-text-muted);
+
+  font-size: 11px;
+  line-height: 1.5;
+
+  overflow-wrap: anywhere;
+}
+
+/* ========================================
+   CONVERSATION AREA
+======================================== */
+
+.xsus-conversation {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+
+  width: 100%;
+  max-width: 860px;
+
+  min-width: 0;
+  min-height: 0;
+
+  margin: 0 auto;
+}
+
+.xsus-conversation-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+
+  flex: 1;
+  min-height: 0;
+
+  padding: 20px 4px 28px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  overscroll-behavior: contain;
+}
+
+/* ========================================
+   COMPOSER AREA
+======================================== */
+
+.xsus-composer-area {
+  position: relative;
+  z-index: 20;
+
+  width: 100%;
+  max-width: 860px;
+
+  margin: 0 auto;
+  padding: 12px 0 6px;
+}
+
+.xsus-composer-area::before {
+  content: "";
+
+  position: absolute;
+  inset: -20px -20px 0;
+
+  z-index: -1;
+
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--xsus-bg) 35%
+  );
+
+  pointer-events: none;
+}
+
+.xsus-composer-disclaimer {
+  margin: 10px 0 0;
+
+  color: var(--xsus-text-muted);
+
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ========================================
+   WORKSPACE STATES
+======================================== */
+
+.xsus-ai-workspace.is-chatting
+.xsus-ai-welcome {
+  display: none;
+}
+
+.xsus-ai-workspace.is-chatting
+.xsus-conversation {
+  display: flex;
+}
+
+.xsus-ai-workspace.is-welcome
+.xsus-conversation {
+  display: none;
+}
+
+/* ========================================
+   EMPTY STATE
+======================================== */
+
+.xsus-workspace-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  flex: 1;
+
+  padding: 32px 20px;
+
+  color: var(--xsus-text-muted);
+  text-align: center;
+}
+
+.xsus-workspace-empty svg {
+  width: 42px;
+  height: 42px;
+
+  margin-bottom: 16px;
+
+  color: var(--xsus-blue);
+}
+
+/* ========================================
+   RESPONSIVE — TABLET
+======================================== */
+
+@media (max-width: 900px) {
+  .xsus-workspace-inner {
+    padding: 18px 20px;
+  }
+
+  .xsus-ai-welcome {
+    padding: 18px 0;
+  }
+
+  .xsus-welcome-logo-wrap {
+    width: 116px;
+    height: 116px;
+    margin-bottom: 16px;
+  }
+
+  .xsus-welcome-logo {
+    width: 100px;
+    height: 100px;
+  }
+
+  .xsus-suggestions {
+    margin-top: 24px;
+  }
+}
+
+/* ========================================
+   RESPONSIVE — MOBILE
+======================================== */
+
+@media (max-width: 600px) {
+  .xsus-workspace-inner {
+    padding: 12px 14px;
+  }
+
+  .xsus-workspace-topbar {
+    min-height: 38px;
+    margin-bottom: 8px;
+  }
+
+  .xsus-workspace-heading {
+    font-size: 12px;
+  }
+
+  .xsus-ai-welcome {
+    justify-content: center;
+    padding: 12px 0 18px;
+  }
+
+  .xsus-welcome-logo-wrap {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 12px;
+  }
+
+  .xsus-welcome-logo {
+    width: 88px;
+    height: 88px;
+  }
+
+  .xsus-welcome-eyebrow {
+    margin-bottom: 8px;
+    font-size: 10px;
+  }
+
+  .xsus-welcome-title {
+    margin-bottom: 10px;
+    font-size: clamp(25px, 7vw, 34px);
+  }
+
+  .xsus-welcome-description {
+    max-width: 340px;
+    font-size: 12px;
+    line-height: 1.65;
+  }
+
+  .xsus-welcome-tagline {
+    margin-top: 10px;
+    font-size: 9px;
+  }
+
+  .xsus-suggestions {
+    grid-template-columns: 1fr;
+
+    gap: 8px;
+    max-width: 440px;
+
+    margin-top: 22px;
+  }
+
+  .xsus-suggestion-card {
+    min-height: 60px;
+    padding: 12px;
+  }
+
+  .xsus-suggestion-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .xsus-suggestion-title {
+    font-size: 12px;
+  }
+
+  .xsus-suggestion-description {
+    font-size: 10px;
+  }
+
+  .xsus-conversation-messages {
+    gap: 16px;
+    padding: 12px 2px 20px;
+  }
+
+  .xsus-composer-area {
+    padding: 8px 0 4px;
+  }
+}
+
+/* ========================================
+   VERY SMALL SCREENS
+======================================== */
+
+@media (max-width: 380px) {
+  .xsus-workspace-inner {
+    padding-inline: 10px;
+  }
+
+  .xsus-welcome-logo-wrap {
+    width: 84px;
+    height: 84px;
+  }
+
+  .xsus-welcome-logo {
+    width: 74px;
+    height: 74px;
+  }
+
+  .xsus-welcome-title {
+    font-size: 24px;
+  }
+
+  .xsus-welcome-description {
+    font-size: 11px;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .xsus-suggestion-card,
+  .xsus-workspace-icon-button {
+    transition: none;
+  }
+
+  .xsus-suggestion-card:hover {
+    transform: none;
+  }
+}
