@@ -1,0 +1,64 @@
+
+name: Install XSUS Studio Globi V4
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract and install Globi V4
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ZIP="xsus-studio-website-v1.zip"
+
+          if [ ! -f "$ZIP" ]; then
+            echo "ERROR: Package not found: $ZIP"
+            exit 1
+          fi
+
+          mkdir -p /tmp/xsus-v4
+          unzip -q "$ZIP" -d /tmp/xsus-v4
+
+          for file in index.html globi-v4.css globi-v4-1.js globi-v4-2.js; do
+            test -f "/tmp/xsus-v4/$file"
+          done
+
+          for image in visual-1.png visual-2.png visual-3.png; do
+            test -f "/tmp/xsus-v4/assets/$image"
+          done
+
+          cp /tmp/xsus-v4/index.html index-v2.html
+          cp /tmp/xsus-v4/globi-v4.css .
+          cp /tmp/xsus-v4/globi-v4-1.js .
+          cp /tmp/xsus-v4/globi-v4-2.js .
+
+          mkdir -p assets
+          cp /tmp/xsus-v4/assets/visual-*.png assets/
+
+          echo "Globi V4 files installed."
+
+      - name: Commit preview files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index-v2.html globi-v4.css globi-v4-1.js globi-v4-2.js assets/visual-1.png assets/visual-2.png assets/visual-3.png
+
+          if git diff --cached --quiet; then
+            echo "No changes needed."
+          else
+            git commit -m "feat: install XSUS Studio Globi V4 preview"
+            git push
+          fi
