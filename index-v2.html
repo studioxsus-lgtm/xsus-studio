@@ -13,7 +13,7 @@
 
   <meta
     name="description"
-    content="XSUS Studio — The X Identity. AI, apps, web, games, logos and domains."
+    content="XSUS Studio — The X Identity. Six specialized products in one technology ecosystem."
   >
 
   <title>XSUS Studio — The X Identity</title>
@@ -54,9 +54,20 @@
   </style>
 
   <!-- XSUS STUDIO ENGINES -->
-  <script src="assets/js/navigation.js" defer></script>
-  <script src="assets/js/language.js" defer></script>
-  <script src="assets/js/globe-engine.js" defer></script>
+  <script
+    src="assets/js/navigation.js"
+    defer
+  ></script>
+
+  <script
+    src="assets/js/language.js?v=520"
+    defer
+  ></script>
+
+  <script
+    src="assets/js/globe-engine.js"
+    defer
+  ></script>
 </head>
 
 <body>
@@ -71,6 +82,7 @@
         class="brand"
         href="index-v2.html"
         aria-label="XSUS Studio Home"
+        data-t-aria="brandHome"
       >
         <img
           src="assets/images/xsus-globe-emblem.png"
@@ -82,21 +94,33 @@
         >
 
         <div>
-          <div class="brand-name">XSUS STUDIO</div>
-          <div class="brand-tag">THE X IDENTITY</div>
+          <div class="brand-name">
+            XSUS STUDIO
+          </div>
+
+          <div class="brand-tag">
+            THE X IDENTITY
+          </div>
         </div>
       </a>
 
       <!-- HEADER ACTIONS -->
       <div class="actions">
 
-        <select id="language" aria-label="Language">
+        <select
+          id="language"
+          aria-label="Language"
+          data-t-aria="languageLabel"
+        >
           <option value="en">EN</option>
           <option value="sq">SQ</option>
           <option value="fr">FR</option>
         </select>
 
-        <a href="auth.html" data-t="login">
+        <a
+          href="auth.html"
+          data-t="login"
+        >
           Login
         </a>
 
@@ -113,6 +137,7 @@
           class="menu-toggle"
           id="menuButton"
           aria-label="Open navigation menu"
+          data-t-aria="menuLabel"
           aria-expanded="false"
           aria-controls="navigation"
         >
@@ -127,6 +152,7 @@
       class="nav"
       id="navigation"
       aria-label="Main navigation"
+      data-t-aria="navigationLabel"
     >
 
       <a
@@ -154,21 +180,35 @@
 
       <div class="hero-content">
 
-        <div class="eyebrow">
+        <!-- PLATFORM MESSAGE -->
+        <div
+          class="eyebrow"
+          data-t="eyebrow"
+        >
           XSUS GLOBAL TECHNOLOGY PLATFORM
         </div>
 
+        <!-- MAIN TITLE -->
         <h1>
-          Build Beyond<br>
-          <span class="gradient">Boundaries.</span>
+          <span data-t="heroTitle">
+            Independent Technologies.
+          </span><br>
+
+          <span
+            class="gradient"
+            data-t="heroHighlight"
+          >
+            One Powerful Ecosystem.
+          </span>
         </h1>
 
+        <!-- MAIN DESCRIPTION -->
         <p data-t="intro">
-          A unified technology studio for artificial intelligence,
-          applications, websites, games, visual identities
-          and domains.
+          Six specialized products. One unified vision.
+          Build, create and innovate with the XSUS ecosystem.
         </p>
 
+        <!-- HERO BUTTONS -->
         <div class="hero-buttons">
 
           <a
@@ -199,6 +239,7 @@
           role="img"
           tabindex="0"
           aria-label="Interactive XSUS globe. Drag to rotate. Use arrow keys to adjust rotation."
+          data-t-aria="globeLabel"
         ></div>
 
       </div>
@@ -206,13 +247,22 @@
     </section>
 
     <!-- SIX XSUS PRODUCTS -->
-    <section class="modules" id="modules">
+    <section
+      class="modules"
+      id="modules"
+    >
 
-      <h2 class="section-title" data-t="modules">
+      <h2
+        class="section-title"
+        data-t="modules"
+      >
         Explore Our Ecosystem
       </h2>
 
-      <p class="section-desc" data-t="subtitle">
+      <p
+        class="section-desc"
+        data-t="subtitle"
+      >
         Six products. One technological identity.
       </p>
 
@@ -236,7 +286,9 @@
             Intelligence, knowledge and AI-powered experiences.
           </p>
 
-          <span data-t="cardExplore">Explore →</span>
+          <span data-t="cardExplore">
+            Explore →
+          </span>
         </a>
 
         <!-- XSUS APP -->
@@ -257,7 +309,9 @@
             Create and develop modern digital applications.
           </p>
 
-          <span data-t="cardExplore">Explore →</span>
+          <span data-t="cardExplore">
+            Explore →
+          </span>
         </a>
 
         <!-- XSUS WEB -->
@@ -278,7 +332,9 @@
             Design and build modern websites.
           </p>
 
-          <span data-t="cardExplore">Explore →</span>
+          <span data-t="cardExplore">
+            Explore →
+          </span>
         </a>
 
         <!-- XSUS GAME -->
@@ -299,7 +355,9 @@
             Explore interactive game development.
           </p>
 
-          <span data-t="cardExplore">Explore →</span>
+          <span data-t="cardExplore">
+            Explore →
+          </span>
         </a>
 
         <!-- XSUS LOGO -->
@@ -320,7 +378,9 @@
             Create distinctive visual identities.
           </p>
 
-          <span data-t="cardExplore">Explore →</span>
+          <span data-t="cardExplore">
+            Explore →
+          </span>
         </a>
 
         <!-- XSUS DOMAIN -->
@@ -341,7 +401,9 @@
             Explore domains and digital identity.
           </p>
 
-          <span data-t="cardExplore">Explore →</span>
+          <span data-t="cardExplore">
+            Explore →
+          </span>
         </a>
 
       </div>
@@ -353,7 +415,10 @@
   <footer>
     <strong>XSUS STUDIO</strong>
     THE X IDENTITY
-    <p>© 2026 XSUS Studio. All rights reserved.</p>
+
+    <p data-t="copyright">
+      © 2026 XSUS Studio. All rights reserved.
+    </p>
   </footer>
 
 </div>
