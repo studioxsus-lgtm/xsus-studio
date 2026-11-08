@@ -52,7 +52,8 @@
 
     a:focus-visible,
     button:focus-visible,
-    select:focus-visible {
+    select:focus-visible,
+    .xsus-globe:focus-visible {
       outline: 2px solid var(--cyan);
       outline-offset: 3px;
     }
@@ -60,8 +61,16 @@
     .page {
       min-height: 100vh;
       background:
-        radial-gradient(ellipse at 50% 20%, #173a63 0%, transparent 46%),
-        radial-gradient(ellipse at 90% 65%, #30134e 0%, transparent 40%),
+        radial-gradient(
+          ellipse at 50% 20%,
+          #173a63 0%,
+          transparent 46%
+        ),
+        radial-gradient(
+          ellipse at 90% 65%,
+          #30134e 0%,
+          transparent 40%
+        ),
         var(--bg);
     }
 
@@ -140,7 +149,11 @@
     }
 
     .actions .signup {
-      background: linear-gradient(120deg, #0c94c7, #7043db);
+      background: linear-gradient(
+        120deg,
+        #0c94c7,
+        #7043db
+      );
       border-color: transparent;
     }
 
@@ -167,7 +180,9 @@
       border-radius: 10px;
       font-size: 13px;
       color: #c9d8f0;
-      transition: background .2s, color .2s;
+      transition:
+        background .2s,
+        color .2s;
     }
 
     .nav a:hover,
@@ -184,7 +199,9 @@
       margin: auto;
       padding: 60px 22px 50px;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
       align-items: center;
       gap: 30px;
     }
@@ -212,7 +229,12 @@
     }
 
     .gradient {
-      background: linear-gradient(90deg, var(--cyan), #83a9ff, #d178ff);
+      background: linear-gradient(
+        90deg,
+        var(--cyan),
+        #83a9ff,
+        #d178ff
+      );
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
@@ -241,7 +263,9 @@
       font-weight: 700;
       border: 1px solid #49617e;
       background: #14233b;
-      transition: transform .2s, box-shadow .2s;
+      transition:
+        transform .2s,
+        box-shadow .2s;
     }
 
     .btn:hover {
@@ -250,11 +274,15 @@
     }
 
     .btn.primary {
-      background: linear-gradient(110deg, #08b9dc, #7147ed);
+      background: linear-gradient(
+        110deg,
+        #08b9dc,
+        #7147ed
+      );
       border-color: transparent;
     }
 
-    /* XSUS GLOBI V4 — INTEGRATED */
+    /* XSUS GLOBI V4.1 */
 
     .globe-wrap {
       min-height: 400px;
@@ -283,6 +311,9 @@
     }
 
     .xsus-globe {
+      --globe-x: -18deg;
+      --globe-y: 0deg;
+
       position: relative;
       display: block;
       width: min(75vw, 360px);
@@ -314,30 +345,47 @@
         0 0 50px #20e8ff44,
         0 0 110px #a26cff33;
 
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+
       animation: xsusFloat 7s ease-in-out infinite;
+    }
+
+    .xsus-globe.dragging {
+      cursor: grabbing;
     }
 
     .xsus-globe::before {
       content: "";
       position: absolute;
-      inset: 0;
+      inset: -35%;
       border-radius: 50%;
+      pointer-events: none;
 
       background:
         repeating-linear-gradient(
           0deg,
           transparent 0 32px,
-          #20e8ff33 33px,
+          #20e8ff38 33px,
           transparent 34px
         ),
         repeating-linear-gradient(
           90deg,
           transparent 0 43px,
-          #20e8ff22 44px,
+          #20e8ff2d 44px,
           transparent 45px
         );
 
-      transform: rotate(-18deg);
+      transform:
+        perspective(600px)
+        rotateX(var(--globe-x))
+        rotateY(var(--globe-y))
+        rotateZ(-18deg);
+
+      will-change: transform;
     }
 
     .xsus-globe::after {
@@ -350,7 +398,10 @@
       font-size: clamp(48px, 7vw, 75px);
       font-weight: 900;
       letter-spacing: 7px;
-      text-shadow: 0 0 28px #00eaff;
+      text-shadow:
+        0 0 15px #00eaff,
+        0 0 35px #00eaff66;
+      pointer-events: none;
     }
 
     @keyframes xsusFloat {
@@ -395,7 +446,11 @@
       border: 1px solid #ffffff20;
       border-radius: 19px;
       padding: 25px;
-      background: linear-gradient(145deg, #14213bdf, #0b1024e8);
+      background: linear-gradient(
+        145deg,
+        #14213bdf,
+        #0b1024e8
+      );
       transition:
         transform .2s,
         border-color .2s,
@@ -742,12 +797,14 @@
         </div>
       </div>
 
-      <!-- XSUS GLOBI V4 -->
+      <!-- XSUS GLOBI V4.1 -->
       <div class="globe-wrap">
         <div
           class="xsus-globe"
+          id="xsusInteractiveGlobe"
           role="img"
-          aria-label="XSUS Studio digital globe">
+          tabindex="0"
+          aria-label="Interactive XSUS globe. Drag to rotate. Use arrow keys to adjust rotation.">
         </div>
       </div>
 
@@ -973,6 +1030,200 @@
   }
 
   setLanguage(savedLanguage);
+
+  /* XSUS GLOBI V4.1 — INTERACTIVE ENGINE */
+
+  (() => {
+    const globe = document.getElementById(
+      "xsusInteractiveGlobe"
+    );
+
+    if (!globe) return;
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    );
+
+    let rotationX = -18;
+    let rotationY = 0;
+
+    let dragging = false;
+    let activePointerId = null;
+    let pointerX = 0;
+    let pointerY = 0;
+
+    let lastFrame = null;
+    let resumeAt = 0;
+
+    const degreesPerSecond = 8;
+
+    function render() {
+      globe.style.setProperty(
+        "--globe-x",
+        rotationX + "deg"
+      );
+
+      globe.style.setProperty(
+        "--globe-y",
+        rotationY + "deg"
+      );
+    }
+
+    globe.addEventListener("pointerdown", event => {
+      if (
+        event.pointerType === "mouse" &&
+        event.button !== 0
+      ) {
+        return;
+      }
+
+      dragging = true;
+      activePointerId = event.pointerId;
+
+      pointerX = event.clientX;
+      pointerY = event.clientY;
+
+      globe.classList.add("dragging");
+      globe.setPointerCapture(event.pointerId);
+    });
+
+    globe.addEventListener("pointermove", event => {
+      if (
+        !dragging ||
+        event.pointerId !== activePointerId
+      ) {
+        return;
+      }
+
+      const dx = event.clientX - pointerX;
+      const dy = event.clientY - pointerY;
+
+      pointerX = event.clientX;
+      pointerY = event.clientY;
+
+      rotationY += dx * 0.35;
+      rotationX -= dy * 0.35;
+
+      rotationX = Math.max(
+        -65,
+        Math.min(65, rotationX)
+      );
+
+      render();
+    });
+
+    function stopDragging(event) {
+      if (
+        !dragging ||
+        event.pointerId !== activePointerId
+      ) {
+        return;
+      }
+
+      dragging = false;
+      activePointerId = null;
+
+      globe.classList.remove("dragging");
+
+      if (globe.hasPointerCapture(event.pointerId)) {
+        globe.releasePointerCapture(event.pointerId);
+      }
+
+      resumeAt = performance.now() + 1800;
+    }
+
+    globe.addEventListener(
+      "pointerup",
+      stopDragging
+    );
+
+    globe.addEventListener(
+      "pointercancel",
+      stopDragging
+    );
+
+    globe.addEventListener(
+      "lostpointercapture",
+      () => {
+        dragging = false;
+        activePointerId = null;
+        globe.classList.remove("dragging");
+        resumeAt = performance.now() + 1800;
+      }
+    );
+
+    globe.addEventListener("keydown", event => {
+      const keys = [
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        "ArrowDown"
+      ];
+
+      if (!keys.includes(event.key)) return;
+
+      event.preventDefault();
+
+      if (event.key === "ArrowLeft") {
+        rotationY -= 8;
+      }
+
+      if (event.key === "ArrowRight") {
+        rotationY += 8;
+      }
+
+      if (event.key === "ArrowUp") {
+        rotationX += 8;
+      }
+
+      if (event.key === "ArrowDown") {
+        rotationX -= 8;
+      }
+
+      rotationX = Math.max(
+        -65,
+        Math.min(65, rotationX)
+      );
+
+      resumeAt = performance.now() + 1800;
+      render();
+    });
+
+    function animate(timestamp) {
+      if (lastFrame === null) {
+        lastFrame = timestamp;
+      }
+
+      const delta = Math.min(
+        timestamp - lastFrame,
+        50
+      );
+
+      lastFrame = timestamp;
+
+      if (
+        !reducedMotion.matches &&
+        !dragging &&
+        timestamp >= resumeAt &&
+        !document.hidden
+      ) {
+        rotationY = (
+          rotationY +
+          degreesPerSecond * delta / 1000
+        ) % 360;
+
+        render();
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    render();
+
+    if (!reducedMotion.matches) {
+      requestAnimationFrame(animate);
+    }
+  })();
 </script>
 
 </body>
