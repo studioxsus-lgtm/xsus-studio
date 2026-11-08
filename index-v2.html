@@ -3,10 +3,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#060a18">
   <meta name="description" content="XSUS Studio — The X Identity. AI, apps, web, games, logos and domains.">
   <title>XSUS Studio — The X Identity</title>
+
+  <!-- XSUS GLOBI V4 -->
+  <link rel="stylesheet" href="./globi-v4.css">
 
   <style>
     :root {
@@ -19,34 +22,67 @@
       --muted: #a8b8d1;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       margin: 0;
+      min-width: 320px;
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, Arial, sans-serif;
       overflow-x: hidden;
     }
 
-    a { color: inherit; text-decoration: none; }
-    button, select { font: inherit; }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    a:focus-visible,
+    button:focus-visible,
+    select:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 3px;
+    }
 
     .page {
       min-height: 100vh;
       background:
-        radial-gradient(ellipse at 50% 20%, #173a63 0%, transparent 46%),
-        radial-gradient(ellipse at 90% 65%, #30134e 0%, transparent 40%),
+        radial-gradient(
+          ellipse at 50% 20%,
+          #173a63 0%,
+          transparent 46%
+        ),
+        radial-gradient(
+          ellipse at 90% 65%,
+          #30134e 0%,
+          transparent 40%
+        ),
         var(--bg);
     }
 
+    /* HEADER */
+
     .header {
       position: relative;
-      z-index: 10;
+      z-index: 20;
       border-bottom: 1px solid #ffffff18;
-      background: #070d1ce8;
+      background: #070d1cf0;
     }
 
     .topbar {
@@ -63,9 +99,11 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      min-width: 0;
     }
 
     .mark {
+      flex-shrink: 0;
       display: grid;
       place-items: center;
       width: 47px;
@@ -83,6 +121,7 @@
       font-size: 18px;
       font-weight: 850;
       letter-spacing: 1.4px;
+      white-space: nowrap;
     }
 
     .brand-tag {
@@ -90,15 +129,19 @@
       color: var(--cyan);
       font-size: 9px;
       letter-spacing: 2.5px;
+      white-space: nowrap;
     }
 
     .actions {
       display: flex;
       align-items: center;
       gap: 9px;
+      flex-shrink: 0;
     }
 
-    .actions a, .actions select, .menu-toggle {
+    .actions a,
+    .actions select,
+    .menu-toggle {
       border: 1px solid #ffffff30;
       border-radius: 10px;
       padding: 10px 12px;
@@ -108,11 +151,21 @@
     }
 
     .actions .signup {
-      background: linear-gradient(120deg, #0c94c7, #7043db);
+      background: linear-gradient(
+        120deg,
+        #0c94c7,
+        #7043db
+      );
       border-color: transparent;
     }
 
-    .menu-toggle { display: none; }
+    .menu-toggle {
+      display: none;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    /* NAVIGATION */
 
     .nav {
       max-width: 1250px;
@@ -129,22 +182,32 @@
       border-radius: 10px;
       font-size: 13px;
       color: #c9d8f0;
-      transition: background .2s, color .2s;
+      transition:
+        background .2s,
+        color .2s;
     }
 
-    .nav a:hover, .nav a:focus-visible {
+    .nav a:hover,
+    .nav a:focus-visible,
+    .nav a[aria-current="page"] {
       color: var(--cyan);
       background: #1c344d;
     }
+
+    /* HERO */
 
     .hero {
       max-width: 1200px;
       margin: auto;
       padding: 60px 22px 50px;
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       align-items: center;
       gap: 30px;
+    }
+
+    .hero-content {
+      min-width: 0;
     }
 
     .eyebrow {
@@ -166,7 +229,12 @@
     }
 
     .gradient {
-      background: linear-gradient(90deg, var(--cyan), #83a9ff, #d178ff);
+      background: linear-gradient(
+        90deg,
+        var(--cyan),
+        #83a9ff,
+        #d178ff
+      );
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
@@ -188,82 +256,64 @@
 
     .btn {
       display: inline-flex;
+      justify-content: center;
+      align-items: center;
       padding: 14px 20px;
       border-radius: 12px;
       font-weight: 700;
       border: 1px solid #49617e;
       background: #14233b;
+      transition:
+        transform .2s,
+        box-shadow .2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px #00000035;
     }
 
     .btn.primary {
-      background: linear-gradient(110deg, #08b9dc, #7147ed);
+      background: linear-gradient(
+        110deg,
+        #08b9dc,
+        #7147ed
+      );
       border-color: transparent;
     }
 
+    /* GLOBI V4 */
+
     .globe-wrap {
-      min-height: 390px;
+      min-height: 400px;
       display: grid;
       place-items: center;
-      perspective: 900px;
-    }
-
-    .globe {
       position: relative;
-      width: min(75vw, 350px);
-      aspect-ratio: 1;
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at 30% 27%, #44e9ff50, transparent 34%),
-        radial-gradient(circle at 75% 80%, #a344ff44, transparent 44%),
-        radial-gradient(circle at 50% 50%, #112c5b, #050e25 72%);
-      border: 1px solid #39e8ff90;
-      box-shadow:
-        inset -30px -20px 65px #01040f,
-        inset 15px 15px 40px #2ceaff25,
-        0 0 45px #0ddaff35,
-        0 0 110px #713cff25;
-      overflow: hidden;
-      animation: float 7s ease-in-out infinite;
+      isolation: isolate;
     }
 
-    .globe::before {
+    .globe-wrap::before {
       content: "";
       position: absolute;
-      inset: 0;
+      width: min(90%, 430px);
+      aspect-ratio: 1;
       border-radius: 50%;
-      background:
-        repeating-linear-gradient(
-          0deg,
-          transparent 0 33px,
-          #31e9ff30 34px,
-          transparent 35px
-        ),
-        repeating-linear-gradient(
-          90deg,
-          transparent 0 44px,
-          #31e9ff25 45px,
-          transparent 46px
-        );
-      transform: rotate(-18deg);
+      background: radial-gradient(
+        circle,
+        #20e8ff25,
+        #a26cff12 45%,
+        transparent 70%
+      );
+      filter: blur(25px);
+      z-index: -1;
+      pointer-events: none;
     }
 
-    .globe::after {
-      content: "XSUS";
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      font-size: clamp(45px, 7vw, 72px);
-      font-weight: 900;
-      letter-spacing: 7px;
-      color: #c9faff;
-      text-shadow: 0 0 25px #00eaff;
+    .xsus-globe-scene {
+      width: 100%;
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-13px); }
-    }
+    /* MODULES */
 
     .modules {
       max-width: 1200px;
@@ -273,7 +323,7 @@
 
     .section-title {
       text-align: center;
-      font-size: 35px;
+      font-size: clamp(27px, 4vw, 35px);
       margin-bottom: 12px;
     }
 
@@ -295,13 +345,21 @@
       border: 1px solid #ffffff20;
       border-radius: 19px;
       padding: 25px;
-      background: linear-gradient(145deg, #14213bdf, #0b1024e8);
-      transition: transform .2s, border-color .2s;
+      background: linear-gradient(
+        145deg,
+        #14213bdf,
+        #0b1024e8
+      );
+      transition:
+        transform .2s,
+        border-color .2s,
+        box-shadow .2s;
     }
 
     .card:hover {
       transform: translateY(-4px);
       border-color: #23dfff88;
+      box-shadow: 0 12px 35px #00000035;
     }
 
     .card-icon {
@@ -315,9 +373,53 @@
       margin-bottom: 20px;
     }
 
-    .card h3 { font-size: 21px; margin: 0 0 10px; }
-    .card p { color: var(--muted); line-height: 1.65; }
-    .card span { color: var(--cyan); font-size: 13px; }
+    .card:nth-child(1) .card-icon {
+      color: #20e8ff;
+      background: #0c3546;
+    }
+
+    .card:nth-child(2) .card-icon {
+      color: #9e85ff;
+      background: #29204c;
+    }
+
+    .card:nth-child(3) .card-icon {
+      color: #49a5ff;
+      background: #132c50;
+    }
+
+    .card:nth-child(4) .card-icon {
+      color: #ff70c6;
+      background: #451b43;
+    }
+
+    .card:nth-child(5) .card-icon {
+      color: #ffca6b;
+      background: #44331c;
+    }
+
+    .card:nth-child(6) .card-icon {
+      color: #65edbd;
+      background: #173b39;
+    }
+
+    .card h3 {
+      font-size: 21px;
+      margin: 0 0 10px;
+    }
+
+    .card p {
+      color: var(--muted);
+      line-height: 1.65;
+      overflow-wrap: anywhere;
+    }
+
+    .card span {
+      color: var(--cyan);
+      font-size: 13px;
+    }
+
+    /* FOOTER */
 
     footer {
       border-top: 1px solid #ffffff18;
@@ -334,6 +436,8 @@
       letter-spacing: 2px;
     }
 
+    /* TABLET / MOBILE */
+
     @media (max-width: 800px) {
       .hero {
         grid-template-columns: 1fr;
@@ -341,12 +445,29 @@
         padding-top: 48px;
       }
 
-      .hero p { margin-inline: auto; }
-      .hero-buttons { justify-content: center; }
-      .globe-wrap { min-height: 310px; }
-      .globe { width: min(70vw, 290px); }
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .menu-toggle { display: inline-block; }
+      .hero p {
+        margin-inline: auto;
+      }
+
+      .hero-buttons {
+        justify-content: center;
+      }
+
+      .globe-wrap {
+        min-height: 320px;
+      }
+
+      .xsus-globe-scene {
+        min-height: 310px;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .menu-toggle {
+        display: inline-block;
+      }
 
       .nav {
         display: none;
@@ -355,9 +476,12 @@
         padding: 12px 20px 20px;
         background: #09162b;
         border-top: 1px solid #20e8ff33;
+        box-shadow: 0 15px 30px #00000045;
       }
 
-      .nav.open { display: flex; }
+      .nav.open {
+        display: flex;
+      }
 
       .nav a {
         display: block;
@@ -366,26 +490,105 @@
         border: 1px solid #29b8db44;
         padding: 13px 16px;
       }
+
+      .nav a:hover,
+      .nav a:focus-visible {
+        color: #ffffff;
+        background: #205071;
+      }
     }
 
     @media (max-width: 520px) {
-      .topbar { padding: 13px; }
-      .brand-name { font-size: 14px; }
-      .brand-tag { font-size: 8px; }
-      .mark { width: 40px; height: 40px; }
-      .actions { gap: 5px; }
-      .actions a, .actions select, .menu-toggle {
-        padding: 9px 7px;
-        font-size: 11px;
+      .topbar {
+        padding: 13px;
+        gap: 7px;
       }
-      .grid { grid-template-columns: 1fr; }
-      .hero { padding-inline: 18px; }
-      h1 { font-size: 47px; }
+
+      .brand {
+        gap: 7px;
+      }
+
+      .brand-name {
+        font-size: 12px;
+        letter-spacing: .6px;
+      }
+
+      .brand-tag {
+        font-size: 7px;
+        letter-spacing: 1.2px;
+      }
+
+      .mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 20px;
+      }
+
+      .actions {
+        gap: 4px;
+      }
+
+      .actions a,
+      .actions select,
+      .menu-toggle {
+        padding: 8px 6px;
+        font-size: 10px;
+        border-radius: 8px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        padding-inline: 18px;
+      }
+
+      h1 {
+        font-size: clamp(39px, 11vw, 47px);
+      }
+
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: .6px;
+      }
+
+      .globe-wrap {
+        min-height: 300px;
+      }
+
+      .xsus-globe-scene {
+        min-height: 300px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .topbar {
+        flex-wrap: wrap;
+      }
+
+      .actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .globe { animation: none; }
-      .card { transition: none; }
+      html {
+        scroll-behavior: auto;
+      }
+
+      .card,
+      .btn,
+      .nav a {
+        transition: none;
+      }
+
+      .card:hover,
+      .btn:hover {
+        transform: none;
+      }
     }
   </style>
 </head>
@@ -393,10 +596,13 @@
 <body>
 <div class="page">
 
+  <!-- HEADER -->
   <header class="header">
     <div class="topbar">
-      <a class="brand" href="index-v2.html">
-        <div class="mark">X</div>
+
+      <a class="brand" href="index-v2.html"
+         aria-label="XSUS Studio Home">
+        <div class="mark" aria-hidden="true">X</div>
         <div>
           <div class="brand-name">XSUS STUDIO</div>
           <div class="brand-tag">THE X IDENTITY</div>
@@ -409,17 +615,32 @@
           <option value="sq">SQ</option>
           <option value="fr">FR</option>
         </select>
-        <a href="auth.html" data-t="login">Login</a>
-        <a href="auth.html" class="signup" data-t="signup">Sign Up</a>
-        <button class="menu-toggle" id="menuButton"
+
+        <a href="auth.html" data-t="login">
+          Login
+        </a>
+
+        <a href="auth.html" class="signup" data-t="signup">
+          Sign Up
+        </a>
+
+        <button
+          type="button"
+          class="menu-toggle"
+          id="menuButton"
           aria-label="Toggle menu"
           aria-expanded="false"
-          aria-controls="navigation">☰</button>
+          aria-controls="navigation">
+          ☰
+        </button>
       </div>
     </div>
 
-    <nav class="nav" id="navigation">
-      <a href="index-v2.html" data-t="home">Home</a>
+    <!-- NAVIGATION -->
+    <nav class="nav" id="navigation" aria-label="Main navigation">
+      <a href="index-v2.html"
+         aria-current="page"
+         data-t="home">Home</a>
       <a href="ai.html">XSUS AI</a>
       <a href="app.html">XSUS App</a>
       <a href="web.html">XSUS Web</a>
@@ -430,107 +651,173 @@
   </header>
 
   <main>
+
+    <!-- HERO -->
     <section class="hero">
-      <div>
-        <div class="eyebrow">XSUS GLOBAL TECHNOLOGY PLATFORM</div>
+      <div class="hero-content">
+
+        <div class="eyebrow">
+          XSUS GLOBAL TECHNOLOGY PLATFORM
+        </div>
+
         <h1>
           Build Beyond<br>
           <span class="gradient">Boundaries.</span>
         </h1>
+
         <p data-t="intro">
           A unified technology studio for artificial intelligence,
           applications, websites, games, visual identities and domains.
         </p>
+
         <div class="hero-buttons">
           <a href="#modules" class="btn primary" data-t="explore">
             Explore Modules
           </a>
-          <a href="ai.html" class="btn">Discover XSUS AI</a>
+
+          <a href="ai.html" class="btn" data-t="discoverAI">
+            Discover XSUS AI
+          </a>
         </div>
       </div>
 
-      <div class="globe-wrap">
-        <div class="globe" aria-label="XSUS digital globe"
-          role="img"></div>
+      <!-- XSUS GLOBI V4 -->
+      <div class="globe-wrap xsus-globe-scene">
+        <div
+          class="xsus-globe"
+          role="img"
+          aria-label="XSUS Studio digital globe">
+        </div>
       </div>
+
     </section>
 
+    <!-- SIX MODULES -->
     <section class="modules" id="modules">
+
       <h2 class="section-title" data-t="modules">
         Explore Our Ecosystem
       </h2>
+
       <p class="section-desc" data-t="subtitle">
         Six products. One technological identity.
       </p>
 
       <div class="grid">
+
         <a class="card" href="ai.html">
-          <div class="card-icon">✦</div>
+          <div class="card-icon" aria-hidden="true">✦</div>
           <h3>XSUS AI</h3>
-          <p data-t="ai">Intelligence, knowledge and AI-powered experiences.</p>
-          <span>Explore →</span>
+          <p data-t="ai">
+            Intelligence, knowledge and AI-powered experiences.
+          </p>
+          <span data-t="cardExplore">Explore →</span>
         </a>
 
         <a class="card" href="app.html">
-          <div class="card-icon">▣</div>
+          <div class="card-icon" aria-hidden="true">▣</div>
           <h3>XSUS App</h3>
-          <p data-t="app">Create and develop modern digital applications.</p>
-          <span>Explore →</span>
+          <p data-t="app">
+            Create and develop modern digital applications.
+          </p>
+          <span data-t="cardExplore">Explore →</span>
         </a>
 
         <a class="card" href="web.html">
-          <div class="card-icon">◎</div>
+          <div class="card-icon" aria-hidden="true">◎</div>
           <h3>XSUS Web</h3>
-          <p data-t="web">Design and build modern websites.</p>
-          <span>Explore →</span>
+          <p data-t="web">
+            Design and build modern websites.
+          </p>
+          <span data-t="cardExplore">Explore →</span>
         </a>
 
         <a class="card" href="game.html">
-          <div class="card-icon">◈</div>
+          <div class="card-icon" aria-hidden="true">◈</div>
           <h3>XSUS Game</h3>
-          <p data-t="game">Explore interactive game development.</p>
-          <span>Explore →</span>
+          <p data-t="game">
+            Explore interactive game development.
+          </p>
+          <span data-t="cardExplore">Explore →</span>
         </a>
 
         <a class="card" href="logo.html">
-          <div class="card-icon">◇</div>
+          <div class="card-icon" aria-hidden="true">◇</div>
           <h3>XSUS Logo</h3>
-          <p data-t="logo">Create distinctive visual identities.</p>
-          <span>Explore →</span>
+          <p data-t="logo">
+            Create distinctive visual identities.
+          </p>
+          <span data-t="cardExplore">Explore →</span>
         </a>
 
         <a class="card" href="domain.html">
-          <div class="card-icon">◉</div>
+          <div class="card-icon" aria-hidden="true">◉</div>
           <h3>XSUS Domain</h3>
-          <p data-t="domain">Explore domains and digital identity.</p>
-          <span>Explore →</span>
+          <p data-t="domain">
+            Explore domains and digital identity.
+          </p>
+          <span data-t="cardExplore">Explore →</span>
         </a>
+
       </div>
     </section>
   </main>
 
+  <!-- FOOTER -->
   <footer>
     <strong>XSUS STUDIO</strong>
-    THE X IDENTITY<br>
-    © 2026 XSUS Studio. All rights reserved.
+    THE X IDENTITY
+    <p>© 2026 XSUS Studio. All rights reserved.</p>
   </footer>
+
 </div>
 
 <script>
+  "use strict";
+
+  /* MOBILE MENU */
+
   const menuButton = document.getElementById("menuButton");
   const navigation = document.getElementById("navigation");
 
+  function closeMenu() {
+    navigation.classList.remove("open");
+    menuButton.setAttribute("aria-expanded", "false");
+    menuButton.textContent = "☰";
+  }
+
   menuButton.addEventListener("click", () => {
     const opened = navigation.classList.toggle("open");
-    menuButton.setAttribute("aria-expanded", String(opened));
+
+    menuButton.setAttribute(
+      "aria-expanded",
+      String(opened)
+    );
+
+    menuButton.textContent = opened ? "✕" : "☰";
   });
 
   navigation.querySelectorAll("a").forEach(link => {
-    link.addEventListener("click", () => {
-      navigation.classList.remove("open");
-      menuButton.setAttribute("aria-expanded", "false");
-    });
+    link.addEventListener("click", closeMenu);
   });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener("click", event => {
+    if (
+      navigation.classList.contains("open") &&
+      !navigation.contains(event.target) &&
+      !menuButton.contains(event.target)
+    ) {
+      closeMenu();
+    }
+  });
+
+  /* MULTILINGUAL SUPPORT */
 
   const translations = {
     en: {
@@ -539,8 +826,10 @@
       signup: "Sign Up",
       intro: "A unified technology studio for artificial intelligence, applications, websites, games, visual identities and domains.",
       explore: "Explore Modules",
+      discoverAI: "Discover XSUS AI",
       modules: "Explore Our Ecosystem",
       subtitle: "Six products. One technological identity.",
+      cardExplore: "Explore →",
       ai: "Intelligence, knowledge and AI-powered experiences.",
       app: "Create and develop modern digital applications.",
       web: "Design and build modern websites.",
@@ -548,14 +837,17 @@
       logo: "Create distinctive visual identities.",
       domain: "Explore domains and digital identity."
     },
+
     sq: {
       home: "Kreu",
       login: "Hyr",
       signup: "Regjistrohu",
       intro: "Një studio teknologjike për inteligjencën artificiale, aplikacionet, faqet web, lojërat, identitetet vizuale dhe domenet.",
       explore: "Shiko Modulet",
+      discoverAI: "Zbulo XSUS AI",
       modules: "Eksploro Ekosistemin",
       subtitle: "Gjashtë produkte. Një identitet teknologjik.",
+      cardExplore: "Eksploro →",
       ai: "Inteligjencë, njohuri dhe përvoja me AI.",
       app: "Krijo dhe zhvillo aplikacione moderne.",
       web: "Dizajno dhe ndërto faqe web moderne.",
@@ -563,14 +855,17 @@
       logo: "Krijo identitete vizuale të veçanta.",
       domain: "Eksploro domenet dhe identitetin digjital."
     },
+
     fr: {
       home: "Accueil",
       login: "Connexion",
       signup: "S'inscrire",
       intro: "Un studio technologique pour l'intelligence artificielle, les applications, les sites web, les jeux, les identités visuelles et les domaines.",
       explore: "Explorer les modules",
+      discoverAI: "Découvrir XSUS AI",
       modules: "Explorer notre écosystème",
       subtitle: "Six produits. Une identité technologique.",
+      cardExplore: "Explorer →",
       ai: "Intelligence, connaissances et expériences IA.",
       app: "Créer et développer des applications modernes.",
       web: "Concevoir et créer des sites web modernes.",
@@ -580,18 +875,46 @@
     }
   };
 
-  document.getElementById("language")
-    .addEventListener("change", event => {
-      const lang = event.target.value;
-      document.documentElement.lang = lang;
+  const languageSelector = document.getElementById("language");
 
-      document.querySelectorAll("[data-t]").forEach(element => {
-        const key = element.dataset.t;
-        if (translations[lang][key]) {
-          element.textContent = translations[lang][key];
-        }
-      });
+  function setLanguage(lang) {
+    const selected = translations[lang]
+      ? lang
+      : "en";
+
+    document.documentElement.lang = selected;
+    languageSelector.value = selected;
+
+    document.querySelectorAll("[data-t]").forEach(element => {
+      const key = element.dataset.t;
+      const translatedText = translations[selected][key];
+
+      if (typeof translatedText === "string") {
+        element.textContent = translatedText;
+      }
     });
+
+    try {
+      localStorage.setItem("xsus-language", selected);
+    } catch (error) {
+      console.warn("Language preference not saved.");
+    }
+  }
+
+  languageSelector.addEventListener("change", event => {
+    setLanguage(event.target.value);
+  });
+
+  let savedLanguage = "en";
+
+  try {
+    savedLanguage = localStorage.getItem("xsus-language") || "en";
+  } catch (error) {
+    savedLanguage = "en";
+  }
+
+  setLanguage(savedLanguage);
 </script>
+
 </body>
 </html>
