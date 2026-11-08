@@ -2,6 +2,7 @@
 /**
  * XSUS STUDIO — LANGUAGE ENGINE
  * Complete EN / SQ / FR translations
+ * Premium Footer Integration
  * THE X IDENTITY
  */
 
@@ -14,6 +15,7 @@
     en: {
       pageDescription:
         "XSUS Studio — The X Identity. Six specialized products in one technology ecosystem.",
+
       brandHome: "XSUS Studio Home",
       languageLabel: "Language",
       menuLabel: "Open navigation menu",
@@ -44,12 +46,20 @@
       logo: "Create distinctive visual identities.",
       domain: "Explore domains and digital identity.",
 
-      copyright: "© 2026 XSUS Studio. All rights reserved."
+      aboutUs: "About Us",
+      contactUs: "Contact",
+      footerNavigation: "Footer navigation",
+      footerVision:
+        "Independent Technologies. One Powerful Ecosystem.",
+
+      copyright:
+        "© 2026 XSUS Studio. All rights reserved."
     },
 
     sq: {
       pageDescription:
         "XSUS Studio — The X Identity. Gjashtë produkte të specializuara në një ekosistem teknologjik.",
+
       brandHome: "Faqja kryesore e XSUS Studio",
       languageLabel: "Gjuha",
       menuLabel: "Hap menynë e navigimit",
@@ -80,12 +90,20 @@
       logo: "Krijo identitete vizuale të veçanta.",
       domain: "Eksploro domenet dhe identitetin digjital.",
 
-      copyright: "© 2026 XSUS Studio. Të gjitha të drejtat e rezervuara."
+      aboutUs: "Rreth Nesh",
+      contactUs: "Kontakt",
+      footerNavigation: "Navigimi i fundit të faqes",
+      footerVision:
+        "Teknologji të Pavarura. Një Ekosistem i Fuqishëm.",
+
+      copyright:
+        "© 2026 XSUS Studio. Të gjitha të drejtat e rezervuara."
     },
 
     fr: {
       pageDescription:
         "XSUS Studio — The X Identity. Six produits spécialisés réunis dans un écosystème technologique.",
+
       brandHome: "Accueil de XSUS Studio",
       languageLabel: "Langue",
       menuLabel: "Ouvrir le menu de navigation",
@@ -116,7 +134,14 @@
       logo: "Créez des identités visuelles distinctives.",
       domain: "Explorez les domaines et l'identité numérique.",
 
-      copyright: "© 2026 XSUS Studio. Tous droits réservés."
+      aboutUs: "À propos",
+      contactUs: "Contact",
+      footerNavigation: "Navigation de pied de page",
+      footerVision:
+        "Des technologies indépendantes. Un écosystème puissant.",
+
+      copyright:
+        "© 2026 XSUS Studio. Tous droits réservés."
     }
   };
 
@@ -147,7 +172,12 @@
     document.querySelectorAll("[data-t]").forEach(element => {
       const key = element.getAttribute("data-t");
 
-      if (Object.prototype.hasOwnProperty.call(dictionary, key)) {
+      if (
+        Object.prototype.hasOwnProperty.call(
+          dictionary,
+          key
+        )
+      ) {
         element.textContent = dictionary[key];
       }
     });
@@ -163,8 +193,16 @@
 
           const key = element.getAttribute(dataKey);
 
-          if (Object.prototype.hasOwnProperty.call(dictionary, key)) {
-            element.setAttribute(attribute, dictionary[key]);
+          if (
+            Object.prototype.hasOwnProperty.call(
+              dictionary,
+              key
+            )
+          ) {
+            element.setAttribute(
+              attribute,
+              dictionary[key]
+            );
           }
         });
       }
@@ -188,7 +226,10 @@
     });
 
     try {
-      localStorage.setItem(STORAGE_KEY, lang);
+      localStorage.setItem(
+        STORAGE_KEY,
+        lang
+      );
     } catch {
       // Storage is optional.
     }
@@ -197,10 +238,13 @@
   }
 
   function initialize() {
-    let saved = document.documentElement.lang || "en";
+    let saved =
+      document.documentElement.lang || "en";
 
     try {
-      saved = localStorage.getItem(STORAGE_KEY) || saved;
+      saved =
+        localStorage.getItem(STORAGE_KEY) ||
+        saved;
     } catch {
       // Use document language.
     }
@@ -208,9 +252,12 @@
     document.querySelectorAll(
       "#language, [data-language-selector]"
     ).forEach(selector => {
-      selector.addEventListener("change", event => {
-        setLanguage(event.target.value);
-      });
+      selector.addEventListener(
+        "change",
+        event => {
+          setLanguage(event.target.value);
+        }
+      );
     });
 
     setLanguage(saved);
@@ -218,9 +265,14 @@
 
   window.XSUSLanguage = Object.freeze({
     setLanguage,
+
     getLanguage: () =>
-      normalizeLanguage(document.documentElement.lang),
-    supportedLanguages: Object.freeze(["en", "sq", "fr"])
+      normalizeLanguage(
+        document.documentElement.lang
+      ),
+
+    supportedLanguages:
+      Object.freeze(["en", "sq", "fr"])
   });
 
   if (document.readyState === "loading") {
