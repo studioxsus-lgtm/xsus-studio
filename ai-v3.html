@@ -1,0 +1,1015 @@
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+  <meta name="theme-color" content="#050914">
+  <meta
+    name="description"
+    content="XSUS AI V3 — Intelligent Workspace. THE X IDENTITY."
+  >
+
+  <title>XSUS AI V3 | THE X IDENTITY</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- XSUS AI V3 Styles -->
+  <link rel="stylesheet" href="assets/css/xsus-ai/base.css">
+  <link rel="stylesheet" href="assets/css/xsus-ai/header.css">
+  <link rel="stylesheet" href="assets/css/xsus-ai/sidebar.css">
+  <link rel="stylesheet" href="assets/css/xsus-ai/workspace.css">
+  <link rel="stylesheet" href="assets/css/xsus-ai/chat.css">
+
+  <style>
+    /* V3 HTML Integration */
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0;
+      background: #050914;
+      color: #f5f8ff;
+      font-family: "Inter", sans-serif;
+    }
+
+    button,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid #20e8ff;
+      outline-offset: 3px;
+    }
+
+    .xsus-ai-app {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .xsus-ai-header {
+      position: relative;
+      z-index: 50;
+      flex-shrink: 0;
+    }
+
+    .xsus-v3-header-inner {
+      min-height: 72px;
+      padding: 12px clamp(14px, 3vw, 32px);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .xsus-v3-brand-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .xsus-v3-brand-symbol {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(
+        135deg,
+        rgba(32,232,255,.18),
+        rgba(149,102,255,.2)
+      );
+      border: 1px solid rgba(32,232,255,.3);
+      color: #20e8ff;
+      font-weight: 900;
+      letter-spacing: -.06em;
+    }
+
+    .xsus-v3-brand-name {
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: .035em;
+    }
+
+    .xsus-v3-brand-slogan {
+      margin-top: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      color: #a9bad3;
+    }
+
+    .xsus-ai-header-nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-left: auto;
+    }
+
+    .xsus-ai-header-nav a {
+      color: #a9bad3;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .xsus-ai-header-nav a:hover {
+      color: #20e8ff;
+    }
+
+    .xsus-ai-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .xsus-ai-language-select {
+      min-height: 38px;
+      padding: 0 10px;
+      border: 1px solid rgba(130,180,255,.2);
+      border-radius: 10px;
+      background: #101b30;
+      color: #f5f8ff;
+      font-size: 12px;
+    }
+
+    .xsus-v3-icon-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 1px solid rgba(130,180,255,.2);
+      border-radius: 12px;
+      background: #101b30;
+      color: #f5f8ff;
+    }
+
+    .xsus-v3-icon-button svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .xsus-ai-menu-toggle {
+      display: none;
+    }
+
+    .xsus-ai-layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+
+    .xsus-ai-sidebar {
+      flex-shrink: 0;
+      width: var(--xsus-sidebar-width, 270px);
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(130,180,255,.15);
+      background: rgba(10,18,36,.94);
+      z-index: 35;
+    }
+
+    .xsus-ai-sidebar.is-collapsed {
+      width: 76px;
+    }
+
+    .xsus-ai-sidebar.is-collapsed
+    .xsus-v3-sidebar-label,
+    .xsus-ai-sidebar.is-collapsed
+    .xsus-sidebar-history,
+    .xsus-ai-sidebar.is-collapsed
+    .xsus-sidebar-section-title {
+      display: none;
+    }
+
+    .xsus-sidebar-header {
+      padding: 18px 14px;
+    }
+
+    .xsus-sidebar-new-chat {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid rgba(32,232,255,.3);
+      border-radius: 12px;
+      background: rgba(32,232,255,.09);
+      color: #20e8ff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .xsus-sidebar-content {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .xsus-sidebar-section {
+      margin-bottom: 20px;
+    }
+
+    .xsus-sidebar-section-title {
+      padding: 8px 10px;
+      color: #788ba8;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .xsus-sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .xsus-sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      background: transparent;
+      color: #a9bad3;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .xsus-sidebar-item:hover,
+    .xsus-sidebar-item.is-active {
+      color: #20e8ff;
+      background: rgba(32,232,255,.08);
+    }
+
+    .xsus-sidebar-history {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .xsus-sidebar-history .xsus-sidebar-item {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+    }
+
+    .xsus-sidebar-footer {
+      padding: 14px;
+      border-top: 1px solid rgba(130,180,255,.15);
+    }
+
+    .xsus-ai-workspace {
+      position: relative;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .xsus-workspace-inner {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      width: min(100%, 1100px);
+      min-height: 0;
+      margin: 0 auto;
+      padding: 18px clamp(12px, 3vw, 28px);
+    }
+
+    .xsus-workspace-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 42px;
+    }
+
+    .xsus-v3-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #a9bad3;
+    }
+
+    .xsus-v3-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #788ba8;
+    }
+
+    .xsus-ai-app[data-ai-connected="true"]
+    .xsus-v3-status-dot {
+      background: #20e8ff;
+    }
+
+    .xsus-ai-welcome {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 35px 0;
+      text-align: center;
+    }
+
+    .xsus-welcome-logo-wrap {
+      display: grid;
+      place-items: center;
+      width: 88px;
+      height: 88px;
+      border: 1px solid rgba(32,232,255,.3);
+      border-radius: 26px;
+      background: linear-gradient(
+        135deg,
+        rgba(32,232,255,.12),
+        rgba(149,102,255,.16)
+      );
+      box-shadow: 0 0 40px rgba(32,232,255,.08);
+    }
+
+    .xsus-welcome-logo {
+      font-size: 34px;
+      font-weight: 900;
+      color: #20e8ff;
+    }
+
+    .xsus-welcome-title {
+      margin: 0;
+      font-size: clamp(25px, 4vw, 42px);
+      font-weight: 800;
+      line-height: 1.2;
+      background: linear-gradient(
+        110deg,
+        #20e8ff,
+        #4285ff,
+        #b78aff
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .xsus-v3-welcome-description {
+      max-width: 530px;
+      color: #a9bad3;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .xsus-suggestions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      width: min(100%, 600px);
+      margin-top: 8px;
+    }
+
+    .xsus-suggestion-card {
+      min-height: 70px;
+      padding: 16px;
+      border: 1px solid rgba(130,180,255,.15);
+      border-radius: 16px;
+      background: rgba(16,27,48,.65);
+      color: #f5f8ff;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    .xsus-suggestion-card:hover {
+      border-color: rgba(32,232,255,.45);
+      background: rgba(23,38,65,.8);
+    }
+
+    .xsus-conversation {
+      flex: 1;
+      min-height: 0;
+      padding-top: 18px;
+    }
+
+    .xsus-conversation-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      height: 100%;
+      overflow-y: auto;
+      padding: 12px 4px 24px;
+    }
+
+    .xsus-composer-area {
+      position: relative;
+      width: min(100%, 850px);
+      margin: auto auto 0;
+      padding-top: 16px;
+    }
+
+    .xsus-composer-disclaimer {
+      padding: 12px 4px 0;
+      color: #788ba8;
+      text-align: center;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .xsus-v3-error {
+      position: fixed;
+      right: 18px;
+      bottom: 20px;
+      z-index: 200;
+      max-width: min(420px, calc(100vw - 36px));
+      padding: 14px 18px;
+      border: 1px solid rgba(255,120,140,.45);
+      border-radius: 12px;
+      background: #301823;
+      color: #ffe2e7;
+      font-size: 12px;
+      box-shadow: 0 12px 35px rgba(0,0,0,.3);
+    }
+
+    .xsus-sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: rgba(0,0,0,.6);
+    }
+
+    @media (max-width: 900px) {
+      .xsus-ai-sidebar {
+        position: fixed;
+        top: 72px;
+        bottom: 0;
+        left: 0;
+        width: min(300px, 85vw);
+        transform: translateX(-105%);
+        transition: transform .25s ease;
+        box-shadow: 15px 0 40px rgba(0,0,0,.2);
+      }
+
+      .xsus-ai-sidebar.is-open {
+        transform: translateX(0);
+      }
+
+      .xsus-ai-sidebar.is-collapsed {
+        width: min(300px, 85vw);
+      }
+
+      .xsus-ai-sidebar.is-collapsed
+      .xsus-v3-sidebar-label,
+      .xsus-ai-sidebar.is-collapsed
+      .xsus-sidebar-history,
+      .xsus-ai-sidebar.is-collapsed
+      .xsus-sidebar-section-title {
+        display: initial;
+      }
+    }
+
+    @media (max-width: 850px) {
+      .xsus-ai-menu-toggle {
+        display: inline-flex;
+      }
+
+      .xsus-ai-header-nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 12px;
+        left: 12px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 10px;
+        border: 1px solid rgba(130,180,255,.2);
+        border-radius: 14px;
+        background: #101b30;
+        box-shadow: 0 15px 40px rgba(0,0,0,.3);
+      }
+
+      .xsus-ai-header-nav.is-open {
+        display: flex;
+      }
+
+      .xsus-ai-header-nav a {
+        padding: 12px;
+      }
+
+      .xsus-ai-header-actions {
+        margin-left: auto;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .xsus-v3-header-inner {
+        gap: 8px;
+        padding: 10px 12px;
+      }
+
+      .xsus-v3-brand-name {
+        font-size: 14px;
+      }
+
+      .xsus-v3-brand-slogan {
+        font-size: 8px;
+      }
+
+      .xsus-v3-brand-symbol {
+        width: 38px;
+        height: 38px;
+      }
+
+      .xsus-suggestions {
+        grid-template-columns: 1fr;
+      }
+
+      .xsus-ai-welcome {
+        gap: 14px;
+        padding: 24px 0;
+      }
+
+      .xsus-suggestion-card {
+        min-height: 54px;
+        padding: 12px;
+      }
+
+      .xsus-workspace-inner {
+        padding: 10px 12px 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .xsus-ai-sidebar {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="xsus-ai-app" data-active-section="chat">
+
+  <!-- HEADER -->
+  <header class="xsus-ai-header">
+    <div class="xsus-v3-header-inner">
+
+      <button
+        type="button"
+        class="xsus-v3-icon-button"
+        data-sidebar-toggle
+        aria-label="Toggle sidebar"
+        title="Toggle sidebar"
+      >
+        <i data-lucide="panel-left"></i>
+      </button>
+
+      <a href="index.html" class="xsus-v3-brand-link">
+        <div class="xsus-v3-brand-symbol" aria-hidden="true">
+          &lt;/&gt;
+        </div>
+
+        <div>
+          <div class="xsus-v3-brand-name">XSUS AI</div>
+          <div class="xsus-v3-brand-slogan">
+            THE X IDENTITY
+          </div>
+        </div>
+      </a>
+
+      <nav
+        class="xsus-ai-header-nav"
+        id="xsus-ai-header-nav"
+        aria-label="Main navigation"
+      >
+        <a href="index.html" data-i18n="navigation.home">
+          Home
+        </a>
+        <a href="app.html">XSUS App</a>
+        <a href="web.html">XSUS Web</a>
+        <a href="game.html">XSUS Game</a>
+        <a href="logo.html">XSUS Logo</a>
+        <a href="domain.html">XSUS Domain</a>
+      </nav>
+
+      <div class="xsus-ai-header-actions">
+
+        <select
+          class="xsus-ai-language-select"
+          data-xsus-language-select
+          aria-label="Language"
+        >
+          <option value="en">EN</option>
+          <option value="sq">SQ</option>
+          <option value="fr">FR</option>
+        </select>
+
+        <button
+          type="button"
+          class="xsus-v3-icon-button xsus-ai-menu-toggle"
+          aria-label="Open navigation"
+          aria-expanded="false"
+        >
+          <i data-lucide="menu"></i>
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE BACKDROP -->
+  <div
+    class="xsus-sidebar-backdrop"
+    hidden
+    aria-hidden="true"
+  ></div>
+
+  <div class="xsus-ai-layout">
+
+    <!-- SIDEBAR -->
+    <aside
+      class="xsus-ai-sidebar"
+      id="xsus-ai-sidebar"
+      aria-label="XSUS AI sidebar"
+    >
+
+      <div class="xsus-sidebar-header">
+
+        <button
+          type="button"
+          class="xsus-sidebar-new-chat"
+          data-action="new-chat"
+        >
+          <i data-lucide="plus"></i>
+          <span
+            class="xsus-v3-sidebar-label"
+            data-i18n="navigation.newChat"
+          >
+            New chat
+          </span>
+        </button>
+
+      </div>
+
+      <div class="xsus-sidebar-content">
+
+        <section class="xsus-sidebar-section">
+
+          <div class="xsus-sidebar-section-title">
+            Workspace
+          </div>
+
+          <nav class="xsus-sidebar-nav">
+
+            <button
+              type="button"
+              class="xsus-sidebar-item is-active"
+              data-nav-section="chat"
+            >
+              <i data-lucide="message-circle"></i>
+              <span
+                class="xsus-v3-sidebar-label"
+                data-i18n="navigation.chat"
+              >Chat</span>
+            </button>
+
+            <button
+              type="button"
+              class="xsus-sidebar-item"
+              data-nav-section="history"
+            >
+              <i data-lucide="history"></i>
+              <span
+                class="xsus-v3-sidebar-label"
+                data-i18n="navigation.history"
+              >History</span>
+            </button>
+
+            <button
+              type="button"
+              class="xsus-sidebar-item"
+              data-nav-section="projects"
+            >
+              <i data-lucide="folder-kanban"></i>
+              <span
+                class="xsus-v3-sidebar-label"
+                data-i18n="navigation.projects"
+              >Projects</span>
+            </button>
+
+            <button
+              type="button"
+              class="xsus-sidebar-item"
+              data-nav-section="knowledge"
+            >
+              <i data-lucide="brain"></i>
+              <span
+                class="xsus-v3-sidebar-label"
+                data-i18n="navigation.knowledge"
+              >Knowledge</span>
+            </button>
+
+            <button
+              type="button"
+              class="xsus-sidebar-item"
+              data-nav-section="settings"
+            >
+              <i data-lucide="settings"></i>
+              <span
+                class="xsus-v3-sidebar-label"
+                data-i18n="navigation.settings"
+              >Settings</span>
+            </button>
+
+          </nav>
+        </section>
+
+        <section class="xsus-sidebar-section">
+
+          <div
+            class="xsus-sidebar-section-title"
+            data-i18n="navigation.history"
+          >
+            History
+          </div>
+
+          <div class="xsus-sidebar-history"></div>
+
+        </section>
+
+      </div>
+
+      <div class="xsus-sidebar-footer">
+        <div class="xsus-v3-status">
+          <span class="xsus-v3-status-dot"></span>
+          <span class="xsus-v3-sidebar-label">
+            XSUS AI V3
+          </span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- WORKSPACE -->
+    <main class="xsus-ai-workspace is-welcome">
+
+      <div class="xsus-workspace-inner">
+
+        <div class="xsus-workspace-topbar">
+
+          <div class="xsus-v3-status">
+            <i data-lucide="sparkles"></i>
+            <span>XSUS AI Workspace</span>
+          </div>
+
+          <button
+            type="button"
+            class="xsus-v3-icon-button"
+            data-action="new-chat"
+            data-i18n-title="navigation.newChat"
+            aria-label="New chat"
+          >
+            <i data-lucide="square-pen"></i>
+          </button>
+
+        </div>
+
+        <!-- WELCOME -->
+        <section class="xsus-ai-welcome">
+
+          <div class="xsus-welcome-logo-wrap">
+            <div class="xsus-welcome-logo">
+              ✦
+            </div>
+          </div>
+
+          <div>
+            <p
+              data-i18n="welcome.greeting"
+              style="color:#a9bad3;font-size:12px;margin-bottom:12px"
+            >
+              Welcome to XSUS AI
+            </p>
+
+            <h1
+              class="xsus-welcome-title"
+              data-i18n="welcome.title"
+            >
+              What can we create today?
+            </h1>
+          </div>
+
+          <p
+            class="xsus-v3-welcome-description"
+            data-i18n="welcome.description"
+          >
+            Intelligence, creativity and technology
+            in one workspace.
+          </p>
+
+          <div class="xsus-suggestions">
+
+            <button
+              type="button"
+              class="xsus-suggestion-card"
+              data-suggestion="Help me write code"
+              data-i18n="welcome.suggestion1"
+            >
+              Help me write code
+            </button>
+
+            <button
+              type="button"
+              class="xsus-suggestion-card"
+              data-suggestion="Create a business idea"
+              data-i18n="welcome.suggestion2"
+            >
+              Create a business idea
+            </button>
+
+            <button
+              type="button"
+              class="xsus-suggestion-card"
+              data-suggestion="Analyze a document"
+              data-i18n="welcome.suggestion3"
+            >
+              Analyze a document
+            </button>
+
+            <button
+              type="button"
+              class="xsus-suggestion-card"
+              data-suggestion="Explain a topic"
+              data-i18n="welcome.suggestion4"
+            >
+              Explain a topic
+            </button>
+
+          </div>
+
+        </section>
+
+        <!-- CONVERSATION -->
+        <section
+          class="xsus-conversation"
+          aria-label="Conversation"
+          hidden
+        >
+          <div
+            class="xsus-conversation-messages"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions"
+          ></div>
+        </section>
+
+        <!-- COMPOSER -->
+        <div class="xsus-composer-area">
+
+          <div class="xsus-chat-composer">
+
+            <!-- Attachment preview -->
+            <div class="xsus-chat-attachments"></div>
+
+            <textarea
+              class="xsus-chat-input"
+              rows="2"
+              maxlength="12000"
+              data-i18n-placeholder="chat.placeholder"
+              placeholder="Ask XSUS AI anything..."
+              aria-label="Message XSUS AI"
+            ></textarea>
+
+            <div class="xsus-chat-toolbar">
+
+              <!-- LEFT: PLUS -->
+              <div class="xsus-chat-toolbar-left">
+
+                <button
+                  type="button"
+                  class="xsus-chat-tool-button xsus-plus-button"
+                  aria-label="Add files or tools"
+                  data-i18n-aria-label="chat.attach"
+                  aria-expanded="false"
+                  title="Add files or tools"
+                >
+                  <i data-lucide="plus"></i>
+                </button>
+
+              </div>
+
+              <!-- RIGHT: VOICE AND SEND -->
+              <div class="xsus-chat-toolbar-right">
+
+                <button
+                  type="button"
+                  class="xsus-chat-tool-button xsus-voice-button"
+                  aria-label="Voice"
+                  data-i18n-aria-label="chat.voice"
+                  title="Voice — coming soon"
+                  disabled
+                >
+                  <i data-lucide="mic"></i>
+                </button>
+
+                <button
+                  type="button"
+                  class="xsus-chat-tool-button xsus-send-button"
+                  aria-label="Send"
+                  data-i18n-aria-label="chat.send"
+                  disabled
+                >
+                  <i data-lucide="arrow-up"></i>
+                </button>
+
+              </div>
+
+            </div>
+
+            <!-- PLUS MENU -->
+            <div
+              class="xsus-plus-menu"
+              id="xsus-plus-menu"
+              hidden
+            ></div>
+
+          </div>
+
+          <p
+            class="xsus-composer-disclaimer"
+            data-i18n="chat.disclaimer"
+          >
+            XSUS AI can make mistakes.
+            Verify important information.
+          </p>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ERROR NOTIFICATION -->
+  <div
+    class="xsus-v3-error"
+    data-xsus-error
+    role="alert"
+    hidden
+  ></div>
+
+</div>
+
+<!-- Lucide Icons -->
+<script
+  src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"
+  defer
+></script>
+
+<!-- XSUS AI V3 Main Application -->
+<script
+  type="module"
+  src="assets/js/xsus-ai/app.js"
+></script>
+
+</body>
+</html>
