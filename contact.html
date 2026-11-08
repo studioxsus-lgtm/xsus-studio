@@ -1,0 +1,649 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#060a18">
+  <meta name="description"
+        content="Contact XSUS Studio — The X Identity.">
+  <title>Contact | XSUS Studio</title>
+
+  <link rel="stylesheet" href="assets/css/studio.css">
+  <link rel="stylesheet" href="assets/css/header.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  <link rel="stylesheet" href="assets/css/footer.css?v=100">
+
+  <style>
+    .contact-main {
+      width: 100%;
+      max-width: 1120px;
+      margin: auto;
+      padding: 65px 22px 75px;
+    }
+
+    .contact-intro {
+      text-align: center;
+      margin-bottom: 45px;
+    }
+
+    .contact-eyebrow {
+      display: inline-block;
+      padding: 9px 16px;
+      border: 1px solid #20e8ff55;
+      border-radius: 30px;
+      color: #20e8ff;
+      background: #0c2c3d;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+    }
+
+    .contact-intro h1 {
+      font-size: clamp(40px, 6vw, 70px);
+      line-height: 1.1;
+      margin: 24px 0;
+      letter-spacing: -1.5px;
+    }
+
+    .contact-gradient {
+      background: linear-gradient(
+        90deg, #20e8ff, #83a9ff, #d178ff
+      );
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .contact-intro p {
+      max-width: 680px;
+      margin: auto;
+      color: #a8b8d1;
+      line-height: 1.75;
+    }
+
+    .contact-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+      gap: 25px;
+      align-items: start;
+    }
+
+    .contact-panel {
+      min-width: 0;
+      padding: 30px;
+      border: 1px solid #ffffff20;
+      border-radius: 21px;
+      background: linear-gradient(
+        145deg, #14213bdf, #0b1024e8
+      );
+    }
+
+    .contact-panel h2 {
+      margin: 0 0 17px;
+      font-size: 24px;
+    }
+
+    .contact-panel p {
+      color: #a8b8d1;
+      line-height: 1.75;
+    }
+
+    .contact-email {
+      display: block;
+      margin-top: 24px;
+      color: #20e8ff;
+      overflow-wrap: anywhere;
+      font-weight: 700;
+    }
+
+    .contact-field {
+      margin-bottom: 19px;
+    }
+
+    .contact-field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #dceaff;
+    }
+
+    .contact-field input,
+    .contact-field textarea {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px 15px;
+      border: 1px solid #ffffff30;
+      border-radius: 11px;
+      background: #09162b;
+      color: #ffffff;
+      font: inherit;
+      font-size: 15px;
+    }
+
+    .contact-field textarea {
+      min-height: 160px;
+      resize: vertical;
+    }
+
+    .contact-field input:focus,
+    .contact-field textarea:focus {
+      outline: 2px solid #20e8ff;
+      outline-offset: 2px;
+    }
+
+    .contact-submit {
+      width: 100%;
+      padding: 15px 20px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(
+        110deg, #08b9dc, #7147ed
+      );
+      color: #ffffff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .contact-submit:disabled {
+      opacity: .65;
+      cursor: wait;
+    }
+
+    .contact-status {
+      margin-top: 15px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .contact-status:empty {
+      display: none;
+    }
+
+    .contact-status[data-state="success"] {
+      color: #72f0c0;
+    }
+
+    .contact-status[data-state="error"] {
+      color: #ff9baf;
+    }
+
+    .contact-honeypot {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
+    @media (max-width: 800px) {
+      .contact-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .contact-main {
+        padding: 45px 18px 50px;
+      }
+
+      .contact-intro h1 {
+        font-size: 40px;
+      }
+
+      .contact-panel {
+        padding: 23px;
+      }
+    }
+  </style>
+
+  <script src="assets/js/navigation.js" defer></script>
+</head>
+
+<body>
+<div class="page">
+
+  <header class="header">
+    <div class="topbar">
+      <a href="index-v2.html" class="brand">
+        <img
+          src="assets/images/xsus-globe-emblem.png"
+          alt="XSUS Studio"
+          class="official-logo"
+        >
+        <div>
+          <div class="brand-name">XSUS STUDIO</div>
+          <div class="brand-tag">THE X IDENTITY</div>
+        </div>
+      </a>
+
+      <div class="actions">
+        <select id="language" aria-label="Language">
+          <option value="en">EN</option>
+          <option value="sq">SQ</option>
+          <option value="fr">FR</option>
+        </select>
+
+        <a href="auth.html" data-t="login">Login</a>
+        <a href="auth.html" class="signup"
+           data-t="signup">Sign Up</a>
+
+        <button
+          type="button"
+          class="menu-toggle"
+          id="menuButton"
+          aria-controls="navigation"
+          aria-expanded="false"
+          aria-label="Open navigation menu"
+        >☰</button>
+      </div>
+    </div>
+
+    <nav class="nav" id="navigation"
+         aria-label="Main navigation">
+      <a href="index-v2.html" data-t="home">Home</a>
+      <a href="ai.html">XSUS AI</a>
+      <a href="app.html">XSUS App</a>
+      <a href="web.html">XSUS Web</a>
+      <a href="game.html">XSUS Game</a>
+      <a href="logo.html">XSUS Logo</a>
+      <a href="domain.html">XSUS Domain</a>
+    </nav>
+  </header>
+
+  <main class="contact-main">
+
+    <section class="contact-intro">
+      <span class="contact-eyebrow">THE X IDENTITY</span>
+
+      <h1>
+        <span data-t="title">Contact</span>
+        <span class="contact-gradient">XSUS Studio</span>
+      </h1>
+
+      <p data-t="intro">
+        Have a question, an idea or a collaboration
+        proposal? Get in touch with XSUS Studio.
+      </p>
+    </section>
+
+    <div class="contact-layout">
+
+      <aside class="contact-panel">
+        <h2 data-t="infoTitle">Get in Touch</h2>
+
+        <p data-t="infoText">
+          We welcome questions, feedback and
+          collaboration inquiries about XSUS Studio
+          and its technology products.
+        </p>
+
+        <a
+          class="contact-email"
+          href="mailto:studioxsus@gmail.com"
+        >studioxsus@gmail.com</a>
+
+        <p data-t="privacy">
+          Your message is processed by our external
+          email form provider and sent to our
+          official contact address.
+        </p>
+      </aside>
+
+      <section class="contact-panel">
+        <h2 data-t="formTitle">Send a Message</h2>
+
+        <form
+          id="contactForm"
+          action="https://formsubmit.co/ajax/studioxsus@gmail.com"
+          method="POST"
+        >
+          <input type="hidden"
+                 name="_subject"
+                 value="XSUS Studio — New Contact Message">
+
+          <input type="hidden"
+                 name="_template"
+                 value="table">
+
+          <input type="hidden"
+                 name="_url"
+                 value="https://xsusstudio.com/contact.html">
+
+          <div class="contact-honeypot"
+               aria-hidden="true">
+            <label for="website">Website</label>
+            <input
+              type="text"
+              id="website"
+              name="_honey"
+              tabindex="-1"
+              autocomplete="off"
+            >
+          </div>
+
+          <div class="contact-field">
+            <label for="contactName"
+                   data-t="nameLabel">Full Name</label>
+
+            <input
+              id="contactName"
+              name="name"
+              type="text"
+              autocomplete="name"
+              maxlength="120"
+              required
+            >
+          </div>
+
+          <div class="contact-field">
+            <label for="contactEmail"
+                   data-t="emailLabel">Email Address</label>
+
+            <input
+              id="contactEmail"
+              name="email"
+              type="email"
+              autocomplete="email"
+              maxlength="254"
+              required
+            >
+          </div>
+
+          <div class="contact-field">
+            <label for="contactSubject"
+                   data-t="subjectLabel">Subject</label>
+
+            <input
+              id="contactSubject"
+              name="subject"
+              type="text"
+              maxlength="180"
+              required
+            >
+          </div>
+
+          <div class="contact-field">
+            <label for="contactMessage"
+                   data-t="messageLabel">Message</label>
+
+            <textarea
+              id="contactMessage"
+              name="message"
+              minlength="10"
+              maxlength="5000"
+              required
+            ></textarea>
+          </div>
+
+          <button
+            id="contactSubmit"
+            type="submit"
+            class="contact-submit"
+            data-t="send"
+          >Send Message</button>
+
+          <p
+            id="contactStatus"
+            class="contact-status"
+            role="status"
+            aria-live="polite"
+          ></p>
+
+        </form>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="xsus-footer">
+    <div class="xsus-footer-main">
+
+      <div class="xsus-footer-brand">
+        <img
+          src="assets/images/xsus-globe-emblem.png"
+          alt=""
+          class="xsus-footer-logo"
+        >
+
+        <div class="xsus-footer-brand-text">
+          <strong>XSUS STUDIO</strong>
+          <span>THE X IDENTITY</span>
+        </div>
+      </div>
+
+      <nav class="xsus-footer-links"
+           aria-label="Footer navigation">
+        <a
+          href="about.html"
+          class="xsus-footer-btn xsus-footer-about"
+          data-t="about"
+        >About Us</a>
+
+        <a
+          href="contact.html"
+          class="xsus-footer-btn xsus-footer-contact"
+          aria-current="page"
+        >
+          <span data-t="contact">Contact</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="xsus-footer-bottom">
+      <p data-t="copyright">
+        © 2026 XSUS Studio. All rights reserved.
+      </p>
+      <p data-t="vision">
+        Independent Technologies. One Powerful Ecosystem.
+      </p>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const translations = {
+    en: {
+      home: "Home",
+      login: "Login",
+      signup: "Sign Up",
+      title: "Contact",
+      intro: "Have a question, an idea or a collaboration proposal? Get in touch with XSUS Studio.",
+      infoTitle: "Get in Touch",
+      infoText: "We welcome questions, feedback and collaboration inquiries about XSUS Studio and its technology products.",
+      privacy: "Your message is processed by our external email form provider and sent to our official contact address.",
+      formTitle: "Send a Message",
+      nameLabel: "Full Name",
+      emailLabel: "Email Address",
+      subjectLabel: "Subject",
+      messageLabel: "Message",
+      send: "Send Message",
+      sending: "Sending...",
+      success: "Your message was submitted successfully.",
+      activation: "The contact form needs email activation. Please try again after activation.",
+      error: "Your message could not be sent. Please try again or contact us by email.",
+      about: "About Us",
+      contact: "Contact",
+      copyright: "© 2026 XSUS Studio. All rights reserved.",
+      vision: "Independent Technologies. One Powerful Ecosystem."
+    },
+    sq: {
+      home: "Kreu",
+      login: "Hyr",
+      signup: "Regjistrohu",
+      title: "Kontakt",
+      intro: "Ke një pyetje, ide apo propozim bashkëpunimi? Kontakto XSUS Studio.",
+      infoTitle: "Na Kontakto",
+      infoText: "Mirëpresim pyetje, sugjerime dhe propozime bashkëpunimi për XSUS Studio dhe produktet e tij teknologjike.",
+      privacy: "Mesazhi yt përpunohet nga shërbimi ynë i jashtëm i formularëve dhe dërgohet në adresën zyrtare të kontaktit.",
+      formTitle: "Dërgo një Mesazh",
+      nameLabel: "Emri i Plotë",
+      emailLabel: "Adresa e Emailit",
+      subjectLabel: "Subjekti",
+      messageLabel: "Mesazhi",
+      send: "Dërgo Mesazhin",
+      sending: "Duke dërguar...",
+      success: "Mesazhi u dorëzua me sukses.",
+      activation: "Formulari kërkon aktivizimin e emailit. Provo përsëri pas aktivizimit.",
+      error: "Mesazhi nuk u dërgua. Provo përsëri ose na kontakto me email.",
+      about: "Rreth Nesh",
+      contact: "Kontakt",
+      copyright: "© 2026 XSUS Studio. Të gjitha të drejtat e rezervuara.",
+      vision: "Teknologji të Pavarura. Një Ekosistem i Fuqishëm."
+    },
+    fr: {
+      home: "Accueil",
+      login: "Connexion",
+      signup: "S'inscrire",
+      title: "Contact",
+      intro: "Une question, une idée ou une proposition de collaboration ? Contactez XSUS Studio.",
+      infoTitle: "Nous Contacter",
+      infoText: "Nous accueillons vos questions, commentaires et propositions de collaboration concernant XSUS Studio et ses produits technologiques.",
+      privacy: "Votre message est traité par notre prestataire externe de formulaires et envoyé à notre adresse officielle.",
+      formTitle: "Envoyer un Message",
+      nameLabel: "Nom Complet",
+      emailLabel: "Adresse E-mail",
+      subjectLabel: "Sujet",
+      messageLabel: "Message",
+      send: "Envoyer le Message",
+      sending: "Envoi en cours...",
+      success: "Votre message a été soumis avec succès.",
+      activation: "Le formulaire nécessite une activation par e-mail. Réessayez après l'activation.",
+      error: "Le message n'a pas pu être envoyé. Réessayez ou contactez-nous par e-mail.",
+      about: "À propos",
+      contact: "Contact",
+      copyright: "© 2026 XSUS Studio. Tous droits réservés.",
+      vision: "Des technologies indépendantes. Un écosystème puissant."
+    }
+  };
+
+  let currentLanguage = "en";
+
+  function translate(key) {
+    return translations[currentLanguage][key] ||
+      translations.en[key] || key;
+  }
+
+  function setLanguage(language) {
+    currentLanguage =
+      Object.prototype.hasOwnProperty.call(translations, language)
+        ? language
+        : "en";
+
+    document.documentElement.lang = currentLanguage;
+
+    document.querySelectorAll("[data-t]").forEach(el => {
+      el.textContent = translate(el.dataset.t);
+    });
+
+    const selector = document.getElementById("language");
+    selector.value = currentLanguage;
+
+    document.title = translate("title") + " | XSUS Studio";
+
+    try {
+      localStorage.setItem("xsus-language", currentLanguage);
+    } catch {
+      // Local storage is optional.
+    }
+  }
+
+  function initialize() {
+    let savedLanguage = "en";
+
+    try {
+      savedLanguage =
+        localStorage.getItem("xsus-language") || "en";
+    } catch {
+      // Use default language.
+    }
+
+    setLanguage(savedLanguage);
+
+    document.getElementById("language")
+      .addEventListener("change", event => {
+        setLanguage(event.target.value);
+      });
+
+    const form = document.getElementById("contactForm");
+    const button = document.getElementById("contactSubmit");
+    const status = document.getElementById("contactStatus");
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      if (!form.reportValidity()) return;
+
+      button.disabled = true;
+      button.textContent = translate("sending");
+      status.textContent = "";
+      status.removeAttribute("data-state");
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          headers: {
+            "Accept": "application/json"
+          },
+          body: new FormData(form)
+        });
+
+        const result = await response.json();
+
+        const successful =
+          response.ok &&
+          (result.success === true ||
+           result.success === "true");
+
+        if (!successful) {
+          const providerMessage =
+            String(result.message || "");
+
+          if (/activat|confirm/i.test(providerMessage)) {
+            status.textContent = translate("activation");
+          } else {
+            status.textContent = translate("error");
+          }
+
+          status.dataset.state = "error";
+          return;
+        }
+
+        form.reset();
+        status.textContent = translate("success");
+        status.dataset.state = "success";
+
+      } catch {
+        status.textContent = translate("error");
+        status.dataset.state = "error";
+
+      } finally {
+        button.disabled = false;
+        button.textContent = translate("send");
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      initialize,
+      { once: true }
+    );
+  } else {
+    initialize();
+  }
+})();
+</script>
+
+</body>
+</html>
