@@ -1,0 +1,223 @@
+
+/**
+ * XSUS STUDIO — HEADER
+ * Version: 1.0.0
+ * Brand: THE X IDENTITY
+ */
+
+.header {
+  position: relative;
+  z-index: 20;
+  border-bottom: 1px solid #ffffff18;
+  background: #070d1cf0;
+}
+
+.topbar {
+  max-width: 1250px;
+  margin: auto;
+  padding: 17px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.official-logo {
+  width: 47px;
+  height: 47px;
+  object-fit: contain;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.mark {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 47px;
+  height: 47px;
+  border: 1px solid #26eaff88;
+  border-radius: 14px;
+  color: var(--cyan);
+  background: #0b2338;
+  box-shadow: 0 0 24px #00dfff25;
+  font-weight: 900;
+  font-size: 25px;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: 1.4px;
+  white-space: nowrap;
+}
+
+.brand-tag {
+  margin-top: 3px;
+  color: var(--cyan);
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.actions a,
+.actions select,
+.menu-toggle {
+  border: 1px solid #ffffff30;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #101b31;
+  color: white;
+  cursor: pointer;
+}
+
+.actions .signup {
+  background: linear-gradient(120deg, #0c94c7, #7043db);
+  border-color: transparent;
+}
+
+.menu-toggle {
+  display: none;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* NAVIGATION */
+
+.nav {
+  max-width: 1250px;
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 15px 12px;
+}
+
+.nav a {
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #c9d8f0;
+  transition: background .2s, color .2s;
+}
+
+.nav a:hover,
+.nav a:focus-visible,
+.nav a[aria-current="page"] {
+  color: var(--cyan);
+  background: #1c344d;
+}
+
+/* TABLET */
+
+@media (max-width: 800px) {
+  .menu-toggle {
+    display: inline-block;
+  }
+
+  .nav {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 20px 20px;
+    background: #09162b;
+    border-top: 1px solid #20e8ff33;
+    box-shadow: 0 15px 30px #00000045;
+  }
+
+  .nav.open {
+    display: flex;
+  }
+
+  .nav a {
+    display: block;
+    background: #132843;
+    color: #66eaff;
+    border: 1px solid #29b8db44;
+    padding: 13px 16px;
+  }
+
+  .nav a:hover,
+  .nav a:focus-visible {
+    color: #ffffff;
+    background: #205071;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 520px) {
+  .topbar {
+    padding: 13px;
+    gap: 7px;
+  }
+
+  .brand {
+    gap: 7px;
+  }
+
+  .brand-name {
+    font-size: 12px;
+    letter-spacing: .6px;
+  }
+
+  .brand-tag {
+    font-size: 7px;
+    letter-spacing: 1.2px;
+  }
+
+  .mark,
+  .official-logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .mark {
+    border-radius: 10px;
+    font-size: 20px;
+  }
+
+  .actions {
+    gap: 4px;
+  }
+
+  .actions a,
+  .actions select,
+  .menu-toggle {
+    padding: 8px 6px;
+    font-size: 10px;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .topbar {
+    flex-wrap: wrap;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav a {
+    transition: none;
+  }
+}
