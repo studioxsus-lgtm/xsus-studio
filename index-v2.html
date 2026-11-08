@@ -1,99 +1,4 @@
 
-/* XSUS GLOBI V4 — INTERNAL FALLBACK */
-
-.xsus-globe {
-  position: relative;
-  display: block;
-  width: min(75vw, 360px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 1px solid #20e8ff99;
-
-  background:
-    radial-gradient(
-      circle at 30% 25%,
-      #35eaff77,
-      transparent 35%
-    ),
-    radial-gradient(
-      circle at 75% 80%,
-      #a26cff66,
-      transparent 45%
-    ),
-    radial-gradient(
-      circle at center,
-      #12376a,
-      #050a18 75%
-    );
-
-  box-shadow:
-    inset -35px -25px 70px #020512,
-    inset 20px 20px 45px #20e8ff22,
-    0 0 50px #20e8ff44,
-    0 0 110px #a26cff33;
-
-  animation: xsusFloat 7s ease-in-out infinite;
-}
-
-.xsus-globe::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent 0 32px,
-      #20e8ff33 33px,
-      transparent 34px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0 43px,
-      #20e8ff22 44px,
-      transparent 45px
-    );
-
-  transform: rotate(-18deg);
-}
-
-.xsus-globe::after {
-  content: "XSUS";
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: #d8faff;
-  font-size: clamp(48px, 7vw, 75px);
-  font-weight: 900;
-  letter-spacing: 7px;
-  text-shadow: 0 0 28px #00eaff;
-}
-
-@keyframes xsusFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-14px);
-  }
-}
-
-@media (max-width: 600px) {
-  .xsus-globe {
-    width: min(75vw, 290px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .xsus-globe {
-    animation: none;
-  }
-}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,9 +7,6 @@
   <meta name="theme-color" content="#060a18">
   <meta name="description" content="XSUS Studio — The X Identity. AI, apps, web, games, logos and domains.">
   <title>XSUS Studio — The X Identity</title>
-
-  <!-- XSUS GLOBI V4 -->
-  <link rel="stylesheet" href="./globi-v4.css">
 
   <style>
     :root {
@@ -158,16 +60,8 @@
     .page {
       min-height: 100vh;
       background:
-        radial-gradient(
-          ellipse at 50% 20%,
-          #173a63 0%,
-          transparent 46%
-        ),
-        radial-gradient(
-          ellipse at 90% 65%,
-          #30134e 0%,
-          transparent 40%
-        ),
+        radial-gradient(ellipse at 50% 20%, #173a63 0%, transparent 46%),
+        radial-gradient(ellipse at 90% 65%, #30134e 0%, transparent 40%),
         var(--bg);
     }
 
@@ -246,11 +140,7 @@
     }
 
     .actions .signup {
-      background: linear-gradient(
-        120deg,
-        #0c94c7,
-        #7043db
-      );
+      background: linear-gradient(120deg, #0c94c7, #7043db);
       border-color: transparent;
     }
 
@@ -277,9 +167,7 @@
       border-radius: 10px;
       font-size: 13px;
       color: #c9d8f0;
-      transition:
-        background .2s,
-        color .2s;
+      transition: background .2s, color .2s;
     }
 
     .nav a:hover,
@@ -324,12 +212,7 @@
     }
 
     .gradient {
-      background: linear-gradient(
-        90deg,
-        var(--cyan),
-        #83a9ff,
-        #d178ff
-      );
+      background: linear-gradient(90deg, var(--cyan), #83a9ff, #d178ff);
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
@@ -358,9 +241,7 @@
       font-weight: 700;
       border: 1px solid #49617e;
       background: #14233b;
-      transition:
-        transform .2s,
-        box-shadow .2s;
+      transition: transform .2s, box-shadow .2s;
     }
 
     .btn:hover {
@@ -369,15 +250,11 @@
     }
 
     .btn.primary {
-      background: linear-gradient(
-        110deg,
-        #08b9dc,
-        #7147ed
-      );
+      background: linear-gradient(110deg, #08b9dc, #7147ed);
       border-color: transparent;
     }
 
-    /* GLOBI V4 */
+    /* XSUS GLOBI V4 — INTEGRATED */
 
     .globe-wrap {
       min-height: 400px;
@@ -385,6 +262,7 @@
       place-items: center;
       position: relative;
       isolation: isolate;
+      perspective: 1000px;
     }
 
     .globe-wrap::before {
@@ -404,8 +282,85 @@
       pointer-events: none;
     }
 
-    .xsus-globe-scene {
-      width: 100%;
+    .xsus-globe {
+      position: relative;
+      display: block;
+      width: min(75vw, 360px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 1px solid #20e8ff99;
+
+      background:
+        radial-gradient(
+          circle at 30% 25%,
+          #35eaff77,
+          transparent 35%
+        ),
+        radial-gradient(
+          circle at 75% 80%,
+          #a26cff66,
+          transparent 45%
+        ),
+        radial-gradient(
+          circle at center,
+          #12376a,
+          #050a18 75%
+        );
+
+      box-shadow:
+        inset -35px -25px 70px #020512,
+        inset 20px 20px 45px #20e8ff22,
+        0 0 50px #20e8ff44,
+        0 0 110px #a26cff33;
+
+      animation: xsusFloat 7s ease-in-out infinite;
+    }
+
+    .xsus-globe::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent 0 32px,
+          #20e8ff33 33px,
+          transparent 34px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent 0 43px,
+          #20e8ff22 44px,
+          transparent 45px
+        );
+
+      transform: rotate(-18deg);
+    }
+
+    .xsus-globe::after {
+      content: "XSUS";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #d8faff;
+      font-size: clamp(48px, 7vw, 75px);
+      font-weight: 900;
+      letter-spacing: 7px;
+      text-shadow: 0 0 28px #00eaff;
+    }
+
+    @keyframes xsusFloat {
+      0%, 100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-14px);
+      }
     }
 
     /* MODULES */
@@ -440,11 +395,7 @@
       border: 1px solid #ffffff20;
       border-radius: 19px;
       padding: 25px;
-      background: linear-gradient(
-        145deg,
-        #14213bdf,
-        #0b1024e8
-      );
+      background: linear-gradient(145deg, #14213bdf, #0b1024e8);
       transition:
         transform .2s,
         border-color .2s,
@@ -531,7 +482,7 @@
       letter-spacing: 2px;
     }
 
-    /* TABLET / MOBILE */
+    /* TABLET */
 
     @media (max-width: 800px) {
       .hero {
@@ -552,8 +503,8 @@
         min-height: 320px;
       }
 
-      .xsus-globe-scene {
-        min-height: 310px;
+      .xsus-globe {
+        width: min(70vw, 290px);
       }
 
       .grid {
@@ -592,6 +543,8 @@
         background: #205071;
       }
     }
+
+    /* MOBILE */
 
     @media (max-width: 520px) {
       .topbar {
@@ -653,8 +606,8 @@
         min-height: 300px;
       }
 
-      .xsus-globe-scene {
-        min-height: 300px;
+      .xsus-globe {
+        width: min(75vw, 290px);
       }
     }
 
@@ -672,6 +625,10 @@
     @media (prefers-reduced-motion: reduce) {
       html {
         scroll-behavior: auto;
+      }
+
+      .xsus-globe {
+        animation: none;
       }
 
       .card,
@@ -695,7 +652,8 @@
   <header class="header">
     <div class="topbar">
 
-      <a class="brand" href="index-v2.html"
+      <a class="brand"
+         href="index-v2.html"
          aria-label="XSUS Studio Home">
         <div class="mark" aria-hidden="true">X</div>
         <div>
@@ -715,7 +673,9 @@
           Login
         </a>
 
-        <a href="auth.html" class="signup" data-t="signup">
+        <a href="auth.html"
+           class="signup"
+           data-t="signup">
           Sign Up
         </a>
 
@@ -732,7 +692,9 @@
     </div>
 
     <!-- NAVIGATION -->
-    <nav class="nav" id="navigation" aria-label="Main navigation">
+    <nav class="nav"
+         id="navigation"
+         aria-label="Main navigation">
       <a href="index-v2.html"
          aria-current="page"
          data-t="home">Home</a>
@@ -766,18 +728,22 @@
         </p>
 
         <div class="hero-buttons">
-          <a href="#modules" class="btn primary" data-t="explore">
+          <a href="#modules"
+             class="btn primary"
+             data-t="explore">
             Explore Modules
           </a>
 
-          <a href="ai.html" class="btn" data-t="discoverAI">
+          <a href="ai.html"
+             class="btn"
+             data-t="discoverAI">
             Discover XSUS AI
           </a>
         </div>
       </div>
 
       <!-- XSUS GLOBI V4 -->
-      <div class="globe-wrap xsus-globe-scene">
+      <div class="globe-wrap">
         <div
           class="xsus-globe"
           role="img"
@@ -973,9 +939,7 @@
   const languageSelector = document.getElementById("language");
 
   function setLanguage(lang) {
-    const selected = translations[lang]
-      ? lang
-      : "en";
+    const selected = translations[lang] ? lang : "en";
 
     document.documentElement.lang = selected;
     languageSelector.value = selected;
