@@ -1,0 +1,256 @@
+
+/**
+ * XSUS AI V3 — Base Design System
+ * Version: 3.0.0
+ * Brand: THE X IDENTITY
+ *
+ * Independent presentation layer.
+ * Does not modify XSUS AI Core.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Backgrounds */
+  --xsus-bg: #050914;
+  --xsus-bg-secondary: #0a1224;
+  --xsus-surface: #101b30;
+  --xsus-surface-hover: #172641;
+
+  /* Brand colors */
+  --xsus-cyan: #20e8ff;
+  --xsus-blue: #4285ff;
+  --xsus-violet: #9566ff;
+  --xsus-pink: #e65aff;
+
+  /* Text */
+  --xsus-text: #f5f8ff;
+  --xsus-text-secondary: #a9bad3;
+  --xsus-text-muted: #788ba8;
+
+  /* Borders */
+  --xsus-border: rgba(130, 180, 255, 0.15);
+  --xsus-border-active: rgba(32, 232, 255, 0.5);
+
+  /* Effects */
+  --xsus-glass: rgba(12, 22, 42, 0.78);
+  --xsus-glow: 0 0 30px rgba(32, 232, 255, 0.12);
+
+  /* Layout */
+  --xsus-sidebar-width: 270px;
+  --xsus-header-height: 72px;
+
+  /* Shapes */
+  --xsus-radius-sm: 10px;
+  --xsus-radius-md: 16px;
+  --xsus-radius-lg: 24px;
+
+  /* Motion */
+  --xsus-transition: 0.25s ease;
+}
+
+/* Global reset */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  background: var(--xsus-bg);
+  color: var(--xsus-text);
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* Atmospheric background */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      ellipse at 20% 10%,
+      rgba(32, 232, 255, 0.09),
+      transparent 45%
+    ),
+    radial-gradient(
+      ellipse at 85% 75%,
+      rgba(149, 102, 255, 0.11),
+      transparent 45%
+    );
+}
+
+/* Typography */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.025em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+input,
+textarea,
+select {
+  color: var(--xsus-text);
+}
+
+::placeholder {
+  color: var(--xsus-text-muted);
+}
+
+/* Accessibility */
+
+:focus-visible {
+  outline: 2px solid var(--xsus-cyan);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgba(32, 232, 255, 0.3);
+  color: #ffffff;
+}
+
+/* Reusable glass surface */
+
+.xsus-glass {
+  background: var(--xsus-glass);
+  border: 1px solid var(--xsus-border);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* Reusable gradient text */
+
+.xsus-gradient-text {
+  background: linear-gradient(
+    120deg,
+    var(--xsus-cyan),
+    var(--xsus-blue),
+    var(--xsus-violet)
+  );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Reusable button foundation */
+
+.xsus-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: 1px solid var(--xsus-border);
+  border-radius: var(--xsus-radius-md);
+
+  padding: 10px 16px;
+  min-height: 44px;
+
+  background: var(--xsus-surface);
+  color: var(--xsus-text);
+
+  transition:
+    background var(--xsus-transition),
+    border-color var(--xsus-transition),
+    transform var(--xsus-transition);
+}
+
+.xsus-button:hover {
+  background: var(--xsus-surface-hover);
+  border-color: var(--xsus-border-active);
+}
+
+/* Scrollbar */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(130, 180, 255, 0.25);
+  border-radius: 20px;
+}
+
+/* Responsive foundations */
+
+@media (max-width: 768px) {
+  :root {
+    --xsus-header-height: 64px;
+  }
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
