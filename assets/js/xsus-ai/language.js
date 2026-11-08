@@ -1,25 +1,15 @@
 
 /**
  * XSUS AI V3 — Interface Language System
- * Version: 3.0.0
+ * Version: 3.1.0
  * Brand: THE X IDENTITY
  *
- * Languages:
- * - Albanian (sq)
- * - English (en)
- * - French (fr)
- *
- * Responsibilities:
- * - Interface translations
- * - Language switching without reload
- * - Persistent user preference
- * - HTML lang synchronization
- * - Accessible labels and placeholders
+ * Supported languages: sq, en, fr
  *
  * Independent of XSUS AI Core.
  */
 
-export const LANGUAGE_VERSION = "3.0.0";
+export const LANGUAGE_VERSION = "3.1.0";
 
 export const SUPPORTED_UI_LANGUAGES = Object.freeze([
   "sq",
@@ -93,14 +83,36 @@ export const UI_TRANSLATIONS = Object.freeze({
       ecosystem: "Ekosistemi XSUS",
       comingSoon: "Së shpejti",
       noResults: "Nuk u gjet asnjë mjet.",
-      close: "Mbyll menunë"
+      close: "Mbyll menunë",
+
+      descriptions: {
+        camera: "Bëj një fotografi",
+        gallery: "Zgjidh fotografi",
+        documents: "Ngarko skedarë",
+        image: "Gjenerim dhe redaktim imazhesh",
+        video: "Krijim videosh",
+        pdf: "Krijim dhe analizë dokumentesh",
+        research: "Kërkim i avancuar",
+        code: "Programim dhe analizë kodi",
+        data: "Analizë të dhënash",
+        ecosystem: "XSUS App, Web, Game, Logo, Domain"
+      },
+
+      unavailable:
+        "{tool} nuk është lidhur ende me motorin përkatës."
     },
 
     files: {
       remove: "Hiq skedarin",
       tooLarge: "Skedari është shumë i madh.",
       limit: "Është arritur kufiri i skedarëve.",
-      unsupported: "Formati nuk mbështetet."
+      unsupported: "Formati nuk mbështetet.",
+      maxFiles:
+        "Mund të ngarkosh maksimumi {count} skedarë.",
+      fileTooLarge:
+        "{name} është më i madh se {size}.",
+      removeNamed: "Hiq {name}",
+      preview: "Pamje paraprake: {name}"
     },
 
     sections: {
@@ -183,14 +195,34 @@ export const UI_TRANSLATIONS = Object.freeze({
       ecosystem: "XSUS Ecosystem",
       comingSoon: "Coming soon",
       noResults: "No tools found.",
-      close: "Close menu"
+      close: "Close menu",
+
+      descriptions: {
+        camera: "Take a photo",
+        gallery: "Choose photos",
+        documents: "Upload files",
+        image: "Generate and edit images",
+        video: "Create videos",
+        pdf: "Create and analyze documents",
+        research: "Advanced research",
+        code: "Programming and code analysis",
+        data: "Analyze data",
+        ecosystem: "XSUS App, Web, Game, Logo, Domain"
+      },
+
+      unavailable:
+        "{tool} is not connected to its engine yet."
     },
 
     files: {
       remove: "Remove file",
       tooLarge: "The file is too large.",
       limit: "File limit reached.",
-      unsupported: "Unsupported file format."
+      unsupported: "Unsupported file format.",
+      maxFiles: "You can attach up to {count} files.",
+      fileTooLarge: "{name} exceeds {size}.",
+      removeNamed: "Remove {name}",
+      preview: "Preview: {name}"
     },
 
     sections: {
@@ -245,7 +277,8 @@ export const UI_TRANSLATIONS = Object.freeze({
     },
 
     chat: {
-      placeholder: "Demandez ce que vous voulez à XSUS AI...",
+      placeholder:
+        "Demandez ce que vous voulez à XSUS AI...",
       send: "Envoyer",
       voice: "Voix",
       attach: "Ajouter des fichiers ou des outils",
@@ -273,14 +306,37 @@ export const UI_TRANSLATIONS = Object.freeze({
       ecosystem: "Écosystème XSUS",
       comingSoon: "Bientôt",
       noResults: "Aucun outil trouvé.",
-      close: "Fermer le menu"
+      close: "Fermer le menu",
+
+      descriptions: {
+        camera: "Prendre une photo",
+        gallery: "Choisir des photos",
+        documents: "Importer des fichiers",
+        image: "Générer et modifier des images",
+        video: "Créer des vidéos",
+        pdf: "Créer et analyser des documents",
+        research: "Recherche avancée",
+        code: "Programmation et analyse de code",
+        data: "Analyser des données",
+        ecosystem: "XSUS App, Web, Game, Logo, Domain"
+      },
+
+      unavailable:
+        "{tool} n'est pas encore connecté à son moteur."
     },
 
     files: {
       remove: "Supprimer le fichier",
       tooLarge: "Le fichier est trop volumineux.",
       limit: "Limite de fichiers atteinte.",
-      unsupported: "Format de fichier non pris en charge."
+      unsupported:
+        "Format de fichier non pris en charge.",
+      maxFiles:
+        "Vous pouvez joindre jusqu'à {count} fichiers.",
+      fileTooLarge:
+        "{name} dépasse la limite de {size}.",
+      removeNamed: "Supprimer {name}",
+      preview: "Aperçu : {name}"
     },
 
     sections: {
@@ -310,10 +366,6 @@ export const UI_TRANSLATIONS = Object.freeze({
   }
 });
 
-/**
- * Resolve nested translation keys.
- * Example: "chat.placeholder"
- */
 function resolveTranslation(dictionary, key) {
   if (typeof key !== "string" || !key) {
     return undefined;
@@ -349,29 +401,45 @@ export function normalizeUILanguage(value) {
 
 export function translateUI(
   key,
-  language = DEFAULT_UI_LANGUAGE
+  language = DEFAULT_UI_LANGUAGE,
+  parameters = {}
 ) {
   const code =
     normalizeUILanguage(language) ||
     DEFAULT_UI_LANGUAGE;
 
-  const result = resolveTranslation(
+  let result = resolveTranslation(
     UI_TRANSLATIONS[code],
     key
   );
 
-  if (typeof result === "string") {
-    return result;
+  if (typeof result !== "string") {
+    result = resolveTranslation(
+      UI_TRANSLATIONS[DEFAULT_UI_LANGUAGE],
+      key
+    );
   }
 
-  const fallback = resolveTranslation(
-    UI_TRANSLATIONS[DEFAULT_UI_LANGUAGE],
-    key
-  );
+  if (typeof result !== "string") {
+    return key;
+  }
 
-  return typeof fallback === "string"
-    ? fallback
-    : key;
+  return result.replace(
+    /\{([a-zA-Z][a-zA-Z0-9]*)\}/g,
+    (match, name) => {
+      if (
+        parameters &&
+        Object.prototype.hasOwnProperty.call(
+          parameters,
+          name
+        )
+      ) {
+        return String(parameters[name]);
+      }
+
+      return match;
+    }
+  );
 }
 
 function readStoredLanguage() {
@@ -391,7 +459,7 @@ function saveLanguage(language) {
       language
     );
   } catch {
-    // Storage may be unavailable in private mode.
+    // Storage may be unavailable.
   }
 }
 
@@ -414,20 +482,6 @@ function detectBrowserLanguage() {
 
   return DEFAULT_UI_LANGUAGE;
 }
-
-/**
- * Initializes the interface language controller.
- *
- * HTML conventions:
- *
- * data-i18n="navigation.chat"
- * data-i18n-placeholder="chat.placeholder"
- * data-i18n-title="chat.send"
- * data-i18n-aria-label="chat.voice"
- *
- * Language selector:
- * <select data-xsus-language-select>...</select>
- */
 
 export function createLanguageController(options = {}) {
   const {
@@ -533,11 +587,20 @@ export function createLanguageController(options = {}) {
   }
 
   function handleSelectChange(event) {
-    const select = event.target.closest(
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const select = target.closest(
       "[data-xsus-language-select]"
     );
 
-    if (!select || !root.contains(select)) {
+    if (
+      !select ||
+      (root !== document && !root.contains(select))
+    ) {
       return;
     }
 
@@ -563,10 +626,12 @@ export function createLanguageController(options = {}) {
 
     setLanguage,
 
-    translate: key => translateUI(
-      key,
-      currentLanguage
-    ),
+    translate: (key, parameters = {}) =>
+      translateUI(
+        key,
+        currentLanguage,
+        parameters
+      ),
 
     refresh: applyTranslations,
 
@@ -578,7 +643,6 @@ export function createLanguageController(options = {}) {
       if (destroyed) return;
 
       destroyed = true;
-
       cleanups.forEach(cleanup => cleanup());
     }
   });
