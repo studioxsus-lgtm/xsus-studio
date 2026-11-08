@@ -1,5 +1,10 @@
 
-/* XSUS Studio — Globi V4 */
+/*
+ * XSUS STUDIO — GLOBI V4.2
+ * Official Logo Integration
+ * THE X IDENTITY
+ */
+
 :root {
   --xsus-bg: #050a18;
   --xsus-cyan: #20e8ff;
@@ -7,21 +12,55 @@
   --xsus-violet: #a26cff;
 }
 
-.xsus-globe-scene {
+/* GLOBE CONTAINER */
+
+.xsus-globe-scene,
+.globe-wrap {
   display: grid;
   place-items: center;
+  position: relative;
   min-height: 400px;
   perspective: 1000px;
-  overflow: hidden;
+  isolation: isolate;
 }
 
-.xsus-globe {
-  position: relative;
-  width: min(75vw, 360px);
+/* BACKGROUND GLOW */
+
+.globe-wrap::before {
+  content: "";
+  position: absolute;
+  width: min(90%, 430px);
   aspect-ratio: 1;
   border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    #20e8ff25 0%,
+    #a26cff12 45%,
+    transparent 70%
+  );
+
+  filter: blur(25px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* MAIN GLOBE */
+
+.xsus-globe {
+  --globe-x: -18deg;
+  --globe-y: 0deg;
+
+  position: relative;
+  display: block;
+
+  width: min(75vw, 360px);
+  aspect-ratio: 1;
+
+  border-radius: 50%;
   overflow: hidden;
-  border: 1px solid #20e8ff88;
+
+  border: 1px solid #20e8ff99;
 
   background:
     radial-gradient(
@@ -46,59 +85,122 @@
     0 0 50px #20e8ff44,
     0 0 110px #a26cff33;
 
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
   animation: xsusFloat 7s ease-in-out infinite;
 }
+
+.xsus-globe.dragging {
+  cursor: grabbing;
+}
+
+/* ROTATING GRID */
 
 .xsus-globe::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -35%;
+
   border-radius: 50%;
+  pointer-events: none;
 
   background:
     repeating-linear-gradient(
       0deg,
       transparent 0 32px,
-      #20e8ff33 33px,
+      #20e8ff38 33px,
       transparent 34px
     ),
     repeating-linear-gradient(
       90deg,
       transparent 0 43px,
-      #20e8ff22 44px,
+      #20e8ff2d 44px,
       transparent 45px
     );
 
-  transform: rotate(-18deg);
+  transform:
+    perspective(600px)
+    rotateX(var(--globe-x))
+    rotateY(var(--globe-y))
+    rotateZ(-18deg);
+
+  will-change: transform;
 }
+
+/* OFFICIAL XSUS LOGO */
 
 .xsus-globe::after {
-  content: "XSUS";
+  content: "";
+
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: #d8faff;
-  font-size: clamp(48px, 7vw, 75px);
-  font-weight: 900;
-  letter-spacing: 7px;
-  text-shadow: 0 0 28px #00eaff;
+  z-index: 2;
+
+  inset: 17%;
+  border-radius: 50%;
+
+  background-image:
+    url("../images/xsus-studio-logo.png");
+
+  background-position: center 28%;
+  background-size: 150% auto;
+  background-repeat: no-repeat;
+
+  pointer-events: none;
+
+  filter:
+    drop-shadow(0 0 12px #20e8ff66)
+    drop-shadow(0 0 25px #a26cff33);
 }
+
+/* FLOAT ANIMATION */
 
 @keyframes xsusFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-14px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-14px);
+  }
 }
 
-@media (max-width: 600px) {
-  .xsus-globe-scene {
-    min-height: 310px;
+/* TABLET */
+
+@media (max-width: 800px) {
+  .xsus-globe-scene,
+  .globe-wrap {
+    min-height: 320px;
+  }
+
+  .xsus-globe {
+    width: min(70vw, 290px);
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 520px) {
+  .xsus-globe-scene,
+  .globe-wrap {
+    min-height: 300px;
   }
 
   .xsus-globe {
     width: min(75vw, 290px);
   }
+
+  .xsus-globe::after {
+    inset: 16%;
+    background-size: 150% auto;
+  }
 }
+
+/* ACCESSIBILITY */
 
 @media (prefers-reduced-motion: reduce) {
   .xsus-globe {
