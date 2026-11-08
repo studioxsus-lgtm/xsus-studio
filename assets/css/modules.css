@@ -1,0 +1,194 @@
+
+/**
+ * XSUS STUDIO — MODULE CARDS
+ * Version: 1.0.0
+ * Six independent products
+ */
+
+.modules {
+  width: min(100% - 32px, 1250px);
+  margin: 0 auto;
+  padding: 40px 0 75px;
+}
+
+.modules-title {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: clamp(25px, 4vw, 38px);
+  font-weight: 850;
+  color: #f4f8ff;
+}
+
+.modules-description {
+  max-width: 650px;
+  margin: 0 auto 35px;
+  text-align: center;
+  color: #a8b8d1;
+  line-height: 1.7;
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.module-card {
+  --module-color: #20e8ff;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 230px;
+  padding: 26px;
+  overflow: hidden;
+
+  border: 1px solid
+    color-mix(in srgb, var(--module-color) 30%, transparent);
+
+  border-radius: 20px;
+
+  background: linear-gradient(
+    145deg,
+    #14223b,
+    #0b1224 80%
+  );
+
+  box-shadow: 0 12px 35px #00000025;
+
+  transition:
+    transform .25s ease,
+    border-color .25s ease,
+    box-shadow .25s ease;
+}
+
+.module-card:hover {
+  transform: translateY(-5px);
+
+  border-color: var(--module-color);
+
+  box-shadow:
+    0 15px 40px #00000040,
+    0 0 25px
+      color-mix(in srgb, var(--module-color) 15%, transparent);
+}
+
+.module-card:focus-visible {
+  outline: 2px solid var(--module-color);
+  outline-offset: 4px;
+}
+
+.module-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 20px;
+
+  border-radius: 15px;
+
+  color: var(--module-color);
+
+  background:
+    color-mix(in srgb, var(--module-color) 12%, #101b30);
+
+  border: 1px solid
+    color-mix(in srgb, var(--module-color) 30%, transparent);
+}
+
+.module-icon svg,
+.module-icon img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.module-card h3 {
+  margin: 0 0 12px;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.module-card p {
+  margin: 0;
+  color: #a8b8d1;
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.module-card .module-arrow {
+  margin-top: auto;
+  padding-top: 20px;
+  color: var(--module-color);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* MODULE IDENTITIES */
+
+.module-ai {
+  --module-color: #20e8ff;
+}
+
+.module-app {
+  --module-color: #a26cff;
+}
+
+.module-web {
+  --module-color: #28b8ff;
+}
+
+.module-game {
+  --module-color: #ff55c8;
+}
+
+.module-logo {
+  --module-color: #ffb84d;
+}
+
+.module-domain {
+  --module-color: #48e6ad;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+  .modules-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .modules {
+    padding: 30px 0 55px;
+  }
+
+  .modules-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .module-card {
+    min-height: 190px;
+    padding: 22px;
+  }
+
+  .module-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .module-card {
+    transition: none;
+  }
+
+  .module-card:hover {
+    transform: none;
+  }
+}
