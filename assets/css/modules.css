@@ -3,13 +3,22 @@
  * XSUS STUDIO — SIX PRODUCT MODULES
  * Official Product Logo Integration
  * THE X IDENTITY
+ *
+ * Refinement:
+ * - Reduced empty space above footer
+ * - Preserved all six module cards
+ * - Preserved logo sizes and visual effects
  */
+
+/* MODULES SECTION */
 
 .modules {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 35px 22px 90px;
+  padding: 35px 22px 55px;
 }
+
+/* SECTION HEADING */
 
 .section-title {
   text-align: center;
@@ -23,11 +32,15 @@
   margin-bottom: 35px;
 }
 
+/* PRODUCT GRID */
+
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 17px;
 }
+
+/* PRODUCT CARDS */
 
 .card {
   display: flex;
@@ -121,6 +134,10 @@
 /* MOBILE */
 
 @media (max-width: 520px) {
+  .modules {
+    padding: 35px 18px 35px;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }
