@@ -1,0 +1,1024 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#060a18">
+
+  <meta
+    name="description"
+    content="Discover XSUS Studio, its vision, six specialized products and independent technology architecture."
+  >
+
+  <title>About Us | XSUS Studio — The X Identity</title>
+
+  <!-- SHARED XSUS STYLES -->
+  <link rel="stylesheet" href="assets/css/studio.css">
+  <link rel="stylesheet" href="assets/css/header.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  <link rel="stylesheet" href="assets/css/footer.css?v=100">
+
+  <style>
+    /* XSUS STUDIO — ABOUT PAGE */
+
+    .xsus-header-logo {
+      display: block;
+      width: 47px;
+      height: 47px;
+      flex: 0 0 47px;
+      object-fit: contain;
+      padding: 3px;
+      border-radius: 12px;
+      border: 1px solid rgba(32,232,255,.35);
+      background: #050a18;
+    }
+
+    .about-main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 22px 70px;
+    }
+
+    .about-hero {
+      text-align: center;
+      padding: 85px 15px 65px;
+    }
+
+    .about-eyebrow {
+      display: inline-block;
+      padding: 9px 17px;
+      border-radius: 999px;
+      border: 1px solid #20e8ff55;
+      background: #0c2c3d;
+      color: #20e8ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+    }
+
+    .about-hero h1 {
+      margin: 25px auto;
+      max-width: 950px;
+      font-size: clamp(39px, 6vw, 70px);
+      line-height: 1.1;
+      letter-spacing: -1.8px;
+    }
+
+    .about-gradient {
+      background: linear-gradient(
+        90deg,
+        #20e8ff,
+        #83a9ff,
+        #d178ff
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .about-lead {
+      max-width: 730px;
+      margin: 0 auto;
+      color: #a8b8d1;
+      font-size: 17px;
+      line-height: 1.8;
+    }
+
+    .about-section {
+      margin-top: 55px;
+    }
+
+    .about-heading {
+      margin: 0 0 15px;
+      text-align: center;
+      font-size: clamp(27px, 4vw, 36px);
+      letter-spacing: -.6px;
+    }
+
+    .about-subheading {
+      max-width: 760px;
+      margin: 0 auto 32px;
+      color: #a8b8d1;
+      line-height: 1.75;
+      text-align: center;
+    }
+
+    .about-panel {
+      padding: 35px;
+      border: 1px solid #ffffff20;
+      border-radius: 22px;
+      background: linear-gradient(
+        145deg,
+        #14213bdf,
+        #0b1024e8
+      );
+    }
+
+    .about-panel p {
+      margin: 0;
+      color: #b9c8df;
+      line-height: 1.85;
+    }
+
+    .about-values {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .about-value {
+      padding: 28px;
+      border-radius: 19px;
+      border: 1px solid #ffffff20;
+      background: linear-gradient(
+        145deg,
+        #14213bdf,
+        #0b1024e8
+      );
+    }
+
+    .about-value-icon {
+      display: grid;
+      place-items: center;
+      width: 47px;
+      height: 47px;
+      margin-bottom: 20px;
+      border-radius: 13px;
+      background: #102c46;
+      border: 1px solid #238fc255;
+      color: #52dcff;
+      font-size: 23px;
+    }
+
+    .about-value h3 {
+      margin: 0 0 12px;
+      font-size: 19px;
+    }
+
+    .about-value p {
+      margin: 0;
+      color: #a8b8d1;
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .about-products {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 17px;
+    }
+
+    .about-product {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 25px 20px;
+      border-radius: 19px;
+      border: 1px solid #ffffff20;
+      background: linear-gradient(
+        145deg,
+        #14213bdf,
+        #0b1024e8
+      );
+      text-align: center;
+      transition:
+        transform .25s ease,
+        border-color .25s ease;
+    }
+
+    .about-product:hover {
+      transform: translateY(-3px);
+      border-color: #23dfff88;
+    }
+
+    .about-product img {
+      display: block;
+      width: 100%;
+      max-width: 165px;
+      height: 115px;
+      object-fit: contain;
+      margin-bottom: 16px;
+    }
+
+    .about-product h3 {
+      margin: 0 0 10px;
+      font-size: 19px;
+    }
+
+    .about-product p {
+      margin: 0 0 17px;
+      color: #a8b8d1;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .about-product span {
+      margin-top: auto;
+      color: #20e8ff;
+      font-size: 13px;
+    }
+
+    .about-cta {
+      margin-top: 70px;
+      padding: 45px 25px;
+      text-align: center;
+      border: 1px solid #20e8ff44;
+      border-radius: 24px;
+      background:
+        radial-gradient(
+          ellipse at 50% 0%,
+          #193d60,
+          transparent 70%
+        ),
+        #0b1428;
+    }
+
+    .about-cta h2 {
+      margin: 0 0 14px;
+      font-size: clamp(26px, 4vw, 36px);
+    }
+
+    .about-cta p {
+      max-width: 620px;
+      margin: 0 auto 25px;
+      color: #a8b8d1;
+      line-height: 1.7;
+    }
+
+    .about-cta-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 45px;
+      padding: 12px 23px;
+      border-radius: 12px;
+      background: linear-gradient(
+        110deg,
+        #08b9dc,
+        #7147ed
+      );
+      color: #fff;
+      font-weight: 700;
+    }
+
+    @media (max-width: 800px) {
+      .about-values,
+      .about-products {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      .xsus-header-logo {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+        padding: 2px;
+      }
+
+      .about-main {
+        padding: 0 18px 45px;
+      }
+
+      .about-hero {
+        padding: 55px 0 35px;
+      }
+
+      .about-hero h1 {
+        font-size: clamp(36px, 10vw, 46px);
+      }
+
+      .about-lead {
+        font-size: 15px;
+        line-height: 1.65;
+      }
+
+      .about-section {
+        margin-top: 40px;
+      }
+
+      .about-values,
+      .about-products {
+        grid-template-columns: 1fr;
+      }
+
+      .about-panel {
+        padding: 24px;
+      }
+
+      .about-cta {
+        margin-top: 45px;
+        padding: 35px 20px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .about-product {
+        transition: none;
+      }
+
+      .about-product:hover {
+        transform: none;
+      }
+    }
+  </style>
+
+  <!-- SHARED NAVIGATION -->
+  <script src="assets/js/navigation.js" defer></script>
+</head>
+
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="topbar">
+
+      <a
+        class="brand"
+        href="index-v2.html"
+        aria-label="XSUS Studio Home"
+        data-t-aria="brandHome"
+      >
+        <img
+          src="assets/images/xsus-globe-emblem.png"
+          alt=""
+          class="xsus-header-logo"
+          width="47"
+          height="47"
+        >
+
+        <div>
+          <div class="brand-name">XSUS STUDIO</div>
+          <div class="brand-tag">THE X IDENTITY</div>
+        </div>
+      </a>
+
+      <div class="actions">
+
+        <select
+          id="language"
+          aria-label="Language"
+          data-t-aria="languageLabel"
+        >
+          <option value="en">EN</option>
+          <option value="sq">SQ</option>
+          <option value="fr">FR</option>
+        </select>
+
+        <a href="auth.html" data-t="login">
+          Login
+        </a>
+
+        <a
+          href="auth.html"
+          class="signup"
+          data-t="signup"
+        >
+          Sign Up
+        </a>
+
+        <button
+          type="button"
+          class="menu-toggle"
+          id="menuButton"
+          aria-label="Open navigation menu"
+          data-t-aria="menuLabel"
+          aria-expanded="false"
+          aria-controls="navigation"
+        >
+          ☰
+        </button>
+
+      </div>
+    </div>
+
+    <nav
+      class="nav"
+      id="navigation"
+      aria-label="Main navigation"
+      data-t-aria="navigationLabel"
+    >
+      <a href="index-v2.html" data-t="home">Home</a>
+      <a href="ai.html">XSUS AI</a>
+      <a href="app.html">XSUS App</a>
+      <a href="web.html">XSUS Web</a>
+      <a href="game.html">XSUS Game</a>
+      <a href="logo.html">XSUS Logo</a>
+      <a href="domain.html">XSUS Domain</a>
+    </nav>
+  </header>
+
+  <main class="about-main">
+
+    <!-- HERO -->
+    <section class="about-hero">
+
+      <div class="about-eyebrow" data-t="eyebrow">
+        THE X IDENTITY
+      </div>
+
+      <h1>
+        <span data-t="heroTitle">
+          About XSUS Studio.
+        </span>
+        <br>
+        <span
+          class="about-gradient"
+          data-t="heroHighlight"
+        >
+          Building Independent Technology.
+        </span>
+      </h1>
+
+      <p class="about-lead" data-t="heroIntro">
+        XSUS Studio is a technology ecosystem built
+        around six specialized products, a shared vision
+        and the pursuit of technological independence.
+      </p>
+
+    </section>
+
+    <!-- WHO WE ARE -->
+    <section class="about-section">
+
+      <h2 class="about-heading" data-t="whoTitle">
+        Who We Are
+      </h2>
+
+      <p class="about-subheading" data-t="whoSubtitle">
+        One identity. Six specialized technology products.
+      </p>
+
+      <div class="about-panel">
+        <p data-t="whoText">
+          XSUS Studio is an evolving technology project
+          focused on artificial intelligence, applications,
+          websites, games, visual identities and domains.
+          Its architecture is designed to support specialized,
+          independent products connected through controlled
+          interfaces where integration is needed.
+        </p>
+      </div>
+
+    </section>
+
+    <!-- PRINCIPLES -->
+    <section class="about-section">
+
+      <h2 class="about-heading" data-t="valuesTitle">
+        Our Principles
+      </h2>
+
+      <p class="about-subheading" data-t="valuesSubtitle">
+        The ideas guiding the development of XSUS Studio.
+      </p>
+
+      <div class="about-values">
+
+        <article class="about-value">
+          <div class="about-value-icon" aria-hidden="true">
+            ◈
+          </div>
+
+          <h3 data-t="valueOneTitle">
+            Independence
+          </h3>
+
+          <p data-t="valueOneText">
+            Build technology with clear ownership,
+            independent components and reduced
+            unnecessary dependencies.
+          </p>
+        </article>
+
+        <article class="about-value">
+          <div class="about-value-icon" aria-hidden="true">
+            ⟡
+          </div>
+
+          <h3 data-t="valueTwoTitle">
+            Innovation
+          </h3>
+
+          <p data-t="valueTwoText">
+            Develop specialized tools and intelligent
+            experiences through continuous improvement.
+          </p>
+        </article>
+
+        <article class="about-value">
+          <div class="about-value-icon" aria-hidden="true">
+            ⌘
+          </div>
+
+          <h3 data-t="valueThreeTitle">
+            Controlled Integration
+          </h3>
+
+          <p data-t="valueThreeText">
+            Connect systems through defined interfaces
+            while preserving their individual boundaries.
+          </p>
+        </article>
+
+      </div>
+
+    </section>
+
+    <!-- PRODUCTS -->
+    <section class="about-section">
+
+      <h2 class="about-heading" data-t="productsTitle">
+        Our Six Products
+      </h2>
+
+      <p class="about-subheading" data-t="productsSubtitle">
+        Six distinct areas of technology, developed
+        under the XSUS identity.
+      </p>
+
+      <div class="about-products">
+
+        <a class="about-product" href="ai.html">
+          <img
+            src="assets/images/xsus-ai-logo.png"
+            alt="XSUS AI"
+            loading="lazy"
+          >
+          <h3>XSUS AI</h3>
+          <p data-t="ai">
+            Artificial intelligence and knowledge systems.
+          </p>
+          <span data-t="explore">Explore →</span>
+        </a>
+
+        <a class="about-product" href="app.html">
+          <img
+            src="assets/images/xsus-app-logo.png"
+            alt="XSUS App"
+            loading="lazy"
+          >
+          <h3>XSUS App</h3>
+          <p data-t="app">
+            Application creation and development.
+          </p>
+          <span data-t="explore">Explore →</span>
+        </a>
+
+        <a class="about-product" href="web.html">
+          <img
+            src="assets/images/xsus-web-logo.png"
+            alt="XSUS Web"
+            loading="lazy"
+          >
+          <h3>XSUS Web</h3>
+          <p data-t="web">
+            Website design and development.
+          </p>
+          <span data-t="explore">Explore →</span>
+        </a>
+
+        <a class="about-product" href="game.html">
+          <img
+            src="assets/images/xsus-game-logo.png"
+            alt="XSUS Game"
+            loading="lazy"
+          >
+          <h3>XSUS Game</h3>
+          <p data-t="game">
+            Interactive games and experiences.
+          </p>
+          <span data-t="explore">Explore →</span>
+        </a>
+
+        <a class="about-product" href="logo.html">
+          <img
+            src="assets/images/xsus-logo-logo.png"
+            alt="XSUS Logo"
+            loading="lazy"
+          >
+          <h3>XSUS Logo</h3>
+          <p data-t="logo">
+            Visual identity and logo creation.
+          </p>
+          <span data-t="explore">Explore →</span>
+        </a>
+
+        <a class="about-product" href="domain.html">
+          <img
+            src="assets/images/xsus-domain-logo.png"
+            alt="XSUS Domain"
+            loading="lazy"
+          >
+          <h3>XSUS Domain</h3>
+          <p data-t="domain">
+            Domains and digital identity.
+          </p>
+          <span data-t="explore">Explore →</span>
+        </a>
+
+      </div>
+
+    </section>
+
+    <!-- FUTURE VISION -->
+    <section class="about-section">
+
+      <h2 class="about-heading" data-t="futureTitle">
+        Our Vision
+      </h2>
+
+      <div class="about-panel">
+        <p data-t="futureText">
+          Our long-term vision is to develop an increasingly
+          independent technology ecosystem with its own
+          intelligence, knowledge, specialized engines and
+          infrastructure. XSUS Studio is being developed
+          progressively, with architecture, validation and
+          reliability guiding each stage.
+        </p>
+      </div>
+
+    </section>
+
+    <!-- CALL TO ACTION -->
+    <section class="about-cta">
+
+      <h2 data-t="ctaTitle">
+        Explore the XSUS Ecosystem
+      </h2>
+
+      <p data-t="ctaText">
+        Discover the products and technologies
+        behind THE X IDENTITY.
+      </p>
+
+      <a
+        href="index-v2.html#modules"
+        class="about-cta-link"
+        data-t="ctaButton"
+      >
+        Explore Our Products
+      </a>
+
+    </section>
+
+  </main>
+
+  <!-- PREMIUM FOOTER -->
+  <footer class="xsus-footer">
+
+    <div class="xsus-footer-main">
+
+      <div class="xsus-footer-brand">
+        <img
+          src="assets/images/xsus-globe-emblem.png"
+          alt=""
+          class="xsus-footer-logo"
+          width="54"
+          height="54"
+          loading="lazy"
+        >
+
+        <div class="xsus-footer-brand-text">
+          <strong>XSUS STUDIO</strong>
+          <span>THE X IDENTITY</span>
+        </div>
+      </div>
+
+      <nav
+        class="xsus-footer-links"
+        aria-label="Footer navigation"
+        data-t-aria="footerNavigation"
+      >
+        <a
+          href="about.html"
+          class="xsus-footer-btn xsus-footer-about"
+          aria-current="page"
+          data-t="aboutUs"
+        >
+          About Us
+        </a>
+
+        <a
+          href="contact.html"
+          class="xsus-footer-btn xsus-footer-contact"
+        >
+          <span data-t="contactUs">Contact</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </nav>
+
+    </div>
+
+    <div class="xsus-footer-bottom">
+      <p data-t="copyright">
+        © 2026 XSUS Studio. All rights reserved.
+      </p>
+
+      <p data-t="footerVision">
+        Independent Technologies. One Powerful Ecosystem.
+      </p>
+    </div>
+
+  </footer>
+
+</div>
+
+<!-- ABOUT PAGE TRANSLATIONS -->
+<script>
+(() => {
+  "use strict";
+
+  const translations = {
+    en: {
+      pageDescription:
+        "Discover XSUS Studio, its vision, six specialized products and independent technology architecture.",
+      brandHome: "XSUS Studio Home",
+      languageLabel: "Language",
+      menuLabel: "Open navigation menu",
+      navigationLabel: "Main navigation",
+      footerNavigation: "Footer navigation",
+      home: "Home",
+      login: "Login",
+      signup: "Sign Up",
+      eyebrow: "THE X IDENTITY",
+      heroTitle: "About XSUS Studio.",
+      heroHighlight: "Building Independent Technology.",
+      heroIntro:
+        "XSUS Studio is a technology ecosystem built around six specialized products, a shared vision and the pursuit of technological independence.",
+      whoTitle: "Who We Are",
+      whoSubtitle:
+        "One identity. Six specialized technology products.",
+      whoText:
+        "XSUS Studio is an evolving technology project focused on artificial intelligence, applications, websites, games, visual identities and domains. Its architecture is designed to support specialized, independent products connected through controlled interfaces where integration is needed.",
+      valuesTitle: "Our Principles",
+      valuesSubtitle:
+        "The ideas guiding the development of XSUS Studio.",
+      valueOneTitle: "Independence",
+      valueOneText:
+        "Build technology with clear ownership, independent components and reduced unnecessary dependencies.",
+      valueTwoTitle: "Innovation",
+      valueTwoText:
+        "Develop specialized tools and intelligent experiences through continuous improvement.",
+      valueThreeTitle: "Controlled Integration",
+      valueThreeText:
+        "Connect systems through defined interfaces while preserving their individual boundaries.",
+      productsTitle: "Our Six Products",
+      productsSubtitle:
+        "Six distinct areas of technology, developed under the XSUS identity.",
+      ai: "Artificial intelligence and knowledge systems.",
+      app: "Application creation and development.",
+      web: "Website design and development.",
+      game: "Interactive games and experiences.",
+      logo: "Visual identity and logo creation.",
+      domain: "Domains and digital identity.",
+      explore: "Explore →",
+      futureTitle: "Our Vision",
+      futureText:
+        "Our long-term vision is to develop an increasingly independent technology ecosystem with its own intelligence, knowledge, specialized engines and infrastructure. XSUS Studio is being developed progressively, with architecture, validation and reliability guiding each stage.",
+      ctaTitle: "Explore the XSUS Ecosystem",
+      ctaText:
+        "Discover the products and technologies behind THE X IDENTITY.",
+      ctaButton: "Explore Our Products",
+      aboutUs: "About Us",
+      contactUs: "Contact",
+      footerVision:
+        "Independent Technologies. One Powerful Ecosystem.",
+      copyright:
+        "© 2026 XSUS Studio. All rights reserved."
+    },
+
+    sq: {
+      pageDescription:
+        "Njihuni me XSUS Studio, vizionin, gjashtë produktet dhe arkitekturën e pavarur teknologjike.",
+      brandHome: "Faqja kryesore e XSUS Studio",
+      languageLabel: "Gjuha",
+      menuLabel: "Hap menynë e navigimit",
+      navigationLabel: "Navigimi kryesor",
+      footerNavigation: "Navigimi i fundit të faqes",
+      home: "Kreu",
+      login: "Hyr",
+      signup: "Regjistrohu",
+      eyebrow: "THE X IDENTITY",
+      heroTitle: "Rreth XSUS Studio.",
+      heroHighlight: "Ndërtojmë Teknologji të Pavarur.",
+      heroIntro:
+        "XSUS Studio është një ekosistem teknologjik i ndërtuar rreth gjashtë produkteve të specializuara, një vizioni të përbashkët dhe synimit për pavarësi teknologjike.",
+      whoTitle: "Kush Jemi",
+      whoSubtitle:
+        "Një identitet. Gjashtë produkte teknologjike të specializuara.",
+      whoText:
+        "XSUS Studio është një projekt teknologjik në zhvillim, i përqendruar te inteligjenca artificiale, aplikacionet, faqet e internetit, lojërat, identitetet vizuale dhe domenet. Arkitektura e tij është projektuar për të mbështetur produkte të specializuara e të pavarura, të lidhura përmes ndërfaqeve të kontrolluara aty ku nevojitet integrimi.",
+      valuesTitle: "Parimet Tona",
+      valuesSubtitle:
+        "Idetë që udhëheqin zhvillimin e XSUS Studio.",
+      valueOneTitle: "Pavarësia",
+      valueOneText:
+        "Ndërtojmë teknologji me kontroll të qartë, komponentë të pavarur dhe më pak varësi të panevojshme.",
+      valueTwoTitle: "Inovacioni",
+      valueTwoText:
+        "Zhvillojmë mjete të specializuara dhe përvoja inteligjente përmes përmirësimit të vazhdueshëm.",
+      valueThreeTitle: "Integrimi i Kontrolluar",
+      valueThreeText:
+        "Lidhim sistemet përmes ndërfaqeve të përcaktuara, duke ruajtur kufijtë e secilit sistem.",
+      productsTitle: "Gjashtë Produktet Tona",
+      productsSubtitle:
+        "Gjashtë fusha të veçanta teknologjike, të zhvilluara nën identitetin XSUS.",
+      ai: "Inteligjencë artificiale dhe sisteme njohurish.",
+      app: "Krijim dhe zhvillim aplikacionesh.",
+      web: "Dizajn dhe zhvillim faqesh interneti.",
+      game: "Lojëra dhe përvoja interaktive.",
+      logo: "Identitet vizual dhe krijim logosh.",
+      domain: "Domene dhe identitet digjital.",
+      explore: "Eksploro →",
+      futureTitle: "Vizioni Ynë",
+      futureText:
+        "Vizioni ynë afatgjatë është të zhvillojmë një ekosistem teknologjik gjithnjë e më të pavarur, me inteligjencën, njohuritë, motorët e specializuar dhe infrastrukturën e vet. XSUS Studio po zhvillohet gradualisht, duke u mbështetur në arkitekturë, validim dhe besueshmëri në çdo fazë.",
+      ctaTitle: "Eksploro Ekosistemin XSUS",
+      ctaText:
+        "Zbulo produktet dhe teknologjitë pas THE X IDENTITY.",
+      ctaButton: "Eksploro Produktet Tona",
+      aboutUs: "Rreth Nesh",
+      contactUs: "Kontakt",
+      footerVision:
+        "Teknologji të Pavarura. Një Ekosistem i Fuqishëm.",
+      copyright:
+        "© 2026 XSUS Studio. Të gjitha të drejtat e rezervuara."
+    },
+
+    fr: {
+      pageDescription:
+        "Découvrez XSUS Studio, sa vision, ses six produits spécialisés et son architecture technologique indépendante.",
+      brandHome: "Accueil de XSUS Studio",
+      languageLabel: "Langue",
+      menuLabel: "Ouvrir le menu de navigation",
+      navigationLabel: "Navigation principale",
+      footerNavigation: "Navigation de pied de page",
+      home: "Accueil",
+      login: "Connexion",
+      signup: "S'inscrire",
+      eyebrow: "THE X IDENTITY",
+      heroTitle: "À propos de XSUS Studio.",
+      heroHighlight: "Construire une technologie indépendante.",
+      heroIntro:
+        "XSUS Studio est un écosystème technologique fondé sur six produits spécialisés, une vision commune et la recherche de l'indépendance technologique.",
+      whoTitle: "Qui sommes-nous ?",
+      whoSubtitle:
+        "Une identité. Six produits technologiques spécialisés.",
+      whoText:
+        "XSUS Studio est un projet technologique en développement, consacré à l'intelligence artificielle, aux applications, aux sites web, aux jeux, aux identités visuelles et aux domaines. Son architecture est conçue pour soutenir des produits spécialisés et indépendants, reliés par des interfaces contrôlées lorsque leur intégration est nécessaire.",
+      valuesTitle: "Nos principes",
+      valuesSubtitle:
+        "Les idées qui guident le développement de XSUS Studio.",
+      valueOneTitle: "Indépendance",
+      valueOneText:
+        "Construire une technologie avec une maîtrise claire, des composants indépendants et moins de dépendances inutiles.",
+      valueTwoTitle: "Innovation",
+      valueTwoText:
+        "Développer des outils spécialisés et des expériences intelligentes grâce à une amélioration continue.",
+      valueThreeTitle: "Intégration contrôlée",
+      valueThreeText:
+        "Relier les systèmes au moyen d'interfaces définies tout en préservant leurs frontières respectives.",
+      productsTitle: "Nos six produits",
+      productsSubtitle:
+        "Six domaines technologiques distincts, développés sous l'identité XSUS.",
+      ai: "Intelligence artificielle et systèmes de connaissances.",
+      app: "Création et développement d'applications.",
+      web: "Conception et développement de sites web.",
+      game: "Jeux et expériences interactives.",
+      logo: "Identité visuelle et création de logos.",
+      domain: "Domaines et identité numérique.",
+      explore: "Explorer →",
+      futureTitle: "Notre vision",
+      futureText:
+        "Notre vision à long terme est de développer un écosystème technologique de plus en plus indépendant, doté de sa propre intelligence, de ses connaissances, de ses moteurs spécialisés et de son infrastructure. XSUS Studio se développe progressivement, en privilégiant l'architecture, la validation et la fiabilité à chaque étape.",
+      ctaTitle: "Explorez l'écosystème XSUS",
+      ctaText:
+        "Découvrez les produits et technologies derrière THE X IDENTITY.",
+      ctaButton: "Explorer nos produits",
+      aboutUs: "À propos",
+      contactUs: "Contact",
+      footerVision:
+        "Des technologies indépendantes. Un écosystème puissant.",
+      copyright:
+        "© 2026 XSUS Studio. Tous droits réservés."
+    }
+  };
+
+  const STORAGE_KEY = "xsus-language";
+
+  function normalizeLanguage(value) {
+    const lang = String(value || "en")
+      .trim()
+      .toLowerCase()
+      .split("-")[0];
+
+    return Object.prototype.hasOwnProperty.call(
+      translations,
+      lang
+    ) ? lang : "en";
+  }
+
+  function setLanguage(value) {
+    const lang = normalizeLanguage(value);
+    const dictionary = translations[lang];
+
+    document.documentElement.lang = lang;
+
+    document.querySelectorAll("[data-t]").forEach(element => {
+      const key = element.getAttribute("data-t");
+
+      if (
+        Object.prototype.hasOwnProperty.call(
+          dictionary,
+          key
+        )
+      ) {
+        element.textContent = dictionary[key];
+      }
+    });
+
+    document.querySelectorAll("[data-t-aria]").forEach(element => {
+      const key = element.getAttribute("data-t-aria");
+
+      if (
+        Object.prototype.hasOwnProperty.call(
+          dictionary,
+          key
+        )
+      ) {
+        element.setAttribute(
+          "aria-label",
+          dictionary[key]
+        );
+      }
+    });
+
+    const description = document.querySelector(
+      'meta[name="description"]'
+    );
+
+    if (description) {
+      description.content = dictionary.pageDescription;
+    }
+
+    document.title =
+      dictionary.aboutUs + " | XSUS Studio — The X Identity";
+
+    const selector = document.getElementById("language");
+
+    if (selector) {
+      selector.value = lang;
+    }
+
+    try {
+      localStorage.setItem(STORAGE_KEY, lang);
+    } catch {
+      // Storage is optional.
+    }
+
+    return lang;
+  }
+
+  function initialize() {
+    let saved = document.documentElement.lang || "en";
+
+    try {
+      saved = localStorage.getItem(STORAGE_KEY) || saved;
+    } catch {
+      // Use document language.
+    }
+
+    const selector = document.getElementById("language");
+
+    if (selector) {
+      selector.addEventListener("change", event => {
+        setLanguage(event.target.value);
+      });
+    }
+
+    setLanguage(saved);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      initialize,
+      { once: true }
+    );
+  } else {
+    initialize();
+  }
+})();
+</script>
+
+</body>
+</html>
