@@ -1,16 +1,20 @@
 
 /**
+ * @vitest-environment jsdom
+ */
+
+/**
  * XSUS APP — HYPER NEXUS
  * Browser History Integration Tests
- * Version: 1.0.0
- * Phase: 1.8.23
+ * Version: 1.0.1
+ * Phase: 1.8.23.1
  *
  * Verifies:
  * - Canonical browser URLs
  * - Frontier route identity
  * - History state preservation
- * - Back / Forward navigation
- * - Notification compatibility
+ * - Simulated Back / Forward restoration
+ * - Navigation notification compatibility
  * - Controller lifecycle
  *
  * No Core connections.
@@ -29,405 +33,419 @@ import {
   createNavigationController
 } from "../../app-ui/shell/navigation.js";
 
-describe("Hyper Nexus — Browser History Integration", () => {
-  let controller;
-  let onNavigate;
+describe(
+  "Hyper Nexus — Browser History Integration",
+  () => {
+    let controller;
+    let onNavigate;
 
-  beforeEach(() => {
-    window.history.replaceState(
-      null,
-      "",
-      "#overview"
-    );
+    beforeEach(() => {
+      controller = undefined;
 
-    onNavigate = vi.fn();
+      window.history.replaceState(
+        null,
+        "",
+        "#overview"
+      );
 
-    controller = createNavigationController({
-      windowRef: window,
-      onNavigate
-    });
-  });
+      onNavigate = vi.fn();
 
-  afterEach(() => {
-    controller.destroy();
-
-    window.history.replaceState(
-      null,
-      "",
-      "#overview"
-    );
-
-    vi.restoreAllMocks();
-  });
-
-  test("initializes browser navigation", () => {
-    controller.initialize();
-
-    expect(controller.isInitialized()).toBe(true);
-    expect(controller.getCurrentModule()).toBe(
-      "overview"
-    );
-    expect(onNavigate).toHaveBeenCalledTimes(1);
-  });
-
-  test("stores canonical module in URL", () => {
-    controller.initialize();
-
-    controller.navigate("architect");
-
-    expect(window.location.hash).toBe(
-      "#command-center"
-    );
-  });
-
-  test("preserves Frontier route in history.state", () => {
-    controller.initialize();
-
-    controller.navigate("architect");
-
-    expect(window.history.state.module).toBe(
-      "command-center"
-    );
-
-    expect(
-      window.history.state.frontierRoute
-    ).toBe("architect");
-  });
-
-  test("preserves engines identity", () => {
-    controller.initialize();
-
-    controller.navigate("engines");
-
-    expect(window.location.hash).toBe(
-      "#system-control"
-    );
-
-    expect(
-      window.history.state.frontierRoute
-    ).toBe("engines");
-  });
-
-  test("preserves monitoring identity", () => {
-    controller.initialize();
-
-    controller.navigate("monitoring");
-
-    expect(window.location.hash).toBe(
-      "#system-control"
-    );
-
-    expect(
-      window.history.state.frontierRoute
-    ).toBe("monitoring");
-  });
-
-  test("distinguishes engines and monitoring", () => {
-    controller.initialize();
-
-    controller.navigate("engines");
-    controller.navigate("monitoring");
-
-    expect(controller.getCurrentModule()).toBe(
-      "system-control"
-    );
-
-    expect(
-      controller.getCurrentFrontierRoute()
-    ).toBe("monitoring");
-
-    expect(onNavigate).toHaveBeenCalledTimes(3);
-  });
-
-  test("does not duplicate canonical notification", () => {
-    controller.navigate("architect");
-
-    controller.navigate("command-center");
-
-    expect(onNavigate).toHaveBeenCalledTimes(1);
-  });
-
-  test("does not notify twice for unchanged route", () => {
-    controller.navigate("monitoring");
-
-    controller.navigate("monitoring");
-
-    expect(onNavigate).toHaveBeenCalledTimes(1);
-  });
-
-  test("supports forceNotify", () => {
-    controller.navigate("architect");
-
-    controller.navigate("architect", {
-      forceNotify: true
+      controller = createNavigationController({
+        windowRef: window,
+        onNavigate
+      });
     });
 
-    expect(onNavigate).toHaveBeenCalledTimes(2);
-  });
+    afterEach(() => {
+      controller?.destroy();
 
-  test("preserves unrelated history metadata", () => {
-    window.history.replaceState(
-      {
-        application: "xsus-app",
-        session: "test-session"
-      },
-      "",
-      "#overview"
-    );
+      vi.restoreAllMocks();
 
-    controller.initialize();
+      window.history.replaceState(
+        null,
+        "",
+        "#overview"
+      );
 
-    controller.navigate("architect");
-
-    expect(window.history.state.application).toBe(
-      "xsus-app"
-    );
-
-    expect(window.history.state.session).toBe(
-      "test-session"
-    );
-  });
-
-  test("supports replaceHistory", () => {
-    controller.initialize();
-
-    const replaceSpy = vi.spyOn(
-      window.history,
-      "replaceState"
-    );
-
-    controller.navigate("architect", {
-      replaceHistory: true
+      controller = undefined;
     });
 
-    expect(replaceSpy).toHaveBeenCalled();
-    expect(window.location.hash).toBe(
-      "#command-center"
-    );
-  });
+    test("initializes browser navigation", () => {
+      controller.initialize();
 
-  test("supports navigation without history update", () => {
-    controller.initialize();
+      expect(controller.isInitialized()).toBe(true);
 
-    controller.navigate("architect", {
-      updateHistory: false
+      expect(controller.getCurrentModule()).toBe(
+        "overview"
+      );
+
+      expect(onNavigate).toHaveBeenCalledTimes(1);
     });
 
-    expect(controller.getCurrentModule()).toBe(
-      "command-center"
-    );
+    test("stores canonical module in URL", () => {
+      controller.initialize();
 
-    expect(window.location.hash).toBe(
-      "#overview"
-    );
-  });
+      controller.navigate("architect");
 
-  test("restores Frontier route from history state", () => {
-    controller.initialize();
+      expect(window.location.hash).toBe(
+        "#command-center"
+      );
+    });
 
-    window.history.replaceState(
-      {
-        module: "system-control",
-        frontierRoute: "monitoring"
-      },
-      "",
-      "#system-control"
-    );
+    test("preserves Frontier route in history.state", () => {
+      controller.initialize();
 
-    window.dispatchEvent(
-      new PopStateEvent("popstate", {
-        state: window.history.state
-      })
-    );
+      controller.navigate("architect");
 
-    expect(controller.getCurrentModule()).toBe(
-      "system-control"
-    );
+      expect(window.history.state.module).toBe(
+        "command-center"
+      );
 
-    expect(
-      controller.getCurrentFrontierRoute()
-    ).toBe("monitoring");
-  });
+      expect(
+        window.history.state.frontierRoute
+      ).toBe("architect");
+    });
 
-  test("restores engines after monitoring", () => {
-    controller.initialize();
+    test("preserves engines identity", () => {
+      controller.initialize();
 
-    controller.navigate("monitoring");
+      controller.navigate("engines");
 
-    window.history.replaceState(
-      {
-        module: "system-control",
-        frontierRoute: "engines"
-      },
-      "",
-      "#system-control"
-    );
+      expect(window.location.hash).toBe(
+        "#system-control"
+      );
 
-    window.dispatchEvent(
-      new PopStateEvent("popstate", {
-        state: window.history.state
-      })
-    );
+      expect(
+        window.history.state.frontierRoute
+      ).toBe("engines");
+    });
 
-    expect(
-      controller.getCurrentFrontierRoute()
-    ).toBe("engines");
-  });
+    test("preserves monitoring identity", () => {
+      controller.initialize();
 
-  test("rejects mismatched Frontier history identity", () => {
-    controller.initialize();
+      controller.navigate("monitoring");
 
-    window.history.replaceState(
-      {
-        module: "command-center",
-        frontierRoute: "monitoring"
-      },
-      "",
-      "#command-center"
-    );
+      expect(window.location.hash).toBe(
+        "#system-control"
+      );
 
-    window.dispatchEvent(
-      new PopStateEvent("popstate", {
-        state: window.history.state
-      })
-    );
+      expect(
+        window.history.state.frontierRoute
+      ).toBe("monitoring");
+    });
 
-    expect(controller.getCurrentModule()).toBe(
-      "command-center"
-    );
+    test("distinguishes engines and monitoring", () => {
+      controller.initialize();
 
-    expect(
-      controller.getCurrentFrontierRoute()
-    ).toBeNull();
-  });
+      controller.navigate("engines");
+      controller.navigate("monitoring");
 
-  test("canonicalizes legacy URL on initialization", () => {
-    window.history.replaceState(
-      null,
-      "",
-      "#architect"
-    );
+      expect(controller.getCurrentModule()).toBe(
+        "system-control"
+      );
 
-    controller.initialize();
+      expect(
+        controller.getCurrentFrontierRoute()
+      ).toBe("monitoring");
 
-    expect(window.location.hash).toBe(
-      "#command-center"
-    );
+      expect(onNavigate).toHaveBeenCalledTimes(3);
+    });
 
-    expect(
-      window.history.state.frontierRoute
-    ).toBe("architect");
-  });
+    test("does not duplicate canonical notification", () => {
+      controller.navigate("architect");
 
-  test("canonicalizes legacy hashchange", () => {
-    controller.initialize();
+      controller.navigate("command-center");
 
-    window.history.replaceState(
-      null,
-      "",
-      "#workspace"
-    );
+      expect(onNavigate).toHaveBeenCalledTimes(1);
 
-    window.dispatchEvent(
-      new Event("hashchange")
-    );
+      expect(controller.getCurrentModule()).toBe(
+        "command-center"
+      );
+    });
 
-    expect(window.location.hash).toBe(
-      "#living-workspace"
-    );
+    test("does not notify twice for unchanged route", () => {
+      controller.navigate("monitoring");
 
-    expect(
-      controller.getCurrentFrontierRoute()
-    ).toBe("workspace");
-  });
+      controller.navigate("monitoring");
 
-  test("falls back to overview for unknown hash", () => {
-    controller.initialize();
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+    });
 
-    window.history.replaceState(
-      null,
-      "",
-      "#unknown-module"
-    );
+    test("supports forceNotify", () => {
+      controller.navigate("architect");
 
-    window.dispatchEvent(
-      new Event("hashchange")
-    );
+      controller.navigate("architect", {
+        forceNotify: true
+      });
 
-    expect(controller.getCurrentModule()).toBe(
-      "overview"
-    );
+      expect(onNavigate).toHaveBeenCalledTimes(2);
+    });
 
-    expect(window.location.hash).toBe(
-      "#overview"
-    );
-  });
+    test("preserves unrelated history metadata", () => {
+      window.history.replaceState(
+        {
+          application: "xsus-app",
+          session: "test-session"
+        },
+        "",
+        "#overview"
+      );
 
-  test("keeps a valid canonical route without Frontier identity", () => {
-    controller.initialize();
+      controller.initialize();
 
-    window.history.replaceState(
-      {
-        module: "multi-agent",
-        frontierRoute: null
-      },
-      "",
-      "#multi-agent"
-    );
+      controller.navigate("architect");
 
-    window.dispatchEvent(
-      new PopStateEvent("popstate", {
-        state: window.history.state
-      })
-    );
+      expect(window.history.state.application).toBe(
+        "xsus-app"
+      );
 
-    expect(controller.getCurrentModule()).toBe(
-      "multi-agent"
-    );
+      expect(window.history.state.session).toBe(
+        "test-session"
+      );
+    });
 
-    expect(
-      controller.getCurrentFrontierRoute()
-    ).toBeNull();
-  });
+    test("supports replaceHistory", () => {
+      controller.initialize();
 
-  test("does not initialize twice", () => {
-    controller.initialize();
+      const replaceSpy = vi.spyOn(
+        window.history,
+        "replaceState"
+      );
 
-    controller.initialize();
+      controller.navigate("architect", {
+        replaceHistory: true
+      });
 
-    expect(onNavigate).toHaveBeenCalledTimes(1);
-  });
+      expect(replaceSpy).toHaveBeenCalled();
 
-  test("removes navigation listeners on destroy", () => {
-    controller.initialize();
+      expect(window.location.hash).toBe(
+        "#command-center"
+      );
+    });
 
-    controller.destroy();
+    test("supports navigation without history update", () => {
+      controller.initialize();
 
-    expect(controller.isInitialized()).toBe(false);
+      controller.navigate("architect", {
+        updateHistory: false
+      });
 
-    const callsBefore = onNavigate.mock.calls.length;
+      expect(controller.getCurrentModule()).toBe(
+        "command-center"
+      );
 
-    window.history.replaceState(
-      null,
-      "",
-      "#architect"
-    );
+      expect(window.location.hash).toBe(
+        "#overview"
+      );
+    });
 
-    window.dispatchEvent(
-      new Event("hashchange")
-    );
+    test("restores Frontier route from history state", () => {
+      controller.initialize();
 
-    expect(onNavigate).toHaveBeenCalledTimes(
-      callsBefore
-    );
-  });
+      window.history.replaceState(
+        {
+          module: "system-control",
+          frontierRoute: "monitoring"
+        },
+        "",
+        "#system-control"
+      );
 
-  test("supports repeated destroy calls", () => {
-    controller.initialize();
+      window.dispatchEvent(
+        new PopStateEvent("popstate", {
+          state: window.history.state
+        })
+      );
 
-    controller.destroy();
-    controller.destroy();
+      expect(controller.getCurrentModule()).toBe(
+        "system-control"
+      );
 
-    expect(controller.isInitialized()).toBe(false);
-  });
-});
+      expect(
+        controller.getCurrentFrontierRoute()
+      ).toBe("monitoring");
+    });
+
+    test("restores engines after monitoring", () => {
+      controller.initialize();
+
+      controller.navigate("monitoring");
+
+      window.history.replaceState(
+        {
+          module: "system-control",
+          frontierRoute: "engines"
+        },
+        "",
+        "#system-control"
+      );
+
+      window.dispatchEvent(
+        new PopStateEvent("popstate", {
+          state: window.history.state
+        })
+      );
+
+      expect(
+        controller.getCurrentFrontierRoute()
+      ).toBe("engines");
+    });
+
+    test("rejects mismatched Frontier history identity", () => {
+      controller.initialize();
+
+      window.history.replaceState(
+        {
+          module: "command-center",
+          frontierRoute: "monitoring"
+        },
+        "",
+        "#command-center"
+      );
+
+      window.dispatchEvent(
+        new PopStateEvent("popstate", {
+          state: window.history.state
+        })
+      );
+
+      expect(controller.getCurrentModule()).toBe(
+        "command-center"
+      );
+
+      expect(
+        controller.getCurrentFrontierRoute()
+      ).toBeNull();
+    });
+
+    test("canonicalizes legacy URL on initialization", () => {
+      window.history.replaceState(
+        null,
+        "",
+        "#architect"
+      );
+
+      controller.initialize();
+
+      expect(window.location.hash).toBe(
+        "#command-center"
+      );
+
+      expect(
+        window.history.state.frontierRoute
+      ).toBe("architect");
+    });
+
+    test("canonicalizes legacy hashchange", () => {
+      controller.initialize();
+
+      window.history.replaceState(
+        null,
+        "",
+        "#workspace"
+      );
+
+      window.dispatchEvent(
+        new Event("hashchange")
+      );
+
+      expect(window.location.hash).toBe(
+        "#living-workspace"
+      );
+
+      expect(
+        controller.getCurrentFrontierRoute()
+      ).toBe("workspace");
+    });
+
+    test("falls back to overview for unknown hash", () => {
+      controller.initialize();
+
+      window.history.replaceState(
+        null,
+        "",
+        "#unknown-module"
+      );
+
+      window.dispatchEvent(
+        new Event("hashchange")
+      );
+
+      expect(controller.getCurrentModule()).toBe(
+        "overview"
+      );
+
+      expect(window.location.hash).toBe(
+        "#overview"
+      );
+    });
+
+    test("keeps a valid canonical route without Frontier identity", () => {
+      controller.initialize();
+
+      window.history.replaceState(
+        {
+          module: "multi-agent",
+          frontierRoute: null
+        },
+        "",
+        "#multi-agent"
+      );
+
+      window.dispatchEvent(
+        new PopStateEvent("popstate", {
+          state: window.history.state
+        })
+      );
+
+      expect(controller.getCurrentModule()).toBe(
+        "multi-agent"
+      );
+
+      expect(
+        controller.getCurrentFrontierRoute()
+      ).toBeNull();
+    });
+
+    test("does not initialize twice", () => {
+      controller.initialize();
+      controller.initialize();
+
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+    });
+
+    test("removes navigation listeners on destroy", () => {
+      controller.initialize();
+
+      controller.destroy();
+
+      expect(controller.isInitialized()).toBe(false);
+
+      const callsBefore =
+        onNavigate.mock.calls.length;
+
+      window.history.replaceState(
+        null,
+        "",
+        "#architect"
+      );
+
+      window.dispatchEvent(
+        new Event("hashchange")
+      );
+
+      expect(onNavigate).toHaveBeenCalledTimes(
+        callsBefore
+      );
+    });
+
+    test("supports repeated destroy calls", () => {
+      controller.initialize();
+
+      controller.destroy();
+      controller.destroy();
+
+      expect(controller.isInitialized()).toBe(false);
+    });
+  }
+);
