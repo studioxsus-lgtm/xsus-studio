@@ -1,4 +1,99 @@
 
+/* XSUS GLOBI V4 — INTERNAL FALLBACK */
+
+.xsus-globe {
+  position: relative;
+  display: block;
+  width: min(75vw, 360px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid #20e8ff99;
+
+  background:
+    radial-gradient(
+      circle at 30% 25%,
+      #35eaff77,
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 75% 80%,
+      #a26cff66,
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at center,
+      #12376a,
+      #050a18 75%
+    );
+
+  box-shadow:
+    inset -35px -25px 70px #020512,
+    inset 20px 20px 45px #20e8ff22,
+    0 0 50px #20e8ff44,
+    0 0 110px #a26cff33;
+
+  animation: xsusFloat 7s ease-in-out infinite;
+}
+
+.xsus-globe::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 32px,
+      #20e8ff33 33px,
+      transparent 34px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 43px,
+      #20e8ff22 44px,
+      transparent 45px
+    );
+
+  transform: rotate(-18deg);
+}
+
+.xsus-globe::after {
+  content: "XSUS";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #d8faff;
+  font-size: clamp(48px, 7vw, 75px);
+  font-weight: 900;
+  letter-spacing: 7px;
+  text-shadow: 0 0 28px #00eaff;
+}
+
+@keyframes xsusFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@media (max-width: 600px) {
+  .xsus-globe {
+    width: min(75vw, 290px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xsus-globe {
+    animation: none;
+  }
+}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
