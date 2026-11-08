@@ -1,19 +1,41 @@
 
+/**
+ * XSUS AI Core — HTTP API Server
+ * Version: 1.0.1
+ * Brand: THE X IDENTITY
+ *
+ * Security:
+ * - Public chat requests cannot access persistent
+ *   conversation memory through client-provided IDs.
+ * - Conversation ownership must be verified before
+ *   authenticated persistence is enabled.
+ * - XSUS AI Core remains independent.
+ */
+
 import http from "node:http";
 import { processAIRequest } from "./src/core/ai-core.js";
 
 const PORT = Number(process.env.PORT) || 3000;
+
 const MAX_BODY_BYTES = 32 * 1024;
 const MAX_QUERY_LENGTH = 8000;
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+const allowedOrigins = (
+    process.env.ALLOWED_ORIGINS || ""
+)
     .split(",")
-    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .map((origin) =>
+        origin.trim().replace(/\/$/, "")
+    )
     .filter(Boolean);
 
+/**
+ * Send JSON response with security headers.
+ */
 function sendJSON(res, statusCode, data) {
     res.writeHead(statusCode, {
-        "Content-Type": "application/json; charset=utf-8",
+        "Content-Type":
+            "application/json; charset=utf-8",
         "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff"
     });
@@ -21,15 +43,37 @@ function sendJSON(res, statusCode, data) {
     res.end(JSON.stringify(data));
 }
 
+/**
+ * Apply CORS policy.
+ *
+ * CORS is not authentication.
+ * Conversation access is controlled separately.
+ */
 function applyCORS(req, res) {
     const origin = req.headers.origin;
 
     res.setHeader("Vary", "Origin");
 
-    if (origin && allowedOrigins.includes(origin.replace(/\/$/, ""))) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-        res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    if (
+        origin &&
+        allowedOrigins.includes(
+            origin.replace(/\/$/, "")
+        )
+    ) {
+        res.setHeader(
+            "Access-Control-Allow-Origin",
+            origin
+        );
+
+        res.setHeader(
+            "Access-Control-Allow-Methods",
+            "GET, POST, OPTIONS"
+        );
+
+        res.setHeader(
+            "Access-Control-Allow-Headers",
+            "Content-Type"
+        );
     }
 
     if (req.method === "OPTIONS") {
@@ -41,6 +85,9 @@ function applyCORS(req, res) {
     return false;
 }
 
+/**
+ * Read JSON request body with size limits.
+ */
 function readJSONBody(req) {
     return new Promise((resolve, reject) => {
         let body = "";
@@ -54,10 +101,16 @@ function readJSONBody(req) {
 
             if (bytes > MAX_BODY_BYTES) {
                 finished = true;
-                reject(Object.assign(
-                    new Error("Request body is too large."),
-                    { statusCode: 413 }
-                ));
+
+                reject(
+                    Object.assign(
+                        new Error(
+                            "Request body is too large."
+                        ),
+                        { statusCode: 413 }
+                    )
+                );
+
                 req.destroy();
                 return;
             }
@@ -67,141 +120,266 @@ function readJSONBody(req) {
 
         req.on("end", () => {
             if (finished) return;
+
             finished = true;
 
             try {
-                resolve(JSON.parse(body || "{}"));
+                resolve(
+                    JSON.parse(body || "{}")
+                );
             } catch {
-                reject(Object.assign(
-                    new Error("Invalid JSON body."),
-                    { statusCode: 400 }
-                ));
+                reject(
+                    Object.assign(
+                        new Error(
+                            "Invalid JSON body."
+                        ),
+                        { statusCode: 400 }
+                    )
+                );
             }
         });
 
         req.on("error", (error) => {
             if (finished) return;
+
             finished = true;
             reject(error);
         });
     });
 }
 
-const server = http.createServer(async (req, res) => {
-    if (applyCORS(req, res)) return;
+/**
+ * HTTP Server
+ */
+const server = http.createServer(
+    async (req, res) => {
+        if (applyCORS(req, res)) {
+            return;
+        }
 
-    const pathname = new URL(
-        req.url || "/",
-        `http://${req.headers.host || "localhost"}`
-    ).pathname;
+        const pathname = new URL(
+            req.url || "/",
+            `http://${req.headers.host || "localhost"}`
+        ).pathname;
 
-    if (req.method === "GET" && pathname === "/health") {
-        return sendJSON(res, 200, {
-            status: "ok",
-            service: "xsus-ai-api",
-            apiVersion: "1.0.0"
-        });
-    }
+        /**
+         * Health endpoint
+         */
+        if (
+            req.method === "GET" &&
+            pathname === "/health"
+        ) {
+            return sendJSON(res, 200, {
+                status: "ok",
+                service: "xsus-ai-api",
+                apiVersion: "1.0.1"
+            });
+        }
 
-    if (req.method === "GET" && pathname === "/") {
-        return sendJSON(res, 200, {
-            service: "XSUS AI API",
-            status: "online",
-            endpoints: {
-                health: "/health",
-                chat: "POST /api/chat"
+        /**
+         * API information endpoint
+         */
+        if (
+            req.method === "GET" &&
+            pathname === "/"
+        ) {
+            return sendJSON(res, 200, {
+                service: "XSUS AI API",
+                status: "online",
+                endpoints: {
+                    health: "/health",
+                    chat: "POST /api/chat"
+                }
+            });
+        }
+
+        /**
+         * Route validation
+         */
+        if (
+            req.method !== "POST" ||
+            pathname !== "/api/chat"
+        ) {
+            return sendJSON(res, 404, {
+                error: "Endpoint not found."
+            });
+        }
+
+        /**
+         * Content-Type validation
+         */
+        if (
+            !req.headers["content-type"]?.includes(
+                "application/json"
+            )
+        ) {
+            return sendJSON(res, 415, {
+                error:
+                    "Content-Type must be application/json."
+            });
+        }
+
+        try {
+            const body = await readJSONBody(req);
+
+            /**
+             * Query validation
+             */
+            const query =
+                typeof body.query === "string"
+                    ? body.query.trim()
+                    : typeof body.message === "string"
+                        ? body.message.trim()
+                        : "";
+
+            if (!query) {
+                return sendJSON(res, 400, {
+                    error: "Query cannot be empty."
+                });
             }
-        });
-    }
 
-    if (req.method !== "POST" || pathname !== "/api/chat") {
-        return sendJSON(res, 404, {
-            error: "Endpoint not found."
-        });
-    }
+            if (
+                query.length > MAX_QUERY_LENGTH
+            ) {
+                return sendJSON(res, 413, {
+                    error:
+                        `Query exceeds ${MAX_QUERY_LENGTH} characters.`
+                });
+            }
 
-    if (!req.headers["content-type"]?.includes("application/json")) {
-        return sendJSON(res, 415, {
-            error: "Content-Type must be application/json."
-        });
-    }
+            /**
+             * Language validation
+             */
+            const language =
+                typeof body.language === "string"
+                    ? body.language
+                        .trim()
+                        .toLowerCase()
+                    : "en";
 
-    try {
-        const body = await readJSONBody(req);
+            const supportedLanguages = new Set([
+                "sq",
+                "en",
+                "fr",
+                "de",
+                "es",
+                "it",
+                "pt",
+                "nl",
+                "ar",
+                "zh",
+                "ja",
+                "ko",
+                "ru"
+            ]);
 
-        const query = typeof body.query === "string"
-            ? body.query.trim()
-            : typeof body.message === "string"
-                ? body.message.trim()
-                : "";
+            if (
+                !supportedLanguages.has(language)
+            ) {
+                return sendJSON(res, 400, {
+                    error: "Unsupported language."
+                });
+            }
 
-        if (!query) {
-            return sendJSON(res, 400, {
-                error: "Query cannot be empty."
+            /**
+             * SECURITY — PUBLIC CHAT ISOLATION
+             *
+             * Never trust a conversationId supplied
+             * by an unauthenticated browser.
+             *
+             * Previously:
+             *
+             * processAIRequest({
+             *   query,
+             *   language,
+             *   conversationId
+             * });
+             *
+             * That could allow access to another
+             * conversation's memory if its ID
+             * became known.
+             *
+             * Until authenticated ownership
+             * verification is implemented,
+             * do not forward conversationId.
+             *
+             * The frontend may continue sending
+             * conversationId for compatibility.
+             */
+            const result = await processAIRequest({
+                query,
+                language
             });
+
+            /**
+             * Validate XSUS AI Core response
+             */
+            if (
+                !result ||
+                typeof result !== "object"
+            ) {
+                return sendJSON(res, 500, {
+                    error:
+                        "XSUS AI Core returned an invalid response."
+                });
+            }
+
+            /**
+             * XSUS AI Core error response
+             */
+            if (result.error) {
+                return sendJSON(
+                    res,
+                    422,
+                    result
+                );
+            }
+
+            /**
+             * Successful AI response
+             */
+            return sendJSON(
+                res,
+                200,
+                result
+            );
+
+        } catch (error) {
+            const statusCode =
+                Number.isInteger(error.statusCode)
+                    ? error.statusCode
+                    : 500;
+
+            if (statusCode >= 500) {
+                console.error(
+                    "XSUS API error:",
+                    error
+                );
+            }
+
+            return sendJSON(
+                res,
+                statusCode,
+                {
+                    error:
+                        statusCode === 500
+                            ? "Internal XSUS AI API error."
+                            : error.message
+                }
+            );
         }
-
-        if (query.length > MAX_QUERY_LENGTH) {
-            return sendJSON(res, 413, {
-                error: `Query exceeds ${MAX_QUERY_LENGTH} characters.`
-            });
-        }
-
-        const language = typeof body.language === "string"
-            ? body.language.trim().toLowerCase()
-            : "en";
-
-        const supportedLanguages = new Set([
-            "sq", "en", "fr", "de", "es", "it",
-            "pt", "nl", "ar", "zh", "ja", "ko", "ru"
-        ]);
-
-        if (!supportedLanguages.has(language)) {
-            return sendJSON(res, 400, {
-                error: "Unsupported language."
-            });
-        }
-
-        const conversationId =
-            typeof body.conversationId === "string" &&
-            /^[a-zA-Z0-9_-]{1,100}$/.test(body.conversationId)
-                ? body.conversationId
-                : undefined;
-
-        const result = await processAIRequest({
-            query,
-            language,
-            ...(conversationId ? { conversationId } : {})
-        });
-
-        if (!result || typeof result !== "object") {
-            return sendJSON(res, 500, {
-                error: "XSUS AI Core returned an invalid response."
-            });
-        }
-
-        if (result.error) {
-            return sendJSON(res, 422, result);
-        }
-
-        return sendJSON(res, 200, result);
-    } catch (error) {
-        const statusCode = Number.isInteger(error.statusCode)
-            ? error.statusCode
-            : 500;
-
-        if (statusCode >= 500) {
-            console.error("XSUS API error:", error);
-        }
-
-        return sendJSON(res, statusCode, {
-            error: statusCode === 500
-                ? "Internal XSUS AI API error."
-                : error.message
-        });
     }
-});
+);
 
-server.listen(PORT, "0.0.0.0", () => {
-    console.log(`XSUS AI API listening on port ${PORT}`);
-});
+/**
+ * Start HTTP server
+ */
+server.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
+        console.log(
+            `XSUS AI API listening on port ${PORT}`
+        );
+    }
+);
