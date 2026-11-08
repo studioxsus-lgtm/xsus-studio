@@ -1,0 +1,84 @@
+
+/**
+ * XSUS STUDIO — BASE STYLES
+ * Version: 1.0.0
+ * Brand: THE X IDENTITY
+ *
+ * Global colors, typography and page foundation.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #060a18;
+  --panel: #101a30;
+
+  --cyan: #20e8ff;
+  --violet: #a26cff;
+
+  --text: #f4f8ff;
+  --muted: #a8b8d1;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a:focus-visible,
+button:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+.page {
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 20%,
+      #173a63 0%,
+      transparent 46%
+    ),
+    radial-gradient(
+      ellipse at 90% 65%,
+      #30134e 0%,
+      transparent 40%
+    ),
+    var(--bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
