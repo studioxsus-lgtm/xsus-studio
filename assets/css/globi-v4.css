@@ -1,14 +1,12 @@
 
 /**
- * XSUS STUDIO — GLOBI V4.2.1
- * Clean Interactive Neon Globe
+ * XSUS STUDIO — GLOBI V4.3
+ * Official Neon Emblem
  * THE X IDENTITY
  *
  * Compatible with:
- * - index-v2.html
- * - assets/js/globe-engine.js
- *
- * No embedded logo image.
+ * index-v2.html
+ * assets/js/globe-engine.js
  */
 
 :root {
@@ -18,35 +16,26 @@
   --xsus-violet: #a26cff;
 }
 
-/* =====================================
-   GLOBE CONTAINER
-===================================== */
+/* GLOBE CONTAINER */
 
 .globe-wrap,
 .xsus-globe-scene {
   position: relative;
-
   display: grid;
   place-items: center;
-
   min-height: 400px;
   perspective: 1000px;
   isolation: isolate;
 }
 
-/* =====================================
-   BACKGROUND GLOW
-===================================== */
+/* BACKGROUND GLOW */
 
 .globe-wrap::before,
 .xsus-globe-scene::before {
   content: "";
-
   position: absolute;
-
   width: min(90%, 430px);
   aspect-ratio: 1;
-
   border-radius: 50%;
 
   background: radial-gradient(
@@ -57,14 +46,11 @@
   );
 
   filter: blur(25px);
-
   z-index: -1;
   pointer-events: none;
 }
 
-/* =====================================
-   MAIN INTERACTIVE GLOBE
-===================================== */
+/* MAIN INTERACTIVE GLOBE */
 
 .xsus-globe {
   --globe-x: -18deg;
@@ -72,10 +58,8 @@
 
   position: relative;
   display: block;
-
   width: min(75vw, 360px);
   aspect-ratio: 1;
-
   border-radius: 50%;
   overflow: hidden;
 
@@ -118,18 +102,13 @@
   cursor: grabbing;
 }
 
-/* =====================================
-   INTERACTIVE ROTATING GRID
-===================================== */
+/* INTERACTIVE ROTATING GRID */
 
 .xsus-globe::before {
   content: "";
-
   position: absolute;
   inset: -35%;
-
   border-radius: 50%;
-
   pointer-events: none;
 
   background:
@@ -155,32 +134,31 @@
   will-change: transform;
 }
 
-/* =====================================
-   CLEAN GLOBE CENTER
-   No text or cropped logo
-===================================== */
+/* OFFICIAL XSUS NEON EMBLEM */
 
 .xsus-globe::after {
   content: "";
-
   position: absolute;
-  inset: 0;
+  z-index: 2;
 
-  border-radius: 50%;
+  inset: 15%;
+  border-radius: 0;
 
-  background: radial-gradient(
-    circle at center,
-    rgba(32, 232, 255, 0.08) 0%,
-    rgba(52, 120, 255, 0.04) 35%,
-    transparent 65%
-  );
+  background-image:
+    url("../images/xsus-globe-emblem.png");
+
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
 
   pointer-events: none;
+
+  filter:
+    drop-shadow(0 0 12px rgba(32, 232, 255, 0.25))
+    drop-shadow(0 0 22px rgba(162, 108, 255, 0.15));
 }
 
-/* =====================================
-   FLOAT ANIMATION
-===================================== */
+/* FLOAT ANIMATION */
 
 @keyframes xsusFloat {
   0%,
@@ -193,9 +171,7 @@
   }
 }
 
-/* =====================================
-   TABLET
-===================================== */
+/* TABLET */
 
 @media (max-width: 800px) {
   .globe-wrap,
@@ -208,9 +184,7 @@
   }
 }
 
-/* =====================================
-   MOBILE
-===================================== */
+/* MOBILE */
 
 @media (max-width: 520px) {
   .globe-wrap,
@@ -221,11 +195,13 @@
   .xsus-globe {
     width: min(75vw, 290px);
   }
+
+  .xsus-globe::after {
+    inset: 13%;
+  }
 }
 
-/* =====================================
-   ACCESSIBILITY
-===================================== */
+/* ACCESSIBILITY */
 
 @media (prefers-reduced-motion: reduce) {
   .xsus-globe {
