@@ -1,0 +1,91 @@
+
+/**
+ * XSUS STUDIO — RESPONSIVE
+ * Version: 1.0.0
+ *
+ * Shared responsive utilities.
+ * Component-specific styles remain
+ * in their own CSS files.
+ */
+
+/* LARGE SCREENS */
+
+@media (min-width: 1440px) {
+  .xsus-container {
+    max-width: 1320px;
+  }
+}
+
+/* TABLETS */
+
+@media (max-width: 1024px) {
+  .xsus-container {
+    width: min(100% - 36px, 960px);
+  }
+
+  .xsus-desktop-only {
+    display: none !important;
+  }
+}
+
+/* SMALL TABLETS */
+
+@media (max-width: 768px) {
+  .xsus-container {
+    width: calc(100% - 32px);
+  }
+
+  .xsus-tablet-hidden {
+    display: none !important;
+  }
+
+  .xsus-stack-mobile {
+    flex-direction: column;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 520px) {
+  .xsus-container {
+    width: calc(100% - 24px);
+  }
+
+  .xsus-mobile-hidden {
+    display: none !important;
+  }
+
+  .xsus-full-mobile {
+    width: 100%;
+  }
+
+  .xsus-center-mobile {
+    text-align: center;
+  }
+}
+
+/* VERY SMALL PHONES */
+
+@media (max-width: 360px) {
+  .xsus-container {
+    width: calc(100% - 20px);
+  }
+}
+
+/* TOUCH DEVICES */
+
+@media (hover: none) {
+  .module-card:hover {
+    transform: none;
+  }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}
