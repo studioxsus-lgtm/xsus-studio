@@ -1,10 +1,7 @@
 
 /**
  * XSUS STUDIO — LANGUAGE ENGINE
- * Version: 1.0.0
- *
- * Languages: EN / SQ / FR
- * Independent from navigation and globe.
+ * EN / SQ / FR
  */
 
 (() => {
@@ -12,172 +9,137 @@
 
   const STORAGE_KEY = "xsus-language";
 
-  const SUPPORTED_LANGUAGES = [
-    "en",
-    "sq",
-    "fr"
-  ];
-
   const translations = {
     en: {
-      ai: "XSUS AI",
-      app: "XSUS APP",
-      web: "XSUS WEB",
-      game: "XSUS GAME",
-      logo: "XSUS LOGO",
-      domain: "XSUS DOMAIN",
-
+      home: "Home",
       login: "Login",
       signup: "Sign Up",
-
-      explore: "Explore",
-      modules: "Our Modules",
-
-      heroTitle: "Build the Future with XSUS",
-      heroDescription:
-        "A technology platform for artificial intelligence, applications, websites, games, logos and domains."
+      intro: "A unified technology studio for artificial intelligence, applications, websites, games, visual identities and domains.",
+      explore: "Explore Modules",
+      discoverAI: "Discover XSUS AI",
+      modules: "Explore Our Ecosystem",
+      subtitle: "Six products. One technological identity.",
+      cardExplore: "Explore →",
+      ai: "Intelligence, knowledge and AI-powered experiences.",
+      app: "Create and develop modern digital applications.",
+      web: "Design and build modern websites.",
+      game: "Explore interactive game development.",
+      logo: "Create distinctive visual identities.",
+      domain: "Explore domains and digital identity."
     },
 
     sq: {
-      ai: "XSUS AI",
-      app: "XSUS APP",
-      web: "XSUS WEB",
-      game: "XSUS GAME",
-      logo: "XSUS LOGO",
-      domain: "XSUS DOMAIN",
-
+      home: "Kreu",
       login: "Hyr",
       signup: "Regjistrohu",
-
-      explore: "Eksploro",
-      modules: "Modulet tona",
-
-      heroTitle: "Ndërto të ardhmen me XSUS",
-      heroDescription:
-        "Një platformë teknologjike për inteligjencë artificiale, aplikacione, faqe interneti, lojëra, logo dhe domene."
+      intro: "Një studio teknologjike për inteligjencën artificiale, aplikacionet, faqet web, lojërat, identitetet vizuale dhe domenet.",
+      explore: "Shiko Modulet",
+      discoverAI: "Zbulo XSUS AI",
+      modules: "Eksploro Ekosistemin",
+      subtitle: "Gjashtë produkte. Një identitet teknologjik.",
+      cardExplore: "Eksploro →",
+      ai: "Inteligjencë, njohuri dhe përvoja me AI.",
+      app: "Krijo dhe zhvillo aplikacione moderne.",
+      web: "Dizajno dhe ndërto faqe web moderne.",
+      game: "Eksploro zhvillimin e lojërave interaktive.",
+      logo: "Krijo identitete vizuale të veçanta.",
+      domain: "Eksploro domenet dhe identitetin digjital."
     },
 
     fr: {
-      ai: "XSUS AI",
-      app: "XSUS APP",
-      web: "XSUS WEB",
-      game: "XSUS GAME",
-      logo: "XSUS LOGO",
-      domain: "XSUS DOMAIN",
-
+      home: "Accueil",
       login: "Connexion",
       signup: "S'inscrire",
-
-      explore: "Explorer",
-      modules: "Nos modules",
-
-      heroTitle: "Construisez l'avenir avec XSUS",
-      heroDescription:
-        "Une plateforme technologique pour l'intelligence artificielle, les applications, les sites web, les jeux, les logos et les domaines."
+      intro: "Un studio technologique pour l'intelligence artificielle, les applications, les sites web, les jeux, les identités visuelles et les domaines.",
+      explore: "Explorer les modules",
+      discoverAI: "Découvrir XSUS AI",
+      modules: "Explorer notre écosystème",
+      subtitle: "Six produits. Une identité technologique.",
+      cardExplore: "Explorer →",
+      ai: "Intelligence, connaissances et expériences IA.",
+      app: "Créer et développer des applications modernes.",
+      web: "Concevoir et créer des sites web modernes.",
+      game: "Explorer le développement de jeux interactifs.",
+      logo: "Créer des identités visuelles distinctives.",
+      domain: "Explorer les domaines et l'identité numérique."
     }
   };
 
   function normalizeLanguage(value) {
-    const language = String(value || "")
-      .trim()
+    const lang = String(value || "en")
       .toLowerCase()
       .split("-")[0];
 
-    return SUPPORTED_LANGUAGES.includes(language)
-      ? language
-      : "en";
+    return Object.prototype.hasOwnProperty.call(
+      translations,
+      lang
+    ) ? lang : "en";
   }
 
-  function getSavedLanguage() {
-    try {
-      return localStorage.getItem(STORAGE_KEY);
-    } catch {
-      return null;
-    }
-  }
+  function setLanguage(value) {
+    const lang = normalizeLanguage(value);
+    const dictionary = translations[lang];
 
-  function saveLanguage(language) {
-    try {
-      localStorage.setItem(STORAGE_KEY, language);
-    } catch {
-      // Storage may be unavailable.
-    }
-  }
+    document.documentElement.lang = lang;
 
-  function translatePage(language) {
-    const dictionary = translations[language];
-
-    document.querySelectorAll("[data-i18n]").forEach(
-      (element) => {
-        const key = element.getAttribute("data-i18n");
-
-        if (
-          Object.prototype.hasOwnProperty.call(
-            dictionary,
-            key
-          )
-        ) {
+    document.querySelectorAll("[data-t]").forEach(
+      element => {
+        const key = element.dataset.t;
+        if (typeof dictionary[key] === "string") {
           element.textContent = dictionary[key];
         }
       }
     );
 
-    document.documentElement.lang = language;
-  }
-
-  function setLanguage(value) {
-    const language = normalizeLanguage(value);
-
-    translatePage(language);
-    saveLanguage(language);
-
     document.querySelectorAll(
-      '[data-language-selector]'
-    ).forEach((selector) => {
-      selector.value = language;
+      "#language, [data-language-selector]"
+    ).forEach(selector => {
+      selector.value = lang;
     });
 
-    return language;
+    try {
+      localStorage.setItem(STORAGE_KEY, lang);
+    } catch {
+      // Storage is optional.
+    }
+
+    return lang;
   }
 
-  function initializeLanguage() {
-    const saved = getSavedLanguage();
+  function initialize() {
+    let saved = document.documentElement.lang || "en";
 
-    const initialLanguage = saved
-      ? normalizeLanguage(saved)
-      : normalizeLanguage(
-          document.documentElement.lang
-        );
+    try {
+      saved = localStorage.getItem(STORAGE_KEY) || saved;
+    } catch {
+      // Use document language.
+    }
 
     document.querySelectorAll(
-      '[data-language-selector]'
-    ).forEach((selector) => {
-      selector.addEventListener("change", (event) => {
+      "#language, [data-language-selector]"
+    ).forEach(selector => {
+      selector.addEventListener("change", event => {
         setLanguage(event.target.value);
       });
     });
 
-    setLanguage(initialLanguage);
+    setLanguage(saved);
   }
 
   window.XSUSLanguage = Object.freeze({
     setLanguage,
     getLanguage: () =>
-      normalizeLanguage(
-        document.documentElement.lang
-      ),
-    supportedLanguages: Object.freeze([
-      ...SUPPORTED_LANGUAGES
-    ])
+      normalizeLanguage(document.documentElement.lang),
+    supportedLanguages: Object.freeze(["en", "sq", "fr"])
   });
 
   if (document.readyState === "loading") {
     document.addEventListener(
       "DOMContentLoaded",
-      initializeLanguage,
+      initialize,
       { once: true }
     );
   } else {
-    initializeLanguage();
+    initialize();
   }
 })();
