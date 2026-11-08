@@ -1,770 +1,1088 @@
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Search & Neural Engine | Xsus Studio</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Marked.js për Renderimin e Tabelave dhe Markdown -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- PDF.js për leximin e dokumenteve PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        cyber: {
-                            blue: '#00f0ff',
-                            purple: '#7000ff',
-                            pink: '#ff007f',
-                            dark: '#0a0a12',
-                            card: 'rgba(18, 18, 35, 0.6)'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        .glass-panel {
-            background: rgba(18, 18, 35, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .text-gradient {
-            background: linear-gradient(135deg, #00f0ff 0%, #7000ff 50%, #ff007f 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .xsus-custom-logo {
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
-            border-radius: 10px;
-            background: #0a0a12;
-            border: 1.5px solid #00f0ff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
-            line-height: 1;
-            user-select: none;
-        }
-        .xsus-custom-logo .logo-x {
-            font-size: 16px;
-            font-weight: 900;
-            color: #00f0ff;
-            text-shadow: 0 0 6px rgba(0, 240, 255, 0.8);
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-        .xsus-custom-logo .logo-sus {
-            font-size: 8px;
-            font-weight: 700;
-            color: #7000ff;
-            text-transform: lowercase;
-            margin-top: 1px;
-            letter-spacing: 0.5px;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+  <meta name="theme-color" content="#050914">
+  <meta
+    name="description"
+    content="XSUS AI V3 — Intelligent Workspace. THE X IDENTITY."
+  >
 
-        .markdown-body table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
-            font-size: 0.85rem;
-        }
-        .markdown-body th, .markdown-body td {
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 8px 12px;
-            text-align: left;
-        }
-        .markdown-body th {
-            background: rgba(0, 240, 255, 0.1);
-            color: #00f0ff;
-            font-weight: bold;
-        }
-        .markdown-body td {
-            background: rgba(10, 10, 18, 0.4);
-        }
-        .markdown-body img {
-            border-radius: 16px;
-            margin: 10px 0;
-            border: 1px solid rgba(0, 240, 255, 0.3);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
-            max-width: 100%;
-        }
+  <title>XSUS AI V3 | THE X IDENTITY</title>
 
-        #ai-console {
-            padding-bottom: max(50px, env(safe-area-inset-bottom)) !important;
-            margin-bottom: calc(30px + env(safe-area-inset-bottom));
-        }
-    </style>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- XSUS AI V3 Styles -->
+  <link rel="stylesheet" href="assets/css/xsus-ai/base.css">
+  <link rel="stylesheet" href="assets/css/xsus-ai/header.css">
+  <link rel="stylesheet" href="assets/css/xsus-ai/sidebar.css">
+  <link rel="stylesheet" href="assets/css/xsus-ai/workspace.css">
+  <link rel="stylesheet" href="assets/css/xsus-ai/chat.css">
+
+  <style>
+    /* XSUS AI V3 — HTML Integration */
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0;
+      background: #050914;
+      color: #f5f8ff;
+      font-family: "Inter", sans-serif;
+    }
+
+    button,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid #20e8ff;
+      outline-offset: 3px;
+    }
+
+    .xsus-ai-app {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* =====================================
+       HEADER
+    ===================================== */
+
+    .xsus-ai-header {
+      position: relative;
+      z-index: 50;
+      flex-shrink: 0;
+    }
+
+    .xsus-v3-header-inner {
+      min-height: 72px;
+      padding: 12px clamp(14px, 3vw, 32px);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .xsus-v3-brand-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* Official XSUS AI logo */
+
+    .xsus-v3-brand-symbol {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      overflow: hidden;
+      border-radius: 14px;
+      background: #000;
+      border: 1px solid rgba(32,232,255,.3);
+      box-shadow: 0 0 18px rgba(32,232,255,.1);
+    }
+
+    .xsus-v3-brand-symbol img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .xsus-v3-brand-name {
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: .035em;
+    }
+
+    .xsus-v3-brand-slogan {
+      margin-top: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      color: #a9bad3;
+    }
+
+    .xsus-ai-header-nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-left: auto;
+    }
+
+    .xsus-ai-header-nav a {
+      color: #a9bad3;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .xsus-ai-header-nav a:hover {
+      color: #20e8ff;
+    }
+
+    .xsus-ai-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .xsus-ai-language-select {
+      min-height: 38px;
+      padding: 0 10px;
+      border: 1px solid rgba(130,180,255,.2);
+      border-radius: 10px;
+      background: #101b30;
+      color: #f5f8ff;
+      font-size: 12px;
+    }
+
+    .xsus-v3-icon-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 1px solid rgba(130,180,255,.2);
+      border-radius: 12px;
+      background: #101b30;
+      color: #f5f8ff;
+    }
+
+    .xsus-v3-icon-button svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .xsus-ai-menu-toggle {
+      display: none;
+    }
+
+    /* =====================================
+       MAIN LAYOUT
+    ===================================== */
+
+    .xsus-ai-layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+
+    .xsus-ai-sidebar {
+      flex-shrink: 0;
+      width: var(--xsus-sidebar-width, 270px);
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(130,180,255,.15);
+      background: rgba(10,18,36,.94);
+      z-index: 35;
+    }
+
+    .xsus-ai-sidebar.is-collapsed {
+      width: 76px;
+    }
+
+    .xsus-ai-sidebar.is-collapsed
+    .xsus-v3-sidebar-label,
+    .xsus-ai-sidebar.is-collapsed
+    .xsus-sidebar-history,
+    .xsus-ai-sidebar.is-collapsed
+    .xsus-sidebar-section-title {
+      display: none;
+    }
+
+    .xsus-sidebar-header {
+      padding: 18px 14px;
+    }
+
+    .xsus-sidebar-new-chat {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid rgba(32,232,255,.3);
+      border-radius: 12px;
+      background: rgba(32,232,255,.09);
+      color: #20e8ff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .xsus-sidebar-content {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .xsus-sidebar-section {
+      margin-bottom: 20px;
+    }
+
+    .xsus-sidebar-section-title {
+      padding: 8px 10px;
+      color: #788ba8;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .xsus-sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .xsus-sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      background: transparent;
+      color: #a9bad3;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .xsus-sidebar-item:hover,
+    .xsus-sidebar-item.is-active {
+      color: #20e8ff;
+      background: rgba(32,232,255,.08);
+    }
+
+    .xsus-sidebar-history {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .xsus-sidebar-history .xsus-sidebar-item {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+    }
+
+    .xsus-sidebar-footer {
+      padding: 14px;
+      border-top: 1px solid rgba(130,180,255,.15);
+    }
+
+    /* =====================================
+       WORKSPACE
+    ===================================== */
+
+    .xsus-ai-workspace {
+      position: relative;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .xsus-workspace-inner {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      width: min(100%, 1100px);
+      min-height: 0;
+      margin: 0 auto;
+      padding: 18px clamp(12px, 3vw, 28px);
+    }
+
+    .xsus-workspace-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 42px;
+    }
+
+    .xsus-v3-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #a9bad3;
+    }
+
+    .xsus-v3-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #788ba8;
+    }
+
+    .xsus-ai-app[data-ai-connected="true"]
+    .xsus-v3-status-dot {
+      background: #20e8ff;
+    }
+
+    /* =====================================
+       WELCOME SCREEN
+    ===================================== */
+
+    .xsus-ai-welcome {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 35px 0;
+      text-align: center;
+    }
+
+    .xsus-welcome-logo-wrap {
+      display: grid;
+      place-items: center;
+      width: 112px;
+      height: 112px;
+      overflow: hidden;
+      border: 1px solid rgba(32,232,255,.3);
+      border-radius: 26px;
+      background: #000;
+      box-shadow:
+        0 0 40px rgba(32,232,255,.1),
+        0 0 24px rgba(66,133,255,.08);
+    }
+
+    .xsus-welcome-logo {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .xsus-welcome-title {
+      margin: 0;
+      font-size: clamp(25px, 4vw, 42px);
+      font-weight: 800;
+      line-height: 1.2;
+      background: linear-gradient(
+        110deg,
+        #20e8ff,
+        #4285ff,
+        #b78aff
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .xsus-v3-welcome-description {
+      max-width: 530px;
+      color: #a9bad3;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .xsus-suggestions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      width: min(100%, 600px);
+      margin-top: 8px;
+    }
+
+    .xsus-suggestion-card {
+      min-height: 70px;
+      padding: 16px;
+      border: 1px solid rgba(130,180,255,.15);
+      border-radius: 16px;
+      background: rgba(16,27,48,.65);
+      color: #f5f8ff;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    .xsus-suggestion-card:hover {
+      border-color: rgba(32,232,255,.45);
+      background: rgba(23,38,65,.8);
+    }
+
+    /* =====================================
+       CONVERSATION
+    ===================================== */
+
+    .xsus-conversation {
+      flex: 1;
+      min-height: 0;
+      padding-top: 18px;
+    }
+
+    .xsus-conversation-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      height: 100%;
+      overflow-y: auto;
+      padding: 12px 4px 24px;
+    }
+
+    /* Assistant avatar logo style */
+
+    .xsus-chat-message.is-assistant
+    .xsus-chat-avatar {
+      overflow: hidden;
+      background: #000;
+      border-color: rgba(32,232,255,.3);
+    }
+
+    .xsus-chat-message.is-assistant
+    .xsus-chat-avatar img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* =====================================
+       COMPOSER
+    ===================================== */
+
+    .xsus-composer-area {
+      position: relative;
+      width: min(100%, 850px);
+      margin: auto auto 0;
+      padding-top: 16px;
+    }
+
+    .xsus-composer-disclaimer {
+      padding: 12px 4px 0;
+      color: #788ba8;
+      text-align: center;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .xsus-v3-error {
+      position: fixed;
+      right: 18px;
+      bottom: 20px;
+      z-index: 200;
+      max-width: min(420px, calc(100vw - 36px));
+      padding: 14px 18px;
+      border: 1px solid rgba(255,120,140,.45);
+      border-radius: 12px;
+      background: #301823;
+      color: #ffe2e7;
+      font-size: 12px;
+      box-shadow: 0 12px 35px rgba(0,0,0,.3);
+    }
+
+    .xsus-sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: rgba(0,0,0,.6);
+    }
+
+    /* =====================================
+       RESPONSIVE
+    ===================================== */
+
+    @media (max-width: 900px) {
+      .xsus-ai-sidebar {
+        position: fixed;
+        top: 72px;
+        bottom: 0;
+        left: 0;
+        width: min(300px, 85vw);
+        transform: translateX(-105%);
+        transition: transform .25s ease;
+        box-shadow: 15px 0 40px rgba(0,0,0,.2);
+      }
+
+      .xsus-ai-sidebar.is-open {
+        transform: translateX(0);
+      }
+
+      .xsus-ai-sidebar.is-collapsed {
+        width: min(300px, 85vw);
+      }
+
+      .xsus-ai-sidebar.is-collapsed
+      .xsus-v3-sidebar-label,
+      .xsus-ai-sidebar.is-collapsed
+      .xsus-sidebar-history,
+      .xsus-ai-sidebar.is-collapsed
+      .xsus-sidebar-section-title {
+        display: initial;
+      }
+    }
+
+    @media (max-width: 850px) {
+      .xsus-ai-menu-toggle {
+        display: inline-flex;
+      }
+
+      .xsus-ai-header-nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 12px;
+        left: 12px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 10px;
+        border: 1px solid rgba(130,180,255,.2);
+        border-radius: 14px;
+        background: #101b30;
+        box-shadow: 0 15px 40px rgba(0,0,0,.3);
+      }
+
+      .xsus-ai-header-nav.is-open {
+        display: flex;
+      }
+
+      .xsus-ai-header-nav a {
+        padding: 12px;
+      }
+
+      .xsus-ai-header-actions {
+        margin-left: auto;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .xsus-v3-header-inner {
+        gap: 8px;
+        padding: 10px 12px;
+      }
+
+      .xsus-v3-brand-name {
+        font-size: 14px;
+      }
+
+      .xsus-v3-brand-slogan {
+        font-size: 8px;
+      }
+
+      .xsus-v3-brand-symbol {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+      }
+
+      .xsus-welcome-logo-wrap {
+        width: 96px;
+        height: 96px;
+        border-radius: 22px;
+      }
+
+      .xsus-suggestions {
+        grid-template-columns: 1fr;
+      }
+
+      .xsus-ai-welcome {
+        gap: 14px;
+        padding: 24px 0;
+      }
+
+      .xsus-suggestion-card {
+        min-height: 54px;
+        padding: 12px;
+      }
+
+      .xsus-workspace-inner {
+        padding: 10px 12px 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .xsus-ai-sidebar {
+        transition: none;
+      }
+    }
+  </style>
 </head>
-<body class="bg-[#06060c] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-cyber-blue selection:text-black">
 
-    <!-- NAVIGATION BAR -->
-    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 px-4 md:px-6 py-4">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-2.5">
-                <div class="xsus-custom-logo">
-                    <span class="logo-x">X</span>
-                    <span class="logo-sus">sus</span>
-                </div>
-                <span class="text-lg font-bold tracking-wider text-white">XSUS <span class="text-cyber-blue">AI</span></span>
-            </a>
+<body>
 
-            <!-- MENUJA KRYESORE ME LINQET E PËRDITËSUARA -->
-            <div class="hidden lg:flex items-center gap-6 font-medium text-xs text-slate-300">
-                <a href="ai.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Xsus AI</a>
-                <a href="app.html" class="hover:text-cyber-blue transition">Xsus App</a>
-                <a href="xsus-web/web.html" class="hover:text-cyber-blue transition">Xsus Web</a>
-                <a href="game.html" class="hover:text-cyber-blue transition">Xsus Game</a>
-                <a href="logo.html" class="hover:text-cyber-blue transition">Xsus Logo</a>
-                <a href="domain.html" class="hover:text-cyber-blue transition">Xsus Domain</a>
-            </div>
+<div class="xsus-ai-app" data-active-section="chat">
 
-            <div class="flex items-center gap-3">
-                <div class="glass-panel px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-300">
-                    <i data-lucide="globe" class="w-3.5 h-3.5 text-cyber-blue"></i>
-                    <select id="language-select" class="bg-transparent text-white outline-none cursor-pointer">
-                        <option value="en" class="bg-[#0a0a12] text-white" selected>EN</option>
-                        <option value="sq" class="bg-[#0a0a12] text-white">SQ</option>
-                        <option value="fr" class="bg-[#0a0a12] text-white">FR</option>
-                    </select>
-                </div>
+  <!-- HEADER -->
+  <header class="xsus-ai-header">
+    <div class="xsus-v3-header-inner">
 
-                <a href="#ai-console" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-bold text-xs hover:opacity-90 transition shadow-[0_0_20px_rgba(0,240,255,0.3)]">
-                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
-                    <span data-i18n="nav-start">Launch Search</span>
-                </a>
-            </div>
+      <button
+        type="button"
+        class="xsus-v3-icon-button"
+        data-sidebar-toggle
+        aria-label="Toggle sidebar"
+        title="Toggle sidebar"
+      >
+        <i data-lucide="panel-left"></i>
+      </button>
+
+      <a href="index.html" class="xsus-v3-brand-link">
+
+        <!-- Official XSUS AI logo -->
+        <div class="xsus-v3-brand-symbol">
+          <img
+            src="assets/images/xsus-ai-logo.png"
+            alt="XSUS AI logo"
+            width="44"
+            height="44"
+            decoding="async"
+          >
         </div>
-    </nav>
 
-    <!-- HERO SECTION -->
-    <header class="pt-36 pb-12 px-6 relative overflow-hidden">
-        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyber-purple/15 rounded-full blur-[140px] pointer-events-none"></div>
-        <div class="max-w-4xl mx-auto text-center relative z-10">
-            <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-4 leading-tight">
-                <span data-i18n="hero-title1">Ask Anything. Create Anything.</span> <br>
-                <span class="text-gradient" data-i18n="hero-title2">Powered by Xsus AI</span>
-            </h1>
-            <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mb-6 leading-relaxed" data-i18n="hero-desc">
-                Instant answers with live web research, deep technical insights, and accurate sources in any language.
+        <div>
+          <div class="xsus-v3-brand-name">XSUS AI</div>
+          <div class="xsus-v3-brand-slogan">
+            THE X IDENTITY
+          </div>
+        </div>
+      </a>
+
+      <nav
+        class="xsus-ai-header-nav"
+        id="xsus-ai-header-nav"
+        aria-label="Main navigation"
+      >
+        <a href="index.html" data-i18n="navigation.home">
+          Home
+        </a>
+        <a href="app.html">XSUS App</a>
+        <a href="web.html">XSUS Web</a>
+        <a href="game.html">XSUS Game</a>
+        <a href="logo.html">XSUS Logo</a>
+        <a href="domain.html">XSUS Domain</a>
+      </nav>
+
+      <div class="xsus-ai-header-actions">
+
+        <select
+          class="xsus-ai-language-select"
+          data-xsus-language-select
+          aria-label="Language"
+        >
+          <option value="en">EN</option>
+          <option value="sq">SQ</option>
+          <option value="fr">FR</option>
+        </select>
+
+        <button
+          type="button"
+          class="xsus-v3-icon-button xsus-ai-menu-toggle"
+          aria-label="Open navigation"
+          aria-expanded="false"
+        >
+          <i data-lucide="menu"></i>
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE BACKDROP -->
+  <div
+    class="xsus-sidebar-backdrop"
+    hidden
+    aria-hidden="true"
+  ></div>
+
+  <div class="xsus-ai-layout">
+
+    <!-- SIDEBAR -->
+    <aside
+      class="xsus-ai-sidebar"
+      id="xsus-ai-sidebar"
+      aria-label="XSUS AI sidebar"
+    >
+
+      <div class="xsus-sidebar-header">
+
+        <button
+          type="button"
+          class="xsus-sidebar-new-chat"
+          data-action="new-chat"
+        >
+          <i data-lucide="plus"></i>
+          <span
+            class="xsus-v3-sidebar-label"
+            data-i18n="navigation.newChat"
+          >
+            New chat
+          </span>
+        </button>
+
+      </div>
+
+      <div class="xsus-sidebar-content">
+
+        <section class="xsus-sidebar-section">
+
+          <div class="xsus-sidebar-section-title">
+            Workspace
+          </div>
+
+          <nav class="xsus-sidebar-nav">
+
+            <button
+              type="button"
+              class="xsus-sidebar-item is-active"
+              data-nav-section="chat"
+            >
+              <i data-lucide="message-circle"></i>
+              <span
+                class="xsus-v3-sidebar-label"
+                data-i18n="navigation.chat"
+              >Chat</span>
+            </button>
+
+            <button
+              type="button"
+              class="xsus-sidebar-item"
+              data-nav-section="history"
+            >
+              <i data-lucide="history"></i>
+              <span
+                class="xsus-v3-sidebar-label"
+                data-i18n="navigation.history"
+              >History</span>
+            </button>
+
+            <button
+              type="button"
+              class="xsus-sidebar-item"
+              data-nav-section="projects"
+            >
+              <i data-lucide="folder-kanban"></i>
+              <span
+                class="xsus-v3-sidebar-label"
+                data-i18n="navigation.projects"
+              >Projects</span>
+            </button>
+
+            <button
+              type="button"
+              class="xsus-sidebar-item"
+              data-nav-section="knowledge"
+            >
+              <i data-lucide="brain"></i>
+              <span
+                class="xsus-v3-sidebar-label"
+                data-i18n="navigation.knowledge"
+              >Knowledge</span>
+            </button>
+
+            <button
+              type="button"
+              class="xsus-sidebar-item"
+              data-nav-section="settings"
+            >
+              <i data-lucide="settings"></i>
+              <span
+                class="xsus-v3-sidebar-label"
+                data-i18n="navigation.settings"
+              >Settings</span>
+            </button>
+
+          </nav>
+        </section>
+
+        <section class="xsus-sidebar-section">
+
+          <div
+            class="xsus-sidebar-section-title"
+            data-i18n="navigation.history"
+          >
+            History
+          </div>
+
+          <div class="xsus-sidebar-history"></div>
+
+        </section>
+
+      </div>
+
+      <div class="xsus-sidebar-footer">
+        <div class="xsus-v3-status">
+          <span class="xsus-v3-status-dot"></span>
+          <span class="xsus-v3-sidebar-label">
+            XSUS AI V3
+          </span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- WORKSPACE -->
+    <main class="xsus-ai-workspace is-welcome">
+
+      <div class="xsus-workspace-inner">
+
+        <div class="xsus-workspace-topbar">
+
+          <div class="xsus-v3-status">
+            <i data-lucide="sparkles"></i>
+            <span>XSUS AI Workspace</span>
+          </div>
+
+          <button
+            type="button"
+            class="xsus-v3-icon-button"
+            data-action="new-chat"
+            data-i18n-title="navigation.newChat"
+            aria-label="New chat"
+          >
+            <i data-lucide="square-pen"></i>
+          </button>
+
+        </div>
+
+        <!-- WELCOME -->
+        <section class="xsus-ai-welcome">
+
+          <div class="xsus-welcome-logo-wrap">
+
+            <!-- Official XSUS AI logo -->
+            <img
+              class="xsus-welcome-logo"
+              src="assets/images/xsus-ai-logo.png"
+              alt="XSUS AI"
+              width="112"
+              height="112"
+              decoding="async"
+            >
+
+          </div>
+
+          <div>
+            <p
+              data-i18n="welcome.greeting"
+              style="color:#a9bad3;font-size:12px;margin-bottom:12px"
+            >
+              Welcome to XSUS AI
             </p>
-        </div>
-    </header>
 
-    <!-- UNIVERSAL AI SEARCH CONSOLE -->
-    <section id="ai-console" class="py-6 px-4 md:px-6 max-w-4xl mx-auto w-full mb-20">
-        <div class="glass-panel p-4 md:p-6 rounded-3xl border border-cyber-purple/30 shadow-[0_0_50px_rgba(112,0,255,0.15)] flex flex-col h-[580px] relative">
-            
-            <!-- Console Header -->
-            <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-cyber-blue animate-pulse"></div>
-                    <span class="text-sm font-bold text-white tracking-wide" data-i18n="chat-header">Xsus Neural AI Assistant</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button id="export-chat" type="button" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
-                        <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
-                    </button>
-                    <button id="clear-chat" type="button" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
-                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> <span data-i18n="clear-btn">Clear Chat</span>
-                    </button>
-                </div>
-            </div>
+            <h1
+              class="xsus-welcome-title"
+              data-i18n="welcome.title"
+            >
+              What can we create today?
+            </h1>
+          </div>
 
-            <!-- Chat Messages Container -->
-            <div id="ai-output-box" class="flex-1 bg-black/60 border border-white/10 rounded-2xl p-4 overflow-y-auto space-y-4 mb-4 text-sm">
-            </div>
+          <p
+            class="xsus-v3-welcome-description"
+            data-i18n="welcome.description"
+          >
+            Intelligence, creativity and technology
+            in one workspace.
+          </p>
 
-            <!-- Pre-view element i skedarit ose fotos -->
-            <div id="file-badge-container" class="hidden mb-2 flex items-center gap-2">
-                <div class="glass-panel px-3 py-1.5 rounded-xl border border-cyber-blue/40 bg-cyber-blue/10 text-xs text-cyber-blue flex items-center gap-2">
-                    <i data-lucide="paperclip" class="w-4 h-4"></i>
-                    <span id="file-name-label">attachment</span>
-                    <button id="remove-file-btn" type="button" class="hover:text-red-400 ml-1 cursor-pointer">
-                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                    </button>
-                </div>
-            </div>
+          <div class="xsus-suggestions">
 
-            <!-- KONTEJNERI I INPUTIT -->
-            <div class="glass-panel p-1.5 md:p-2 rounded-full md:rounded-3xl border border-cyber-blue/40 flex items-center gap-2 relative shadow-[0_0_25px_rgba(0,240,255,0.15)]">
-                
-                <!-- MENUJA E PLUSIT (Dropdown) -->
-                <div id="plus-menu" class="absolute bottom-16 left-0 glass-panel border border-cyber-blue/30 rounded-2xl p-2 hidden flex-col gap-1.5 shadow-2xl z-30 w-48 bg-[#0a0a12]/95 backdrop-blur-xl">
-                    <button type="button" id="menu-doc-btn" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-cyber-blue/20 hover:text-cyber-blue transition text-left cursor-pointer">
-                        <i data-lucide="file-text" class="w-4 h-4 text-cyber-blue"></i> PDF / Document
-                    </button>
-                    <button type="button" id="menu-img-btn" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-cyber-blue/20 hover:text-cyber-blue transition text-left cursor-pointer">
-                        <i data-lucide="image" class="w-4 h-4 text-cyber-purple"></i> Photo / Image
-                    </button>
-                    <button type="button" id="menu-cam-btn" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-cyber-blue/20 hover:text-cyber-blue transition text-left cursor-pointer">
-                        <i data-lucide="camera" class="w-4 h-4 text-cyber-pink"></i> Use Camera
-                    </button>
-                </div>
+            <button
+              type="button"
+              class="xsus-suggestion-card"
+              data-suggestion="Help me write code"
+              data-i18n="welcome.suggestion1"
+            >
+              Help me write code
+            </button>
 
-                <input type="file" id="doc-input" class="hidden" accept=".pdf,.txt,.md,.js,.json,.html,.css,.py">
-                <input type="file" id="img-input" class="hidden" accept="image/*">
-                <input type="file" id="cam-input" class="hidden" accept="image/*" capture="environment">
+            <button
+              type="button"
+              class="xsus-suggestion-card"
+              data-suggestion="Create a business idea"
+              data-i18n="welcome.suggestion2"
+            >
+              Create a business idea
+            </button>
 
-                <button id="plus-btn" type="button" title="Add document, image, or use camera" class="p-2.5 rounded-full bg-white/5 hover:bg-cyber-blue/20 text-slate-300 hover:text-cyber-blue transition shrink-0 cursor-pointer flex items-center justify-center">
-                    <i data-lucide="plus" class="w-5 h-5"></i>
+            <button
+              type="button"
+              class="xsus-suggestion-card"
+              data-suggestion="Analyze a document"
+              data-i18n="welcome.suggestion3"
+            >
+              Analyze a document
+            </button>
+
+            <button
+              type="button"
+              class="xsus-suggestion-card"
+              data-suggestion="Explain a topic"
+              data-i18n="welcome.suggestion4"
+            >
+              Explain a topic
+            </button>
+
+          </div>
+
+        </section>
+
+        <!-- CONVERSATION -->
+        <section
+          class="xsus-conversation"
+          aria-label="Conversation"
+          hidden
+        >
+          <div
+            class="xsus-conversation-messages"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions"
+          ></div>
+        </section>
+
+        <!-- COMPOSER -->
+        <div class="xsus-composer-area">
+
+          <div class="xsus-chat-composer">
+
+            <!-- Attachment preview -->
+            <div class="xsus-chat-attachments"></div>
+
+            <textarea
+              class="xsus-chat-input"
+              rows="2"
+              maxlength="12000"
+              data-i18n-placeholder="chat.placeholder"
+              placeholder="Ask XSUS AI anything..."
+              aria-label="Message XSUS AI"
+            ></textarea>
+
+            <div class="xsus-chat-toolbar">
+
+              <!-- LEFT: PLUS -->
+              <div class="xsus-chat-toolbar-left">
+
+                <button
+                  type="button"
+                  class="xsus-chat-tool-button xsus-plus-button"
+                  aria-label="Add files or tools"
+                  data-i18n-aria-label="chat.attach"
+                  aria-expanded="false"
+                  title="Add files or tools"
+                >
+                  <i data-lucide="plus"></i>
                 </button>
 
-                <!-- INPUT TYPE TEXT -->
-                <input type="text" id="ai-input" data-i18n-placeholder="input-placeholder" placeholder="Ask XSUS AI..." class="flex-1 bg-transparent px-2 text-white text-xs md:text-sm outline-none truncate"/>
-                
-                <!-- BUTONI I DËRGIMIT -->
-                <button id="ai-send-btn" type="button" class="px-4 py-2 rounded-full bg-gradient-to-r from-cyber-blue to-cyber-purple text-black font-extrabold text-xs md:text-sm shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:opacity-90 transition flex items-center gap-1.5 shrink-0 cursor-pointer">
-                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                    <span data-i18n="btn-send">Send</span>
+              </div>
+
+              <!-- RIGHT: VOICE AND SEND -->
+              <div class="xsus-chat-toolbar-right">
+
+                <button
+                  type="button"
+                  class="xsus-chat-tool-button xsus-voice-button"
+                  aria-label="Voice"
+                  data-i18n-aria-label="chat.voice"
+                  title="Voice — coming soon"
+                  disabled
+                >
+                  <i data-lucide="mic"></i>
                 </button>
+
+                <button
+                  type="button"
+                  class="xsus-chat-tool-button xsus-send-button"
+                  aria-label="Send"
+                  data-i18n-aria-label="chat.send"
+                  disabled
+                >
+                  <i data-lucide="arrow-up"></i>
+                </button>
+
+              </div>
+
             </div>
+
+            <!-- PLUS MENU -->
+            <div
+              class="xsus-plus-menu"
+              id="xsus-plus-menu"
+              hidden
+            ></div>
+
+          </div>
+
+          <p
+            class="xsus-composer-disclaimer"
+            data-i18n="chat.disclaimer"
+          >
+            XSUS AI can make mistakes.
+            Verify important information.
+          </p>
 
         </div>
-    </section>
 
-    <!-- FOOTER -->
-    <footer class="mt-auto py-8 border-t border-white/10 glass-panel text-center text-xs text-slate-500">
-        <p>&copy; 2026 XSUS STUDIO. All rights reserved. | xsusstudio.com</p>
-    </footer>
+      </div>
 
-    <!-- SCRIPT INTEGRESUES -->
-    <script type="module">
-        import { readDocumentFile } from './services/file-service.js';
-        import { checkWeather } from './services/weather-service.js';
+    </main>
 
-        let smartRouterFunc = null;
-        try {
-            const module = await import('./services/router.js');
-            if (module && module.smartRouter) {
-                smartRouterFunc = module.smartRouter;
-            }
-        } catch (err) {
-            console.warn("SmartRouter nuk u ngarkua:", err);
-        }
+  </div>
 
-        function refreshIcons() {
-            if (window.lucide) {
-                lucide.createIcons();
-            }
-        }
+  <!-- ERROR NOTIFICATION -->
+  <div
+    class="xsus-v3-error"
+    data-xsus-error
+    role="alert"
+    hidden
+  ></div>
 
-        const i18nData = {
-            en: {
-                "nav-start": "Launch Search",
-                "hero-title1": "Ask Anything. Create Anything.",
-                "hero-title2": "Powered by Xsus AI",
-                "hero-desc": "Instant answers with live web research, deep technical insights, and accurate sources in any language.",
-                "chat-header": "Xsus Neural AI Assistant",
-                "clear-btn": "Clear Chat",
-                "input-placeholder": "Ask XSUS AI...",
-                "btn-send": "Send",
-                "thinking": "Searching live web & analyzing...",
-                "sys-prompt": "You are Xsus AI Neural Engine, an advanced assistant created by Xsus Studio. Respond ONLY with clear, direct human text in English."
-            },
-            sq: {
-                "nav-start": "Nis Kërkimin",
-                "hero-title1": "Pyet Çdo Gjë. Krijo Çdo Gjë.",
-                "hero-title2": "Mbështetur nga Xsus AI",
-                "hero-desc": "Asistenti yt i drejtpërdrejtë i lidhur me modele të avancuara neurale për përgjigje të sakta në çdo gjuhë.",
-                "chat-header": "Asistenti Neural Xsus AI",
-                "clear-btn": "Pastro Bisedën",
-                "input-placeholder": "Pyet XSUS AI...",
-                "btn-send": "Dërgo",
-                "thinking": "Duke analizuar dhe përgatitur përgjigjen...",
-                "sys-prompt": "[RREGULL ABSOLUT I GJUHËS]: Ti je Xsus AI Neural Engine, i krijuar nga Xsus Studio. Përgjigju KATEGORIKISHT VETËM NË GJUHËN SHQIPE. Mos e përkthe kurrë në anglisht. Përdor ë dhe ç të sakta dhe ruaj një ton të ngrohtë e profesional."
-            },
-            fr: {
-                "nav-start": "Lancer Recherche",
-                "hero-title1": "Demandez Tout. Créez Tout.",
-                "hero-title2": "Propulsé par Xsus AI",
-                "hero-desc": "Des réponses instantanées avec des recherches web en direct, des analyses techniques approfondies et des sources précises dans n'importe quelle langue.",
-                "chat-header": "Assistant Neural Xsus AI",
-                "clear-btn": "Effacer le Chat",
-                "input-placeholder": "Demandez à XSUS AI...",
-                "btn-send": "Envoyer",
-                "thinking": "Recherche sur le web en direct et analyse...",
-                "sys-prompt": "Vous êtes Xsus AI Neural Engine. Répondez uniquement en texte brut en français."
-            }
-        };
+</div>
 
-        const langSelect = document.getElementById('language-select');
-        let currentLang = 'en';
+<!-- Lucide Icons -->
+<script
+  src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"
+  defer
+></script>
 
-        let conversationHistory = [
-            { role: 'system', content: i18nData['en']["sys-prompt"] }
-        ];
+<!-- XSUS AI V3 Main Application -->
+<script
+  type="module"
+  src="assets/js/xsus-ai/app.js"
+></script>
 
-        const xsusAiLogoHTML = `
-            <div class="xsus-custom-logo shrink-0">
-                <span class="logo-x">X</span>
-                <span class="logo-sus">sus</span>
-            </div>
-        `;
-
-        const aiInput = document.getElementById('ai-input');
-        const aiSendBtn = document.getElementById('ai-send-btn');
-        const aiOutputBox = document.getElementById('ai-output-box');
-        const clearChatBtn = document.getElementById('clear-chat');
-        const exportChatBtn = document.getElementById('export-chat');
-
-        const plusBtn = document.getElementById('plus-btn');
-        const plusMenu = document.getElementById('plus-menu');
-        const menuDocBtn = document.getElementById('menu-doc-btn');
-        const menuImgBtn = document.getElementById('menu-img-btn');
-        const menuCamBtn = document.getElementById('menu-cam-btn');
-
-        const docInput = document.getElementById('doc-input');
-        const imgInput = document.getElementById('img-input');
-        const camInput = document.getElementById('cam-input');
-
-        const fileBadgeContainer = document.getElementById('file-badge-container');
-        const fileNameLabel = document.getElementById('file-name-label');
-        const removeFileBtn = document.getElementById('remove-file-btn');
-
-        let attachedFileContent = null;
-        let attachedFileName = null;
-        let attachedImageBase64 = null;
-
-        if (plusBtn) {
-            plusBtn.onclick = (e) => {
-                e.stopPropagation();
-                plusMenu.classList.toggle('hidden');
-                plusMenu.classList.toggle('flex');
-            };
-        }
-
-        document.addEventListener('click', () => {
-            if (plusMenu) {
-                plusMenu.classList.add('hidden');
-                plusMenu.classList.remove('flex');
-            }
-        });
-
-        if (menuDocBtn) {
-            menuDocBtn.onclick = () => {
-                plusMenu.classList.add('hidden');
-                docInput.click();
-            };
-        }
-        if (docInput) {
-            docInput.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                try {
-                    fileNameLabel.textContent = "Reading " + file.name + "...";
-                    fileBadgeContainer.classList.remove('hidden');
-                    refreshIcons();
-
-                    const text = await readDocumentFile(file);
-                    attachedFileContent = text;
-                    attachedFileName = file.name;
-                    attachedImageBase64 = null;
-                    fileNameLabel.textContent = "📄 " + file.name;
-                } catch (err) {
-                    alert(err);
-                    fileBadgeContainer.classList.add('hidden');
-                }
-            };
-        }
-
-        if (menuImgBtn) {
-            menuImgBtn.onclick = () => {
-                plusMenu.classList.add('hidden');
-                imgInput.click();
-            };
-        }
-        if (imgInput) {
-            imgInput.onchange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                processImageFile(file);
-            };
-        }
-
-        if (menuCamBtn) {
-            menuCamBtn.onclick = () => {
-                plusMenu.classList.add('hidden');
-                camInput.click();
-            };
-        }
-        if (camInput) {
-            camInput.onchange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                processImageFile(file);
-            };
-        }
-
-        function processImageFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(uploadEvent) {
-                attachedImageBase64 = uploadEvent.target.result;
-                attachedFileName = file.name || "image.jpg";
-                attachedFileContent = null;
-                fileNameLabel.textContent = "📷 " + attachedFileName;
-                fileBadgeContainer.classList.remove('hidden');
-                refreshIcons();
-            };
-            reader.readAsDataURL(file);
-        }
-
-        if (removeFileBtn) {
-            removeFileBtn.onclick = () => {
-                docInput.value = '';
-                imgInput.value = '';
-                camInput.value = '';
-                attachedFileContent = null;
-                attachedFileName = null;
-                attachedImageBase64 = null;
-                fileBadgeContainer.classList.add('hidden');
-            };
-        }
-
-        function saveChatToLocalStorage() {
-            localStorage.setItem('xsus_search_chat_history', aiOutputBox.innerHTML);
-            localStorage.setItem('xsus_search_history_array', JSON.stringify(conversationHistory));
-        }
-
-        function loadChatFromLocalStorage() {
-            const savedHTML = localStorage.getItem('xsus_search_chat_history');
-            const savedHistory = localStorage.getItem('xsus_search_history_array');
-
-            if (savedHTML && savedHTML.trim() !== '') {
-                aiOutputBox.innerHTML = savedHTML;
-                if (savedHistory) {
-                    try { conversationHistory = JSON.parse(savedHistory); } catch(e){}
-                }
-            }
-            refreshIcons();
-            attachInteractiveButtons();
-        }
-
-        function attachInteractiveButtons() {
-            document.querySelectorAll('.copy-btn').forEach(btn => {
-                btn.onclick = function() {
-                    const parent = this.closest('.msg-bubble');
-                    const text = parent ? parent.innerText : '';
-                    navigator.clipboard.writeText(text);
-                    this.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-green-400"></i>`;
-                    refreshIcons();
-                    setTimeout(() => {
-                        this.innerHTML = `<i data-lucide="copy" class="w-3.5 h-3.5"></i>`;
-                        refreshIcons();
-                    }, 2000);
-                };
-            });
-
-            document.querySelectorAll('.speak-btn').forEach(btn => {
-                btn.onclick = function() {
-                    const parent = this.closest('.msg-bubble');
-                    const text = parent ? parent.innerText : '';
-                    if (!text) return;
-                    window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = currentLang === 'sq' ? 'sq-AL' : (currentLang === 'fr' ? 'fr-FR' : 'en-US');
-                    window.speechSynthesis.speak(utterance);
-                };
-            });
-        }
-
-        function setLanguage(lang) {
-            currentLang = lang;
-            const dictionary = i18nData[lang] || i18nData['en'];
-
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (dictionary[key]) el.textContent = dictionary[key];
-            });
-
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-i18n-placeholder');
-                if (dictionary[key]) el.placeholder = dictionary[key];
-            });
-
-            document.documentElement.lang = lang;
-            if (langSelect) langSelect.value = lang;
-
-            conversationHistory[0] = {
-                role: 'system',
-                content: dictionary["sys-prompt"]
-            };
-            refreshIcons();
-        }
-
-        if (langSelect) {
-            langSelect.addEventListener('change', (e) => setLanguage(e.target.value));
-        }
-
-        setLanguage('en');
-
-        function cleanResponseText(rawText) {
-            if (!rawText) return "";
-            let text = rawText.trim();
-
-            try {
-                if (text.startsWith("{") && text.endsWith("}")) {
-                    const parsed = JSON.parse(text);
-                    if (parsed.content) text = parsed.content;
-                    else if (parsed.choices && parsed.choices[0] && parsed.choices[0].message) text = parsed.choices[0].message.content;
-                    else if (parsed.message) text = parsed.message;
-                }
-            } catch (e) {}
-
-            return text
-                .replace(/\\n/g, '\n')
-                .replace(/\\r/g, '')
-                .replace(/^"|"$/g, '')
-                .trim();
-        }
-
-        function renderContent(text) {
-            if (window.marked) {
-                return marked.parse(text);
-            }
-            return text;
-        }
-
-        async function fetchRealTimeSearch(userText) {
-            let promptToSend = userText;
-
-            if (attachedImageBase64) {
-                const imgTag = `<img src="${attachedImageBase64}" class="w-64 rounded-xl my-2 border border-cyber-blue/30"/>`;
-                return currentLang === 'sq'
-                    ? `Imazhi u analizua me sukses! 📷\n\n${imgTag}\nKërkesa juaj: "${userText}".`
-                    : `Image analyzed successfully! 📷\n\n${imgTag}\nYour query: "${userText}".`;
-            }
-
-            if (attachedFileContent) {
-                promptToSend = `[ATTACHED DOCUMENT: ${attachedFileName}]\n${attachedFileContent}\n\n[QUERY]: ${userText}`;
-            }
-
-            // Zbulim automatik nëse inputi është në gjuhën shqipe
-            const lowerText = userText.toLowerCase();
-            const isAlbanianInput = lowerText.includes('studentët') || 
-                                    lowerText.includes('studentet') || 
-                                    lowerText.includes('punojnë') || 
-                                    lowerText.includes('libra') || 
-                                    lowerText.includes('shtëpi') || 
-                                    lowerText.includes('më jep') || 
-                                    lowerText.includes('çfarë') ||
-                                    lowerText.includes('cfare') ||
-                                    lowerText.includes('si');
-
-            const activeLang = isAlbanianInput ? 'sq' : currentLang;
-
-            let finalPromptToSend = promptToSend;
-            if (activeLang === 'sq') {
-                finalPromptToSend = "[PËRGJIGJU NË MËNYRË NATYRALE NË GJUHËN SHQIPE, MOS E PËRKTHE NË ANGLISHT]: " + promptToSend;
-            }
-
-            conversationHistory.push({ role: 'user', content: finalPromptToSend });
-
-            try {
-                const response = await fetch('https://text.pollinations.ai/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        messages: conversationHistory,
-                        model: 'openai',
-                        search: true,
-                        seed: Math.floor(Math.random() * 10000)
-                    })
-                });
-
-                if (response.ok) {
-                    let rawReply = await response.text();
-                    let reply = cleanResponseText(rawReply);
-
-                    conversationHistory.push({ role: 'assistant', content: reply });
-
-                    if (removeFileBtn) removeFileBtn.click();
-                    return reply;
-                } else {
-                    return activeLang === 'sq' ? "Ndodhi një gabim gjatë lidhjes me motorin e kërkimit." : "Search engine connection error.";
-                }
-            } catch (err) {
-                return activeLang === 'sq' ? "Gabim në rrjet gjatë kërkimit." : "Network error during search.";
-            }
-        }
-
-        function typeWriterEffect(element, htmlText, speed = 8, callback) {
-            let i = 0;
-            const words = htmlText.split(' ');
-            let currentText = '';
-            
-            function addWord() {
-                if (i < words.length) {
-                    currentText += (i === 0 ? '' : ' ') + words[i];
-                    element.innerHTML = renderContent(currentText);
-                    aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
-                    i++;
-                    setTimeout(addWord, speed);
-                } else {
-                    element.innerHTML = renderContent(htmlText);
-                    if (callback) callback();
-                }
-            }
-            addWord();
-        }
-
-        async function handleSearchExecution() {
-            const text = aiInput.value.trim() || (attachedFileContent ? "Summarize this document." : (attachedImageBase64 ? "Analyze this image." : ""));
-            if (!text && !attachedFileContent && !attachedImageBase64) return;
-
-            let userDisplayMsg = text;
-            if (attachedFileName && attachedImageBase64) {
-                userDisplayMsg = `📷 **[${attachedFileName}]**\n<img src="${attachedImageBase64}" class="w-48 rounded-xl my-2"/>\n${text}`;
-            }
-
-            const userMsg = document.createElement('div');
-            userMsg.className = "flex items-start gap-3 justify-end";
-            userMsg.innerHTML = `
-                <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tr-none text-sm text-slate-100 max-w-[85%] border-cyber-blue/30 bg-cyber-blue/10 leading-relaxed">
-                    <p>${renderContent(userDisplayMsg)}</p>
-                </div>
-                <div class="w-9 h-9 rounded-xl bg-cyber-blue flex items-center justify-center font-bold text-black text-xs shrink-0 shadow-[0_0_12px_rgba(0,240,255,0.4)]">
-                    YOU
-                </div>
-            `;
-            aiOutputBox.appendChild(userMsg);
-            aiInput.value = '';
-            aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
-
-            const loadingText = (i18nData[currentLang] && i18nData[currentLang]["thinking"]) 
-                                ? i18nData[currentLang]["thinking"] 
-                                : i18nData["en"]["thinking"];
-
-            const loadingMsg = document.createElement('div');
-            loadingMsg.className = "flex items-start gap-3";
-            loadingMsg.id = "loading-bubble";
-            loadingMsg.innerHTML = `
-                ${xsusAiLogoHTML}
-                <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-400 max-w-[85%] animate-pulse flex items-center gap-2">
-                    <i data-lucide="loader" class="w-4 h-4 animate-spin text-cyber-blue"></i>
-                    <span>${loadingText}</span>
-                </div>
-            `;
-            aiOutputBox.appendChild(loadingMsg);
-            refreshIcons();
-            aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
-
-            let reply = "";
-
-            if (!attachedFileContent && !attachedImageBase64 && smartRouterFunc) {
-                try {
-                    const routerReply = await smartRouterFunc(text, currentLang);
-                    if (routerReply) {
-                        reply = routerReply;
-                    }
-                } catch (e) {
-                    console.warn("Router info:", e);
-                }
-            }
-
-            if (!reply && !attachedFileContent && !attachedImageBase64) {
-                try {
-                    const directWeather = await checkWeather(text);
-                    if (directWeather) {
-                        reply = directWeather;
-                    }
-                } catch (wErr) {
-                    console.warn("Direct weather check error:", wErr);
-                }
-            }
-
-            if (!reply) {
-                reply = await fetchRealTimeSearch(text);
-            } else {
-                conversationHistory.push({ role: 'user', content: text });
-                conversationHistory.push({ role: 'assistant', content: reply });
-            }
-
-            document.getElementById('loading-bubble')?.remove();
-
-            const aiMsg = document.createElement('div');
-            aiMsg.className = "flex items-start gap-3";
-            aiMsg.innerHTML = `
-                ${xsusAiLogoHTML}
-                <div class="glass-panel p-3.5 md:p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] leading-relaxed markdown-body msg-bubble relative group">
-                    <div class="ai-text-content"></div>
-                    <div class="flex items-center gap-2 mt-3 pt-2 border-t border-white/10 text-xs text-slate-400">
-                        <button type="button" class="copy-btn hover:text-cyber-blue transition flex items-center gap-1 cursor-pointer">
-                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
-                        </button>
-                        <span class="text-white/20">•</span>
-                        <button type="button" class="speak-btn hover:text-cyber-blue transition flex items-center gap-1 cursor-pointer">
-                            <i data-lucide="volume-2" class="w-3.5 h-3.5"></i> Listen
-                        </button>
-                    </div>
-                </div>
-            `;
-            aiOutputBox.appendChild(aiMsg);
-            
-            const textContainer = aiMsg.querySelector('.ai-text-content');
-            typeWriterEffect(textContainer, reply, 8, () => {
-                refreshIcons();
-                attachInteractiveButtons();
-                saveChatToLocalStorage();
-            });
-
-            aiOutputBox.scrollTop = aiOutputBox.scrollHeight;
-        }
-
-        if (aiSendBtn) {
-            aiSendBtn.onclick = handleSearchExecution;
-        }
-
-        if (aiInput) {
-            aiInput.onkeydown = (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSearchExecution();
-                }
-            };
-        }
-
-        if (clearChatBtn) {
-            clearChatBtn.onclick = function() {
-                localStorage.removeItem('xsus_search_chat_history');
-                localStorage.removeItem('xsus_search_history_array');
-                conversationHistory = [
-                    { role: 'system', content: i18nData[currentLang]["sys-prompt"] }
-                ];
-                aiOutputBox.innerHTML = '';
-                refreshIcons();
-            };
-        }
-
-        if (exportChatBtn) {
-            exportChatBtn.onclick = function() {
-                const chatContent = aiOutputBox.innerText;
-                if (!chatContent.trim()) return;
-
-                const blob = new Blob([chatContent], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'xsus-search-history-' + new Date().toISOString().slice(0, 10) + '.txt';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            };
-        }
-
-        loadChatFromLocalStorage();
-    </script>
 </body>
 </html>
