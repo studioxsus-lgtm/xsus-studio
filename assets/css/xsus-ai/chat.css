@@ -1,0 +1,768 @@
+
+/**
+ * XSUS AI V3 — Chat & Plus Menu
+ * Version: 3.0.0
+ * Brand: THE X IDENTITY
+ *
+ * Requires: base.css, workspace.css
+ *
+ * Layout:
+ * LEFT  — Plus menu
+ * RIGHT — Voice and Send
+ *
+ * CSS presentation only.
+ * Interactions will be implemented in JavaScript.
+ */
+
+/* ========================================
+   CHAT MESSAGE
+======================================== */
+
+.xsus-chat-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.xsus-chat-message.is-user {
+  justify-content: flex-end;
+}
+
+.xsus-chat-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+
+  border: 1px solid var(--xsus-border);
+  border-radius: 12px;
+
+  background: var(--xsus-surface);
+  color: var(--xsus-cyan);
+}
+
+.xsus-chat-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.xsus-chat-bubble {
+  max-width: min(85%, 720px);
+  min-width: 0;
+
+  padding: 14px 18px;
+  border-radius: 18px;
+
+  color: var(--xsus-text);
+  font-size: 14px;
+  line-height: 1.7;
+
+  overflow-wrap: anywhere;
+}
+
+.xsus-chat-message.is-user .xsus-chat-bubble {
+  background: linear-gradient(
+    135deg,
+    rgba(66, 133, 255, 0.22),
+    rgba(149, 102, 255, 0.16)
+  );
+
+  border: 1px solid rgba(149, 102, 255, 0.25);
+  border-bottom-right-radius: 6px;
+}
+
+.xsus-chat-message.is-assistant .xsus-chat-bubble {
+  background: rgba(16, 27, 48, 0.75);
+  border: 1px solid var(--xsus-border);
+  border-top-left-radius: 6px;
+}
+
+.xsus-chat-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.xsus-chat-bubble pre {
+  max-width: 100%;
+  padding: 14px;
+
+  overflow-x: auto;
+
+  border: 1px solid var(--xsus-border);
+  border-radius: 12px;
+
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.xsus-chat-bubble code {
+  font-family:
+    "SFMono-Regular",
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  font-size: 0.9em;
+}
+
+/* ========================================
+   MESSAGE ACTIONS
+======================================== */
+
+.xsus-chat-message-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 8px;
+}
+
+.xsus-chat-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+
+  border: 1px solid transparent;
+  border-radius: 9px;
+
+  background: transparent;
+  color: var(--xsus-text-muted);
+}
+
+.xsus-chat-action:hover {
+  background: var(--xsus-surface-hover);
+  color: var(--xsus-cyan);
+}
+
+.xsus-chat-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ========================================
+   COMPOSER
+======================================== */
+
+.xsus-chat-composer {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  width: 100%;
+  padding: 14px;
+
+  border: 1px solid var(--xsus-border);
+  border-radius: 22px;
+
+  background: rgba(16, 27, 48, 0.92);
+
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.18);
+
+  transition:
+    border-color var(--xsus-transition),
+    box-shadow var(--xsus-transition);
+}
+
+.xsus-chat-composer:focus-within {
+  border-color: rgba(32, 232, 255, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(32, 232, 255, 0.08),
+    0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.xsus-chat-input {
+  display: block;
+
+  width: 100%;
+  min-height: 42px;
+  max-height: 180px;
+
+  padding: 8px 6px;
+
+  border: 0;
+  outline: none;
+  resize: none;
+
+  background: transparent;
+  color: var(--xsus-text);
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.xsus-chat-input::placeholder {
+  color: var(--xsus-text-muted);
+}
+
+/* ========================================
+   COMPOSER TOOLBAR
+======================================== */
+
+.xsus-chat-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.xsus-chat-toolbar-left,
+.xsus-chat-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xsus-chat-toolbar-right {
+  margin-left: auto;
+}
+
+/* ========================================
+   TOOLBAR BUTTONS
+======================================== */
+
+.xsus-chat-tool-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+
+  padding: 0;
+
+  border: 1px solid var(--xsus-border);
+  border-radius: 13px;
+
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--xsus-text-secondary);
+
+  transition:
+    background var(--xsus-transition),
+    color var(--xsus-transition),
+    border-color var(--xsus-transition),
+    transform var(--xsus-transition);
+}
+
+.xsus-chat-tool-button:hover {
+  background: var(--xsus-surface-hover);
+  color: var(--xsus-text);
+  border-color: var(--xsus-border-active);
+}
+
+.xsus-chat-tool-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ========================================
+   PLUS BUTTON — LEFT
+======================================== */
+
+.xsus-plus-button {
+  border-radius: 50%;
+
+  background: rgba(32, 232, 255, 0.07);
+  color: var(--xsus-cyan);
+
+  border-color: rgba(32, 232, 255, 0.22);
+}
+
+.xsus-plus-button:hover,
+.xsus-plus-button[aria-expanded="true"] {
+  background: rgba(32, 232, 255, 0.16);
+  border-color: var(--xsus-cyan);
+
+  box-shadow: var(--xsus-glow);
+}
+
+.xsus-plus-button[aria-expanded="true"] svg {
+  transform: rotate(45deg);
+}
+
+.xsus-plus-button svg {
+  transition: transform var(--xsus-transition);
+}
+
+/* ========================================
+   VOICE BUTTON — RIGHT
+======================================== */
+
+.xsus-voice-button {
+  border-radius: 50%;
+
+  color: var(--xsus-text);
+  background: rgba(149, 102, 255, 0.08);
+}
+
+.xsus-voice-button:hover {
+  color: var(--xsus-violet);
+  border-color: rgba(149, 102, 255, 0.5);
+}
+
+.xsus-voice-button.is-listening {
+  color: #ffffff;
+  background: rgba(230, 90, 255, 0.2);
+  border-color: var(--xsus-pink);
+
+  animation: xsus-voice-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes xsus-voice-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(230, 90, 255, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 0 9px rgba(230, 90, 255, 0);
+  }
+}
+
+/* ========================================
+   SEND BUTTON — RIGHT
+======================================== */
+
+.xsus-send-button {
+  border-radius: 50%;
+
+  border-color: transparent;
+
+  background: linear-gradient(
+    135deg,
+    var(--xsus-cyan),
+    var(--xsus-blue)
+  );
+
+  color: #061020;
+}
+
+.xsus-send-button:hover {
+  color: #061020;
+  border-color: transparent;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 0 20px rgba(32, 232, 255, 0.25);
+}
+
+.xsus-send-button:disabled {
+  opacity: 0.45;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ========================================
+   PLUS MENU — FLOATING PANEL
+======================================== */
+
+.xsus-plus-menu {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  z-index: 80;
+
+  width: min(370px, 100%);
+  max-height: min(520px, 65dvh);
+
+  padding: 12px;
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  border: 1px solid var(--xsus-border);
+  border-radius: 20px;
+
+  background: rgba(10, 18, 36, 0.98);
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(32, 232, 255, 0.05);
+
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.xsus-plus-menu[hidden] {
+  display: none;
+}
+
+/* ========================================
+   PLUS MENU HEADER
+======================================== */
+
+.xsus-plus-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding: 8px 10px 12px;
+}
+
+.xsus-plus-menu-title {
+  margin: 0;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+
+  color: var(--xsus-text);
+}
+
+.xsus-plus-menu-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+  color: var(--xsus-text-muted);
+}
+
+.xsus-plus-menu-close:hover {
+  background: var(--xsus-surface-hover);
+  color: var(--xsus-text);
+}
+
+/* ========================================
+   PLUS MENU SEARCH
+======================================== */
+
+.xsus-plus-search {
+  width: 100%;
+  min-height: 42px;
+
+  margin-bottom: 12px;
+  padding: 10px 12px;
+
+  border: 1px solid var(--xsus-border);
+  border-radius: 12px;
+
+  background: var(--xsus-surface);
+  color: var(--xsus-text);
+
+  font-size: 12px;
+}
+
+.xsus-plus-search:focus {
+  outline: 2px solid var(--xsus-cyan);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   PLUS MENU GROUPS
+======================================== */
+
+.xsus-plus-group {
+  margin-bottom: 12px;
+}
+
+.xsus-plus-group:last-child {
+  margin-bottom: 0;
+}
+
+.xsus-plus-group-title {
+  margin: 0 0 8px;
+  padding: 0 10px;
+
+  color: var(--xsus-text-muted);
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ========================================
+   PLUS MENU ITEMS
+======================================== */
+
+.xsus-plus-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 48px;
+  padding: 10px;
+
+  border: 1px solid transparent;
+  border-radius: 12px;
+
+  background: transparent;
+  color: var(--xsus-text);
+
+  text-align: left;
+  cursor: pointer;
+
+  transition:
+    background var(--xsus-transition),
+    border-color var(--xsus-transition);
+}
+
+.xsus-plus-item:hover {
+  background: var(--xsus-surface-hover);
+  border-color: var(--xsus-border);
+}
+
+.xsus-plus-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+
+  border-radius: 11px;
+
+  background: rgba(32, 232, 255, 0.08);
+  color: var(--xsus-cyan);
+}
+
+.xsus-plus-item-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.xsus-plus-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  flex: 1;
+  min-width: 0;
+}
+
+.xsus-plus-item-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.xsus-plus-item-description {
+  color: var(--xsus-text-muted);
+
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.xsus-plus-item-status {
+  flex-shrink: 0;
+
+  padding: 4px 7px;
+
+  border-radius: 7px;
+
+  background: rgba(149, 102, 255, 0.12);
+  color: var(--xsus-violet);
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* ========================================
+   CAMERA & GALLERY
+======================================== */
+
+.xsus-plus-item[data-tool="camera"]
+.xsus-plus-item-icon {
+  background: rgba(32, 232, 255, 0.12);
+  color: var(--xsus-cyan);
+}
+
+.xsus-plus-item[data-tool="gallery"]
+.xsus-plus-item-icon {
+  background: rgba(66, 133, 255, 0.12);
+  color: var(--xsus-blue);
+}
+
+.xsus-plus-item[data-tool="documents"]
+.xsus-plus-item-icon {
+  background: rgba(149, 102, 255, 0.12);
+  color: var(--xsus-violet);
+}
+
+/* ========================================
+   ATTACHMENT PREVIEW
+======================================== */
+
+.xsus-chat-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.xsus-chat-attachments:empty {
+  display: none;
+}
+
+.xsus-chat-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  max-width: 100%;
+  padding: 7px 10px;
+
+  border: 1px solid var(--xsus-border);
+  border-radius: 10px;
+
+  background: var(--xsus-surface);
+  color: var(--xsus-text-secondary);
+
+  font-size: 11px;
+}
+
+.xsus-chat-attachment-name {
+  min-width: 0;
+  max-width: 180px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xsus-chat-attachment-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 26px;
+  height: 26px;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+  color: var(--xsus-text-muted);
+}
+
+.xsus-chat-attachment-remove:hover {
+  background: var(--xsus-surface-hover);
+  color: var(--xsus-text);
+}
+
+/* ========================================
+   LOADING INDICATOR
+======================================== */
+
+.xsus-chat-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  padding: 12px;
+}
+
+.xsus-chat-typing span {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+  background: var(--xsus-cyan);
+
+  animation: xsus-typing 1.2s infinite ease-in-out;
+}
+
+.xsus-chat-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.xsus-chat-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes xsus-typing {
+  0%, 60%, 100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* ========================================
+   RESPONSIVE — MOBILE
+======================================== */
+
+@media (max-width: 600px) {
+  .xsus-chat-message {
+    gap: 8px;
+  }
+
+  .xsus-chat-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+  }
+
+  .xsus-chat-bubble {
+    max-width: 90%;
+    padding: 11px 13px;
+
+    font-size: 12px;
+    line-height: 1.65;
+  }
+
+  .xsus-chat-composer {
+    padding: 10px;
+    gap: 6px;
+    border-radius: 18px;
+  }
+
+  .xsus-chat-input {
+    min-height: 38px;
+    font-size: 14px;
+  }
+
+  .xsus-chat-tool-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .xsus-plus-menu {
+    width: 100%;
+    max-height: min(460px, 60dvh);
+    border-radius: 16px;
+  }
+
+  .xsus-plus-item {
+    min-height: 46px;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .xsus-chat-tool-button,
+  .xsus-plus-button svg,
+  .xsus-plus-item {
+    transition: none;
+  }
+
+  .xsus-chat-typing span,
+  .xsus-voice-button.is-listening {
+    animation: none;
+  }
+}
