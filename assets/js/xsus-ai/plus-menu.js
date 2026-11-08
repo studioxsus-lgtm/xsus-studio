@@ -1,15 +1,18 @@
 
 /**
  * XSUS AI V3 — Plus Menu Controller
- * Version: 3.0.0
+ * Version: 3.1.0
  *
- * Camera, gallery, documents and tool selection.
+ * Camera, gallery, documents, tool selection,
+ * image thumbnails and attachment previews.
+ *
  * Independent UI module.
+ * No AI Core or Hyper XSUS Core dependencies.
  *
  * Voice is intentionally excluded.
  */
 
-export const PLUS_MENU_VERSION = "3.0.0";
+export const PLUS_MENU_VERSION = "3.1.0";
 
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
@@ -133,6 +136,62 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function isImage(file) {
+  return file.type.startsWith("image/");
+}
+
+function isPDF(file) {
+  return (
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf")
+  );
+}
+
+function getFileExtension(name) {
+  const parts = name.split(".");
+
+  return parts.length > 1
+    ? parts.pop().toUpperCase()
+    : "FILE";
+}
+
+function getFileIcon(file) {
+  if (isPDF(file)) {
+    return "file-text";
+  }
+
+  const extension = getFileExtension(file.name);
+
+  if (["DOC", "DOCX", "TXT", "MD"].includes(extension)) {
+    return "file-text";
+  }
+
+  if (["XLS", "XLSX", "CSV"].includes(extension)) {
+    return "sheet";
+  }
+
+  if (["PPT", "PPTX"].includes(extension)) {
+    return "presentation";
+  }
+
+  if (["JSON"].includes(extension)) {
+    return "file-code";
+  }
+
+  return "file";
+}
+
+function refreshLucide(container) {
+  if (
+    typeof window !== "undefined" &&
+    window.lucide?.createIcons
+  ) {
+    window.lucide.createIcons({
+      nodes: container.querySelectorAll("[data-lucide]")
+    });
+  }
+}
+
 export function createPlusMenu(options = {}) {
   const {
     button,
@@ -160,6 +219,7 @@ export function createPlusMenu(options = {}) {
   let searchInput = null;
 
   const listeners = [];
+  const previewURLs = new Map();
 
   function listen(target, event, handler) {
     target.addEventListener(event, handler);
@@ -170,11 +230,47 @@ export function createPlusMenu(options = {}) {
   }
 
   function reportError(message) {
+    if (destroyed) return;
+
     onError(message);
   }
 
   function emitFilesChange() {
+    if (destroyed) return;
+
     onFilesChange([...attachments]);
+  }
+
+  function releasePreview(file) {
+    const url = previewURLs.get(file);
+
+    if (url) {
+      URL.revokeObjectURL(url);
+      previewURLs.delete(file);
+    }
+  }
+
+  function releaseAllPreviews() {
+    for (const url of previewURLs.values()) {
+      URL.revokeObjectURL(url);
+    }
+
+    previewURLs.clear();
+  }
+
+  function getPreviewURL(file) {
+    if (!isImage(file)) {
+      return null;
+    }
+
+    if (!previewURLs.has(file)) {
+      previewURLs.set(
+        file,
+        URL.createObjectURL(file)
+      );
+    }
+
+    return previewURLs.get(file);
   }
 
   function setOpen(open) {
@@ -191,7 +287,7 @@ export function createPlusMenu(options = {}) {
       searchInput.focus();
     }
 
-    if (!open) {
+    if (!open && open !== undefined) {
       button.focus();
     }
   }
@@ -201,23 +297,37 @@ export function createPlusMenu(options = {}) {
   }
 
   function clearFiles() {
+    if (destroyed) return;
+
     attachments = [];
+
+    releaseAllPreviews();
     renderAttachments();
     emitFilesChange();
   }
 
   function removeFile(index) {
-    if (index < 0 || index >= attachments.length) {
+    if (destroyed) return;
+
+    if (
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= attachments.length
+    ) {
       return;
     }
 
-    attachments.splice(index, 1);
+    const [removed] = attachments.splice(index, 1);
+
+    releasePreview(removed);
 
     renderAttachments();
     emitFilesChange();
   }
 
   function addFiles(fileList) {
+    if (destroyed) return;
+
     const files = Array.from(fileList || []);
 
     if (!files.length) return;
@@ -225,6 +335,10 @@ export function createPlusMenu(options = {}) {
     let changed = false;
 
     for (const file of files) {
+      if (!(file instanceof File)) {
+        continue;
+      }
+
       if (attachments.length >= MAX_FILES) {
         reportError(
           `Mund të ngarkosh maksimumi ${MAX_FILES} skedarë.`
@@ -260,8 +374,90 @@ export function createPlusMenu(options = {}) {
     }
   }
 
+  function createImagePreview(file) {
+    const wrapper = createElement(
+      "div",
+      "xsus-attachment-preview"
+    );
+
+    const image = createElement(
+      "img",
+      "xsus-attachment-thumbnail"
+    );
+
+    image.src = getPreviewURL(file);
+    image.alt = `Pamje paraprake: ${file.name}`;
+    image.loading = "lazy";
+    image.decoding = "async";
+
+    image.style.width = "48px";
+    image.style.height = "48px";
+    image.style.objectFit = "cover";
+    image.style.borderRadius = "9px";
+    image.style.display = "block";
+    image.style.flexShrink = "0";
+
+    image.addEventListener("error", () => {
+      if (destroyed) return;
+
+      image.replaceWith(
+        createDocumentPreview(file)
+      );
+    }, { once: true });
+
+    wrapper.append(image);
+
+    return wrapper;
+  }
+
+  function createDocumentPreview(file) {
+    const wrapper = createElement(
+      "div",
+      "xsus-attachment-preview xsus-attachment-document"
+    );
+
+    const icon = createElement(
+      "span",
+      "xsus-attachment-document-icon"
+    );
+
+    icon.dataset.lucide = getFileIcon(file);
+
+    const extension = createElement(
+      "span",
+      "xsus-attachment-extension",
+      getFileExtension(file.name)
+    );
+
+    wrapper.style.width = "48px";
+    wrapper.style.height = "48px";
+    wrapper.style.borderRadius = "9px";
+    wrapper.style.display = "flex";
+    wrapper.style.flexDirection = "column";
+    wrapper.style.alignItems = "center";
+    wrapper.style.justifyContent = "center";
+    wrapper.style.gap = "2px";
+    wrapper.style.flexShrink = "0";
+    wrapper.style.background = "rgba(66,133,255,0.12)";
+    wrapper.style.border =
+      "1px solid rgba(66,133,255,0.25)";
+    wrapper.style.color = "#7ddcff";
+
+    extension.style.fontSize = "9px";
+    extension.style.fontWeight = "700";
+    extension.style.maxWidth = "44px";
+    extension.style.overflow = "hidden";
+    extension.style.textOverflow = "ellipsis";
+
+    wrapper.append(icon, extension);
+
+    return wrapper;
+  }
+
   function renderAttachments() {
-    if (!attachmentsContainer) return;
+    if (!attachmentsContainer || destroyed) {
+      return;
+    }
 
     attachmentsContainer.replaceChildren();
 
@@ -271,11 +467,49 @@ export function createPlusMenu(options = {}) {
         "xsus-chat-attachment"
       );
 
+      item.dataset.fileIndex = String(index);
+
+      item.style.display = "flex";
+      item.style.alignItems = "center";
+      item.style.gap = "9px";
+      item.style.maxWidth = "100%";
+
+      const preview = isImage(file)
+        ? createImagePreview(file)
+        : createDocumentPreview(file);
+
+      const info = createElement(
+        "div",
+        "xsus-attachment-info"
+      );
+
+      info.style.display = "flex";
+      info.style.flexDirection = "column";
+      info.style.minWidth = "0";
+      info.style.flex = "1";
+
       const name = createElement(
         "span",
         "xsus-chat-attachment-name",
-        `${file.name} (${formatFileSize(file.size)})`
+        file.name
       );
+
+      name.title = file.name;
+      name.style.display = "block";
+      name.style.overflow = "hidden";
+      name.style.textOverflow = "ellipsis";
+      name.style.whiteSpace = "nowrap";
+
+      const size = createElement(
+        "span",
+        "xsus-attachment-size",
+        formatFileSize(file.size)
+      );
+
+      size.style.fontSize = "11px";
+      size.style.opacity = "0.65";
+
+      info.append(name, size);
 
       const remove = createElement(
         "button",
@@ -284,18 +518,25 @@ export function createPlusMenu(options = {}) {
       );
 
       remove.type = "button";
+
       remove.setAttribute(
         "aria-label",
         `Hiq ${file.name}`
       );
 
+      remove.title = `Hiq ${file.name}`;
+
+      remove.style.flexShrink = "0";
+
       remove.addEventListener("click", () => {
         removeFile(index);
       });
 
-      item.append(name, remove);
+      item.append(preview, info, remove);
       attachmentsContainer.append(item);
     });
+
+    refreshLucide(attachmentsContainer);
   }
 
   function createFileInput(accept, capture = null) {
@@ -307,13 +548,13 @@ export function createPlusMenu(options = {}) {
 
     if (capture) {
       input.setAttribute("capture", capture);
-    }
-
-    if (!capture) {
+    } else {
       input.multiple = true;
     }
 
     input.addEventListener("change", () => {
+      if (destroyed) return;
+
       addFiles(input.files);
       input.value = "";
     });
@@ -365,7 +606,9 @@ export function createPlusMenu(options = {}) {
   }
 
   function renderMenu(query = "") {
-    const normalized = query
+    if (destroyed) return;
+
+    const normalized = String(query)
       .trim()
       .toLocaleLowerCase();
 
@@ -379,14 +622,12 @@ export function createPlusMenu(options = {}) {
 
     for (const [groupId, groupLabel] of GROUPS) {
       const tools = PLUS_TOOLS.filter(tool => {
-        const matchesGroup = tool.group === groupId;
-
         const searchable =
           `${tool.label} ${tool.description}`
             .toLocaleLowerCase();
 
         return (
-          matchesGroup &&
+          tool.group === groupId &&
           searchable.includes(normalized)
         );
       });
@@ -472,20 +713,12 @@ export function createPlusMenu(options = {}) {
       );
     }
 
-    // Replace icon placeholders with Lucide SVGs.
-    if (window.lucide?.createIcons) {
-      window.lucide.createIcons({
-        nodes: content.querySelectorAll(
-          "[data-lucide]"
-        )
-      });
-    }
+    refreshLucide(content);
   }
 
   function buildMenu() {
     menu.classList.add("xsus-plus-menu");
     menu.hidden = true;
-
     menu.replaceChildren();
 
     const header = createElement(
@@ -581,16 +814,24 @@ export function createPlusMenu(options = {}) {
     destroy() {
       if (destroyed) return;
 
-      destroyed = true;
-
       listeners.forEach(cleanup => cleanup());
+
+      releaseAllPreviews();
 
       cameraInput.remove();
       galleryInput.remove();
       documentInput.remove();
 
-      menu.hidden = true;
       attachments = [];
+
+      menu.hidden = true;
+      menu.replaceChildren();
+
+      if (attachmentsContainer) {
+        attachmentsContainer.replaceChildren();
+      }
+
+      destroyed = true;
     }
   });
 }
