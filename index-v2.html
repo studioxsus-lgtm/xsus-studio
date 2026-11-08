@@ -1,0 +1,597 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#060a18">
+  <meta name="description" content="XSUS Studio — The X Identity. AI, apps, web, games, logos and domains.">
+  <title>XSUS Studio — The X Identity</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #060a18;
+      --panel: #101a30;
+      --cyan: #20e8ff;
+      --violet: #a26cff;
+      --text: #f4f8ff;
+      --muted: #a8b8d1;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, select { font: inherit; }
+
+    .page {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 50% 20%, #173a63 0%, transparent 46%),
+        radial-gradient(ellipse at 90% 65%, #30134e 0%, transparent 40%),
+        var(--bg);
+    }
+
+    .header {
+      position: relative;
+      z-index: 10;
+      border-bottom: 1px solid #ffffff18;
+      background: #070d1ce8;
+    }
+
+    .topbar {
+      max-width: 1250px;
+      margin: auto;
+      padding: 17px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 47px;
+      height: 47px;
+      border: 1px solid #26eaff88;
+      border-radius: 14px;
+      color: var(--cyan);
+      background: #0b2338;
+      box-shadow: 0 0 24px #00dfff25;
+      font-weight: 900;
+      font-size: 25px;
+    }
+
+    .brand-name {
+      font-size: 18px;
+      font-weight: 850;
+      letter-spacing: 1.4px;
+    }
+
+    .brand-tag {
+      margin-top: 3px;
+      color: var(--cyan);
+      font-size: 9px;
+      letter-spacing: 2.5px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .actions a, .actions select, .menu-toggle {
+      border: 1px solid #ffffff30;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #101b31;
+      color: white;
+      cursor: pointer;
+    }
+
+    .actions .signup {
+      background: linear-gradient(120deg, #0c94c7, #7043db);
+      border-color: transparent;
+    }
+
+    .menu-toggle { display: none; }
+
+    .nav {
+      max-width: 1250px;
+      margin: auto;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 0 15px 12px;
+    }
+
+    .nav a {
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #c9d8f0;
+      transition: background .2s, color .2s;
+    }
+
+    .nav a:hover, .nav a:focus-visible {
+      color: var(--cyan);
+      background: #1c344d;
+    }
+
+    .hero {
+      max-width: 1200px;
+      margin: auto;
+      padding: 60px 22px 50px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      border: 1px solid #20e8ff55;
+      background: #0c2c3d;
+      color: var(--cyan);
+      border-radius: 30px;
+      padding: 9px 15px;
+      font-size: 12px;
+      letter-spacing: 1.2px;
+    }
+
+    h1 {
+      font-size: clamp(44px, 6vw, 78px);
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin: 24px 0;
+    }
+
+    .gradient {
+      background: linear-gradient(90deg, var(--cyan), #83a9ff, #d178ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      max-width: 560px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.8;
+    }
+
+    .hero-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .btn {
+      display: inline-flex;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      border: 1px solid #49617e;
+      background: #14233b;
+    }
+
+    .btn.primary {
+      background: linear-gradient(110deg, #08b9dc, #7147ed);
+      border-color: transparent;
+    }
+
+    .globe-wrap {
+      min-height: 390px;
+      display: grid;
+      place-items: center;
+      perspective: 900px;
+    }
+
+    .globe {
+      position: relative;
+      width: min(75vw, 350px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 27%, #44e9ff50, transparent 34%),
+        radial-gradient(circle at 75% 80%, #a344ff44, transparent 44%),
+        radial-gradient(circle at 50% 50%, #112c5b, #050e25 72%);
+      border: 1px solid #39e8ff90;
+      box-shadow:
+        inset -30px -20px 65px #01040f,
+        inset 15px 15px 40px #2ceaff25,
+        0 0 45px #0ddaff35,
+        0 0 110px #713cff25;
+      overflow: hidden;
+      animation: float 7s ease-in-out infinite;
+    }
+
+    .globe::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent 0 33px,
+          #31e9ff30 34px,
+          transparent 35px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent 0 44px,
+          #31e9ff25 45px,
+          transparent 46px
+        );
+      transform: rotate(-18deg);
+    }
+
+    .globe::after {
+      content: "XSUS";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: clamp(45px, 7vw, 72px);
+      font-weight: 900;
+      letter-spacing: 7px;
+      color: #c9faff;
+      text-shadow: 0 0 25px #00eaff;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-13px); }
+    }
+
+    .modules {
+      max-width: 1200px;
+      margin: auto;
+      padding: 35px 22px 90px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 35px;
+      margin-bottom: 12px;
+    }
+
+    .section-desc {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 35px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 17px;
+    }
+
+    .card {
+      display: block;
+      min-width: 0;
+      border: 1px solid #ffffff20;
+      border-radius: 19px;
+      padding: 25px;
+      background: linear-gradient(145deg, #14213bdf, #0b1024e8);
+      transition: transform .2s, border-color .2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: #23dfff88;
+    }
+
+    .card-icon {
+      display: grid;
+      place-items: center;
+      width: 51px;
+      height: 51px;
+      border-radius: 14px;
+      font-size: 25px;
+      background: #1b3150;
+      margin-bottom: 20px;
+    }
+
+    .card h3 { font-size: 21px; margin: 0 0 10px; }
+    .card p { color: var(--muted); line-height: 1.65; }
+    .card span { color: var(--cyan); font-size: 13px; }
+
+    footer {
+      border-top: 1px solid #ffffff18;
+      padding: 30px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    footer strong {
+      display: block;
+      color: white;
+      margin-bottom: 7px;
+      letter-spacing: 2px;
+    }
+
+    @media (max-width: 800px) {
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding-top: 48px;
+      }
+
+      .hero p { margin-inline: auto; }
+      .hero-buttons { justify-content: center; }
+      .globe-wrap { min-height: 310px; }
+      .globe { width: min(70vw, 290px); }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .menu-toggle { display: inline-block; }
+
+      .nav {
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 20px 20px;
+        background: #09162b;
+        border-top: 1px solid #20e8ff33;
+      }
+
+      .nav.open { display: flex; }
+
+      .nav a {
+        display: block;
+        background: #132843;
+        color: #66eaff;
+        border: 1px solid #29b8db44;
+        padding: 13px 16px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .topbar { padding: 13px; }
+      .brand-name { font-size: 14px; }
+      .brand-tag { font-size: 8px; }
+      .mark { width: 40px; height: 40px; }
+      .actions { gap: 5px; }
+      .actions a, .actions select, .menu-toggle {
+        padding: 9px 7px;
+        font-size: 11px;
+      }
+      .grid { grid-template-columns: 1fr; }
+      .hero { padding-inline: 18px; }
+      h1 { font-size: 47px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .globe { animation: none; }
+      .card { transition: none; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="page">
+
+  <header class="header">
+    <div class="topbar">
+      <a class="brand" href="index-v2.html">
+        <div class="mark">X</div>
+        <div>
+          <div class="brand-name">XSUS STUDIO</div>
+          <div class="brand-tag">THE X IDENTITY</div>
+        </div>
+      </a>
+
+      <div class="actions">
+        <select id="language" aria-label="Language">
+          <option value="en">EN</option>
+          <option value="sq">SQ</option>
+          <option value="fr">FR</option>
+        </select>
+        <a href="auth.html" data-t="login">Login</a>
+        <a href="auth.html" class="signup" data-t="signup">Sign Up</a>
+        <button class="menu-toggle" id="menuButton"
+          aria-label="Toggle menu"
+          aria-expanded="false"
+          aria-controls="navigation">☰</button>
+      </div>
+    </div>
+
+    <nav class="nav" id="navigation">
+      <a href="index-v2.html" data-t="home">Home</a>
+      <a href="ai.html">XSUS AI</a>
+      <a href="app.html">XSUS App</a>
+      <a href="web.html">XSUS Web</a>
+      <a href="game.html">XSUS Game</a>
+      <a href="logo.html">XSUS Logo</a>
+      <a href="domain.html">XSUS Domain</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">XSUS GLOBAL TECHNOLOGY PLATFORM</div>
+        <h1>
+          Build Beyond<br>
+          <span class="gradient">Boundaries.</span>
+        </h1>
+        <p data-t="intro">
+          A unified technology studio for artificial intelligence,
+          applications, websites, games, visual identities and domains.
+        </p>
+        <div class="hero-buttons">
+          <a href="#modules" class="btn primary" data-t="explore">
+            Explore Modules
+          </a>
+          <a href="ai.html" class="btn">Discover XSUS AI</a>
+        </div>
+      </div>
+
+      <div class="globe-wrap">
+        <div class="globe" aria-label="XSUS digital globe"
+          role="img"></div>
+      </div>
+    </section>
+
+    <section class="modules" id="modules">
+      <h2 class="section-title" data-t="modules">
+        Explore Our Ecosystem
+      </h2>
+      <p class="section-desc" data-t="subtitle">
+        Six products. One technological identity.
+      </p>
+
+      <div class="grid">
+        <a class="card" href="ai.html">
+          <div class="card-icon">✦</div>
+          <h3>XSUS AI</h3>
+          <p data-t="ai">Intelligence, knowledge and AI-powered experiences.</p>
+          <span>Explore →</span>
+        </a>
+
+        <a class="card" href="app.html">
+          <div class="card-icon">▣</div>
+          <h3>XSUS App</h3>
+          <p data-t="app">Create and develop modern digital applications.</p>
+          <span>Explore →</span>
+        </a>
+
+        <a class="card" href="web.html">
+          <div class="card-icon">◎</div>
+          <h3>XSUS Web</h3>
+          <p data-t="web">Design and build modern websites.</p>
+          <span>Explore →</span>
+        </a>
+
+        <a class="card" href="game.html">
+          <div class="card-icon">◈</div>
+          <h3>XSUS Game</h3>
+          <p data-t="game">Explore interactive game development.</p>
+          <span>Explore →</span>
+        </a>
+
+        <a class="card" href="logo.html">
+          <div class="card-icon">◇</div>
+          <h3>XSUS Logo</h3>
+          <p data-t="logo">Create distinctive visual identities.</p>
+          <span>Explore →</span>
+        </a>
+
+        <a class="card" href="domain.html">
+          <div class="card-icon">◉</div>
+          <h3>XSUS Domain</h3>
+          <p data-t="domain">Explore domains and digital identity.</p>
+          <span>Explore →</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <strong>XSUS STUDIO</strong>
+    THE X IDENTITY<br>
+    © 2026 XSUS Studio. All rights reserved.
+  </footer>
+</div>
+
+<script>
+  const menuButton = document.getElementById("menuButton");
+  const navigation = document.getElementById("navigation");
+
+  menuButton.addEventListener("click", () => {
+    const opened = navigation.classList.toggle("open");
+    menuButton.setAttribute("aria-expanded", String(opened));
+  });
+
+  navigation.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", () => {
+      navigation.classList.remove("open");
+      menuButton.setAttribute("aria-expanded", "false");
+    });
+  });
+
+  const translations = {
+    en: {
+      home: "Home",
+      login: "Login",
+      signup: "Sign Up",
+      intro: "A unified technology studio for artificial intelligence, applications, websites, games, visual identities and domains.",
+      explore: "Explore Modules",
+      modules: "Explore Our Ecosystem",
+      subtitle: "Six products. One technological identity.",
+      ai: "Intelligence, knowledge and AI-powered experiences.",
+      app: "Create and develop modern digital applications.",
+      web: "Design and build modern websites.",
+      game: "Explore interactive game development.",
+      logo: "Create distinctive visual identities.",
+      domain: "Explore domains and digital identity."
+    },
+    sq: {
+      home: "Kreu",
+      login: "Hyr",
+      signup: "Regjistrohu",
+      intro: "Një studio teknologjike për inteligjencën artificiale, aplikacionet, faqet web, lojërat, identitetet vizuale dhe domenet.",
+      explore: "Shiko Modulet",
+      modules: "Eksploro Ekosistemin",
+      subtitle: "Gjashtë produkte. Një identitet teknologjik.",
+      ai: "Inteligjencë, njohuri dhe përvoja me AI.",
+      app: "Krijo dhe zhvillo aplikacione moderne.",
+      web: "Dizajno dhe ndërto faqe web moderne.",
+      game: "Eksploro zhvillimin e lojërave interaktive.",
+      logo: "Krijo identitete vizuale të veçanta.",
+      domain: "Eksploro domenet dhe identitetin digjital."
+    },
+    fr: {
+      home: "Accueil",
+      login: "Connexion",
+      signup: "S'inscrire",
+      intro: "Un studio technologique pour l'intelligence artificielle, les applications, les sites web, les jeux, les identités visuelles et les domaines.",
+      explore: "Explorer les modules",
+      modules: "Explorer notre écosystème",
+      subtitle: "Six produits. Une identité technologique.",
+      ai: "Intelligence, connaissances et expériences IA.",
+      app: "Créer et développer des applications modernes.",
+      web: "Concevoir et créer des sites web modernes.",
+      game: "Explorer le développement de jeux interactifs.",
+      logo: "Créer des identités visuelles distinctives.",
+      domain: "Explorer les domaines et l'identité numérique."
+    }
+  };
+
+  document.getElementById("language")
+    .addEventListener("change", event => {
+      const lang = event.target.value;
+      document.documentElement.lang = lang;
+
+      document.querySelectorAll("[data-t]").forEach(element => {
+        const key = element.dataset.t;
+        if (translations[lang][key]) {
+          element.textContent = translations[lang][key];
+        }
+      });
+    });
+</script>
+</body>
+</html>
