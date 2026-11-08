@@ -1,38 +1,32 @@
 
 /**
  * XSUS AI V3 — Chat Controller
- * Version: 3.1.0
+ * Version: 3.2.0
  * Brand: THE X IDENTITY
  *
- * Responsibilities:
- * - Create and manage conversations
- * - Send and render messages
- * - Maintain local conversation history
- * - Support file attachments
- * - Display official XSUS AI assistant avatar
- * - Prepare controlled AI integration
- * - Handle loading and errors
- *
- * No direct dependency on XSUS AI Core
- * or Hyper XSUS Core.
+ * Privacy-first, in-memory conversations.
+ * No browser persistence or account-wide history is enabled.
+ * Authenticated persistence requires a separately audited server API.
+ * No direct dependency on XSUS AI Core or Hyper XSUS Core.
  */
 
-export const CHAT_VERSION = "3.1.0";
+export const CHAT_VERSION = "3.2.0";
 
-const STORAGE_KEY = "xsus-ai-v3-conversations";
-
-const ASSISTANT_LOGO_PATH =
-  "assets/images/xsus-ai-logo.png";
-
+// Legacy storage is removed on initialization. Never write chat data here.
+const LEGACY_STORAGE_KEY = "xsus-ai-v3-conversations";
+const ASSISTANT_LOGO_PATH = "assets/images/xsus-ai-logo.png";
 const MAX_CONVERSATIONS = 100;
 const MAX_MESSAGES = 200;
 const MAX_MESSAGE_LENGTH = 12000;
+const VALID_ROLES = Object.freeze(["user", "assistant", "system"]);
 
-const VALID_ROLES = Object.freeze([
-  "user",
-  "assistant",
-  "system"
-]);
+function clearLegacyStorage() {
+  try {
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+  } catch {
+    // Storage may be disabled. Chat remains usable in memory.
+  }
+}
 
 function createId() {
   if (
@@ -42,9 +36,7 @@ function createId() {
     return crypto.randomUUID();
   }
 
-  throw new Error(
-    "Secure conversation IDs are unavailable."
-  );
+  throw new Error("Secure conversation IDs are unavailable.");
 }
 
 function timestamp() {
@@ -59,10 +51,7 @@ function createMessage(role, content, attachments = []) {
   return {
     id: createId(),
     role,
-    content: String(content).slice(
-      0,
-      MAX_MESSAGE_LENGTH
-    ),
+    content: String(content).slice(0, MAX_MESSAGE_LENGTH),
     attachments: attachments.map(file => ({
       name: String(file.name || ""),
       size: Number(file.size || 0),
@@ -84,85 +73,10 @@ function createConversation() {
   };
 }
 
-function safeReadStorage() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw);
-
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed
-      .filter(item => {
-        return (
-          item &&
-          typeof item.id === "string" &&
-          typeof item.title === "string" &&
-          Array.isArray(item.messages)
-        );
-      })
-      .slice(0, MAX_CONVERSATIONS)
-      .map(item => ({
-        id: item.id,
-        title: item.title.slice(0, 100),
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        messages: item.messages
-          .filter(message => {
-            return (
-              message &&
-              VALID_ROLES.includes(message.role) &&
-              typeof message.content === "string"
-            );
-          })
-          .slice(-MAX_MESSAGES)
-          .map(message => ({
-            id: String(message.id || ""),
-            role: message.role,
-            content: message.content.slice(
-              0,
-              MAX_MESSAGE_LENGTH
-            ),
-            attachments: Array.isArray(
-              message.attachments
-            )
-              ? message.attachments
-                  .slice(0, 5)
-                  .map(file => ({
-                    name: String(file.name || ""),
-                    size: Number(file.size || 0),
-                    type: String(file.type || "")
-                  }))
-              : [],
-            createdAt: message.createdAt
-          }))
-      }));
-  } catch {
-    return [];
-  }
-}
-
-function safeWriteStorage(conversations) {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(conversations)
-    );
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function formatTitle(content) {
   const clean = content.trim().replace(/\s+/g, " ");
 
-  if (!clean) {
-    return "New conversation";
-  }
+  if (!clean) return "New conversation";
 
   return clean.length > 48
     ? `${clean.slice(0, 48)}…`
@@ -172,65 +86,35 @@ function formatTitle(content) {
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
 
-  if (className) {
-    element.className = className;
-  }
-
-  if (text !== undefined) {
-    element.textContent = text;
-  }
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
 
   return element;
 }
 
-/**
- * Create avatar for assistant/system messages.
- *
- * Assistant:
- * Official XSUS AI logo.
- *
- * System:
- * Original informational symbol.
- *
- * The image is presentation-only.
- * It does not modify messages or storage.
- */
 function createMessageAvatar(role) {
-  const avatar = createElement(
-    "div",
-    "xsus-chat-avatar"
-  );
+  const avatar = createElement("div", "xsus-chat-avatar");
 
   if (role === "assistant") {
-    avatar.classList.add(
-      "xsus-chat-avatar-assistant"
-    );
-
-    avatar.setAttribute(
-      "aria-label",
-      "XSUS AI"
-    );
+    avatar.classList.add("xsus-chat-avatar-assistant");
+    avatar.setAttribute("aria-label", "XSUS AI");
 
     const image = document.createElement("img");
-
     image.src = ASSISTANT_LOGO_PATH;
     image.alt = "XSUS AI";
     image.width = 34;
     image.height = 34;
     image.decoding = "async";
-
     image.style.display = "block";
     image.style.width = "100%";
     image.style.height = "100%";
     image.style.objectFit = "contain";
 
     avatar.append(image);
-
     return avatar;
   }
 
   avatar.textContent = "i";
-
   return avatar;
 }
 
@@ -244,7 +128,6 @@ export function createChatController(options = {}) {
     historyContainer = null,
     newChatButton = null,
     attachmentsController = null,
-
     onSend = null,
     onError = () => {},
     onConversationChange = () => {}
@@ -268,12 +151,13 @@ export function createChatController(options = {}) {
     );
   }
 
+  // Remove legacy, shared-browser conversation history.
+  clearLegacyStorage();
+
   let destroyed = false;
   let sending = false;
-
-  let conversations = safeReadStorage();
-  let activeConversationId =
-    conversations[0]?.id || null;
+  let conversations = [];
+  let activeConversationId = null;
 
   const cleanups = [];
 
@@ -291,18 +175,6 @@ export function createChatController(options = {}) {
     return conversations.find(
       item => item.id === activeConversationId
     ) || null;
-  }
-
-  function persist() {
-    const saved = safeWriteStorage(conversations);
-
-    if (!saved) {
-      onError(
-        "Historiku nuk mund të ruhej në këtë shfletues."
-      );
-    }
-
-    return saved;
   }
 
   function emitConversationChange() {
@@ -338,16 +210,10 @@ export function createChatController(options = {}) {
     wrapper.dataset.messageId = message.id;
 
     if (message.role !== "user") {
-      wrapper.append(
-        createMessageAvatar(message.role)
-      );
+      wrapper.append(createMessageAvatar(message.role));
     }
 
-    const bubble = createElement(
-      "div",
-      "xsus-chat-bubble"
-    );
-
+    const bubble = createElement("div", "xsus-chat-bubble");
     const content = createElement(
       "div",
       "xsus-chat-message-content"
@@ -379,8 +245,33 @@ export function createChatController(options = {}) {
     }
 
     wrapper.append(bubble);
-
     return wrapper;
+  }
+
+  function updateWorkspaceState(hasMessages) {
+    if (conversationContainer) {
+      conversationContainer.hidden = !hasMessages;
+    }
+
+    if (welcomeContainer) {
+      welcomeContainer.hidden = hasMessages;
+    }
+
+    const workspace = messagesContainer.closest(
+      ".xsus-ai-workspace"
+    );
+
+    if (workspace) {
+      workspace.classList.toggle(
+        "is-chatting",
+        hasMessages
+      );
+
+      workspace.classList.toggle(
+        "is-welcome",
+        !hasMessages
+      );
+    }
   }
 
   function renderMessages() {
@@ -394,44 +285,12 @@ export function createChatController(options = {}) {
     }
 
     for (const message of conversation.messages) {
-      messagesContainer.append(
-        renderMessage(message)
-      );
+      messagesContainer.append(renderMessage(message));
     }
 
-    updateWorkspaceState(
-      conversation.messages.length > 0
-    );
-
+    updateWorkspaceState(conversation.messages.length > 0);
     messagesContainer.scrollTop =
       messagesContainer.scrollHeight;
-  }
-
-  function updateWorkspaceState(hasMessages) {
-    if (conversationContainer) {
-      conversationContainer.hidden = !hasMessages;
-    }
-
-    if (welcomeContainer) {
-      welcomeContainer.hidden = hasMessages;
-    }
-
-    const workspace =
-      messagesContainer.closest(
-        ".xsus-ai-workspace"
-      );
-
-    if (workspace) {
-      workspace.classList.toggle(
-        "is-chatting",
-        hasMessages
-      );
-
-      workspace.classList.toggle(
-        "is-welcome",
-        !hasMessages
-      );
-    }
   }
 
   function renderHistory() {
@@ -447,8 +306,7 @@ export function createChatController(options = {}) {
       );
 
       item.type = "button";
-      item.dataset.conversationId =
-        conversation.id;
+      item.dataset.conversationId = conversation.id;
 
       item.classList.toggle(
         "is-active",
@@ -464,6 +322,8 @@ export function createChatController(options = {}) {
   }
 
   function refresh() {
+    if (destroyed) return;
+
     renderMessages();
     renderHistory();
     updateSendButton();
@@ -474,23 +334,14 @@ export function createChatController(options = {}) {
     if (destroyed || sending) return null;
 
     const conversation = createConversation();
-
     conversations.unshift(conversation);
-
-    conversations = conversations.slice(
-      0,
-      MAX_CONVERSATIONS
-    );
-
+    conversations = conversations.slice(0, MAX_CONVERSATIONS);
     activeConversationId = conversation.id;
 
     input.value = "";
-
     attachmentsController?.clearFiles?.();
 
-    persist();
     refresh();
-
     input.focus();
 
     return conversation.id;
@@ -506,10 +357,7 @@ export function createChatController(options = {}) {
     if (!exists) return false;
 
     activeConversationId = id;
-
-    persist();
     refresh();
-
     return true;
   }
 
@@ -527,13 +375,10 @@ export function createChatController(options = {}) {
     );
 
     if (activeConversationId === id) {
-      activeConversationId =
-        conversations[0]?.id || null;
+      activeConversationId = conversations[0]?.id || null;
     }
 
-    persist();
     refresh();
-
     return true;
   }
 
@@ -541,19 +386,11 @@ export function createChatController(options = {}) {
     const conversation = getActiveConversation();
 
     if (!conversation) {
-      throw new Error(
-        "No active conversation."
-      );
+      throw new Error("No active conversation.");
     }
 
-    const message = createMessage(
-      role,
-      content,
-      files
-    );
-
+    const message = createMessage(role, content, files);
     conversation.messages.push(message);
-
     conversation.messages =
       conversation.messages.slice(-MAX_MESSAGES);
 
@@ -567,8 +404,6 @@ export function createChatController(options = {}) {
     }
 
     conversation.updatedAt = timestamp();
-
-    persist();
     refresh();
 
     return message;
@@ -582,20 +417,11 @@ export function createChatController(options = {}) {
 
     wrapper.dataset.typing = "true";
 
-    // Official XSUS AI avatar during loading.
-    const avatar = createMessageAvatar(
-      "assistant"
-    );
-
-    const typing = createElement(
-      "div",
-      "xsus-chat-typing"
-    );
+    const avatar = createMessageAvatar("assistant");
+    const typing = createElement("div", "xsus-chat-typing");
 
     for (let i = 0; i < 3; i++) {
-      typing.append(
-        createElement("span")
-      );
+      typing.append(createElement("span"));
     }
 
     wrapper.append(avatar, typing);
@@ -615,9 +441,7 @@ export function createChatController(options = {}) {
     if (!content) return false;
 
     if (content.length > MAX_MESSAGE_LENGTH) {
-      onError(
-        "Mesazhi tejkalon kufirin e lejuar."
-      );
+      onError("Mesazhi tejkalon kufirin e lejuar.");
       return false;
     }
 
@@ -642,7 +466,6 @@ export function createChatController(options = {}) {
     );
 
     input.value = "";
-
     attachmentsController?.clearFiles?.();
 
     sending = true;
@@ -657,12 +480,10 @@ export function createChatController(options = {}) {
         conversationId: conversation.id,
         message: userMessage.content,
         attachments: files,
-        history: conversation.messages.map(
-          item => ({
-            role: item.role,
-            content: item.content
-          })
-        )
+        history: conversation.messages.map(item => ({
+          role: item.role,
+          content: item.content
+        }))
       });
 
       if (
@@ -670,32 +491,33 @@ export function createChatController(options = {}) {
         typeof response.answer !== "string" ||
         !response.answer.trim()
       ) {
-        throw new Error(
-          "Invalid AI response."
-        );
+        throw new Error("Invalid AI response.");
       }
 
-      typingIndicator.remove();
-
-      appendMessage(
-        "assistant",
-        response.answer
-      );
+      if (!destroyed) {
+        typingIndicator.remove();
+        appendMessage("assistant", response.answer);
+      }
 
       return true;
     } catch (error) {
       typingIndicator.remove();
 
-      onError(
-        error instanceof Error
-          ? error.message
-          : "Ndodhi një gabim gjatë përgjigjes."
-      );
+      if (!destroyed) {
+        onError(
+          error instanceof Error
+            ? error.message
+            : "Ndodhi një gabim gjatë përgjigjes."
+        );
+      }
 
       return false;
     } finally {
       sending = false;
-      updateSendButton();
+
+      if (!destroyed) {
+        updateSendButton();
+      }
     }
   }
 
@@ -710,29 +532,10 @@ export function createChatController(options = {}) {
     }
   }
 
-  listen(
-    input,
-    "input",
-    updateSendButton
-  );
-
-  listen(
-    input,
-    "keydown",
-    handleInputKeydown
-  );
-
-  listen(
-    sendButton,
-    "click",
-    sendMessage
-  );
-
-  listen(
-    newChatButton,
-    "click",
-    newConversation
-  );
+  listen(input, "input", updateSendButton);
+  listen(input, "keydown", handleInputKeydown);
+  listen(sendButton, "click", sendMessage);
+  listen(newChatButton, "click", newConversation);
 
   refresh();
 
@@ -766,12 +569,16 @@ export function createChatController(options = {}) {
       if (destroyed) return;
 
       destroyed = true;
+      cleanups.forEach(cleanup => cleanup());
 
-      cleanups.forEach(
-        cleanup => cleanup()
-      );
+      conversations = [];
+      activeConversationId = null;
 
       messagesContainer.replaceChildren();
+
+      if (historyContainer) {
+        historyContainer.replaceChildren();
+      }
     }
   });
 }
