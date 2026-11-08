@@ -1,34 +1,60 @@
 
 /**
- * XSUS STUDIO — GLOBI V4.1
+ * XSUS STUDIO — GLOBI V4.2
+ * Official XSUS Logo Integration
  * Interactive Neon Globe
+ * THE X IDENTITY
  */
 
-.globe-wrap {
-  min-height: 400px;
+:root {
+  --xsus-bg: #050a18;
+  --xsus-cyan: #20e8ff;
+  --xsus-blue: #3478ff;
+  --xsus-violet: #a26cff;
+}
+
+/* =====================================
+   GLOBE CONTAINER
+===================================== */
+
+.globe-wrap,
+.xsus-globe-scene {
+  position: relative;
   display: grid;
   place-items: center;
-  position: relative;
-  isolation: isolate;
+  min-height: 400px;
   perspective: 1000px;
+  isolation: isolate;
 }
+
+/* =====================================
+   BACKGROUND GLOW
+===================================== */
 
 .globe-wrap::before {
   content: "";
   position: absolute;
+
   width: min(90%, 430px);
   aspect-ratio: 1;
+
   border-radius: 50%;
+
   background: radial-gradient(
     circle,
-    #20e8ff25,
+    #20e8ff25 0%,
     #a26cff12 45%,
     transparent 70%
   );
+
   filter: blur(25px);
   z-index: -1;
   pointer-events: none;
 }
+
+/* =====================================
+   MAIN INTERACTIVE GLOBE
+===================================== */
 
 .xsus-globe {
   --globe-x: -18deg;
@@ -36,10 +62,13 @@
 
   position: relative;
   display: block;
+
   width: min(75vw, 360px);
   aspect-ratio: 1;
+
   border-radius: 50%;
   overflow: hidden;
+
   border: 1px solid #20e8ff99;
 
   background:
@@ -67,6 +96,7 @@
 
   cursor: grab;
   touch-action: none;
+
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -78,11 +108,17 @@
   cursor: grabbing;
 }
 
+/* =====================================
+   INTERACTIVE ROTATING GRID
+===================================== */
+
 .xsus-globe::before {
   content: "";
   position: absolute;
+
   inset: -35%;
   border-radius: 50%;
+
   pointer-events: none;
 
   background:
@@ -108,24 +144,40 @@
   will-change: transform;
 }
 
+/* =====================================
+   OFFICIAL XSUS STUDIO LOGO
+===================================== */
+
 .xsus-globe::after {
-  content: "XSUS";
+  content: "";
+
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: #d8faff;
-  font-size: clamp(48px, 7vw, 75px);
-  font-weight: 900;
-  letter-spacing: 7px;
-  text-shadow:
-    0 0 15px #00eaff,
-    0 0 35px #00eaff66;
+  z-index: 2;
+
+  inset: 17%;
+  border-radius: 50%;
+
+  background-image:
+    url("../images/xsus-studio-logo.png");
+
+  background-position: center 28%;
+  background-size: 150% auto;
+  background-repeat: no-repeat;
+
   pointer-events: none;
+
+  filter:
+    drop-shadow(0 0 12px #20e8ff66)
+    drop-shadow(0 0 25px #a26cff33);
 }
 
+/* =====================================
+   FLOAT ANIMATION
+===================================== */
+
 @keyframes xsusFloat {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
 
@@ -134,8 +186,13 @@
   }
 }
 
+/* =====================================
+   TABLET
+===================================== */
+
 @media (max-width: 800px) {
-  .globe-wrap {
+  .globe-wrap,
+  .xsus-globe-scene {
     min-height: 320px;
   }
 
@@ -144,15 +201,29 @@
   }
 }
 
+/* =====================================
+   MOBILE
+===================================== */
+
 @media (max-width: 520px) {
-  .globe-wrap {
+  .globe-wrap,
+  .xsus-globe-scene {
     min-height: 300px;
   }
 
   .xsus-globe {
     width: min(75vw, 290px);
   }
+
+  .xsus-globe::after {
+    inset: 16%;
+    background-size: 150% auto;
+  }
 }
+
+/* =====================================
+   REDUCED MOTION
+===================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .xsus-globe {
