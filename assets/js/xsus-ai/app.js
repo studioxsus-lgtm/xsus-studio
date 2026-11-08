@@ -31,6 +31,18 @@ import {
   createChatController
 } from "./chat.js";
 
+/**
+ * XSUS AI Core HTTP Adapter
+ *
+ * Communicates with XSUS AI Core through
+ * the controlled HTTP integration boundary.
+ *
+ * Does not import internal AI Core modules.
+ */
+import {
+  createXSUSCoreAdapter
+} from "./adapters/xsus-ai-core-adapter.js";
+
 export const XSUS_APP_VERSION = "3.0.0";
 
 const SELECTORS = Object.freeze({
@@ -447,6 +459,7 @@ export function createXSUSAIApp(options = {}) {
       initializeSuggestions();
 
       app.dataset.xsusInitialized = "true";
+
       app.dataset.aiConnected = String(
         Boolean(adapter)
       );
@@ -535,8 +548,8 @@ export function createXSUSAIApp(options = {}) {
  * Runs only when the V3 application root
  * is present in the document.
  *
- * A real AI adapter can be supplied later
- * through an explicit integration entrypoint.
+ * The real XSUS AI Core HTTP adapter is
+ * explicitly supplied at this boundary.
  */
 
 function bootXSUSAI() {
@@ -551,7 +564,17 @@ function bootXSUSAI() {
   }
 
   try {
-    const instance = createXSUSAIApp();
+    const instance = createXSUSAIApp({
+      aiAdapter: createXSUSCoreAdapter({
+        getLanguage: () => {
+          const select = document.querySelector(
+            "[data-xsus-language-select]"
+          );
+
+          return select?.value || "sq";
+        }
+      })
+    });
 
     window.XSUSAI = instance;
   } catch (error) {
