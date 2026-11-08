@@ -1,4 +1,3 @@
-
 /**
  * XSUS AI Core — Request Orchestrator
  * Version: 1.2.0
@@ -19,6 +18,11 @@
  * - XSUS Knowledge Service Fallback
  * - Injectable Knowledge Adapter
  * - Standardized Retrieval Metadata
+ *
+ * Conversation Integration:
+ * - Conversation Response Engine v1.0.0
+ * - Previous Question Retrieval
+ * - Knowledge Retrieval Bypass
  */
 
 import {
@@ -68,6 +72,10 @@ import {
 } from "./response-engine.js";
 
 import {
+  createConversationResponse
+} from "./conversation-response-engine.js";
+
+import {
   createResponseQualityPipeline
 } from "./response-quality-pipeline.js";
 
@@ -99,13 +107,9 @@ const memoryRetrievalEngine =
 let memoryPersistenceInstance = null;
 let modelOrchestratorInstance = null;
 
-// Hyper XSUS Core integration.
 let hyperKnowledgeAdapterInstance = null;
 let knowledgeRetrievalRouterInstance = null;
 
-/**
- * Configures the memory persistence adapter.
- */
 export function configureAICoreMemoryPersistence(
   instance = null
 ) {
@@ -125,9 +129,6 @@ export function configureAICoreMemoryPersistence(
   memoryPersistenceInstance = instance;
 }
 
-/**
- * Configures the model orchestrator.
- */
 export function configureAICoreModelOrchestrator(
   instance = null
 ) {
@@ -146,15 +147,6 @@ export function configureAICoreModelOrchestrator(
   modelOrchestratorInstance = instance;
 }
 
-/**
- * Configures the Hyper XSUS Core Knowledge Adapter.
- *
- * The adapter must be initialized and populated by the
- * Hyper XSUS Core integration layer before injection.
- *
- * Passing null disables Hyper retrieval and leaves the
- * existing XSUS Knowledge Service as the retrieval source.
- */
 export function configureAICoreKnowledgeAdapter(
   instance = null
 ) {
@@ -171,17 +163,9 @@ export function configureAICoreKnowledgeAdapter(
   }
 
   hyperKnowledgeAdapterInstance = instance;
-
-  // Recreate the router on its next use.
   knowledgeRetrievalRouterInstance = null;
 }
 
-/**
- * Lazily creates the Knowledge Retrieval Router.
- *
- * Hyper XSUS Core is the primary source when configured.
- * XSUS Knowledge Service is retained as automatic fallback.
- */
 function getKnowledgeRetrievalRouter() {
   if (!knowledgeRetrievalRouterInstance) {
     knowledgeRetrievalRouterInstance =
@@ -871,12 +855,6 @@ function buildContextMetadata({
   };
 }
 
-/*
- * Public memoryRetrieval contract:
- * only enabled and retrievedCount.
- *
- * Diagnostics are kept in memoryDiagnostics.
- */
 function buildMemoryRetrievalMetadata(
   memoryEnabled,
   conversationId,
@@ -1123,12 +1101,6 @@ function buildKnowledgeContext(results) {
     .join("\n\n");
 }
 
-/**
- * XSUS AI Core — Model Request Bridge
- *
- * Forwards normalized requests to the Model Orchestrator.
- * Preserves memory and knowledge context.
- */
 async function generateWithModel({
   contextualQuery,
   language,
@@ -1436,10 +1408,150 @@ export async function processAIRequest(input = {}) {
     }
 
     // --------------------------------------------------
+    // Conversation Response Engine
+    // --------------------------------------------------
+
+    const conversationResponse = createConversationResponse({
+      query: requestContext.query,
+      language,
+      history,
+      requestId,
+      conversationId: conversationId || null
+    });
+
+    if (conversationResponse.handled) {
+      const answer =
+        typeof conversationResponse.answer === "string"
+          ? conversationResponse.answer.trim()
+          : "";
+
+      if (!answer) {
+        return createErrorResponse({
+          message: GENERIC_ERROR_MESSAGE,
+          requestId,
+          language,
+          code: AI_ERROR_CODES.EMPTY_RESPONSE,
+          exposeMessage: false,
+          metadata: buildErrorMetadata({
+            requestId,
+            language,
+            conversationId,
+            history,
+            memoryEnabled,
+            retrievedMemory
+          })
+        });
+      }
+
+      let responseQuality = null;
+
+      try {
+        const pipelineResult =
+          responseQualityPipeline.evaluate({
+            query: requestContext.query,
+            answer,
+            expectedLanguage: language,
+            responseLanguage: language,
+            sources: []
+          });
+
+        if (
+          pipelineResult &&
+          pipelineResult.quality &&
+          typeof pipelineResult.quality === "object"
+        ) {
+          responseQuality = pipelineResult.quality;
+        }
+      } catch {
+        responseQuality = null;
+      }
+
+      if (memoryEnabled) {
+        saveMemoryMessage(
+          conversationId,
+          "assistant",
+          answer
+        );
+
+        await persistMemorySession(conversationId);
+      }
+
+      const standardizedResponse = {
+        success: true,
+        answer,
+        confidence: 0,
+        version: conversationResponse.version,
+        metadata: conversationResponse.metadata
+      };
+
+      const metadata = buildMetadata({
+        language,
+        results: [],
+        knowledge: {
+          metadata: {
+            retrievalSource: null,
+            fallbackUsed: false,
+            retrievalError: null
+          }
+        },
+        context: {
+          ...context,
+          messages: history
+        },
+        history,
+        requestId,
+        conversationId,
+        memoryEnabled,
+        retrievedMemory,
+        responseResult: standardizedResponse,
+        responseQuality,
+        modelResult: null
+      });
+
+      metadata.conversationResponse = {
+        handled: true,
+        version: conversationResponse.version,
+        previousQuestionFound: Boolean(
+          conversationResponse.metadata
+            ?.previousQuestionFound
+        )
+      };
+
+      const response = createAIResponse({
+        requestId,
+        answer,
+        language,
+        source: conversationResponse.source,
+        confidence: 0,
+        metadata
+      });
+
+      return {
+        ...response,
+        requestId,
+        answer,
+        language,
+        source: conversationResponse.source,
+        confidence: 0,
+        version: AI_CORE_VERSION,
+        timestamp:
+          response.timestamp || new Date().toISOString(),
+        metadata: {
+          ...response.metadata,
+          ...metadata,
+          memoryRetrieval: buildMemoryRetrievalMetadata(
+            memoryEnabled,
+            conversationId,
+            retrievedMemory
+          ),
+          engine: "xsus-ai-core",
+          version: AI_CORE_VERSION
+        }
+      };
+    }
+
+    // --------------------------------------------------
     // Knowledge Retrieval
-    //
-    // Primary: Hyper XSUS Core
-    // Fallback: XSUS Knowledge Service
     // --------------------------------------------------
 
     let retrieval;
@@ -1460,7 +1572,6 @@ export async function processAIRequest(input = {}) {
         }
       );
     } catch (error) {
-      // Unexpected internal errors must not be exposed.
       return createErrorResponse({
         message: GENERIC_ERROR_MESSAGE,
         requestId,
@@ -1716,14 +1827,11 @@ export async function processAIRequest(input = {}) {
       metadata: {
         ...response.metadata,
         ...metadata,
-
-        // Preserve the public memory contract.
         memoryRetrieval: buildMemoryRetrievalMetadata(
           memoryEnabled,
           conversationId,
           retrievedMemory
         ),
-
         engine: "xsus-ai-core",
         version: AI_CORE_VERSION
       }
