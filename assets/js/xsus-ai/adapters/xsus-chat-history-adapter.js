@@ -1,7 +1,7 @@
 
 /**
  * XSUS AI — Private Chat History Adapter
- * Version: 1.1.0
+ * Version: 1.1.1
  *
  * Brand: THE X IDENTITY
  *
@@ -30,7 +30,7 @@ import {
   supabase
 } from "../../../../services/supabase-client.js";
 
-export const CHAT_HISTORY_ADAPTER_VERSION = "1.1.0";
+export const CHAT_HISTORY_ADAPTER_VERSION = "1.1.1";
 
 /* ============================================
    UUID VALIDATION
@@ -39,6 +39,9 @@ export const CHAT_HISTORY_ADAPTER_VERSION = "1.1.0";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+/**
+ * Validate conversation UUID.
+ */
 function validateConversationId(conversationId) {
   if (
     typeof conversationId !== "string" ||
@@ -59,18 +62,54 @@ function validateConversationId(conversationId) {
 /**
  * Returns the authenticated Supabase user,
  * or null when no valid session exists.
+ *
+ * A local session alone is not considered
+ * sufficient proof of authentication.
  */
 async function getAuthenticatedUser() {
-  const {
-    data,
-    error
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data: sessionData,
+      error: sessionError
+    } = await supabase.auth.getSession();
 
-  if (error || !data?.user) {
+    if (sessionError) {
+      console.error(
+        "XSUS session verification failed:",
+        sessionError
+      );
+
+      return null;
+    }
+
+    if (!sessionData?.session) {
+      return null;
+    }
+
+    const {
+      data,
+      error
+    } = await supabase.auth.getUser();
+
+    if (error || !data?.user) {
+      console.error(
+        "XSUS authentication verification failed:",
+        error
+      );
+
+      return null;
+    }
+
+    return data.user;
+
+  } catch (error) {
+    console.error(
+      "XSUS authentication error:",
+      error
+    );
+
     return null;
   }
-
-  return data.user;
 }
 
 /* ============================================
@@ -214,8 +253,8 @@ export async function createMyTestConversation() {
  * Create a harmless test message in a
  * conversation owned by the signed-in user.
  *
- * RLS must enforce both user ownership
- * and conversation ownership.
+ * RLS and database constraints must
+ * enforce ownership.
  */
 export async function createMyTestMessage(
   conversationId
@@ -348,7 +387,8 @@ export async function testUnauthorizedMessageInsert(
     });
 
   if (error) {
-    const errorCode = error.code ?? null;
+    const errorCode =
+      error.code ?? null;
 
     const rlsBlocked =
       errorCode === "42501";
