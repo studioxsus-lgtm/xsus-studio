@@ -29,8 +29,9 @@
   <!-- XSUS PREMIUM FOOTER -->
   <link rel="stylesheet" href="assets/css/footer.css?v=100">
 
-  <!-- OFFICIAL XSUS HEADER EMBLEM -->
   <style>
+    /* OFFICIAL XSUS HEADER EMBLEM */
+
     .xsus-header-logo {
       display: block;
       width: 47px;
@@ -53,6 +54,35 @@
         padding: 2px;
         border-radius: 10px;
       }
+    }
+
+    /* AUTHENTICATION UI */
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .xsus-account-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .xsus-account-indicator {
+      width: 8px;
+      height: 8px;
+      flex: 0 0 8px;
+      border-radius: 50%;
+      background: #25d695;
+      box-shadow: 0 0 9px rgba(37, 214, 149, 0.55);
+    }
+
+    .xsus-account-link:focus-visible {
+      outline: 2px solid #20e8ff;
+      outline-offset: 3px;
     }
   </style>
 
@@ -83,7 +113,7 @@
       <!-- OFFICIAL XSUS BRAND -->
       <a
         class="brand"
-        href="index-v2.html"
+        href="index.html"
         aria-label="XSUS Studio Home"
         data-t-aria="brandHome"
       >
@@ -120,21 +150,46 @@
           <option value="fr">FR</option>
         </select>
 
+        <!-- GUEST: LOGIN -->
         <a
           href="auth.html"
+          id="xsusLogin"
           data-t="login"
+          hidden
         >
           Login
         </a>
 
+        <!-- GUEST: SIGN UP -->
         <a
           href="auth.html"
+          id="xsusSignup"
           class="signup"
           data-t="signup"
+          hidden
         >
           Sign Up
         </a>
 
+        <!-- AUTHENTICATED USER -->
+        <a
+          href="auth.html"
+          id="xsusAccount"
+          class="signup xsus-account-link"
+          aria-label="My account"
+          hidden
+        >
+          <span
+            class="xsus-account-indicator"
+            aria-hidden="true"
+          ></span>
+
+          <span id="xsusAccountText">
+            My Account
+          </span>
+        </a>
+
+        <!-- MOBILE NAVIGATION -->
         <button
           type="button"
           class="menu-toggle"
@@ -159,7 +214,7 @@
     >
 
       <a
-        href="index-v2.html"
+        href="index.html"
         aria-current="page"
         data-t="home"
       >
@@ -485,5 +540,148 @@
   </footer>
 
 </div>
+
+<!-- ================================================= -->
+<!-- XSUS STUDIO — SUPABASE AUTH STATUS CONTROLLER      -->
+<!-- Version 1.0.0                                   -->
+<!-- ================================================= -->
+
+<script type="module">
+  import {
+    supabase
+  } from "./services/supabase-client.js";
+
+  const loginLink =
+    document.getElementById("xsusLogin");
+
+  const signupLink =
+    document.getElementById("xsusSignup");
+
+  const accountLink =
+    document.getElementById("xsusAccount");
+
+  const accountText =
+    document.getElementById("xsusAccountText");
+
+  const languageSelect =
+    document.getElementById("language");
+
+  const ACCOUNT_LABELS = Object.freeze({
+    sq: "Llogaria ime",
+    en: "My Account",
+    fr: "Mon compte"
+  });
+
+  let authenticated = false;
+
+  function getCurrentLanguage() {
+    const selected = languageSelect?.value;
+
+    if (selected && ACCOUNT_LABELS[selected]) {
+      return selected;
+    }
+
+    try {
+      const saved =
+        localStorage.getItem("xsus_language");
+
+      if (saved && ACCOUNT_LABELS[saved]) {
+        return saved;
+      }
+    } catch {
+      // Storage may be unavailable.
+    }
+
+    return "en";
+  }
+
+  function updateAccountLanguage() {
+    const language = getCurrentLanguage();
+
+    const label =
+      ACCOUNT_LABELS[language] ||
+      ACCOUNT_LABELS.en;
+
+    accountText.textContent = label;
+
+    accountLink.setAttribute(
+      "aria-label",
+      label
+    );
+  }
+
+  function updateAuthUI(session) {
+    authenticated = Boolean(session?.user);
+
+    loginLink.hidden = authenticated;
+    signupLink.hidden = authenticated;
+    accountLink.hidden = !authenticated;
+
+    updateAccountLanguage();
+  }
+
+  function showGuestUI() {
+    updateAuthUI(null);
+  }
+
+  async function initializeAuth() {
+    try {
+      const {
+        data: { session },
+        error
+      } = await supabase.auth.getSession();
+
+      if (error) {
+        throw error;
+      }
+
+      updateAuthUI(session);
+
+    } catch (error) {
+      console.error(
+        "XSUS Studio authentication status error:",
+        error
+      );
+
+      showGuestUI();
+    }
+  }
+
+  // Keep header synchronized with Supabase Auth.
+  supabase.auth.onAuthStateChange(
+    (_event, session) => {
+      updateAuthUI(session);
+    }
+  );
+
+  // Update account label when language changes.
+  languageSelect?.addEventListener(
+    "change",
+    updateAccountLanguage
+  );
+
+  // Refresh authentication status when the page
+  // becomes visible again.
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+      if (!document.hidden) {
+        initializeAuth();
+      }
+    }
+  );
+
+  // Check the session when returning via navigation.
+  window.addEventListener(
+    "pageshow",
+    () => {
+      initializeAuth();
+    }
+  );
+
+  // Initial check.
+  initializeAuth();
+</script>
+
 </body>
 </html>
