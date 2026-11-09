@@ -197,13 +197,30 @@
       maxlength="36"
     >
 
-    <button
-      id="check"
-      type="button"
-      disabled
-    >
-      Kontrollo mesazhet
-    </button>
+    <div class="actions">
+
+      <button
+        id="check"
+        type="button"
+        disabled
+      >
+        Kontrollo mesazhet
+      </button>
+
+      <button
+        id="createMessage"
+        type="button"
+        disabled
+      >
+        Krijo mesazh testimi
+      </button>
+
+    </div>
+
+    <p class="notice">
+      Mesazhi i testimit ka përmbajtje fikse.
+      Nuk përdoren të dhëna personale.
+    </p>
 
     <!-- TEST RESULTS -->
 
@@ -242,7 +259,8 @@
     import {
       loadMyConversations,
       loadMyMessages,
-      createMyTestConversation
+      createMyTestConversation,
+      createMyTestMessage
     } from "./assets/js/xsus-ai/adapters/xsus-chat-history-adapter.js";
 
     /* ========================================
@@ -264,6 +282,9 @@
     const checkButton =
       document.getElementById("check");
 
+    const createMessageButton =
+      document.getElementById("createMessage");
+
     const conversationInput =
       document.getElementById("conversationId");
 
@@ -281,6 +302,7 @@
       loadButton.disabled = disabled;
       createButton.disabled = disabled;
       checkButton.disabled = disabled;
+      createMessageButton.disabled = disabled;
     }
 
     function showResult(data) {
@@ -459,12 +481,33 @@
     );
 
     /* ========================================
-       AUTH STATE CHANGES
+       CREATE TEST MESSAGE
     ======================================== */
 
-    supabase.auth.onAuthStateChange(
-      () => {
-        void checkSession();
+    createMessageButton.addEventListener(
+      "click",
+      async () => {
+        const id =
+          conversationInput.value.trim();
+
+        await runAction(
+          "Duke krijuar mesazhin e testimit...",
+          async () => {
+            const message =
+              await createMyTestMessage(id);
+
+            showResult({
+              success: true,
+              action: "create_test_message",
+              messageId:
+                message.id,
+              conversationId:
+                message.conversation_id,
+              role:
+                message.role
+            });
+          }
+        );
       }
     );
 
