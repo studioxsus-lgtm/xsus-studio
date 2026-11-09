@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+  <title>XSUS AI — Private History Test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #050914;
+      color: #f5f8ff;
+      font-family: Arial, sans-serif;
+    }
+
+    main {
+      max-width: 650px;
+      margin: 30px auto;
+    }
+
+    h1 { color: #20e8ff; }
+
+    button {
+      padding: 12px 18px;
+      border: 1px solid #20e8ff;
+      border-radius: 10px;
+      background: #10253a;
+      color: white;
+      cursor: pointer;
+    }
+
+    input {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      margin: 12px 0;
+      background: #101b30;
+      color: white;
+      border: 1px solid #456;
+      border-radius: 10px;
+    }
+
+    pre {
+      padding: 16px;
+      background: #101b30;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    a { color: #20e8ff; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>XSUS AI — History Security Test</h1>
+
+    <p id="status">Duke kontrolluar sesionin...</p>
+
+    <button id="load">
+      Lexo bisedat e mia
+    </button>
+
+    <h3>Testo ID-në e një bisede</h3>
+
+    <input
+      id="conversationId"
+      placeholder="Vendos UUID të bisedës"
+      autocomplete="off"
+    >
+
+    <button id="check">
+      Kontrollo mesazhet
+    </button>
+
+    <pre id="result" aria-live="polite"></pre>
+
+    <p>
+      <a href="ai.html">Kthehu te XSUS AI</a>
+    </p>
+  </main>
+
+  <script type="module">
+    import {
+      supabase
+    } from "./services/supabase-client.js";
+
+    import {
+      loadMyConversations,
+      loadMyMessages
+    } from "./assets/js/xsus-ai/adapters/xsus-chat-history-adapter.js";
+
+    const status = document.getElementById("status");
+    const result = document.getElementById("result");
+
+    async function checkSession() {
+      const { data, error } =
+        await supabase.auth.getUser();
+
+      status.textContent = error
+        ? "Gabim gjatë kontrollit të sesionit."
+        : data?.user
+          ? "Llogaria është aktive."
+          : "Nuk je i identifikuar.";
+    }
+
+    document.getElementById("load")
+      .addEventListener("click", async () => {
+        result.textContent = "Duke lexuar...";
+
+        try {
+          const conversations =
+            await loadMyConversations();
+
+          result.textContent = JSON.stringify(
+            {
+              count: conversations.length,
+              conversations: conversations.map(c => ({
+                id: c.id,
+                title: c.title
+              }))
+            },
+            null,
+            2
+          );
+        } catch (error) {
+          result.textContent = error.message;
+        }
+      });
+
+    document.getElementById("check")
+      .addEventListener("click", async () => {
+        const id = document
+          .getElementById("conversationId")
+          .value.trim();
+
+        result.textContent = "Duke kontrolluar...";
+
+        try {
+          const messages =
+            await loadMyMessages(id);
+
+          result.textContent = JSON.stringify(
+            {
+              messageCount: messages.length
+            },
+            null,
+            2
+          );
+        } catch (error) {
+          result.textContent = error.message;
+        }
+      });
+
+    await checkSession();
+  </script>
+</body>
+</html>
