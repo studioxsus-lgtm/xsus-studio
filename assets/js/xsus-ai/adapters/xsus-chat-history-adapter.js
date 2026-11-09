@@ -254,3 +254,59 @@ export async function createMyTestMessage(
 
   return data;
 }
+
+
+/* ============================================
+   TEMPORARY DIRECT RLS READ TEST
+============================================ */
+
+/**
+ * Verify database-enforced message isolation.
+ *
+ * Intentionally omits the user_id filter.
+ * Supabase RLS must restrict the result.
+ *
+ * Read-only. Remove after testing.
+ */
+export async function testDirectMessageRLS(
+  conversationId
+) {
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    throw new Error(
+      "Authentication required."
+    );
+  }
+
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (
+    typeof conversationId !== "string" ||
+    !uuidPattern.test(conversationId)
+  ) {
+    throw new TypeError(
+      "Invalid conversation ID."
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("ai_messages")
+    .select("id")
+    .eq("conversation_id", conversationId)
+    .limit(10);
+
+  if (error) {
+    throw new Error(
+      `Direct RLS test failed: ${error.message}`
+    );
+  }
+
+  return {
+    success: true,
+    test: "direct_message_rls",
+    conversationId,
+    visibleMessageCount: data?.length ?? 0
+  };
+}
