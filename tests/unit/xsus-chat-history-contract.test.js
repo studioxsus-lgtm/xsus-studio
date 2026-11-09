@@ -1,9 +1,11 @@
 
 /**
  * XSUS AI — Private Chat History Contract Tests
+ * Version: 1.0.1
  * Phase: 22.16.2
+ * Brand: THE X IDENTITY
  *
- * Tests:
+ * Test categories:
  * - Public contract
  * - UUID validation
  * - Conversation validation
@@ -13,6 +15,8 @@
  * - Standardized errors
  *
  * No Supabase connection required.
+ * No database writes.
+ * No browser storage.
  */
 
 import {
@@ -76,14 +80,15 @@ function makeMessage(overrides = {}) {
 }
 
 /* ============================================
-   PUBLIC CONTRACT
+   1. PUBLIC CONTRACT
 ============================================ */
 
 describe("XSUS Chat History — Public Contract", () => {
-  test("exposes version 1.0.0", () => {
+
+  test("exposes version 1.0.1", () => {
     expect(
       CHAT_HISTORY_CONTRACT_VERSION
-    ).toBe("1.0.0");
+    ).toBe("1.0.1");
   });
 
   test("exposes consistent contract metadata", () => {
@@ -98,6 +103,10 @@ describe("XSUS Chat History — Public Contract", () => {
     expect(
       XSUS_CHAT_HISTORY_CONTRACT.roles
     ).toBe(CHAT_HISTORY_ROLES);
+
+    expect(
+      XSUS_CHAT_HISTORY_CONTRACT.errorCodes
+    ).toBe(CHAT_HISTORY_ERROR_CODES);
   });
 
   test("defines user and assistant roles", () => {
@@ -115,14 +124,24 @@ describe("XSUS Chat History — Public Contract", () => {
     expect(
       CHAT_HISTORY_LIMITS.MAX_MESSAGES
     ).toBe(200);
+
+    expect(
+      CHAT_HISTORY_LIMITS.MAX_TITLE_LENGTH
+    ).toBe(200);
+
+    expect(
+      CHAT_HISTORY_LIMITS.MAX_CONTENT_LENGTH
+    ).toBe(12000);
   });
+
 });
 
 /* ============================================
-   UUID VALIDATION
+   2. UUID VALIDATION
 ============================================ */
 
 describe("XSUS Chat History — UUID Validation", () => {
+
   test("accepts valid UUID", () => {
     expect(
       isValidConversationId(CONVERSATION_ID)
@@ -143,6 +162,10 @@ describe("XSUS Chat History — UUID Validation", () => {
     expect(
       isValidConversationId(123)
     ).toBe(false);
+
+    expect(
+      isValidConversationId(undefined)
+    ).toBe(false);
   });
 
   test("throws for invalid UUID", () => {
@@ -156,19 +179,22 @@ describe("XSUS Chat History — UUID Validation", () => {
       validateConversationId(CONVERSATION_ID)
     ).toBe(CONVERSATION_ID);
   });
+
 });
 
 /* ============================================
-   CONVERSATION VALIDATION
+   3. CONVERSATION VALIDATION
 ============================================ */
 
 describe("XSUS Chat History — Conversations", () => {
+
   test("normalizes valid conversation", () => {
     const result = normalizeConversation(
       makeConversation()
     );
 
     expect(result.id).toBe(CONVERSATION_ID);
+
     expect(result.title).toBe(
       "XSUS Test Conversation"
     );
@@ -228,26 +254,33 @@ describe("XSUS Chat History — Conversations", () => {
       isValidConversation(makeConversation())
     ).toBe(true);
   });
+
 });
 
 /* ============================================
-   MESSAGE VALIDATION
+   4. MESSAGE VALIDATION
 ============================================ */
 
 describe("XSUS Chat History — Messages", () => {
+
   test("normalizes valid user message", () => {
     const result = normalizeMessage(
       makeMessage()
     );
 
     expect(result.id).toBe(MESSAGE_ID);
+
     expect(result.conversationId).toBe(
       CONVERSATION_ID
     );
+
     expect(result.role).toBe("user");
+
     expect(result.content).toBe(
       "XSUS test message"
     );
+
+    expect(result.createdAt).toBe(TIMESTAMP);
   });
 
   test("accepts assistant role", () => {
@@ -301,20 +334,25 @@ describe("XSUS Chat History — Messages", () => {
       isValidMessage(makeMessage())
     ).toBe(true);
   });
+
 });
 
 /* ============================================
-   COLLECTION VALIDATION
+   5. COLLECTION VALIDATION
 ============================================ */
 
 describe("XSUS Chat History — Collections", () => {
+
   test("normalizes conversation array", () => {
     const result = normalizeConversations([
       makeConversation()
     ]);
 
     expect(result).toHaveLength(1);
-    expect(result[0].id).toBe(CONVERSATION_ID);
+
+    expect(result[0].id).toBe(
+      CONVERSATION_ID
+    );
   });
 
   test("rejects invalid conversation collection", () => {
@@ -344,6 +382,7 @@ describe("XSUS Chat History — Collections", () => {
     );
 
     expect(result).toHaveLength(1);
+
     expect(result[0].conversationId).toBe(
       CONVERSATION_ID
     );
@@ -395,13 +434,15 @@ describe("XSUS Chat History — Collections", () => {
       )
     ).toThrow(RangeError);
   });
+
 });
 
 /* ============================================
-   IMMUTABILITY
+   6. IMMUTABILITY
 ============================================ */
 
 describe("XSUS Chat History — Immutability", () => {
+
   test("freezes normalized conversation", () => {
     const result = normalizeConversation(
       makeConversation()
@@ -436,13 +477,15 @@ describe("XSUS Chat History — Immutability", () => {
       Object.isFrozen(result[0])
     ).toBe(true);
   });
+
 });
 
 /* ============================================
-   STANDARDIZED ERRORS
+   7. STANDARDIZED ERRORS
 ============================================ */
 
 describe("XSUS Chat History — Errors", () => {
+
   test("creates standardized error", () => {
     const result = createHistoryError(
       CHAT_HISTORY_ERROR_CODES.ACCESS_DENIED,
@@ -477,4 +520,5 @@ describe("XSUS Chat History — Errors", () => {
       )
     ).toThrow(TypeError);
   });
+
 });
