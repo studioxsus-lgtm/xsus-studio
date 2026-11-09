@@ -215,11 +215,25 @@
         Krijo mesazh testimi
       </button>
 
+      <button
+        id="testDirectRLS"
+        type="button"
+        disabled
+      >
+        Testo RLS direkt
+      </button>
+
     </div>
 
     <p class="notice">
       Mesazhi i testimit ka përmbajtje fikse.
       Nuk përdoren të dhëna personale.
+    </p>
+
+    <p class="notice">
+      Testi direkt RLS lexon vetëm ID-të
+      e mesazheve, pa filtrin user_id.
+      Nuk ndryshon të dhënat.
     </p>
 
     <!-- TEST RESULTS -->
@@ -260,7 +274,8 @@
       loadMyConversations,
       loadMyMessages,
       createMyTestConversation,
-      createMyTestMessage
+      createMyTestMessage,
+      testDirectMessageRLS
     } from "./assets/js/xsus-ai/adapters/xsus-chat-history-adapter.js";
 
     /* ========================================
@@ -285,6 +300,9 @@
     const createMessageButton =
       document.getElementById("createMessage");
 
+    const directRLSButton =
+      document.getElementById("testDirectRLS");
+
     const conversationInput =
       document.getElementById("conversationId");
 
@@ -303,6 +321,7 @@
       createButton.disabled = disabled;
       checkButton.disabled = disabled;
       createMessageButton.disabled = disabled;
+      directRLSButton.disabled = disabled;
     }
 
     function showResult(data) {
@@ -506,6 +525,28 @@
               role:
                 message.role
             });
+          }
+        );
+      }
+    );
+
+    /* ========================================
+       DIRECT RLS READ TEST
+    ======================================== */
+
+    directRLSButton.addEventListener(
+      "click",
+      async () => {
+        const id =
+          conversationInput.value.trim();
+
+        await runAction(
+          "Duke testuar Supabase RLS direkt...",
+          async () => {
+            const testResult =
+              await testDirectMessageRLS(id);
+
+            showResult(testResult);
           }
         );
       }
