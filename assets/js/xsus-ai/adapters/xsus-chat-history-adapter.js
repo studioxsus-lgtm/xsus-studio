@@ -198,3 +198,59 @@ export async function createMyTestConversation() {
 
   return data;
 }
+
+
+/* ============================================
+   TEMPORARY MESSAGE SECURITY TEST
+============================================ */
+
+/**
+ * Create a harmless test message in a
+ * conversation owned by the signed-in user.
+ *
+ * Supabase RLS must independently enforce
+ * both user and conversation ownership.
+ */
+export async function createMyTestMessage(
+  conversationId
+) {
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    throw new Error(
+      "Authentication required."
+    );
+  }
+
+  if (
+    typeof conversationId !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      conversationId
+    )
+  ) {
+    throw new TypeError(
+      "Invalid conversation ID."
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("ai_messages")
+    .insert({
+      conversation_id: conversationId,
+      user_id: user.id,
+      role: "user",
+      content: "XSUS RLS message security test"
+    })
+    .select(
+      "id, conversation_id, role, created_at"
+    )
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Could not create test message: ${error.message}`
+    );
+  }
+
+  return data;
+}
