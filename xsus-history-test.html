@@ -3,12 +3,7 @@
 <html lang="sq">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050914">
 
   <title>XSUS AI — Private History Test</title>
@@ -142,17 +137,14 @@
 
 <body>
   <main>
-
-    <h1>
-      XSUS AI — History Security Test
-    </h1>
+    <h1>XSUS AI — History Security Test</h1>
 
     <p class="notice">
       THE X IDENTITY — Private Conversation
       Security Verification
     </p>
 
-    <!-- AUTHENTICATION STATUS -->
+    <!-- AUTHENTICATION -->
 
     <h3>1. Statusi i llogarisë</h3>
 
@@ -169,23 +161,13 @@
     <h3>2. Bisedat private</h3>
 
     <div class="actions">
-
-      <button
-        id="load"
-        type="button"
-        disabled
-      >
+      <button id="load" type="button" disabled>
         Lexo bisedat e mia
       </button>
 
-      <button
-        id="createTest"
-        type="button"
-        disabled
-      >
+      <button id="createTest" type="button" disabled>
         Krijo bisedë testimi
       </button>
-
     </div>
 
     <p class="notice">
@@ -193,7 +175,7 @@
       për llogarinë e identifikuar.
     </p>
 
-    <!-- MESSAGE ACCESS TEST -->
+    <!-- MESSAGES -->
 
     <h3>3. Kontrollo ID-në e një bisede</h3>
 
@@ -211,31 +193,17 @@
     >
 
     <div class="actions">
-
-      <button
-        id="check"
-        type="button"
-        disabled
-      >
+      <button id="check" type="button" disabled>
         Kontrollo mesazhet
       </button>
 
-      <button
-        id="createMessage"
-        type="button"
-        disabled
-      >
+      <button id="createMessage" type="button" disabled>
         Krijo mesazh testimi
       </button>
 
-      <button
-        id="testDirectRLS"
-        type="button"
-        disabled
-      >
+      <button id="testDirectRLS" type="button" disabled>
         Testo RLS direkt
       </button>
-
     </div>
 
     <p class="notice">
@@ -249,7 +217,7 @@
       Nuk ndryshon të dhënat.
     </p>
 
-    <!-- UNAUTHORIZED INSERT TEST -->
+    <!-- UNAUTHORIZED INSERT -->
 
     <h3>4. Testo shkrimin e paautorizuar</h3>
 
@@ -262,7 +230,6 @@
     </p>
 
     <div class="actions">
-
       <button
         id="testUnauthorizedInsert"
         class="danger-button"
@@ -271,12 +238,32 @@
       >
         Testo shkrimin e paautorizuar
       </button>
-
     </div>
 
-    <!-- TEST RESULTS -->
+    <!-- ANONYMOUS RLS -->
 
-    <h3>5. Rezultati i testimit</h3>
+    <h3>5. Testo qasjen anonime</h3>
+
+    <p class="notice">
+      Ky test krijon një klient të veçantë
+      pa sesion dhe lexon vetëm ID-të nga
+      tabelat e historikut.
+      Nuk ndryshon të dhëna.
+    </p>
+
+    <div class="actions">
+      <button
+        id="testAnonymousRLS"
+        type="button"
+        disabled
+      >
+        Testo qasjen anonime
+      </button>
+    </div>
+
+    <!-- RESULTS -->
+
+    <h3>6. Rezultati i testimit</h3>
 
     <pre
       id="result"
@@ -295,7 +282,6 @@
         Kthehu te XSUS AI
       </a>
     </p>
-
   </main>
 
   <script type="module">
@@ -305,7 +291,12 @@
     ======================================== */
 
     import {
-      supabase
+      createClient
+    } from "https://esm.sh/@supabase/supabase-js@2";
+
+    import {
+      supabase,
+      supabaseConfig
     } from "./services/supabase-client.js";
 
     import {
@@ -343,9 +334,10 @@
       document.getElementById("testDirectRLS");
 
     const unauthorizedInsertButton =
-      document.getElementById(
-        "testUnauthorizedInsert"
-      );
+      document.getElementById("testUnauthorizedInsert");
+
+    const anonymousRLSButton =
+      document.getElementById("testAnonymousRLS");
 
     const conversationInput =
       document.getElementById("conversationId");
@@ -367,6 +359,9 @@
       createMessageButton.disabled = disabled;
       directRLSButton.disabled = disabled;
       unauthorizedInsertButton.disabled = disabled;
+
+      // Anonymous test must work without login.
+      anonymousRLSButton.disabled = busy;
     }
 
     function showResult(data) {
@@ -386,9 +381,13 @@
 
     async function runAction(
       loadingMessage,
-      action
+      action,
+      requiresAuth = true
     ) {
-      if (!authenticated || busy) {
+      if (
+        busy ||
+        (requiresAuth && !authenticated)
+      ) {
         return;
       }
 
@@ -399,12 +398,14 @@
 
       try {
         await action();
+
       } catch (error) {
         showError(
           error instanceof Error
             ? error.message
             : "Ndodhi një gabim i papritur."
         );
+
       } finally {
         busy = false;
         updateButtons();
@@ -628,12 +629,16 @@
     );
 
     /* ========================================
-       UNAUTHORIZED INSERT RLS TEST
+       UNAUTHORIZED INSERT TEST
     ======================================== */
 
     unauthorizedInsertButton.addEventListener(
       "click",
       async () => {
+        if (busy || !authenticated) {
+          return;
+        }
+
         const id =
           conversationInput.value.trim();
 
@@ -665,6 +670,133 @@
           }
         );
       }
+    );
+
+    /* ========================================
+       PHASE 22.13 — ANONYMOUS RLS READ TEST
+    ======================================== */
+
+    async function testAnonymousRLS() {
+      await runAction(
+        "Duke testuar qasjen anonime...",
+        async () => {
+
+          /*
+           * Separate Supabase client.
+           * No stored session.
+           * No session detection in URL.
+           * No service-role credentials.
+           */
+
+          const anonymousClient = createClient(
+            supabaseConfig.projectUrl,
+            "sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr",
+            {
+              auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false
+              }
+            }
+          );
+
+          const {
+            data: sessionData,
+            error: sessionError
+          } = await anonymousClient.auth.getSession();
+
+          if (
+            sessionError ||
+            sessionData?.session
+          ) {
+            throw new Error(
+              "Klienti anonim nuk mundi të konfirmojë mungesën e sesionit."
+            );
+          }
+
+          const [
+            conversationsResponse,
+            messagesResponse
+          ] = await Promise.all([
+            anonymousClient
+              .from("ai_conversations")
+              .select("id")
+              .limit(10),
+
+            anonymousClient
+              .from("ai_messages")
+              .select("id")
+              .limit(10)
+          ]);
+
+          function summarize(response) {
+            const visibleRows =
+              response.data?.length ?? 0;
+
+            const errorCode =
+              response.error?.code ?? null;
+
+            const databaseError =
+              response.error?.message ?? null;
+
+            const accessDenied =
+              errorCode === "42501" ||
+              errorCode === "PGRST301";
+
+            const noRowsVisible =
+              !response.error &&
+              visibleRows === 0;
+
+            let outcome = "rows_visible";
+
+            if (accessDenied) {
+              outcome = "access_denied";
+            } else if (noRowsVisible) {
+              outcome = "no_rows_visible";
+            } else if (response.error) {
+              outcome = "query_error";
+            }
+
+            return {
+              protected:
+                accessDenied || noRowsVisible,
+              visibleRows,
+              databaseErrorCode: errorCode,
+              databaseError,
+              outcome
+            };
+          }
+
+          const conversations =
+            summarize(conversationsResponse);
+
+          const messages =
+            summarize(messagesResponse);
+
+          const passed =
+            conversations.protected &&
+            messages.protected;
+
+          showResult({
+            success: passed,
+            test: "anonymous_rls_read",
+            sessionPresent: false,
+            conversations,
+            messages,
+            securityStatus: passed
+              ? "PASS — No private rows visible to anonymous client."
+              : "NOT VERIFIED — Review query results and RLS policies.",
+            note:
+              "Ky test kontrollon vetëm leximin anonim, jo politikat e tjera RLS."
+          });
+        },
+        false
+      );
+    }
+
+    anonymousRLSButton.addEventListener(
+      "click",
+      testAnonymousRLS
     );
 
     /* ========================================
