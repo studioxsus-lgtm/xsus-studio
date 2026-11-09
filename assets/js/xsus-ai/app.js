@@ -1,18 +1,25 @@
 
 /**
  * XSUS AI V3 — Main Application Controller
- * Version: 3.0.0
+ * Version: 3.1.0
+ * Phase: 22.16.5.5
  * Brand: THE X IDENTITY
  *
  * Responsibilities:
- * - Initialize UI modules
- * - Connect chat, navigation, language and tools
- * - Coordinate interface state
- * - Provide controlled AI adapter boundary
- * - Handle errors and lifecycle
+ * - Initialize UI modules.
+ * - Connect chat, navigation, language and tools.
+ * - Integrate private Supabase history session.
+ * - Coordinate application state.
+ * - Preserve the controlled AI HTTP boundary.
+ * - Handle errors and lifecycle cleanup.
  *
- * No direct dependency on XSUS AI Core
- * or Hyper XSUS Core.
+ * Private history:
+ * - Read-only Supabase integration.
+ * - No browser conversation persistence.
+ * - No direct database writes.
+ *
+ * XSUS AI Core and Hyper XSUS Core remain
+ * independent from this application.
  */
 
 import {
@@ -31,19 +38,19 @@ import {
   createChatController
 } from "./chat.js";
 
-/**
- * XSUS AI Core HTTP Adapter
- *
- * Communicates with XSUS AI Core through
- * the controlled HTTP integration boundary.
- *
- * Does not import internal AI Core modules.
- */
 import {
   createXSUSCoreAdapter
 } from "./adapters/xsus-ai-core-adapter.js";
 
-export const XSUS_APP_VERSION = "3.0.0";
+import {
+  createPrivateHistorySession
+} from "./adapters/xsus-private-history-session.js";
+
+export const XSUS_APP_VERSION = "3.1.0";
+
+/* ============================================
+   SELECTORS
+============================================ */
 
 const SELECTORS = Object.freeze({
   app: ".xsus-ai-app",
@@ -77,6 +84,10 @@ const SELECTORS = Object.freeze({
   error: "[data-xsus-error]"
 });
 
+/* ============================================
+   DOM UTILITIES
+============================================ */
+
 function find(root, selector) {
   return root.querySelector(selector);
 }
@@ -93,8 +104,15 @@ function required(root, selector) {
   return element;
 }
 
+/* ============================================
+   ERROR PRESENTER
+============================================ */
+
 function createErrorPresenter(root) {
-  const container = find(root, SELECTORS.error);
+  const container = find(
+    root,
+    SELECTORS.error
+  );
 
   let hideTimer = null;
 
@@ -111,7 +129,10 @@ function createErrorPresenter(root) {
         ? message
         : "An unexpected error occurred.";
 
-    console.error("[XSUS AI V3]", text);
+    console.error(
+      "[XSUS AI V3]",
+      text
+    );
 
     if (!container) return;
 
@@ -119,7 +140,11 @@ function createErrorPresenter(root) {
 
     container.textContent = text;
     container.hidden = false;
-    container.setAttribute("role", "alert");
+
+    container.setAttribute(
+      "role",
+      "alert"
+    );
 
     hideTimer = setTimeout(() => {
       container.hidden = true;
@@ -141,6 +166,10 @@ function createErrorPresenter(root) {
   });
 }
 
+/* ============================================
+   AI ADAPTER VALIDATION
+============================================ */
+
 /**
  * AI adapter contract:
  *
@@ -150,7 +179,9 @@ function createErrorPresenter(root) {
  *   attachments,
  *   history
  * }) {
- *   return { answer: "..." };
+ *   return {
+ *     answer: "..."
+ *   };
  * }
  *
  * The adapter must be explicitly supplied.
@@ -171,18 +202,28 @@ function normalizeAIAdapter(adapter) {
   return adapter;
 }
 
+/* ============================================
+   MAIN APPLICATION
+============================================ */
+
 export function createXSUSAIApp(options = {}) {
   const {
     root = document,
     aiAdapter = null,
+    enablePrivateHistory = true,
     onReady = () => {},
     onError = () => {},
     onNavigate = () => {}
   } = options;
 
-  const app = required(root, SELECTORS.app);
+  const app = required(
+    root,
+    SELECTORS.app
+  );
 
-  if (app.dataset.xsusInitialized === "true") {
+  if (
+    app.dataset.xsusInitialized === "true"
+  ) {
     throw new Error(
       "XSUS AI V3 has already been initialized."
     );
@@ -218,9 +259,11 @@ export function createXSUSAIApp(options = {}) {
     SELECTORS.plusMenu
   );
 
-  const errorPresenter = createErrorPresenter(root);
+  const errorPresenter =
+    createErrorPresenter(root);
 
-  const adapter = normalizeAIAdapter(aiAdapter);
+  const adapter =
+    normalizeAIAdapter(aiAdapter);
 
   let destroyed = false;
 
@@ -228,41 +271,89 @@ export function createXSUSAIApp(options = {}) {
   let navigationController = null;
   let plusMenuController = null;
   let chatController = null;
+  let privateHistorySession = null;
 
   const cleanups = [];
 
+  /* ==========================================
+     ERRORS
+  ========================================== */
+
   function reportError(error) {
+    if (destroyed) return;
+
     const message =
       error instanceof Error
         ? error.message
         : String(error);
 
     errorPresenter.show(message);
+
     onError(message);
   }
 
-  function listen(target, eventName, handler) {
+  /* ==========================================
+     EVENTS
+  ========================================== */
+
+  function listen(
+    target,
+    eventName,
+    handler
+  ) {
     if (!target) return;
 
-    target.addEventListener(eventName, handler);
+    target.addEventListener(
+      eventName,
+      handler
+    );
 
     cleanups.push(() => {
-      target.removeEventListener(eventName, handler);
+      target.removeEventListener(
+        eventName,
+        handler
+      );
     });
   }
 
-  function updateLanguage(language) {
-    app.dataset.language = language;
+  /* ==========================================
+     LANGUAGE
+  ========================================== */
 
-    // Dynamic menus can be refreshed here
-    // when their translation adapters are added.
+  function updateLanguage(language) {
+    app.dataset.language =
+      language;
   }
 
+  function initializeLanguage() {
+    languageController =
+      createLanguageController({
+        root,
+
+        onLanguageChange(language) {
+          updateLanguage(language);
+        }
+      });
+
+    updateLanguage(
+      languageController.getLanguage()
+    );
+  }
+
+  /* ==========================================
+     NAVIGATION
+  ========================================== */
+
   function handleNavigation(section) {
-    app.dataset.activeSection = section;
+    app.dataset.activeSection =
+      section;
 
     onNavigate(section);
   }
+
+  /* ==========================================
+     AI COMMUNICATION
+  ========================================== */
 
   async function handleAISend(request) {
     if (!adapter) {
@@ -274,209 +365,337 @@ export function createXSUSAIApp(options = {}) {
     return adapter(request);
   }
 
-  function initializeLanguage() {
-    languageController = createLanguageController({
-      root,
-
-      onLanguageChange(language) {
-        updateLanguage(language);
-      }
-    });
-
-    updateLanguage(
-      languageController.getLanguage()
-    );
-  }
+  /* ==========================================
+     PLUS MENU
+  ========================================== */
 
   function initializePlusMenu() {
-    plusMenuController = createPlusMenu({
-      button: plusButton,
-      menu: plusMenu,
+    plusMenuController =
+      createPlusMenu({
+        button: plusButton,
+        menu: plusMenu,
 
-      attachmentsContainer: find(
-        root,
-        SELECTORS.attachments
-      ),
+        attachmentsContainer: find(
+          root,
+          SELECTORS.attachments
+        ),
 
-      onFilesChange(files) {
-        app.dataset.attachmentCount =
-          String(files.length);
-      },
+        onFilesChange(files) {
+          app.dataset.attachmentCount =
+            String(files.length);
+        },
 
-      onToolSelect(tool) {
-        app.dispatchEvent(
-          new CustomEvent("xsus:tool-select", {
-            detail: {
-              tool
-            }
-          })
-        );
-      },
+        onToolSelect(tool) {
+          app.dispatchEvent(
+            new CustomEvent(
+              "xsus:tool-select",
+              {
+                detail: {
+                  tool
+                }
+              }
+            )
+          );
+        },
 
-      onError: reportError
-    });
+        onError: reportError
+      });
   }
+
+  /* ==========================================
+     CHAT CONTROLLER
+  ========================================== */
 
   function initializeChat() {
-    chatController = createChatController({
-      messagesContainer,
-      input: chatInput,
-      sendButton,
+    chatController =
+      createChatController({
+        messagesContainer,
 
-      conversationContainer: find(
-        root,
-        SELECTORS.conversation
-      ),
+        input: chatInput,
+        sendButton,
 
-      welcomeContainer: find(
-        root,
-        SELECTORS.welcome
-      ),
+        conversationContainer: find(
+          root,
+          SELECTORS.conversation
+        ),
 
-      historyContainer: find(
-        root,
-        SELECTORS.history
-      ),
+        welcomeContainer: find(
+          root,
+          SELECTORS.welcome
+        ),
 
-      attachmentsController: plusMenuController,
+        historyContainer: find(
+          root,
+          SELECTORS.history
+        ),
 
-      onSend: handleAISend,
+        attachmentsController:
+          plusMenuController,
 
-      onError: reportError,
+        onSend: handleAISend,
 
-      onConversationChange(state) {
-        app.dataset.conversationCount =
-          String(state.conversations.length);
+        onError: reportError,
 
-        app.dataset.activeConversationId =
-          state.activeConversationId || "";
-      }
-    });
+        onConversationChange(state) {
+          if (destroyed) return;
+
+          app.dataset.conversationCount =
+            String(
+              state.conversations.length
+            );
+
+          app.dataset.activeConversationId =
+            state.activeConversationId || "";
+        }
+      });
   }
+
+  /* ==========================================
+     PRIVATE HISTORY SESSION
+  ========================================== */
+
+  function handleHistoryStatus({
+    status,
+    userId
+  }) {
+    if (destroyed) return;
+
+    app.dataset.historyStatus =
+      status;
+
+    app.dataset.authenticated =
+      String(Boolean(userId));
+
+    /*
+     * Never expose the Supabase user ID
+     * through DOM dataset attributes.
+     */
+  }
+
+  function initializePrivateHistory() {
+    if (!enablePrivateHistory) {
+      app.dataset.historyStatus =
+        "disabled";
+
+      app.dataset.authenticated =
+        "false";
+
+      return;
+    }
+
+    privateHistorySession =
+      createPrivateHistorySession({
+        chatController,
+
+        onError: reportError,
+
+        onStatusChange:
+          handleHistoryStatus
+      });
+
+    const started =
+      privateHistorySession.start();
+
+    if (!started) {
+      throw new Error(
+        "XSUS AI: Private history session could not start."
+      );
+    }
+  }
+
+  /* ==========================================
+     NAVIGATION CONTROLLER
+  ========================================== */
 
   function initializeNavigation() {
-    navigationController = createNavigation({
-      sidebar,
+    navigationController =
+      createNavigation({
+        sidebar,
 
-      sidebarToggle: find(
-        root,
-        SELECTORS.sidebarToggle
-      ),
+        sidebarToggle: find(
+          root,
+          SELECTORS.sidebarToggle
+        ),
 
-      sidebarClose: find(
-        root,
-        SELECTORS.sidebarClose
-      ),
+        sidebarClose: find(
+          root,
+          SELECTORS.sidebarClose
+        ),
 
-      sidebarCollapse: find(
-        root,
-        SELECTORS.sidebarCollapse
-      ),
+        sidebarCollapse: find(
+          root,
+          SELECTORS.sidebarCollapse
+        ),
 
-      sidebarBackdrop: find(
-        root,
-        SELECTORS.sidebarBackdrop
-      ),
+        sidebarBackdrop: find(
+          root,
+          SELECTORS.sidebarBackdrop
+        ),
 
-      headerNav: find(
-        root,
-        SELECTORS.headerNav
-      ),
+        headerNav: find(
+          root,
+          SELECTORS.headerNav
+        ),
 
-      headerMenuToggle: find(
-        root,
-        SELECTORS.headerMenuToggle
-      ),
+        headerMenuToggle: find(
+          root,
+          SELECTORS.headerMenuToggle
+        ),
 
-      workspace: find(
-        root,
-        SELECTORS.workspace
-      ),
+        workspace: find(
+          root,
+          SELECTORS.workspace
+        ),
 
-      onNavigate: handleNavigation,
+        onNavigate:
+          handleNavigation,
 
-      onNewChat() {
-        chatController?.newConversation();
-      }
-    });
+        onNewChat() {
+          chatController
+            ?.newConversation();
+        }
+      });
   }
 
-  function initializeNewChatActions() {
-    // Sidebar new-chat actions are already
-    // handled by the navigation controller.
-    //
-    // Bind only buttons outside the sidebar.
+  /* ==========================================
+     NEW CHAT ACTIONS
+  ========================================== */
 
-    const buttons = root.querySelectorAll(
-      SELECTORS.newChat
-    );
+  function initializeNewChatActions() {
+    const buttons =
+      root.querySelectorAll(
+        SELECTORS.newChat
+      );
 
     buttons.forEach(button => {
-      if (sidebar.contains(button)) {
+      if (
+        sidebar.contains(button)
+      ) {
         return;
       }
 
-      listen(button, "click", () => {
-        chatController?.newConversation();
-        navigationController?.navigate("chat");
-      });
+      listen(
+        button,
+        "click",
+        () => {
+          chatController
+            ?.newConversation();
+
+          navigationController
+            ?.navigate("chat");
+        }
+      );
     });
   }
+
+  /* ==========================================
+     SUGGESTIONS
+  ========================================== */
 
   function initializeSuggestions() {
-    const suggestions = root.querySelectorAll(
-      "[data-suggestion]"
-    );
+    const suggestions =
+      root.querySelectorAll(
+        "[data-suggestion]"
+      );
 
     suggestions.forEach(button => {
-      listen(button, "click", () => {
-        const suggestion =
-          button.dataset.suggestion;
+      listen(
+        button,
+        "click",
+        () => {
+          const suggestion =
+            button.dataset.suggestion;
 
-        if (!suggestion) return;
+          if (!suggestion) {
+            return;
+          }
 
-        chatInput.value = suggestion;
+          chatInput.value =
+            suggestion;
 
-        chatInput.dispatchEvent(
-          new Event("input", {
-            bubbles: true
-          })
-        );
+          chatInput.dispatchEvent(
+            new Event(
+              "input",
+              {
+                bubbles: true
+              }
+            )
+          );
 
-        chatInput.focus();
-      });
+          chatInput.focus();
+        }
+      );
     });
   }
+
+  /* ==========================================
+     INITIALIZATION
+  ========================================== */
 
   function initialize() {
     try {
       initializeLanguage();
+
       initializePlusMenu();
+
       initializeChat();
+
       initializeNavigation();
 
       initializeNewChatActions();
+
       initializeSuggestions();
 
-      app.dataset.xsusInitialized = "true";
+      /*
+       * Start private history only after
+       * the chat controller is ready.
+       */
+      initializePrivateHistory();
 
-      app.dataset.aiConnected = String(
-        Boolean(adapter)
-      );
+      app.dataset.xsusInitialized =
+        "true";
+
+      app.dataset.aiConnected =
+        String(
+          Boolean(adapter)
+        );
 
       onReady({
-        version: XSUS_APP_VERSION,
-        aiConnected: Boolean(adapter)
-      });
-    } catch (error) {
-      navigationController?.destroy();
-      chatController?.destroy();
-      plusMenuController?.destroy();
-      languageController?.destroy();
+        version:
+          XSUS_APP_VERSION,
 
-      cleanups.forEach(cleanup => cleanup());
+        aiConnected:
+          Boolean(adapter),
+
+        privateHistoryEnabled:
+          Boolean(
+            enablePrivateHistory
+          )
+      });
+
+    } catch (error) {
+      privateHistorySession
+        ?.destroy();
+
+      navigationController
+        ?.destroy();
+
+      chatController
+        ?.destroy();
+
+      plusMenuController
+        ?.destroy();
+
+      languageController
+        ?.destroy();
+
+      cleanups.forEach(
+        cleanup => cleanup()
+      );
 
       errorPresenter.destroy();
+
+      delete app.dataset.xsusInitialized;
 
       throw error;
     }
@@ -484,43 +703,90 @@ export function createXSUSAIApp(options = {}) {
 
   initialize();
 
+  /* ==========================================
+     PUBLIC API
+  ========================================== */
+
   return Object.freeze({
     version: XSUS_APP_VERSION,
 
     getLanguage() {
-      return languageController?.getLanguage();
+      return languageController
+        ?.getLanguage();
     },
 
     setLanguage(language) {
-      return languageController?.setLanguage(
-        language
-      ) || false;
+      return (
+        languageController
+          ?.setLanguage(language) ||
+        false
+      );
     },
 
     newChat() {
-      return chatController?.newConversation();
+      return chatController
+        ?.newConversation();
     },
 
     sendMessage() {
-      return chatController?.sendMessage();
+      return chatController
+        ?.sendMessage();
     },
 
     getConversations() {
-      return chatController?.getConversations() || [];
+      return (
+        chatController
+          ?.getConversations() ||
+        []
+      );
     },
 
     navigate(section) {
-      return navigationController?.navigate(
-        section
-      ) || false;
+      return (
+        navigationController
+          ?.navigate(section) ||
+        false
+      );
     },
 
     getAttachments() {
-      return plusMenuController?.getFiles() || [];
+      return (
+        plusMenuController
+          ?.getFiles() ||
+        []
+      );
     },
 
     isAIConnected() {
       return Boolean(adapter);
+    },
+
+    isPrivateHistoryEnabled() {
+      return Boolean(
+        enablePrivateHistory
+      );
+    },
+
+    getPrivateHistoryStatus() {
+      return (
+        app.dataset.historyStatus ||
+        "unknown"
+      );
+    },
+
+    getAuthenticatedUserId() {
+      return privateHistorySession
+        ?.getCurrentUserId() ||
+        null;
+    },
+
+    refreshPrivateHistory(options) {
+      if (!privateHistorySession) {
+        return Promise.resolve(false);
+      }
+
+      return privateHistorySession
+        .refresh(options);
     },
 
     destroy() {
@@ -528,55 +794,81 @@ export function createXSUSAIApp(options = {}) {
 
       destroyed = true;
 
-      cleanups.forEach(cleanup => cleanup());
+      /*
+       * Destroy the authentication
+       * session before destroying chat.
+       */
+      privateHistorySession
+        ?.destroy();
 
-      navigationController?.destroy();
-      chatController?.destroy();
-      plusMenuController?.destroy();
-      languageController?.destroy();
+      cleanups.forEach(
+        cleanup => cleanup()
+      );
+
+      navigationController
+        ?.destroy();
+
+      chatController
+        ?.destroy();
+
+      plusMenuController
+        ?.destroy();
+
+      languageController
+        ?.destroy();
 
       errorPresenter.destroy();
 
       delete app.dataset.xsusInitialized;
+      delete app.dataset.historyStatus;
+      delete app.dataset.authenticated;
     }
   });
 }
 
-/**
- * Browser initialization.
- *
- * Runs only when the V3 application root
- * is present in the document.
- *
- * The real XSUS AI Core HTTP adapter is
- * explicitly supplied at this boundary.
- */
+/* ============================================
+   BROWSER BOOTSTRAP
+============================================ */
 
 function bootXSUSAI() {
-  const app = document.querySelector(
-    SELECTORS.app
-  );
+  const app =
+    document.querySelector(
+      SELECTORS.app
+    );
 
   if (!app) return;
 
-  if (app.dataset.xsusInitialized === "true") {
+  if (
+    app.dataset.xsusInitialized ===
+    "true"
+  ) {
     return;
   }
 
   try {
-    const instance = createXSUSAIApp({
-      aiAdapter: createXSUSCoreAdapter({
-        getLanguage: () => {
-          const select = document.querySelector(
-            "[data-xsus-language-select]"
-          );
+    const instance =
+      createXSUSAIApp({
+        aiAdapter:
+          createXSUSCoreAdapter({
+            getLanguage: () => {
+              const select =
+                document.querySelector(
+                  "[data-xsus-language-select]"
+                );
 
-          return select?.value || "sq";
-        }
-      })
-    });
+              return (
+                select?.value ||
+                "sq"
+              );
+            }
+          }),
 
-    window.XSUSAI = instance;
+        enablePrivateHistory: true
+      });
+
+    window.XSUSAI =
+      instance;
+
   } catch (error) {
     console.error(
       "[XSUS AI V3] Initialization failed:",
@@ -585,12 +877,23 @@ function bootXSUSAI() {
   }
 }
 
-if (typeof document !== "undefined") {
-  if (document.readyState === "loading") {
+/* ============================================
+   DOM READY
+============================================ */
+
+if (
+  typeof document !== "undefined"
+) {
+  if (
+    document.readyState ===
+    "loading"
+  ) {
     document.addEventListener(
       "DOMContentLoaded",
       bootXSUSAI,
-      { once: true }
+      {
+        once: true
+      }
     );
   } else {
     bootXSUSAI();
