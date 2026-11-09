@@ -412,7 +412,7 @@
     }
 
     /* ========================================
-       AUTHENTICATION
+       AUTHENTICATION — PHASE 22.11
     ======================================== */
 
     async function checkSession() {
@@ -424,11 +424,16 @@
 
       try {
         const {
-          data,
-          error
-        } = await supabase.auth.getUser();
+          data: sessionData,
+          error: sessionError
+        } = await supabase.auth.getSession();
 
-        if (error) {
+        if (sessionError) {
+          console.error(
+            "XSUS session error:",
+            sessionError
+          );
+
           status.textContent =
             "Gabim gjatë kontrollit të sesionit.";
 
@@ -436,25 +441,50 @@
           return;
         }
 
-        if (data?.user) {
-          authenticated = true;
-
-          status.textContent =
-            "Llogaria është aktive.";
-
-          status.className = "success";
-        } else {
+        if (!sessionData?.session) {
           status.textContent =
             "Nuk je i identifikuar.";
 
           status.className = "error";
+          return;
         }
 
+        const {
+          data,
+          error
+        } = await supabase.auth.getUser();
+
+        if (error || !data?.user) {
+          console.error(
+            "XSUS authentication error:",
+            error
+          );
+
+          status.textContent =
+            "Sesioni nuk mund të verifikohet.";
+
+          status.className = "error";
+          return;
+        }
+
+        authenticated = true;
+
+        status.textContent =
+          "Llogaria është aktive.";
+
+        status.className = "success";
+
       } catch (error) {
+        console.error(
+          "XSUS unexpected auth error:",
+          error
+        );
+
         status.textContent =
           "Nuk u arrit të verifikohej sesioni.";
 
         status.className = "error";
+
       } finally {
         updateButtons();
       }
