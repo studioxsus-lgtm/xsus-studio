@@ -1,14 +1,16 @@
 
 /**
  * XSUS AI — Private Chat History Adapter
- * Version: 1.1.1
+ * Version: 1.2.0
  *
+ * Phase: 22.16.3
  * Brand: THE X IDENTITY
  *
  * Responsibilities:
  * - Verify authenticated Supabase users.
  * - Load private conversations.
  * - Load private conversation messages.
+ * - Validate and normalize loaded records.
  * - Create temporary RLS test conversations.
  * - Create temporary RLS test messages.
  * - Verify direct RLS read isolation.
@@ -22,38 +24,21 @@
  * - No direct dependency on XSUS AI Core.
  * - No direct dependency on Hyper XSUS Core.
  *
- * Temporary test functions must be removed
- * after security verification.
+ * Temporary test functions are preserved
+ * until security verification is complete.
  */
 
 import {
   supabase
 } from "../../../../services/supabase-client.js";
 
-export const CHAT_HISTORY_ADAPTER_VERSION = "1.1.1";
+import {
+  validateConversationId,
+  normalizeConversations,
+  normalizeMessages
+} from "../contracts/xsus-chat-history-contract.js";
 
-/* ============================================
-   UUID VALIDATION
-============================================ */
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-/**
- * Validate conversation UUID.
- */
-function validateConversationId(conversationId) {
-  if (
-    typeof conversationId !== "string" ||
-    !UUID_PATTERN.test(conversationId)
-  ) {
-    throw new TypeError(
-      "Invalid conversation ID."
-    );
-  }
-
-  return conversationId;
-}
+export const CHAT_HISTORY_ADAPTER_VERSION = "1.2.0";
 
 /* ============================================
    AUTHENTICATION
@@ -65,6 +50,9 @@ function validateConversationId(conversationId) {
  *
  * A local session alone is not considered
  * sufficient proof of authentication.
+ *
+ * Database RLS must independently verify
+ * ownership for every request.
  */
 async function getAuthenticatedUser() {
   try {
@@ -122,6 +110,11 @@ async function getAuthenticatedUser() {
  *
  * Returns an empty array when the
  * user is not authenticated.
+ *
+ * Authenticated results are normalized
+ * through the shared history contract.
+ *
+ * RLS must enforce ownership.
  */
 export async function loadMyConversations() {
   const user = await getAuthenticatedUser();
@@ -150,7 +143,7 @@ export async function loadMyConversations() {
     );
   }
 
-  return data ?? [];
+  return normalizeConversations(data ?? []);
 }
 
 /* ============================================
@@ -162,6 +155,11 @@ export async function loadMyConversations() {
  * belonging to the authenticated user.
  *
  * The conversation ID must be a valid UUID.
+ *
+ * Results are normalized and checked
+ * against the requested conversation ID.
+ *
+ * RLS must independently enforce ownership.
  */
 export async function loadMyMessages(
   conversationId
@@ -198,7 +196,10 @@ export async function loadMyMessages(
     );
   }
 
-  return data ?? [];
+  return normalizeMessages(
+    data ?? [],
+    conversationId
+  );
 }
 
 /* ============================================
@@ -211,7 +212,8 @@ export async function loadMyMessages(
  * The user ID comes from Supabase Auth.
  * RLS must independently enforce ownership.
  *
- * Remove this function after testing.
+ * Remove this function only after
+ * security verification is complete.
  */
 export async function createMyTestConversation() {
   const user = await getAuthenticatedUser();
@@ -255,6 +257,8 @@ export async function createMyTestConversation() {
  *
  * RLS and database constraints must
  * enforce ownership.
+ *
+ * This function performs a real INSERT.
  */
 export async function createMyTestMessage(
   conversationId
@@ -304,7 +308,9 @@ export async function createMyTestMessage(
  * Intentionally omits the user_id filter.
  * Supabase RLS must restrict the result.
  *
- * Read-only. Remove after testing.
+ * Read-only.
+ *
+ * Remove only after security verification.
  */
 export async function testDirectMessageRLS(
   conversationId
@@ -360,7 +366,7 @@ export async function testDirectMessageRLS(
  * If the database accepts the insert,
  * a test message will be created.
  *
- * Remove after security verification.
+ * Remove only after security verification.
  */
 export async function testUnauthorizedMessageInsert(
   conversationId
