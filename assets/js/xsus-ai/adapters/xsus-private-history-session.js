@@ -1,21 +1,27 @@
 
 /**
  * XSUS AI V3 — Private History Session
- * Version: 1.0.0
- * Phase: 22.16.5.4
+ * Version: 1.1.0
+ * Phase: 22.16.5.4.3
+ * Brand: THE X IDENTITY
  *
- * Connects Supabase Auth with the
- * private chat-history read adapter.
+ * Responsibilities:
+ * - Verify Supabase identity.
+ * - Load private conversations and messages.
+ * - Prevent cross-account memory exposure.
+ * - Reject stale asynchronous results.
+ * - Avoid duplicate same-user hydration.
+ * - Protect local changes during loading.
+ * - Clean up authentication subscriptions.
  *
  * Security:
- * - Clears memory on identity changes.
- * - Rejects stale asynchronous results.
- * - Rechecks identity before hydration.
- * - Never stores chats in localStorage.
- * - Never uses service-role credentials.
- * - Does not modify database RLS.
+ * - No service-role credentials.
+ * - No browser chat persistence.
+ * - No database writes.
+ * - No direct AI Core dependencies.
  *
- * This is a read-only integration.
+ * Database authorization remains enforced
+ * independently by Supabase RLS.
  */
 
 import {
@@ -28,7 +34,7 @@ import {
 } from "./xsus-chat-history-adapter.js";
 
 export const PRIVATE_HISTORY_SESSION_VERSION =
-  "1.0.0";
+  "1.1.0";
 
 export function createPrivateHistorySession({
   chatController,
@@ -45,25 +51,74 @@ export function createPrivateHistorySession({
     );
   }
 
+  if (
+    typeof onError !== "function" ||
+    typeof onStatusChange !== "function"
+  ) {
+    throw new TypeError(
+      "Invalid session callbacks."
+    );
+  }
+
   let destroyed = false;
   let started = false;
+
   let generation = 0;
   let currentUserId = null;
+  let loadedUserId = null;
+  let loadingUserId = null;
+
   let subscription = null;
 
+  /* ==========================================
+     STATUS
+  ========================================== */
+
   function notify(status) {
-    if (!destroyed) {
-      onStatusChange({
-        status,
-        userId: currentUserId
-      });
-    }
+    if (destroyed) return;
+
+    onStatusChange({
+      status,
+      userId: currentUserId
+    });
   }
 
-  function invalidate() {
+  function isCurrent(requestGeneration) {
+    return (
+      !destroyed &&
+      started &&
+      generation === requestGeneration
+    );
+  }
+
+  /* ==========================================
+     MEMORY ISOLATION
+  ========================================== */
+
+  function clearPrivateMemory() {
     generation += 1;
+
+    loadedUserId = null;
+    loadingUserId = null;
+
     chatController.clearHistory();
   }
+
+  function changeIdentity(nextUserId) {
+    if (currentUserId === nextUserId) {
+      return false;
+    }
+
+    clearPrivateMemory();
+
+    currentUserId = nextUserId;
+
+    return true;
+  }
+
+  /* ==========================================
+     AUTHENTICATION
+  ========================================== */
 
   async function verifiedUserId() {
     const { data, error } =
@@ -76,12 +131,79 @@ export function createPrivateHistorySession({
     return data.user.id;
   }
 
-  async function refresh() {
+  /* ==========================================
+     LOCAL STATE PROTECTION
+  ========================================== */
+
+  function snapshotLocalState() {
+    if (
+      typeof chatController.getConversations !==
+      "function"
+    ) {
+      return null;
+    }
+
+    const conversations =
+      chatController.getConversations();
+
+    const messages =
+      typeof chatController.getMessages ===
+      "function"
+        ? chatController.getMessages()
+        : null;
+
+    return JSON.stringify({
+      conversations,
+      messages
+    });
+  }
+
+  function localStateChanged(snapshot) {
+    if (snapshot === null) {
+      return false;
+    }
+
+    return snapshotLocalState() !== snapshot;
+  }
+
+  /* ==========================================
+     PRIVATE HISTORY LOADING
+  ========================================== */
+
+  async function refresh({
+    force = false
+  } = {}) {
     if (destroyed || !started) {
       return false;
     }
 
-    const requestGeneration = ++generation;
+    /*
+     * A normal refresh must not replace
+     * already loaded local conversations.
+     */
+    if (
+      !force &&
+      currentUserId &&
+      loadedUserId === currentUserId
+    ) {
+      notify("ready");
+      return true;
+    }
+
+    /*
+     * Avoid duplicate simultaneous loads
+     * for the same verified identity.
+     */
+    if (
+      !force &&
+      currentUserId &&
+      loadingUserId === currentUserId
+    ) {
+      return false;
+    }
+
+    const requestGeneration =
+      ++generation;
 
     notify("loading");
 
@@ -89,32 +211,43 @@ export function createPrivateHistorySession({
       const userId =
         await verifiedUserId();
 
-      if (
-        destroyed ||
-        requestGeneration !== generation
-      ) {
+      if (!isCurrent(requestGeneration)) {
         return false;
       }
 
       if (!userId) {
-        currentUserId = null;
-        chatController.clearHistory();
+        changeIdentity(null);
+        clearPrivateMemory();
         notify("signed-out");
         return false;
       }
 
-      if (currentUserId !== userId) {
-        chatController.clearHistory();
-        currentUserId = userId;
+      changeIdentity(userId);
+
+      /*
+       * changeIdentity() invalidates the
+       * previous generation. Capture the
+       * current generation for this load.
+       */
+      const loadGeneration = generation;
+
+      if (
+        !force &&
+        loadedUserId === userId
+      ) {
+        notify("ready");
+        return true;
       }
+
+      loadingUserId = userId;
+
+      const localSnapshot =
+        snapshotLocalState();
 
       const conversations =
         await loadMyConversations();
 
-      if (
-        destroyed ||
-        requestGeneration !== generation
-      ) {
+      if (!isCurrent(loadGeneration)) {
         return false;
       }
 
@@ -122,12 +255,11 @@ export function createPrivateHistorySession({
 
       for (const conversation of conversations) {
         const messages =
-          await loadMyMessages(conversation.id);
+          await loadMyMessages(
+            conversation.id
+          );
 
-        if (
-          destroyed ||
-          requestGeneration !== generation
-        ) {
+        if (!isCurrent(loadGeneration)) {
           return false;
         }
 
@@ -137,27 +269,32 @@ export function createPrivateHistorySession({
       }
 
       /*
-       * Authentication may change while
-       * the database requests are running.
-       *
-       * Verify identity again before
-       * updating the chat controller.
+       * Verify the identity again before
+       * importing any private data.
        */
-
       const finalUserId =
         await verifiedUserId();
 
-      if (
-        destroyed ||
-        requestGeneration !== generation
-      ) {
+      if (!isCurrent(loadGeneration)) {
         return false;
       }
 
       if (finalUserId !== userId) {
-        currentUserId = null;
-        invalidate();
+        changeIdentity(null);
+        clearPrivateMemory();
+
         notify("identity-changed");
+        return false;
+      }
+
+      /*
+       * A local conversation may have
+       * changed while Supabase was loading.
+       * Do not overwrite that work.
+       */
+      if (localStateChanged(localSnapshot)) {
+        loadingUserId = null;
+        notify("local-changes");
         return false;
       }
 
@@ -168,23 +305,29 @@ export function createPrivateHistorySession({
         });
 
       if (!hydrated) {
+        loadingUserId = null;
         notify("busy");
         return false;
       }
+
+      loadedUserId = userId;
+      loadingUserId = null;
 
       notify("ready");
       return true;
 
     } catch (error) {
-      if (
-        destroyed ||
-        requestGeneration !== generation
-      ) {
+      if (!isCurrent(requestGeneration) &&
+          loadingUserId === null) {
         return false;
       }
 
-      currentUserId = null;
-      invalidate();
+      /*
+       * Never keep a partially trusted
+       * history after a load failure.
+       */
+      changeIdentity(null);
+      clearPrivateMemory();
 
       notify("error");
 
@@ -200,65 +343,90 @@ export function createPrivateHistorySession({
     }
   }
 
+  /* ==========================================
+     AUTH EVENTS
+  ========================================== */
+
   function handleAuthChange(event, session) {
     if (destroyed || !started) {
       return;
     }
 
-    /*
-     * Token refresh does not necessarily
-     * represent an account change.
-     */
-    if (event === "TOKEN_REFRESHED") {
-      const tokenUserId =
-        session?.user?.id ?? null;
-
-      if (
-        currentUserId &&
-        tokenUserId &&
-        tokenUserId !== currentUserId
-      ) {
-        currentUserId = null;
-        invalidate();
-        notify("identity-changed");
-        void refresh();
-      }
-
-      return;
-    }
+    const nextUserId =
+      session?.user?.id ?? null;
 
     if (event === "SIGNED_OUT") {
-      currentUserId = null;
-      invalidate();
+      changeIdentity(null);
+      clearPrivateMemory();
       notify("signed-out");
       return;
     }
 
-    if (
-      event === "SIGNED_IN" ||
-      event === "INITIAL_SESSION" ||
-      event === "USER_UPDATED"
-    ) {
-      const nextUserId =
-        session?.user?.id ?? null;
+    if (event === "TOKEN_REFRESHED") {
+      if (
+        currentUserId &&
+        nextUserId &&
+        currentUserId !== nextUserId
+      ) {
+        changeIdentity(nextUserId);
 
-      if (nextUserId !== currentUserId) {
-        currentUserId = null;
-        invalidate();
+        queueMicrotask(() => {
+          if (started && !destroyed) {
+            void refresh();
+          }
+        });
       }
 
-      /*
-       * Schedule outside the synchronous
-       * auth callback to avoid awaiting
-       * Supabase operations inside it.
-       */
-      queueMicrotask(() => {
-        if (!destroyed && started) {
-          void refresh();
-        }
-      });
+      return;
     }
+
+    if (
+      event !== "SIGNED_IN" &&
+      event !== "INITIAL_SESSION" &&
+      event !== "USER_UPDATED"
+    ) {
+      return;
+    }
+
+    /*
+     * Repeated SIGNED_IN events for the
+     * same loaded user must not rehydrate
+     * or overwrite local conversations.
+     */
+    if (
+      nextUserId &&
+      nextUserId === currentUserId &&
+      loadedUserId === nextUserId
+    ) {
+      return;
+    }
+
+    /*
+     * If the same user's history is already
+     * loading, avoid starting another load.
+     */
+    if (
+      nextUserId &&
+      nextUserId === currentUserId &&
+      loadingUserId === nextUserId
+    ) {
+      return;
+    }
+
+    if (nextUserId !== currentUserId) {
+      changeIdentity(nextUserId);
+    }
+
+    queueMicrotask(() => {
+      if (started && !destroyed) {
+        void refresh();
+      }
+    });
   }
+
+  /* ==========================================
+     LIFECYCLE
+  ========================================== */
 
   function start() {
     if (destroyed || started) {
@@ -266,9 +434,12 @@ export function createPrivateHistorySession({
     }
 
     started = true;
-    currentUserId = null;
 
-    invalidate();
+    currentUserId = null;
+    loadedUserId = null;
+    loadingUserId = null;
+
+    clearPrivateMemory();
 
     const { data } =
       supabase.auth.onAuthStateChange(
@@ -289,9 +460,12 @@ export function createPrivateHistorySession({
     }
 
     started = false;
-    currentUserId = null;
 
     generation += 1;
+
+    currentUserId = null;
+    loadedUserId = null;
+    loadingUserId = null;
 
     subscription?.unsubscribe();
     subscription = null;
@@ -303,9 +477,7 @@ export function createPrivateHistorySession({
   }
 
   function destroy() {
-    if (destroyed) {
-      return;
-    }
+    if (destroyed) return;
 
     stop();
     destroyed = true;
