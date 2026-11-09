@@ -18,7 +18,7 @@
  * - No service-role keys.
  * - No anonymous persistent history.
  * - User identity comes from Supabase Auth.
- * - Row Level Security must enforce ownership.
+ * - Database RLS must enforce ownership.
  * - No direct dependency on XSUS AI Core.
  * - No direct dependency on Hyper XSUS Core.
  *
@@ -31,6 +31,26 @@ import {
 } from "../../../../services/supabase-client.js";
 
 export const CHAT_HISTORY_ADAPTER_VERSION = "1.1.0";
+
+/* ============================================
+   UUID VALIDATION
+============================================ */
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function validateConversationId(conversationId) {
+  if (
+    typeof conversationId !== "string" ||
+    !UUID_PATTERN.test(conversationId)
+  ) {
+    throw new TypeError(
+      "Invalid conversation ID."
+    );
+  }
+
+  return conversationId;
+}
 
 /* ============================================
    AUTHENTICATION
@@ -113,16 +133,7 @@ export async function loadMyMessages(
     return [];
   }
 
-  if (
-    typeof conversationId !== "string" ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      conversationId
-    )
-  ) {
-    throw new TypeError(
-      "Invalid conversation ID."
-    );
-  }
+  validateConversationId(conversationId);
 
   const {
     data,
@@ -217,18 +228,12 @@ export async function createMyTestMessage(
     );
   }
 
-  if (
-    typeof conversationId !== "string" ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      conversationId
-    )
-  ) {
-    throw new TypeError(
-      "Invalid conversation ID."
-    );
-  }
+  validateConversationId(conversationId);
 
-  const { data, error } = await supabase
+  const {
+    data,
+    error
+  } = await supabase
     .from("ai_messages")
     .insert({
       conversation_id: conversationId,
@@ -273,19 +278,12 @@ export async function testDirectMessageRLS(
     );
   }
 
-  const uuidPattern =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  validateConversationId(conversationId);
 
-  if (
-    typeof conversationId !== "string" ||
-    !uuidPattern.test(conversationId)
-  ) {
-    throw new TypeError(
-      "Invalid conversation ID."
-    );
-  }
-
-  const { data, error } = await supabase
+  const {
+    data,
+    error
+  } = await supabase
     .from("ai_messages")
     .select("id")
     .eq("conversation_id", conversationId)
@@ -318,6 +316,11 @@ export async function testDirectMessageRLS(
  * Uses the authenticated user's ID.
  * Does not use service-role credentials.
  *
+ * IMPORTANT:
+ * This test performs a real INSERT attempt.
+ * If the database accepts the insert,
+ * a test message will be created.
+ *
  * Remove after security verification.
  */
 export async function testUnauthorizedMessageInsert(
@@ -331,19 +334,11 @@ export async function testUnauthorizedMessageInsert(
     );
   }
 
-  const uuidPattern =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  validateConversationId(conversationId);
 
-  if (
-    typeof conversationId !== "string" ||
-    !uuidPattern.test(conversationId)
-  ) {
-    throw new TypeError(
-      "Invalid conversation ID."
-    );
-  }
-
-  const { error } = await supabase
+  const {
+    error
+  } = await supabase
     .from("ai_messages")
     .insert({
       conversation_id: conversationId,
@@ -353,12 +348,18 @@ export async function testUnauthorizedMessageInsert(
     });
 
   if (error) {
+    const errorCode = error.code ?? null;
+
+    const rlsBlocked =
+      errorCode === "42501";
+
     return {
-      success: true,
+      success: rlsBlocked,
       test: "unauthorized_message_insert",
       conversationId,
       blocked: true,
-      databaseErrorCode: error.code ?? null,
+      rlsBlocked,
+      databaseErrorCode: errorCode,
       databaseError: error.message
     };
   }
@@ -368,6 +369,7 @@ export async function testUnauthorizedMessageInsert(
     test: "unauthorized_message_insert",
     conversationId,
     blocked: false,
+    rlsBlocked: false,
     securityWarning:
       "Unauthorized insert was accepted. Review RLS policies immediately."
   };
