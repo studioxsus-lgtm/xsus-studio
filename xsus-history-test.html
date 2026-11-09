@@ -107,12 +107,25 @@
       font-size: 14px;
     }
 
+    .warning {
+      color: #ffd18a;
+    }
+
     .success {
       color: #57e5ac;
     }
 
     .error {
       color: #ff9292;
+    }
+
+    .danger-button {
+      border-color: #ff9292;
+      background: #3a1723;
+    }
+
+    .danger-button:hover:not(:disabled) {
+      background: #612236;
     }
 
     a {
@@ -236,9 +249,34 @@
       Nuk ndryshon të dhënat.
     </p>
 
+    <!-- UNAUTHORIZED INSERT TEST -->
+
+    <h3>4. Testo shkrimin e paautorizuar</h3>
+
+    <p class="warning">
+      Ky test provon të krijojë një mesazh
+      testimi në bisedën e një llogarie tjetër.
+      Nëse databaza e lejon, mesazhi do të
+      ruhet realisht. Përdor vetëm një
+      bisedë të dedikuar për testim.
+    </p>
+
+    <div class="actions">
+
+      <button
+        id="testUnauthorizedInsert"
+        class="danger-button"
+        type="button"
+        disabled
+      >
+        Testo shkrimin e paautorizuar
+      </button>
+
+    </div>
+
     <!-- TEST RESULTS -->
 
-    <h3>4. Rezultati i testimit</h3>
+    <h3>5. Rezultati i testimit</h3>
 
     <pre
       id="result"
@@ -275,7 +313,8 @@
       loadMyMessages,
       createMyTestConversation,
       createMyTestMessage,
-      testDirectMessageRLS
+      testDirectMessageRLS,
+      testUnauthorizedMessageInsert
     } from "./assets/js/xsus-ai/adapters/xsus-chat-history-adapter.js";
 
     /* ========================================
@@ -303,6 +342,11 @@
     const directRLSButton =
       document.getElementById("testDirectRLS");
 
+    const unauthorizedInsertButton =
+      document.getElementById(
+        "testUnauthorizedInsert"
+      );
+
     const conversationInput =
       document.getElementById("conversationId");
 
@@ -322,6 +366,7 @@
       checkButton.disabled = disabled;
       createMessageButton.disabled = disabled;
       directRLSButton.disabled = disabled;
+      unauthorizedInsertButton.disabled = disabled;
     }
 
     function showResult(data) {
@@ -545,6 +590,46 @@
           async () => {
             const testResult =
               await testDirectMessageRLS(id);
+
+            showResult(testResult);
+          }
+        );
+      }
+    );
+
+    /* ========================================
+       UNAUTHORIZED INSERT RLS TEST
+    ======================================== */
+
+    unauthorizedInsertButton.addEventListener(
+      "click",
+      async () => {
+        const id =
+          conversationInput.value.trim();
+
+        if (!id) {
+          showError(
+            "Vendos UUID e bisedës së testimit."
+          );
+          return;
+        }
+
+        const confirmed = window.confirm(
+          "Ky test do të tentojë të krijojë " +
+          "një mesazh në bisedën e llogarisë A. " +
+          "Nëse databaza e lejon, mesazhi " +
+          "mund të ruhet. Të vazhdojmë?"
+        );
+
+        if (!confirmed) {
+          return;
+        }
+
+        await runAction(
+          "Duke testuar shkrimin e paautorizuar...",
+          async () => {
+            const testResult =
+              await testUnauthorizedMessageInsert(id);
 
             showResult(testResult);
           }
