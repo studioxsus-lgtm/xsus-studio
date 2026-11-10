@@ -7,6 +7,7 @@ const body = { conversationId: CONV, operationId: OP, query: "Hello" };
 function setup({ owner = true, answer = "AI answer", saved = true } = {}) {
   const authorize = {
     verifyUser: vi.fn().mockResolvedValue({ userId: USER, token: "token" }),
+    verifyUserMessage: vi.fn().mockResolvedValue(true),
     verifyConversation: vi.fn().mockImplementation(async () => {
       if (!owner) throw new Error("Forbidden");
       return true;
@@ -27,6 +28,7 @@ describe("Authenticated private reply integration", () => {
     expect(result.status).toBe(200);
     expect(result.data.persisted).toBe(true);
     expect(x.authorize.verifyConversation).toHaveBeenCalledTimes(2);
+    expect(x.authorize.verifyUserMessage).toHaveBeenCalledTimes(2);
     expect(x.writer.save).toHaveBeenCalledWith({ userId: USER, conversationId: CONV, operationId: OP, answer: "AI answer" });
     expect(x.generate).toHaveBeenCalledWith({ query: "Hello" });
   });
@@ -34,6 +36,19 @@ describe("Authenticated private reply integration", () => {
     const x = setup({ owner: false });
     expect((await x.handler({ authorization: "Bearer token", body })).status).toBe(403);
     expect(x.generate).not.toHaveBeenCalled();
+    expect(x.writer.save).not.toHaveBeenCalled();
+  });
+  it("rejects an absent or mismatched user message before generation", async () => {
+    const x = setup();
+    x.authorize.verifyUserMessage.mockRejectedValue(new Error("Missing user message"));
+    expect((await x.handler({ authorization: "Bearer token", body })).status).toBe(403);
+    expect(x.generate).not.toHaveBeenCalled();
+    expect(x.writer.save).not.toHaveBeenCalled();
+  });
+  it("blocks privileged write when user message disappears during generation", async () => {
+    const x = setup();
+    x.authorize.verifyUserMessage.mockResolvedValueOnce(true).mockRejectedValueOnce(new Error("Removed"));
+    expect((await x.handler({ authorization: "Bearer token", body })).status).toBe(503);
     expect(x.writer.save).not.toHaveBeenCalled();
   });
   it("never writes when generation fails", async () => {
