@@ -80,10 +80,10 @@ export function createPrivateReplyBoundary({
         typeof result.answer !== "string" || !result.answer.trim()) {
       throw new Error("Invalid persisted private reply.");
     }
+    return { answer: result.answer, persisted: true };
     } finally {
       pending.delete(controller);
     }
-    return { answer: result.answer, persisted: true };
   }
   return Object.freeze({ send, invalidate });
 }
