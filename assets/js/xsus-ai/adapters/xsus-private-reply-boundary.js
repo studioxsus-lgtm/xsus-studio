@@ -14,8 +14,11 @@ export function createPrivateReplyBoundary({
     throw new TypeError("Private reply boundary dependencies required.");
   }
   let generation = 0;
+  const pending = new Set();
   function invalidate() {
     generation += 1;
+    for (const controller of pending) controller.abort();
+    pending.clear();
     persistence.invalidate();
   }
   async function session() {
@@ -47,8 +50,12 @@ export function createPrivateReplyBoundary({
       invalidate();
       throw new Error("Private chat session changed.");
     }
+    const controller = new AbortController();
+    pending.add(controller);
+    try {
     const response = await fetchImpl(endpoint, {
       method: "POST",
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + beforeReply.access_token
@@ -72,6 +79,9 @@ export function createPrivateReplyBoundary({
         result.operationId !== receipt.operationId ||
         typeof result.answer !== "string" || !result.answer.trim()) {
       throw new Error("Invalid persisted private reply.");
+    }
+    } finally {
+      pending.delete(controller);
     }
     return { answer: result.answer, persisted: true };
   }
