@@ -4513,6 +4513,84 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     }
   }
 
+  // Phases 41.63–41.72: recover saved history once after a local-edit collision.
+  for (const edit of [
+    { label: "rename", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Unsaved rename" }];
+    } },
+    { label: "add", apply: controller => {
+      controller.state.conversations = [record(a), { ...record(b), title: "Unsaved addition" }];
+    } },
+    { label: "remove", apply: controller => {
+      controller.state.conversations = [];
+    } },
+    { label: "replace", apply: controller => {
+      controller.state.conversations = [{ ...record(b), title: "Unsaved replacement" }];
+    } },
+    { label: "reorder", apply: controller => {
+      controller.state.conversations = [
+        { ...record(b), title: "Draft B" },
+        { ...record(a), title: "Draft A" }
+      ];
+    } }
+  ]) {
+    for (const outcome of ["resolve", "reject"]) {
+      test(`phase 41.63-41.72 local draft recovery: ${edit.label} after ${outcome} then recovers exactly once`, async () => {
+        const controller = chat();
+        const onError = vi.fn();
+        const statuses = [];
+        const session = createPrivateHistorySession({
+          chatController: controller,
+          onError,
+          onStatusChange: ({ status }) => statuses.push(status)
+        });
+        expect(session.start()).toBe(true);
+        expect(await session.refresh()).toBe(true);
+
+        let resolvePending;
+        let rejectPending;
+        mock.deferred = new Promise((resolve, reject) => {
+          resolvePending = resolve;
+          rejectPending = reject;
+        });
+        const collided = session.refresh({ force: true });
+        await tick();
+        edit.apply(controller);
+        const localDraft = structuredClone(controller.state.conversations);
+
+        if (outcome === "resolve") {
+          resolvePending([record(a)]);
+        } else {
+          rejectPending(new Error("Temporary conversation failure"));
+        }
+        expect(await collided).toBe(false);
+        expect(statuses.at(-1)).toBe("local-changes");
+        expect(controller.state.conversations).toEqual(localDraft);
+        expect(onError).toHaveBeenCalledTimes(outcome === "reject" ? 1 : 0);
+
+        mock.deferred = null;
+        mock.conversations = [{ ...record(a), title: "Saved remote revision" }];
+        mock.messages = new Map([[a, [{ ...assistant(a), content: "Saved remote answer" }]]]);
+        const beforeHydrate = controller.hydrateHistory.mock.calls.length;
+        expect(await session.refresh({ force: true })).toBe(true);
+        expect(controller.hydrateHistory).toHaveBeenCalledTimes(beforeHydrate + 1);
+        expect(statuses.at(-1)).toBe("ready");
+        expect(controller.state.conversations).toHaveLength(1);
+        expect(controller.state.conversations[0].id).toBe(a);
+        expect(controller.state.conversations[0].title).toBe("Saved remote revision");
+        expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+        expect(controller.state.messagesByConversation[a][0].content).toBe("Saved remote answer");
+        expect(controller.state.messagesByConversation[b]).toBeUndefined();
+
+        const afterHydrate = controller.hydrateHistory.mock.calls.length;
+        expect(await session.refresh()).toBe(true);
+        expect(controller.hydrateHistory).toHaveBeenCalledTimes(afterHydrate);
+        expect(onError).toHaveBeenCalledTimes(outcome === "reject" ? 1 : 0);
+        session.destroy();
+      });
+    }
+  }
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
