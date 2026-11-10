@@ -31,6 +31,19 @@ export function createPrivateChatPersistence({
     if (typeof id !== "string" || !id.trim()) throw new TypeError("Invalid local conversation ID.");
     return id;
   }
+  function registerPersistedConversation(id) {
+    if (destroyed) throw new Error("Private chat persistence invalidated.");
+    // This is a mapping hint only. The database must still enforce ownership via RLS.
+    if (typeof id !== "string" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      throw new TypeError("Invalid persisted conversation ID.");
+    }
+    if (pendingConversations.has(id)) {
+      throw new Error("Conversation creation is already pending.");
+    }
+    committedConversations.set(id, id);
+    return id;
+  }
   function ensureConversation(localId) {
     if (committedConversations.has(localId)) {
       return Promise.resolve(committedConversations.get(localId));
@@ -84,5 +97,5 @@ export function createPrivateChatPersistence({
     return true;
   }
   function destroy() { invalidate(); destroyed = true; }
-  return Object.freeze({ save, invalidate, destroy });
+  return Object.freeze({ save, registerPersistedConversation, invalidate, destroy });
 }
