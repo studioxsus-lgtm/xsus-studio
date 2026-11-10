@@ -999,3 +999,86 @@ describe("Advanced Failure Recovery and Identity Isolation", () => {
     expect(coordinator.getCompletedCount()).toBe(1);
   });
 });
+
+/* ============================================
+   PHASE 22.16.5.8.10 — FINAL INTEGRITY
+============================================ */
+
+describe("Final Integrity and Production Readiness", () => {
+  test("41. invalidation during pending identity lookup prevents a stale write", async () => {
+    const identityGate = deferred();
+    const write = vi.fn(async () => ({ id: OPERATION_ID }));
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => identityGate.promise,
+      write
+    });
+
+    const pending = coordinator.execute(request());
+    coordinator.invalidate();
+    identityGate.resolve(USER_A);
+
+    await expect(pending).rejects.toThrow("Write operation invalidated.");
+    expect(write).not.toHaveBeenCalled();
+    expect(coordinator.getPendingCount()).toBe(0);
+    expect(coordinator.getCompletedCount()).toBe(0);
+  });
+
+  test("42. destruction during pending identity lookup prevents any write", async () => {
+    const identityGate = deferred();
+    const write = vi.fn(async () => ({ id: OPERATION_ID }));
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => identityGate.promise,
+      write
+    });
+
+    const pending = coordinator.execute(request());
+    coordinator.destroy();
+    identityGate.resolve(USER_A);
+
+    await expect(pending).rejects.toThrow("Write coordinator is destroyed.");
+    expect(write).not.toHaveBeenCalled();
+    expect(coordinator.isDestroyed()).toBe(true);
+  });
+
+  test("43. conflicting payload cannot reuse a completed operation key", async () => {
+    const { coordinator, write } = createHarness();
+    await coordinator.execute(request());
+
+    await expect(
+      coordinator.execute(request({ content: "Changed payload" }))
+    ).rejects.toThrow("Operation ID reused with different content.");
+
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(coordinator.getCompletedCount()).toBe(1);
+  });
+
+  test("44. public coordinator methods remain stable and frozen", () => {
+    const { coordinator } = createHarness();
+    expect(Object.isFrozen(coordinator)).toBe(true);
+    expect(Object.keys(coordinator).sort()).toEqual([
+      "destroy",
+      "execute",
+      "getCompletedCount",
+      "getPendingCount",
+      "invalidate",
+      "isDestroyed"
+    ].sort());
+    expect(PRIVATE_WRITE_COORDINATOR_VERSION).toBe("1.0.0");
+  });
+
+  test("45. an invalid request never invokes identity lookup or storage", async () => {
+    const getUserId = vi.fn(async () => USER_A);
+    const write = vi.fn(async () => ({ id: OPERATION_ID }));
+    const coordinator = createPrivateWriteCoordinator({ getUserId, write });
+
+    await expect(
+      coordinator.execute(request({ content: "  " }))
+    ).rejects.toThrow("Invalid message content.");
+    await expect(
+      coordinator.execute(request({ operationId: "invalid" }))
+    ).rejects.toThrow("Invalid operation ID.");
+
+    expect(getUserId).not.toHaveBeenCalled();
+    expect(write).not.toHaveBeenCalled();
+  });
+});
