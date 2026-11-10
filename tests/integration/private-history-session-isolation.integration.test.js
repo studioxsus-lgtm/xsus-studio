@@ -1065,6 +1065,50 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("late second-conversation rejection from previous account cannot clear new account", async () => {
+    let rejectOldSecondMessages;
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, [assistant(b)]]]);
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise((_resolve, reject) => { rejectOldSecondMessages = reject; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    mock.userId = "99999999-9999-4999-8999-999999999999";
+    mock.deferredMessages = null;
+    mock.conversations = [record(a)];
+    mock.messages = new Map([[a, [{ ...assistant(a), content: "Account B answer" }]]]);
+    mock.authListener("SIGNED_IN", { user: { id: mock.userId } });
+    expect(await session.refresh()).toBe(true);
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    const statusCount = statuses.length;
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Account B answer");
+
+    rejectOldSecondMessages(new Error("Previous account second-conversation request failed"));
+    await tick();
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(statuses).toHaveLength(statusCount);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Account B answer");
+    expect(controller.state.messagesByConversation[b]).toBeUndefined();
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
