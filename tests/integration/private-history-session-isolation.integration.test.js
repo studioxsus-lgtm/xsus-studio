@@ -173,6 +173,34 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("late account A history cannot overwrite already hydrated account B", async () => {
+    let resolveOld;
+    mock.deferred = { promise: new Promise(resolve => { resolveOld = resolve; }) };
+    const controller = chat();
+    const session = createPrivateHistorySession({ chatController: controller });
+    session.start();
+    await tick();
+
+    const accountB = "99999999-9999-4999-8999-999999999999";
+    mock.userId = accountB;
+    mock.deferred = null;
+    mock.conversations = [record(b)];
+    mock.messages = new Map([[b, [assistant(b)]]]);
+    mock.authListener("SIGNED_IN", { user: { id: accountB } });
+    await tick();
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+
+    resolveOld([record(a)]);
+    await tick();
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+    expect(controller.state.messagesByConversation[a]).toBeUndefined();
+    expect(controller.state.messagesByConversation[b][0].conversationId).toBe(b);
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
