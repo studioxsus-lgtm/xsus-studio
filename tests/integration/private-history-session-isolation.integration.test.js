@@ -2304,6 +2304,46 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("local conversation edits during pending multi-conversation load cannot be overwritten", async () => {
+    let resolveSecondMessages;
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, [assistant(b)]]]);
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise(resolve => { resolveSecondMessages = resolve; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    const localConversation = { ...record(a), title: "Locally edited conversation" };
+    controller.state.conversations = [localConversation];
+    controller.state.messagesByConversation = {
+      [a]: [{ ...assistant(a), content: "Local unsaved answer" }]
+    };
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+
+    resolveSecondMessages([assistant(b)]);
+    await tick();
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(statuses).toContain("local-changes");
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations).toEqual([localConversation]);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Local unsaved answer");
+    expect(controller.state.messagesByConversation[b]).toBeUndefined();
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
