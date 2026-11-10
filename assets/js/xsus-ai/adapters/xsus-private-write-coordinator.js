@@ -2,7 +2,7 @@
 /**
  * XSUS AI V3 — Private Write Coordinator
  * Version: 1.0.0
- * Phase: 22.16.5.8.2
+ * Phase: 22.16.5.8.4
  *
  * Coordinates private write operations.
  *
@@ -10,6 +10,7 @@
  * - One in-flight operation per key.
  * - Repeated callers share the same promise.
  * - Completed keys are retained in memory.
+ * - Reusing a key with a different payload is rejected.
  * - Failed operations can be retried.
  * - Account changes invalidate local state.
  *
@@ -100,8 +101,8 @@ export function createPrivateWriteCoordinator({
     }
   }
 
-  function remember(key, result) {
-    completed.set(key, result);
+  function remember(key, content, result) {
+    completed.set(key, { content, result });
 
     while (completed.size > maxCompleted) {
       const oldest =
@@ -163,12 +164,24 @@ export function createPrivateWriteCoordinator({
       id
     ].join(":");
 
-    if (completed.has(key)) {
-      return completed.get(key);
+    const previous = completed.get(key);
+    if (previous) {
+      if (previous.content !== content) {
+        throw new Error(
+          "Operation ID reused with different content."
+        );
+      }
+      return previous.result;
     }
 
-    if (pending.has(key)) {
-      return pending.get(key);
+    const inFlight = pending.get(key);
+    if (inFlight) {
+      if (inFlight.content !== content) {
+        throw new Error(
+          "Operation ID reused with different content."
+        );
+      }
+      return inFlight.promise;
     }
 
     const token = generation;
@@ -204,17 +217,18 @@ export function createPrivateWriteCoordinator({
         );
       }
 
-      remember(key, result);
+      remember(key, content, result);
 
       return result;
     })();
 
-    pending.set(key, operation);
+    const entry = { content, promise: operation };
+    pending.set(key, entry);
 
     try {
       return await operation;
     } finally {
-      if (pending.get(key) === operation) {
+      if (pending.get(key) === entry) {
         pending.delete(key);
       }
     }
