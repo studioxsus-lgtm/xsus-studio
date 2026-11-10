@@ -4677,6 +4677,84 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     }
   }
 
+  // Phases 41.83–41.92: pending message fetch must preserve locally edited drafts.
+  // Each message mutation also updates its conversation metadata, as the chat UI does.
+  for (const edit of [
+    { label: "edit answer", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Edited answer draft" }];
+      controller.state.messagesByConversation[a] = [{ ...assistant(a), content: "Local edited answer" }];
+    } },
+    { label: "append answer", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Appended answer draft" }];
+      controller.state.messagesByConversation[a] = [
+        assistant(a), { ...assistant(a), id: "55555555-5555-4555-8555-555555555555", content: "Local appended answer" }
+      ];
+    } },
+    { label: "remove answer", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Removed answer draft" }];
+      controller.state.messagesByConversation[a] = [];
+    } },
+    { label: "replace answer", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Replaced answer draft" }];
+      controller.state.messagesByConversation[a] = [{
+        ...assistant(a), id: "66666666-6666-4666-8666-666666666666", content: "Local replacement"
+      }];
+    } },
+    { label: "add local conversation and message", apply: controller => {
+      controller.state.conversations = [record(a), { ...record(b), title: "Local new conversation" }];
+      controller.state.messagesByConversation[b] = [{ ...assistant(b), content: "Local new message" }];
+    } }
+  ]) {
+    for (const outcome of ["resolve", "reject"]) {
+      test(`phase 41.83-41.92 local message drafts: ${edit.label} survives delayed ${outcome}`, async () => {
+        const controller = chat();
+        const onError = vi.fn();
+        const statuses = [];
+        const session = createPrivateHistorySession({
+          chatController: controller,
+          onError,
+          onStatusChange: ({ status }) => statuses.push(status)
+        });
+        expect(session.start()).toBe(true);
+        expect(await session.refresh()).toBe(true);
+
+        let resolvePending;
+        let rejectPending;
+        mock.deferredMessages = {
+          id: a,
+          promise: new Promise((resolve, reject) => {
+            resolvePending = resolve;
+            rejectPending = reject;
+          })
+        };
+        const pending = session.refresh({ force: true });
+        await tick();
+        const hydrationCount = controller.hydrateHistory.mock.calls.length;
+        const clearCount = controller.clearHistory.mock.calls.length;
+        edit.apply(controller);
+        const expectedConversations = structuredClone(controller.state.conversations);
+        const expectedMessages = structuredClone(controller.state.messagesByConversation);
+
+        if (outcome === "resolve") {
+          resolvePending([{ ...assistant(a), content: "Stale remote answer" }]);
+        } else {
+          rejectPending(new Error("Remote message fetch failed"));
+        }
+        expect(await pending).toBe(false);
+        expect(statuses.at(-1)).toBe("local-changes");
+        expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+        expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+        expect(controller.state.conversations).toEqual(expectedConversations);
+        expect(controller.state.messagesByConversation).toEqual(expectedMessages);
+        expect(onError).toHaveBeenCalledTimes(outcome === "reject" ? 1 : 0);
+        if (outcome === "reject") {
+          expect(onError.mock.lastCall[0].message).toBe("Remote message fetch failed");
+        }
+        session.destroy();
+      });
+    }
+  }
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
