@@ -65,7 +65,7 @@ export function createPrivateChatPersistence({
     }).catch(() => {});
     return task;
   }
-  async function save({ localConversationId, content, localMessageId } = {}) {
+  async function saveWithReceipt({ localConversationId, content, localMessageId } = {}) {
     if (destroyed) throw new Error("Private chat persistence invalidated.");
     const localId = requireLocalId(localConversationId);
     if (typeof localMessageId !== "string" || !localMessageId.trim()) {
@@ -86,7 +86,28 @@ export function createPrivateChatPersistence({
     active(token);
     const result = await saveUserMessage({ conversationId, operationId, content });
     active(token);
-    return result;
+    if (!result || result.conversationId?.toLowerCase() !== conversationId.toLowerCase() ||
+        result.role !== "user" || result.content !== content ||
+        typeof result.id !== "string") {
+      throw new Error("Persisted user message does not match request.");
+    }
+    return Object.freeze({
+      conversationId,
+      operationId,
+      messageId: result.id,
+      content,
+      role: "user"
+    });
+  }
+  async function save(request) {
+    // Preserve the existing normalized-message return contract.
+    const receipt = await saveWithReceipt(request);
+    return Object.freeze({
+      id: receipt.messageId,
+      conversationId: receipt.conversationId,
+      role: receipt.role,
+      content: receipt.content
+    });
   }
   function invalidate() {
     if (destroyed) return false;
@@ -97,5 +118,5 @@ export function createPrivateChatPersistence({
     return true;
   }
   function destroy() { invalidate(); destroyed = true; }
-  return Object.freeze({ save, registerPersistedConversation, invalidate, destroy });
+  return Object.freeze({ save, saveWithReceipt, registerPersistedConversation, invalidate, destroy });
 }
