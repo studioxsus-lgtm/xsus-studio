@@ -61,4 +61,63 @@ describe("Private chat persistence bridge", () => {
     expect(x.writeService.save).toHaveBeenCalledTimes(1);
     expect(x.fetchImpl).toHaveBeenCalledTimes(1);
   });
+  it("does not return cached answer after switching authenticated accounts", async () => {
+    const x = setup();
+    let account = "user-a";
+    const supabase = { auth: { getSession: vi.fn(async () => ({
+      data: { session: { access_token: "token-" + account, user: { id: account } } },
+      error: null
+    })) } };
+    const bridge = createPrivateChatPersistenceBridge({
+      supabase, writeService: x.writeService,
+      endpoint: "https://example.org/api/private-chat", fetchImpl: x.fetchImpl
+    });
+    await bridge.send(args);
+    account = "user-b";
+    await bridge.send(args);
+    expect(x.writeService.invalidate).toHaveBeenCalledTimes(1);
+    expect(x.writeService.save).toHaveBeenCalledTimes(2);
+    expect(x.fetchImpl).toHaveBeenCalledTimes(2);
+  });
+  it("does not return a cached reply after signing out", async () => {
+    const x = setup();
+    let session = { access_token: "jwt", user: { id: "user-a" } };
+    const supabase = { auth: { getSession: vi.fn(async () => ({
+      data: { session }, error: null
+    })) } };
+    const bridge = createPrivateChatPersistenceBridge({
+      supabase, writeService: x.writeService,
+      endpoint: "https://example.org/api/private-chat", fetchImpl: x.fetchImpl
+    });
+    await bridge.send(args);
+    session = null;
+    await expect(bridge.send(args)).rejects.toThrow("Authentication required.");
+    expect(x.fetchImpl).toHaveBeenCalledTimes(1);
+  });
+  it("rejects account change during a pending user write", async () => {
+    const x = setup();
+    let account = "user-a";
+    let release;
+    x.writeService.save.mockImplementationOnce(() => new Promise(resolve => {
+      release = resolve;
+    }));
+    const supabase = { auth: { getSession: vi.fn(async () => ({
+      data: { session: { access_token: "token-" + account, user: { id: account } } },
+      error: null
+    })) } };
+    const bridge = createPrivateChatPersistenceBridge({
+      supabase, writeService: x.writeService,
+      endpoint: "https://example.org/api/private-chat", fetchImpl: x.fetchImpl
+    });
+    const pending = bridge.send(args);
+    // Wait for asynchronous identity resolution to reach the user-write boundary.
+    await vi.waitFor(() => expect(release).toBeTypeOf("function"));
+    account = "user-b";
+    const second = bridge.send(args);
+    await vi.waitFor(() => expect(x.writeService.invalidate).toHaveBeenCalledTimes(1));
+    release({ id: operationId, conversationId, content: "Hello", role: "user" });
+    await expect(pending).rejects.toThrow("Private chat session changed.");
+    await expect(second).resolves.toMatchObject({ persisted: true });
+  });
+
 });
