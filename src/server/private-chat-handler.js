@@ -26,6 +26,8 @@ export function createPrivateChatHandler({
     try {
       ({ userId, token } = await auth.verifyUser(authorization));
       await auth.verifyConversation({ userId, token, conversationId: input.conversationId });
+      await auth.verifyUserMessage({ userId, token, conversationId: input.conversationId,
+        operationId: input.operationId, content: input.query });
     } catch {
       return { status: 403, data: { error: "Private conversation access denied." } };
     }
@@ -38,7 +40,7 @@ export function createPrivateChatHandler({
       if (!result || typeof result.answer !== "string" || !result.answer.trim() || result.error) {
         return { status: 422, data: { error: "AI response unavailable." } };
       }
-      // Re-check ownership immediately before a privileged database write.
+      // Re-check ownership and the persisted user operation before a privileged write.
       await auth.verifyConversation({ userId, token, conversationId: input.conversationId });
       const saved = await writer.save({
         userId, conversationId: input.conversationId,
