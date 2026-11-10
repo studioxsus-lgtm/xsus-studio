@@ -68,6 +68,7 @@ export function createPrivateHistorySession({
 
   let activeLoad = null;
   let subscription = null;
+  let authSubscriptionEpoch = 0;
 
   /* ==========================================
      STATUS
@@ -484,10 +485,17 @@ export function createPrivateHistorySession({
 
     clearPrivateMemory();
 
+    const subscriptionEpoch = ++authSubscriptionEpoch;
+
     try {
       const { data } =
         supabase.auth.onAuthStateChange(
-          handleAuthChange
+          (event, session) => {
+            if (subscriptionEpoch !== authSubscriptionEpoch) {
+              return;
+            }
+            handleAuthChange(event, session);
+          }
         );
 
       subscription =
@@ -514,6 +522,7 @@ export function createPrivateHistorySession({
     }
 
     started = false;
+    authSubscriptionEpoch += 1;
 
     currentUserId = null;
 
