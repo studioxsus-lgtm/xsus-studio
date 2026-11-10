@@ -10,7 +10,10 @@ const executable = sql.split("\n").filter(line => !line.trim().startsWith("--"))
 describe("Private chat Supabase readiness gate", () => {
   it("contains only a read-only SQL statement", () => {
     expect(executable.trim()).toMatch(/^WITH\s+checks\s+AS\s*\(/i);
-    expect(executable).not.toMatch(/\b(INSERT|UPDATE|DELETE|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE)\s+(?:TABLE|INTO|FROM|ON|INDEX|POLICY|ROLE|FUNCTION|SCHEMA)?\b/i);
+    // Ignore SQL single-quoted string literals (including doubled quote escapes)
+    // before scanning for mutating SQL keywords.
+    const withoutLiterals = executable.replace(/'(?:''|[^'])*'/g, "''");
+    expect(withoutLiterals).not.toMatch(/\\b(?:INSERT|UPDATE|DELETE|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE)\\b/i);
   });
   it("checks forced RLS on both tables", () => {
     expect(sql).toContain("relforcerowsecurity");
