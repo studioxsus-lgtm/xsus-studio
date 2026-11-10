@@ -14,6 +14,8 @@ on:
       - "tests/unit/xsus-supabase-idempotent-write-adapter.test.js"
       - "tests/unit/xsus-database-idempotency-preflight.test.js"
       - "tests/unit/xsus-idempotent-persistence-recovery.test.js"
+      - "tests/unit/xsus-private-idempotent-write-service.test.js"
+      - "assets/js/xsus-ai/adapters/xsus-private-idempotent-write-service.js"
       - "supabase/verification/xsus_ai_idempotency_preflight.sql"
       - "supabase/migrations/20261110_xsus_ai_message_operation_id.sql"
       - ".github/workflows/xsus-private-write-coordinator-tests.yml"
@@ -30,6 +32,8 @@ on:
       - "tests/unit/xsus-supabase-idempotent-write-adapter.test.js"
       - "tests/unit/xsus-database-idempotency-preflight.test.js"
       - "tests/unit/xsus-idempotent-persistence-recovery.test.js"
+      - "tests/unit/xsus-private-idempotent-write-service.test.js"
+      - "assets/js/xsus-ai/adapters/xsus-private-idempotent-write-service.js"
       - "supabase/verification/xsus_ai_idempotency_preflight.sql"
       - "supabase/migrations/20261110_xsus_ai_message_operation_id.sql"
       - ".github/workflows/xsus-private-write-coordinator-tests.yml"
@@ -51,5 +55,5 @@ jobs:
           node-version: "22"
       - name: Install dependencies
         run: npm install
-      - name: Run coordinator, adapters, preflight and recovery tests
-        run: npx vitest run tests/unit/xsus-private-write-coordinator.test.js tests/unit/xsus-database-idempotency-migration.test.js tests/unit/xsus-idempotent-message-write-adapter.test.js tests/unit/xsus-supabase-idempotent-write-adapter.test.js tests/unit/xsus-database-idempotency-preflight.test.js tests/unit/xsus-idempotent-persistence-recovery.test.js
+      - name: Run coordinator, adapters, recovery and integration security tests
+        run: npx vitest run tests/unit/xsus-private-write-coordinator.test.js tests/unit/xsus-database-idempotency-migration.test.js tests/unit/xsus-idempotent-message-write-adapter.test.js tests/unit/xsus-supabase-idempotent-write-adapter.test.js tests/unit/xsus-database-idempotency-preflight.test.js tests/unit/xsus-idempotent-persistence-recovery.test.js tests/unit/xsus-private-idempotent-write-service.test.js
