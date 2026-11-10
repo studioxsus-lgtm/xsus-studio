@@ -9,6 +9,7 @@ function make({ rejectUser = false, rejectConversation = false } = {}) {
       if (rejectUser) throw new Error("bad token");
       return { userId: A, token: "token" };
     }),
+    verifyUserMessage: vi.fn().mockResolvedValue(true),
     verifyConversation: vi.fn().mockImplementation(async () => {
       if (rejectConversation) throw new Error("not owner");
       return true;
