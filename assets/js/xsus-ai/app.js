@@ -499,7 +499,8 @@ export function createXSUSAIApp(options = {}) {
     app.dataset.historyStatus =
       status;
     if (privateWritesActive &&
-        (status === "signed-out" || status === "identity-changed")) {
+        (status === "signed-out" || status === "identity-changed" ||
+         status === "token-refreshed")) {
       if (privateReplyBoundary) privateReplyBoundary.invalidate();
       else privateChatPersistence?.invalidate();
       privateWriteService?.invalidate();
