@@ -4374,6 +4374,77 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     });
   }
 
+  // Phases 41.43–41.52: ten local conversation edits during a pending forced refresh.
+  for (const edit of [
+    { label: "rename", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Unsaved rename" }];
+    } },
+    { label: "add", apply: controller => {
+      controller.state.conversations = [record(a), { ...record(b), title: "Unsaved addition" }];
+    } },
+    { label: "remove", apply: controller => {
+      controller.state.conversations = [];
+    } },
+    { label: "replace", apply: controller => {
+      controller.state.conversations = [{ ...record(b), title: "Unsaved replacement" }];
+    } },
+    { label: "reorder and rename", apply: controller => {
+      controller.state.conversations = [
+        { ...record(b), title: "Draft B" },
+        { ...record(a), title: "Draft A" }
+      ];
+    } }
+  ]) {
+    for (const outcome of ["resolve", "reject"]) {
+      test(`phase 41.43-41.52 local edits: ${edit.label} survives pending ${outcome}`, async () => {
+        const controller = chat();
+        const onError = vi.fn();
+        const statuses = [];
+        const session = createPrivateHistorySession({
+          chatController: controller,
+          onError,
+          onStatusChange: ({ status }) => statuses.push(status)
+        });
+        expect(session.start()).toBe(true);
+        expect(await session.refresh()).toBe(true);
+
+        let resolvePending;
+        let rejectPending;
+        mock.deferredMessages = {
+          id: a,
+          promise: new Promise((resolve, reject) => {
+            resolvePending = resolve;
+            rejectPending = reject;
+          })
+        };
+        const pending = session.refresh({ force: true });
+        await tick();
+        const hydrateCount = controller.hydrateHistory.mock.calls.length;
+        const clearCount = controller.clearHistory.mock.calls.length;
+        edit.apply(controller);
+        const expectedConversations = structuredClone(controller.state.conversations);
+        const expectedMessages = structuredClone(controller.state.messagesByConversation);
+
+        if (outcome === "resolve") {
+          resolvePending([{ ...assistant(a), content: "Remote stale answer" }]);
+        } else {
+          rejectPending(new Error("Remote refresh unavailable"));
+        }
+        expect(await pending).toBe(false);
+        expect(statuses.at(-1)).toBe("local-changes");
+        expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount);
+        expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+        expect(controller.state.conversations).toEqual(expectedConversations);
+        expect(controller.state.messagesByConversation).toEqual(expectedMessages);
+        expect(onError).toHaveBeenCalledTimes(outcome === "reject" ? 1 : 0);
+        if (outcome === "reject") {
+          expect(onError.mock.lastCall[0].message).toBe("Remote refresh unavailable");
+        }
+        session.destroy();
+      });
+    }
+  }
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
