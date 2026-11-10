@@ -616,3 +616,132 @@ describe("Concurrent Idempotency Regression", () => {
     expect(write).toHaveBeenCalledTimes(2);
   });
 });
+
+/* ============================================
+   PHASE 22.16.5.8.7 — ADVANCED INTEGRITY
+============================================ */
+
+describe("Advanced Concurrency and Recovery Integrity", () => {
+  test("26. rejects conflicting pending callers without disrupting identical callers", async () => {
+    const gate = deferred();
+    const write = vi.fn(async () => gate.promise);
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    const first = coordinator.execute(request());
+    await vi.waitFor(() => {
+      expect(coordinator.getPendingCount()).toBe(1);
+    });
+
+    const identical = coordinator.execute(request());
+    const conflicting = coordinator.execute(
+      request({ content: "Conflicting request" })
+    );
+
+    await expect(conflicting).rejects.toThrow(
+      "Operation ID reused with different content."
+    );
+
+    gate.resolve({ id: OPERATION_ID });
+    const results = await Promise.all([first, identical]);
+    expect(results[0]).toEqual(results[1]);
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(coordinator.getCompletedCount()).toBe(1);
+  });
+
+  test("27. rejects a write after the user signs out mid-operation", async () => {
+    const gate = deferred();
+    let currentUser = USER_A;
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => currentUser,
+      write: async () => gate.promise
+    });
+
+    const pending = coordinator.execute(request());
+    await vi.waitFor(() => {
+      expect(coordinator.getPendingCount()).toBe(1);
+    });
+
+    currentUser = null;
+    gate.resolve({ id: OPERATION_ID });
+
+    await expect(pending).rejects.toThrow(
+      "Authentication changed during write."
+    );
+    expect(coordinator.getCompletedCount()).toBe(0);
+  });
+
+  test("28. completed cache respects the configured capacity", async () => {
+    const { coordinator, write } = createHarness({
+      maxCompleted: 2
+    });
+
+    const first = request();
+    const second = request({ operationId: SECOND_OPERATION_ID });
+    const third = request({
+      operationId: "77777777-7777-4777-8777-777777777777"
+    });
+
+    await coordinator.execute(first);
+    await coordinator.execute(second);
+    await coordinator.execute(third);
+
+    expect(coordinator.getCompletedCount()).toBe(2);
+
+    await coordinator.execute(first);
+    expect(write).toHaveBeenCalledTimes(4);
+    expect(coordinator.getCompletedCount()).toBe(2);
+  });
+
+  test("29. destruction is idempotent and clears both caches", async () => {
+    const { coordinator } = createHarness();
+    await coordinator.execute(request());
+    expect(coordinator.getCompletedCount()).toBe(1);
+
+    coordinator.destroy();
+    coordinator.destroy();
+
+    expect(coordinator.isDestroyed()).toBe(true);
+    expect(coordinator.getPendingCount()).toBe(0);
+    expect(coordinator.getCompletedCount()).toBe(0);
+    expect(() => coordinator.invalidate()).toThrow(
+      "Write coordinator is destroyed."
+    );
+  });
+
+  test("30. a failed concurrent write is retried only after the pending entry clears", async () => {
+    const gate = deferred();
+    const write = vi.fn()
+      .mockImplementationOnce(async () => gate.promise)
+      .mockResolvedValueOnce({ id: OPERATION_ID, content: "Recovered" });
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    const first = coordinator.execute(request());
+    await vi.waitFor(() => {
+      expect(coordinator.getPendingCount()).toBe(1);
+    });
+
+    const second = coordinator.execute(request());
+    gate.reject(new Error("Transient write failure"));
+
+    const settled = await Promise.allSettled([first, second]);
+    expect(settled.map((item) => item.status)).toEqual([
+      "rejected",
+      "rejected"
+    ]);
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(coordinator.getPendingCount()).toBe(0);
+
+    const recovered = await coordinator.execute(
+      request({ content: "Recovered" })
+    );
+    expect(recovered.content).toBe("Recovered");
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(coordinator.getCompletedCount()).toBe(1);
+  });
+});
