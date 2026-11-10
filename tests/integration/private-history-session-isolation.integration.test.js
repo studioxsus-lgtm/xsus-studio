@@ -4909,6 +4909,50 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("sign-out during token rotation cannot restore stale private history", async () => {
+    const controller = chat();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+
+    let resolveOld;
+    mock.deferred = {
+      promise: new Promise(resolve => { resolveOld = resolve; })
+    };
+    const stale = session.refresh({ force: true });
+    await tick();
+    mock.authListener("TOKEN_REFRESHED", { user: { id: mock.userId } });
+    await tick();
+
+    mock.userId = null;
+    mock.authListener("SIGNED_OUT", null);
+    mock.deferred = null;
+    resolveOld([record(a)]);
+    expect(await stale).toBe(false);
+    await tick();
+    expect(session.getCurrentUserId()).toBeNull();
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+    expect(statuses.at(-1)).toBe("signed-out");
+
+    mock.userId = "99999999-9999-4999-8999-999999999999";
+    mock.conversations = [record(b)];
+    mock.messages = new Map([[b, [{ ...assistant(b), content: "New account only" }]]]);
+    mock.authListener("SIGNED_IN", { user: { id: mock.userId } });
+    await tick();
+    expect(await session.refresh()).toBe(true);
+    expect(session.getCurrentUserId()).toBe(mock.userId);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+    expect(controller.state.messagesByConversation[a]).toBeUndefined();
+    expect(controller.state.messagesByConversation[b][0].content).toBe("New account only");
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
