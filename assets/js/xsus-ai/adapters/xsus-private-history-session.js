@@ -176,6 +176,7 @@ export function createPrivateHistorySession({
   ========================================== */
 
   async function loadHistory(token) {
+    let localSnapshot = null;
     try {
       const userId =
         await verifiedUserId();
@@ -204,7 +205,7 @@ export function createPrivateHistorySession({
         token = generation;
       }
 
-      const localSnapshot =
+      localSnapshot =
         snapshotLocalState();
 
       const conversations =
@@ -302,6 +303,14 @@ export function createPrivateHistorySession({
        * modify the active account's memory.
        */
       if (!isCurrent(token)) {
+        return false;
+      }
+
+      // A failed network refresh must not erase edits made locally
+      // while that same-account request was pending.
+      if (localSnapshot !== null && localStateChanged(localSnapshot)) {
+        notify("local-changes");
+        onError(error instanceof Error ? error : new Error("Private history loading failed."));
         return false;
       }
 
