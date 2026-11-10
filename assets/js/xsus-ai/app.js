@@ -942,9 +942,17 @@ async function bootXSUSAI() {
     // Private mode is opt-in only when the deployed backend confirms both
     // capabilities AND the current browser session is authenticated.
     // Otherwise preserve the existing public chat without private writes.
+    // Never wait indefinitely for authentication: keep public chat usable
+    // if the auth provider stalls. A later page reload can retry private mode.
+    const authCheck = Promise.race([
+      supabase.auth.getUser().catch(() => ({ data: null, error: true })),
+      new Promise(resolve => setTimeout(
+        () => resolve({ data: null, error: true }), 8000
+      ))
+    ]);
     const [ready, auth] = await Promise.all([
       privateBackendReady(),
-      supabase.auth.getUser().catch(() => ({ data: null, error: true }))
+      authCheck
     ]);
     if (!app.isConnected || app.dataset.xsusInitialized === "true") return;
     const privateEnabled = ready && !auth?.error && Boolean(auth?.data?.user?.id);
