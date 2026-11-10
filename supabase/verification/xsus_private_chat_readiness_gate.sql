@@ -45,7 +45,7 @@ WITH checks AS (
              WHERE k.ordinality <= i.indnkeyatts)
             = ARRAY['user_id', 'conversation_id', 'operation_id']::name[]
         AND (i.indpred IS NULL OR pg_get_expr(i.indpred, i.indrelid) ~*
-             $operation_id\s+IS\s+NOT\s+NULL$)
+             'operation_id[[:space:]]+IS[[:space:]]+NOT[[:space:]]+NULL')
     ) AS operation_unique,
     -- Accept PostgreSQL rendering of (SELECT auth.uid() AS uid) and role casts.
     EXISTS (
@@ -53,9 +53,9 @@ WITH checks AS (
       WHERE schemaname = 'public' AND tablename = 'ai_messages'
         AND cmd = 'INSERT'
         AND 'authenticated' = ANY(roles)
-        AND position('auth.uid()' in regexp_replace(with_check, $\s+$, '', 'g')) > 0
-        AND with_check ~* $role\s*=\s*'user'$
-        AND with_check ~* $$user_id$$
+        AND position('auth.uid()' in regexp_replace(with_check, '[[:space:]]+', '', 'g')) > 0
+        AND with_check ~* 'role[[:space:]]*=[[:space:]]*''user'''
+        AND with_check ~* 'user_id'
     ) AS user_only_insert_policy,
     NOT EXISTS (
       SELECT 1 FROM pg_policies
