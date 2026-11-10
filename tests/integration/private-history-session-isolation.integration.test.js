@@ -2477,6 +2477,54 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("retry after failed refresh with local edits hydrates saved history once", async () => {
+    let rejectMessages;
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+
+    mock.deferredMessages = {
+      id: a,
+      promise: new Promise((_resolve, reject) => { rejectMessages = reject; })
+    };
+    const failed = session.refresh({ force: true });
+    await tick();
+
+    controller.state.conversations = [{ ...record(a), title: "Local unsaved title" }];
+    controller.state.messagesByConversation = {
+      [a]: [{ ...assistant(a), content: "Local unsaved answer" }]
+    };
+    rejectMessages(new Error("Temporary refresh failure"));
+    expect(await failed).toBe(false);
+    expect(statuses.at(-1)).toBe("local-changes");
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Local unsaved answer");
+    expect(onError).toHaveBeenCalledTimes(1);
+
+    mock.deferredMessages = null;
+    mock.conversations = [{ ...record(a), title: "Saved updated title" }];
+    mock.messages = new Map([[a, [{ ...assistant(a), content: "Saved updated answer" }]]]);
+    const hydratedBeforeRetry = controller.hydrateHistory.mock.calls.length;
+    expect(await session.refresh({ force: true })).toBe(true);
+    expect(statuses.at(-1)).toBe("ready");
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydratedBeforeRetry + 1);
+    expect(controller.state.conversations).toHaveLength(1);
+    expect(controller.state.conversations[0].title).toBe("Saved updated title");
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Saved updated answer");
+
+    expect(await session.refresh()).toBe(true);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydratedBeforeRetry + 1);
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
