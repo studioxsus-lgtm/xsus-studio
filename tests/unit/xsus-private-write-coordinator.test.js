@@ -884,3 +884,118 @@ describe("Stress Testing and Lifecycle Integrity", () => {
     expect(write).toHaveBeenCalledTimes(2);
   });
 });
+
+/* ============================================
+   PHASE 22.16.5.8.9 — FAILURE AND IDENTITY
+============================================ */
+
+describe("Advanced Failure Recovery and Identity Isolation", () => {
+  test("36. an authentication lookup failure never starts a write", async () => {
+    const write = vi.fn(async () => ({ id: OPERATION_ID }));
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: vi.fn().mockRejectedValueOnce(
+        new Error("Authentication service unavailable")
+      ).mockResolvedValue(USER_A),
+      write
+    });
+
+    await expect(coordinator.execute(request())).rejects.toThrow(
+      "Authentication service unavailable"
+    );
+    expect(write).not.toHaveBeenCalled();
+
+    await expect(coordinator.execute(request())).resolves.toEqual({
+      id: OPERATION_ID
+    });
+    expect(write).toHaveBeenCalledTimes(1);
+  });
+
+  test("37. switching accounts does not reuse another account's completed result", async () => {
+    let userId = USER_A;
+    const write = vi.fn(async ({ userId: owner }) => ({ owner }));
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => userId,
+      write
+    });
+
+    const first = await coordinator.execute(request());
+    expect(first.owner).toBe(USER_A);
+
+    userId = USER_B;
+    const second = await coordinator.execute(request());
+    expect(second.owner).toBe(USER_B);
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(coordinator.getCompletedCount()).toBe(1);
+  });
+
+  test("38. account change invalidates the previous account's pending write", async () => {
+    const oldGate = deferred();
+    let userId = USER_A;
+    const write = vi.fn()
+      .mockImplementationOnce(async () => oldGate.promise)
+      .mockResolvedValueOnce({ owner: USER_B });
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => userId,
+      write
+    });
+
+    const oldWrite = coordinator.execute(request());
+    await vi.waitFor(() => {
+      expect(coordinator.getPendingCount()).toBe(1);
+    });
+
+    userId = USER_B;
+    const newWrite = await coordinator.execute(request());
+    expect(newWrite.owner).toBe(USER_B);
+
+    oldGate.resolve({ owner: USER_A });
+    await expect(oldWrite).rejects.toThrow("Write operation invalidated.");
+    expect(coordinator.getCompletedCount()).toBe(1);
+    expect(write).toHaveBeenCalledTimes(2);
+  });
+
+  test("39. a write failure leaves no completed result and allows retry", async () => {
+    const write = vi.fn()
+      .mockRejectedValueOnce(new Error("Storage unavailable"))
+      .mockResolvedValueOnce({ id: OPERATION_ID });
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    await expect(coordinator.execute(request())).rejects.toThrow(
+      "Storage unavailable"
+    );
+    expect(coordinator.getPendingCount()).toBe(0);
+    expect(coordinator.getCompletedCount()).toBe(0);
+
+    await expect(coordinator.execute(request())).resolves.toEqual({
+      id: OPERATION_ID
+    });
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(coordinator.getCompletedCount()).toBe(1);
+  });
+
+  test("40. a signed-out request clears cached results before a new sign-in", async () => {
+    let userId = USER_A;
+    const write = vi.fn(async ({ userId: owner }) => ({ owner }));
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => userId,
+      write
+    });
+
+    await coordinator.execute(request());
+    expect(coordinator.getCompletedCount()).toBe(1);
+
+    userId = null;
+    await expect(coordinator.execute(request())).rejects.toThrow(
+      "Authentication required."
+    );
+    expect(coordinator.getCompletedCount()).toBe(0);
+
+    userId = USER_A;
+    await coordinator.execute(request());
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(coordinator.getCompletedCount()).toBe(1);
+  });
+});
