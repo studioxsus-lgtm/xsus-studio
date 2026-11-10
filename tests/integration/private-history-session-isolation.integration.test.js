@@ -9,7 +9,8 @@ const mock = vi.hoisted(() => ({
   authListener: null,
   conversations: [],
   messages: new Map(),
-  deferred: null
+  deferred: null,
+  deferredMessages: null
 }));
 
 vi.mock("../../services/supabase-client.js", () => ({
@@ -32,7 +33,10 @@ vi.mock("../../assets/js/xsus-ai/adapters/xsus-chat-history-adapter.js", () => (
     if (mock.deferred) return mock.deferred.promise;
     return mock.conversations;
   }),
-  loadMyMessages: vi.fn(async id => mock.messages.get(id) ?? [])
+  loadMyMessages: vi.fn(async id => {
+    if (mock.deferredMessages?.id === id) return mock.deferredMessages.promise;
+    return mock.messages.get(id) ?? [];
+  })
 }));
 
 import { createPrivateHistorySession } from "../../assets/js/xsus-ai/adapters/xsus-private-history-session.js";
@@ -73,6 +77,7 @@ beforeEach(() => {
   mock.conversations = [record(a)];
   mock.messages = new Map([[a, [assistant(a)]]]);
   mock.deferred = null;
+  mock.deferredMessages = null;
 });
 
 describe("Private history session account and refresh isolation (mocked)", () => {
@@ -371,6 +376,37 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     resolveNew([record(b)]);
     await tick();
     expect(await session.refresh()).toBe(true);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+    expect(controller.state.messagesByConversation[a]).toBeUndefined();
+    expect(controller.state.messagesByConversation[b][0].conversationId).toBe(b);
+    session.destroy();
+  });
+
+  test("late account A message response cannot overwrite hydrated account B", async () => {
+    let resolveOldMessages;
+    mock.deferredMessages = {
+      id: a,
+      promise: new Promise(resolve => { resolveOldMessages = resolve; })
+    };
+    const controller = chat();
+    const session = createPrivateHistorySession({ chatController: controller });
+    session.start();
+    await tick();
+
+    const accountB = "99999999-9999-4999-8999-999999999999";
+    mock.userId = accountB;
+    mock.deferredMessages = null;
+    mock.conversations = [record(b)];
+    mock.messages = new Map([[b, [assistant(b)]]]);
+    mock.authListener("SIGNED_IN", { user: { id: accountB } });
+    await tick();
+    expect(await session.refresh()).toBe(true);
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+
+    resolveOldMessages([assistant(a)]);
+    await tick();
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
     expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
     expect(controller.state.messagesByConversation[a]).toBeUndefined();
     expect(controller.state.messagesByConversation[b][0].conversationId).toBe(b);
