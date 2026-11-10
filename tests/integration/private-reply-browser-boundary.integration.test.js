@@ -72,6 +72,40 @@ describe("Private reply browser opt-in boundary (mocked)", () => {
     expect(env.fetchImpl).not.toHaveBeenCalled();
   });
 
+  test("rejects account switch after the user message was saved", async () => {
+    const env = setup();
+    env.persistence.saveWithReceipt.mockImplementationOnce(async () => {
+      env.setUser("44444444-4444-4444-8444-444444444444");
+      return { conversationId, operationId, content: request.message, role: "user" };
+    });
+    await expect(env.boundary.send(request)).rejects.toThrow("Private chat session changed.");
+    expect(env.fetchImpl).not.toHaveBeenCalled();
+    expect(env.persistence.invalidate).toHaveBeenCalledTimes(1);
+  });
+
+  test("rejects account switch during backend reply before exposing answer", async () => {
+    const env = setup();
+    env.fetchImpl.mockImplementationOnce(async () => {
+      env.setUser("44444444-4444-4444-8444-444444444444");
+      return {
+        ok: true,
+        json: async () => ({ persisted: true, conversationId, operationId, answer: "Private" })
+      };
+    });
+    await expect(env.boundary.send(request)).rejects.toThrow("Private chat session changed.");
+    expect(env.persistence.invalidate).toHaveBeenCalledTimes(1);
+  });
+
+  test("rejects invalidation while the user receipt is pending", async () => {
+    const env = setup();
+    env.persistence.saveWithReceipt.mockImplementationOnce(async () => {
+      env.boundary.invalidate();
+      return { conversationId, operationId, content: request.message, role: "user" };
+    });
+    await expect(env.boundary.send(request)).rejects.toThrow("Private chat session changed.");
+    expect(env.fetchImpl).not.toHaveBeenCalled();
+  });
+
   test("rejects attachments before any private database write", async () => {
     const env = setup();
     await expect(env.boundary.send({ ...request, attachments: [{ name: "file" }] }))
