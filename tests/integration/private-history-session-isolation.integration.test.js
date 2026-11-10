@@ -1807,6 +1807,56 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("late pre-stop message rejection after repeated token refreshes cannot clear restarted account", async () => {
+    let rejectOldSecondMessages;
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, [assistant(b)]]]);
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise((_resolve, reject) => { rejectOldSecondMessages = reject; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    for (let i = 0; i < 3; i++) {
+      mock.authListener("TOKEN_REFRESHED", { user: { id: mock.userId } });
+    }
+    expect(statuses.filter(status => status === "token-refreshed")).toHaveLength(3);
+    session.stop();
+
+    mock.userId = "99999999-9999-4999-8999-999999999999";
+    mock.deferredMessages = null;
+    mock.conversations = [record(a)];
+    mock.messages = new Map([[a, [{ ...assistant(a), content: "Restarted account answer" }]]]);
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    const statusCount = statuses.length;
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Restarted account answer");
+
+    rejectOldSecondMessages(new Error("Old session message request failed after restart"));
+    await tick();
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(statuses).toHaveLength(statusCount);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Restarted account answer");
+    expect(controller.state.messagesByConversation[b]).toBeUndefined();
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
