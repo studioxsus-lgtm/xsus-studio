@@ -13,6 +13,7 @@ on:
       - "assets/js/xsus-ai/adapters/xsus-supabase-idempotent-write-adapter.js"
       - "tests/unit/xsus-supabase-idempotent-write-adapter.test.js"
       - "tests/unit/xsus-database-idempotency-preflight.test.js"
+      - "tests/unit/xsus-idempotent-persistence-recovery.test.js"
       - "supabase/verification/xsus_ai_idempotency_preflight.sql"
       - "supabase/migrations/20261110_xsus_ai_message_operation_id.sql"
       - ".github/workflows/xsus-private-write-coordinator-tests.yml"
@@ -28,6 +29,7 @@ on:
       - "assets/js/xsus-ai/adapters/xsus-supabase-idempotent-write-adapter.js"
       - "tests/unit/xsus-supabase-idempotent-write-adapter.test.js"
       - "tests/unit/xsus-database-idempotency-preflight.test.js"
+      - "tests/unit/xsus-idempotent-persistence-recovery.test.js"
       - "supabase/verification/xsus_ai_idempotency_preflight.sql"
       - "supabase/migrations/20261110_xsus_ai_message_operation_id.sql"
       - ".github/workflows/xsus-private-write-coordinator-tests.yml"
@@ -49,5 +51,5 @@ jobs:
           node-version: "22"
       - name: Install dependencies
         run: npm install
-      - name: Run coordinator, adapters and database preflight tests
-        run: npx vitest run tests/unit/xsus-private-write-coordinator.test.js tests/unit/xsus-database-idempotency-migration.test.js tests/unit/xsus-idempotent-message-write-adapter.test.js tests/unit/xsus-supabase-idempotent-write-adapter.test.js tests/unit/xsus-database-idempotency-preflight.test.js
+      - name: Run coordinator, adapters, preflight and recovery tests
+        run: npx vitest run tests/unit/xsus-private-write-coordinator.test.js tests/unit/xsus-database-idempotency-migration.test.js tests/unit/xsus-idempotent-message-write-adapter.test.js tests/unit/xsus-supabase-idempotent-write-adapter.test.js tests/unit/xsus-database-idempotency-preflight.test.js tests/unit/xsus-idempotent-persistence-recovery.test.js
