@@ -1,13 +1,13 @@
 /**
- * Private chat HTTP boundary. Authentication and RLS authorization only.
- * Fail closed until a server-side assistant persistence writer is installed.
- * Never forward a client conversation ID into the public AI memory runtime.
+ * XSUS AI — authenticated private chat orchestration.
+ * Authorization precedes generation. Never pass a browser conversation ID
+ * to AI Core memory. Reply persistence is optional and fails closed.
  */
 import { validatePrivateChatRequest } from "./private-chat-persistence-contract.js";
 import { createPrivateChatAuthorization } from "./private-chat-authorization.js";
 
 export function createPrivateChatHandler({
-  supabaseUrl, supabaseKey, fetchImpl, authorize
+  supabaseUrl, supabaseKey, fetchImpl, authorize, generate, writer
 } = {}) {
   const auth = authorize || createPrivateChatAuthorization({
     supabaseUrl, supabaseKey, fetchImpl
@@ -22,14 +22,35 @@ export function createPrivateChatHandler({
     if (!authorization) {
       return { status: 401, data: { error: "Authentication required." } };
     }
+    let userId, token;
     try {
-      const { userId, token } = await auth.verifyUser(authorization);
+      ({ userId, token } = await auth.verifyUser(authorization));
       await auth.verifyConversation({ userId, token, conversationId: input.conversationId });
     } catch {
       return { status: 403, data: { error: "Private conversation access denied." } };
     }
-    // Intentionally do not generate or save a reply yet: a verified, idempotent
-    // server-side persistence writer is required before this route can succeed.
-    return { status: 501, data: { error: "Private reply persistence is not enabled." } };
+    if (typeof generate !== "function" || typeof writer?.save !== "function") {
+      return { status: 501, data: { error: "Private reply persistence is not enabled." } };
+    }
+    try {
+      // Only pass validated query to the independent AI Core.
+      const result = await generate({ query: input.query });
+      if (!result || typeof result.answer !== "string" || !result.answer.trim() || result.error) {
+        return { status: 422, data: { error: "AI response unavailable." } };
+      }
+      // Re-check ownership immediately before a privileged database write.
+      await auth.verifyConversation({ userId, token, conversationId: input.conversationId });
+      const saved = await writer.save({
+        userId, conversationId: input.conversationId,
+        operationId: input.operationId, answer: result.answer
+      });
+      if (!saved || typeof saved.content !== "string" || !saved.content.trim()) {
+        throw new Error("Invalid persistence result.");
+      }
+      return { status: 200, data: { answer: saved.content, conversationId: input.conversationId,
+        operationId: input.operationId, persisted: true } };
+    } catch {
+      return { status: 503, data: { error: "Private reply could not be safely saved." } };
+    }
   };
 }
