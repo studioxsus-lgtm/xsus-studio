@@ -4755,6 +4755,97 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     }
   }
 
+  // Phases 41.93–42.02: local message drafts survive collisions and later recover exactly once.
+  for (const edit of [
+    { label: "edit", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Edited local answer" }];
+      controller.state.messagesByConversation[a] = [{ ...assistant(a), content: "Edited draft" }];
+    } },
+    { label: "append", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Appended local answer" }];
+      controller.state.messagesByConversation[a] = [
+        assistant(a), { ...assistant(a), id: "55555555-5555-4555-8555-555555555555", content: "Appended draft" }
+      ];
+    } },
+    { label: "delete", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Deleted local answer" }];
+      controller.state.messagesByConversation[a] = [];
+    } },
+    { label: "replace", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Replaced local answer" }];
+      controller.state.messagesByConversation[a] = [
+        { ...assistant(a), id: "66666666-6666-4666-8666-666666666666", content: "Replacement draft" }
+      ];
+    } },
+    { label: "new conversation", apply: controller => {
+      controller.state.conversations = [record(a), { ...record(b), title: "New local chat" }];
+      controller.state.messagesByConversation[b] = [{ ...assistant(b), content: "New local message" }];
+    } }
+  ]) {
+    for (const outcome of ["resolve", "reject"]) {
+      test(`phase 41.93-42.02 message draft recovery: ${edit.label} after ${outcome} recovers without duplication`, async () => {
+        const controller = chat();
+        const onError = vi.fn();
+        const statuses = [];
+        const session = createPrivateHistorySession({
+          chatController: controller,
+          onError,
+          onStatusChange: ({ status }) => statuses.push(status)
+        });
+        expect(session.start()).toBe(true);
+        expect(await session.refresh()).toBe(true);
+
+        let resolveOld;
+        let rejectOld;
+        mock.deferredMessages = {
+          id: a,
+          promise: new Promise((resolve, reject) => {
+            resolveOld = resolve;
+            rejectOld = reject;
+          })
+        };
+        const collided = session.refresh({ force: true });
+        await tick();
+        edit.apply(controller);
+        const localConversations = structuredClone(controller.state.conversations);
+        const localMessages = structuredClone(controller.state.messagesByConversation);
+        const hydrateCount = controller.hydrateHistory.mock.calls.length;
+        const clearCount = controller.clearHistory.mock.calls.length;
+
+        if (outcome === "resolve") {
+          resolveOld([{ ...assistant(a), content: "Old remote message" }]);
+        } else {
+          rejectOld(new Error("Temporary message fetch failure"));
+        }
+        expect(await collided).toBe(false);
+        expect(statuses.at(-1)).toBe("local-changes");
+        expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount);
+        expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+        expect(controller.state.conversations).toEqual(localConversations);
+        expect(controller.state.messagesByConversation).toEqual(localMessages);
+        expect(onError).toHaveBeenCalledTimes(outcome === "reject" ? 1 : 0);
+
+        mock.deferredMessages = null;
+        mock.conversations = [{ ...record(a), title: "Saved canonical conversation" }];
+        mock.messages = new Map([[a, [{ ...assistant(a), content: "Canonical saved answer" }]]]);
+        expect(await session.refresh({ force: true })).toBe(true);
+        expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount + 1);
+        expect(statuses.at(-1)).toBe("ready");
+        expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+        expect(controller.state.conversations[0].title).toBe("Saved canonical conversation");
+        expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+        expect(controller.state.messagesByConversation[a][0].content).toBe("Canonical saved answer");
+        expect(controller.state.messagesByConversation[b]).toBeUndefined();
+
+        const recoveredHydrateCount = controller.hydrateHistory.mock.calls.length;
+        expect(await session.refresh()).toBe(true);
+        expect(controller.hydrateHistory).toHaveBeenCalledTimes(recoveredHydrateCount);
+        expect(onError).toHaveBeenCalledTimes(outcome === "reject" ? 1 : 0);
+        session.destroy();
+      });
+    }
+  }
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
