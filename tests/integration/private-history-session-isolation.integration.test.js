@@ -2125,6 +2125,53 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("stale auth events cannot mask a current history load failure after restart", async () => {
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+    const oldAuthListener = mock.authListener;
+    expect(session.stop()).toBe(true);
+
+    let rejectNewMessages;
+    mock.userId = "99999999-9999-4999-8999-999999999999";
+    mock.conversations = [record(b)];
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise((_resolve, reject) => { rejectNewMessages = reject; })
+    };
+    expect(session.start()).toBe(true);
+    await tick();
+    const pending = session.refresh();
+    const clearCount = controller.clearHistory.mock.calls.length;
+    const statusCount = statuses.length;
+
+    for (const event of ["SIGNED_OUT", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED", "INITIAL_SESSION"]) {
+      oldAuthListener(event, { user: { id: "11111111-1111-4111-8111-111111111111" } });
+    }
+    await tick();
+    expect(statuses).toHaveLength(statusCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(session.getCurrentUserId()).toBe(mock.userId);
+    expect(session.refresh()).toBe(pending);
+
+    rejectNewMessages(new Error("Current account message load failed"));
+    expect(await pending).toBe(false);
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][0].message).toBe("Current account message load failed");
+    expect(statuses.at(-1)).toBe("error");
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(1);
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
