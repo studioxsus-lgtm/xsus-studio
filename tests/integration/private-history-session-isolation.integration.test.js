@@ -689,6 +689,34 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("late message response after destroy cannot restore private history", async () => {
+    let resolveOldMessages;
+    mock.deferredMessages = {
+      id: a,
+      promise: new Promise(resolve => { resolveOldMessages = resolve; })
+    };
+    const controller = chat();
+    const session = createPrivateHistorySession({ chatController: controller });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    session.destroy();
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+
+    resolveOldMessages([assistant(a)]);
+    await tick();
+
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+    expect(session.isStarted()).toBe(false);
+    expect(session.start()).toBe(false);
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
