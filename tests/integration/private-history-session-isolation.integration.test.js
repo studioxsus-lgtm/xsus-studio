@@ -349,6 +349,34 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("token refresh with a new identity clears old messages before loading the new account", async () => {
+    const controller = chat();
+    const session = createPrivateHistorySession({ chatController: controller });
+    session.start();
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+
+    const accountB = "99999999-9999-4999-8999-999999999999";
+    mock.userId = accountB;
+    let resolveNew;
+    mock.deferred = { promise: new Promise(resolve => { resolveNew = resolve; }) };
+    mock.messages = new Map([[b, [assistant(b)]]]);
+    mock.authListener("TOKEN_REFRESHED", { user: { id: accountB } });
+
+    expect(session.getCurrentUserId()).toBe(accountB);
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation[a]).toBeUndefined();
+
+    await tick();
+    resolveNew([record(b)]);
+    await tick();
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+    expect(controller.state.messagesByConversation[a]).toBeUndefined();
+    expect(controller.state.messagesByConversation[b][0].conversationId).toBe(b);
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
