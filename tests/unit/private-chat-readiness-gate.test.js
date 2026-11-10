@@ -34,7 +34,7 @@ describe("Private chat Supabase readiness gate", () => {
     expect(sql).toContain("no_public_message_insert_policy");
     expect(sql).toContain("regexp_replace(with_check");
     expect(sql).toContain("auth.uid()");
-    expect(sql).toContain(String.raw`role\s*=\s+\x27user\x27`);
+    expect(sql).toContain(String.raw`role\s*=\s*'user'`);
   });
   it("produces explicit PASS or FAIL rows", () => {
     expect(sql).toContain("'PASS'");
