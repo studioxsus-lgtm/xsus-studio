@@ -873,6 +873,7 @@ export function createXSUSAIApp(options = {}) {
        */
       privateHistorySession
         ?.destroy();
+      privateReplyBoundary?.invalidate();
       privateChatPersistence?.destroy();
       privateWriteService?.destroy();
 
