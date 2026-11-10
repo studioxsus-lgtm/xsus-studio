@@ -4846,6 +4846,35 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     }
   }
 
+  // Final security gate: malformed private payloads must never reach the chat UI.
+  for (const scenario of [
+    { label: "null conversations", configure: () => { mock.conversations = null; }, error: "Invalid private conversations." },
+    { label: "object conversations", configure: () => { mock.conversations = { id: a }; }, error: "Invalid private conversations." },
+    { label: "null messages", configure: () => { mock.messages = new Map([[a, null]]); }, error: "Invalid private messages." },
+    { label: "object messages", configure: () => { mock.messages = new Map([[a, { content: "Untrusted" }]]); }, error: "Invalid private messages." }
+  ]) {
+    test(`final security gate invalid private payload: ${scenario.label}`, async () => {
+      const controller = chat();
+      const onError = vi.fn();
+      const statuses = [];
+      const session = createPrivateHistorySession({
+        chatController: controller,
+        onError,
+        onStatusChange: ({ status }) => statuses.push(status)
+      });
+      scenario.configure();
+      expect(session.start()).toBe(true);
+      expect(await session.refresh()).toBe(false);
+      expect(controller.hydrateHistory).not.toHaveBeenCalled();
+      expect(controller.state.conversations).toEqual([]);
+      expect(controller.state.messagesByConversation).toEqual({});
+      expect(statuses.at(-1)).toBe("error");
+      expect(onError).toHaveBeenCalledTimes(1);
+      expect(onError.mock.lastCall[0].message).toBe(scenario.error);
+      session.destroy();
+    });
+  }
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
