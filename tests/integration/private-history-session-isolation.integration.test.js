@@ -3447,6 +3447,70 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("obsolete auth events cannot mask current account B load failure after repeated recovery", async () => {
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+    const oldAuthListener = mock.authListener;
+
+    for (const message of ["First failed refresh", "Second failed refresh"]) {
+      let rejectMessages;
+      mock.deferredMessages = {
+        id: a,
+        promise: new Promise((_resolve, reject) => { rejectMessages = reject; })
+      };
+      const failedLoad = session.refresh({ force: true });
+      await tick();
+      rejectMessages(new Error(message));
+      expect(await failedLoad).toBe(false);
+    }
+    expect(onError).toHaveBeenCalledTimes(2);
+
+    mock.deferredMessages = null;
+    mock.messages = new Map([[a, [{ ...assistant(a), content: "Recovered account A" }]]]);
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Recovered account A");
+
+    session.stop();
+    mock.userId = "99999999-9999-4999-8999-999999999999";
+    mock.conversations = [record(b)];
+    let rejectBMessages;
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise((_resolve, reject) => { rejectBMessages = reject; })
+    };
+    expect(session.start()).toBe(true);
+    expect(mock.authListener).not.toBe(oldAuthListener);
+    const pendingB = session.refresh();
+    await tick();
+    const errorCount = onError.mock.calls.length;
+    const statusCount = statuses.length;
+
+    for (const event of ["SIGNED_OUT", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED", "INITIAL_SESSION"]) {
+      oldAuthListener(event, { user: { id: "11111111-1111-4111-8111-111111111111" } });
+    }
+    await tick();
+    expect(onError).toHaveBeenCalledTimes(errorCount);
+    expect(statuses).toHaveLength(statusCount);
+
+    rejectBMessages(new Error("Current account B load failed"));
+    expect(await pendingB).toBe(false);
+    expect(onError).toHaveBeenCalledTimes(errorCount + 1);
+    expect(onError.mock.lastCall[0].message).toBe("Current account B load failed");
+    expect(statuses.at(-1)).toBe("error");
+    expect(session.getCurrentUserId()).toBe(mock.userId);
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
