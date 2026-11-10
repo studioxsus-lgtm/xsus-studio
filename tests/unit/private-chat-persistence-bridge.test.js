@@ -110,13 +110,14 @@ describe("Private chat persistence bridge", () => {
       endpoint: "https://example.org/api/private-chat", fetchImpl: x.fetchImpl
     });
     const pending = bridge.send(args);
+    const rejected = expect(pending).rejects.toThrow("Private chat session changed.");
     // Wait for asynchronous identity resolution to reach the user-write boundary.
     await vi.waitFor(() => expect(release).toBeTypeOf("function"));
     account = "user-b";
     const second = bridge.send(args);
     await vi.waitFor(() => expect(x.writeService.invalidate).toHaveBeenCalledTimes(1));
     release({ id: operationId, conversationId, content: "Hello", role: "user" });
-    await expect(pending).rejects.toThrow("Private chat session changed.");
+    await rejected;
     await expect(second).resolves.toMatchObject({ persisted: true });
   });
 
