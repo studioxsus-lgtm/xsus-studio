@@ -86,6 +86,31 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("reloading the same account does not duplicate saved assistant messages", async () => {
+    const controller = chat();
+    const session = createPrivateHistorySession({ chatController: controller });
+    session.start();
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    expect(await session.refresh({ force: true })).toBe(true);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Persisted answer");
+    session.destroy();
+  });
+
+  test("refresh preserves messages in their own conversations", async () => {
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, []]]);
+    const controller = chat();
+    const session = createPrivateHistorySession({ chatController: controller });
+    session.start();
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[b]).toEqual([]);
+    expect(controller.state.messagesByConversation[a][0].conversationId).toBe(a);
+    session.destroy();
+  });
+
   test("sign out clears messages without deleting database history", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
