@@ -490,13 +490,6 @@ export function createXSUSAIApp(options = {}) {
       privateWriteService?.invalidate();
     }
 
-    if (enablePrivateWrites && status === "ready" && userId) {
-      // Only history hydrated by the authenticated read session may be registered.
-      for (const conversation of chatController?.getConversations() || []) {
-        privateChatPersistence?.registerPersistedConversation(conversation.id);
-      }
-    }
-
     app.dataset.authenticated =
       String(Boolean(userId));
 
@@ -538,7 +531,13 @@ export function createXSUSAIApp(options = {}) {
         onError: reportError,
 
         onStatusChange:
-          handleHistoryStatus
+          handleHistoryStatus,
+        onHydrated({ conversationIds }) {
+          if (!enablePrivateWrites) return;
+          for (const id of conversationIds) {
+            privateChatPersistence?.registerPersistedConversation(id);
+          }
+        }
       });
 
     const started =
