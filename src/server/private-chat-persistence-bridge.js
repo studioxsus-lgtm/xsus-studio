@@ -16,7 +16,26 @@ export function createPrivateChatPersistenceBridge({
       typeof writeService?.invalidate !== "function") {
     throw new TypeError("Authenticated idempotent user write service required.");
   }
+  if (typeof supabase?.auth?.getSession !== "function") {
+    throw new TypeError("Authenticated Supabase session required.");
+  }
   const reply = createPrivateReplyTransport({ supabase, endpoint, fetchImpl });
+  let identity = null;
+  let identityEpoch = 0;
+  async function requireIdentity() {
+    const { data, error } = await supabase.auth.getSession();
+    const session = data?.session;
+    if (error || !session?.user?.id || !session?.access_token) {
+      invalidate();
+      throw new Error("Authentication required.");
+    }
+    const current = session.user.id;
+    if (identity !== null && identity !== current) {
+      invalidate();
+    }
+    identity = current;
+    return current;
+  }
   const roundTrip = createPrivateChatRoundTrip({
     async saveUserMessage({ conversationId, operationId, content }) {
       const saved = await writeService.save({ conversationId, operationId, content });
@@ -29,11 +48,26 @@ export function createPrivateChatPersistenceBridge({
     },
     sendPrivateReply: reply
   });
+  function invalidate() {
+    identityEpoch += 1;
+    identity = null;
+    roundTrip.invalidate();
+    writeService.invalidate();
+  }
   return Object.freeze({
-    send: roundTrip.send,
-    invalidate() {
-      roundTrip.invalidate();
-      writeService.invalidate();
-    }
+    async send(request) {
+      const user = await requireIdentity();
+      const token = identityEpoch;
+      const result = await roundTrip.send(request);
+      // Even completed/cached replies require a fresh account check.
+      const { data, error } = await supabase.auth.getSession();
+      if (error || data?.session?.user?.id !== user ||
+          identityEpoch !== token) {
+        invalidate();
+        throw new Error("Private chat session changed.");
+      }
+      return result;
+    },
+    invalidate
   });
 }
