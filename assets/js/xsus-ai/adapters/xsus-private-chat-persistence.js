@@ -65,7 +65,7 @@ export function createPrivateChatPersistence({
     }).catch(() => {});
     return task;
   }
-  async function saveWithReceipt({ localConversationId, content, localMessageId } = {}) {
+  async function save({ localConversationId, content, localMessageId } = {}) {
     if (destroyed) throw new Error("Private chat persistence invalidated.");
     const localId = requireLocalId(localConversationId);
     if (typeof localMessageId !== "string" || !localMessageId.trim()) {
@@ -91,22 +91,21 @@ export function createPrivateChatPersistence({
         typeof result.id !== "string") {
       throw new Error("Persisted user message does not match request.");
     }
-    return Object.freeze({
-      conversationId,
-      operationId,
-      messageId: result.id,
-      content,
-      role: "user"
-    });
+    return result;
   }
-  async function save(request) {
-    // Preserve the existing normalized-message return contract.
-    const receipt = await saveWithReceipt(request);
+  async function saveWithReceipt(request = {}) {
+    const result = await save(request);
+    const key = request.localConversationId + ":" + request.localMessageId;
+    const operation = operations.get(key);
+    if (!operation || operation.content !== request.content) {
+      throw new Error("Private operation receipt unavailable.");
+    }
     return Object.freeze({
-      id: receipt.messageId,
-      conversationId: receipt.conversationId,
-      role: receipt.role,
-      content: receipt.content
+      conversationId: result.conversationId,
+      operationId: operation.operationId,
+      messageId: result.id,
+      content: result.content,
+      role: result.role
     });
   }
   function invalidate() {
