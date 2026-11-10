@@ -229,10 +229,10 @@ describe(
   "XSUS Private History — Public API",
   () => {
 
-    test("exposes version 1.0.0", () => {
+    test("exposes version 1.2.0", () => {
       expect(
         PRIVATE_HISTORY_SESSION_VERSION
-      ).toBe("1.0.0");
+      ).toBe("1.2.0");
     });
 
     test("rejects missing Chat Controller", () => {
@@ -392,7 +392,7 @@ describe(
 
       expect(
         session.getCurrentUserId()
-      ).toBeNull();
+      ).toBe(USER_A);
     });
 
   }
