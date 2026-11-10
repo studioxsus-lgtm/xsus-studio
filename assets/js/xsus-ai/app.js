@@ -46,6 +46,11 @@ import {
   createPrivateHistorySession
 } from "./adapters/xsus-private-history-session.js";
 
+import { supabase } from "../../../services/supabase-client.js";
+import { createMyConversation } from "./adapters/xsus-chat-history-write-adapter.js";
+import { createPrivateIdempotentWriteService } from "./adapters/xsus-private-idempotent-write-service.js";
+import { createPrivateChatPersistence } from "./adapters/xsus-private-chat-persistence.js";
+
 export const XSUS_APP_VERSION = "3.1.0";
 
 /* ============================================
@@ -211,6 +216,7 @@ export function createXSUSAIApp(options = {}) {
     root = document,
     aiAdapter = null,
     enablePrivateHistory = true,
+    enablePrivateWrites = false,
     onReady = () => {},
     onError = () => {},
     onNavigate = () => {}
@@ -272,6 +278,8 @@ export function createXSUSAIApp(options = {}) {
   let plusMenuController = null;
   let chatController = null;
   let privateHistorySession = null;
+  let privateWriteService = null;
+  let privateChatPersistence = null;
 
   const cleanups = [];
 
@@ -360,6 +368,20 @@ export function createXSUSAIApp(options = {}) {
       throw new Error(
         "XSUS AI Core is not connected yet."
       );
+    }
+
+    if (enablePrivateWrites) {
+      if (!enablePrivateHistory || !privateChatPersistence) {
+        throw new Error("Private chat persistence is not ready.");
+      }
+      if (!privateHistorySession?.getCurrentUserId()) {
+        throw new Error("Sign in before saving a private chat.");
+      }
+      await privateChatPersistence.save({
+        localConversationId: request.conversationId,
+        localMessageId: request.messageId,
+        content: request.message
+      });
     }
 
     return adapter(request);
@@ -462,6 +484,11 @@ export function createXSUSAIApp(options = {}) {
 
     app.dataset.historyStatus =
       status;
+    if (enablePrivateWrites &&
+        (status === "signed-out" || status === "identity-changed")) {
+      privateChatPersistence?.invalidate();
+      privateWriteService?.invalidate();
+    }
 
     app.dataset.authenticated =
       String(Boolean(userId));
@@ -470,6 +497,20 @@ export function createXSUSAIApp(options = {}) {
      * Never expose the Supabase user ID
      * through DOM dataset attributes.
      */
+  }
+
+  function initializePrivateWrites() {
+    if (!enablePrivateWrites) return;
+    if (!enablePrivateHistory) {
+      throw new Error("Private writes require private history.");
+    }
+    privateWriteService =
+      createPrivateIdempotentWriteService({ supabase });
+    privateChatPersistence = createPrivateChatPersistence({
+      createConversation: createMyConversation,
+      createOperationId: privateWriteService.createOperationId,
+      saveUserMessage: args => privateWriteService.save(args)
+    });
   }
 
   function initializePrivateHistory() {
@@ -638,6 +679,7 @@ export function createXSUSAIApp(options = {}) {
 
       initializePlusMenu();
 
+      initializePrivateWrites();
       initializeChat();
 
       initializeNavigation();
@@ -674,6 +716,8 @@ export function createXSUSAIApp(options = {}) {
       });
 
     } catch (error) {
+      privateChatPersistence?.destroy();
+      privateWriteService?.destroy();
       privateHistorySession
         ?.destroy();
 
@@ -800,6 +844,8 @@ export function createXSUSAIApp(options = {}) {
        */
       privateHistorySession
         ?.destroy();
+      privateChatPersistence?.destroy();
+      privateWriteService?.destroy();
 
       cleanups.forEach(
         cleanup => cleanup()
@@ -863,7 +909,8 @@ function bootXSUSAI() {
             }
           }),
 
-        enablePrivateHistory: true
+        enablePrivateHistory: true,
+        enablePrivateWrites: false
       });
 
     window.XSUSAI =
