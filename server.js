@@ -190,7 +190,11 @@ const server = http.createServer(
             return sendJSON(res, 200, {
                 status: "ok",
                 service: "xsus-ai-api",
-                apiVersion: "1.0.1"
+                apiVersion: "1.0.1",
+                capabilities: {
+                    privateChat: Boolean(privateChatHandler),
+                    privateReplyWrites: Boolean(privateChatHandler && privateReplyWriter)
+                }
             });
         }
 
