@@ -23,10 +23,15 @@ describe("Private chat Supabase readiness gate", () => {
   it("checks composite ownership and unique operation", () => {
     expect(sql).toContain("composite_owner_fk");
     expect(sql).toContain("operation_unique");
+    expect(sql).toContain("pg_constraint c");
+    expect(sql).toContain("pg_index i");
+    expect(sql).toContain("indisvalid");
+    expect(sql).toContain("indimmediate");
   });
   it("checks restricted authenticated inserts", () => {
     expect(sql).toContain("user_only_insert_policy");
     expect(sql).toContain("no_public_message_insert_policy");
+    expect(sql).toContain("regexp_replace(with_check");
   });
   it("produces explicit PASS or FAIL rows", () => {
     expect(sql).toContain("'PASS'");
