@@ -1982,6 +1982,56 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     expect(controller.state.messagesByConversation).toEqual({});
   });
 
+  test("late authentication events after stop cannot restore history before a clean restart", async () => {
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+    const oldAuthListener = mock.authListener;
+    expect(typeof oldAuthListener).toBe("function");
+
+    expect(session.stop()).toBe(true);
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    const statusCount = statuses.length;
+    expect(session.isStarted()).toBe(false);
+    expect(session.getCurrentUserId()).toBeNull();
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+
+    mock.userId = "99999999-9999-4999-8999-999999999999";
+    for (const event of ["TOKEN_REFRESHED", "SIGNED_IN", "INITIAL_SESSION", "USER_UPDATED", "SIGNED_OUT"]) {
+      oldAuthListener(event, { user: { id: mock.userId } });
+    }
+    await tick();
+
+    expect(await session.refresh()).toBe(false);
+    expect(session.isStarted()).toBe(false);
+    expect(session.getCurrentUserId()).toBeNull();
+    expect(onError).not.toHaveBeenCalled();
+    expect(statuses).toHaveLength(statusCount);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+
+    mock.conversations = [record(b)];
+    mock.messages = new Map([[b, [{ ...assistant(b), content: "Restarted session answer" }]]]);
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+    expect(session.isStarted()).toBe(true);
+    expect(session.getCurrentUserId()).toBe(mock.userId);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+    expect(controller.state.messagesByConversation[b][0].content).toBe("Restarted session answer");
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
