@@ -4003,6 +4003,111 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     });
   }
 
+  // Phases 41.13–41.17: late B messages cannot cross a completed lifecycle boundary.
+  for (const scenario of [
+    { label: "resolved after sign-out", outcome: "resolve", boundary: "sign-out" },
+    { label: "rejected after sign-out", outcome: "reject", boundary: "sign-out" },
+    { label: "resolved after stop", outcome: "resolve", boundary: "stop" },
+    { label: "rejected after destroy", outcome: "reject", boundary: "destroy" },
+    { label: "resolved after restart as a third identity", outcome: "resolve", boundary: "restart" }
+  ]) {
+    test(`phase 41.13-41.17 pending B response: ${scenario.label}`, async () => {
+      const controller = chat();
+      const onError = vi.fn();
+      const statuses = [];
+      const session = createPrivateHistorySession({
+        chatController: controller,
+        onError,
+        onStatusChange: ({ status }) => statuses.push(status)
+      });
+      expect(session.start()).toBe(true);
+      expect(await session.refresh()).toBe(true);
+
+      mock.userId = "99999999-9999-4999-8999-999999999999";
+      mock.conversations = [record(b)];
+      mock.messages = new Map([[b, [{ ...assistant(b), content: "First B answer" }]]]);
+      mock.authListener("SIGNED_IN", { user: { id: mock.userId } });
+      expect(await session.refresh()).toBe(true);
+
+      // A failed B refresh must not leave a stale hydration behind.
+      let rejectFailed;
+      mock.deferredMessages = {
+        id: b,
+        promise: new Promise((_resolve, reject) => { rejectFailed = reject; })
+      };
+      const failed = session.refresh({ force: true });
+      await tick();
+      rejectFailed(new Error("B retry needed"));
+      expect(await failed).toBe(false);
+      expect(onError).toHaveBeenCalledTimes(1);
+      mock.deferredMessages = null;
+      mock.messages = new Map([[b, [{ ...assistant(b), content: "Recovered B answer" }]]]);
+      expect(await session.refresh()).toBe(true);
+
+      let resolvePending;
+      let rejectPending;
+      mock.deferredMessages = {
+        id: b,
+        promise: new Promise((resolve, reject) => {
+          resolvePending = resolve;
+          rejectPending = reject;
+        })
+      };
+      const pendingB = session.refresh({ force: true });
+      await tick();
+
+      if (scenario.boundary === "sign-out") {
+        mock.userId = null;
+        mock.authListener("SIGNED_OUT", null);
+      } else if (scenario.boundary === "stop") {
+        session.stop();
+      } else if (scenario.boundary === "destroy") {
+        session.destroy();
+      } else {
+        session.stop();
+        mock.userId = "88888888-8888-4888-8888-888888888888";
+        mock.conversations = [record(a)];
+        mock.messages = new Map([[a, [{ ...assistant(a), content: "Third account answer" }]]]);
+        mock.deferredMessages = null;
+        expect(session.start()).toBe(true);
+        expect(await session.refresh()).toBe(true);
+      }
+      await tick();
+      const hydrateCount = controller.hydrateHistory.mock.calls.length;
+      const clearCount = controller.clearHistory.mock.calls.length;
+      const statusCount = statuses.length;
+
+      if (scenario.outcome === "resolve") {
+        resolvePending([{ ...assistant(b), content: "Late B answer" }]);
+      } else {
+        rejectPending(new Error("Late B rejection"));
+      }
+      expect(await pendingB).toBe(false);
+      await tick();
+
+      expect(onError).toHaveBeenCalledTimes(1);
+      expect(statuses).toHaveLength(statusCount);
+      expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount);
+      expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+      if (scenario.boundary === "restart") {
+        expect(session.getCurrentUserId()).toBe(mock.userId);
+        expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+        expect(controller.state.messagesByConversation[a][0].content).toBe("Third account answer");
+        expect(controller.state.messagesByConversation[b]).toBeUndefined();
+      } else {
+        expect(session.getCurrentUserId()).toBeNull();
+        expect(controller.state.conversations).toEqual([]);
+        expect(controller.state.messagesByConversation).toEqual({});
+      }
+      if (scenario.boundary === "destroy") {
+        expect(session.start()).toBe(false);
+        expect(await session.refresh()).toBe(false);
+      } else {
+        session.destroy();
+      }
+    });
+  }
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
