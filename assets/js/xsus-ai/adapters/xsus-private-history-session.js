@@ -116,6 +116,10 @@ export function createPrivateHistorySession({
 
     clearPrivateMemory();
 
+    // Notify immediately: private writes and pending replies must be
+    // invalidated before the next account's history begins loading.
+    notify("identity-changed");
+
     return true;
   }
 
