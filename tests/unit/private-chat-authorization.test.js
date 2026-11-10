@@ -47,4 +47,30 @@ describe("Private chat server authorization", () => {
     await expect(auth.verifyConversation({ token: "token", userId: USER, conversationId: "bad" })).rejects.toThrow();
     expect(fetchImpl).not.toHaveBeenCalled();
   });
+  it("verifies the user-authored operation using authenticated RLS", async () => {
+    const op = "550e8400-e29b-41d4-a716-446655440003";
+    const { auth, fetchImpl } = setup([ok([{
+      id: "550e8400-e29b-41d4-a716-446655440004",
+      user_id: USER, conversation_id: CONV, operation_id: op,
+      role: "user", content: "Hello"
+    }])]);
+    await expect(auth.verifyUserMessage({ token: "token", userId: USER,
+      conversationId: CONV, operationId: op, content: "Hello" })).resolves.toBe(true);
+    expect(fetchImpl.mock.calls[0][0]).toContain("operation_id=eq.");
+  });
+  it("rejects forged assistant role in user operation", async () => {
+    const op = "550e8400-e29b-41d4-a716-446655440003";
+    const { auth } = setup([ok([{ user_id: USER, conversation_id: CONV,
+      operation_id: op, role: "assistant", content: "Hello" }])]);
+    await expect(auth.verifyUserMessage({ token: "token", userId: USER,
+      conversationId: CONV, operationId: op, content: "Hello" })).rejects.toThrow();
+  });
+  it("rejects an operation with different user message text", async () => {
+    const op = "550e8400-e29b-41d4-a716-446655440003";
+    const { auth } = setup([ok([{ user_id: USER, conversation_id: CONV,
+      operation_id: op, role: "user", content: "Different" }])]);
+    await expect(auth.verifyUserMessage({ token: "token", userId: USER,
+      conversationId: CONV, operationId: op, content: "Hello" })).rejects.toThrow();
+  });
+
 });
