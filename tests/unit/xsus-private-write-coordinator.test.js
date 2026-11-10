@@ -494,3 +494,125 @@ describe("Recovery and Lifecycle", () => {
     );
   });
 });
+
+/* ============================================
+   PHASE 22.16.5.8.6 — CONCURRENCY HARDENING
+============================================ */
+
+describe("Concurrent Idempotency Regression", () => {
+  test("21. rejects conflicting content while an operation is pending", async () => {
+    const gate = deferred();
+    const write = vi.fn(async () => gate.promise);
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    const first = coordinator.execute(request());
+
+    await vi.waitFor(() => {
+      expect(coordinator.getPendingCount()).toBe(1);
+    });
+
+    await expect(
+      coordinator.execute(request({ content: "Conflicting payload" }))
+    ).rejects.toThrow("Operation ID reused with different content.");
+
+    expect(write).toHaveBeenCalledTimes(1);
+    gate.resolve({ id: OPERATION_ID });
+    await expect(first).resolves.toEqual({ id: OPERATION_ID });
+    expect(coordinator.getPendingCount()).toBe(0);
+  });
+
+  test("22. invalidation prevents stale pending results from entering the cache", async () => {
+    const gate = deferred();
+    const write = vi.fn(async () => gate.promise);
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    const first = coordinator.execute(request());
+    await vi.waitFor(() => {
+      expect(coordinator.getPendingCount()).toBe(1);
+    });
+
+    coordinator.invalidate();
+    expect(coordinator.getPendingCount()).toBe(0);
+    expect(coordinator.getCompletedCount()).toBe(0);
+
+    gate.resolve({ id: OPERATION_ID });
+    await expect(first).rejects.toThrow("Write operation invalidated.");
+    expect(coordinator.getCompletedCount()).toBe(0);
+  });
+
+  test("23. failed operations can retry with a different payload", async () => {
+    const write = vi.fn()
+      .mockRejectedValueOnce(new Error("Temporary failure"))
+      .mockResolvedValueOnce({ id: OPERATION_ID, content: "Retry payload" });
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    await expect(coordinator.execute(request())).rejects.toThrow(
+      "Temporary failure"
+    );
+
+    await expect(
+      coordinator.execute(request({ content: "Retry payload" }))
+    ).resolves.toEqual({ id: OPERATION_ID, content: "Retry payload" });
+
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(coordinator.getCompletedCount()).toBe(1);
+  });
+
+  test("24. same operation ID in different conversations has a distinct key", async () => {
+    const { coordinator, write } = createHarness();
+    const otherConversation = "66666666-6666-4666-8666-666666666666";
+
+    await coordinator.execute(request());
+    await coordinator.execute(request({
+      conversationId: otherConversation,
+      content: "Other conversation"
+    }));
+
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(coordinator.getCompletedCount()).toBe(2);
+  });
+
+  test("25. invalidating a pending write allows a new generation to finish", async () => {
+    const oldGate = deferred();
+    const write = vi.fn()
+      .mockImplementationOnce(async () => oldGate.promise)
+      .mockResolvedValueOnce({ id: OPERATION_ID, content: "Fresh payload" });
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    const oldOperation = coordinator.execute(request());
+    await vi.waitFor(() => {
+      expect(coordinator.getPendingCount()).toBe(1);
+    });
+
+    coordinator.invalidate();
+
+    const fresh = await coordinator.execute(
+      request({ content: "Fresh payload" })
+    );
+    expect(fresh.content).toBe("Fresh payload");
+
+    oldGate.resolve({ id: OPERATION_ID, content: "Stale payload" });
+    await expect(oldOperation).rejects.toThrow(
+      "Write operation invalidated."
+    );
+
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(coordinator.getCompletedCount()).toBe(1);
+    await expect(
+      coordinator.execute(request({ content: "Fresh payload" }))
+    ).resolves.toEqual(fresh);
+    expect(write).toHaveBeenCalledTimes(2);
+  });
+});
