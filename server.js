@@ -15,13 +15,23 @@
 import http from "node:http";
 import { processAIRequest } from "./src/core/ai-core.js";
 import { createPrivateChatHandler } from "./src/server/private-chat-handler.js";
+import { createAssistantMessageWriter } from "./src/server/assistant-message-writer.js";
 
 const PORT = Number(process.env.PORT) || 3000;
+
+const privateReplyWriter = process.env.XSUS_PRIVATE_REPLY_WRITES_ENABLED === "true"
+    ? createAssistantMessageWriter({
+        supabaseUrl: process.env.SUPABASE_URL,
+        serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY
+    })
+    : null;
 
 const privateChatHandler = process.env.XSUS_PRIVATE_CHAT_ENABLED === "true"
     ? createPrivateChatHandler({
         supabaseUrl: process.env.SUPABASE_URL,
-        supabaseKey: process.env.SUPABASE_ANON_KEY
+        supabaseKey: process.env.SUPABASE_ANON_KEY,
+        generate: privateReplyWriter ? ({ query }) => processAIRequest({ query }) : undefined,
+        writer: privateReplyWriter || undefined
     })
     : null;
 
