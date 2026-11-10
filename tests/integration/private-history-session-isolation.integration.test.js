@@ -1251,6 +1251,38 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("late second-conversation response after destroy cannot restore private history", async () => {
+    let resolveOldSecondMessages;
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, [assistant(b)]]]);
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise(resolve => { resolveOldSecondMessages = resolve; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const session = createPrivateHistorySession({ chatController: controller, onError });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    session.destroy();
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+
+    resolveOldSecondMessages([{ ...assistant(b), content: "Late destroyed-session answer" }]);
+    await tick();
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+    expect(session.isStarted()).toBe(false);
+    expect(session.start()).toBe(false);
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
