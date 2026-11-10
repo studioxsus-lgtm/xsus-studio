@@ -52,5 +52,22 @@ export function createPrivateChatAuthorization({ supabaseUrl, supabaseKey, fetch
     }
     return true;
   }
-  return Object.freeze({ verifyUser, verifyConversation });
+  async function verifyUserMessage({ token, userId, conversationId, operationId, content }) {
+    if (![userId, conversationId, operationId].every(v => typeof v === "string" && UUID.test(v)) ||
+        typeof content !== "string" || !content.trim()) {
+      throw new Error("User message verification denied.");
+    }
+    const path = "/rest/v1/ai_messages?select=id%2Cuser_id%2Cconversation_id%2Coperation_id%2Crole%2Ccontent" +
+      "&user_id=eq." + encodeURIComponent(userId) +
+      "&conversation_id=eq." + encodeURIComponent(conversationId) +
+      "&operation_id=eq." + encodeURIComponent(operationId) + "&limit=1";
+    const rows = await request(path, token);
+    const row = Array.isArray(rows) && rows.length === 1 ? rows[0] : null;
+    if (!row || row.user_id !== userId || row.conversation_id !== conversationId ||
+        row.operation_id !== operationId || row.role !== "user" || row.content.trim() !== content.trim()) {
+      throw new Error("User message verification denied.");
+    }
+    return true;
+  }
+  return Object.freeze({ verifyUser, verifyConversation, verifyUserMessage });
 }
