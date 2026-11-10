@@ -24,9 +24,12 @@ async function runWithFlags(flags, assertion) {
     env: {
       ...process.env,
       PORT: String(port),
-      SUPABASE_URL: "",
+      // The writer validates configuration at startup even if its route
+      // is disabled. Use inert local-test placeholders, never real secrets.
+      // No private route is enabled and no network/database call is made.
+      SUPABASE_URL: flags.writes === "true" ? "https://example.invalid" : "",
       SUPABASE_ANON_KEY: "",
-      SUPABASE_SERVICE_ROLE_KEY: "",
+      SUPABASE_SERVICE_ROLE_KEY: flags.writes === "true" ? "test-only-not-a-secret" : "",
       XSUS_PRIVATE_CHAT_ENABLED: flags.chat,
       XSUS_PRIVATE_REPLY_WRITES_ENABLED: flags.writes
     },
