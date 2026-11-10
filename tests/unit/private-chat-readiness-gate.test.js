@@ -13,7 +13,7 @@ describe("Private chat Supabase readiness gate", () => {
     // Ignore SQL single-quoted string literals (including doubled quote escapes)
     // before scanning for mutating SQL keywords.
     const withoutLiterals = executable.replace(/'(?:''|[^'])*'/g, "''");
-    expect(withoutLiterals).not.toMatch(/\\b(?:INSERT|UPDATE|DELETE|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE)\\b/i);
+    expect(withoutLiterals).not.toMatch(/\b(?:INSERT|UPDATE|DELETE|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE)\b/i);
   });
   it("checks forced RLS on both tables", () => {
     expect(sql).toContain("relforcerowsecurity");
@@ -27,11 +27,14 @@ describe("Private chat Supabase readiness gate", () => {
     expect(sql).toContain("pg_index i");
     expect(sql).toContain("indisvalid");
     expect(sql).toContain("indimmediate");
+    expect(sql).toContain(String.raw`operation_id\s+IS\s+NOT\s+NULL`);
   });
   it("checks restricted authenticated inserts", () => {
     expect(sql).toContain("user_only_insert_policy");
     expect(sql).toContain("no_public_message_insert_policy");
     expect(sql).toContain("regexp_replace(with_check");
+    expect(sql).toContain("auth.uid()");
+    expect(sql).toContain(String.raw`role\s*=\s+\x27user\x27`);
   });
   it("produces explicit PASS or FAIL rows", () => {
     expect(sql).toContain("'PASS'");
