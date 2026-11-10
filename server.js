@@ -14,8 +14,16 @@
 
 import http from "node:http";
 import { processAIRequest } from "./src/core/ai-core.js";
+import { createPrivateChatHandler } from "./src/server/private-chat-handler.js";
 
 const PORT = Number(process.env.PORT) || 3000;
+
+const privateChatHandler = process.env.XSUS_PRIVATE_CHAT_ENABLED === "true"
+    ? createPrivateChatHandler({
+        supabaseUrl: process.env.SUPABASE_URL,
+        supabaseKey: process.env.SUPABASE_ANON_KEY
+    })
+    : null;
 
 const MAX_BODY_BYTES = 32 * 1024;
 const MAX_QUERY_LENGTH = 8000;
@@ -72,7 +80,7 @@ function applyCORS(req, res) {
 
         res.setHeader(
             "Access-Control-Allow-Headers",
-            "Content-Type"
+            "Content-Type, Authorization"
         );
     }
 
@@ -191,6 +199,30 @@ const server = http.createServer(
                     chat: "POST /api/chat"
                 }
             });
+        }
+
+        // Separate authenticated route; disabled unless explicitly configured.
+        // Never changes the public /api/chat behavior.
+        if (pathname === "/api/private-chat") {
+            if (req.method !== "POST") {
+                return sendJSON(res, 405, { error: "Method not allowed." });
+            }
+            if (!privateChatHandler) {
+                return sendJSON(res, 503, { error: "Private chat is not enabled." });
+            }
+            if (!req.headers["content-type"]?.includes("application/json")) {
+                return sendJSON(res, 415, { error: "Content-Type must be application/json." });
+            }
+            try {
+                const body = await readJSONBody(req);
+                const result = await privateChatHandler({
+                    authorization: req.headers.authorization,
+                    body
+                });
+                return sendJSON(res, result.status, result.data);
+            } catch {
+                return sendJSON(res, 400, { error: "Invalid private chat request." });
+            }
         }
 
         /**
