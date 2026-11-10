@@ -50,6 +50,7 @@ import { supabase } from "../../../services/supabase-client.js";
 import { createMyConversation } from "./adapters/xsus-chat-history-write-adapter.js";
 import { createPrivateIdempotentWriteService } from "./adapters/xsus-private-idempotent-write-service.js";
 import { createPrivateChatPersistence } from "./adapters/xsus-private-chat-persistence.js";
+import { createPrivateReplyBoundary } from "./adapters/xsus-private-reply-boundary.js";
 
 export const XSUS_APP_VERSION = "3.1.0";
 
@@ -217,6 +218,8 @@ export function createXSUSAIApp(options = {}) {
     aiAdapter = null,
     enablePrivateHistory = true,
     enablePrivateWrites = false,
+    enablePrivateReplies = false,
+    privateReplyEndpoint = "https://xsus-studio.onrender.com/api/private-chat",
     onReady = () => {},
     onError = () => {},
     onNavigate = () => {}
@@ -280,6 +283,7 @@ export function createXSUSAIApp(options = {}) {
   let privateHistorySession = null;
   let privateWriteService = null;
   let privateChatPersistence = null;
+  let privateReplyBoundary = null;
 
   const cleanups = [];
 
@@ -368,6 +372,13 @@ export function createXSUSAIApp(options = {}) {
       throw new Error(
         "XSUS AI Core is not connected yet."
       );
+    }
+
+    if (enablePrivateReplies) {
+      if (!privateReplyBoundary || !privateHistorySession?.getCurrentUserId()) {
+        throw new Error("Authenticated private replies are not ready.");
+      }
+      return privateReplyBoundary.send(request);
     }
 
     if (enablePrivateWrites) {
@@ -486,7 +497,8 @@ export function createXSUSAIApp(options = {}) {
       status;
     if (enablePrivateWrites &&
         (status === "signed-out" || status === "identity-changed")) {
-      privateChatPersistence?.invalidate();
+      if (privateReplyBoundary) privateReplyBoundary.invalidate();
+      else privateChatPersistence?.invalidate();
       privateWriteService?.invalidate();
     }
 
@@ -500,6 +512,9 @@ export function createXSUSAIApp(options = {}) {
   }
 
   function initializePrivateWrites() {
+    if (enablePrivateReplies && !enablePrivateWrites) {
+      throw new Error("Private replies require private writes.");
+    }
     if (!enablePrivateWrites) return;
     if (!enablePrivateHistory) {
       throw new Error("Private writes require private history.");
@@ -511,6 +526,13 @@ export function createXSUSAIApp(options = {}) {
       createOperationId: privateWriteService.createOperationId,
       saveUserMessage: args => privateWriteService.save(args)
     });
+    if (enablePrivateReplies) {
+      privateReplyBoundary = createPrivateReplyBoundary({
+        supabase,
+        persistence: privateChatPersistence,
+        endpoint: privateReplyEndpoint
+      });
+    }
   }
 
   function initializePrivateHistory() {
@@ -722,6 +744,7 @@ export function createXSUSAIApp(options = {}) {
       });
 
     } catch (error) {
+      privateReplyBoundary?.invalidate();
       privateChatPersistence?.destroy();
       privateWriteService?.destroy();
       privateHistorySession
@@ -916,7 +939,8 @@ function bootXSUSAI() {
           }),
 
         enablePrivateHistory: true,
-        enablePrivateWrites: false
+        enablePrivateWrites: false,
+        enablePrivateReplies: false
       });
 
     window.XSUSAI =
