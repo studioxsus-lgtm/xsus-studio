@@ -55,7 +55,27 @@ describe("XSUS opt-in private chat persistence", () => {
     const h = setup(); h.service.destroy();
     await expect(h.service.save(req)).rejects.toThrow("invalidated");
   });
-  test("10. dependency validation fails closed", () => {
+  test("10. hydrated conversation is reused without duplicate insert", async () => {
+    const h = setup();
+    h.service.registerPersistedConversation(C);
+    await h.service.save({ ...req, localConversationId: C });
+    expect(h.createConversation).not.toHaveBeenCalled();
+    expect(h.saveUserMessage).toHaveBeenCalledWith({
+      conversationId: C, operationId: O, content: req.content
+    });
+  });
+  test("11. invalid hydrated ID is rejected", () => {
+    const h = setup();
+    expect(() => h.service.registerPersistedConversation("local-id")).toThrow(TypeError);
+  });
+  test("12. invalidation clears trusted ID mapping", async () => {
+    const h = setup();
+    h.service.registerPersistedConversation(C);
+    h.service.invalidate();
+    await h.service.save({ ...req, localConversationId: C });
+    expect(h.createConversation).toHaveBeenCalledTimes(1);
+  });
+  test("13. dependency validation fails closed", () => {
     expect(() => createPrivateChatPersistence({})).toThrow(TypeError);
   });
 });
