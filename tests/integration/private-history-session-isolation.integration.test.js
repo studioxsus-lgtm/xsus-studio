@@ -816,6 +816,36 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("failed history load can retry successfully without duplicate conversations", async () => {
+    let rejectFirst;
+    mock.deferred = {
+      promise: new Promise((_resolve, reject) => { rejectFirst = reject; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const session = createPrivateHistorySession({ chatController: controller, onError });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    const first = session.refresh();
+    rejectFirst(new Error("Temporary history outage"));
+    expect(await first).toBe(false);
+    await tick();
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(controller.state.conversations).toEqual([]);
+
+    mock.deferred = null;
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(1);
+
+    expect(await session.refresh()).toBe(true);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(1);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
