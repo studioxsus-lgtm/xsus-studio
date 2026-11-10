@@ -82,6 +82,7 @@ export function createPrivateWriteCoordinator({
 
   let activeUserId = null;
   let generation = 0;
+  let cancellationEpoch = 0;
   let destroyed = false;
 
   function assertActive() {
@@ -139,9 +140,16 @@ export function createPrivateWriteCoordinator({
       );
     }
 
+    // Track explicit invalidation across asynchronous identity resolution.
+    // Keep this separate from generation: initial identity synchronization
+    // must not reject concurrent callers belonging to the same user.
+    const identityEpoch = cancellationEpoch;
     const userId = await getUserId();
 
     assertActive();
+    if (identityEpoch !== cancellationEpoch) {
+      throw new Error("Write operation invalidated.");
+    }
 
     if (!userId) {
       syncIdentity(null);
@@ -237,6 +245,7 @@ export function createPrivateWriteCoordinator({
   function invalidate() {
     assertActive();
 
+    cancellationEpoch += 1;
     generation += 1;
     pending.clear();
     completed.clear();
@@ -251,6 +260,7 @@ export function createPrivateWriteCoordinator({
     }
 
     destroyed = true;
+    cancellationEpoch += 1;
     generation += 1;
 
     pending.clear();
