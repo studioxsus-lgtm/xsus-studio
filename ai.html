@@ -337,6 +337,29 @@
       display: block;
     }
 
+    /* Read-only private history status; driven by app.js data-history-status. */
+    .xsus-private-history-status {
+      margin: 7px 2px 11px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #a9bad3;
+    }
+
+    .xsus-private-history-status > span { display: none; }
+    .xsus-ai-app[data-history-status="loading"] .xsus-private-history-status .is-loading,
+    .xsus-ai-app[data-history-status="ready"] .xsus-private-history-status .is-ready,
+    .xsus-ai-app[data-history-status="signed-out"] .xsus-private-history-status .is-signed-out,
+    .xsus-ai-app[data-history-status="error"] .xsus-private-history-status .is-error,
+    .xsus-ai-app[data-history-status="identity-changed"] .xsus-private-history-status .is-identity-changed,
+    .xsus-ai-app[data-history-status="local-changes"] .xsus-private-history-status .is-local-changes {
+      display: inline;
+    }
+
+    .xsus-ai-app[data-history-status="error"] .xsus-private-history-status,
+    .xsus-ai-app[data-history-status="identity-changed"] .xsus-private-history-status {
+      color: #ffb4b4;
+    }
+
     .xsus-sidebar-footer {
       padding: 14px;
       border-top: 1px solid rgba(130,180,255,.15);
@@ -928,6 +951,15 @@
             data-i18n="navigation.history"
           >
             History
+          </div>
+
+          <div class="xsus-private-history-status" aria-label="Private history status">
+            <span class="is-loading">Loading private history…</span>
+            <span class="is-ready">Private history loaded.</span>
+            <span class="is-signed-out">Sign in to load private history.</span>
+            <span class="is-error">Private history could not be loaded.</span>
+            <span class="is-identity-changed">Session changed. History was cleared.</span>
+            <span class="is-local-changes">History refresh paused to preserve current messages.</span>
           </div>
 
           <div class="xsus-sidebar-history"></div>
