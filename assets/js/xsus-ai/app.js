@@ -490,6 +490,13 @@ export function createXSUSAIApp(options = {}) {
       privateWriteService?.invalidate();
     }
 
+    if (enablePrivateWrites && status === "ready" && userId) {
+      // Only history hydrated by the authenticated read session may be registered.
+      for (const conversation of chatController?.getConversations() || []) {
+        privateChatPersistence?.registerPersistedConversation(conversation.id);
+      }
+    }
+
     app.dataset.authenticated =
       String(Boolean(userId));
 
