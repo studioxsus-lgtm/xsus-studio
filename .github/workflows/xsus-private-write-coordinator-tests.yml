@@ -12,6 +12,8 @@ on:
       - "assets/js/xsus-ai/adapters/xsus-idempotent-message-write-adapter.js"
       - "assets/js/xsus-ai/adapters/xsus-supabase-idempotent-write-adapter.js"
       - "tests/unit/xsus-supabase-idempotent-write-adapter.test.js"
+      - "tests/unit/xsus-database-idempotency-preflight.test.js"
+      - "supabase/verification/xsus_ai_idempotency_preflight.sql"
       - "supabase/migrations/20261110_xsus_ai_message_operation_id.sql"
       - ".github/workflows/xsus-private-write-coordinator-tests.yml"
   pull_request:
@@ -25,6 +27,8 @@ on:
       - "assets/js/xsus-ai/adapters/xsus-idempotent-message-write-adapter.js"
       - "assets/js/xsus-ai/adapters/xsus-supabase-idempotent-write-adapter.js"
       - "tests/unit/xsus-supabase-idempotent-write-adapter.test.js"
+      - "tests/unit/xsus-database-idempotency-preflight.test.js"
+      - "supabase/verification/xsus_ai_idempotency_preflight.sql"
       - "supabase/migrations/20261110_xsus_ai_message_operation_id.sql"
       - ".github/workflows/xsus-private-write-coordinator-tests.yml"
   workflow_dispatch:
@@ -45,5 +49,5 @@ jobs:
           node-version: "22"
       - name: Install dependencies
         run: npm install
-      - name: Run coordinator, migration and both idempotent adapter suites
-        run: npx vitest run tests/unit/xsus-private-write-coordinator.test.js tests/unit/xsus-database-idempotency-migration.test.js tests/unit/xsus-idempotent-message-write-adapter.test.js tests/unit/xsus-supabase-idempotent-write-adapter.test.js
+      - name: Run coordinator, adapters and database preflight tests
+        run: npx vitest run tests/unit/xsus-private-write-coordinator.test.js tests/unit/xsus-database-idempotency-migration.test.js tests/unit/xsus-idempotent-message-write-adapter.test.js tests/unit/xsus-supabase-idempotent-write-adapter.test.js tests/unit/xsus-database-idempotency-preflight.test.js
