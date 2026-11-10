@@ -4445,6 +4445,74 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     }
   }
 
+  // Phases 41.53–41.62: local edits survive delayed conversation-list responses/errors.
+  for (const edit of [
+    { label: "rename", apply: controller => {
+      controller.state.conversations = [{ ...record(a), title: "Draft rename" }];
+    } },
+    { label: "add", apply: controller => {
+      controller.state.conversations = [record(a), { ...record(b), title: "Draft addition" }];
+    } },
+    { label: "remove", apply: controller => {
+      controller.state.conversations = [];
+    } },
+    { label: "replace", apply: controller => {
+      controller.state.conversations = [{ ...record(b), title: "Draft replacement" }];
+    } },
+    { label: "reorder", apply: controller => {
+      controller.state.conversations = [
+        { ...record(b), title: "Second first" },
+        { ...record(a), title: "First second" }
+      ];
+    } }
+  ]) {
+    for (const outcome of ["resolve", "reject"]) {
+      test(`phase 41.53-41.62 local edits during conversation list: ${edit.label} survives delayed ${outcome}`, async () => {
+        const controller = chat();
+        const onError = vi.fn();
+        const statuses = [];
+        const session = createPrivateHistorySession({
+          chatController: controller,
+          onError,
+          onStatusChange: ({ status }) => statuses.push(status)
+        });
+        expect(session.start()).toBe(true);
+        expect(await session.refresh()).toBe(true);
+
+        let resolvePending;
+        let rejectPending;
+        mock.deferred = new Promise((resolve, reject) => {
+          resolvePending = resolve;
+          rejectPending = reject;
+        });
+        const pending = session.refresh({ force: true });
+        await tick();
+        const hydrateCount = controller.hydrateHistory.mock.calls.length;
+        const clearCount = controller.clearHistory.mock.calls.length;
+
+        edit.apply(controller);
+        const expectedConversations = structuredClone(controller.state.conversations);
+        const expectedMessages = structuredClone(controller.state.messagesByConversation);
+        if (outcome === "resolve") {
+          resolvePending([record(a)]);
+        } else {
+          rejectPending(new Error("Conversation list temporarily unavailable"));
+        }
+        expect(await pending).toBe(false);
+        expect(statuses.at(-1)).toBe("local-changes");
+        expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount);
+        expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+        expect(controller.state.conversations).toEqual(expectedConversations);
+        expect(controller.state.messagesByConversation).toEqual(expectedMessages);
+        expect(onError).toHaveBeenCalledTimes(outcome === "reject" ? 1 : 0);
+        if (outcome === "reject") {
+          expect(onError.mock.lastCall[0].message).toBe("Conversation list temporarily unavailable");
+        }
+        session.destroy();
+      });
+    }
+  }
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
