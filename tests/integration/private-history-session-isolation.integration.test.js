@@ -1857,6 +1857,48 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("late multi-conversation response after repeated token refreshes and destroy cannot restore history", async () => {
+    let resolveSecondMessages;
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, [assistant(b)]]]);
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise(resolve => { resolveSecondMessages = resolve; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    for (let i = 0; i < 3; i++) {
+      mock.authListener("TOKEN_REFRESHED", { user: { id: mock.userId } });
+    }
+    expect(statuses.filter(status => status === "token-refreshed")).toHaveLength(3);
+    session.destroy();
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    const statusCount = statuses.length;
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+
+    resolveSecondMessages([{ ...assistant(b), content: "Late answer after destroy" }]);
+    await tick();
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(statuses).toHaveLength(statusCount);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+    expect(session.start()).toBe(false);
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
