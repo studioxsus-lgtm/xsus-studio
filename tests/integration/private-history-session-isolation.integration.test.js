@@ -324,6 +324,31 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("token refresh keeps hydrated history without another database read", async () => {
+    const controller = chat();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    session.start();
+    expect(await session.refresh()).toBe(true);
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    const historyBefore = JSON.stringify(controller.state);
+
+    mock.authListener("TOKEN_REFRESHED", { user: { id: mock.userId } });
+    await tick();
+
+    expect(statuses).toContain("token-refreshed");
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(JSON.stringify(controller.state)).toBe(historyBefore);
+    expect(await session.refresh()).toBe(true);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
