@@ -4875,6 +4875,40 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     });
   }
 
+  test("token rotation invalidates pending private history read", async () => {
+    const controller = chat();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+
+    let resolveOld;
+    mock.deferred = {
+      promise: new Promise(resolve => { resolveOld = resolve; })
+    };
+    const oldRequest = session.refresh({ force: true });
+    await tick();
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+
+    mock.authListener("TOKEN_REFRESHED", { user: { id: mock.userId } });
+    mock.deferred = null;
+    mock.conversations = [{ ...record(a), title: "New token history" }];
+    await tick();
+     expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount + 1);
+    expect(controller.state.conversations[0].title).toBe("New token history");
+    expect(statuses).toContain("token-refreshed");
+
+    resolveOld([{ ...record(a), title: "Old token history" }]);
+    expect(await oldRequest).toBe(false);
+    await tick();
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount + 1);
+    expect(controller.state.conversations[0].title).toBe("New token history");
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
