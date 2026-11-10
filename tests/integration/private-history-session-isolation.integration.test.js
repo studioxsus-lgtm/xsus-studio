@@ -1533,6 +1533,47 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("repeated same-account token refreshes preserve one pending history hydration", async () => {
+    let resolveSecondMessages;
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, [assistant(b)]]]);
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise(resolve => { resolveSecondMessages = resolve; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    const pending = session.refresh();
+    const clearCount = controller.clearHistory.mock.calls.length;
+    for (let i = 0; i < 3; i++) {
+      mock.authListener("TOKEN_REFRESHED", { user: { id: mock.userId } });
+    }
+    expect(statuses.filter(status => status === "token-refreshed")).toHaveLength(3);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.hydrateHistory).not.toHaveBeenCalled();
+
+    const concurrent = session.refresh();
+    expect(concurrent).toBe(pending);
+    resolveSecondMessages([assistant(b)]);
+    expect(await pending).toBe(true);
+    expect(await concurrent).toBe(true);
+    expect(onError).not.toHaveBeenCalled();
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(1);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a, b]);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[b]).toHaveLength(1);
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
