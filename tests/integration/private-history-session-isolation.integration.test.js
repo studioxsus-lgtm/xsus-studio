@@ -2525,6 +2525,48 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("failed forced refresh without local edits still clears stale private history", async () => {
+    let rejectMessages;
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+
+    mock.deferredMessages = {
+      id: a,
+      promise: new Promise((_resolve, reject) => { rejectMessages = reject; })
+    };
+    const pending = session.refresh({ force: true });
+    await tick();
+    const clearCount = controller.clearHistory.mock.calls.length;
+
+    rejectMessages(new Error("Private history unavailable"));
+    expect(await pending).toBe(false);
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][0].message).toBe("Private history unavailable");
+    expect(statuses.at(-1)).toBe("error");
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount + 1);
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+
+    mock.deferredMessages = null;
+    mock.messages = new Map([[a, [{ ...assistant(a), content: "Recovered private answer" }]]]);
+    expect(await session.refresh()).toBe(true);
+    expect(statuses.at(-1)).toBe("ready");
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Recovered private answer");
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
