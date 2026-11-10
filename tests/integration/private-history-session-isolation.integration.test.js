@@ -2792,6 +2792,68 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("sign-out after repeated failure recovery ignores late stale private message rejection", async () => {
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+
+    let rejectOldMessages;
+    mock.deferredMessages = {
+      id: a,
+      promise: new Promise((_resolve, reject) => { rejectOldMessages = reject; })
+    };
+    const staleLoad = session.refresh({ force: true });
+    await tick();
+
+    for (const message of ["First failed refresh", "Second failed refresh"]) {
+      let rejectMessages;
+      mock.deferredMessages = {
+        id: a,
+        promise: new Promise((_resolve, reject) => { rejectMessages = reject; })
+      };
+      const failedLoad = session.refresh({ force: true });
+      await tick();
+      rejectMessages(new Error(message));
+      expect(await failedLoad).toBe(false);
+    }
+    expect(onError).toHaveBeenCalledTimes(2);
+
+    mock.deferredMessages = null;
+    mock.messages = new Map([[a, [{ ...assistant(a), content: "Recovered answer" }]]]);
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Recovered answer");
+
+    mock.userId = null;
+    mock.authListener("SIGNED_OUT", null);
+    await tick();
+    expect(statuses.at(-1)).toBe("signed-out");
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+    const hydrateCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    const statusCount = statuses.length;
+
+    rejectOldMessages(new Error("Obsolete request rejected after sign-out"));
+    expect(await staleLoad).toBe(false);
+    await tick();
+
+    expect(onError).toHaveBeenCalledTimes(2);
+    expect(statuses).toHaveLength(statusCount);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+    expect(session.getCurrentUserId()).toBeNull();
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
