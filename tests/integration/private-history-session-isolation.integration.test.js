@@ -111,6 +111,39 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("a fresh session preserves chronological user/assistant message order", async () => {
+    const first = {
+      id: "55555555-5555-4555-8555-555555555555",
+      conversationId: a, role: "user", content: "Question",
+      createdAt: "2026-11-10T10:45:00Z"
+    };
+    const second = assistant(a);
+    mock.messages = new Map([[a, [first, second]]]);
+    const controller = chat();
+    const session = createPrivateHistorySession({ chatController: controller });
+    session.start();
+    expect(await session.refresh()).toBe(true);
+    expect(controller.state.messagesByConversation[a].map(m => m.role)).toEqual([
+      "user", "assistant"
+    ]);
+    expect(controller.state.messagesByConversation[a].map(m => m.content)).toEqual([
+      "Question", "Persisted answer"
+    ]);
+    session.destroy();
+  });
+
+  test("repeated normal refresh does not rehydrate already loaded messages", async () => {
+    const controller = chat();
+    const session = createPrivateHistorySession({ chatController: controller });
+    session.start();
+    expect(await session.refresh()).toBe(true);
+    const calls = controller.hydrateHistory.mock.calls.length;
+    expect(await session.refresh()).toBe(true);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(calls);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    session.destroy();
+  });
+
   test("sign out clears messages without deleting database history", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
