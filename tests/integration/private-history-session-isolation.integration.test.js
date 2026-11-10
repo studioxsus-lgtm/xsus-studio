@@ -2172,6 +2172,52 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("retry after restarted account message failure hydrates only recovered account history", async () => {
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+    const oldAuthListener = mock.authListener;
+    expect(session.stop()).toBe(true);
+
+    let rejectNewMessages;
+    mock.userId = "99999999-9999-4999-8999-999999999999";
+    mock.conversations = [record(b)];
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise((_resolve, reject) => { rejectNewMessages = reject; })
+    };
+    expect(session.start()).toBe(true);
+    await tick();
+    const failedLoad = session.refresh();
+    for (const event of ["SIGNED_OUT", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED", "INITIAL_SESSION"]) {
+      oldAuthListener(event, { user: { id: "11111111-1111-4111-8111-111111111111" } });
+    }
+    rejectNewMessages(new Error("Temporary current account failure"));
+    expect(await failedLoad).toBe(false);
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+
+    mock.deferredMessages = null;
+    mock.messages = new Map([[b, [{ ...assistant(b), content: "Recovered account answer" }]]]);
+    expect(await session.refresh()).toBe(true);
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(statuses.at(-1)).toBe("ready");
+    expect(session.getCurrentUserId()).toBe(mock.userId);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+    expect(controller.state.messagesByConversation[b]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[b][0].content).toBe("Recovered account answer");
+    expect(controller.state.messagesByConversation[a]).toBeUndefined();
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
