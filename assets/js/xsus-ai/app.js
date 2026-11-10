@@ -571,7 +571,19 @@ export function createXSUSAIApp(options = {}) {
         onStatusChange:
           handleHistoryStatus,
         onHydrated({ conversationIds }) {
-          if (!privateWritesActive && !privateBackendAvailable) return;
+          // Existing conversations must be registered even when private
+          // writes are activated later by the ready status callback.
+          if (!privateWritesActive && privateBackendAvailable) {
+            try {
+              initializePrivateWrites(true);
+              privateWritesActive = true;
+              privateRepliesActive = true;
+            } catch (error) {
+              reportError(error);
+              return;
+            }
+          }
+          if (!privateWritesActive) return;
           for (const id of conversationIds) {
             privateChatPersistence?.registerPersistedConversation(id);
           }
