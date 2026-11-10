@@ -183,6 +183,44 @@ describe("Private reply browser opt-in boundary (mocked)", () => {
     expect(env.fetchImpl).toHaveBeenCalledTimes(1);
   });
 
+  test("account B can send while a late account A response remains isolated", async () => {
+    const env = setup();
+    let releaseOld;
+    let signalOld;
+    let oldStarted;
+    const oldStartedPromise = new Promise(resolve => { oldStarted = resolve; });
+    env.fetchImpl.mockImplementationOnce((_url, options) => {
+      signalOld = options.signal;
+      oldStarted();
+      return new Promise(resolve => {
+        releaseOld = () => resolve({
+          ok: true,
+          json: async () => ({
+            persisted: true, conversationId, operationId,
+            answer: "Account A private reply"
+          })
+        });
+      });
+    });
+
+    const oldPending = env.boundary.send(request);
+    await oldStartedPromise;
+
+    env.setUser("44444444-4444-4444-8444-444444444444");
+    env.boundary.invalidate();
+    expect(signalOld.aborted).toBe(true);
+
+    await expect(env.boundary.send({
+      ...request, message: "Account B message"
+    })).resolves.toEqual({
+      answer: "Saved assistant reply", persisted: true
+    });
+
+    releaseOld();
+    await expect(oldPending).rejects.toThrow("Private chat session changed.");
+    expect(env.fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
   test("rejects attachments before any private database write", async () => {
     const env = setup();
     await expect(env.boundary.send({ ...request, attachments: [{ name: "file" }] }))
