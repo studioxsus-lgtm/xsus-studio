@@ -7,6 +7,8 @@ on:
     paths:
       - "assets/js/xsus-ai/adapters/xsus-private-write-coordinator.js"
       - "tests/unit/xsus-private-write-coordinator.test.js"
+      - "tests/unit/xsus-database-idempotency-migration.test.js"
+      - "supabase/migrations/20261110_xsus_ai_message_operation_id.sql"
       - ".github/workflows/xsus-private-write-coordinator-tests.yml"
   pull_request:
     branches:
@@ -14,6 +16,8 @@ on:
     paths:
       - "assets/js/xsus-ai/adapters/xsus-private-write-coordinator.js"
       - "tests/unit/xsus-private-write-coordinator.test.js"
+      - "tests/unit/xsus-database-idempotency-migration.test.js"
+      - "supabase/migrations/20261110_xsus_ai_message_operation_id.sql"
       - ".github/workflows/xsus-private-write-coordinator-tests.yml"
   workflow_dispatch:
 
@@ -22,7 +26,7 @@ permissions:
 
 jobs:
   coordinator-tests:
-    name: Private Write Coordinator — 20 regression tests
+    name: Private Write Coordinator and Migration Contract
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -33,5 +37,5 @@ jobs:
           node-version: "22"
       - name: Install dependencies
         run: npm install
-      - name: Run coordinator regression tests
-        run: npx vitest run tests/unit/xsus-private-write-coordinator.test.js
+      - name: Run coordinator and migration contract tests
+        run: npx vitest run tests/unit/xsus-private-write-coordinator.test.js tests/unit/xsus-database-idempotency-migration.test.js
