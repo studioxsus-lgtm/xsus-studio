@@ -14,27 +14,49 @@ WITH checks AS (
       WHERE oid = 'public.ai_conversations'::regclass
         AND relrowsecurity AND relforcerowsecurity
     ) AS conversations_rls,
+    -- Verify ordered FK columns from PostgreSQL catalogs, not rendered SQL text.
     EXISTS (
-      SELECT 1 FROM pg_constraint
-      WHERE conrelid = 'public.ai_messages'::regclass
-        AND contype = 'f'
-        AND pg_get_constraintdef(oid) ~* 'FOREIGN KEY \\(conversation_id, user_id\\)'
-        AND pg_get_constraintdef(oid) ~* 'REFERENCES .*ai_conversations.*\\(id, user_id\\)'
+      SELECT 1
+      FROM pg_constraint c
+      WHERE c.conrelid = 'public.ai_messages'::regclass
+        AND c.confrelid = 'public.ai_conversations'::regclass
+        AND c.contype = 'f'
+        AND (SELECT array_agg(a.attname ORDER BY k.ordinality)
+             FROM unnest(c.conkey) WITH ORDINALITY AS k(attnum, ordinality)
+             JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum)
+            = ARRAY['conversation_id', 'user_id']::name[]
+        AND (SELECT array_agg(a.attname ORDER BY k.ordinality)
+             FROM unnest(c.confkey) WITH ORDINALITY AS k(attnum, ordinality)
+             JOIN pg_attribute a ON a.attrelid = c.confrelid AND a.attnum = k.attnum)
+            = ARRAY['id', 'user_id']::name[]
     ) AS composite_owner_fk,
+    -- Only a valid, immediate, non-partial unique index with exactly these keys qualifies.
     EXISTS (
-      SELECT 1 FROM pg_indexes
-      WHERE schemaname = 'public' AND tablename = 'ai_messages'
-        AND indexdef ~* 'CREATE UNIQUE INDEX'
-        AND indexdef ~* '\\(user_id, conversation_id, operation_id\\)'
+      SELECT 1
+      FROM pg_index i
+      JOIN pg_class t ON t.oid = i.indrelid
+      JOIN pg_namespace n ON n.oid = t.relnamespace
+      WHERE n.nspname = 'public' AND t.relname = 'ai_messages'
+        AND i.indisunique AND i.indisvalid AND i.indimmediate
+        AND i.indnkeyatts = 3
+        AND (SELECT array_agg(a.attname ORDER BY k.ordinality)
+             FROM unnest(i.indkey::int2[]) WITH ORDINALITY AS k(attnum, ordinality)
+             JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum
+             WHERE k.ordinality <= i.indnkeyatts)
+            = ARRAY['user_id', 'conversation_id', 'operation_id']::name[]
+        AND (i.indpred IS NULL OR pg_get_expr(i.indpred, i.indrelid) ~*
+             $$operation_id\\s+IS\\s+NOT\\s+NULL$$)
     ) AS operation_unique,
+    -- Inspect actual authenticated INSERT policy expression; avoid fragile
+    -- backslash-escaped regex for auth.uid() and casted role literals.
     EXISTS (
       SELECT 1 FROM pg_policies
       WHERE schemaname = 'public' AND tablename = 'ai_messages'
         AND cmd = 'INSERT'
         AND 'authenticated' = ANY(roles)
-        AND with_check ~* 'auth\\.uid\\(\\)'
-        AND with_check ~* 'role'
-        AND with_check ~* '''user'''
+        AND position('auth.uid()' in regexp_replace(with_check, $$\\s+$$, '', 'g')) > 0
+        AND with_check ~* $$role\\s*=\\s*'user'$$
+        AND with_check ~* $$user_id$$
     ) AS user_only_insert_policy,
     NOT EXISTS (
       SELECT 1 FROM pg_policies
