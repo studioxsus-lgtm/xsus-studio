@@ -3689,6 +3689,108 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     });
   }
 
+  // Phases 40.93–40.97: five cross-account and lifecycle stale-request regressions.
+  for (const scenario of [
+    { name: "resolved A response cannot overwrite B after B retry", outcome: "resolve", lifecycle: "active" },
+    { name: "rejected A response cannot clear B after B retry", outcome: "reject", lifecycle: "active" },
+    { name: "resolved A response cannot restore history after B sign-out", outcome: "resolve", lifecycle: "sign-out" },
+    { name: "rejected A response cannot restore history after B stop", outcome: "reject", lifecycle: "stop" },
+    { name: "resolved A response cannot overwrite C after B stop and restart", outcome: "resolve", lifecycle: "restart" }
+  ]) {
+    test(`late account A request after B recovery: ${scenario.name}`, async () => {
+      const controller = chat();
+      const onError = vi.fn();
+      const statuses = [];
+      const session = createPrivateHistorySession({
+        chatController: controller,
+        onError,
+        onStatusChange: ({ status }) => statuses.push(status)
+      });
+      expect(session.start()).toBe(true);
+      expect(await session.refresh()).toBe(true);
+
+      let resolveOld;
+      let rejectOld;
+      mock.deferredMessages = {
+        id: a,
+        promise: new Promise((resolve, reject) => {
+          resolveOld = resolve;
+          rejectOld = reject;
+        })
+      };
+      const staleA = session.refresh({ force: true });
+      await tick();
+
+      mock.userId = "99999999-9999-4999-8999-999999999999";
+      mock.conversations = [record(b)];
+      mock.messages = new Map([[b, [{ ...assistant(b), content: "Initial B" }]]]);
+      mock.deferredMessages = null;
+      mock.authListener("SIGNED_IN", { user: { id: mock.userId } });
+      expect(await session.refresh()).toBe(true);
+
+      let rejectB;
+      mock.deferredMessages = {
+        id: b,
+        promise: new Promise((_resolve, reject) => { rejectB = reject; })
+      };
+      const failedB = session.refresh({ force: true });
+      await tick();
+      rejectB(new Error("Temporary B error"));
+      expect(await failedB).toBe(false);
+      expect(onError).toHaveBeenCalledTimes(1);
+
+      mock.deferredMessages = null;
+      mock.messages = new Map([[b, [{ ...assistant(b), content: "Recovered B" }]]]);
+      expect(await session.refresh()).toBe(true);
+      expect(controller.state.messagesByConversation[b][0].content).toBe("Recovered B");
+
+      let expectedId = b;
+      let expectedAnswer = "Recovered B";
+      if (scenario.lifecycle === "sign-out") {
+        mock.userId = null;
+        mock.authListener("SIGNED_OUT", null);
+      } else if (scenario.lifecycle === "stop") {
+        session.stop();
+      } else if (scenario.lifecycle === "restart") {
+        session.stop();
+        mock.userId = "88888888-8888-4888-8888-888888888888";
+        mock.conversations = [record(a)];
+        mock.messages = new Map([[a, [{ ...assistant(a), content: "New account C" }]]]);
+        expect(session.start()).toBe(true);
+        expect(await session.refresh()).toBe(true);
+        expectedId = a;
+        expectedAnswer = "New account C";
+      }
+      await tick();
+      const hydrateCount = controller.hydrateHistory.mock.calls.length;
+      const clearCount = controller.clearHistory.mock.calls.length;
+      const statusCount = statuses.length;
+      if (scenario.outcome === "resolve") {
+        resolveOld([{ ...assistant(a), content: "Obsolete A" }]);
+      } else {
+        rejectOld(new Error("Obsolete A error"));
+      }
+      expect(await staleA).toBe(false);
+      await tick();
+
+      expect(onError).toHaveBeenCalledTimes(1);
+      expect(statuses).toHaveLength(statusCount);
+      expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount);
+      expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+      if (scenario.lifecycle === "sign-out" || scenario.lifecycle === "stop") {
+        expect(session.getCurrentUserId()).toBeNull();
+        expect(controller.state.conversations).toEqual([]);
+        expect(controller.state.messagesByConversation).toEqual({});
+      } else {
+        expect(session.getCurrentUserId()).toBe(mock.userId);
+        expect(controller.state.conversations.map(item => item.id)).toEqual([expectedId]);
+        expect(controller.state.messagesByConversation[expectedId]).toHaveLength(1);
+        expect(controller.state.messagesByConversation[expectedId][0].content).toBe(expectedAnswer);
+      }
+      session.destroy();
+    });
+  }
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
