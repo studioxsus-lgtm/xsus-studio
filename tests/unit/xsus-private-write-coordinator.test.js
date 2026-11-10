@@ -745,3 +745,142 @@ describe("Advanced Concurrency and Recovery Integrity", () => {
     expect(coordinator.getCompletedCount()).toBe(1);
   });
 });
+
+/* ============================================
+   PHASE 22.16.5.8.8 — STRESS AND LIFECYCLE
+============================================ */
+
+describe("Stress Testing and Lifecycle Integrity", () => {
+  test("31. deduplicates a burst of 100 identical concurrent requests", async () => {
+    const gate = deferred();
+    const write = vi.fn(async () => gate.promise);
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    const requests = Array.from({ length: 100 }, () =>
+      coordinator.execute(request())
+    );
+
+    await vi.waitFor(() => {
+      expect(write).toHaveBeenCalledTimes(1);
+    });
+    expect(coordinator.getPendingCount()).toBe(1);
+
+    gate.resolve({ id: OPERATION_ID, content: "Hello XSUS" });
+    const results = await Promise.all(requests);
+
+    expect(results).toHaveLength(100);
+    expect(results.every((result) => result === results[0])).toBe(true);
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(coordinator.getPendingCount()).toBe(0);
+    expect(coordinator.getCompletedCount()).toBe(1);
+  });
+
+  test("32. executes 50 distinct concurrent operation IDs independently", async () => {
+    const write = vi.fn(async ({ operationId }) => ({ id: operationId }));
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    const ids = Array.from({ length: 50 }, (_, index) => {
+      const suffix = (index + 1).toString(16).padStart(12, "0");
+      return `aaaaaaaa-aaaa-4aaa-8aaa-${suffix}`;
+    });
+
+    const results = await Promise.all(ids.map((operationId) =>
+      coordinator.execute(request({ operationId }))
+    ));
+
+    expect(new Set(results.map((result) => result.id)).size).toBe(50);
+    expect(write).toHaveBeenCalledTimes(50);
+    expect(coordinator.getPendingCount()).toBe(0);
+    expect(coordinator.getCompletedCount()).toBe(50);
+  });
+
+  test("33. evicts old completed entries under sustained load", async () => {
+    const write = vi.fn(async ({ operationId }) => ({ id: operationId }));
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write,
+      maxCompleted: 10
+    });
+
+    const ids = Array.from({ length: 40 }, (_, index) => {
+      const suffix = (index + 1).toString(16).padStart(12, "0");
+      return `bbbbbbbb-bbbb-4bbb-8bbb-${suffix}`;
+    });
+
+    for (const operationId of ids) {
+      await coordinator.execute(request({ operationId }));
+    }
+
+    expect(coordinator.getCompletedCount()).toBe(10);
+    await coordinator.execute(request({ operationId: ids[0] }));
+    expect(write).toHaveBeenCalledTimes(41);
+    expect(coordinator.getCompletedCount()).toBe(10);
+  });
+
+  test("34. destroy invalidates a burst of pending writes", async () => {
+    const gate = deferred();
+    const write = vi.fn(async () => gate.promise);
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    const pending = Array.from({ length: 30 }, () =>
+      coordinator.execute(request())
+    );
+
+    await vi.waitFor(() => {
+      expect(coordinator.getPendingCount()).toBe(1);
+    });
+
+    coordinator.destroy();
+    gate.resolve({ id: OPERATION_ID });
+
+    const settled = await Promise.allSettled(pending);
+    expect(settled).toHaveLength(30);
+    expect(settled.every((item) =>
+      item.status === "rejected" &&
+      item.reason.message === "Write operation invalidated."
+    )).toBe(true);
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(coordinator.getPendingCount()).toBe(0);
+    expect(coordinator.getCompletedCount()).toBe(0);
+  });
+
+  test("35. invalidation prevents stale writes from polluting a new generation", async () => {
+    const oldGate = deferred();
+    const write = vi.fn()
+      .mockImplementationOnce(async () => oldGate.promise)
+      .mockResolvedValueOnce({ id: OPERATION_ID, content: "New generation" });
+    const coordinator = createPrivateWriteCoordinator({
+      getUserId: async () => USER_A,
+      write
+    });
+
+    const stale = coordinator.execute(request());
+    await vi.waitFor(() => {
+      expect(coordinator.getPendingCount()).toBe(1);
+    });
+
+    coordinator.invalidate();
+
+    const fresh = await coordinator.execute(
+      request({ content: "New generation" })
+    );
+    oldGate.resolve({ id: OPERATION_ID, content: "Old generation" });
+    await expect(stale).rejects.toThrow("Write operation invalidated.");
+
+    expect(coordinator.getCompletedCount()).toBe(1);
+    expect(coordinator.getPendingCount()).toBe(0);
+    await expect(
+      coordinator.execute(request({ content: "New generation" }))
+    ).resolves.toEqual(fresh);
+    expect(write).toHaveBeenCalledTimes(2);
+  });
+});
