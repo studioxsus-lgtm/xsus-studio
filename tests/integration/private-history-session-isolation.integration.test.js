@@ -3858,6 +3858,69 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     });
   }
 
+  // Phases 41.03–41.07: each obsolete auth event must not mask B's real load error.
+  for (const event of ["SIGNED_OUT", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED", "INITIAL_SESSION"]) {
+    test(`phase 41.03-41.07 obsolete auth event: ${event} cannot mask a current B message failure`, async () => {
+      const controller = chat();
+      const onError = vi.fn();
+      const statuses = [];
+      const session = createPrivateHistorySession({
+        chatController: controller,
+        onError,
+        onStatusChange: ({ status }) => statuses.push(status)
+      });
+      expect(session.start()).toBe(true);
+      expect(await session.refresh()).toBe(true);
+      const oldListener = mock.authListener;
+
+      let rejectA;
+      mock.deferredMessages = {
+        id: a,
+        promise: new Promise((_resolve, reject) => { rejectA = reject; })
+      };
+      const failedA = session.refresh({ force: true });
+      await tick();
+      rejectA(new Error("Transient A failure"));
+      expect(await failedA).toBe(false);
+      expect(onError).toHaveBeenCalledTimes(1);
+      mock.deferredMessages = null;
+      expect(await session.refresh()).toBe(true);
+
+      session.stop();
+      mock.userId = "99999999-9999-4999-8999-999999999999";
+      mock.conversations = [record(b)];
+      let rejectB;
+      mock.deferredMessages = {
+        id: b,
+        promise: new Promise((_resolve, reject) => { rejectB = reject; })
+      };
+      expect(session.start()).toBe(true);
+      expect(mock.authListener).not.toBe(oldListener);
+      const pendingB = session.refresh();
+      await tick();
+      const statusCount = statuses.length;
+      const clearCount = controller.clearHistory.mock.calls.length;
+
+      oldListener(event, event === "SIGNED_OUT" ? null : {
+        user: { id: "11111111-1111-4111-8111-111111111111" }
+      });
+      await tick();
+      expect(statuses).toHaveLength(statusCount);
+      expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+      expect(onError).toHaveBeenCalledTimes(1);
+
+      rejectB(new Error("Current B message load failed"));
+      expect(await pendingB).toBe(false);
+      expect(onError).toHaveBeenCalledTimes(2);
+      expect(onError.mock.lastCall[0].message).toBe("Current B message load failed");
+      expect(statuses.at(-1)).toBe("error");
+      expect(session.getCurrentUserId()).toBe(mock.userId);
+      expect(controller.state.conversations).toEqual([]);
+      expect(controller.state.messagesByConversation).toEqual({});
+      session.destroy();
+    });
+  }
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
