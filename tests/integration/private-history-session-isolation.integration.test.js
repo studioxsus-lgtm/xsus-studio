@@ -2567,6 +2567,55 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("two consecutive private history failures recover with one successful hydration", async () => {
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+
+    for (const failureMessage of ["First temporary failure", "Second temporary failure"]) {
+      let rejectMessages;
+      mock.deferredMessages = {
+        id: a,
+        promise: new Promise((_resolve, reject) => { rejectMessages = reject; })
+      };
+      const pending = session.refresh({ force: true });
+      await tick();
+      rejectMessages(new Error(failureMessage));
+      expect(await pending).toBe(false);
+      expect(statuses.at(-1)).toBe("error");
+      expect(controller.state.conversations).toEqual([]);
+      expect(controller.state.messagesByConversation).toEqual({});
+    }
+    expect(onError).toHaveBeenCalledTimes(2);
+    expect(onError.mock.calls.map(([error]) => error.message)).toEqual([
+      "First temporary failure",
+      "Second temporary failure"
+    ]);
+
+    mock.deferredMessages = null;
+    mock.messages = new Map([[a, [{ ...assistant(a), content: "Recovered after two failures" }]]]);
+    const hydrateCount = controller.hydrateHistory.mock.calls.length;
+    expect(await session.refresh()).toBe(true);
+    expect(statuses.at(-1)).toBe("ready");
+    expect(onError).toHaveBeenCalledTimes(2);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount + 1);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Recovered after two failures");
+
+    expect(await session.refresh()).toBe(true);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount + 1);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
