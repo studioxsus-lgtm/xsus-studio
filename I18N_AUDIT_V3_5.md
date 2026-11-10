@@ -1,0 +1,211 @@
+# XSUS App V3.5 — Internationalization status
+
+English remains the source language. A language switcher (EN/SQ/FR) is now available in the public header and is synchronized with Settings. The selected language is stored locally.
+
+## Honest coverage
+
+- 308 distinct static text/attribute strings are tagged for translation.
+- 111 tagged strings have explicit Albanian and French translations.
+- 197 tagged strings are not translated yet and fall back to English.
+- Dynamic strings created by JS modules are not yet fully internationalized.
+- This is an incremental implementation, **not** complete three-language coverage.
+
+## Remaining static source strings
+
+- / Untitled Project
+- 0 concepts
+- 01 · Review
+- 02 · Configure
+- 03 · Validate
+- 04 · Deploy
+- 13 px
+- A clear structure for files, projects and future version history.
+- A dedicated environment for every stage of your app's design journey.
+- A standalone interface prepared for future controlled integrations.
+- A thoughtfully organized interface for the full app design journey. These steps describe the intended workflow, not active AI generation.
+- Activity
+- Add concept
+- All categories
+- All types
+- App Types
+- Appointments and reservations.
+- Appointments, scheduling and booking flow.
+- Attach file (not connected)
+- BUSINESS APP
+- Blue accent
+- Booking Studio
+- Browse projects & templates
+- Builder
+- Business
+- Business tool
+- Canvas and component properties
+- Check project details and intended release
+- Choose a sample concept to prefill the Builder's local demonstration prompt.
+- Choose environment and preview domain settings
+- Close project manager
+- Close version history
+- Commerce Hub
+- Compare
+- Concept
+- Concept only
+- Concept preview ready.
+- Concepts
+- Conceptual URL (not registered)
+- Configuration is local to this page and will not be saved.
+- Conversation-first interface designed for future AI-powered workflows.
+- Create a local concept
+- Create a modern dashboard.
+- Ctrl/⌘ + Enter to preview · Nothing is sent to a server
+- Cyan accent
+- DEMO SESSIONS · CURRENT PAGE ONLY
+- DESIGN PROTOTYPE
+- DRAFT
+- Demo conversation history
+- Demonstration only
+- Describe the app idea
+- Describe the app you want to build or improve…
+- Describe the intended changes...
+- Describe your app, refine your design and explore new ideas.
+- Describe your application
+- Describe your idea or choose a starting point. XSUS App is currently a visual prototype.
+- Describe your idea...
+- Describe your next app idea
+- Design mode
+- Design your next digital product in one creative workspace. Explore AI conversations, visual editing, code and live previews in a unified experience.
+- Desktop preview
+- Desktop, tablet and mobile
+- Diagram only. No releases or rollbacks exist.
+- Domain
+- Editor mode
+- Example status
+- Explore Visual Design
+- Explore a visual canvas and component properties.
+- Explore layouts and visual components in the Design tab.
+- Explore project concepts and templates. Changes last only until this page is refreshed.
+- Explore responsive layouts, dashboards and interactive web products.
+- Explore sample project checkpoints and activity. No real snapshots are stored.
+- Explore sample test results, diagnostic details and interface states. No tests are executed.
+- Explore the design prototype.
+- Explore the design workspace for mobile experiences, web applications and internal business tools.
+- Explore the workspace design today. AI generation and publishing will be connected in later development phases.
+- Features
+- Filter category
+- Filter project concepts
+- Filter sample checks
+- Future build and security checks (not available)
+- Future controlled deployment (not available)
+- Game
+- Home
+- How It Works
+- Hyper XSUS Core
+- Illustrative release lifecycle
+- In progress
+- Independent by design
+- Inspect code and review your work in Split View.
+- Interface language
+- Keep code and application preview visible side by side.
+- Landing page sections
+- Live
+- Local demo only: this concept is not saved to an account or server.
+- Logo
+- MOBILE APP
+- Mobile
+- Mobile app
+- Mobile preview
+- My First App
+- My New App
+- Name A–Z
+- Navigate your project, describe your idea and compare code with preview inside the three-panel workspace.
+- New demo conversation
+- No matching concepts
+- No sample checks match your filters.
+- Once a deployment service is connected in a later development phase, release versions, environments, statuses and rollback controls can appear here.
+- Open AI Builder
+- Organize ideas and explore project concepts in your workspace.
+- Organize tasks, teams and priorities.
+- Plan a release and inspect the publishing experience. No application is deployed.
+- Plan elegant app screens, flows and mobile-first interactions.
+- Preparing local concept card…
+- Preview device
+- Product catalogue and store dashboard.
+- Products, categories and checkout.
+- Project Manager
+- Project concepts
+- Project manager views
+- Projects dashboard
+- Published
+- Publishing views
+- Quick start
+- Ready to explore
+- Recently added
+- Return to landing page
+- Sample project statistics
+- Sample projects
+- Sample test cases
+- Sample versions
+- Save project
+- Search by name or description
+- Search concepts
+- Search projects and templates
+- Search sample projects
+- Settings categories
+- Show demo conversation history
+- Sort concepts
+- Split
+- Split   Code   Preview
+- Start with your app idea in the AI conversation panel.
+- Switch between desktop, tablet and mobile display widths.
+- Switch between desktop, tablet and phone-sized views.
+- THE X IDENTITY
+- Tablet preview
+- Task Flow
+- Tasks, teams and deadlines.
+- Templates
+- Testing views
+- These are sample cards, not saved projects.
+- These sessions are temporary examples, not saved projects.
+- This selection is a design preview. The interface text remains in English until translations are implemented.
+- Three-panel workspace illustration
+- Timeline
+- Toggle sidebar
+- Try a different search or category.
+- Try another category or search term.
+- Validation
+- Version History
+- Version history views
+- View responsive preview
+- Violet accent
+- Visualize management panels, booking workflows and internal tools.
+- Voice input (not connected)
+- WEB APP
+- Web
+- Web app
+- What will you build today?
+- Workspace preferences
+- XSUS AI
+- XSUS AI Core
+- XSUS APP / BUILDER
+- XSUS APP / Builder Workspace
+- XSUS APP V2 · Interface prototype
+- XSUS APP · DESIGN PROTOTYPE
+- XSUS APP · DESIGN WORKSPACE
+- XSUS APP · THE NEXT GENERATION
+- XSUS App
+- XSUS App Builder
+- XSUS App home
+- XSUS App is a standalone UI prototype. No real AI generation, cloud project storage or deployment is connected yet.
+- XSUS App primary navigation
+- XSUS App · No publishing actions available
+- XSUS App.
+- XSUS Domain
+- XSUS Game
+- XSUS Logo
+- XSUS STUDIO
+- XSUS Studio
+- XSUS Web
+- YOUR CREATIVE SPACE
+- my-first-app
+- with XSUS App.
+- © 2026 XSUS Studio · XSUS App design prototype
+- ● DEMO DATA
+- ✦ Builder

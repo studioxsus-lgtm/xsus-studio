@@ -1,0 +1,79 @@
+{
+  "version": "6.0",
+  "scope": "static_and_unit_regression_only",
+  "passed": 14,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "Unique HTML IDs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Local HTML assets",
+      "passed": true,
+      "detail": "28 references, 0 missing"
+    },
+    {
+      "name": "Module entrypoint",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Original XSUS App logo",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "JavaScript syntax",
+      "passed": true,
+      "detail": "19 checked; invalid: []"
+    },
+    {
+      "name": "run-v5-2-checks.py",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "module-regression-v5-3.py",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "module-regression-v5-4.py",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "accessibility-v5-5.py",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "responsive-accessibility-v5-6.py",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "navigation-v5-7.py",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "modal-stability-v5-8.py",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "modal-coordinator-v5-9.mjs",
+      "passed": true,
+      "detail": "V5.9 modal coordinator: 9 static assertions passed"
+    },
+    {
+      "name": "Language dictionaries",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "browser_verified": false
+}
