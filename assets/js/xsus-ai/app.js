@@ -945,7 +945,8 @@ async function bootXSUSAI() {
     // Never wait indefinitely for authentication: keep public chat usable
     // if the auth provider stalls. A later page reload can retry private mode.
     const authCheck = Promise.race([
-      supabase.auth.getUser().catch(() => ({ data: null, error: true })),
+      Promise.resolve().then(() => supabase.auth.getUser())
+        .catch(() => ({ data: null, error: true })),
       new Promise(resolve => setTimeout(
         () => resolve({ data: null, error: true }), 8000
       ))
