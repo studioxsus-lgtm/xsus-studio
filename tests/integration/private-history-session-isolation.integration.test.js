@@ -1212,6 +1212,45 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("late second-conversation rejection after stop cannot affect private history", async () => {
+    let rejectOldSecondMessages;
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, [assistant(b)]]]);
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise((_resolve, reject) => { rejectOldSecondMessages = reject; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    session.stop();
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    const statusCount = statuses.length;
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+
+    rejectOldSecondMessages(new Error("Stopped session second-conversation request failed"));
+    await tick();
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(statuses).toHaveLength(statusCount);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations).toEqual([]);
+    expect(controller.state.messagesByConversation).toEqual({});
+    expect(session.isStarted()).toBe(false);
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
