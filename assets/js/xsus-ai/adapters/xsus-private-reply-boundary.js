@@ -36,6 +36,11 @@ export function createPrivateReplyBoundary({
       localConversationId: conversationId, localMessageId: messageId, content: message
     });
     if (token !== generation) throw new Error("Private chat session changed.");
+    if (!receipt || receipt.role !== "user" || receipt.content !== message ||
+        typeof receipt.conversationId !== "string" ||
+        typeof receipt.operationId !== "string") {
+      throw new Error("Invalid persisted user receipt.");
+    }
     const beforeReply = await session();
     if (beforeReply.user.id !== initial.user.id ||
         beforeReply.access_token !== initial.access_token) {
