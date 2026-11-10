@@ -42,6 +42,8 @@ export function createPrivateChatHandler({
       }
       // Re-check ownership and the persisted user operation before a privileged write.
       await auth.verifyConversation({ userId, token, conversationId: input.conversationId });
+      await auth.verifyUserMessage({ userId, token, conversationId: input.conversationId,
+        operationId: input.operationId, content: input.query });
       const saved = await writer.save({
         userId, conversationId: input.conversationId,
         operationId: input.operationId, answer: result.answer
