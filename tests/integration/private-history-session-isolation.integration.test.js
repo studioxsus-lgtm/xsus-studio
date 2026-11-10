@@ -2389,6 +2389,45 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("failed forced refresh preserves edits made locally while request was pending", async () => {
+    let rejectMessages;
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    expect(await session.refresh()).toBe(true);
+
+    mock.deferredMessages = {
+      id: a,
+      promise: new Promise((_resolve, reject) => { rejectMessages = reject; })
+    };
+    const pending = session.refresh({ force: true });
+    await tick();
+
+    controller.state.conversations = [{ ...record(a), title: "Local draft title" }];
+    controller.state.messagesByConversation = {
+      [a]: [{ ...assistant(a), content: "Local draft answer" }]
+    };
+    const clearCount = controller.clearHistory.mock.calls.length;
+    const hydrateCount = controller.hydrateHistory.mock.calls.length;
+
+    rejectMessages(new Error("Temporary refresh failure"));
+    expect(await pending).toBe(false);
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][0].message).toBe("Temporary refresh failure");
+    expect(statuses.at(-1)).toBe("local-changes");
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount);
+    expect(controller.state.conversations[0].title).toBe("Local draft title");
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Local draft answer");
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
