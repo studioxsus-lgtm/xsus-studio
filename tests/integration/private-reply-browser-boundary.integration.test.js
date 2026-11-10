@@ -149,6 +149,40 @@ describe("Private reply browser opt-in boundary (mocked)", () => {
     await expect(sending).rejects.toThrow("Private chat session changed.");
   });
 
+  test("sign-out invalidates pending reply and refuses to display it", async () => {
+    const env = setup();
+    let release;
+    let started;
+    const startedPromise = new Promise(resolve => { started = resolve; });
+    env.fetchImpl.mockImplementationOnce((_url, options) => {
+      started(options.signal);
+      return new Promise(resolve => {
+        release = () => resolve({
+          ok: true,
+          json: async () => ({ persisted: true, conversationId, operationId, answer: "Old account reply" })
+        });
+      });
+    });
+    const pending = env.boundary.send(request);
+    const signal = await startedPromise;
+    env.setUser(null);
+    env.boundary.invalidate();
+    expect(signal.aborted).toBe(true);
+    release();
+    await expect(pending).rejects.toThrow("Authentication required.");
+    expect(env.persistence.invalidate).toHaveBeenCalled();
+  });
+
+  test("a new authenticated session can send after an old one was invalidated", async () => {
+    const env = setup();
+    env.boundary.invalidate();
+    env.setUser("44444444-4444-4444-8444-444444444444");
+    await expect(env.boundary.send(request)).resolves.toEqual({
+      answer: "Saved assistant reply", persisted: true
+    });
+    expect(env.fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
   test("rejects attachments before any private database write", async () => {
     const env = setup();
     await expect(env.boundary.send({ ...request, attachments: [{ name: "file" }] }))
