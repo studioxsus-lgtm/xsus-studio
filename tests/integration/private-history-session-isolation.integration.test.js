@@ -792,6 +792,30 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("concurrent normal refresh calls share one pending history load", async () => {
+    let resolveConversations;
+    mock.deferred = {
+      promise: new Promise(resolve => { resolveConversations = resolve; })
+    };
+    const controller = chat();
+    const session = createPrivateHistorySession({ chatController: controller });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    const first = session.refresh();
+    const second = session.refresh();
+    expect(first).toBe(second);
+    expect(controller.hydrateHistory).not.toHaveBeenCalled();
+
+    resolveConversations([record(a)]);
+    expect(await first).toBe(true);
+    expect(await second).toBe(true);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(1);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a]);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
