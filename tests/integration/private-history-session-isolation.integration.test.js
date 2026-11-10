@@ -2344,6 +2344,51 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("forced refresh after local changes loads updated private history without duplicates", async () => {
+    let resolveOldSecondMessages;
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, [assistant(b)]]]);
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise(resolve => { resolveOldSecondMessages = resolve; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    controller.state.conversations = [{ ...record(a), title: "Local edit" }];
+    controller.state.messagesByConversation = {
+      [a]: [{ ...assistant(a), content: "Local draft" }]
+    };
+    resolveOldSecondMessages([assistant(b)]);
+    await tick();
+
+    expect(statuses).toContain("local-changes");
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Local draft");
+    expect(controller.state.messagesByConversation[b]).toBeUndefined();
+
+    mock.deferredMessages = null;
+    mock.conversations = [{ ...record(a), title: "Updated saved conversation" }];
+    mock.messages = new Map([[a, [{ ...assistant(a), content: "Updated saved answer" }]]]);
+    expect(await session.refresh({ force: true })).toBe(true);
+    expect(onError).not.toHaveBeenCalled();
+    expect(statuses.at(-1)).toBe("ready");
+    expect(controller.state.conversations).toHaveLength(1);
+    expect(controller.state.conversations[0].id).toBe(a);
+    expect(controller.state.conversations[0].title).toBe("Updated saved conversation");
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[a][0].content).toBe("Updated saved answer");
+    expect(controller.state.messagesByConversation[b]).toBeUndefined();
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
