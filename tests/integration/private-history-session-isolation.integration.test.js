@@ -955,6 +955,40 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("late second-conversation message response cannot replace recovered history", async () => {
+    let resolveOldSecondMessages;
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, [assistant(b)]]]);
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise(resolve => { resolveOldSecondMessages = resolve; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const session = createPrivateHistorySession({ chatController: controller, onError });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    mock.deferredMessages = null;
+    expect(await session.refresh({ force: true })).toBe(true);
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a, b]);
+    expect(controller.state.messagesByConversation[b][0].content).toBe("Persisted answer");
+
+    resolveOldSecondMessages([{ ...assistant(b), content: "Outdated answer" }]);
+    await tick();
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([a, b]);
+    expect(controller.state.messagesByConversation[a]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[b]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[b][0].content).toBe("Persisted answer");
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
