@@ -418,6 +418,9 @@ export function createPrivateHistorySession({
     }
 
     if (event === "TOKEN_REFRESHED") {
+      // A refreshed JWT must invalidate any in-flight request carrying
+      // the previous token, even when the account ID stays unchanged.
+      notify("token-refreshed");
       if (
         nextUserId &&
         currentUserId &&
