@@ -233,6 +233,30 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("forced refresh wins over a slower previous refresh for the same account", async () => {
+    let resolveOld;
+    mock.deferred = { promise: new Promise(resolve => { resolveOld = resolve; }) };
+    const controller = chat();
+    const session = createPrivateHistorySession({ chatController: controller });
+    session.start();
+    await tick();
+
+    mock.deferred = null;
+    mock.conversations = [record(b)];
+    mock.messages = new Map([[b, [assistant(b)]]]);
+    const latest = session.refresh({ force: true });
+    expect(await latest).toBe(true);
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+
+    resolveOld([record(a)]);
+    await tick();
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+    expect(controller.state.messagesByConversation[a]).toBeUndefined();
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
