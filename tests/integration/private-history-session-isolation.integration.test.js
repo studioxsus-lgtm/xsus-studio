@@ -2218,6 +2218,49 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     session.destroy();
   });
 
+  test("late superseded message response cannot overwrite successfully recovered private history", async () => {
+    let resolveOldMessages;
+    mock.conversations = [record(a), record(b)];
+    mock.messages = new Map([[a, [assistant(a)]], [b, [assistant(b)]]]);
+    mock.deferredMessages = {
+      id: b,
+      promise: new Promise(resolve => { resolveOldMessages = resolve; })
+    };
+    const controller = chat();
+    const onError = vi.fn();
+    const statuses = [];
+    const session = createPrivateHistorySession({
+      chatController: controller,
+      onError,
+      onStatusChange: ({ status }) => statuses.push(status)
+    });
+    expect(session.start()).toBe(true);
+    await tick();
+
+    mock.deferredMessages = null;
+    mock.conversations = [record(b)];
+    mock.messages = new Map([[b, [{ ...assistant(b), content: "Recovered answer" }]]]);
+    expect(await session.refresh({ force: true })).toBe(true);
+    const hydrationCount = controller.hydrateHistory.mock.calls.length;
+    const clearCount = controller.clearHistory.mock.calls.length;
+    const statusCount = statuses.length;
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+    expect(controller.state.messagesByConversation[b][0].content).toBe("Recovered answer");
+
+    resolveOldMessages([{ ...assistant(b), content: "Superseded answer" }]);
+    await tick();
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(statuses).toHaveLength(statusCount);
+    expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+    expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+    expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+    expect(controller.state.messagesByConversation[b]).toHaveLength(1);
+    expect(controller.state.messagesByConversation[b][0].content).toBe("Recovered answer");
+    expect(controller.state.messagesByConversation[a]).toBeUndefined();
+    session.destroy();
+  });
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
