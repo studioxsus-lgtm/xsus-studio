@@ -106,6 +106,49 @@ describe("Private reply browser opt-in boundary (mocked)", () => {
     expect(env.fetchImpl).not.toHaveBeenCalled();
   });
 
+  test("aborts an in-flight private HTTP request on invalidation", async () => {
+    const env = setup();
+    let started;
+    const requestStarted = new Promise(resolve => { started = resolve; });
+    env.fetchImpl.mockImplementationOnce((_url, options) => new Promise((_resolve, reject) => {
+      options.signal.addEventListener("abort", () => {
+        reject(Object.assign(new Error("Request aborted"), { name: "AbortError" }));
+      }, { once: true });
+      started(options.signal);
+    }));
+    const sending = env.boundary.send(request);
+    const signal = await requestStarted;
+    expect(signal.aborted).toBe(false);
+    env.boundary.invalidate();
+    expect(signal.aborted).toBe(true);
+    await expect(sending).rejects.toMatchObject({ name: "AbortError" });
+    expect(env.persistence.invalidate).toHaveBeenCalledTimes(1);
+  });
+
+  test("does not expose a late response after invalidation, even if fetch ignores abort", async () => {
+    const env = setup();
+    let release;
+    let started;
+    const requestStarted = new Promise(resolve => { started = resolve; });
+    env.fetchImpl.mockImplementationOnce((_url, options) => {
+      started(options.signal);
+      return new Promise(resolve => {
+        release = () => resolve({
+          ok: true,
+          json: async () => ({
+            persisted: true, conversationId, operationId, answer: "Late private reply"
+          })
+        });
+      });
+    });
+    const sending = env.boundary.send(request);
+    const signal = await requestStarted;
+    env.boundary.invalidate();
+    expect(signal.aborted).toBe(true);
+    release();
+    await expect(sending).rejects.toThrow("Private chat session changed.");
+  });
+
   test("rejects attachments before any private database write", async () => {
     const env = setup();
     await expect(env.boundary.send({ ...request, attachments: [{ name: "file" }] }))
