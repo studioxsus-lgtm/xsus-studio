@@ -906,7 +906,24 @@ export function createXSUSAIApp(options = {}) {
    BROWSER BOOTSTRAP
 ============================================ */
 
-function bootXSUSAI() {
+async function privateBackendReady() {
+  try {
+    const response = await fetch("https://xsus-studio.onrender.com/health", {
+      method: "GET",
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) return false;
+    const data = await response.json();
+    return data?.status === "ok" &&
+      data?.capabilities?.privateChat === true &&
+      data?.capabilities?.privateReplyWrites === true;
+  } catch {
+    return false;
+  }
+}
+
+async function bootXSUSAI() {
   const app =
     document.querySelector(
       SELECTORS.app
@@ -922,6 +939,15 @@ function bootXSUSAI() {
   }
 
   try {
+    // Private mode is opt-in only when the deployed backend confirms both
+    // capabilities AND the current browser session is authenticated.
+    // Otherwise preserve the existing public chat without private writes.
+    const [ready, auth] = await Promise.all([
+      privateBackendReady(),
+      supabase.auth.getUser().catch(() => ({ data: null, error: true }))
+    ]);
+    if (!app.isConnected || app.dataset.xsusInitialized === "true") return;
+    const privateEnabled = ready && !auth?.error && Boolean(auth?.data?.user?.id);
     const instance =
       createXSUSAIApp({
         aiAdapter:
@@ -940,8 +966,8 @@ function bootXSUSAI() {
           }),
 
         enablePrivateHistory: true,
-        enablePrivateWrites: false,
-        enablePrivateReplies: false
+        enablePrivateWrites: privateEnabled,
+        enablePrivateReplies: privateEnabled
       });
 
     window.XSUSAI =
