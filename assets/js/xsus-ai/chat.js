@@ -1131,6 +1131,9 @@ export function createChatController(
           message:
             userMessage.content,
 
+          messageId:
+            userMessage.id,
+
           attachments: files,
 
           history:
