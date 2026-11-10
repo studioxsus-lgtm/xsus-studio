@@ -84,6 +84,44 @@ describe("Private assistant persistence and fresh-instance readback (mocked)", (
     expect(env.rows).toHaveLength(1);
   });
 
+  test("persisted assistant is visible in a fresh RLS-style history read for its owner", async () => {
+    const env = environment();
+    const saved = await env.create()({ authorization: "Bearer owner-token", body });
+    expect(saved.status).toBe(200);
+
+    // Simulate a new page load: no in-memory chat state is carried over.
+    const historyRead = async ({ userId, requestedConversationId }) =>
+      env.rows.filter(row => row.user_id === userId &&
+        row.conversation_id === requestedConversationId)
+        .map(({ id, conversation_id, role, content }) =>
+          ({ id, conversationId: conversation_id, role, content }));
+
+    const ownHistory = await historyRead({ userId: owner, requestedConversationId: conversationId });
+    expect(ownHistory).toHaveLength(1);
+    expect(ownHistory[0]).toMatchObject({
+      conversationId, role: "assistant", content: saved.data.answer
+    });
+    expect(await historyRead({ userId: other, requestedConversationId: conversationId })).toEqual([]);
+    expect(await historyRead({
+      userId: owner, requestedConversationId: "66666666-6666-4666-8666-666666666666"
+    })).toEqual([]);
+  });
+
+  test("failed persistence cannot be reported as a stored assistant reply", async () => {
+    const env = environment();
+    const handler = createPrivateChatHandler({
+      supabaseUrl: "https://mock.supabase.co",
+      supabaseKey: "mock-public-key",
+      fetchImpl: env.fetchImpl,
+      generate: async () => ({ answer: "Unsaved response" }),
+      writer: { save: async () => { throw new Error("Database unavailable"); } }
+    });
+    const result = await handler({ authorization: "Bearer owner-token", body });
+    expect(result.status).toBe(503);
+    expect(result.data).not.toHaveProperty("persisted", true);
+    expect(env.rows).toHaveLength(0);
+  });
+
   test("assistant row remains associated with its original conversation and owner", async () => {
     const env = environment();
     expect((await env.create()({ authorization: "Bearer owner-token", body })).status).toBe(200);
