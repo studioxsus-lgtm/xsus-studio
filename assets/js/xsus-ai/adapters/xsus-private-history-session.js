@@ -34,7 +34,8 @@ export const PRIVATE_HISTORY_SESSION_VERSION =
 export function createPrivateHistorySession({
   chatController,
   onError = () => {},
-  onStatusChange = () => {}
+  onStatusChange = () => {},
+  onHydrated = () => {}
 } = {}) {
 
   if (
@@ -49,7 +50,8 @@ export function createPrivateHistorySession({
 
   if (
     typeof onError !== "function" ||
-    typeof onStatusChange !== "function"
+    typeof onStatusChange !== "function" ||
+    typeof onHydrated !== "function"
   ) {
     throw new TypeError(
       "Invalid session callbacks."
@@ -281,6 +283,7 @@ export function createPrivateHistorySession({
 
       loadedUserId = userId;
 
+      onHydrated({ userId, conversationIds: conversations.map(item => item.id) });
       notify("ready");
 
       return true;
