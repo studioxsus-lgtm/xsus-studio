@@ -15,6 +15,8 @@ on:
       - "tests/unit/xsus-database-idempotency-preflight.test.js"
       - "tests/unit/xsus-idempotent-persistence-recovery.test.js"
       - "tests/unit/xsus-private-idempotent-write-service.test.js"
+      - "assets/js/xsus-ai/adapters/xsus-private-chat-persistence.js"
+      - "tests/unit/xsus-private-chat-persistence.test.js"
       - "assets/js/xsus-ai/adapters/xsus-private-idempotent-write-service.js"
       - "supabase/verification/xsus_ai_idempotency_preflight.sql"
       - "supabase/migrations/20261110_xsus_ai_message_operation_id.sql"
@@ -33,6 +35,8 @@ on:
       - "tests/unit/xsus-database-idempotency-preflight.test.js"
       - "tests/unit/xsus-idempotent-persistence-recovery.test.js"
       - "tests/unit/xsus-private-idempotent-write-service.test.js"
+      - "assets/js/xsus-ai/adapters/xsus-private-chat-persistence.js"
+      - "tests/unit/xsus-private-chat-persistence.test.js"
       - "assets/js/xsus-ai/adapters/xsus-private-idempotent-write-service.js"
       - "supabase/verification/xsus_ai_idempotency_preflight.sql"
       - "supabase/migrations/20261110_xsus_ai_message_operation_id.sql"
@@ -56,4 +60,4 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Run coordinator, adapters, recovery and integration security tests
-        run: npx vitest run tests/unit/xsus-private-write-coordinator.test.js tests/unit/xsus-database-idempotency-migration.test.js tests/unit/xsus-idempotent-message-write-adapter.test.js tests/unit/xsus-supabase-idempotent-write-adapter.test.js tests/unit/xsus-database-idempotency-preflight.test.js tests/unit/xsus-idempotent-persistence-recovery.test.js tests/unit/xsus-private-idempotent-write-service.test.js
+        run: npx vitest run tests/unit/xsus-private-write-coordinator.test.js tests/unit/xsus-database-idempotency-migration.test.js tests/unit/xsus-idempotent-message-write-adapter.test.js tests/unit/xsus-supabase-idempotent-write-adapter.test.js tests/unit/xsus-database-idempotency-preflight.test.js tests/unit/xsus-idempotent-persistence-recovery.test.js tests/unit/xsus-private-idempotent-write-service.test.js tests/unit/xsus-private-chat-persistence.test.js
