@@ -219,6 +219,7 @@ export function createXSUSAIApp(options = {}) {
     enablePrivateHistory = true,
     enablePrivateWrites = false,
     enablePrivateReplies = false,
+    privateBackendAvailable = false,
     privateReplyEndpoint = "https://xsus-studio.onrender.com/api/private-chat",
     onReady = () => {},
     onError = () => {},
@@ -284,6 +285,8 @@ export function createXSUSAIApp(options = {}) {
   let privateWriteService = null;
   let privateChatPersistence = null;
   let privateReplyBoundary = null;
+  let privateWritesActive = Boolean(enablePrivateWrites);
+  let privateRepliesActive = Boolean(enablePrivateReplies);
 
   const cleanups = [];
 
@@ -374,14 +377,14 @@ export function createXSUSAIApp(options = {}) {
       );
     }
 
-    if (enablePrivateReplies) {
+    if (privateRepliesActive) {
       if (!privateReplyBoundary || !privateHistorySession?.getCurrentUserId()) {
         throw new Error("Authenticated private replies are not ready.");
       }
       return privateReplyBoundary.send(request);
     }
 
-    if (enablePrivateWrites) {
+    if (privateWritesActive) {
       if (!enablePrivateHistory || !privateChatPersistence) {
         throw new Error("Private chat persistence is not ready.");
       }
@@ -495,7 +498,7 @@ export function createXSUSAIApp(options = {}) {
 
     app.dataset.historyStatus =
       status;
-    if (enablePrivateWrites &&
+    if (privateWritesActive &&
         (status === "signed-out" || status === "identity-changed")) {
       if (privateReplyBoundary) privateReplyBoundary.invalidate();
       else privateChatPersistence?.invalidate();
@@ -505,17 +508,30 @@ export function createXSUSAIApp(options = {}) {
     app.dataset.authenticated =
       String(Boolean(userId));
 
+    // Enable private writes only after a verified identity and history load.
+    // Do not rebuild the chat controller or discard the active UI state.
+    if (status === "ready" && userId && privateBackendAvailable &&
+        !privateWritesActive) {
+      try {
+        initializePrivateWrites(true);
+        privateWritesActive = true;
+        privateRepliesActive = true;
+      } catch (error) {
+        reportError(error);
+      }
+    }
+
     /*
      * Never expose the Supabase user ID
      * through DOM dataset attributes.
      */
   }
 
-  function initializePrivateWrites() {
-    if (enablePrivateReplies && !enablePrivateWrites) {
+  function initializePrivateWrites(activate = enablePrivateWrites) {
+    if (enablePrivateReplies && !activate) {
       throw new Error("Private replies require private writes.");
     }
-    if (!enablePrivateWrites) return;
+    if (!activate) return;
     if (!enablePrivateHistory) {
       throw new Error("Private writes require private history.");
     }
@@ -526,7 +542,7 @@ export function createXSUSAIApp(options = {}) {
       createOperationId: privateWriteService.createOperationId,
       saveUserMessage: args => privateWriteService.save(args)
     });
-    if (enablePrivateReplies) {
+    if (enablePrivateReplies || privateBackendAvailable) {
       privateReplyBoundary = createPrivateReplyBoundary({
         supabase,
         persistence: privateChatPersistence,
@@ -555,7 +571,7 @@ export function createXSUSAIApp(options = {}) {
         onStatusChange:
           handleHistoryStatus,
         onHydrated({ conversationIds }) {
-          if (!enablePrivateWrites) return;
+          if (!privateWritesActive && !privateBackendAvailable) return;
           for (const id of conversationIds) {
             privateChatPersistence?.registerPersistedConversation(id);
           }
@@ -975,6 +991,7 @@ async function bootXSUSAI() {
           }),
 
         enablePrivateHistory: true,
+        privateBackendAvailable: ready,
         enablePrivateWrites: privateEnabled,
         enablePrivateReplies: privateEnabled
       });
