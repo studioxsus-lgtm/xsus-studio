@@ -4108,6 +4108,87 @@ describe("Private history session account and refresh isolation (mocked)", () =>
     });
   }
 
+  // Phases 41.18–41.22: obsolete conversation-list requests never cross lifecycle boundaries.
+  for (const scenario of [
+    { label: "resolved after sign-out", outcome: "resolve", boundary: "sign-out" },
+    { label: "rejected after sign-out", outcome: "reject", boundary: "sign-out" },
+    { label: "resolved after stop", outcome: "resolve", boundary: "stop" },
+    { label: "rejected after destroy", outcome: "reject", boundary: "destroy" },
+    { label: "resolved after restart with B", outcome: "resolve", boundary: "restart" }
+  ]) {
+    test(`phase 41.18-41.22 stale conversation load: ${scenario.label}`, async () => {
+      const controller = chat();
+      const onError = vi.fn();
+      const statuses = [];
+      const session = createPrivateHistorySession({
+        chatController: controller,
+        onError,
+        onStatusChange: ({ status }) => statuses.push(status)
+      });
+      expect(session.start()).toBe(true);
+      expect(await session.refresh()).toBe(true);
+
+      let resolveOld;
+      let rejectOld;
+      mock.deferred = new Promise((resolve, reject) => {
+        resolveOld = resolve;
+        rejectOld = reject;
+      });
+      const staleLoad = session.refresh({ force: true });
+      await tick();
+
+      if (scenario.boundary === "sign-out") {
+        mock.userId = null;
+        mock.authListener("SIGNED_OUT", null);
+      } else if (scenario.boundary === "stop") {
+        session.stop();
+      } else if (scenario.boundary === "destroy") {
+        session.destroy();
+      } else {
+        session.stop();
+        mock.userId = "99999999-9999-4999-8999-999999999999";
+        mock.conversations = [record(b)];
+        mock.messages = new Map([[b, [{ ...assistant(b), content: "Current B answer" }]]]);
+        mock.deferred = null;
+        expect(session.start()).toBe(true);
+        expect(await session.refresh()).toBe(true);
+      }
+      await tick();
+      const hydrateCount = controller.hydrateHistory.mock.calls.length;
+      const clearCount = controller.clearHistory.mock.calls.length;
+      const statusCount = statuses.length;
+
+      if (scenario.outcome === "resolve") {
+        resolveOld([record(a)]);
+      } else {
+        rejectOld(new Error("Obsolete conversations request failed"));
+      }
+      expect(await staleLoad).toBe(false);
+      await tick();
+
+      expect(onError).not.toHaveBeenCalled();
+      expect(statuses).toHaveLength(statusCount);
+      expect(controller.hydrateHistory).toHaveBeenCalledTimes(hydrateCount);
+      expect(controller.clearHistory).toHaveBeenCalledTimes(clearCount);
+      if (scenario.boundary === "restart") {
+        expect(session.getCurrentUserId()).toBe(mock.userId);
+        expect(controller.state.conversations.map(item => item.id)).toEqual([b]);
+        expect(controller.state.messagesByConversation[b][0].content).toBe("Current B answer");
+        expect(controller.state.messagesByConversation[a]).toBeUndefined();
+      } else {
+        expect(session.getCurrentUserId()).toBeNull();
+        expect(controller.state.conversations).toEqual([]);
+        expect(controller.state.messagesByConversation).toEqual({});
+      }
+      if (scenario.boundary === "destroy") {
+        expect(session.start()).toBe(false);
+        expect(await session.refresh()).toBe(false);
+      } else {
+        session.destroy();
+      }
+    });
+  }
+
   test("an identity switch clears previous account messages before new hydration", async () => {
     const controller = chat();
     const session = createPrivateHistorySession({ chatController: controller });
