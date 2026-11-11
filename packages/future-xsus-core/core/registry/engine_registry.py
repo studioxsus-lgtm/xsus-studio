@@ -93,8 +93,9 @@ class EngineRegistry:
         *,
         engine: EngineIdentity | None = None,
         exclude_instance_ids: Iterable[str] = (),
+        ordered: bool = True,
     ) -> tuple[EngineInstance, ...]:
-        """Return a point-in-time snapshot, ordered by instance ID."""
+        """Return a point-in-time snapshot, ordered by instance ID by default."""
         excluded = frozenset(exclude_instance_ids)
         route = (request.language, request.operation.capability)
         matches: list[EngineInstance] = []
@@ -107,7 +108,9 @@ class EngineRegistry:
                 replicas = group.get(identity)
                 if replicas and self._engines[_revision(identity)].accepts(request):
                     matches.extend(replica for replica in replicas if replica.instance_id not in excluded)
-        return tuple(sorted(matches, key=lambda replica: replica.instance_id))
+        if ordered:
+            matches.sort(key=lambda replica: replica.instance_id)
+        return tuple(matches)
 
     @staticmethod
     def _validate_status(status: InstanceStatus) -> None:
