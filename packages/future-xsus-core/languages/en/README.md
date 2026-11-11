@@ -97,3 +97,30 @@ python3 -m languages.en.evaluation.compare \
 ```
 
 Për të përsëritur grupin e mëparshëm, përdor `quality-v2.jsonl` te parametri `--evaluation` i komandës së krahasimit.
+
+## Morfologjia, gramatika dhe sintaksa
+
+Analizuesi i anglishtes ekzekutohet lokalisht dhe përdor fjalorë të vegjël e rregulla të XSUS.
+
+| Skedari | Përgjegjësia |
+| --- | --- |
+| `text/morphology.py` | Gjeneron format kryesore të foljeve dhe shumësin e emrave. Përdor një fjalor për format e parregullta dhe rregulla drejtshkrimore për format e rregullta. |
+| `text/syntax.py` | Dallon kryefjalën, foljen kryesore, foljen ndihmëse, kundrinorin, plotësuesin dhe mohimin. Mbulon pohime, mohime dhe pyetje po/jo me `do`, `have` dhe `be`. |
+| `text/grammar.py` | Kontrollon përputhjen me kryefjalën, rasën e përemrave, numrin e përcaktorëve dhe formën që kërkon folja ndihmëse. |
+| `text/linguistics.py` | Ekspozon analizën e përbashkët përmes `analyze_english()` dhe komandës lokale. |
+
+Nga rrënja `packages/future-xsus-core/`:
+
+```sh
+python3 -m languages.en.text.linguistics verb write
+python3 -m languages.en.text.linguistics plural child
+python3 -m languages.en.text.linguistics clause 'They writes.'
+python3 -m languages.en.text.linguistics clause 'Alex called Sam.'
+python3 -m languages.en.text.linguistics clause 'Did Alex wrote the report?'
+python3 -m languages.en.text.linguistics clause 'Alex has wrote the report.'
+python3 -m languages.en.text.linguistics clause "Isn't Alex writing the report?"
+```
+
+Pas `do` pritet forma bazë, pas `have` pjesorja e shkuar dhe pas `be` në ndërtimin progresiv forma me `-ing`. Për shembull, `Did Alex wrote` merr sugjerimin `write`, ndërsa `Alex has wrote` merr `written`. Mohimi njihet si `not` ose në shkurtime si `didn't` dhe `isn't`.
+
+Analizuesi përdor një fjalor të kufizuar dhe mbulon një folje ndihmëse për ndërtim. Pyetjet me fjalë pyetëse, zinxhirët me disa folje ndihmëse dhe analiza e zërit pësor mbeten jashtë mbulimit. Për strukturat që nuk i analizon, komanda kthen `unsupported_clause`. Analizuesi ekzekutohet më vete nga gjenerimi i bisedës.
