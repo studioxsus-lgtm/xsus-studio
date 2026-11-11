@@ -67,7 +67,30 @@
 .project-title{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .project-title .project-label{color:#e4f3ff;font-weight:650}
 .project-draft{font-size:9px!important;color:#9fe7ee!important;letter-spacing:.08em;padding:5px 7px;border:1px solid #2a6674;border-radius:30px}
-@media (max-width: 1100px) {
+@media (min-width: 851px) {
+  .site-header {
+    gap: clamp(10px, 1.4vw, 20px);
+    padding-inline: clamp(16px, 2vw, 28px);
+  }
+
+  .site-header .brand {
+    flex-shrink: 0;
+  }
+
+  .site-nav {
+    flex: 1 1 auto;
+    justify-content: center;
+    gap: clamp(10px, 1.55vw, 24px);
+    font-size: clamp(12px, 1.1vw, 13px);
+    font-weight: 600;
+  }
+
+  .site-session > [data-open-builder] {
+    display: none;
+  }
+}
+
+@media (max-width: 850px) {
   .site-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
