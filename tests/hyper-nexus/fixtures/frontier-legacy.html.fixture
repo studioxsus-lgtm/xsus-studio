@@ -1,0 +1,722 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050811">
+  <meta name="description" content="XSUS App Frontier — Independent application engineering and intelligence platform.">
+
+  <title>XSUS App Frontier | XSUS Studio</title>
+
+  <link rel="stylesheet" href="./app-ui/styles/design-system.css">
+  <link rel="stylesheet" href="./app-ui/styles/layout.css">
+  <link rel="stylesheet" href="./app-ui/styles/components.css">
+  <link rel="stylesheet" href="./app-ui/styles/responsive.css">
+</head>
+
+<body>
+
+<div class="xsus-app-shell" id="xsus-app">
+
+  <!-- SIDEBAR -->
+  <aside class="xsus-sidebar">
+
+    <div class="xsus-sidebar-content">
+
+      <a class="xsus-brand" href="index.html">
+        <div class="xsus-brand-mark" aria-hidden="true"></div>
+        <div>
+          <div class="xsus-brand-name">XSUS APP</div>
+          <div class="xsus-brand-tagline">THE X IDENTITY</div>
+        </div>
+      </a>
+
+      <nav class="xsus-sidebar-nav" aria-label="Main navigation">
+
+        <div class="xsus-nav-section">CONTROL CENTER</div>
+
+        <a class="xsus-nav-item active" href="#overview">
+          <span>◈</span> Overview
+        </a>
+
+        <a class="xsus-nav-item" href="#architect">
+          <span>⌘</span> Application Architect
+        </a>
+
+        <a class="xsus-nav-item" href="#workspace">
+          <span>▣</span> Engineering Workspace
+        </a>
+
+        <div class="xsus-nav-section">INTELLIGENCE</div>
+
+        <a class="xsus-nav-item" href="#nexus">
+          <span>✧</span> XSUS NEXUS
+        </a>
+
+        <a class="xsus-nav-item" href="#engines">
+          <span>⬡</span> Frontier Engines
+        </a>
+
+        <a class="xsus-nav-item" href="#architecture">
+          <span>⌬</span> Architecture
+        </a>
+
+        <a class="xsus-nav-item" href="#monitoring">
+          <span>◉</span> System Monitoring
+        </a>
+
+      </nav>
+
+      <div class="xsus-sidebar-footer">
+        <div class="xsus-divider"></div>
+        <p>INDEPENDENT INTELLIGENCE INFRASTRUCTURE</p>
+        <span class="xsus-badge">FRONTIER ENVIRONMENT</span>
+      </div>
+
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="xsus-main-content">
+
+    <!-- TOPBAR -->
+    <header class="xsus-topbar">
+
+      <div>
+        <div class="xsus-eyebrow">XSUS STUDIO / XSUS APP</div>
+        <div class="xsus-topbar-title">Frontier Command Center</div>
+      </div>
+
+      <div class="xsus-topbar-actions">
+
+        <span class="xsus-status">
+          <span class="xsus-status-dot"></span>
+          Independent Platform
+        </span>
+
+        <a class="xsus-button-secondary" href="index.html">
+          ← Studio
+        </a>
+
+      </div>
+
+    </header>
+
+    <main class="xsus-content">
+
+      <!-- OVERVIEW -->
+      <section class="xsus-section" id="overview">
+
+        <div class="xsus-page-header">
+
+          <div class="xsus-eyebrow">
+            XSUS APP / FRONTIER ENVIRONMENT
+          </div>
+
+          <h1 class="xsus-page-title">
+            Build beyond
+            <span class="xsus-gradient-text">limitations.</span>
+          </h1>
+
+          <p class="xsus-page-description">
+            An independent environment for application architecture,
+            engineering, intelligence orchestration and system evolution.
+          </p>
+
+        </div>
+
+        <!-- HERO COMMAND PANEL -->
+        <div class="xsus-panel xsus-command-center">
+
+          <div>
+            <span class="xsus-badge">FRONTIER COMMAND</span>
+
+            <h2>From intent to architecture.</h2>
+
+            <p>
+              Define an application, describe its requirements and
+              submit an engineering request through the existing
+              XSUS App interface.
+            </p>
+
+            <a class="xsus-button-primary" href="#architect">
+              Open Application Architect →
+            </a>
+          </div>
+
+          <div class="xsus-command-visual" aria-hidden="true">
+            <div class="xsus-command-orbit">
+              <div class="xsus-command-core">X</div>
+              <span class="xsus-orbit-point point-one"></span>
+              <span class="xsus-orbit-point point-two"></span>
+              <span class="xsus-orbit-point point-three"></span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- PLATFORM METRICS -->
+        <div class="xsus-dashboard-grid">
+
+          <article class="xsus-metric-card">
+            <div class="xsus-metric-label">PLATFORM</div>
+            <div class="xsus-metric-value xsus-gradient-text">XSUS</div>
+            <p>Independent application environment</p>
+          </article>
+
+          <article class="xsus-metric-card">
+            <div class="xsus-metric-label">ARCHITECTURE</div>
+            <div class="xsus-metric-value">Modular</div>
+            <p>Separated systems and controlled boundaries</p>
+          </article>
+
+          <article class="xsus-metric-card">
+            <div class="xsus-metric-label">INTELLIGENCE</div>
+            <div class="xsus-metric-value">Frontier</div>
+            <p>Advanced capabilities roadmap</p>
+          </article>
+
+          <article class="xsus-metric-card">
+            <div class="xsus-metric-label">BRIDGE</div>
+            <div class="xsus-metric-value" id="bridge-metric">Checking</div>
+            <p>Existing integration interface</p>
+          </article>
+
+        </div>
+
+      </section>
+
+      <!-- APPLICATION ARCHITECT -->
+      <section class="xsus-section" id="architect">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">ENGINEERING INTERFACE</div>
+            <h2>Application Architect</h2>
+            <p>
+              Transform an application specification into an
+              engineering request.
+            </p>
+          </div>
+
+          <span class="xsus-badge">REQUEST INTERFACE</span>
+        </div>
+
+        <div class="xsus-workspace">
+
+          <div class="xsus-panel">
+
+            <div class="xsus-panel-header">
+              <div>
+                <h3>New Application Request</h3>
+                <p>Describe the system you want to design.</p>
+              </div>
+              <span class="xsus-badge">XSUS APP</span>
+            </div>
+
+            <form id="app-form" class="xsus-form">
+
+              <label for="prompt">
+                Application specification
+              </label>
+
+              <textarea
+                id="prompt"
+                name="prompt"
+                class="xsus-command-input"
+                rows="8"
+                placeholder="Describe your application, purpose, architecture, features, security requirements and expected behavior..."
+                required
+              ></textarea>
+
+              <label for="platform">
+                Target platform
+              </label>
+
+              <select
+                id="platform"
+                name="platform"
+                class="xsus-select"
+              >
+                <option value="web">Web</option>
+                <option value="android">Android</option>
+                <option value="ios">iOS</option>
+                <option value="desktop">Desktop</option>
+              </select>
+
+              <button
+                class="xsus-button-primary"
+                id="generate-button"
+                type="submit"
+              >
+                Generate Application Architecture →
+              </button>
+
+            </form>
+
+            <p
+              id="message"
+              role="status"
+              aria-live="polite"
+            ></p>
+
+          </div>
+
+          <!-- RESPONSE -->
+          <div class="xsus-panel">
+
+            <div class="xsus-panel-header">
+              <div>
+                <h3>Engine Response</h3>
+                <p>Response returned by the existing XSUS App Bridge.</p>
+              </div>
+
+              <span class="xsus-badge">OUTPUT</span>
+            </div>
+
+            <pre
+              id="result"
+              class="xsus-output-viewer"
+            >Your XSUS App response will appear here.</pre>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- DEVELOPMENT WORKSPACE -->
+      <section class="xsus-section" id="workspace">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">ENGINEERING ENVIRONMENT</div>
+            <h2>Development Workspace</h2>
+            <p>
+              A foundation for future application engineering workflows.
+            </p>
+          </div>
+
+          <span class="xsus-badge">IN DEVELOPMENT</span>
+        </div>
+
+        <div class="xsus-dashboard-grid">
+
+          <article class="xsus-panel">
+            <span class="xsus-badge">PLANNED</span>
+            <h3>Project Workspace</h3>
+            <p>Centralized application project organization.</p>
+          </article>
+
+          <article class="xsus-panel">
+            <span class="xsus-badge">PLANNED</span>
+            <h3>Visual Architecture</h3>
+            <p>Visual representation of application structures.</p>
+          </article>
+
+          <article class="xsus-panel">
+            <span class="xsus-badge">PLANNED</span>
+            <h3>Engineering Pipeline</h3>
+            <p>Structured development and verification workflows.</p>
+          </article>
+
+          <article class="xsus-panel">
+            <span class="xsus-badge">PLANNED</span>
+            <h3>Simulation Environment</h3>
+            <p>Future simulation and optimization capabilities.</p>
+          </article>
+
+        </div>
+
+      </section>
+
+      <!-- NEXUS -->
+      <section class="xsus-section" id="nexus">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">CENTRAL ORCHESTRATION</div>
+            <h2>XSUS NEXUS</h2>
+            <p>
+              The intended control and coordination center of XSUS APP.
+            </p>
+          </div>
+
+          <span class="xsus-badge">FOUNDATION</span>
+        </div>
+
+        <div class="xsus-dashboard-grid">
+
+          <article class="xsus-panel">
+            <h3>XSUS App Bridge</h3>
+            <p>Connection state reported by the existing bridge.</p>
+
+            <div class="xsus-status">
+              <span class="xsus-status-dot" id="status-dot"></span>
+              <span id="status-text">Checking connection...</span>
+            </div>
+          </article>
+
+          <article class="xsus-panel">
+            <h3>System Independence</h3>
+            <p>
+              Connected systems retain their own architecture,
+              ownership, APIs and development lifecycle.
+            </p>
+            <span class="xsus-badge">ARCHITECTURE PRINCIPLE</span>
+          </article>
+
+          <article class="xsus-panel">
+            <h3>Controlled Integration</h3>
+            <p>
+              Future integrations will use explicitly defined
+              interfaces and adapters.
+            </p>
+            <span class="xsus-badge">PLANNED</span>
+          </article>
+
+        </div>
+
+      </section>
+
+      <!-- FRONTIER ENGINES -->
+      <section class="xsus-section" id="engines">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">FRONTIER ENGINE ECOSYSTEM</div>
+            <h2>Intelligence Engines</h2>
+            <p>
+              Proposed specialized capabilities from the
+              XSUS APP Frontier Blueprint.
+            </p>
+          </div>
+
+          <span class="xsus-badge">ROADMAP</span>
+        </div>
+
+        <div class="xsus-engine-grid">
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">✧</div>
+            <h3>Evolution Engine</h3>
+            <p>Future system evolution and improvement.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⌘</div>
+            <h3>Autonomous Engineering</h3>
+            <p>Future controlled engineering automation.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">◉</div>
+            <h3>Reality Simulator</h3>
+            <p>Future system simulation and scenario testing.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⟳</div>
+            <h3>Self-Healing Architecture</h3>
+            <p>Future recovery and resilience mechanisms.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⬡</div>
+            <h3>Knowledge Intelligence Fabric</h3>
+            <p>Future knowledge-aware system coordination.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⌬</div>
+            <h3>Intent-to-System Compiler</h3>
+            <p>Future translation of intent into system designs.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">◈</div>
+            <h3>Predictive Intelligence</h3>
+            <p>Future prediction and decision-support capabilities.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">◎</div>
+            <h3>Synthetic Universe</h3>
+            <p>Future virtual environments and system models.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⇄</div>
+            <h3>Model Intelligence Router</h3>
+            <p>Future model selection and orchestration.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">▤</div>
+            <h3>Software Genome</h3>
+            <p>Future software structure and lineage intelligence.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⛨</div>
+            <h3>Security Intelligence</h3>
+            <p>Future security analysis and protection workflows.</p>
+          </article>
+
+          <article class="xsus-engine-card">
+            <span class="xsus-badge">PLANNED</span>
+            <div class="xsus-engine-icon">⇧</div>
+            <h3>Universal Portability</h3>
+            <p>Future portable application environments.</p>
+          </article>
+
+        </div>
+
+      </section>
+
+      <!-- MONITORING -->
+      <section class="xsus-section" id="monitoring">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">OBSERVABILITY FOUNDATION</div>
+            <h2>System Monitoring</h2>
+            <p>
+              The interface for future operational monitoring.
+              No simulated telemetry is displayed.
+            </p>
+          </div>
+
+          <span class="xsus-badge">FOUNDATION</span>
+        </div>
+
+        <div class="xsus-panel">
+
+          <h3>Monitoring Infrastructure</h3>
+
+          <p>
+            Live performance metrics, resource utilization,
+            event streams and engine diagnostics will appear
+            here after their respective monitoring services
+            are implemented and connected.
+          </p>
+
+          <div class="xsus-empty-state">
+            <div class="xsus-empty-icon">◉</div>
+            <h3>No monitoring data connected</h3>
+            <p>
+              No operational telemetry is currently being reported
+              by this interface.
+            </p>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ARCHITECTURE -->
+      <section class="xsus-section" id="architecture">
+
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">SYSTEM DESIGN</div>
+            <h2>Independent Architecture</h2>
+            <p>
+              XSUS APP coordinates integrations without absorbing
+              or replacing connected systems.
+            </p>
+          </div>
+
+          <span class="xsus-badge">ARCHITECTURE PRINCIPLE</span>
+        </div>
+
+        <div class="xsus-panel">
+
+          <div class="xsus-architecture-canvas">
+
+            <div class="xsus-architecture-node">
+              <strong>XSUS STUDIO</strong>
+              <span>User entry point</span>
+            </div>
+
+            <div class="xsus-architecture-connector">↓</div>
+
+            <div class="xsus-architecture-node">
+              <strong>XSUS APP</strong>
+              <span>Application coordination layer</span>
+            </div>
+
+            <div class="xsus-architecture-connector">↓</div>
+
+            <div class="xsus-architecture-node">
+              <strong>CONTROLLED ADAPTERS</strong>
+              <span>Independent integration boundaries</span>
+            </div>
+
+            <div class="xsus-architecture-connector">↙ &nbsp;&nbsp; ↘</div>
+
+            <div class="xsus-dashboard-grid">
+
+              <div class="xsus-architecture-node">
+                <strong>XSUS AI CORE</strong>
+                <span>Independent AI system</span>
+              </div>
+
+              <div class="xsus-architecture-node">
+                <strong>HYPER XSUS CORE</strong>
+                <span>Independent knowledge system</span>
+              </div>
+
+            </div>
+
+          </div>
+
+          <p class="xsus-card-description">
+            This diagram represents the intended architecture.
+            It does not claim that all future adapters or integrations
+            are already implemented.
+          </p>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <footer class="xsus-footer">
+      XSUS STUDIO · THE X IDENTITY · © 2026
+    </footer>
+
+  </div>
+
+</div>
+
+<!-- EXISTING XSUS APP BRIDGE -->
+<script type="module">
+
+  import {
+    processXsusAppRequest,
+    getXsusAppBridgeStatus
+  } from "./platform/xsus-app/xsus-app-bridge.js";
+
+  const form = document.getElementById("app-form");
+  const promptInput = document.getElementById("prompt");
+  const platformInput = document.getElementById("platform");
+  const generateButton = document.getElementById("generate-button");
+
+  const resultElement = document.getElementById("result");
+  const messageElement = document.getElementById("message");
+
+  const statusDot = document.getElementById("status-dot");
+  const statusText = document.getElementById("status-text");
+  const bridgeMetric = document.getElementById("bridge-metric");
+
+  function updateStatus() {
+    try {
+      const status = getXsusAppBridgeStatus();
+
+      if (status.connected) {
+        statusDot.className = "xsus-status-dot xsus-status-active";
+        statusText.textContent = "XSUS App Engine connected.";
+        bridgeMetric.textContent = "Connected";
+      } else if (status.initializationError || status.error) {
+        statusDot.className = "xsus-status-dot";
+        statusText.textContent =
+          status.initializationError ||
+          status.error ||
+          "XSUS App connection failed.";
+
+        bridgeMetric.textContent = "Error";
+      } else {
+        statusDot.className = "xsus-status-dot";
+        statusText.textContent = "XSUS App is not initialized.";
+        bridgeMetric.textContent = "Inactive";
+      }
+
+    } catch (error) {
+      statusDot.className = "xsus-status-dot";
+      statusText.textContent = "Bridge status unavailable.";
+      bridgeMetric.textContent = "Unavailable";
+    }
+  }
+
+  function displayResult(value) {
+    resultElement.textContent = JSON.stringify(value, null, 2);
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const prompt = promptInput.value.trim();
+
+    if (!prompt) {
+      messageElement.textContent =
+        "Please enter an application description.";
+      return;
+    }
+
+    generateButton.disabled = true;
+    generateButton.textContent = "Processing...";
+
+    messageElement.textContent =
+      "Sending request to XSUS App Engine...";
+
+    try {
+
+      const response = await processXsusAppRequest({
+        prompt,
+        platform: platformInput.value,
+        useIntelligence: true,
+        retrieveKnowledge: true
+      });
+
+      displayResult(response);
+      updateStatus();
+
+      messageElement.textContent = response.success
+        ? "Request processed by XSUS App."
+        : "XSUS App returned an unsuccessful response.";
+
+    } catch (error) {
+
+      displayResult({
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || "APP_REQUEST_FAILED"
+        }
+      });
+
+      messageElement.textContent =
+        "The request could not be completed.";
+
+      updateStatus();
+
+    } finally {
+
+      generateButton.disabled = false;
+      generateButton.textContent =
+        "Generate Application Architecture →";
+
+    }
+  });
+
+  updateStatus();
+
+</script>
+
+</body>
+</html>

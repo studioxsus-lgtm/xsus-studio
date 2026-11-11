@@ -6,7 +6,7 @@
  *
  * @vitest-environment jsdom
  *
- * Audits the existing app.html without modifying it.
+ * Audits the archived Frontier page. The public app.html is XSUS App V6.2.
  *
  * The audit reports migration gaps.
  * It does not claim that Hyper Nexus is integrated.
@@ -39,7 +39,7 @@ import {
   resolveLegacyRoute
 } from "../../app-ui/shell/legacy-route-resolver.js";
 
-const APP_PATH = resolve(process.cwd(), "app.html");
+const FRONTIER_FIXTURE = resolve(process.cwd(), "tests/hyper-nexus/fixtures/frontier-legacy.html.fixture");
 
 const REQUIRED_FRONTIER_IDS = Object.freeze([
   "xsus-app",
@@ -105,7 +105,7 @@ describe(
     let report;
 
     beforeAll(() => {
-      html = readFileSync(APP_PATH, "utf8");
+      html = readFileSync(FRONTIER_FIXTURE, "utf8");
 
       const dom = new JSDOM(html, {
         url: "https://xsus.example/app.html",
@@ -116,7 +116,7 @@ describe(
       report = inspectDOM(document);
     });
 
-    test("app.html është dokument HTML i vlefshëm për analizë", () => {
+    test("Faqja Frontier është dokument HTML i vlefshëm për analizë", () => {
       expect(document.documentElement.tagName).toBe("HTML");
       expect(document.body).not.toBeNull();
       expect(document.title).toContain("XSUS App");
