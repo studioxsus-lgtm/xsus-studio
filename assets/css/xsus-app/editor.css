@@ -1,0 +1,33 @@
+/* XSUS APP — editor */
+.editor-panel{display:flex;flex-direction:column;min-width:0;min-height:0;background:#0b1423}
+.editor-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs{display:flex;gap:5px}
+.tab{background:transparent;color:#91a7c1;padding:9px 13px;border-radius:9px;font-size:12px;font-weight:650}
+.tab.active{background:#17384d;color:#82ebff}
+.device-tools{display:flex;gap:3px}
+.editor-body{flex:1;min-height:0;overflow:auto;padding:14px}
+.split{height:100%;min-height:300px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pane{border:1px solid #283d56;border-radius:12px;overflow:hidden;background:#0d192a;min-width:0;display:flex;flex-direction:column}
+.pane-label{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-bottom:1px solid #2b3d52;color:#a9bbd1;font-size:12px}
+.pane-label i{width:15px;height:15px}
+.code-view{padding:16px;white-space:pre;overflow:auto;color:#bdd5ec;font-size:12px;line-height:1.85;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;flex:1}
+.code-view .kw{color:#ba9bff}
+.code-view .str{color:#7cddc5}
+.code-view .tag{color:#7fd9f5}
+.app-canvas{background:#f8fbff;color:#17243a;width:100%;max-width:680px;border-radius:10px;overflow:hidden;align-self:flex-start;box-shadow:0 12px 40px #0004;transition:max-width .2s}
+.app-canvas.tablet{max-width:420px}
+.app-canvas.mobile{max-width:260px}
+.canvas-header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;background:white;border-bottom:1px solid #e3eaf2;font-size:13px;font-weight:800}
+.canvas-hero{padding:30px 18px;background:linear-gradient(120deg,#e8f7ff,#eae6ff)}
+.canvas-hero h3{font-size:20px;letter-spacing:-.04em;margin:0 0 8px}
+.canvas-hero p{font-size:11px;color:#52617a;line-height:1.5;margin:0 0 14px}
+.canvas-hero span{display:inline-block;background:#2563eb;color:white;font-size:10px;padding:9px 13px;border-radius:7px}
+.canvas-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:15px}
+.canvas-cards div{height:65px;background:#eef3f9;border:1px solid #e0e7f0;border-radius:9px}
+.single{height:100%;min-height:300px}
+.single .pane{height:100%}
+.design-canvas{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:12px;height:100%;min-height:300px}
+.design-properties{background:#111f33;border:1px solid #2b415c;border-radius:12px;padding:15px}
+.design-properties h3{font-size:13px;margin:0 0 20px}
+.property{font-size:12px;color:#9cafc9;display:flex;justify-content:space-between;border-bottom:1px solid #293d54;padding:13px 0}
+.property b{color:#e1ecfb}

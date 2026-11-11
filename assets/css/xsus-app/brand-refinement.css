@@ -1,0 +1,8 @@
+/* XSUS APP V3.3 — official logo integration; isolated visual refinement */
+.brand{display:inline-flex;align-items:center;gap:10px;min-width:0}
+.xsus-app-brand-logo{display:block;flex:none;width:44px;height:44px;object-fit:contain;border-radius:10px;filter:drop-shadow(0 2px 9px rgba(0,174,255,.12))}
+.work-header .xsus-app-brand-logo{width:36px;height:36px;border-radius:8px}
+.site-header .xsus-app-brand-logo{width:46px;height:46px}
+.brand small{display:block;letter-spacing:.14em}
+@media(max-width:700px){.site-header .xsus-app-brand-logo{width:39px;height:39px}.work-header .xsus-app-brand-logo{width:32px;height:32px}}
+@media(prefers-reduced-motion:reduce){.xsus-app-brand-logo{transition:none}}

@@ -1,0 +1,31 @@
+/* XSUS APP — responsive */
+@media(max-width:1000px){.work-main{grid-template-columns:65px minmax(270px,34%) minmax(0,1fr)}.site-nav{gap:10px}.split{grid-template-columns:1fr;grid-template-rows:minmax(180px,1fr) minmax(240px,1fr)}.design-canvas{grid-template-columns:1fr}.design-properties{display:none}.feature-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.site-header{height:72px;padding:0 17px}.site-nav{display:none}.hero{padding:75px 20px 55px}.hero p{font-size:14px}.landing-preview{margin:0 14px 55px}.preview-columns{grid-template-columns:25% 1fr}.preview-columns>div:last-child{display:none}.feature-grid{grid-template-columns:1fr}.work-header{padding:0 10px;height:58px}.work-header .project-title{font-size:11px}.work-header .brand small{display:none}.head-actions .optional{display:none}.work-main{display:block;position:relative;overflow:hidden}.rail{position:absolute;inset:0 auto 0 0;width:66px;z-index:3;transform:translateX(-100%);transition:transform .2s;box-shadow:15px 0 40px #0008}.rail.open{transform:translateX(0)}.chat-panel,.editor-panel{height:100%;border:0}.mobile-switch{display:flex;align-items:center;justify-content:space-around;height:54px;border-top:1px solid var(--line);background:#0c1728;flex-shrink:0}.mobile-switch button{background:transparent;color:#9bacc3;display:flex;align-items:center;gap:7px;font-size:12px;padding:10px}.mobile-switch button.active{color:#78e8fa}.editor-tools{padding:8px}.editor-body{padding:8px}.split{grid-template-columns:1fr;grid-template-rows:minmax(180px,1fr) minmax(180px,1fr)}.statusbar{font-size:9px}.site-footer{padding:25px}.project-title span{display:none}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+
+/* V5.6: modal containment and small-screen usability */
+:where(.pm-overlay,.vh-overlay,.td-overlay,.pub-overlay,.st-overlay):not(.hidden) {
+  overscroll-behavior: contain;
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+}
+:where(.pm-dialog,.vh-dialog,.td-dialog,.pub-dialog,.st-dialog) {
+  max-height: min(94dvh, 100%);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+:where(button,a,input,select,textarea):focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 3px;
+}
+@media (max-width: 480px) {
+  :where(.pm-dialog,.vh-dialog,.td-dialog,.pub-dialog,.st-dialog) {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    border-radius: 14px;
+  }
+  :where(.pm-dialog,.vh-dialog,.td-dialog,.pub-dialog,.st-dialog) :where(input,select,textarea) {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
