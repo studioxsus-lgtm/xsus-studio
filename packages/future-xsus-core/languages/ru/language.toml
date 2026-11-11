@@ -1,0 +1,8 @@
+tag = "ru"
+name = "Русский"
+stage = "planned"
+
+[capabilities]
+text = "planned"
+recognition = "planned"
+synthesis = "planned"

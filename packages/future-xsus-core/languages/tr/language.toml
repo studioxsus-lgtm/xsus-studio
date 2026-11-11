@@ -1,0 +1,8 @@
+tag = "tr"
+name = "Türkçe"
+stage = "planned"
+
+[capabilities]
+text = "planned"
+recognition = "planned"
+synthesis = "planned"

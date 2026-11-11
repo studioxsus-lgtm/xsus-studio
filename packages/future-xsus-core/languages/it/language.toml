@@ -1,0 +1,8 @@
+tag = "it"
+name = "Italiano"
+stage = "planned"
+
+[capabilities]
+text = "planned"
+recognition = "planned"
+synthesis = "planned"

@@ -1,0 +1,8 @@
+tag = "ja"
+name = "日本語"
+stage = "planned"
+
+[capabilities]
+text = "planned"
+recognition = "planned"
+synthesis = "planned"

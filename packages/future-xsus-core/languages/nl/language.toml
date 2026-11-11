@@ -1,0 +1,8 @@
+tag = "nl"
+name = "Nederlands"
+stage = "planned"
+
+[capabilities]
+text = "planned"
+recognition = "planned"
+synthesis = "planned"

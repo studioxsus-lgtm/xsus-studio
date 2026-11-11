@@ -1,0 +1,8 @@
+tag = "zh"
+name = "中文"
+stage = "planned"
+
+[capabilities]
+text = "planned"
+recognition = "planned"
+synthesis = "planned"

@@ -1,0 +1,8 @@
+tag = "de"
+name = "Deutsch"
+stage = "planned"
+
+[capabilities]
+text = "planned"
+recognition = "planned"
+synthesis = "planned"

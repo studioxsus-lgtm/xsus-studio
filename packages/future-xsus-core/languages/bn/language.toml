@@ -1,0 +1,8 @@
+tag = "bn"
+name = "বাংলা"
+stage = "planned"
+
+[capabilities]
+text = "planned"
+recognition = "planned"
+synthesis = "planned"
