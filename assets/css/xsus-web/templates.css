@@ -1,0 +1,9 @@
+dialog{width:min(720px,calc(100% - 28px));padding:22px;border:1px solid #47617a;border-radius:16px;background:#141f2e;color:var(--text)}
+dialog::backdrop{background:#050913bd}
+.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.template-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.template-grid button{text-align:left;display:grid;gap:7px;padding:9px}
+.template-grid small{color:#b4c6db;font-size:12px;line-height:1.4}
+.template-art{min-height:66px;border-radius:6px;border:1px solid #597189;background:linear-gradient(125deg,#263650,#416a68)}
+.portfolio-art{background:linear-gradient(135deg,#344268 0 47%,#af96e9 48% 69%,#273c58 70%)}
+.blank-art{background:linear-gradient(#53687f 1px,transparent 1px) 0 0/16px 16px,linear-gradient(90deg,#53687f 1px,transparent 1px) 0 0/16px 16px,#202d40}

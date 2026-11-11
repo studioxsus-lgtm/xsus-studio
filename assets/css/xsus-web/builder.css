@@ -1,0 +1,12 @@
+.views,.devices,.mobile-panels{display:flex;gap:4px;align-items:center}
+.views button,.devices button,.mobile-panels button{background:transparent;border-color:transparent;color:var(--muted);font-size:13px}
+.views button[aria-pressed=true],.devices button[aria-pressed=true],.mobile-panels button[aria-pressed=true]{background:#20384a;color:#c9fff4;border-color:#355c6b}
+.builder{min-height:calc(100vh - 72px)}
+.editor-grid{display:grid;grid-template-columns:minmax(176px,220px) minmax(0,1fr) minmax(185px,250px);min-height:calc(100vh - 72px)}
+.panel{padding:17px 14px;background:var(--panel);border-inline-end:1px solid var(--line);min-width:0}
+.properties-panel{border-inline-end:0;border-inline-start:1px solid var(--line)}
+.panel-heading{display:flex;justify-content:space-between;gap:8px;align-items:center;min-height:34px;margin-bottom:12px}
+.panel-heading h2,.dialog-head h2{font-size:15px;margin:0}
+.section-heading{border-top:1px solid var(--line);margin-top:20px;padding-top:12px}
+.small-button{min-height:32px;min-width:32px;padding:2px 7px;font-size:19px}
+.mobile-panels{display:none}

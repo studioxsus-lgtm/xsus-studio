@@ -1,0 +1,6 @@
+.item-list{display:grid;gap:6px}
+.item-list button{text-align:left;overflow-wrap:anywhere}
+.item-list button[aria-pressed=true]{border-color:#578c92;background:#1a3543;color:#c2fff2}
+.row-actions{display:flex;gap:6px;margin:12px 0}
+.row-actions button{font-size:12px;flex:1;padding:6px}
+.page-name{margin-top:12px}

@@ -1,0 +1,6 @@
+.field{display:grid;gap:6px;margin:0 0 13px;font-size:13px;color:#bfcee0}
+.field textarea{resize:vertical;width:100%}
+.field input[type=color]{width:100%;padding:4px}
+.field input[type=range]{padding:0;accent-color:var(--mint)}
+.property-type{color:var(--mint);font-size:11px;text-align:right}
+.danger{color:#ffc5c7;background:#221e2a}

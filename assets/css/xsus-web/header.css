@@ -1,0 +1,5 @@
+.top{min-height:72px;padding:12px clamp(16px,4vw,56px);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;border-bottom:1px solid #202c3d;background:#0c1320}
+.brand{display:inline-flex;align-items:center;gap:12px;justify-self:start;font-size:14px;letter-spacing:.09em;font-weight:800;white-space:nowrap}
+.brand img{object-fit:contain;border-radius:10px;background:#101c2b}
+.brand small{display:block;font-size:8px;letter-spacing:.18em;color:#b2c3d9;margin-top:4px}
+.language{grid-column:3;justify-self:end}
