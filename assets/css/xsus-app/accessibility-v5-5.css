@@ -1,6 +1,0 @@
-/* XSUS App V5.5 — keyboard and mobile accessibility */
-.xsus-skip-link { position:fixed; top:8px; left:8px; z-index:100000; padding:12px 18px; border-radius:10px; background:#0d2139; color:#fff; border:2px solid #67e8f9; transform:translateY(-160%); }
-.xsus-skip-link:focus { transform:translateY(0); }
-:where(button,a,input,select,textarea,[tabindex="0"]):focus-visible { outline:3px solid #67e8f9; outline-offset:3px; }
-:where(.pm-dialog,.vh-dialog,.td-dialog,.pub-dialog,.st-dialog):focus { outline:none; }
-@media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; } }

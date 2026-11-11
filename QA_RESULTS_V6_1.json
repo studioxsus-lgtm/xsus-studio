@@ -1,7 +1,0 @@
-{
-  "version": "6.1",
-  "scope": "static regression and attempted real browser smoke",
-  "browser_smoke": "blocked by environment administrator for loopback HTTP; not verified",
-  "browser_verified": false,
-  "note": "No claims of functional browser pass."
-}
