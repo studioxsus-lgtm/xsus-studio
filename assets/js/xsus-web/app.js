@@ -1,5 +1,5 @@
 import { $, $$ } from './dom.js';
-import { bindModuleMenu, bindNavigation, setPanel } from './navigation.js';
+import { bindModuleMenu, bindNavigation, setPanel } from './navigation.js?v=2';
 import { bindPages, renderPages } from './pages.js';
 import { bindPreview, renderCanvas } from './preview.js';
 import { bindProperties, renderProperties } from './properties.js';

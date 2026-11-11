@@ -48,7 +48,6 @@ export function bindModuleMenu() {
   const toggle = $('.module-menu-toggle');
   const header = toggle.closest('header');
   const nav = $('#module-nav');
-  const mobile = matchMedia('(max-width: 1000px)');
 
   function setMenuOpen(open) {
     header.toggleAttribute('data-menu-open', open);
@@ -60,16 +59,10 @@ export function bindModuleMenu() {
     setMenuOpen(open);
     if (open) nav.querySelector('a').focus();
   });
-  nav.addEventListener('click', event => {
-    if (event.target.closest('a')) setMenuOpen(false);
-  });
-  document.addEventListener('click', event => {
-    if (!nav.contains(event.target) && !toggle.contains(event.target)) setMenuOpen(false);
-  });
-  document.addEventListener('keydown', event => {
+  header.addEventListener('keydown', event => {
     if (event.key !== 'Escape' || !header.hasAttribute('data-menu-open')) return;
+    if (!toggle.getClientRects().length) return;
     setMenuOpen(false);
     toggle.focus();
   });
-  mobile.addEventListener('change', () => setMenuOpen(false));
 }

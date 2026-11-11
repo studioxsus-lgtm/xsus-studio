@@ -122,9 +122,10 @@
     display: none;
     grid-column: 1 / -1;
     grid-row: 2;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     align-items: stretch;
     gap: 2px;
-    padding: 6px;
+    padding: 4px;
     border: 1px solid var(--line);
     border-radius: 12px;
     background: #101a29;
@@ -133,13 +134,22 @@
   .top[data-menu-open] .module-nav { display: grid; }
 
   .module-nav a {
-    padding: 10px 12px;
+    display: grid;
+    place-items: center;
+    min-height: 36px;
+    padding: 4px;
     border-radius: 8px;
+    color: var(--text);
+    text-align: center;
   }
 
   .module-nav a:hover, .module-nav a:focus-visible {
     background: #192638;
   }
+}
+
+@media (max-width: 620px) {
+  .module-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 500px) {
