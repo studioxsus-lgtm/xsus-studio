@@ -7,6 +7,7 @@ export default {
   "code": "Code",
   "preview": "Aperçu",
   "moduleNavigation": "Navigation principale",
+  "moduleMenu": "Menu des modules",
   "language": "Langue",
   "panels": "Panneaux",
   "pages": "Pages",

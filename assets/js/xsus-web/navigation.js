@@ -43,3 +43,27 @@ export function bindNavigation(renderEditor, saveProject) {
   });
   $$('.mobile-panels button').forEach(button => button.addEventListener('click', () => setPanel(button.dataset.panel)));
 }
+
+export function bindModuleMenu() {
+  const toggle = $('.module-menu-toggle');
+  const header = toggle.closest('header');
+  const nav = $('#module-nav');
+
+  function setMenuOpen(open) {
+    header.toggleAttribute('data-menu-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+  }
+
+  toggle.addEventListener('click', () => {
+    const open = !header.hasAttribute('data-menu-open');
+    setMenuOpen(open);
+    if (open) nav.querySelector('a').focus();
+  });
+
+  header.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || !header.hasAttribute('data-menu-open')) return;
+    if (!toggle.getClientRects().length) return;
+    setMenuOpen(false);
+    toggle.focus();
+  });
+}
