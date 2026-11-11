@@ -1,0 +1,142 @@
+{"prompt":"Hello.","response":"Hello! How can I help?"}
+{"prompt":"Good morning.","response":"Good morning! How can I help?"}
+{"prompt":"Good evening.","response":"Good evening! How can I help?"}
+{"prompt":"How are you?","response":"I am ready to help."}
+{"prompt":"Thank you for your help.","response":"You are welcome."}
+{"prompt":"Thanks for the explanation.","response":"You are welcome."}
+{"prompt":"I need a short answer.","response":"Of course. What is your question?"}
+{"prompt":"Can you help me write a message?","response":"Yes. Share your draft and tell me who will read it."}
+{"prompt":"Make this polite: Send me the file today.","response":"Could you please send me the file today?"}
+{"prompt":"Make this polite: Send me the link today.","response":"Could you please send me the link today?"}
+{"prompt":"Make this polite: Send me the draft tomorrow.","response":"Could you please send me the draft tomorrow?"}
+{"prompt":"Make this polite: Send me the report by Friday.","response":"Could you please send me the report by Friday?"}
+{"prompt":"Make this polite: Share your notes today.","response":"Could you please share your notes today?"}
+{"prompt":"Make this polite: Share your notes tomorrow.","response":"Could you please share your notes tomorrow?"}
+{"prompt":"Make this shorter: I would like to confirm that I received your message.","response":"I received your message."}
+{"prompt":"Make this shorter: I am writing to let you know that we are ready.","response":"We are ready."}
+{"prompt":"Make this shorter: Thank you very much for your time today.","response":"Thank you for your time today."}
+{"prompt":"Make this clearer: It is due then.","response":"Which date should the message specify?"}
+{"prompt":"Make this clearer: We should meet there.","response":"Where should the meeting take place?"}
+{"prompt":"Make this warmer: Your draft is ready.","response":"Good news! Your draft is ready."}
+{"prompt":"Make this warmer: The files are ready.","response":"Good news! The files are ready."}
+{"prompt":"Say goodbye politely.","response":"Thank you for your time. Goodbye!"}
+{"prompt":"Write a short thank-you note.","response":"Thank you for your help. I appreciate it."}
+{"prompt":"Ask someone for a meeting time.","response":"What time would work for you?"}
+{"prompt":"Make it shorter.","response":"Please send the file today.","history":[{"role":"user","text":"Make this polite: Send me the file today."},{"role":"assistant","text":"Could you please send me the file today?"}]}
+{"prompt":"Make it shorter.","response":"Please send the report by Friday.","history":[{"role":"user","text":"Make this polite: Send me the report by Friday."},{"role":"assistant","text":"Could you please send me the report by Friday?"}]}
+{"prompt":"Keep the deadline and make it warmer.","response":"We would appreciate your draft by Monday.","history":[{"role":"user","text":"We need your draft by Monday."},{"role":"assistant","text":"Please send your draft by Monday."}]}
+{"prompt":"Keep the deadline and make it warmer.","response":"We would appreciate your report by Friday.","history":[{"role":"user","text":"We need your report by Friday."},{"role":"assistant","text":"Please send your report by Friday."}]}
+{"prompt":"Make this polite: Maya, send the draft by Monday at 9 a.m..","response":"Maya, could you please send the draft by Monday at 9 a.m.?"}
+{"prompt":"Could you make this request more courteous? Maya, send the draft by Monday at 9 a.m..","response":"Maya, could you please send the draft by Monday at 9 a.m.?"}
+{"prompt":"Make this warmer: We need the draft from Maya by Monday at 9 a.m..","response":"Maya, we would appreciate receiving the draft by Monday at 9 a.m.."}
+{"prompt":"Make this shorter: I am writing to ask Maya to send the draft by Monday at 9 a.m..","response":"Maya, please send the draft by Monday at 9 a.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Maya, send the draft by Monday at 9 a.m.."},{"role":"assistant","text":"Maya, could you please send the draft by Monday at 9 a.m.?"}],"response":"Maya, please send the draft by Monday at 9 a.m.."}
+{"prompt":"Make this polite: Noah, send the report by Tuesday at noon.","response":"Noah, could you please send the report by Tuesday at noon?"}
+{"prompt":"Could you make this request more courteous? Noah, send the report by Tuesday at noon.","response":"Noah, could you please send the report by Tuesday at noon?"}
+{"prompt":"Make this warmer: We need the report from Noah by Tuesday at noon.","response":"Noah, we would appreciate receiving the report by Tuesday at noon."}
+{"prompt":"Make this shorter: I am writing to ask Noah to send the report by Tuesday at noon.","response":"Noah, please send the report by Tuesday at noon."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Noah, send the report by Tuesday at noon."},{"role":"assistant","text":"Noah, could you please send the report by Tuesday at noon?"}],"response":"Noah, please send the report by Tuesday at noon."}
+{"prompt":"Make this polite: Ava, send the slides by Wednesday at 2 p.m..","response":"Ava, could you please send the slides by Wednesday at 2 p.m.?"}
+{"prompt":"Could you make this request more courteous? Ava, send the slides by Wednesday at 2 p.m..","response":"Ava, could you please send the slides by Wednesday at 2 p.m.?"}
+{"prompt":"Make this warmer: We need the slides from Ava by Wednesday at 2 p.m..","response":"Ava, we would appreciate receiving the slides by Wednesday at 2 p.m.."}
+{"prompt":"Make this shorter: I am writing to ask Ava to send the slides by Wednesday at 2 p.m..","response":"Ava, please send the slides by Wednesday at 2 p.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Ava, send the slides by Wednesday at 2 p.m.."},{"role":"assistant","text":"Ava, could you please send the slides by Wednesday at 2 p.m.?"}],"response":"Ava, please send the slides by Wednesday at 2 p.m.."}
+{"prompt":"Make this polite: Leo, send the budget by Thursday at 3 p.m..","response":"Leo, could you please send the budget by Thursday at 3 p.m.?"}
+{"prompt":"Could you make this request more courteous? Leo, send the budget by Thursday at 3 p.m..","response":"Leo, could you please send the budget by Thursday at 3 p.m.?"}
+{"prompt":"Make this warmer: We need the budget from Leo by Thursday at 3 p.m..","response":"Leo, we would appreciate receiving the budget by Thursday at 3 p.m.."}
+{"prompt":"Make this shorter: I am writing to ask Leo to send the budget by Thursday at 3 p.m..","response":"Leo, please send the budget by Thursday at 3 p.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Leo, send the budget by Thursday at 3 p.m.."},{"role":"assistant","text":"Leo, could you please send the budget by Thursday at 3 p.m.?"}],"response":"Leo, please send the budget by Thursday at 3 p.m.."}
+{"prompt":"Make this polite: Emma, send the agenda by Friday at 10 a.m..","response":"Emma, could you please send the agenda by Friday at 10 a.m.?"}
+{"prompt":"Could you make this request more courteous? Emma, send the agenda by Friday at 10 a.m..","response":"Emma, could you please send the agenda by Friday at 10 a.m.?"}
+{"prompt":"Make this warmer: We need the agenda from Emma by Friday at 10 a.m..","response":"Emma, we would appreciate receiving the agenda by Friday at 10 a.m.."}
+{"prompt":"Make this shorter: I am writing to ask Emma to send the agenda by Friday at 10 a.m..","response":"Emma, please send the agenda by Friday at 10 a.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Emma, send the agenda by Friday at 10 a.m.."},{"role":"assistant","text":"Emma, could you please send the agenda by Friday at 10 a.m.?"}],"response":"Emma, please send the agenda by Friday at 10 a.m.."}
+{"prompt":"Make this polite: Liam, send the summary by Monday at noon.","response":"Liam, could you please send the summary by Monday at noon?"}
+{"prompt":"Could you make this request more courteous? Liam, send the summary by Monday at noon.","response":"Liam, could you please send the summary by Monday at noon?"}
+{"prompt":"Make this warmer: We need the summary from Liam by Monday at noon.","response":"Liam, we would appreciate receiving the summary by Monday at noon."}
+{"prompt":"Make this shorter: I am writing to ask Liam to send the summary by Monday at noon.","response":"Liam, please send the summary by Monday at noon."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Liam, send the summary by Monday at noon."},{"role":"assistant","text":"Liam, could you please send the summary by Monday at noon?"}],"response":"Liam, please send the summary by Monday at noon."}
+{"prompt":"Make this polite: Nora, send the invoice by Tuesday at 2 p.m..","response":"Nora, could you please send the invoice by Tuesday at 2 p.m.?"}
+{"prompt":"Could you make this request more courteous? Nora, send the invoice by Tuesday at 2 p.m..","response":"Nora, could you please send the invoice by Tuesday at 2 p.m.?"}
+{"prompt":"Make this warmer: We need the invoice from Nora by Tuesday at 2 p.m..","response":"Nora, we would appreciate receiving the invoice by Tuesday at 2 p.m.."}
+{"prompt":"Make this shorter: I am writing to ask Nora to send the invoice by Tuesday at 2 p.m..","response":"Nora, please send the invoice by Tuesday at 2 p.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Nora, send the invoice by Tuesday at 2 p.m.."},{"role":"assistant","text":"Nora, could you please send the invoice by Tuesday at 2 p.m.?"}],"response":"Nora, please send the invoice by Tuesday at 2 p.m.."}
+{"prompt":"Make this polite: Sofia, send the revised draft by Wednesday at 3 p.m..","response":"Sofia, could you please send the revised draft by Wednesday at 3 p.m.?"}
+{"prompt":"Could you make this request more courteous? Sofia, send the revised draft by Wednesday at 3 p.m..","response":"Sofia, could you please send the revised draft by Wednesday at 3 p.m.?"}
+{"prompt":"Make this warmer: We need the revised draft from Sofia by Wednesday at 3 p.m..","response":"Sofia, we would appreciate receiving the revised draft by Wednesday at 3 p.m.."}
+{"prompt":"Make this shorter: I am writing to ask Sofia to send the revised draft by Wednesday at 3 p.m..","response":"Sofia, please send the revised draft by Wednesday at 3 p.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Sofia, send the revised draft by Wednesday at 3 p.m.."},{"role":"assistant","text":"Sofia, could you please send the revised draft by Wednesday at 3 p.m.?"}],"response":"Sofia, please send the revised draft by Wednesday at 3 p.m.."}
+{"prompt":"Make this polite: Oliver, send the notes by Thursday at 9 a.m..","response":"Oliver, could you please send the notes by Thursday at 9 a.m.?"}
+{"prompt":"Could you make this request more courteous? Oliver, send the notes by Thursday at 9 a.m..","response":"Oliver, could you please send the notes by Thursday at 9 a.m.?"}
+{"prompt":"Make this warmer: We need the notes from Oliver by Thursday at 9 a.m..","response":"Oliver, we would appreciate receiving the notes by Thursday at 9 a.m.."}
+{"prompt":"Make this shorter: I am writing to ask Oliver to send the notes by Thursday at 9 a.m..","response":"Oliver, please send the notes by Thursday at 9 a.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Oliver, send the notes by Thursday at 9 a.m.."},{"role":"assistant","text":"Oliver, could you please send the notes by Thursday at 9 a.m.?"}],"response":"Oliver, please send the notes by Thursday at 9 a.m.."}
+{"prompt":"Make this polite: Amelia, send the schedule by Friday at noon.","response":"Amelia, could you please send the schedule by Friday at noon?"}
+{"prompt":"Could you make this request more courteous? Amelia, send the schedule by Friday at noon.","response":"Amelia, could you please send the schedule by Friday at noon?"}
+{"prompt":"Make this warmer: We need the schedule from Amelia by Friday at noon.","response":"Amelia, we would appreciate receiving the schedule by Friday at noon."}
+{"prompt":"Make this shorter: I am writing to ask Amelia to send the schedule by Friday at noon.","response":"Amelia, please send the schedule by Friday at noon."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Amelia, send the schedule by Friday at noon."},{"role":"assistant","text":"Amelia, could you please send the schedule by Friday at noon?"}],"response":"Amelia, please send the schedule by Friday at noon."}
+{"prompt":"Make this polite: Lucas, send the checklist by Monday at 2 p.m..","response":"Lucas, could you please send the checklist by Monday at 2 p.m.?"}
+{"prompt":"Could you make this request more courteous? Lucas, send the checklist by Monday at 2 p.m..","response":"Lucas, could you please send the checklist by Monday at 2 p.m.?"}
+{"prompt":"Make this warmer: We need the checklist from Lucas by Monday at 2 p.m..","response":"Lucas, we would appreciate receiving the checklist by Monday at 2 p.m.."}
+{"prompt":"Make this shorter: I am writing to ask Lucas to send the checklist by Monday at 2 p.m..","response":"Lucas, please send the checklist by Monday at 2 p.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Lucas, send the checklist by Monday at 2 p.m.."},{"role":"assistant","text":"Lucas, could you please send the checklist by Monday at 2 p.m.?"}],"response":"Lucas, please send the checklist by Monday at 2 p.m.."}
+{"prompt":"Make this polite: Elena, send the proposal by Tuesday at 3 p.m..","response":"Elena, could you please send the proposal by Tuesday at 3 p.m.?"}
+{"prompt":"Could you make this request more courteous? Elena, send the proposal by Tuesday at 3 p.m..","response":"Elena, could you please send the proposal by Tuesday at 3 p.m.?"}
+{"prompt":"Make this warmer: We need the proposal from Elena by Tuesday at 3 p.m..","response":"Elena, we would appreciate receiving the proposal by Tuesday at 3 p.m.."}
+{"prompt":"Make this shorter: I am writing to ask Elena to send the proposal by Tuesday at 3 p.m..","response":"Elena, please send the proposal by Tuesday at 3 p.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Elena, send the proposal by Tuesday at 3 p.m.."},{"role":"assistant","text":"Elena, could you please send the proposal by Tuesday at 3 p.m.?"}],"response":"Elena, please send the proposal by Tuesday at 3 p.m.."}
+{"prompt":"Make this polite: Mia, send the figures by Wednesday at 10 a.m..","response":"Mia, could you please send the figures by Wednesday at 10 a.m.?"}
+{"prompt":"Could you make this request more courteous? Mia, send the figures by Wednesday at 10 a.m..","response":"Mia, could you please send the figures by Wednesday at 10 a.m.?"}
+{"prompt":"Make this warmer: We need the figures from Mia by Wednesday at 10 a.m..","response":"Mia, we would appreciate receiving the figures by Wednesday at 10 a.m.."}
+{"prompt":"Make this shorter: I am writing to ask Mia to send the figures by Wednesday at 10 a.m..","response":"Mia, please send the figures by Wednesday at 10 a.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Mia, send the figures by Wednesday at 10 a.m.."},{"role":"assistant","text":"Mia, could you please send the figures by Wednesday at 10 a.m.?"}],"response":"Mia, please send the figures by Wednesday at 10 a.m.."}
+{"prompt":"Make this polite: Henry, send the list by Thursday at noon.","response":"Henry, could you please send the list by Thursday at noon?"}
+{"prompt":"Could you make this request more courteous? Henry, send the list by Thursday at noon.","response":"Henry, could you please send the list by Thursday at noon?"}
+{"prompt":"Make this warmer: We need the list from Henry by Thursday at noon.","response":"Henry, we would appreciate receiving the list by Thursday at noon."}
+{"prompt":"Make this shorter: I am writing to ask Henry to send the list by Thursday at noon.","response":"Henry, please send the list by Thursday at noon."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Henry, send the list by Thursday at noon."},{"role":"assistant","text":"Henry, could you please send the list by Thursday at noon?"}],"response":"Henry, please send the list by Thursday at noon."}
+{"prompt":"Make this polite: Isla, send the files by Friday at 9 a.m..","response":"Isla, could you please send the files by Friday at 9 a.m.?"}
+{"prompt":"Could you make this request more courteous? Isla, send the files by Friday at 9 a.m..","response":"Isla, could you please send the files by Friday at 9 a.m.?"}
+{"prompt":"Make this warmer: We need the files from Isla by Friday at 9 a.m..","response":"Isla, we would appreciate receiving the files by Friday at 9 a.m.."}
+{"prompt":"Make this shorter: I am writing to ask Isla to send the files by Friday at 9 a.m..","response":"Isla, please send the files by Friday at 9 a.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Isla, send the files by Friday at 9 a.m.."},{"role":"assistant","text":"Isla, could you please send the files by Friday at 9 a.m.?"}],"response":"Isla, please send the files by Friday at 9 a.m.."}
+{"prompt":"Make this polite: Theo, send the link by Monday at 10 a.m..","response":"Theo, could you please send the link by Monday at 10 a.m.?"}
+{"prompt":"Could you make this request more courteous? Theo, send the link by Monday at 10 a.m..","response":"Theo, could you please send the link by Monday at 10 a.m.?"}
+{"prompt":"Make this warmer: We need the link from Theo by Monday at 10 a.m..","response":"Theo, we would appreciate receiving the link by Monday at 10 a.m.."}
+{"prompt":"Make this shorter: I am writing to ask Theo to send the link by Monday at 10 a.m..","response":"Theo, please send the link by Monday at 10 a.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Theo, send the link by Monday at 10 a.m.."},{"role":"assistant","text":"Theo, could you please send the link by Monday at 10 a.m.?"}],"response":"Theo, please send the link by Monday at 10 a.m.."}
+{"prompt":"Make this polite: Zoe, send the plan by Tuesday at 9 a.m..","response":"Zoe, could you please send the plan by Tuesday at 9 a.m.?"}
+{"prompt":"Could you make this request more courteous? Zoe, send the plan by Tuesday at 9 a.m..","response":"Zoe, could you please send the plan by Tuesday at 9 a.m.?"}
+{"prompt":"Make this warmer: We need the plan from Zoe by Tuesday at 9 a.m..","response":"Zoe, we would appreciate receiving the plan by Tuesday at 9 a.m.."}
+{"prompt":"Make this shorter: I am writing to ask Zoe to send the plan by Tuesday at 9 a.m..","response":"Zoe, please send the plan by Tuesday at 9 a.m.."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Zoe, send the plan by Tuesday at 9 a.m.."},{"role":"assistant","text":"Zoe, could you please send the plan by Tuesday at 9 a.m.?"}],"response":"Zoe, please send the plan by Tuesday at 9 a.m.."}
+{"prompt":"Make this polite: Ethan, send the form by Wednesday at noon.","response":"Ethan, could you please send the form by Wednesday at noon?"}
+{"prompt":"Could you make this request more courteous? Ethan, send the form by Wednesday at noon.","response":"Ethan, could you please send the form by Wednesday at noon?"}
+{"prompt":"Make this warmer: We need the form from Ethan by Wednesday at noon.","response":"Ethan, we would appreciate receiving the form by Wednesday at noon."}
+{"prompt":"Make this shorter: I am writing to ask Ethan to send the form by Wednesday at noon.","response":"Ethan, please send the form by Wednesday at noon."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Ethan, send the form by Wednesday at noon."},{"role":"assistant","text":"Ethan, could you please send the form by Wednesday at noon?"}],"response":"Ethan, please send the form by Wednesday at noon."}
+{"prompt":"Make this polite: Bring 2 copies.","response":"Could you please bring 2 copies?"}
+{"prompt":"Shorten this: I am writing to ask you to bring 2 copies.","response":"Please bring 2 copies."}
+{"prompt":"Make this polite: Bring 3 labels.","response":"Could you please bring 3 labels?"}
+{"prompt":"Shorten this: I am writing to ask you to bring 3 labels.","response":"Please bring 3 labels."}
+{"prompt":"Make this polite: Bring 4 forms.","response":"Could you please bring 4 forms?"}
+{"prompt":"Shorten this: I am writing to ask you to bring 4 forms.","response":"Please bring 4 forms."}
+{"prompt":"Make this polite: Bring 5 tickets.","response":"Could you please bring 5 tickets?"}
+{"prompt":"Shorten this: I am writing to ask you to bring 5 tickets.","response":"Please bring 5 tickets."}
+{"prompt":"Make this polite: Bring 6 folders.","response":"Could you please bring 6 folders?"}
+{"prompt":"Shorten this: I am writing to ask you to bring 6 folders.","response":"Please bring 6 folders."}
+{"prompt":"Make this polite: Bring 8 badges.","response":"Could you please bring 8 badges?"}
+{"prompt":"Shorten this: I am writing to ask you to bring 8 badges.","response":"Please bring 8 badges."}
+{"prompt":"Hi there!","response":"Hello! How can I help?"}
+{"prompt":"Hello, can you help?","response":"Of course. What is your question?"}
+{"prompt":"Good morning, are you available?","response":"Good morning! How can I help?"}
+{"prompt":"Good afternoon, can we start?","response":"Good afternoon! How can I help?"}
+{"prompt":"Thanks a lot for your help.","response":"You are welcome."}
+{"prompt":"I appreciate your assistance.","response":"You are welcome."}
+{"prompt":"Please make this clearer: We need it soon.","response":"What deadline should the message specify?"}
+{"prompt":"Clarify this message: We need to meet later.","response":"What time should the message specify?"}
+{"prompt":"Make this clearer: Meet me at the usual spot.","response":"Where should the meeting take place?"}
+{"prompt":"Make this clearer: Ask them to send it.","response":"Who should send it, and what should they send?"}
+{"prompt":"Write a short note of thanks.","response":"Thank you for your help. I appreciate it."}
+{"prompt":"Write a brief message thanking a teammate.","response":"Thank you for your help. I appreciate it."}

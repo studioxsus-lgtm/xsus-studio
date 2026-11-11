@@ -13,6 +13,7 @@ class NeuralLanguageModel:
     hidden_bias: list[float]
     output_weights: list[list[float]]
     output_bias: list[float]
+    prompt_format: str = "plain"
 
     @classmethod
     def initialize(

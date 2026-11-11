@@ -14,18 +14,21 @@ class Example:
     response: str
 
 
+def parse_example(row: dict) -> Example:
+    history = row.get("history", [])
+    if not isinstance(history, list):
+        raise ValueError("history must be a list")
+    turns = tuple(ConversationTurn(ConversationRole(turn["role"]), turn["text"]) for turn in history)
+    require_text(row["response"], "response")
+    return Example(Conversation(row["prompt"], turns), row["response"])
+
+
 def load_corpus(path: Path) -> tuple[Example, ...]:
     examples: list[Example] = []
     with path.open(encoding="utf-8") as source:
         for line_number, line in enumerate(source, start=1):
             try:
-                row = json.loads(line)
-                history = row.get("history", [])
-                if not isinstance(history, list):
-                    raise ValueError("history must be a list")
-                turns = tuple(ConversationTurn(ConversationRole(turn["role"]), turn["text"]) for turn in history)
-                require_text(row["response"], "response")
-                examples.append(Example(Conversation(row["prompt"], turns), row["response"]))
+                examples.append(parse_example(json.loads(line)))
             except (AttributeError, KeyError, TypeError, ValueError) as error:
                 raise ValueError(f"Invalid corpus entry at {path}:{line_number}") from error
     if not examples:

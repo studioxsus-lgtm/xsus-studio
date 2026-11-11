@@ -1,0 +1,14 @@
+id = "xsus-en-original-v2"
+origin = "Original seed dialogs and original English variants generated from XSUS-authored phrases"
+
+[training]
+path = "data/training-v2.jsonl"
+examples = 142
+seed_examples = 28
+generator = "data/preparation/expand_corpus.py"
+
+[held_out]
+path = "evaluation/quality-v2.jsonl"
+examples = 12
+fact_cases = 7
+used_for_training = false

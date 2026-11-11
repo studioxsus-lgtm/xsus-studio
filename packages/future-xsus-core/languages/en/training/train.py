@@ -11,10 +11,23 @@ from ..models.checkpoint import load_checkpoint, save_checkpoint
 from ..models.neural_model import NeuralLanguageModel
 from ..text.generation.conversation_format import prompt_tokens
 from ..text.generation.generate import generate
+from ..text.normalization.rewrite_slots import prepare_rewrite
 from ..text.tokenizer import EOS, BytePairTokenizer
 
 _ROOT = Path(__file__).resolve().parents[1]
 _EncodedExample = tuple[list[int], list[int]]
+
+
+def _mask_examples(examples: tuple[Example, ...]) -> tuple[Example, ...]:
+    normalized = []
+    for example in examples:
+        rewrite = prepare_rewrite(example.conversation)
+        if rewrite is not None:
+            response = rewrite.mask(example.response)
+            if all(response.count(marker) == 1 for marker, _ in rewrite.slots):
+                example = Example(rewrite.prompt, response)
+        normalized.append(example)
+    return tuple(normalized)
 
 
 def _encode(tokenizer: BytePairTokenizer, examples: tuple[Example, ...]) -> list[_EncodedExample]:
@@ -47,6 +60,7 @@ def main() -> None:
     parser.add_argument("--context-size", type=int, default=32)
     parser.add_argument("--epochs", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.055)
+    parser.add_argument("--copy-rewrite-slots", action="store_true")
     args = parser.parse_args()
     if args.epochs < 1 or not isfinite(args.learning_rate) or args.learning_rate <= 0:
         parser.error("epochs and learning rate must be positive and finite")
@@ -55,8 +69,10 @@ def main() -> None:
     training = load_corpus(args.training)
     evaluation = load_corpus(args.evaluation)
     validate_splits(training, evaluation)
+    train_for_model = _mask_examples(training) if args.copy_rewrite_slots else training
+    eval_for_model = _mask_examples(evaluation) if args.copy_rewrite_slots else evaluation
     tokenizer = BytePairTokenizer.train(
-        (text for example in training for text in (
+        (text for example in train_for_model for text in (
             example.conversation.text, *(turn.text for turn in example.conversation.history), example.response
         )),
         max_merges=args.merges,
@@ -65,8 +81,10 @@ def main() -> None:
         vocab_size=tokenizer.vocab_size, hidden_size=args.hidden_size,
         context_size=args.context_size, seed=args.seed,
     )
-    train_encoded = _encode(tokenizer, training)
-    eval_encoded = _encode(tokenizer, evaluation)
+    if args.copy_rewrite_slots:
+        model.prompt_format = "rewrite-slots-v1"
+    train_encoded = _encode(tokenizer, train_for_model)
+    eval_encoded = _encode(tokenizer, eval_for_model)
     initial_train_loss = _mean_loss(model, train_encoded)
     initial_eval_loss = _mean_loss(model, eval_encoded)
     rng = Random(args.seed)

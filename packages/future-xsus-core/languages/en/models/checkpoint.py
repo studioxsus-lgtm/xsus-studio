@@ -17,7 +17,7 @@ _FORMAT = "xsus-en-neural-lm-v1"
 def save_checkpoint(path: Path, tokenizer: BytePairTokenizer, model: NeuralLanguageModel) -> None:
     if tokenizer.vocab_size != model.vocab_size:
         raise ValueError("Tokenizer vocabulary and model dimensions differ")
-    raw = json.dumps({
+    data = {
         "format": _FORMAT,
         "merges": tokenizer.merges,
         "context_size": model.context_size,
@@ -25,7 +25,10 @@ def save_checkpoint(path: Path, tokenizer: BytePairTokenizer, model: NeuralLangu
         "hidden_bias": [round(value, 8) for value in model.hidden_bias],
         "output_weights": [[round(value, 8) for value in row] for row in model.output_weights],
         "output_bias": [round(value, 8) for value in model.output_bias],
-    }, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    }
+    if model.prompt_format != "plain":
+        data["prompt_format"] = model.prompt_format
+    raw = json.dumps(data, separators=(",", ":"), allow_nan=False).encode("utf-8")
     path.parent.mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile(dir=path.parent, delete=False) as temporary:
         temp_path = Path(temporary.name)
@@ -53,6 +56,9 @@ def load_checkpoint(path: Path) -> tuple[BytePairTokenizer, NeuralLanguageModel,
             raise ValueError("Unsupported checkpoint format")
         tokenizer = BytePairTokenizer(tuple(tuple(pair) for pair in data["merges"]))
         context_size = data["context_size"]
+        prompt_format = data.get("prompt_format", "plain")
+        if prompt_format not in ("plain", "rewrite-slots-v1"):
+            raise ValueError("Unsupported checkpoint prompt format")
         hidden = data["hidden_bias"]
         if type(context_size) is not int or context_size < 1 or not isinstance(hidden, list) or not hidden:
             raise ValueError("Invalid checkpoint model dimensions")
@@ -64,7 +70,7 @@ def load_checkpoint(path: Path) -> tuple[BytePairTokenizer, NeuralLanguageModel,
         embeddings, output_weights = [[_vector(row, hidden_size) for row in matrix] for matrix in matrices]
         model = NeuralLanguageModel(
             context_size, embeddings, _vector(hidden, hidden_size), output_weights,
-            _vector(data["output_bias"], vocabulary),
+            _vector(data["output_bias"], vocabulary), prompt_format,
         )
     except (EOFError, OSError, KeyError, TypeError, OverflowError, ValueError) as error:
         raise ValueError(f"Invalid XSUS checkpoint: {path}") from error

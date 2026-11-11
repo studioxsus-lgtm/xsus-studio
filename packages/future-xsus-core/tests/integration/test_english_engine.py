@@ -45,3 +45,29 @@ class EnglishEngineIntegrationTests(unittest.IsolatedAsyncioTestCase):
         checkpoint = root / manifest["checkpoint"]
         self.assertEqual(checkpoint, DEFAULT_CHECKPOINT)
         self.assertEqual(hashlib.sha256(checkpoint.read_bytes()).hexdigest(), manifest["sha256"])
+
+    async def test_rewrite_v2_preserves_unseen_details_in_a_follow_up(self):
+        root = Path(__file__).resolve().parents[2] / "languages" / "en"
+        with (root / "models" / "manifests" / "rewrite-v2.toml").open("rb") as source:
+            manifest = tomllib.load(source)
+        checkpoint = root / manifest["checkpoint"]
+        self.assertEqual(hashlib.sha256(checkpoint.read_bytes()).hexdigest(), manifest["sha256"])
+        engine = EnglishEngine(checkpoint, "en-rewrite-test")
+        registry = EngineRegistry()
+        registry.register_engine(engine.descriptor)
+        registry.register_instance(engine.instance, status=InstanceStatus.READY)
+        executor = RequestExecutor(RequestRouter(registry, RoutingMetrics()), LocalEngineTransport((engine,)))
+        deadline = time_ns() // 1_000_000 + 5_000
+        prompt = "Make this polite: Jamie, send the invoice by Sunday at 4:30 p.m."
+        first = await executor.execute(EngineRequest("req-1", "try-1", V1, ENGLISH, deadline, Conversation(prompt)))
+        self.assertIsInstance(first, EngineResponse)
+        self.assertEqual(first.outcome, TextResult("Jamie, could you please send the invoice by Sunday at 4:30 p.m.?", ENGLISH))
+        history = (
+            ConversationTurn(ConversationRole.USER, prompt),
+            ConversationTurn(ConversationRole.ASSISTANT, first.outcome.text),
+        )
+        second = await executor.execute(
+            EngineRequest("req-2", "try-2", V1, ENGLISH, deadline, Conversation("Make it shorter.", history))
+        )
+        self.assertIsInstance(second, EngineResponse)
+        self.assertEqual(second.outcome, TextResult("Jamie, please send the invoice by Sunday at 4:30 p.m.", ENGLISH))

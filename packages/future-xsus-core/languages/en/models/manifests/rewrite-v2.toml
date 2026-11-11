@@ -1,0 +1,23 @@
+id = "xsus-en-rewrite-v2"
+checkpoint = "models/checkpoints/xsus-en-rewrite-v2.json.gz"
+sha256 = "47e41d4dd234a5e95a3df589c3a66afaebd22f5dbb4bc070d493ea2e8f4cd12d"
+initialization = "seeded random weights"
+architecture = "causal neural language model with recency-weighted token embeddings"
+prompt_format = "rewrite-slots-v1"
+corpus = "xsus-en-original-v2"
+
+[training]
+seed = 23
+merges = 96
+hidden_size = 16
+context_size = 32
+epochs = 32
+learning_rate = 0.055
+
+[evaluation]
+benchmark = "evaluation/quality-v2.jsonl"
+cases = 12
+accepted = 6
+exact_matches = 6
+fact_cases = 7
+preserved_all_facts = 6

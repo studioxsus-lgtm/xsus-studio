@@ -5,6 +5,7 @@ from threading import Event
 from core.contracts.request import Conversation
 
 from ...models.neural_model import NeuralLanguageModel
+from ..normalization.rewrite_slots import prepare_rewrite
 from ..tokenizer import BYTE_OFFSET, EOS, BytePairTokenizer
 from .conversation_format import prompt_tokens
 
@@ -19,7 +20,8 @@ def generate(
 ) -> str:
     if type(max_new_tokens) is not int or max_new_tokens < 1:
         raise ValueError("max_new_tokens must be a positive integer")
-    prefix = prompt_tokens(tokenizer, conversation)[-model.context_size:]
+    rewrite = prepare_rewrite(conversation) if model.prompt_format == "rewrite-slots-v1" else None
+    prefix = prompt_tokens(tokenizer, rewrite.prompt if rewrite else conversation)[-model.context_size:]
     produced: list[int] = []
     for _ in range(max_new_tokens):
         if stop is not None and stop.is_set():
@@ -30,4 +32,5 @@ def generate(
             break
         prefix.append(candidate)
         produced.append(candidate)
-    return tokenizer.decode(produced, errors="replace").strip()
+    generated = tokenizer.decode(produced, errors="replace").strip()
+    return rewrite.restore(generated) if rewrite else generated
