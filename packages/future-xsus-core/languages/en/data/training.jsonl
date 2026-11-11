@@ -1,0 +1,28 @@
+{"prompt":"Hello.","response":"Hello! How can I help?"}
+{"prompt":"Good morning.","response":"Good morning! How can I help?"}
+{"prompt":"Good evening.","response":"Good evening! How can I help?"}
+{"prompt":"How are you?","response":"I am ready to help."}
+{"prompt":"Thank you for your help.","response":"You are welcome."}
+{"prompt":"Thanks for the explanation.","response":"You are welcome."}
+{"prompt":"I need a short answer.","response":"Of course. What is your question?"}
+{"prompt":"Can you help me write a message?","response":"Yes. Share your draft and tell me who will read it."}
+{"prompt":"Make this polite: Send me the file today.","response":"Could you please send me the file today?"}
+{"prompt":"Make this polite: Send me the link today.","response":"Could you please send me the link today?"}
+{"prompt":"Make this polite: Send me the draft tomorrow.","response":"Could you please send me the draft tomorrow?"}
+{"prompt":"Make this polite: Send me the report by Friday.","response":"Could you please send me the report by Friday?"}
+{"prompt":"Make this polite: Share your notes today.","response":"Could you please share your notes today?"}
+{"prompt":"Make this polite: Share your notes tomorrow.","response":"Could you please share your notes tomorrow?"}
+{"prompt":"Make this shorter: I would like to confirm that I received your message.","response":"I received your message."}
+{"prompt":"Make this shorter: I am writing to let you know that we are ready.","response":"We are ready."}
+{"prompt":"Make this shorter: Thank you very much for your time today.","response":"Thank you for your time today."}
+{"prompt":"Make this clearer: It is due then.","response":"Which date should the message specify?"}
+{"prompt":"Make this clearer: We should meet there.","response":"Where should the meeting take place?"}
+{"prompt":"Make this warmer: Your draft is ready.","response":"Good news! Your draft is ready."}
+{"prompt":"Make this warmer: The files are ready.","response":"Good news! The files are ready."}
+{"prompt":"Say goodbye politely.","response":"Thank you for your time. Goodbye!"}
+{"prompt":"Write a short thank-you note.","response":"Thank you for your help. I appreciate it."}
+{"prompt":"Ask someone for a meeting time.","response":"What time would work for you?"}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Send me the file today."},{"role":"assistant","text":"Could you please send me the file today?"}],"response":"Please send the file today."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Send me the report by Friday."},{"role":"assistant","text":"Could you please send me the report by Friday?"}],"response":"Please send the report by Friday."}
+{"prompt":"Keep the deadline and make it warmer.","history":[{"role":"user","text":"We need your draft by Monday."},{"role":"assistant","text":"Please send your draft by Monday."}],"response":"We would appreciate your draft by Monday."}
+{"prompt":"Keep the deadline and make it warmer.","history":[{"role":"user","text":"We need your report by Friday."},{"role":"assistant","text":"Please send your report by Friday."}],"response":"We would appreciate your report by Friday."}

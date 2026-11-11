@@ -1,0 +1,11 @@
+id = "xsus-en-original-v1"
+origin = "Original examples authored for Future XSUS Core"
+
+[training]
+path = "data/training.jsonl"
+examples = 28
+
+[held_out]
+path = "evaluation/conversation.jsonl"
+examples = 6
+used_for_training = false

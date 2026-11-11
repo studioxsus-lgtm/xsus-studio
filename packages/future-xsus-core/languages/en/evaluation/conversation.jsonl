@@ -1,0 +1,6 @@
+{"prompt":"Good afternoon.","response":"Good afternoon! How can I help?"}
+{"prompt":"Make this polite: Send me the file tomorrow.","response":"Could you please send me the file tomorrow?"}
+{"prompt":"Make this shorter: I am writing to confirm our meeting.","response":"I confirm our meeting."}
+{"prompt":"Make this clearer: Please finish it soon.","response":"What deadline should the message specify?"}
+{"prompt":"Write a short note thanking a colleague.","response":"Thank you for your help. I appreciate it."}
+{"prompt":"Make it shorter.","history":[{"role":"user","text":"Make this polite: Send me the draft tomorrow."},{"role":"assistant","text":"Could you please send me the draft tomorrow?"}],"response":"Please send the draft tomorrow."}

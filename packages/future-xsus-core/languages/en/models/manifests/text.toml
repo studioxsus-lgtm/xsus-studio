@@ -1,0 +1,21 @@
+id = "xsus-en-seed-v1"
+checkpoint = "models/checkpoints/xsus-en-seed-v1.json.gz"
+sha256 = "250bbcb4d8165aaa69d004955a87e55a340df85cc2411a617d282dec75911494"
+initialization = "seeded random weights"
+architecture = "causal neural language model with recency-weighted token embeddings"
+tokenizer = "XSUS UTF-8 byte-pair tokenizer"
+corpus = "xsus-en-original-v1"
+
+[training]
+seed = 23
+merges = 96
+hidden_size = 16
+context_size = 32
+epochs = 32
+learning_rate = 0.055
+
+[evaluation]
+held_out_examples = 6
+held_out_loss_before = 5.8903
+held_out_loss_after = 3.7899
+held_out_exact_matches = 0
