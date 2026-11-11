@@ -16,13 +16,11 @@ function render(user, error = false) {
     const login = container.querySelector("[data-auth-login]");
     const signup = container.querySelector("[data-auth-signup]");
     const account = container.querySelector("[data-auth-account]");
-    const email = container.querySelector("[data-auth-email]");
     const status = container.querySelector("[data-auth-status]");
     const authenticated = Boolean(user?.id);
     login?.classList.toggle("hidden", authenticated);
     signup?.classList.toggle("hidden", authenticated);
     account?.classList.toggle("hidden", !authenticated);
-    if (email) email.textContent = user?.email || "Account";
     if (status) status.textContent = error ? labels[lang()].unavailable : authenticated ? labels[lang()].signedIn : labels[lang()].signedOut;
   });
 }

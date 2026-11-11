@@ -1,4 +1,5 @@
 export default {
+  "My Account": "Llogaria ime",
   "Your app.": "Aplikacioni yt.",
   "Bring your idea to life.": "Jepi formë asaj që ke në mendje.",
   "Log in": "Hyr",

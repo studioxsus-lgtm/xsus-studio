@@ -39,17 +39,6 @@
   flex-wrap: nowrap;
 }
 
-.site-session [data-auth-account] {
-  max-width: min(172px, 100%);
-  min-width: 0;
-}
-
-.site-session [data-auth-email] {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .site-session .xsus-auth-status {
   position: absolute;
   width: 1px;
@@ -138,4 +127,14 @@
   }
 }
 
-@media(max-width:700px){.project-title{gap:5px}.project-draft{display:none}.work-header .brand{letter-spacing:0}.work-header .brand-mark{width:30px;height:30px}}
+@media (max-width: 700px) {
+  .site-session {
+    justify-content: flex-end;
+  }
+
+  .site-session > [data-open-builder] {
+    display: none;
+  }
+
+  .project-title{gap:5px}.project-draft{display:none}.work-header .brand{letter-spacing:0}.work-header .brand-mark{width:30px;height:30px}
+}

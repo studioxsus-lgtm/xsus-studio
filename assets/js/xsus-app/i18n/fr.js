@@ -1,4 +1,5 @@
 export default {
+  "My Account": "Mon compte",
   "Your app.": "Votre application.",
   "Bring your idea to life.": "Donnez forme à vos idées.",
   "Log in": "Connexion",

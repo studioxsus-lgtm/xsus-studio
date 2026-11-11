@@ -1,4 +1,5 @@
 export default {
+  "My Account": "My Account",
   "Your app.": "Your app.",
   "Bring your idea to life.": "Bring your idea to life.",
   "Log in": "Log in",
