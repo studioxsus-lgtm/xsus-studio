@@ -85,22 +85,73 @@ def build_rows(seed_path: Path) -> list[dict]:
     return rows
 
 
+def build_v3_rows(seed_path: Path) -> list[dict]:
+    rows = build_rows(seed_path)
+    for _, item, deadline in _DELIVERIES[:8]:
+        finish = "" if deadline.endswith(".") else "."
+        warm = f"We would appreciate receiving {item} by {deadline}{finish}"
+        short = f"Please send {item} by {deadline}{finish}"
+        rows.extend((
+            {"prompt": f"Make this warmer: We need {item} by {deadline}{finish}", "response": warm},
+            {"prompt": f"Make this polite: Send me {item} by {deadline}{finish}", "response": f"Could you please send me {item} by {deadline}?"},
+            {"prompt": f"Make this shorter: Send {item} by {deadline}{finish}", "response": short},
+            {
+                "prompt": "Can you say that in fewer words?",
+                "history": [
+                    {"role": "user", "text": f"Make this warmer: We need {item} by {deadline}{finish}"},
+                    {"role": "assistant", "text": warm},
+                ],
+                "response": short,
+            },
+        ))
+    for prompt, reply in (
+        ("Hi, are you available?", "Hello! How can I help?"),
+        ("Hey there!", "Hello! How can I help?"),
+        ("Hello there.", "Hello! How can I help?"),
+        ("Hey, can we start?", "Hello! How can I help?"),
+        ("Good morning, can we start?", "Good morning! How can I help?"),
+        ("Good afternoon!", "Good afternoon! How can I help?"),
+        ("Good evening, are you available?", "Good evening! How can I help?"),
+        ("Good afternoon, are you available?", "Good afternoon! How can I help?"),
+        ("Many thanks for the update.", "You are welcome."),
+        ("Thank you so much!", "You are welcome."),
+        ("I appreciate what you did.", "You are welcome."),
+        ("Thanks for checking the draft.", "You are welcome."),
+        ("Draft a brief thank-you message.", "Thank you for your help. I appreciate it."),
+        ("Can you write a short thank-you note?", "Thank you for your help. I appreciate it."),
+        ("Write a message thanking the project team.", "Thank you for your help. I appreciate it."),
+        ("Clarify this: Please bring the proposal soon.", "What deadline should the message specify?"),
+        ("Please make this clearer: We need the forms as soon as possible.", "What deadline should the message specify?"),
+        ("Clarify this message: The invoice is due then.", "What deadline should the message specify?"),
+        ("Clarify: Please call at the usual time.", "What time should the message specify?"),
+        ("Make this clearer: We should start the review at some point.", "What time should the message specify?"),
+        ("Please clarify: Drop the documents at the regular place.", "Where should the meeting take place?"),
+        ("Clarify: We should meet somewhere.", "Where should the meeting take place?"),
+        ("Clarify: Tell them to send it.", "Who should send it, and what should they send?"),
+    ):
+        rows.append({"prompt": prompt, "response": reply})
+    return rows
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--version", choices=("v2", "v3"), default="v2")
     args = parser.parse_args()
     seed = _ROOT / "data" / "training.jsonl"
-    evaluation = _ROOT / "evaluation" / "quality-v2.jsonl"
-    if args.output.resolve() in {seed.resolve(), evaluation.resolve()}:
+    evaluations = tuple(_ROOT / "evaluation" / f"quality-{version}.jsonl" for version in ("v2", "v3"))
+    if args.output.resolve() in {seed.resolve(), *(path.resolve() for path in evaluations)}:
         parser.error("choose a separate output file")
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    rows = build_rows(seed)
+    rows = build_v3_rows(seed) if args.version == "v3" else build_rows(seed)
     data = "".join(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n" for row in rows)
     # Check the new split before touching any existing output file.
     with TemporaryDirectory() as temporary:
         path = Path(temporary) / "training.jsonl"
         path.write_text(data, encoding="utf-8")
-        validate_splits(load_corpus(path), load_corpus(evaluation))
+        training = load_corpus(path)
+        for evaluation in evaluations[:1] if args.version == "v2" else evaluations:
+            validate_splits(training, load_corpus(evaluation))
     args.output.write_text(data, encoding="utf-8")
     print(f"Wrote {len(rows)} XSUS training examples")
 

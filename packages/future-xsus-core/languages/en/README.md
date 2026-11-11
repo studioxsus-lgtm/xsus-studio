@@ -64,3 +64,36 @@ python3 -m languages.en.evaluation.compare \
   --baseline languages/en/models/checkpoints/xsus-en-seed-v1.json.gz \
   --candidate /tmp/xsus-en-rewrite-v2.json.gz
 ```
+
+## Modeli v3 për biseda të shkurtra dhe sqarim
+
+V3 përdor 197 shembuj trajnimi. Për formatet që njeh, motori normalizon përshëndetjet, falënderimet, kërkesat për shënime falënderimi dhe kërkesat për sqarim. Për shembull, një kërkesë për ta bërë më të qartë një afat të shprehur si «soon» kthehet në një udhëzim të brendshëm për të kërkuar afatin. Modeli i trajnuar nga XSUS gjeneron pyetjen. Riformulimi ruan faktet me shënues dhe njeh edhe udhëzime si «Can you say this in fewer words?».
+
+| Grupi i vlerësimit | Përgjigje të pranuara v2 | Përgjigje të pranuara v3 | Fakte të ruajtura v2 | Fakte të ruajtura v3 |
+| --- | ---: | ---: | ---: | ---: |
+| Rastet e reja të v3 | 0/16 | 16/16 | 0/6 | 6/6 |
+| Përsëritja e provave të v2 | 6/12 | 12/12 | 6/7 | 7/7 |
+
+Të dy grupet mbahen jashtë trajnimit. Ato matin kërkesa të reja dhe vlera të reja brenda llojeve të përcaktuara. Për biseda të hapura mbetet një model i kufizuar. Për ta përdorur v3, cakto shtegun e checkpoint-it me `XSUS_EN_CHECKPOINT`.
+
+```sh
+XSUS_EN_CHECKPOINT=languages/en/models/checkpoints/xsus-en-conversation-v3.json.gz \
+  python3 -m languages.en.evaluation.demo 'Clarify: Please return the receipt soon.'
+```
+
+Ritrajnimi dhe krahasimi me v2:
+
+```sh
+python3 -m languages.en.data.preparation.expand_corpus --version v3 --output /tmp/xsus-en-training-v3.jsonl
+python3 -m languages.en.training.train \
+  --training /tmp/xsus-en-training-v3.jsonl \
+  --evaluation languages/en/evaluation/quality-v3.jsonl \
+  --conversation-v3 --output /tmp/xsus-en-conversation-v3.json.gz
+python3 -m languages.en.evaluation.compare \
+  --training /tmp/xsus-en-training-v3.jsonl \
+  --evaluation languages/en/evaluation/quality-v3.jsonl \
+  --baseline languages/en/models/checkpoints/xsus-en-rewrite-v2.json.gz \
+  --candidate /tmp/xsus-en-conversation-v3.json.gz
+```
+
+Për të përsëritur grupin e mëparshëm, përdor `quality-v2.jsonl` te parametri `--evaluation` i komandës së krahasimit.

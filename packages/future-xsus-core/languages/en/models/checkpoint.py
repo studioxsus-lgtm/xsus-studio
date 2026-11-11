@@ -9,6 +9,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from ..text.tokenizer import BytePairTokenizer
+from ..text.normalization.model_input import FORMATS
 from .neural_model import NeuralLanguageModel
 
 _FORMAT = "xsus-en-neural-lm-v1"
@@ -57,7 +58,7 @@ def load_checkpoint(path: Path) -> tuple[BytePairTokenizer, NeuralLanguageModel,
         tokenizer = BytePairTokenizer(tuple(tuple(pair) for pair in data["merges"]))
         context_size = data["context_size"]
         prompt_format = data.get("prompt_format", "plain")
-        if prompt_format not in ("plain", "rewrite-slots-v1"):
+        if prompt_format not in FORMATS:
             raise ValueError("Unsupported checkpoint prompt format")
         hidden = data["hidden_bias"]
         if type(context_size) is not int or context_size < 1 or not isinstance(hidden, list) or not hidden:

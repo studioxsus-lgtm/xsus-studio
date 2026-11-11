@@ -1,0 +1,30 @@
+id = "xsus-en-conversation-v3"
+checkpoint = "models/checkpoints/xsus-en-conversation-v3.json.gz"
+sha256 = "56063d2c63cd4cd21ac99e9ca3e32e08edcbe07765c7ea8f55c25f1ef8a82805"
+initialization = "seeded random weights"
+architecture = "causal neural language model with recency-weighted token embeddings"
+prompt_format = "conversation-intents-v1"
+corpus = "xsus-en-original-v3"
+
+[training]
+seed = 23
+merges = 96
+hidden_size = 16
+context_size = 32
+epochs = 32
+learning_rate = 0.055
+
+[evaluation]
+benchmark = "evaluation/quality-v3.jsonl"
+cases = 16
+accepted = 16
+exact_matches = 16
+fact_cases = 6
+preserved_all_facts = 6
+
+[regression]
+benchmark = "evaluation/quality-v2.jsonl"
+cases = 12
+accepted = 12
+fact_cases = 7
+preserved_all_facts = 7
