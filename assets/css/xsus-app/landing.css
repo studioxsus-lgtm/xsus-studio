@@ -3,11 +3,60 @@
 .site-header{height:82px;max-width:1300px;margin:auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:20px}
 .site-nav{display:flex;align-items:center;gap:22px;color:#a9bbd2;font-size:13px}
 .site-nav a:hover{color:var(--cyan)}
-.hero{max-width:1120px;margin:auto;padding:108px 24px 75px;text-align:center}
-.hero h1{font-size:clamp(40px,6.2vw,82px);line-height:1.08;letter-spacing:-.065em;margin:25px auto;max-width:940px}
+.hero {
+  max-width: 1120px;
+  margin: auto;
+  padding: clamp(52px, 8vw, 100px) 20px clamp(38px, 5vw, 62px);
+  text-align: center;
+}
+
+.hero h1 {
+  width: fit-content;
+  max-width: 100%;
+  font-size: clamp(2rem, 7.5vw, 5rem);
+  line-height: 1.08;
+  letter-spacing: -.055em;
+  margin: 0 auto 16px;
+  text-wrap: balance;
+}
+
+.hero h1.gradient {
+  background-image: linear-gradient(100deg, #56e7ff, #b5a0ff);
+}
 .gradient{background:linear-gradient(100deg,#56e7ff,#a69bff,#f69be3);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero p{color:#a5b6cf;font-size:17px;line-height:1.75;max-width:680px;margin:0 auto 30px}
-.hero-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.hero p {
+  color: #b2c3da;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.5;
+  max-width: 36ch;
+  margin: 0 auto 24px;
+  text-wrap: balance;
+}
+
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-actions > * {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.hero-actions .primary {
+  background: linear-gradient(115deg, #086b88, #5641c8);
+}
+
+@media (forced-colors: active) {
+  .hero h1.gradient {
+    background: none;
+    color: CanvasText;
+  }
+}
 .landing-preview{max-width:1090px;margin:0 auto 95px;padding:15px;border-radius:24px;background:linear-gradient(145deg,#183a57,#281a4a 55%,#102039);border:1px solid #3c5a7a;box-shadow:0 35px 100px #0009}
 .preview-inner{background:#0b1220;border:1px solid #33455d;border-radius:15px;overflow:hidden;min-height:350px}
 .preview-top{height:45px;border-bottom:1px solid #26384d;display:flex;align-items:center;gap:7px;padding:0 15px}

@@ -35,19 +35,18 @@ export function showLanding() {
 export function initNavigation() {
   const siteMenu = $('#siteMenuBtn');
   const mobileNav = $('#siteMobileNav');
-  siteMenu?.addEventListener('click', () => {
-    const isOpen = mobileNav.classList.toggle('hidden') === false;
+  const setSiteMenuOpen = isOpen => {
+    if (!siteMenu || !mobileNav) return;
+    mobileNav.classList.toggle('hidden', !isOpen);
     siteMenu.setAttribute('aria-expanded', String(isOpen));
     siteMenu.setAttribute('aria-label', isOpen ? t('Close module navigation') : t('Open module navigation'));
-  });
-  mobileNav?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
-    mobileNav.classList.add('hidden');
-    siteMenu?.setAttribute('aria-expanded', 'false');
-  }));
+  };
+  siteMenu?.addEventListener('click', () => setSiteMenuOpen(mobileNav?.classList.contains('hidden')));
+  mobileNav?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setSiteMenuOpen(false)));
+  document.addEventListener('xsus:close-mobile-navigation', () => setSiteMenuOpen(false));
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && mobileNav && !mobileNav.classList.contains('hidden')) {
-      mobileNav.classList.add('hidden');
-      siteMenu?.setAttribute('aria-expanded', 'false');
+      setSiteMenuOpen(false);
       siteMenu?.focus();
     }
   });
