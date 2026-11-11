@@ -3,6 +3,6 @@ name = "English"
 stage = "baseline"
 
 [capabilities]
-text = "planned"
+text = "in-development"
 recognition = "planned"
 synthesis = "planned"
