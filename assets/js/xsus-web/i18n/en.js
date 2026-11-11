@@ -6,6 +6,8 @@ export default {
   "design": "Design",
   "code": "Code",
   "preview": "Preview",
+  "moduleNavigation": "Main navigation",
+  "moduleMenu": "Module menu",
   "language": "Language",
   "panels": "Panels",
   "pages": "Pages",

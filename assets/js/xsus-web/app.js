@@ -1,5 +1,5 @@
 import { $, $$ } from './dom.js';
-import { bindNavigation, setPanel } from './navigation.js';
+import { bindModuleMenu, bindNavigation, setPanel } from './navigation.js';
 import { bindPages, renderPages } from './pages.js';
 import { bindPreview, renderCanvas } from './preview.js';
 import { bindProperties, renderProperties } from './properties.js';
@@ -67,6 +67,7 @@ $('#language').addEventListener('change', event => {
   updateLanguage();
   if (state.project) saveProject();
 });
+bindModuleMenu();
 bindNavigation(renderEditor, saveProject);
 bindPages(renderEditor, renderLists, renderCanvas, saveProject);
 bindSections(renderEditor, setPanel, saveProject);

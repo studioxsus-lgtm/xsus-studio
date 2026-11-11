@@ -1,7 +1,7 @@
 import { translate } from './i18n/index.js';
 
 export const state = {
-  language: 'sq',
+  language: 'en',
   view: 'design',
   device: 'desktop',
   project: undefined,

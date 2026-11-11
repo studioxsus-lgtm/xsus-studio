@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sq">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,91 +17,116 @@
   <link rel="stylesheet" href="assets/css/xsus-web/page.css">
 </head>
 <body>
-  <header class="top">
+  <header class="top header">
     <a class="brand" href="#home" id="home-link" aria-label="XSUS Web">
-      <img src="assets/images/xsus-web/brand.png" width="38" height="38" alt="">
+      <img src="assets/images/xsus-web/brand.png" width="44" height="44" alt="">
       <span>XSUS WEB<small>THE X IDENTITY</small></span>
     </a>
-    <nav class="views" aria-label="Builder" data-label="view" hidden>
-      <button type="button" data-view="design" data-i18n="design" aria-pressed="true">Dizajn</button>
-      <button type="button" data-view="code" data-i18n="code" aria-pressed="false">Kod</button>
-      <button type="button" data-view="preview" data-i18n="preview" aria-pressed="false">Parapamje</button>
+    <nav class="module-nav" id="module-nav" aria-label="Main navigation" data-label="moduleNavigation">
+      <a href="index.html" data-i18n="home">Home</a>
+      <a href="ai.html">XSUS AI</a>
+      <a href="app.html">XSUS App</a>
+      <a href="game.html">XSUS Game</a>
+      <a href="logo.html">XSUS Logo</a>
+      <a href="domain.html">XSUS Domain</a>
     </nav>
-    <select id="language" class="language" aria-label="Gjuha" data-label="language">
-      <option value="sq">SQ</option><option value="en">EN</option><option value="fr">FR</option>
-    </select>
+    <div class="header-actions actions">
+      <select id="language" class="language" aria-label="Language" data-label="language">
+        <option value="en">EN</option>
+        <option value="sq">SQ</option>
+        <option value="fr">FR</option>
+      </select>
+      <div class="xsus-global-auth">
+        <a href="auth.html" id="xsusLogin">Login</a>
+        <a href="auth.html" id="xsusSignup" class="signup">Sign Up</a>
+        <a href="auth.html" id="xsusAccount" class="xsus-global-auth-account" hidden>
+          <span class="xsus-global-auth-dot" aria-hidden="true"></span>
+          <span id="xsusAccountText">My Account</span>
+        </a>
+      </div>
+      <button class="module-menu-toggle" type="button" aria-controls="module-nav"
+        aria-expanded="false" aria-label="Module menu" data-label="moduleMenu">
+        <span aria-hidden="true"></span>
+      </button>
+    </div>
+    <nav class="views" aria-label="Editor view" data-label="view" hidden>
+      <button type="button" data-view="design" data-i18n="design" aria-pressed="true">Design</button>
+      <button type="button" data-view="code" data-i18n="code" aria-pressed="false">Code</button>
+      <button type="button" data-view="preview" data-i18n="preview" aria-pressed="false">Preview</button>
+    </nav>
   </header>
   <main>
     <section class="landing" id="landing">
       <div class="intro">
-        <h1 data-i18n="headline">Faqja jote.</h1>
-        <p data-i18n="intro">Projekto, ndërto dhe shiko faqen tënde në një vend.</p>
+        <h1 data-i18n="headline">Your website.</h1>
+        <p data-i18n="intro">Design, build and preview your website in one place.</p>
         <div class="landing-actions">
-          <button class="primary" type="button" id="start" data-i18n="start">Hap Web Builder →</button>
+          <button class="primary" type="button" id="start" data-i18n="start">Open Web Builder →</button>
           <button type="button" id="new-project" data-i18n="newProject" hidden>Projekt i ri</button>
         </div>
         <p id="restore-status" role="status" hidden></p>
       </div>
       <div class="showcase">
-        <div class="chrome"><span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span><span>XSUS WEB / index.html</span><span class="chrome-right" data-i18n="preview">Parapamje</span></div>
+        <div class="chrome"><span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span><span>XSUS WEB / index.html</span><span class="chrome-right" data-i18n="preview">Preview</span></div>
         <div id="sample"></div>
       </div>
     </section>
     <section class="builder" id="builder" hidden>
-      <div class="mobile-panels" role="group" aria-label="Panelet" data-label="panels">
+      <div class="mobile-panels" role="group" aria-label="Panels" data-label="panels">
         <button type="button" data-panel="pages" data-i18n="pages" aria-pressed="false">Faqet</button>
         <button type="button" data-panel="canvas" data-i18n="canvas" aria-pressed="true">Hapësira</button>
         <button type="button" data-panel="properties" data-i18n="properties" aria-pressed="false">Vetitë</button>
       </div>
       <div class="editor-grid" data-panel="canvas">
         <aside class="panel pages-panel" aria-labelledby="pages-title">
-          <div class="panel-heading"><h2 id="pages-title" data-i18n="pages">Faqet</h2><button class="small-button" type="button" id="add-page" aria-label="Shto faqe" data-label="addPage">+</button></div>
+          <div class="panel-heading"><h2 id="pages-title" data-i18n="pages">Pages</h2><button class="small-button" type="button" id="add-page" aria-label="Add page" data-label="addPage">+</button></div>
           <div id="page-list" class="item-list"></div>
-          <label class="field page-name"><span data-i18n="pageName">Emri i faqes</span><input id="page-name" maxlength="60"></label>
-          <div class="panel-heading section-heading"><h2 data-i18n="sections">Seksionet</h2></div>
+          <label class="field page-name"><span data-i18n="pageName">Page name</span><input id="page-name" maxlength="60"></label>
+          <div class="panel-heading section-heading"><h2 data-i18n="sections">Sections</h2></div>
           <div id="section-list" class="item-list"></div>
           <div class="row-actions">
-            <button type="button" id="move-up" data-i18n="up">↑ Lart</button>
-            <button type="button" id="move-down" data-i18n="down">↓ Poshtë</button>
+            <button type="button" id="move-up" data-i18n="up">↑ Up</button>
+            <button type="button" id="move-down" data-i18n="down">↓ Down</button>
           </div>
-          <label class="field"><span data-i18n="addSection">Shto seksion</span><select id="add-section"></select></label>
+          <label class="field"><span data-i18n="addSection">Add section</span><select id="add-section"></select></label>
         </aside>
         <div class="canvas-panel">
           <div class="canvas-bar"><span id="page-path" class="page-path">index.html</span>
-            <div class="devices" role="group" aria-label="Madhësia e ekranit" data-label="device">
+            <div class="devices" role="group" aria-label="Viewport size" data-label="device">
               <button type="button" data-device="desktop" data-i18n="desktop" aria-pressed="true">Kompjuter</button>
               <button type="button" data-device="tablet" data-i18n="tablet" aria-pressed="false">Tablet</button>
               <button type="button" data-device="phone" data-i18n="phone" aria-pressed="false">Telefon</button>
             </div>
           </div>
-          <div class="stage" id="stage"><div id="canvas" class="artboard"></div><iframe id="preview" title="Parapamja e faqes" sandbox referrerpolicy="no-referrer" hidden></iframe><pre id="code" tabindex="0" aria-label="Kodi HTML" data-label="htmlCode" hidden></pre></div>
+          <div class="stage" id="stage"><div id="canvas" class="artboard"></div><iframe id="preview" title="Parapamja e faqes" sandbox referrerpolicy="no-referrer" hidden></iframe><pre id="code" tabindex="0" aria-label="HTML code" data-label="htmlCode" hidden></pre></div>
           <div class="canvas-footer">
             <span id="canvas-status" aria-live="polite"></span>
             <span id="save-status" role="status"></span>
           </div>
         </div>
         <aside class="panel properties-panel" aria-labelledby="properties-title">
-          <div class="panel-heading"><h2 id="properties-title" data-i18n="properties">Vetitë</h2><span class="property-type" id="selected-kind"></span></div>
-          <label class="field"><span data-i18n="heading">Titulli</span><input id="section-title" maxlength="100"></label>
-          <label class="field"><span data-i18n="text">Teksti</span><textarea id="section-body" rows="4" maxlength="350"></textarea></label>
-          <label class="field"><span data-i18n="buttonText">Teksti i butonit</span><input id="section-action" maxlength="35"></label>
-          <label class="field"><span data-i18n="buttonTarget">Seksioni i lidhur</span><select id="section-target"></select></label>
-          <label class="field"><span data-i18n="accent">Ngjyra kryesore</span><input id="page-accent" type="color"></label>
-          <label class="field"><span data-i18n="typography">Tipografia</span><select id="page-font"><option value="sans" data-i18n="sans">Moderne</option><option value="serif" data-i18n="serif">Klasike</option><option value="mono" data-i18n="mono">Monospace</option></select></label>
-          <label class="field"><span data-i18n="spacing">Hapësira e seksionit</span><input id="section-spacing" type="range" min="32" max="96" step="8"></label>
-          <button class="outline danger" type="button" id="remove-section" data-i18n="remove">Hiq seksionin</button>
+          <div class="panel-heading"><h2 id="properties-title" data-i18n="properties">Properties</h2><span class="property-type" id="selected-kind"></span></div>
+          <label class="field"><span data-i18n="heading">Heading</span><input id="section-title" maxlength="100"></label>
+          <label class="field"><span data-i18n="text">Text</span><textarea id="section-body" rows="4" maxlength="350"></textarea></label>
+          <label class="field"><span data-i18n="buttonText">Button text</span><input id="section-action" maxlength="35"></label>
+          <label class="field"><span data-i18n="buttonTarget">Link to section</span><select id="section-target"></select></label>
+          <label class="field"><span data-i18n="accent">Accent color</span><input id="page-accent" type="color"></label>
+          <label class="field"><span data-i18n="typography">Typography</span><select id="page-font"><option value="sans" data-i18n="sans">Modern</option><option value="serif" data-i18n="serif">Classic</option><option value="mono" data-i18n="mono">Monospace</option></select></label>
+          <label class="field"><span data-i18n="spacing">Section spacing</span><input id="section-spacing" type="range" min="32" max="96" step="8"></label>
+          <button class="outline danger" type="button" id="remove-section" data-i18n="remove">Remove section</button>
         </aside>
       </div>
     </section>
   </main>
   <dialog id="templates" aria-labelledby="template-title">
-    <div class="dialog-head"><h2 id="template-title" data-i18n="choose">Zgjidh një model</h2><form method="dialog"><button class="small-button" type="submit" aria-label="Mbyll" data-label="close">×</button></form></div>
+    <div class="dialog-head"><h2 id="template-title" data-i18n="choose">Choose a template</h2><form method="dialog"><button class="small-button" type="submit" aria-label="Close" data-label="close">×</button></form></div>
     <div class="template-grid">
-      <button type="button" data-template="studio"><span class="template-art studio-art"></span><strong data-i18n="studio">Studio</strong><small data-i18n="studioDesc">Për agjenci dhe marka krijuese</small></button>
-      <button type="button" data-template="portfolio"><span class="template-art portfolio-art"></span><strong data-i18n="portfolio">Portofol</strong><small data-i18n="portfolioDesc">Për të prezantuar punën tënde</small></button>
-      <button type="button" data-template="blank"><span class="template-art blank-art"></span><strong data-i18n="blank">Faqe bosh</strong><small data-i18n="blankDesc">Nis me një seksion dhe ndërtoje vetë</small></button>
+      <button type="button" data-template="studio"><span class="template-art studio-art"></span><strong data-i18n="studio">Studio</strong><small data-i18n="studioDesc">For agencies and creative brands</small></button>
+      <button type="button" data-template="portfolio"><span class="template-art portfolio-art"></span><strong data-i18n="portfolio">Portfolio</strong><small data-i18n="portfolioDesc">Showcase your work</small></button>
+      <button type="button" data-template="blank"><span class="template-art blank-art"></span><strong data-i18n="blank">Blank page</strong><small data-i18n="blankDesc">Start with one section and make it yours</small></button>
     </div>
   </dialog>
   <script type="module" src="assets/js/xsus-web/app.js"></script>
+  <script type="module" src="assets/js/xsus-auth-ui.js"></script>
 </body>
 </html>

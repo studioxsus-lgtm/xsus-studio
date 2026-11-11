@@ -6,6 +6,8 @@ export default {
   "design": "Dizajn",
   "code": "Kod",
   "preview": "Parapamje",
+  "moduleNavigation": "Navigimi kryesor",
+  "moduleMenu": "Menuja e moduleve",
   "language": "Gjuha",
   "panels": "Panelet",
   "pages": "Faqet",
