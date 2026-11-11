@@ -1,8 +1,0 @@
-tag = "en"
-name = "English"
-stage = "baseline"
-
-[capabilities]
-text = "in-development"
-recognition = "planned"
-synthesis = "planned"

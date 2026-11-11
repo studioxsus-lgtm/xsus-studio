@@ -1,8 +1,0 @@
-tag = "hi"
-name = "हिन्दी"
-stage = "planned"
-
-[capabilities]
-text = "planned"
-recognition = "planned"
-synthesis = "planned"
