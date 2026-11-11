@@ -1,0 +1,8 @@
+tag = "en"
+name = "English"
+stage = "baseline"
+
+[capabilities]
+text = "planned"
+recognition = "planned"
+synthesis = "planned"
