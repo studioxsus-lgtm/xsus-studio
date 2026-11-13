@@ -4,9 +4,8 @@
  * Atomic rename protects against partially replaced files; it does not
  * guarantee power-loss durability or atomicity with the transaction journal.
  */
-import { readFile, writeFile, mkdir, rename, unlink } from "node:fs/promises";
-import { dirname, basename, join } from "node:path";
-import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { writeAtomicJson } from "./atomic-json-writer.js";
 
 export const GRAPH_SNAPSHOT_VERSION = "0.1.0";
 
@@ -48,17 +47,7 @@ export function createGraphSnapshotStore({ filePath } = {}) {
     assertOpen();
     const copy = validate(snapshot);
     const operation = queue.catch(() => {}).then(async () => {
-      await mkdir(dirname(filePath), { recursive: true });
-      const temp = join(dirname(filePath), `.${basename(filePath)}.${randomUUID()}.tmp`);
-      try {
-        await writeFile(temp, JSON.stringify({
-          version: GRAPH_SNAPSHOT_VERSION, snapshot: copy,
-        }), { encoding: "utf8", flag: "wx" });
-        await rename(temp, filePath);
-      } catch (error) {
-        await unlink(temp).catch(() => {});
-        throw error;
-      }
+      await writeAtomicJson(filePath, { version: GRAPH_SNAPSHOT_VERSION, snapshot: copy });
     });
     queue = operation;
     return operation;
