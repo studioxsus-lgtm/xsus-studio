@@ -16,7 +16,18 @@ function contender(path, id) {
     });
     const id = Number(process.argv[2]);
     try {
-      const { entries, revision } = await store.loadWithRevision();
+      let snapshot;
+      for (let attempt = 0; attempt < 100; attempt++) {
+        try {
+          snapshot = await store.loadWithRevision();
+          break;
+        } catch (error) {
+          if (error?.code !== "XSUS_FILE_LOCK_BUSY") throw error;
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+      }
+      if (!snapshot) throw new Error("Timed out waiting to read initial revision");
+      const { entries, revision } = snapshot;
       process.stdout.write("READY\\n");
       await new Promise((resolve, reject) => {
         process.stdin.once("data", resolve);
@@ -55,12 +66,9 @@ function observe(child) {
       if (!stdout.includes("READY")) reject(new Error(`child exited before READY: ${code} ${stderr}`));
     });
   });
-  const exit = new Promise((resolve, reject) => {
-    child.on("error", reject);
-    child.on("exit", (code, signal) => {
-      if (code === 0) resolve();
-      else reject(new Error(`child exit ${code}/${signal}: ${stderr}`));
-    });
+  const exit = new Promise((resolve) => {
+    child.on("error", (error) => resolve({ error: String(error) }));
+    child.on("exit", (code, signal) => resolve({ code, signal }));
   });
   return { ready, exit, output: () => stdout };
 }
@@ -81,9 +89,9 @@ describe("Transaction Journal — real cross-process revision conflicts", () => 
         new Promise((_, reject) => setTimeout(() => reject(new Error("read barrier timeout")), 10000)),
       ]);
       a.stdin.end("GO\n");
-      await oa.exit;
+      expect(await oa.exit).toEqual({ code: 0, signal: null });
       b.stdin.end("GO\n");
-      await ob.exit;
+      expect(await ob.exit).toEqual({ code: 0, signal: null });
       const results = [oa.output(), ob.output()];
       expect(results.filter((s) => s.includes("SAVED"))).toHaveLength(1);
       expect(results.filter((s) => s.includes("CONFLICT"))).toHaveLength(1);
