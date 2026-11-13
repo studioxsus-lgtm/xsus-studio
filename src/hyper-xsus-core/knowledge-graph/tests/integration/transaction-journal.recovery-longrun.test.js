@@ -16,9 +16,9 @@ const childCode = [
   'const entries = Array.from({length:Number(count)}, (_, i) => ({id:i+1,state:"completed",attempted:1,added:1}));',
   'await writeAtomicJson(path, {version:' + JSON.stringify(TRANSACTION_JOURNAL_VERSION) + ',entries}, {',
   '  io: {rename: async (from, to) => {',
-  '    if (phase === "before") { process.stdout.write("READY_BEFORE\\n"); await new Promise(() => {}); }',
+  '    if (phase === "before") { process.stdout.write("READY_BEFORE\\n"); await new Promise(() => { setInterval(() => {}, 1000); }); }',
   '    await rename(from, to);',
-  '    if (phase === "after") { process.stdout.write("READY_AFTER\\n"); await new Promise(() => {}); }',
+  '    if (phase === "after") { process.stdout.write("READY_AFTER\\n"); await new Promise(() => { setInterval(() => {}, 1000); }); }',
   '  }},',
   '});',
 ].join("\n");
