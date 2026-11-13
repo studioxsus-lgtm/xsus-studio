@@ -3,9 +3,8 @@
  * Durable journal snapshots for a single writer on a local filesystem.
  * This is not a distributed transaction manager or a durable graph store.
  */
-import { readFile, writeFile, rename, mkdir, unlink } from "node:fs/promises";
-import { dirname, basename, join } from "node:path";
-import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { writeAtomicJson } from "./atomic-json-writer.js";
 
 export const TRANSACTION_JOURNAL_VERSION = "0.1.0";
 const STATES = new Set(["running", "completed", "failed", "interrupted"]);
@@ -61,17 +60,7 @@ export function createTransactionJournalStore({ filePath }) {
     ensureOpen();
     const snapshot = validate(entries);
     const operation = queue.catch(() => {}).then(async () => {
-      await mkdir(dirname(filePath), { recursive: true });
-      const temp = join(dirname(filePath), `.${basename(filePath)}.${randomUUID()}.tmp`);
-      try {
-        await writeFile(temp, JSON.stringify({
-          version: TRANSACTION_JOURNAL_VERSION, entries: snapshot,
-        }), { encoding: "utf8", flag: "wx" });
-        await rename(temp, filePath);
-      } catch (error) {
-        await unlink(temp).catch(() => {});
-        throw error;
-      }
+      await writeAtomicJson(filePath, { version: TRANSACTION_JOURNAL_VERSION, entries: snapshot });
     });
     queue = operation;
     return operation;
