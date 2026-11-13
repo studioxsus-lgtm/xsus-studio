@@ -62,7 +62,7 @@ function launchReader(journal) {
   };
 }
 
-async function scenario(mutate) {
+async function scenario(mutate, readerCount = 2) {
   const dir = await mkdtemp(join(tmpdir(), "xsus-concurrent-identity-"));
   const journal = join(dir, "journal.json");
   const temp = join(dir, name);
@@ -70,14 +70,13 @@ async function scenario(mutate) {
   try {
     await writeFile(journal, "committed");
     await writeFile(temp, "pending");
-    workers.push(launchReader(journal), launchReader(journal));
+    for (let i = 0; i < readerCount; i++) workers.push(launchReader(journal));
     await Promise.all(workers.map((worker) => worker.ready));
     await mutate({ dir, temp });
     const results = await Promise.all(workers.map((worker) => worker.verify()));
-    expect(results).toEqual([
-      { matches: false, safeToDeleteAutomatically: false },
-      { matches: false, safeToDeleteAutomatically: false },
-    ]);
+    expect(results).toEqual(Array.from({ length: readerCount }, () => ({
+      matches: false, safeToDeleteAutomatically: false,
+    })));
     expect(await readFile(journal, "utf8")).toBe("committed");
   } finally {
     for (const worker of workers) {
@@ -87,7 +86,7 @@ async function scenario(mutate) {
   }
 }
 
-describe("Hyper XSUS Core — concurrent identity verification v2.6.0", () => {
+describe("Hyper XSUS Core — concurrent identity verification v2.6.0 / v2.7.0", () => {
   it("two independent readers detect a replacement after their snapshot barriers", async () => {
     await scenario(async ({ dir, temp }) => {
       const replacement = join(dir, "replacement");
@@ -101,4 +100,22 @@ describe("Hyper XSUS Core — concurrent identity verification v2.6.0", () => {
       await appendFile(temp, "-changed");
     });
   }, 45000);
+  it("six independent readers detect replacement in five repeated rounds", async () => {
+    for (let round = 0; round < 5; round++) {
+      await scenario(async ({ dir, temp }) => {
+        const replacement = join(dir, "replacement-" + round);
+        await writeFile(replacement, "replacement-" + round);
+        await rename(replacement, temp);
+      }, 6);
+    }
+  }, 120000);
+
+  it("six independent readers detect appended data in five repeated rounds", async () => {
+    for (let round = 0; round < 5; round++) {
+      await scenario(async ({ temp }) => {
+        await appendFile(temp, "-mutation-" + round);
+      }, 6);
+    }
+  }, 120000);
+
 });
