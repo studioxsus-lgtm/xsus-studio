@@ -43,19 +43,20 @@ export async function withExclusiveFileLock(filePath, operation) {
     // manually replaced lock; such intervention requires investigation.
     try {
       const current = await lstat(lockPath);
-      // Never unlink a replacement inode, even if its token was copied.
-      if (!acquiredIdentity || current.isSymbolicLink() ||
-          current.dev !== acquiredIdentity.dev ||
-          current.ino !== acquiredIdentity.ino) return;
-      const owner = JSON.parse(await readFile(lockPath, "utf8"));
-      if (owner.token !== token) return;
-      const latest = await lstat(lockPath);
-      if (latest.dev !== acquiredIdentity.dev ||
-          latest.ino !== acquiredIdentity.ino ||
-          latest.isSymbolicLink()) return;
-      // Remaining TOCTOU window: a separate actor can replace the pathname
-      // after this check. Do not treat this as an atomic conditional unlink.
-      await unlink(lockPath);
+      // This is a best-effort pathname identity check, not an atomic unlink.
+      if (acquiredIdentity && !current.isSymbolicLink() &&
+          current.dev === acquiredIdentity.dev &&
+          current.ino === acquiredIdentity.ino) {
+        const owner = JSON.parse(await readFile(lockPath, "utf8"));
+        if (owner.token === token) {
+          const latest = await lstat(lockPath);
+          if (!latest.isSymbolicLink() &&
+              latest.dev === acquiredIdentity.dev &&
+              latest.ino === acquiredIdentity.ino) {
+            await unlink(lockPath);
+          }
+        }
+      }
     } catch (error) {
       if (error?.code !== "ENOENT") throw error;
     }
