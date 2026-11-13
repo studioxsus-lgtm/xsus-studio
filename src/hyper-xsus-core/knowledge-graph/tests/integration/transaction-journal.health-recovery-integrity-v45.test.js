@@ -1,5 +1,5 @@
 import { describe,it,expect } from "vitest";
-import { mkdtemp,rm,readFile,writeFile,readdir,rename } from "node:fs/promises";
+import { mkdtemp,rm,readFile,writeFile,readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { writeAtomicJson } from "../../integration/atomic-json-writer.js";
