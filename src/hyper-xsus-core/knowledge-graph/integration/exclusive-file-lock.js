@@ -4,7 +4,7 @@
  * A lock left by a killed process must be investigated/released externally:
  * automatic age-based stealing is deliberately NOT supported.
  */
-import { open, unlink, mkdir } from "node:fs/promises";
+import { open, unlink, mkdir, lstat, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -31,18 +31,31 @@ export async function withExclusiveFileLock(filePath, operation) {
     if (error?.code === "EEXIST") throw new FileLockBusyError();
     throw error;
   }
+  let acquiredIdentity;
   try {
     await handle.writeFile(JSON.stringify({ pid: process.pid, token }), "utf8");
     await handle.sync();
+    acquiredIdentity = await handle.stat();
     return await operation();
   } finally {
     await handle.close();
     // Only the lock holder should remove this file. Do not delete a
     // manually replaced lock; such intervention requires investigation.
     try {
-      const { readFile } = await import("node:fs/promises");
+      const current = await lstat(lockPath);
+      // Never unlink a replacement inode, even if its token was copied.
+      if (!acquiredIdentity || current.isSymbolicLink() ||
+          current.dev !== acquiredIdentity.dev ||
+          current.ino !== acquiredIdentity.ino) return;
       const owner = JSON.parse(await readFile(lockPath, "utf8"));
-      if (owner.token === token) await unlink(lockPath);
+      if (owner.token !== token) return;
+      const latest = await lstat(lockPath);
+      if (latest.dev !== acquiredIdentity.dev ||
+          latest.ino !== acquiredIdentity.ino ||
+          latest.isSymbolicLink()) return;
+      // Remaining TOCTOU window: a separate actor can replace the pathname
+      // after this check. Do not treat this as an atomic conditional unlink.
+      await unlink(lockPath);
     } catch (error) {
       if (error?.code !== "ENOENT") throw error;
     }
