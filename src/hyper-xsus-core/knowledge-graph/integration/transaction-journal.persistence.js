@@ -4,10 +4,20 @@
  * This is not a distributed transaction manager or a durable graph store.
  */
 import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { writeAtomicJson } from "./atomic-json-writer.js";
 import { withExclusiveFileLock } from "./exclusive-file-lock.js";
 
 export const TRANSACTION_JOURNAL_VERSION = "0.1.0";
+
+export class JournalRevisionConflictError extends Error {
+  constructor() {
+    super("Transaction journal revision conflict.");
+    this.name = "JournalRevisionConflictError";
+    this.code = "XSUS_JOURNAL_REVISION_CONFLICT";
+  }
+}
+
 const STATES = new Set(["running", "completed", "failed", "interrupted"]);
 
 function validate(entries) {
@@ -58,6 +68,56 @@ export function createTransactionJournalStore({ filePath, exclusiveLock = false 
       throw new TypeError("Unsupported transaction journal version.");
     }
     return validate(data.entries);
+  }
+
+  // The revision identifies exact committed file bytes. null means absent.
+  async function readVersioned() {
+    let raw;
+    try {
+      raw = await readFile(filePath, "utf8");
+    } catch (error) {
+      if (error?.code === "ENOENT") return { entries: [], revision: null };
+      throw error;
+    }
+    const data = JSON.parse(raw);
+    if (!data || data.version !== TRANSACTION_JOURNAL_VERSION) {
+      throw new TypeError("Unsupported transaction journal version.");
+    }
+    return {
+      entries: validate(data.entries),
+      revision: createHash("sha256").update(raw, "utf8").digest("hex"),
+    };
+  }
+
+  async function loadWithRevision() {
+    ensureOpen();
+    await queue;
+    return withLock(readVersioned);
+  }
+
+  function saveIfRevision(entries, expectedRevision) {
+    ensureOpen();
+    const snapshot = validate(entries);
+    if (expectedRevision !== null &&
+        (typeof expectedRevision !== "string" ||
+         !/^[a-f0-9]{64}$/.test(expectedRevision))) {
+      throw new TypeError("expectedRevision must be a SHA-256 hex string or null.");
+    }
+    if (!exclusiveLock) {
+      throw new Error("saveIfRevision requires exclusiveLock: true.");
+    }
+    const operation = queue.catch(() => {}).then(() => withLock(async () => {
+      const current = await readVersioned();
+      if (current.revision !== expectedRevision) {
+        throw new JournalRevisionConflictError();
+      }
+      await writeAtomicJson(filePath, {
+        version: TRANSACTION_JOURNAL_VERSION, entries: snapshot,
+      });
+      return (await readVersioned()).revision;
+    }));
+    queue = operation.then(() => undefined, () => undefined);
+    return operation;
   }
 
   async function load() {
@@ -113,5 +173,5 @@ export function createTransactionJournalStore({ filePath, exclusiveLock = false 
   }
 
   return Object.freeze({ version: TRANSACTION_JOURNAL_VERSION,
-    load, save, recoverInterrupted, close });
+    load, save, loadWithRevision, saveIfRevision, recoverInterrupted, close });
 }
