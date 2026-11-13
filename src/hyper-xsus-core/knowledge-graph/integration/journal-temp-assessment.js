@@ -16,7 +16,7 @@ export async function assessJournalTemporaryFiles(filePath, { now = Date.now(), 
     throw new TypeError("Invalid assessment time or minimum age.");
   }
   const directory = dirname(filePath);
-  const matcher = new RegExp("^\\." + basename(filePath).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&") + "\\." + UUID + "\\.tmp$", "i");
+  const prefix = "." + basename(filePath) + ".";
   let names;
   try { names = await readdir(directory); }
   catch (error) {
@@ -25,7 +25,7 @@ export async function assessJournalTemporaryFiles(filePath, { now = Date.now(), 
   }
   const results = [];
   for (const name of names.sort()) {
-    if (!matcher.test(name)) continue;
+    if (!name.startsWith(prefix) || !name.endsWith(".tmp") || !new RegExp("^" + UUID + "$", "i").test(name.slice(prefix.length, -4))) continue;
     const path = join(directory, name);
     let info;
     try { info = await lstat(path); }
