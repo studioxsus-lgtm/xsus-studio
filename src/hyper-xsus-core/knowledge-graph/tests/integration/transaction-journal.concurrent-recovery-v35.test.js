@@ -68,7 +68,16 @@ async function scenario(count) {
     try {
       await store.save([{...expected[0],state:"running"},expected[1],expected[2]]);
     } finally {await store.close();}
-    // Bound simultaneous Node processes in CI while retaining lock contention\n    // within each wave. All count attempts still execute and are verified.\n    const results=[];\n    const waveSize=10;\n    for(let offset=0;offset<count;offset+=waveSize) {\n      const wave=Array.from({length:Math.min(waveSize,count-offset)},()=>launch(filePath));\n      workers.push(...wave);\n      await Promise.all(wave.map(worker=>worker.ready));\n      results.push(...await Promise.all(wave.map(worker=>worker.run())));\n    }
+    // Bound simultaneous Node processes in CI while retaining lock contention
+    // within each wave. All count attempts still execute and are verified.
+    const results=[];
+    const waveSize=10;
+    for(let offset=0;offset<count;offset+=waveSize) {
+      const wave=Array.from({length:Math.min(waveSize,count-offset)},()=>launch(filePath));
+      workers.push(...wave);
+      await Promise.all(wave.map(worker=>worker.ready));
+      results.push(...await Promise.all(wave.map(worker=>worker.run())));
+    }
     const successful=results.filter(result=>result.ok);
     const busy=results.filter(result=>!result.ok&&result.code==="XSUS_FILE_LOCK_BUSY");
     expect(successful.length).toBeGreaterThanOrEqual(1);
