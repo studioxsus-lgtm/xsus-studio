@@ -1,0 +1,41 @@
+name: Hyper XSUS Core - Knowledge Integration
+
+on:
+  push:
+    branches:
+      - feature/xsus-ai-core
+    paths:
+      - 'src/hyper-xsus-core/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/hyper-xsus-knowledge-integration.yml'
+  pull_request:
+    paths:
+      - 'src/hyper-xsus-core/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/hyper-xsus-knowledge-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  knowledge-integration:
+    name: Knowledge Graph and Knowledge Link integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Knowledge Graph integration tests
+        run: npx vitest run src/hyper-xsus-core/knowledge-graph/tests/integration
+      - name: Run Knowledge Link integration tests
+        run: npx vitest run src/hyper-xsus-core/knowledge-linking/tests/integrations
