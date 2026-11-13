@@ -5,6 +5,7 @@
  */
 import { readFile } from "node:fs/promises";
 import { writeAtomicJson } from "./atomic-json-writer.js";
+import { withExclusiveFileLock } from "./exclusive-file-lock.js";
 
 export const TRANSACTION_JOURNAL_VERSION = "0.1.0";
 const STATES = new Set(["running", "completed", "failed", "interrupted"]);
@@ -29,10 +30,15 @@ function validate(entries) {
   });
 }
 
-export function createTransactionJournalStore({ filePath }) {
+export function createTransactionJournalStore({ filePath, exclusiveLock = false }) {
   if (typeof filePath !== "string" || !filePath.trim()) {
     throw new TypeError("filePath must be a non-empty string.");
   }
+  if (typeof exclusiveLock !== "boolean") {
+    throw new TypeError("exclusiveLock must be a boolean.");
+  }
+  const withLock = (operation) => exclusiveLock
+    ? withExclusiveFileLock(filePath, operation) : operation();
   let queue = Promise.resolve();
   let closed = false;
   const ensureOpen = () => {
@@ -57,14 +63,16 @@ export function createTransactionJournalStore({ filePath }) {
   async function load() {
     ensureOpen();
     await queue;
-    return readCommitted();
+    return withLock(readCommitted);
   }
 
   function save(entries) {
     ensureOpen();
     const snapshot = validate(entries);
     const operation = queue.catch(() => {}).then(async () => {
-      await writeAtomicJson(filePath, { version: TRANSACTION_JOURNAL_VERSION, entries: snapshot });
+      await withLock(() => writeAtomicJson(filePath, {
+        version: TRANSACTION_JOURNAL_VERSION, entries: snapshot,
+      }));
     });
     // Preserve rejection for the caller, but keep the internal queue settled.
     // A handled failure must not poison later operations or close().
@@ -77,7 +85,7 @@ export function createTransactionJournalStore({ filePath }) {
     // The entire read/modify/write transaction runs in the same queue as save.
     // This prevents another save on this store instance from being overwritten
     // by recovery between reading and committing.
-    const operation = queue.catch(() => {}).then(async () => {
+    const operation = queue.catch(() => {}).then(() => withLock(async () => {
       const entries = await readCommitted();
       let changed = false;
       const recovered = entries.map((entry) => {
@@ -91,7 +99,7 @@ export function createTransactionJournalStore({ filePath }) {
         });
       }
       return recovered;
-    });
+    }));
     // Preserve rejection for the caller, but keep the internal queue settled.
     // A handled failure must not poison later operations or close().
     queue = operation.then(() => undefined, () => undefined);
