@@ -61,8 +61,8 @@ describe("Transaction Journal — optimistic revision safety", () => {
     const dir = await mkdtemp(join(tmpdir(), "xsus-cas-unlocked-"));
     const store = createTransactionJournalStore({ filePath: join(dir, "journal.json") });
     try {
-      await expect(store.saveIfRevision([entry(1)], null))
-        .rejects.toThrow("exclusiveLock");
+      expect(() => store.saveIfRevision([entry(1)], null))
+        .toThrow("exclusiveLock");
     } finally { await store.close(); await rm(dir, { recursive: true, force: true }); }
   });
 });
