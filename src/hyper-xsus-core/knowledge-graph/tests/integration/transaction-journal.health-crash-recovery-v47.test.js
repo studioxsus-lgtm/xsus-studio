@@ -3,7 +3,6 @@ import { spawn } from "node:child_process";
 import { mkdtemp,rm,readFile,stat,unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { withExclusiveFileLock } from "../../integration/exclusive-file-lock.js";
 import { createPersistentJournalHealthHistory } from "../../integration/transaction-journal-health-persistence.js";
 
 const lockUrl=new URL("../../integration/exclusive-file-lock.js",import.meta.url).href;
