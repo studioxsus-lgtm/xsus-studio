@@ -22,9 +22,8 @@ describe("Hyper XSUS Core — cross-engine load integrity", () => {
         }));
         links.addMany(batch);
         expect(links.find().count).toBe(size);
-        for (const item of links.find().links) {
-          graph.addLink(item);
-        }
+        // One atomic graph commit avoids cloning the full graph per link.
+        graph.addLinks(links.find().links);
         expect(graph.getStatus().linkCount).toBe(size);
         expect(graph.verifyIntegrity().valid).toBe(true);
         links.rebuildIndexes();
