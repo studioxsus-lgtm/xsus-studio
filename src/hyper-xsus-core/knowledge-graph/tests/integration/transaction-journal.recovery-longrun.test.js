@@ -3,6 +3,8 @@ import { spawn } from "node:child_process";
 import { mkdtemp, rm, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { createTransactionJournalStore, TRANSACTION_JOURNAL_VERSION } from "../../integration/transaction-journal.persistence.js";
 
 const writerUrl = new URL("../../integration/atomic-json-writer.js", import.meta.url).href;
@@ -64,8 +66,8 @@ async function readFresh(path) {
   try { return await store.load(); } finally { await store.close(); }
 }
 
-describe("Hyper XSUS Core — recovery integrity long-run v2.0.0", () => {
-  it("maintains exact committed entries across 50 SIGKILL and recovery cycles", async () => {
+describe("Hyper XSUS Core — extended recovery integrity v2.1.0", () => {
+  it("maintains exact committed entries across 100 SIGKILL and recovery cycles", async () => {
     const dir = await mkdtemp(join(tmpdir(), "xsus-recovery-longrun-"));
     const path = join(dir, "journal.json");
     try {
@@ -73,11 +75,17 @@ describe("Hyper XSUS Core — recovery integrity long-run v2.0.0", () => {
       const initial = createTransactionJournalStore({ filePath: path });
       try { await initial.save(entries(committed)); } finally { await initial.close(); }
 
-      for (let cycle = 0; cycle < 50; cycle++) {
+      for (let cycle = 0; cycle < 100; cycle++) {
         const phase = cycle % 2 === 0 ? "before" : "after";
         await killAtBarrier(path, phase, committed + 1);
         if (phase === "after") committed++;
         expect(await readFresh(path)).toEqual(entries(committed));
+        const versioned = createTransactionJournalStore({ filePath: path });
+        try {
+          const { entries: actual, revision } = await versioned.loadWithRevision();
+          expect(actual).toEqual(entries(committed));
+          expect(revision).toBe(createHash("sha256").update(await readFile(path)).digest("hex"));
+        } finally { await versioned.close(); }
 
         const restarted = createTransactionJournalStore({ filePath: path });
         try {
@@ -89,10 +97,10 @@ describe("Hyper XSUS Core — recovery integrity long-run v2.0.0", () => {
 
       // SIGKILL before rename leaves one orphan temp per such crash.
       // The active journal must remain readable despite these unrelated files.
-      expect((await readdir(dir)).filter((name) => name.endsWith(".tmp"))).toHaveLength(25);
+      expect((await readdir(dir)).filter((name) => name.endsWith(".tmp"))).toHaveLength(50);
       expect(await readFresh(path)).toEqual(entries(committed));
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
-  }, 180000);
+  }, 240000);
 });
