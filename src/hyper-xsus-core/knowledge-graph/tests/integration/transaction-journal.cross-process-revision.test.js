@@ -80,9 +80,9 @@ describe("Transaction Journal — real cross-process revision conflicts", () => 
         Promise.all([oa.ready, ob.ready]),
         new Promise((_, reject) => setTimeout(() => reject(new Error("read barrier timeout")), 10000)),
       ]);
-      a.stdin.write("GO\\n");
+      a.stdin.end("GO\n");
       await oa.exit;
-      b.stdin.write("GO\\n");
+      b.stdin.end("GO\n");
       await ob.exit;
       const results = [oa.output(), ob.output()];
       expect(results.filter((s) => s.includes("SAVED"))).toHaveLength(1);
