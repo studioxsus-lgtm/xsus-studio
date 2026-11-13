@@ -18,7 +18,7 @@ function childSource() {
     'const entries = [1, 2].map(id => ({ id, state: "completed", attempted: 1, added: 1 }));',
     'const hold = async (marker) => {',
     '  process.stdout.write(marker + "\\n");',
-    '  await new Promise(() => {});',
+    '  await new Promise(() => { setInterval(() => {}, 1000); });',
     '};',
     'await writeAtomicJson(filePath, { version: ' + JSON.stringify(TRANSACTION_JOURNAL_VERSION) + ', entries }, {',
     '  io: { rename: async (from, to) => {',
