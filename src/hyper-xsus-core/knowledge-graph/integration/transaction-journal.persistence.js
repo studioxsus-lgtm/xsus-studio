@@ -39,9 +39,7 @@ export function createTransactionJournalStore({ filePath }) {
     if (closed) throw new Error("Transaction journal store is closed.");
   };
 
-  async function load() {
-    ensureOpen();
-    await queue;
+  async function readCommitted() {
     let raw;
     try {
       raw = await readFile(filePath, "utf8");
@@ -56,6 +54,12 @@ export function createTransactionJournalStore({ filePath }) {
     return validate(data.entries);
   }
 
+  async function load() {
+    ensureOpen();
+    await queue;
+    return readCommitted();
+  }
+
   function save(entries) {
     ensureOpen();
     const snapshot = validate(entries);
@@ -66,18 +70,28 @@ export function createTransactionJournalStore({ filePath }) {
     return operation;
   }
 
-  async function recoverInterrupted() {
+  function recoverInterrupted() {
     ensureOpen();
-    const entries = await load();
-    let changed = false;
-    const recovered = entries.map((entry) => {
-      if (entry.state !== "running") return entry;
-      changed = true;
-      return { ...entry, state: "interrupted" };
+    // The entire read/modify/write transaction runs in the same queue as save.
+    // This prevents another save on this store instance from being overwritten
+    // by recovery between reading and committing.
+    const operation = queue.catch(() => {}).then(async () => {
+      const entries = await readCommitted();
+      let changed = false;
+      const recovered = entries.map((entry) => {
+        if (entry.state !== "running") return entry;
+        changed = true;
+        return { ...entry, state: "interrupted" };
+      });
+      if (changed) {
+        await writeAtomicJson(filePath, {
+          version: TRANSACTION_JOURNAL_VERSION, entries: recovered,
+        });
+      }
+      return recovered;
     });
-    // Avoid an additional scan and an unnecessary fsync-backed rewrite.
-    if (changed) await save(recovered);
-    return recovered;
+    queue = operation;
+    return operation;
   }
 
   async function close() {
