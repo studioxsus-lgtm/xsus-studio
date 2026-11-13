@@ -14,9 +14,9 @@ const writerCode = [
   'const [path, phase, id] = process.argv.slice(1);',
   'const entries = [{id:1,state:"completed",attempted:1,added:1},{id:Number(id),state:"running",attempted:2,added:1}];',
   'await writeAtomicJson(path,{version:"0.1.0",entries},{io:{rename:async(source,target)=>{',
-  '  if(phase==="before"){process.stdout.write("CRASH_POINT\\n");await new Promise(()=>{});}',
+  '  if(phase==="before"){process.stdout.write("CRASH_POINT\\n");await new Promise(() => { setInterval(() => {}, 1000); });}',
   '  await rename(source,target);',
-  '  if(phase==="after"){process.stdout.write("CRASH_POINT\\n");await new Promise(()=>{});}',
+  '  if(phase==="after"){process.stdout.write("CRASH_POINT\\n");await new Promise(() => { setInterval(() => {}, 1000); });}',
   '}}});',
 ].join("\n");
 const recoverCode = [
