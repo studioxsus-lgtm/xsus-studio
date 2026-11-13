@@ -66,7 +66,9 @@ export function createTransactionJournalStore({ filePath }) {
     const operation = queue.catch(() => {}).then(async () => {
       await writeAtomicJson(filePath, { version: TRANSACTION_JOURNAL_VERSION, entries: snapshot });
     });
-    queue = operation;
+    // Preserve rejection for the caller, but keep the internal queue settled.
+    // A handled failure must not poison later operations or close().
+    queue = operation.then(() => undefined, () => undefined);
     return operation;
   }
 
@@ -90,7 +92,9 @@ export function createTransactionJournalStore({ filePath }) {
       }
       return recovered;
     });
-    queue = operation;
+    // Preserve rejection for the caller, but keep the internal queue settled.
+    // A handled failure must not poison later operations or close().
+    queue = operation.then(() => undefined, () => undefined);
     return operation;
   }
 
