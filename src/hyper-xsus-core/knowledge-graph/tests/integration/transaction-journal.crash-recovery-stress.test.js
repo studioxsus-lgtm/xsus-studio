@@ -16,7 +16,7 @@ function source() {
     'const entries = Array.from({length: Number(count)}, (_, i) => ({id:i+1,state:"completed",attempted:1,added:1}));',
     'const pause = async (marker) => {',
     '  process.stdout.write(marker + "\\n");',
-    '  await new Promise(() => {});',
+    '  await new Promise(() => { setInterval(() => {}, 1000); });',
     '};',
     'await writeAtomicJson(path, {version:' + JSON.stringify(TRANSACTION_JOURNAL_VERSION) + ',entries}, {',
     '  io: {rename: async (from, to) => {',
