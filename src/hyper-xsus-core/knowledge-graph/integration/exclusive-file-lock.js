@@ -32,18 +32,23 @@ export async function withExclusiveFileLock(filePath, operation) {
     throw error;
   }
   let acquiredIdentity;
+  let result;
+  let operationError;
   try {
     await handle.writeFile(JSON.stringify({ pid: process.pid, token }), "utf8");
     await handle.sync();
     acquiredIdentity = await handle.stat();
-    return await operation();
-  } finally {
+    result = await operation();
+  } catch (error) {
+    operationError = error;
+  }
+
+  let cleanupError;
+  try {
     await handle.close();
-    // Only the lock holder should remove this file. Do not delete a
-    // manually replaced lock; such intervention requires investigation.
     try {
       const current = await lstat(lockPath);
-      // This is a best-effort pathname identity check, not an atomic unlink.
+      // Best-effort pathname check; not an atomic conditional unlink.
       if (acquiredIdentity && !current.isSymbolicLink() &&
           current.dev === acquiredIdentity.dev &&
           current.ino === acquiredIdentity.ino) {
@@ -60,5 +65,18 @@ export async function withExclusiveFileLock(filePath, operation) {
     } catch (error) {
       if (error?.code !== "ENOENT") throw error;
     }
+  } catch (error) {
+    cleanupError = error;
   }
+
+  if (operationError && cleanupError) {
+    throw new AggregateError(
+      [operationError, cleanupError],
+      "Lock operation and cleanup both failed.",
+      { cause: operationError },
+    );
+  }
+  if (operationError) throw operationError;
+  if (cleanupError) throw cleanupError;
+  return result;
 }
