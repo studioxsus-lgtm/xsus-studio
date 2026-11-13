@@ -69,11 +69,14 @@ export function createTransactionJournalStore({ filePath }) {
   async function recoverInterrupted() {
     ensureOpen();
     const entries = await load();
-    const recovered = entries.map((entry) =>
-      entry.state === "running" ? { ...entry, state: "interrupted" } : entry);
-    if (recovered.some((entry, i) => entry.state !== entries[i].state)) {
-      await save(recovered);
-    }
+    let changed = false;
+    const recovered = entries.map((entry) => {
+      if (entry.state !== "running") return entry;
+      changed = true;
+      return { ...entry, state: "interrupted" };
+    });
+    // Avoid an additional scan and an unnecessary fsync-backed rewrite.
+    if (changed) await save(recovered);
     return recovered;
   }
 
