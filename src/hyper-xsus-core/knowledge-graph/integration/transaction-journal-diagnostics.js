@@ -3,8 +3,7 @@
  * Snapshot health is advisory, not an atomic observation across multiple paths.
  * Never acquires/removes locks, rewrites journals, or deletes temporary files.
  */
-import { readFile, lstat } from "node:fs/promises";
-import { createHash } from "node:crypto";
+import { lstat } from "node:fs/promises";
 import { createTransactionJournalStore } from "./transaction-journal.persistence.js";
 import { assessJournalTemporaryFiles } from "./journal-temp-assessment.js";
 
