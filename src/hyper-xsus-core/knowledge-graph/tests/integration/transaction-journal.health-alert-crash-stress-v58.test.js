@@ -18,7 +18,7 @@ const workerCode=[
  'await store.append(evaluation,{timestamp:i});',
  'await store.close();',
  'process.stdout.write("COMMITTED\\n");',
- 'await new Promise(()=>{});',
+ 'setInterval(()=>{},1000);',
 ].join("\n");
 const evaluation=()=>evaluateHealthHistoryAlerts({status:"missing",lockPresent:false});
 async function fixture(fn){
