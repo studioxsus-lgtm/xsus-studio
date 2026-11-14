@@ -3,7 +3,7 @@
  * Fail closed: no overwrite, no automatic recovery, no trusted-state mutation.
  */
 import {createHmac,timingSafeEqual,randomUUID} from "node:crypto";
-import {mkdir,open,readFile,readdir} from "node:fs/promises";
+import {mkdir,open,readFile,readdir,rmdir} from "node:fs/promises";
 import {constants} from "node:fs";
 import {join,isAbsolute} from "node:path";
 export const INCIDENT_ARCHIVE_VERSION="3.6.0";
@@ -74,6 +74,12 @@ export function createIncidentEvidenceArchive({directory,key,keyId}={}){
  async function record(report){
   const data=canonical(report);
   await mkdir(directory,{recursive:true,mode:0o700});
+  const writerLock=join(directory,"writer.lock");
+  try{await mkdir(writerLock);}catch(e){
+   if(e.code==="EEXIST")throw fail("XSUS_INCIDENT_ARCHIVE_CONFLICT","Concurrent writer or stale writer lock.");
+   throw e;
+  }
+  try{
   const before=await verify();
   const sequence=before.count+1,previous=before.tip;
   const signature=sign(sequence,previous,data);
@@ -93,6 +99,10 @@ export function createIncidentEvidenceArchive({directory,key,keyId}={}){
   if(after.count!==sequence||after.tip!==signature)
    throw fail("XSUS_INCIDENT_ARCHIVE_CONFLICT","Incident archive changed during append.");
   return Object.freeze({sequence,signature});
+  }finally{
+   // An interrupted process leaves the lock for explicit operator review.
+   await rmdir(writerLock);
+  }
  }
  return Object.freeze({version:INCIDENT_ARCHIVE_VERSION,record,verify});
 }
