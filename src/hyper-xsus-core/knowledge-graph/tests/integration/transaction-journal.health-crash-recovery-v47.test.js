@@ -11,7 +11,7 @@ const holdLockCode=[
   'import { withExclusiveFileLock } from '+JSON.stringify(lockUrl)+';',
   'await withExclusiveFileLock(process.argv[1],async()=>{',
   ' process.stdout.write("LOCKED\\n");',
-  ' await new Promise(()=>{});',
+  ' await new Promise(()=>{setInterval(()=>{},1000);});',
   '});',
 ].join("\n");
 const committedCode=[
@@ -20,7 +20,7 @@ const committedCode=[
   'await store.append({level:"healthy",journalStatus:"healthy",revision:null,warnings:[],transactionCounts:null},{timestamp:2});',
   'await store.close();',
   'process.stdout.write("COMMITTED\\n");',
-  'await new Promise(()=>{});',
+  'await new Promise(()=>{setInterval(()=>{},1000);});',
 ].join("\n");
 const report={level:"healthy",journalStatus:"healthy",revision:null,warnings:[],transactionCounts:null};
 async function fixture(fn){
