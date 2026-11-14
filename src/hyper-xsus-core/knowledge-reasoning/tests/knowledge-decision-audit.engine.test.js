@@ -36,11 +36,20 @@ describe("Hyper Decision Audit v0.7.0",()=>{
   const x=createKnowledgeDecisionAudit();
   x.record({result:{...result(),query:"secret",principalId:"alice",
    evidence:[{content:"private"}]}});
-  const s=JSON.stringify(x.snapshot());
-  expect(s).not.toContain("secret");
-  expect(s).not.toContain("alice");
-  expect(s).not.toContain("private");
-  expect(s).not.toContain("e1");
+  const snapshot=x.snapshot();
+  const receipt=snapshot.entries[0];
+  expect(Object.keys(receipt).sort()).toEqual([
+   "contradictionDigest","decisionDigest","evidenceCount","hash",
+   "previousHash","sequence","status","summary"].sort());
+  expect(Object.keys(snapshot).sort()).toEqual([
+   "anchorHash","entries","valid","version"].sort());
+  expect(receipt.decisionDigest).toMatch(/^[a-f0-9]{64}$/);
+  expect(receipt.contradictionDigest).toMatch(/^[a-f0-9]{64}$/);
+  const serialized=JSON.stringify(snapshot);
+  for(const sensitive of ["secret","alice","private","evidenceIds",
+   "supportingClaimIds","principalId","query","content"])
+   expect(serialized).not.toContain('"' + sensitive + '"');
+  expect(snapshot.valid).toBe(true);
  });
  it("rejects inconsistent summary counts",()=>{
   const x=createKnowledgeDecisionAudit();
