@@ -80,7 +80,8 @@ export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}
   let created=false;
   try{
    await io.mkdir(directory,{recursive:true});
-   await io.writeFile(tmp,JSON.stringify(next),"utf8");created=true;
+   await io.writeFile(tmp,JSON.stringify(next),
+    strictFilesystem?{encoding:"utf8",mode:0o600}:"utf8");created=true;
    const handle=await io.open(tmp,"r");
    try{await handle.sync();}finally{await handle.close();}
    await io.rename(tmp,filePath);created=false;
