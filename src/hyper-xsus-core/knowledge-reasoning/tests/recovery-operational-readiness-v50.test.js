@@ -46,6 +46,7 @@ describe("Hyper Audit v5.0 — operational recovery readiness",()=>{
  }));
  it("reports archive writer lock as unsafe",async()=>fixture(async({make,archiveDirectory})=>{
   const r=make();await r.initializeCheckpoint();
+  await mkdir(archiveDirectory,{recursive:true});
   await mkdir(join(archiveDirectory,"writer.lock"));
   const state=await make().inspectOperationalReadiness();
   expect(state.safeToResume).toBe(false);
