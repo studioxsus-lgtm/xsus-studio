@@ -4,7 +4,7 @@
  * A trusted operator must provision and protect this directory.
  */
 import {createHmac,timingSafeEqual,randomUUID} from "node:crypto";
-import {mkdir,open,readFile,rename,rm} from "node:fs/promises";
+import {mkdir,open,readFile,rename,rm,rmdir} from "node:fs/promises";
 import {constants} from "node:fs";
 import {join,isAbsolute,resolve} from "node:path";
 export const LOCAL_RECOVERY_BACKEND_VERSION="3.3.0";
@@ -90,7 +90,7 @@ export function createLocalRecoveryBackend({directory,key,keyId}={}){
     throw fail("XSUS_AUDIT_FENCE_INVALID","Lock ownership changed.");
    // Keep stale lock on filesystem failure; do not allow another writer.
    await rm(lockFile);
-   await rm(lockDir,{recursive:false});
+   await rmdir(lockDir);
    await syncDir(directory);
    owned=null;
   }
