@@ -34,7 +34,7 @@ describe("Hyper Audit v4.6 — transaction integrity under interference",()=>{
    if(once){once=false;await make().promote();}
    return true;
   });
-  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED"});
+  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_BLOCKED"});
   expect((await r.readCheckpoint()).count).toBe(1);
  }));
  it("rejects concurrent promotions on the same instance",async()=>fixture(async({make,setReviewer})=>{
@@ -83,7 +83,7 @@ describe("Hyper Audit v4.6 — transaction integrity under interference",()=>{
  it("archive rollback during review prevents checkpoint advancement",async()=>fixture(async({make,archiveDirectory,setReviewer})=>{
   const r=make();await r.initializeCheckpoint();await r.recordIncident(clean);
   setReviewer(async()=>{await unlink(join(archiveDirectory,"incident-0000000000000001.json"));return true;});
-  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED"});
+  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_BLOCKED"});
   expect((await r.readCheckpoint()).count).toBe(0);
  }));
  it("checkpoint signature corruption during review prevents promotion",async()=>fixture(async({make,checkpointDirectory,setReviewer})=>{
