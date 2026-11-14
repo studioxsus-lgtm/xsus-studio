@@ -18,6 +18,7 @@ import { createPrivateChatHandler } from "./src/server/private-chat-handler.js";
 import { createAssistantMessageWriter } from "./src/server/assistant-message-writer.js";
 import { createPrivateChatAuthorization } from "./src/server/private-chat-authorization.js";
 import { createXsusHyperAdapter } from "./src/platform/xsus-app/xsus-hyper-adapter.js";
+import { inspectHyperDeploymentConfig } from "./src/platform/xsus-app/hyper-deployment-gate.js";
 import { createTrustedRecoveryAuditAnchor } from "./src/hyper-xsus-core/knowledge-reasoning/trusted-recovery-audit-anchor.js";
 import { createDurableRecoveryAudit } from "./src/hyper-xsus-core/knowledge-reasoning/durable-recovery-audit.js";
 
@@ -41,14 +42,9 @@ const privateChatHandler = process.env.XSUS_PRIVATE_CHAT_ENABLED === "true"
 
 const hyperAdapter = process.env.XSUS_HYPER_APP_ENABLED === "true"
     ? (() => {
-        const required = [
-            "SUPABASE_URL", "SUPABASE_ANON_KEY",
-            "XSUS_HYPER_AUDIT_DIRECTORY", "XSUS_HYPER_AUDIT_KEY",
-            "XSUS_HYPER_AUDIT_KEY_ID", "XSUS_HYPER_ANCHOR_DIRECTORY",
-            "XSUS_HYPER_ANCHOR_KEY", "XSUS_HYPER_ANCHOR_KEY_ID"
-        ];
-        if (required.some(name => !process.env[name])) {
-            throw new Error("Hyper XSUS App integration configuration is incomplete.");
+        const gate = inspectHyperDeploymentConfig(process.env);
+        if (!gate.ready) {
+            throw new Error("Hyper XSUS App deployment gate blocked: " + gate.blockers.join(", "));
         }
         const auth = createPrivateChatAuthorization({
             supabaseUrl: process.env.SUPABASE_URL,
