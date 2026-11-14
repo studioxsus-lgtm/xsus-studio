@@ -41,4 +41,32 @@ describe("Hyper XSUS Core v6.0 trusted audit anchor",()=>{
   expect((await anchor.assess()).blockers).toContain("AUDIT_ROLLBACK_REVIEW_REQUIRED");
   await expect(anchor.advance()).rejects.toMatchObject({code:"XSUS_AUDIT_ANCHOR_BLOCKED"});
  },async()=>true));
+ it("rejects mismatched trusted prefix after a new signed history",async()=>fixture(async({audit,anchor,root})=>{
+  await audit.append({kind:"first"});await anchor.advance();
+  const file=join(root,"audit","audit.json");
+  const original=await readFile(file,"utf8");
+  await audit.append({kind:"second"});
+  expect((await anchor.assess()).safeToResume).toBe(true);
+  expect((await anchor.read()).count).toBe(1);
+  expect(await readFile(file,"utf8")).not.toBe(original);
+ }));
+ it("persists the trusted anchor across new instances",async()=>fixture(async({audit,anchor,config})=>{
+  await audit.append({kind:"one"});await anchor.advance();
+  const reopened=createTrustedRecoveryAuditAnchor(config);
+  expect(await reopened.read()).toEqual(await anchor.read());
+  expect((await reopened.assess()).safeToResume).toBe(true);
+ }));
+ it("rejects anchor and audit directory reuse",async()=>fixture(async({config})=>{
+  expect(()=>createTrustedRecoveryAuditAnchor({...config,directory:config.auditDirectory}))
+   .toThrow(TypeError);
+ }));
+ it("refuses to advance when audit has pending crash residue",async()=>fixture(async({audit,anchor,root})=>{
+  await audit.append({kind:"one"});
+  await writeFile(join(root,"audit","audit.pending"),"interrupted");
+  await expect(anchor.advance()).rejects.toMatchObject({code:"XSUS_AUDIT_ANCHOR_BLOCKED"});
+  expect((await anchor.read()).count).toBe(0);
+ }));
+ it("refuses unauthorized missing reviewer",async()=>fixture(async({config})=>{
+  expect(()=>createTrustedRecoveryAuditAnchor({...config,authorize:null})).toThrow(TypeError);
+ }));
 });
