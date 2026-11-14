@@ -4,7 +4,7 @@ const snapshot={lastSequence:10,entries:[{sequence:10,hash:"a".repeat(64)}]};
 function setup({mark=10,inventory=[],observed=[],lock="absent",verifyError=null,
  mutate=false,diagnosticMismatch=false}={}){
  let reads=0,verified=0;
- const highWater={read:async()=>{reads++;return mutate&&reads>2?mark+1:mark;}};
+ const highWater={read:async()=>{reads++;return mutate&&reads>1?mark+1:mark;}};
  const expected={read:async()=>[...inventory]};
  const receipts={list:async()=>[...observed]};
  const assessor={assess:async()=>({
