@@ -15,8 +15,8 @@ export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDi
  const archive=createIncidentEvidenceArchive({directory:archiveDirectory,key:archiveKey,keyId:archiveKeyId});
  const checkpoint=createDurableIncidentCheckpoint({directory:checkpointDirectory,key:checkpointKey,keyId:checkpointKeyId});
  const guard=createIncidentPrefixGuard({directory:archiveDirectory,archive,checkpoint});
- const promotion=createIncidentCheckpointPromotion({guard,archive,checkpoint,authorize});
  const readiness=createRecoveryReadinessGuard({archiveDirectory,checkpointDirectory,inspect:()=>guard.inspect()});
+ const promotion=createIncidentCheckpointPromotion({guard,archive,checkpoint,authorize,readiness:()=>readiness.assess()});
  return Object.freeze({
   version:INCIDENT_RECOVERY_INTEGRATION_VERSION,
   initializeCheckpoint:()=>checkpoint.initialize(),
