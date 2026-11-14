@@ -18,6 +18,7 @@ import {createTrustedRecoveryAuditAnchor} from "./trusted-recovery-audit-anchor.
 import {createRecoveryOperationalVerification} from "./recovery-operational-verification-v65.js";
 import {createRecoverySecurityValidation} from "./recovery-security-validation-v68.js";
 import {createRecoverySecurityArchitecture} from "./recovery-security-architecture-v70.js";
+import {createRecoveryAssurance} from "./recovery-assurance-v80.js";
 export const INCIDENT_RECOVERY_INTEGRATION_VERSION="4.1.0";
 export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDirectory,archiveKey,checkpointKey,archiveKeyId,checkpointKeyId,authorize,durableAudit,trustedAuditAnchor}={}){
  if(typeof archiveDirectory!=="string"||typeof checkpointDirectory!=="string"||
@@ -39,6 +40,7 @@ export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDi
  const operationalVerification=anchor?createRecoveryOperationalVerification({inspectHealth:()=>anchor.inspectHealth()}):null;
  const securityValidation=anchor?createRecoverySecurityValidation({inspectHealth:()=>anchor.inspectHealth()}):null;
  const securityArchitecture=anchor?createRecoverySecurityArchitecture({inspectHealth:()=>anchor.inspectHealth()}):null;
+ const recoveryAssurance=anchor?createRecoveryAssurance({inspectHealth:()=>anchor.inspectHealth()}):null;
  const promotion=createIncidentCheckpointPromotion({guard,archive,checkpoint,authorize,readiness:()=>readiness.assess()});
  return Object.freeze({
   version:INCIDENT_RECOVERY_INTEGRATION_VERSION,
@@ -65,6 +67,7 @@ export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDi
   verifyTrustedAuditRecoveryOperation:()=>{if(!operationalVerification)throw new Error("Trusted audit anchor not configured.");return operationalVerification.assess();},
   validateTrustedAuditRecoverySecurity:()=>{if(!securityValidation)throw new Error("Trusted audit anchor not configured.");return securityValidation.assess();},
   assessTrustedRecoverySecurityArchitecture:()=>{if(!securityArchitecture)throw new Error("Trusted audit anchor not configured.");return securityArchitecture.assess();},
+  assessTrustedRecoveryAssurance:()=>{if(!recoveryAssurance)throw new Error("Trusted audit anchor not configured.");return recoveryAssurance.assess();},
   promote:()=>promotion.promote(),
   readCheckpoint:()=>checkpoint.read(),
   verifyArchive:()=>archive.verify()
