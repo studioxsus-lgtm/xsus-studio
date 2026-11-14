@@ -11,8 +11,6 @@ const fixture=async()=>{const dir=await mkdtemp(join(tmpdir(),"xsus-guard-"));
 describe("Hyper Audit v1.2.0 — filesystem guard",()=>{
  it("rejects relative paths in strict mode",()=>{
   expect(()=>createAuditFilesystemGuard({filePath:"relative.json"}))
-   .toMatchObject;
-  expect(()=>createAuditFilesystemGuard({filePath:"relative.json"}))
    .toThrow(/absolute normalized/);
  });
  it("allows missing journal in trusted directory",async()=>{
