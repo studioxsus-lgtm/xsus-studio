@@ -7,6 +7,7 @@ import {readFile,writeFile,rename,open,mkdir,unlink} from "node:fs/promises";
 import {dirname,basename,join} from "node:path";
 import {randomUUID,createHash} from "node:crypto";
 import {createKnowledgeDecisionAudit} from "./knowledge-decision-audit.engine.js";
+import {createAuditFilesystemGuard} from "./audit-filesystem-guard.js";
 export const PERSISTENT_DECISION_AUDIT_VERSION="0.8.0";
 const hash=x=>createHash("sha256").update(JSON.stringify(x)).digest("hex");
 const plain=x=>x!==null&&typeof x==="object"&&!Array.isArray(x)&&
@@ -44,10 +45,12 @@ function validate(doc,maxEntries){
   throw new TypeError("Audit sequence mismatch.");
  return true;
 }
-export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}}={}){
+export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={},strictFilesystem=false}={}){
  if(typeof filePath!=="string"||!filePath.trim()||
   !Number.isSafeInteger(maxEntries)||maxEntries<1||maxEntries>10000)
   throw new TypeError("Invalid persistent audit configuration.");
+ if(typeof strictFilesystem!=="boolean")throw new TypeError("Invalid filesystem policy.");
+ const guard=strictFilesystem?createAuditFilesystemGuard({filePath,fsOps}):null;
  const io={readFile,writeFile,rename,open,mkdir,...fsOps};
  let closed=false,loaded=false,failed=false,queue=Promise.resolve();
  let doc={version:PERSISTENT_DECISION_AUDIT_VERSION,
@@ -56,6 +59,7 @@ export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}
   if(closed||failed)throw new Error("Persistent audit unavailable.");
   if(loaded)throw new Error("Persistent audit already loaded.");
   try{
+   if(guard)await guard.check();
    const bytes=await io.readFile(filePath,"utf8");
    const parsed=JSON.parse(bytes);
    validate(parsed,maxEntries);
@@ -94,6 +98,7 @@ export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}
  function append({result}={}){
   const job=queue.then(async()=>{
    if(!loaded||closed||failed)throw new Error("Persistent audit unavailable.");
+   if(guard)await guard.check();
    // Reuse v0.7.0 strict result validation and canonical digest fields.
    const receipt=createKnowledgeDecisionAudit().record({result});
    // Exclusive lock is never stolen automatically: uncertain ownership fails closed.
@@ -109,6 +114,7 @@ export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}
    }
    let entry;
    try{
+    if(guard)await guard.check();
     let current;
     try{
      current=JSON.parse(await io.readFile(filePath,"utf8"));
@@ -135,6 +141,7 @@ export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}
      anchorHash,lastSequence:entry.sequence,entries};
     validate(next,maxEntries);
     await atomicWrite(next);
+    if(guard)await guard.check();
     doc=next;
    }catch(e){
     failed=true;
