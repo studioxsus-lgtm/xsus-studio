@@ -381,6 +381,29 @@
 
       </section>
 
+      <!-- HYPER XSUS CORE — AUTHENTICATED READ-ONLY ASSURANCE -->
+      <section class="xsus-section" id="hyper-assurance">
+        <div class="xsus-section-header">
+          <div>
+            <div class="xsus-eyebrow">CONTROLLED INTEGRATION</div>
+            <h2>Hyper XSUS Core v8.0</h2>
+            <p>Authenticated, read-only recovery security verification.</p>
+          </div>
+          <span class="xsus-badge">SERVER VERIFICATION</span>
+        </div>
+        <div class="xsus-panel" id="xsus-hyper-panel">
+          <h3 data-hyper-status role="status" aria-live="polite">Not checked</h3>
+          <p data-hyper-details>Sign in, then select Check security status.</p>
+          <button class="xsus-button-primary" type="button" data-hyper-check>
+            Check security status
+          </button>
+          <a class="xsus-button-secondary" href="auth.html">Login / Sign Up</a>
+          <p class="xsus-card-description">
+            Verification is advisory only. No automatic recovery or approval is performed.
+          </p>
+        </div>
+      </section>
+
       <!-- FRONTIER ENGINES -->
       <section class="xsus-section" id="engines">
 
@@ -716,6 +739,28 @@
 
   updateStatus();
 
+</script>
+
+<!-- HYPER XSUS CORE — SEPARATE AUTHENTICATED STATUS CLIENT -->
+<script type="module">
+  import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
+  import {createXsusHyperPanel} from "./platform/xsus-app/xsus-hyper-panel.js";
+
+  // Public Supabase project URL and publishable key; no server secrets.
+  // Same auth configuration as XSUS Studio auth.html.
+  const supabase=createClient(
+    "https://rdcwqjsmzklktfccebfs.supabase.co",
+    "sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr",
+    {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}
+  );
+  createXsusHyperPanel({
+    root:document.getElementById("xsus-hyper-panel"),
+    getAccessToken:async()=>{
+      const {data,error}=await supabase.auth.getSession();
+      if(error||!data.session?.access_token)return null;
+      return data.session.access_token;
+    }
+  });
 </script>
 
 </body>
