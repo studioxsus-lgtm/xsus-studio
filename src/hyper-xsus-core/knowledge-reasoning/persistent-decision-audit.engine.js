@@ -6,6 +6,7 @@
 import {readFile,writeFile,rename,open,mkdir,unlink} from "node:fs/promises";
 import {dirname,basename,join} from "node:path";
 import {randomUUID,createHash} from "node:crypto";
+import {constants} from "node:fs";
 import {createKnowledgeDecisionAudit} from "./knowledge-decision-audit.engine.js";
 import {createAuditFilesystemGuard} from "./audit-filesystem-guard.js";
 export const PERSISTENT_DECISION_AUDIT_VERSION="0.8.0";
@@ -55,12 +56,24 @@ export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}
  let closed=false,loaded=false,failed=false,queue=Promise.resolve();
  let doc={version:PERSISTENT_DECISION_AUDIT_VERSION,
   anchorHash:"GENESIS",lastSequence:0,entries:[]};
+ async function secureReadJournal(){
+  if(!strictFilesystem)return io.readFile(filePath,"utf8");
+  const flags=constants.O_RDONLY|constants.O_NOFOLLOW;
+  const handle=await io.open(filePath,flags);
+  try{
+   const info=await handle.stat();
+   if(!info.isFile()||(process.platform!=="win32"&&(info.mode&0o077)!==0))
+    throw Object.assign(new Error("Unsafe opened audit journal."),
+     {code:"XSUS_AUDIT_UNSAFE_PATH"});
+   return await handle.readFile({encoding:"utf8"});
+  }finally{await handle.close();}
+ }
  async function load(){
   if(closed||failed)throw new Error("Persistent audit unavailable.");
   if(loaded)throw new Error("Persistent audit already loaded.");
   try{
    if(guard)await guard.check();
-   const bytes=await io.readFile(filePath,"utf8");
+   const bytes=await secureReadJournal();
    const parsed=JSON.parse(bytes);
    validate(parsed,maxEntries);
    doc=parsed;
@@ -118,7 +131,7 @@ export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}
     if(guard)await guard.check();
     let current;
     try{
-     current=JSON.parse(await io.readFile(filePath,"utf8"));
+     current=JSON.parse(await secureReadJournal());
      validate(current,maxEntries);
     }catch(e){
      if(e?.code!=="ENOENT")throw e;
