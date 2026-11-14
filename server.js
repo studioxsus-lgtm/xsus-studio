@@ -16,6 +16,10 @@ import http from "node:http";
 import { processAIRequest } from "./src/core/ai-core.js";
 import { createPrivateChatHandler } from "./src/server/private-chat-handler.js";
 import { createAssistantMessageWriter } from "./src/server/assistant-message-writer.js";
+import { createPrivateChatAuthorization } from "./src/server/private-chat-authorization.js";
+import { createXsusHyperAdapter } from "./src/platform/xsus-app/xsus-hyper-adapter.js";
+import { createTrustedRecoveryAuditAnchor } from "./src/hyper-xsus-core/knowledge-reasoning/trusted-recovery-audit-anchor.js";
+import { createDurableRecoveryAudit } from "./src/hyper-xsus-core/knowledge-reasoning/durable-recovery-audit.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -33,6 +37,42 @@ const privateChatHandler = process.env.XSUS_PRIVATE_CHAT_ENABLED === "true"
         generate: privateReplyWriter ? ({ query }) => processAIRequest({ query }) : undefined,
         writer: privateReplyWriter || undefined
     })
+    : null;
+
+const hyperAdapter = process.env.XSUS_HYPER_APP_ENABLED === "true"
+    ? (() => {
+        const required = [
+            "SUPABASE_URL", "SUPABASE_ANON_KEY",
+            "XSUS_HYPER_AUDIT_DIRECTORY", "XSUS_HYPER_AUDIT_KEY",
+            "XSUS_HYPER_AUDIT_KEY_ID", "XSUS_HYPER_ANCHOR_DIRECTORY",
+            "XSUS_HYPER_ANCHOR_KEY", "XSUS_HYPER_ANCHOR_KEY_ID"
+        ];
+        if (required.some(name => !process.env[name])) {
+            throw new Error("Hyper XSUS App integration configuration is incomplete.");
+        }
+        const auth = createPrivateChatAuthorization({
+            supabaseUrl: process.env.SUPABASE_URL,
+            supabaseKey: process.env.SUPABASE_ANON_KEY
+        });
+        const audit = createDurableRecoveryAudit({
+            directory: process.env.XSUS_HYPER_AUDIT_DIRECTORY,
+            key: process.env.XSUS_HYPER_AUDIT_KEY,
+            keyId: process.env.XSUS_HYPER_AUDIT_KEY_ID
+        });
+        const trusted = createTrustedRecoveryAuditAnchor({
+            directory: process.env.XSUS_HYPER_ANCHOR_DIRECTORY,
+            key: process.env.XSUS_HYPER_ANCHOR_KEY,
+            keyId: process.env.XSUS_HYPER_ANCHOR_KEY_ID,
+            auditDirectory: process.env.XSUS_HYPER_AUDIT_DIRECTORY,
+            readDurableAudit: () => audit.read(),
+            // Read-only endpoint: never grant anchor advancement here.
+            authorize: async () => false
+        });
+        return createXsusHyperAdapter({
+            verifyUser: authorization => auth.verifyUser(authorization),
+            inspectHealth: () => trusted.inspectHealth()
+        });
+    })()
     : null;
 
 const MAX_BODY_BYTES = 32 * 1024;
@@ -213,6 +253,16 @@ const server = http.createServer(
                     chat: "POST /api/chat"
                 }
             });
+        }
+
+        // Server-only authenticated, read-only Hyper XSUS Core status endpoint.
+        if (pathname === "/api/xsus-app/hyper/assurance") {
+            if (!hyperAdapter) return sendJSON(res, 503, { error: "Hyper integration is not enabled." });
+            const result = await hyperAdapter.handle({
+                method: req.method,
+                authorization: req.headers.authorization
+            });
+            return sendJSON(res, result.status, result.data);
         }
 
         // Separate authenticated route; disabled unless explicitly configured.
