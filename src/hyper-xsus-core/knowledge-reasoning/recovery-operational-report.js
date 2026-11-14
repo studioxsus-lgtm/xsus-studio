@@ -36,6 +36,21 @@ export function createRecoveryOperationalReport({inspectReadiness,verifyArchive,
    verified.core.trustedCount!==core.trustedCount||
    verified.core.trustedTip!==core.trustedTip)
    throw fail("XSUS_RECOVERY_OPERATIONAL_CHANGED","Readiness changed during reporting.");
+  // Re-read both authenticated stores after the second readiness assessment.
+  // A mutation between the first storage reads and the final guard must
+  // never yield a report claiming a stable ready snapshot.
+  const finalCheckpoint=await readCheckpoint();
+  const finalArchive=await verifyArchive();
+  if(!finalCheckpoint||finalCheckpoint.count!==checkpoint.count||
+   finalCheckpoint.tip!==checkpoint.tip||
+   !finalArchive||finalArchive.count!==archive.count||
+   finalArchive.tip!==archive.tip||
+   !Array.isArray(finalArchive.entries)||finalArchive.entries.length!==archive.entries.length)
+   throw fail("XSUS_RECOVERY_OPERATIONAL_CHANGED","Authenticated storage changed during reporting.");
+  for(let i=0;i<archive.entries.length;i++)
+   if(finalArchive.entries[i]?.sequence!==archive.entries[i]?.sequence||
+    finalArchive.entries[i]?.signature!==archive.entries[i]?.signature)
+    throw fail("XSUS_RECOVERY_OPERATIONAL_CHANGED","Archive evidence changed during reporting.");
   const blockers=Object.freeze([...new Set(readiness.blockers)]);
   const safeToResume=readiness.safeToResume===true&&blockers.length===0&&
    archive.count===checkpoint.count&&archive.tip===checkpoint.tip;
