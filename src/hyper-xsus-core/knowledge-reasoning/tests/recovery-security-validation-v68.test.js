@@ -28,16 +28,20 @@ describe("Hyper XSUS Core v6.8 — strict recovery security validation",()=>{
   expect((await verify(()=>anchor.inspectHealth())).anchor.count).toBe(1);
  }));
  it("rejects malformed anchor hash",async()=>{
-  expect((await verify(async()=>ready({count:0,tip:"bad"}))).blockers).toContain("SECURITY_HEALTH_INVALID");
+  const result=await verify(async()=>ready({count:0,tip:"bad"}));
+  expect(result.blockers).toContain("SECURITY_HEALTH_INVALID");
  });
  it("rejects negative audit counts",async()=>{
-  expect((await verify(async()=>ready(undefined,{count:-1,tip:Z}))).safeToResume).toBe(false);
+  const result=await verify(async()=>ready(undefined,{count:-1,tip:Z}));
+  expect(result.safeToResume).toBe(false);
  });
  it("rejects audit behind trusted anchor",async()=>{
-  expect((await verify(async()=>ready({count:2,tip:Z},{count:1,tip:Z}))).safeToResume).toBe(false);
+  const result=await verify(async()=>ready({count:2,tip:Z},{count:1,tip:Z}));
+  expect(result.safeToResume).toBe(false);
  });
  it("rejects forged ready status with blockers",async()=>{
-  expect((await verify(async()=>({...ready(),blockers:["REVIEW_REQUIRED"]})).safeToResume).toBe(false);
+  const result=await verify(async()=>({...ready(),blockers:["REVIEW_REQUIRED"]}));
+  expect(result.safeToResume).toBe(false);
  });
  it("detects changed audit mark across observations",async()=>{
   let n=0;const x=await verify(async()=>ready(undefined,{count:n++,tip:Z}));
