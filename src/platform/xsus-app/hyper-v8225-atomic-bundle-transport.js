@@ -50,15 +50,18 @@ export function createHyperAtomicBundleTransport({
         const records = await response.json();
         if (!Array.isArray(records) || records.length !== 1)
           throw Error("insert not confirmed");
-        const confirmed = parseHyperAtomicBundle(records[0]);
-        if (Object.keys(row).some(k => confirmed.row[k] !== row[k] &&
-            records[0][k] !== row[k]))
-          throw Error("insert mismatch");
-        if (records[0].observation_id !== row.observation_id ||
-            records[0].authentication_tag !== row.authentication_tag ||
-            records[0].evidence_digest !== row.evidence_digest ||
-            records[0].envelope_key_id !== row.envelope_key_id)
-          throw Error("insert mismatch");
+        parseHyperAtomicBundle(records[0]);
+        // Confirm every persisted field, not only identity and MAC.
+        // Normalize timestamp representations returned by PostgreSQL.
+        const timestamps = new Set(["started_at", "observed_at"]);
+        for (const [field, value] of Object.entries(row)) {
+          const actual = records[0][field];
+          const equal = timestamps.has(field)
+            ? typeof actual === "string" && Number.isFinite(Date.parse(actual)) &&
+              new Date(actual).getTime() === new Date(value).getTime()
+            : actual === value;
+          if (!equal) throw Error("insert mismatch");
+        }
         return Object.freeze({ inserted: true, observationId: row.observation_id });
       } catch {
         throw Error("Hyper atomic bundle write failed.");
