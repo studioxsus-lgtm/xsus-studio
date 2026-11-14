@@ -2,9 +2,9 @@
  * Child process fixture for v6.6 crash tests. Never used by production.
  * Modes: hold-lock, committed, hold-pre-rename.
  */
-import {withExclusiveFileLock} from "../../integration/exclusive-file-lock.js";
-import {createPersistentAnomalyHistory} from "../../integration/transaction-journal-health-anomaly-persistence.js";
-import {writeAtomicJson} from "../../integration/atomic-json-writer.js";
+import {withExclusiveFileLock} from "../../../integration/exclusive-file-lock.js";
+import {createPersistentAnomalyHistory} from "../../../integration/transaction-journal-health-anomaly-persistence.js";
+import {writeAtomicJson} from "../../../integration/atomic-json-writer.js";
 import {open} from "node:fs/promises";
 
 const [mode,filePath]=process.argv.slice(2);
