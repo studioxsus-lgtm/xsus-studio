@@ -6,7 +6,7 @@
  */
 import {describe,it,expect} from "vitest";
 import {spawn} from "node:child_process";
-import {mkdtemp,readFile,rm} from "node:fs/promises";
+import {mkdtemp,readFile,rm,unlink} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {createPersistentDecisionAudit} from "../persistent-decision-audit.engine.js";
@@ -76,6 +76,9 @@ suite("Hyper Persistent Audit v0.9.0 — real SIGKILL boundaries",()=>{
    expect(await readFile(filePath,"utf8")).toBe(before);
    const recovered=createPersistentDecisionAudit({filePath});
    expect((await recovered.load()).lastSequence).toBe(1);
+   await expect(recovered.append({result})).rejects.toMatchObject({code:"XSUS_AUDIT_LOCKED"});
+   // Operator verified the child exited before removing its orphan lock.
+   await unlink(filePath+".lock");
    expect((await recovered.append({result})).sequence).toBe(2);
   }finally{await rm(dir,{recursive:true,force:true});}
  },20000);
@@ -88,6 +91,9 @@ suite("Hyper Persistent Audit v0.9.0 — real SIGKILL boundaries",()=>{
    await killAtBoundary(filePath,"after-rename");
    const recovered=createPersistentDecisionAudit({filePath});
    expect((await recovered.load()).lastSequence).toBe(2);
+   await expect(recovered.append({result})).rejects.toMatchObject({code:"XSUS_AUDIT_LOCKED"});
+   // Explicit orphan-lock recovery; never remove a live writer lock.
+   await unlink(filePath+".lock");
    expect((await recovered.append({result})).sequence).toBe(3);
   }finally{await rm(dir,{recursive:true,force:true});}
  },20000);
