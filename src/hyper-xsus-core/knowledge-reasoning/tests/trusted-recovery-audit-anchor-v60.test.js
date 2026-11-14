@@ -32,7 +32,7 @@ describe("Hyper XSUS Core v6.0 trusted audit anchor",()=>{
   await expect(anchor.advance()).rejects.toMatchObject({code:"XSUS_AUDIT_ANCHOR_DENIED"});
   expect((await anchor.read()).count).toBe(0);
  },async()=>false));
- it("rejects valid signed rollback against the protected anchor",async()=>fixture(async({audit,anchor})=>{
+ it("rejects valid signed rollback against the protected anchor",async()=>fixture(async({audit,anchor,root})=>{
   await audit.append({kind:"first"});
   const file=join(root,"audit","audit.json");
   const old=await readFile(file,"utf8");
