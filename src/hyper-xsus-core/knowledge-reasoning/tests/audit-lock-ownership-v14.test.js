@@ -53,7 +53,7 @@ describe("Hyper Audit v1.4.0 — lock ownership integrity",()=>{
    let injected=false;
    const audit=createPersistentDecisionAudit({filePath:f.path,fsOps:{
     readFile:async(path,...args)=>{
-     if(path===f.path&&!injected){
+     if(path===f.path&&!injected&&await lstat(f.path+".lock").then(()=>true,()=>false)){
       injected=true;
       await rename(f.path+".lock",f.path+".original-lock");
       await symlink(target,f.path+".lock");
