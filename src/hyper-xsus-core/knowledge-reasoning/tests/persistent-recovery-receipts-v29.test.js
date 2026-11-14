@@ -74,7 +74,7 @@ describe("Hyper Audit v2.9 — persistent authenticated recovery receipts",()=>{
  it("detects missing retention evidence rather than assuming integrity",async()=>{
   await fixture(async({make})=>{
    await make().record({previous:1,sequence:2,tipHash:h("b")});
-   await expect(make().verifyAgainst({trustedSequence:2,snapshot:{lastSequence:3,anchorHash:h("a"),entries:[{sequence:3,hash:h("c")}]}}))
+   await expect(make().verifyAgainst({trustedSequence:2,snapshot:{lastSequence:4,anchorHash:h("a"),entries:[{sequence:4,hash:h("c")}]}}))
     .rejects.toMatchObject({code:"XSUS_RECOVERY_RECEIPT_UNVERIFIABLE"});
   });
  });
