@@ -9,7 +9,7 @@ import {open} from "node:fs/promises";
 
 const [mode,filePath]=process.argv.slice(2);
 const healthy={status:"healthy",anomalyCount:0,anomalies:[]};
-const wait=()=>new Promise(()=>{});
+const wait=()=>new Promise(()=>{setInterval(()=>{},1000);});
 try{
  if(mode==="hold-lock"){
   await withExclusiveFileLock(filePath,async()=>{
