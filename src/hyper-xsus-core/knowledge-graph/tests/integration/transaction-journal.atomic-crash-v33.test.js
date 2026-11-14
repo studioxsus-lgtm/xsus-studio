@@ -13,9 +13,9 @@ const childCode = [
   'const entries = [{id:1,state:"interrupted",attempted:4,added:2},{id:2,state:"completed",attempted:3,added:3}];',
   'await writeAtomicJson(filePath, {version:"0.1.0",entries}, {io:{',
   '  rename: async (source,target) => {',
-  '    if (phase === "before") { process.stdout.write("CRASH_POINT\\n"); await new Promise(() => {}); }',
+  '    if (phase === "before") { process.stdout.write("CRASH_POINT\\n"); await new Promise(() => { setInterval(() => {}, 1000); }); }',
   '    await actualRename(source,target);',
-  '    if (phase === "after") { process.stdout.write("CRASH_POINT\\n"); await new Promise(() => {}); }',
+  '    if (phase === "after") { process.stdout.write("CRASH_POINT\\n"); await new Promise(() => { setInterval(() => {}, 1000); }); }',
   '  }',
   '}});',
 ].join("\n");
