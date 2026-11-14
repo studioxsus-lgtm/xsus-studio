@@ -3,7 +3,7 @@
  * NOT an external rollback anchor. Requires a separately protected directory/key.
  */
 import {createHmac,timingSafeEqual} from "node:crypto";
-import {mkdir,open,readFile,rename,rmdir} from "node:fs/promises";
+import {mkdir,open,readFile,rename,rmdir,lstat} from "node:fs/promises";
 import {constants} from "node:fs";
 import {join,isAbsolute} from "node:path";
 export const DURABLE_CHECKPOINT_VERSION="4.0.0";
@@ -34,6 +34,11 @@ export function createDurableIncidentCheckpoint({directory,key,keyId}={}){
    throw fail("XSUS_CHECKPOINT_SIGNATURE","Checkpoint authentication failed.");
   return Object.freeze({count:obj.count,tip:obj.tip});
  }
+ async function checkPending(){
+  try{await lstat(join(directory,"checkpoint.pending"));}
+  catch(e){if(e.code==="ENOENT")return;throw e;}
+  throw fail("XSUS_CHECKPOINT_PENDING","Interrupted checkpoint write requires manual review.");
+ }
  async function acquire(){
   await mkdir(directory,{recursive:true,mode:0o700});
   try{await mkdir(lock, {mode:0o700});}
@@ -58,6 +63,7 @@ export function createDurableIncidentCheckpoint({directory,key,keyId}={}){
  async function initialize(){
   await acquire();
   try{
+   await checkPending();
    try{await read();return false;}
    catch(e){if(e.code!=="XSUS_CHECKPOINT_UNINITIALIZED")throw e;}
    await persist({count:0,tip:zero},{exclusive:true});
@@ -69,6 +75,7 @@ export function createDurableIncidentCheckpoint({directory,key,keyId}={}){
    throw fail("XSUS_CHECKPOINT_INVALID_TRANSITION","Checkpoint must advance monotonically.");
   await acquire();
   try{
+   await checkPending();
    const current=await read();
    if(current.count!==previous.count||current.tip!==previous.tip)
     throw fail("XSUS_CHECKPOINT_CAS_CONFLICT","Checkpoint changed.");
