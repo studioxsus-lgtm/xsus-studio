@@ -141,6 +141,26 @@ export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}
      current={version:PERSISTENT_DECISION_AUDIT_VERSION,
       anchorHash:"GENESIS",lastSequence:0,entries:[]};
     }
+    // Detect rollback and observable history forks relative to this instance.
+    // Concurrent writers may advance the journal, but must not rewrite its
+    // known tip when that tip is still represented in retained history.
+    if(current.lastSequence<doc.lastSequence)
+     throw Object.assign(new Error("Audit journal rollback detected."),
+      {code:"XSUS_AUDIT_ROLLBACK"});
+    if(doc.lastSequence>0){
+     const knownTip=doc.entries.length?
+      doc.entries[doc.entries.length-1].hash:doc.anchorHash;
+     const matching=current.entries.find(e=>e.sequence===doc.lastSequence);
+     const observable=matching?.hash??(
+      current.lastSequence===doc.lastSequence?
+       (current.entries.length?
+        current.entries[current.entries.length-1].hash:current.anchorHash):
+       current.entries.length&&current.entries[0].sequence===doc.lastSequence+1?
+        current.anchorHash:null);
+     if(observable!==null&&observable!==knownTip)
+      throw Object.assign(new Error("Audit journal history fork detected."),
+       {code:"XSUS_AUDIT_FORK"});
+    }
     const payload={sequence:current.lastSequence+1,
      previousHash:current.entries.length?
       current.entries[current.entries.length-1].hash:current.anchorHash,
