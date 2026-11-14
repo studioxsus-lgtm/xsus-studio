@@ -20,6 +20,8 @@ export function createIncidentCheckpointPromotion({guard,archive,checkpoint,auth
   if(!state||!Array.isArray(state.blockers))
    throw fail("XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED","Invalid readiness assessment.");
   if(state.blockers.length===1&&state.blockers[0]==="UNANCHORED_ARCHIVE_TAIL")return;
+  if(state.blockers.includes("CHECKPOINT_PENDING_REVIEW_REQUIRED"))
+   throw fail("EEXIST","Interrupted checkpoint.pending file requires operator review.");
   if(state.blockers.includes("CHECKPOINT_WRITER_LOCK_REVIEW_REQUIRED"))
    throw fail("XSUS_CHECKPOINT_LOCKED","Concurrent or interrupted checkpoint writer.");
   if(state.blockers.includes("ARCHIVE_WRITER_LOCK_REVIEW_REQUIRED")||
