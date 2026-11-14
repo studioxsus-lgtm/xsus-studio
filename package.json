@@ -1,4 +1,3 @@
-
 {
   "name": "xsus-ai-core",
   "version": "1.0.0",
@@ -20,7 +19,8 @@
     "test:integration": "vitest run tests/integration",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
-    "check": "npm test && npm run test:coverage"
+    "check": "npm test && npm run test:coverage",
+    "check:hyper-deployment": "node scripts/check-hyper-deployment.js"
   },
   "engines": {
     "node": ">=20"
