@@ -5,6 +5,7 @@
  */
 import {createDurableIncidentCheckpoint} from "./durable-incident-checkpoint.js";
 import {createRecoveryAuditIntegrity} from "./recovery-audit-integrity.js";
+import {createTrustedAnchorHealth} from "./trusted-anchor-health.js";
 import {resolve,isAbsolute} from "node:path";
 export const TRUSTED_RECOVERY_AUDIT_ANCHOR_VERSION="6.0.0";
 const fail=(code,message)=>Object.assign(new Error(message),{code});
@@ -18,6 +19,7 @@ export function createTrustedRecoveryAuditAnchor({
   throw new TypeError("Independent absolute anchor/audit directories, audit reader and reviewer required.");
  const store=createDurableIncidentCheckpoint({directory,key,keyId});
  const inspect=createRecoveryAuditIntegrity({directory:auditDirectory,readDurableAudit});
+ const health=createTrustedAnchorHealth({directory,readAnchor:()=>store.read(),inspectAudit:options=>inspect.assess(options)});
  async function assess(){
   const anchor=await store.read();
   const report=await inspect.assess({trustedAnchor:anchor});
@@ -45,6 +47,6 @@ export function createTrustedRecoveryAuditAnchor({
   version:TRUSTED_RECOVERY_AUDIT_ANCHOR_VERSION,
   initialize:()=>store.initialize(),
   read:()=>store.read(),
-  assess,advance
+  assess,advance,inspectHealth:()=>health.assess()
  });
 }
