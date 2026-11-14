@@ -6,7 +6,7 @@
  */
 import {mkdir} from "node:fs/promises";
 import {join} from "node:path";
-import {createIncidentRecoveryIntegration} from "../incident-recovery-integration.js";
+import {createIncidentRecoveryIntegration} from "../../incident-recovery-integration.js";
 const [archiveDirectory,checkpointDirectory,mode]=process.argv.slice(2);
 const engine=createIncidentRecoveryIntegration({
  archiveDirectory,checkpointDirectory,
