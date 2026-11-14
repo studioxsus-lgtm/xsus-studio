@@ -22,12 +22,12 @@ describe("Hyper Audit v1.6.0 — externally keyed anchors",()=>{
  it("rejects a rollback against an anchor",()=>{
   const v=verifier(),a=v.createAnchor(snap([entry(1,hash("a")),entry(2,hash("b"))]));
   expect(()=>v.verifyAnchor(snap([entry(1,hash("a"))]),a))
-   .toMatchObject({code:"XSUS_AUDIT_ANCHOR_ROLLBACK"});
+   .toThrowError(expect.objectContaining({code:"XSUS_AUDIT_ANCHOR_ROLLBACK"}));
  });
  it("rejects a divergent tip at the same sequence",()=>{
   const v=verifier(),a=v.createAnchor(snap([entry(1,hash("a"))]));
   expect(()=>v.verifyAnchor(snap([entry(1,hash("b"))]),a))
-   .toMatchObject({code:"XSUS_AUDIT_ANCHOR_FORK"});
+   .toThrowError(expect.objectContaining({code:"XSUS_AUDIT_ANCHOR_FORK"}));
  });
  it("allows forward progress with matching retained history",()=>{
   const v=verifier(),a=v.createAnchor(snap([entry(1,hash("a"))]));
@@ -40,12 +40,12 @@ describe("Hyper Audit v1.6.0 — externally keyed anchors",()=>{
  it("fails closed when anchor history is no longer observable",()=>{
   const v=verifier(),a=v.createAnchor(snap([entry(1,hash("a"))]));
   expect(()=>v.verifyAnchor(snap([entry(3,hash("c"))],hash("b")),a))
-   .toMatchObject({code:"XSUS_AUDIT_ANCHOR_UNVERIFIABLE"});
+   .toThrowError(expect.objectContaining({code:"XSUS_AUDIT_ANCHOR_UNVERIFIABLE"}));
  });
  it("rejects mismatched signing keys",()=>{
   const s=snap([entry(1,hash("a"))]),a=verifier().createAnchor(s);
   const other=createAuditAnchorVerifier({key:"x".repeat(48),keyId:"primary-2026"});
-  expect(()=>other.verifyAnchor(s,a)).toMatchObject({code:"XSUS_AUDIT_ANCHOR_SIGNATURE"});
+  expect(()=>other.verifyAnchor(s,a)).toThrowError(expect.objectContaining({code:"XSUS_AUDIT_ANCHOR_SIGNATURE"}));
  });
  it("rejects short keys",()=>{
   expect(()=>createAuditAnchorVerifier({key:"weak",keyId:"primary-2026"})).toThrow();
