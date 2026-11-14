@@ -19,13 +19,19 @@ function validate(doc,maxEntries){
   !(doc.anchorHash==="GENESIS"||digest(doc.anchorHash))||
   !Number.isSafeInteger(doc.lastSequence)||doc.lastSequence<0)
   throw new TypeError("Invalid persistent audit journal.");
+ if(Object.keys(doc).sort().join(",")!==
+  "anchorHash,entries,lastSequence,version")
+  throw new TypeError("Unexpected journal fields.");
  let prev=doc.anchorHash,seq=null;
  for(const e of doc.entries){
-  if(!plain(e)||!Number.isSafeInteger(e.sequence)||e.sequence<1||
+  if(!plain(e)||Object.keys(e).sort().join(",")!==
+   "contradictionDigest,decisionDigest,evidenceCount,hash,previousHash,sequence,status,summary"||
+   !Number.isSafeInteger(e.sequence)||e.sequence<1||
    (seq!==null&&e.sequence!==seq+1)||
    e.previousHash!==prev||!digest(e.hash)||
    !["reviewed","explicit-conflicts","incomplete-review"].includes(e.status)||
    !count(e.evidenceCount)||!plain(e.summary)||
+   Object.keys(e.summary).sort().join(",")!=="blocked,eligible,needsReview"||
    !["eligible","needsReview","blocked"].every(k=>count(e.summary[k]))||
    !digest(e.decisionDigest)||!digest(e.contradictionDigest))
    throw new TypeError("Invalid audit entry.");
