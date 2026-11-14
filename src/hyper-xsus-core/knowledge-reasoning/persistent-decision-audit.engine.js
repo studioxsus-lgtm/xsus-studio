@@ -3,7 +3,7 @@
  * Node-only atomic snapshot persistence. Fail closed on malformed journals.
  * No automatic recovery from unverified temp files.
  */
-import {readFile,writeFile,rename,open,mkdir,unlink} from "node:fs/promises";
+import {readFile,writeFile,rename,open,mkdir,unlink,lstat} from "node:fs/promises";
 import {dirname,basename,join} from "node:path";
 import {randomUUID,createHash} from "node:crypto";
 import {constants} from "node:fs";
@@ -161,8 +161,19 @@ export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}
     failed=true;
     throw e;
    }finally{
-    try{await lock.close();await unlink(filePath+".lock");}
-    catch(e){failed=true;throw e;}
+    // Never delete a replacement lock installed by another actor.
+    // Compare inode identity while the original descriptor is still open.
+    let releaseError;
+    try{
+     const owned=await lock.stat();
+     const linked=await lstat(filePath+".lock");
+     if(!linked.isFile()||owned.dev!==linked.dev||owned.ino!==linked.ino)
+      throw Object.assign(new Error("Audit lock ownership changed."),
+       {code:"XSUS_AUDIT_LOCK_CHANGED"});
+     await unlink(filePath+".lock");
+    }catch(e){releaseError=e;failed=true;}
+    try{await lock.close();}catch(e){releaseError??=e;failed=true;}
+    if(releaseError)throw releaseError;
    }
    return structuredClone(entry);
   });
