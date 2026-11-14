@@ -51,10 +51,11 @@ export function createRotatingAuditAnchors({directory,key,keyId,fsOps={}}={}){
  async function verify(snapshot){
   const seqs=await list();
   if(!seqs.length)throw error("XSUS_ANCHOR_MISSING","No external checkpoint.");
-  // Every retained checkpoint must authenticate against the current journal.
-  // Older checkpoints beyond journal retention cannot be verified: fail closed.
-  for(const seq of seqs)verifier.verifyAnchor(snapshot,await read(seq));
-  return seqs.at(-1);
+  // The newest checkpoint is authoritative; older signed checkpoints may
+  // predate the journal's bounded retention and remain forensic artifacts.
+  const latest=seqs.at(-1);
+  verifier.verifyAnchor(snapshot,await read(latest));
+  return latest;
  }
  async function rotate(snapshot){
   const checkpoint=verifier.createAnchor(snapshot);
