@@ -13,6 +13,7 @@ import {createRecoveryDecisionIntelligence} from "./recovery-decision-intelligen
 import {createRecoveryDecisionVerification} from "./recovery-decision-verification.js";
 import {createRecoveryDecisionAudit} from "./recovery-decision-audit.js";
 import {createDurableRecoveryAudit} from "./durable-recovery-audit.js";
+import {createRecoveryAuditIntegrity} from "./recovery-audit-integrity.js";
 export const INCIDENT_RECOVERY_INTEGRATION_VERSION="4.1.0";
 export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDirectory,archiveKey,checkpointKey,archiveKeyId,checkpointKeyId,authorize,durableAudit}={}){
  if(typeof archiveDirectory!=="string"||typeof checkpointDirectory!=="string"||
@@ -28,6 +29,7 @@ export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDi
  const decisionVerification=createRecoveryDecisionVerification({inspectOperationalReadiness:()=>operational.assess()});
  const audit=createRecoveryDecisionAudit({verifyRecoveryDecisions:()=>decisionVerification.assess()});
  const durable=durableAudit===undefined?null:createDurableRecoveryAudit(durableAudit);
+ const integrity=durable?createRecoveryAuditIntegrity({readDurableAudit:()=>durable.read(),directory:durableAudit.directory}):null;
  const promotion=createIncidentCheckpointPromotion({guard,archive,checkpoint,authorize,readiness:()=>readiness.assess()});
  return Object.freeze({
   version:INCIDENT_RECOVERY_INTEGRATION_VERSION,
@@ -44,6 +46,7 @@ export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDi
   verifyRecoveryDecisionAudit:()=>audit.verify(),
   initializeDurableRecoveryAudit:()=>{if(!durable)throw new Error("Durable audit not configured.");return durable.initialize();},
   readDurableRecoveryAudit:()=>{if(!durable)throw new Error("Durable audit not configured.");return durable.read();},
+  inspectDurableRecoveryAudit:(options)=>{if(!integrity)throw new Error("Durable audit not configured.");return integrity.assess(options);},
   recordDurableRecoveryAudit:async()=>{if(!durable)throw new Error("Durable audit not configured.");const verified=await decisionVerification.assess();return durable.append(verified);},
   promote:()=>promotion.promote(),
   readCheckpoint:()=>checkpoint.read(),
