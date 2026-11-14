@@ -31,7 +31,7 @@ export function createSecureReasoningPipeline({
   if(!plain(authorization)||!id(authorization.principalId)||!id(authorization.scope))
    throw Object.assign(new Error("Evidence access denied."),{
     code:"XSUS_EVIDENCE_ACCESS_DENIED"});
-  const request={query,language,authorization};
+  if(typeof query!=="string"||!query.trim()||query.length>8000)\n   throw new TypeError("Invalid query.");\n  const request={query,language,authorization};
   if(limit!==undefined)request.limit=limit;
   // Authorization is checked by the injected context provider before this call returns.
   const context=await contextEngine.build(request);
