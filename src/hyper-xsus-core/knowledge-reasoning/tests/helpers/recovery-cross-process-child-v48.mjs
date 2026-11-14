@@ -7,7 +7,7 @@ import {createIncidentRecoveryIntegration} from "../../incident-recovery-integra
 const [archiveDirectory,checkpointDirectory,mode,rawSequence]=process.argv.slice(2);
 const report=n=>({sequence:n,status:"verified",safeToResume:true,blockers:[],missingReceipts:[],unexpectedReceipts:[]});
 const authorize=mode==="pause-review"
- ?async()=>{process.stdout.write("REVIEW_READY\n");await new Promise(()=>{});}
+ ?async()=>{process.stdout.write("REVIEW_READY\n");await new Promise(()=>{setInterval(()=>{},1000);});}
  :async()=>true;
 const engine=createIncidentRecoveryIntegration({
  archiveDirectory,checkpointDirectory,archiveKey:"a".repeat(48),
