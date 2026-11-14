@@ -42,7 +42,21 @@ export function createSupabaseAuditStorage({
  }
  async function append(row){
   const validated=validate(row);
-  const rows=await request("POST","?select=event_id,sequence,previous_hash,entry_hash,payload",[validated]);
+  // Database RPC serializes writers and validates the expected chain head.
+  // Direct table inserts are intentionally not used.
+  const response=await fetchImpl(url+"/rest/v1/rpc/xsus_hyper_append_v811",{
+   method:"POST",
+   headers:{apikey:key,Authorization:"Bearer "+key,
+    Accept:"application/json","Content-Type":"application/json"},
+   body:JSON.stringify({p_event_id:validated.event_id,
+    p_sequence:validated.sequence,p_previous_hash:validated.previous_hash,
+    p_entry_hash:validated.entry_hash,p_payload:validated.payload}),
+   signal:AbortSignal.timeout(10000),redirect:"error",cache:"no-store"
+  });
+  if(!response.ok)throw fail("XSUS_SUPABASE_AUDIT_UNAVAILABLE");
+  let rows;
+  try{rows=await response.json();}catch{throw fail("XSUS_SUPABASE_AUDIT_INVALID_RESPONSE");}
+  if(!Array.isArray(rows))throw fail("XSUS_SUPABASE_AUDIT_INVALID_RESPONSE");
   if(rows.length!==1)throw fail("XSUS_SUPABASE_AUDIT_UNCERTAIN");
   const stored=validate(rows[0]);
   if(JSON.stringify(stored)!==JSON.stringify(validated))
