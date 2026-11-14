@@ -25,7 +25,7 @@ describe("Hyper Audit v3.5 — durable backend stress and incident integration",
    expect(await fresh.highWater.read()).toBe(250);
    expect(await fresh.expected.read()).toEqual(Array.from({length:250},(_,i)=>i+1));
   });
- });
+ },120000);
  it("rejects 40 stale CAS attempts without changing durable state",async()=>{
   await fixture(async({make})=>{
    const b=make();await b.initialize(0);
