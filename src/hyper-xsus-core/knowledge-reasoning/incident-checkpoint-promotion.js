@@ -17,9 +17,15 @@ export function createIncidentCheckpointPromotion({guard,archive,checkpoint,auth
  async function requireReady(){
   if(!readiness)return;
   const state=await readiness();
-  if(!state||!Array.isArray(state.blockers)||
-   state.blockers.length!==1||state.blockers[0]!=="UNANCHORED_ARCHIVE_TAIL")
-   throw fail("XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED","Recovery residue or unsafe readiness prevents promotion.");
+  if(!state||!Array.isArray(state.blockers))
+   throw fail("XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED","Invalid readiness assessment.");
+  if(state.blockers.length===1&&state.blockers[0]==="UNANCHORED_ARCHIVE_TAIL")return;
+  if(state.blockers.includes("CHECKPOINT_WRITER_LOCK_REVIEW_REQUIRED"))
+   throw fail("XSUS_CHECKPOINT_LOCKED","Concurrent or interrupted checkpoint writer.");
+  if(state.blockers.includes("ARCHIVE_WRITER_LOCK_REVIEW_REQUIRED")||
+   state.blockers.length===0)
+   throw fail("XSUS_INCIDENT_PROMOTION_BLOCKED","Only a verified, unanchored tail may be promoted.");
+  throw fail("XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED","Recovery residue prevents promotion.");
  }
  let busy=false;
  async function promote(){
