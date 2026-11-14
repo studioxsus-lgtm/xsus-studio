@@ -60,12 +60,12 @@ describe("Hyper XSUS Core v6.8 — strict recovery security validation",()=>{
   });
   expect(x.safeToResume).toBe(true);
   expect(x.anchor.count).toBe(0);
- }));
+ });
  it("blocks known integrity exceptions",async()=>{
   const x=await verify(async()=>{throw Object.assign(new Error("invalid"),{code:"XSUS_CHECKPOINT_SIGNATURE"});});
   expect(x.safeToResume).toBe(false);
   expect(x.blockers).toContain("SECURITY_INSPECTION_ERROR");
- }));
+ });
  it("propagates unknown I/O failures",async()=>{
   await expect(verify(async()=>{throw Object.assign(new Error("disk"),{code:"EIO"});})).rejects.toMatchObject({code:"EIO"});
  });
