@@ -3,7 +3,7 @@
  * NOT an external rollback anchor. Requires a separately protected directory/key.
  */
 import {createHmac,timingSafeEqual} from "node:crypto";
-import {mkdir,open,readFile,rename,rm} from "node:fs/promises";
+import {mkdir,open,readFile,rename,rmdir} from "node:fs/promises";
 import {constants} from "node:fs";
 import {join,isAbsolute} from "node:path";
 export const DURABLE_CHECKPOINT_VERSION="4.0.0";
@@ -39,7 +39,7 @@ export function createDurableIncidentCheckpoint({directory,key,keyId}={}){
   try{await mkdir(lock, {mode:0o700});}
   catch(e){if(e.code==="EEXIST")throw fail("XSUS_CHECKPOINT_LOCKED","Concurrent or interrupted checkpoint writer.");throw e;}
  }
- async function release(){await rm(lock,{recursive:false});}
+ async function release(){await rmdir(lock);}
  async function persist(mark,{exclusive=false}={}){
   const body=JSON.stringify({version:DURABLE_CHECKPOINT_VERSION,keyId,count:mark.count,tip:mark.tip,signature:sign(mark.count,mark.tip)});
   const tmp=join(directory,"checkpoint.pending");
