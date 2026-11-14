@@ -6,8 +6,8 @@ export const RECOVERY_DIAGNOSTICS_VERSION="5.3.0";
 const classify=code=>{
  if(code==="ARCHIVE_ROLLBACK"||code==="TRUSTED_PREFIX_FORK")return ["integrity","critical"];
  if(code==="UNANCHORED_ARCHIVE_TAIL")return ["unanchored-evidence","high"];
- if(code.includes("LOCK")||code.includes("WRITER"))return ["writer-lock","high"];
- if(code.includes("PENDING"))return ["incomplete-write","high"];
+ if(/^(?:ARCHIVE_WRITER_LOCK|CHECKPOINT_WRITER_LOCK|WRITER_LOCK)_REVIEW_REQUIRED$/.test(code))return ["writer-lock","high"];
+ if(code==="CHECKPOINT_PENDING_REVIEW_REQUIRED")return ["incomplete-write","high"];
  return ["unclassified","high"];
 };
 export function classifyRecoveryOperationalReport(report){
