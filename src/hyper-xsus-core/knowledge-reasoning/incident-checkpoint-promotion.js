@@ -8,16 +8,25 @@ const valid=n=>Number.isSafeInteger(n)&&n>=0;
 const hex=/^[a-f0-9]{64}$/;
 const validMark=x=>x&&valid(x.count)&&typeof x.tip==="string"&&hex.test(x.tip)&&
  (x.count!==0||x.tip==="0".repeat(64));
-export function createIncidentCheckpointPromotion({guard,archive,checkpoint,authorize}={}){
+export function createIncidentCheckpointPromotion({guard,archive,checkpoint,authorize,readiness}={}){
  if(!guard||typeof guard.inspect!=="function"||!archive||typeof archive.verify!=="function"||
  !checkpoint||typeof checkpoint.read!=="function"||typeof checkpoint.advance!=="function"||
  typeof authorize!=="function")
  throw new TypeError("Guard, authenticated archive, independent CAS checkpoint and reviewer required.");
+ if(readiness!==undefined&&typeof readiness!=="function")throw new TypeError("Readiness must be a function.");
+ async function requireReady(){
+  if(!readiness)return;
+  const state=await readiness();
+  if(!state||!Array.isArray(state.blockers)||
+   state.blockers.length!==1||state.blockers[0]!=="UNANCHORED_ARCHIVE_TAIL")
+   throw fail("XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED","Recovery residue or unsafe readiness prevents promotion.");
+ }
  let busy=false;
  async function promote(){
   if(busy)throw fail("XSUS_INCIDENT_PROMOTION_BUSY","Promotion already in progress.");
   busy=true;
   try{
+   await requireReady();
    const before=await checkpoint.read();
    if(!validMark(before))throw fail("XSUS_INCIDENT_CHECKPOINT_INVALID","Malformed checkpoint.");
    const assessment=await guard.inspect();
@@ -36,6 +45,7 @@ export function createIncidentCheckpointPromotion({guard,archive,checkpoint,auth
    const next=Object.freeze({count:verified.count,tip:verified.tip});
    const approved=await authorize(Object.freeze({previous:Object.freeze({...before}),next,assessment}));
    if(approved!==true)throw fail("XSUS_INCIDENT_PROMOTION_DENIED","Explicit reviewer authorization required.");
+   await requireReady();
    const again=await guard.inspect();
    if(JSON.stringify(again)!==JSON.stringify(assessment))
     throw fail("XSUS_INCIDENT_PROMOTION_CHANGED","Assessment changed before CAS.");
