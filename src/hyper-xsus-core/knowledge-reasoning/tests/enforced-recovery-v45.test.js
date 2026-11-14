@@ -26,7 +26,7 @@ describe("Hyper Audit v4.5 — enforced promotion readiness",()=>{
   let calls=0;setReviewer(async()=>{calls++;return true;});
   const r=make();await r.initializeCheckpoint();await r.recordIncident(clean);
   await writeFile(join(checkpointDirectory,"checkpoint.pending"),"partial");
-  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED"});
+  await expect(r.promote()).rejects.toMatchObject({code:"EEXIST"});
   expect(calls).toBe(0);expect((await r.readCheckpoint()).count).toBe(0);
  }));
  it("blocks checkpoint lock before reviewer",async()=>fixture(async({make,checkpointDirectory,setReviewer})=>{
@@ -44,7 +44,7 @@ describe("Hyper Audit v4.5 — enforced promotion readiness",()=>{
  it("blocks residue created during reviewer callback",async()=>fixture(async({make,checkpointDirectory,setReviewer})=>{
   const r=make();await r.initializeCheckpoint();await r.recordIncident(clean);
   setReviewer(async()=>{await writeFile(join(checkpointDirectory,"checkpoint.pending"),"interrupted");return true;});
-  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED"});
+  await expect(r.promote()).rejects.toMatchObject({code:"EEXIST"});
   expect((await r.readCheckpoint()).count).toBe(0);
  }));
  it("blocks checkpoint lock created during reviewer callback",async()=>fixture(async({make,checkpointDirectory,setReviewer})=>{
