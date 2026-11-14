@@ -5,6 +5,7 @@
  */
 import {createSupabaseAuditPipeline} from "./supabase-audit-pipeline-v814.js";
 import {createTrustedCheckpointIntegration} from "./trusted-checkpoint-integration-v817.js";
+import {createTrustedCheckpointProtocol} from "./trusted-checkpoint-v815.js";
 
 export const RECOVERY_LIFECYCLE_VERSION="8.1.8";
 const fail=code=>Object.assign(new Error(code),{code});
@@ -26,14 +27,6 @@ export function createRecoveryLifecycle({
    checkpointSigningKey,checkpointKeyId
   });
  }
- function createPipeline(){
-  // The pipeline receives only verified checkpoint data, not untrusted rows.
-  const checkpoint=createIntegration();
-  // Its inspect() verifies the entire audit and checkpoint, including signature.
-  // For append we need an independently signature-verified checkpoint reader.
-  // Expose the signed reader via the same underlying protocol.
-  return {checkpoint};
- }
  async function inspect(){
   return createIntegration().inspect();
  }
@@ -49,7 +42,6 @@ export function createRecoveryLifecycle({
   if(!initial.verified)throw fail("XSUS_LIFECYCLE_NOT_READY");
 
   // Verify the checkpoint signature for the pipeline through the protocol.
-  const {createTrustedCheckpointProtocol}=await import("./trusted-checkpoint-v815.js");
   const signed=createTrustedCheckpointProtocol({
    key:checkpointSigningKey,keyId:checkpointKeyId,
    readCheckpoint:checkpointStorage.readCheckpoint,
