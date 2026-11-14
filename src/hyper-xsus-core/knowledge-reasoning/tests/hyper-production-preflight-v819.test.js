@@ -13,7 +13,7 @@ const ready=()=>({
 });
 describe("Hyper v8.1.9 production preflight",()=>{
  it("blocks disabled integration",()=>{
-  expect(inspect(ready()&&{...ready(),XSUS_HYPER_V81_ENABLED:"false"}).blockers)
+  expect(inspect({...ready(),XSUS_HYPER_V81_ENABLED:"false"}).blockers)
    .toContain("V81_NOT_ENABLED");
  });
  it("accepts complete isolated configuration shape only",()=>{
