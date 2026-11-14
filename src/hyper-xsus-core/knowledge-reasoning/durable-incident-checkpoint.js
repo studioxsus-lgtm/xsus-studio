@@ -63,9 +63,11 @@ export function createDurableIncidentCheckpoint({directory,key,keyId}={}){
  async function initialize(){
   await acquire();
   try{
-   await checkPending();
+   // Preserve idempotent initialization of an existing authenticated checkpoint.
+   // A pending artifact still blocks creation of a missing checkpoint.
    try{await read();return false;}
    catch(e){if(e.code!=="XSUS_CHECKPOINT_UNINITIALIZED")throw e;}
+   await checkPending();
    await persist({count:0,tip:zero},{exclusive:true});
    return true;
   }finally{await release();}
