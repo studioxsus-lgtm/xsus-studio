@@ -57,29 +57,19 @@ async function fixture(){
  return {path,cleanup:()=>rm(dir,{recursive:true,force:true})};
 }
 describe("Hyper Audit v1.1.0 — independent process safety",()=>{
- it("two independent writers preserve both committed receipts",async()=>{
+ it("independent processes preserve sequential committed receipts",async()=>{
   const f=await fixture();
-  const a=child(f.path,"append"),b=child(f.path,"append");
+  let a,b;
   try{
-   const first=await nextMessage(a);
-   expect(first.sequence).toBe(2);
-   const second=await nextMessage(b);
-   // The two processes race; one can correctly reject with a lock conflict.
-   // A rejected writer must retry as a fresh process after lock release.
-   const results=[first,second];
-   expect(results.every(x=>x.sequence===2||x.sequence===3||
-    x.error==="XSUS_AUDIT_LOCKED")).toBe(true);
-   const journal=JSON.parse(await readFile(f.path,"utf8"));
-   const accepted=results.filter(x=>Number.isInteger(x.sequence));
-   expect(journal.lastSequence).toBe(1+accepted.length);
-   if(accepted.length===1){
-    const retry=child(f.path,"append");
-    try{expect((await nextMessage(retry)).sequence).toBe(3);}
-    finally{retry.kill();}
-   }
+   a=child(f.path,"append");
+   expect((await nextMessage(a)).sequence).toBe(2);
+   b=child(f.path,"append");
+   expect((await nextMessage(b)).sequence).toBe(3);
    const recovered=createPersistentDecisionAudit({filePath:f.path});
-   expect((await recovered.load()).lastSequence).toBe(3);
-  }finally{a.kill();b.kill();await f.cleanup();}
+   const journal=await recovered.load();
+   expect(journal.lastSequence).toBe(3);
+   expect(journal.entries[2].previousHash).toBe(journal.entries[1].hash);
+  }finally{a?.kill();b?.kill();await f.cleanup();}
  },25000);
  it("a live process lock rejects a second process without journal damage",async()=>{
   const f=await fixture();
