@@ -3,7 +3,7 @@
  * Node-only atomic snapshot persistence. Fail closed on malformed journals.
  * No automatic recovery from unverified temp files.
  */
-import {readFile,writeFile,rename,open,mkdir} from "node:fs/promises";
+import {readFile,writeFile,rename,open,mkdir,unlink} from "node:fs/promises";
 import {dirname,basename,join} from "node:path";
 import {randomUUID,createHash} from "node:crypto";
 import {createKnowledgeDecisionAudit} from "./knowledge-decision-audit.engine.js";
@@ -96,21 +96,53 @@ export function createPersistentDecisionAudit({filePath,maxEntries=1000,fsOps={}
    if(!loaded||closed||failed)throw new Error("Persistent audit unavailable.");
    // Reuse v0.7.0 strict result validation and canonical digest fields.
    const receipt=createKnowledgeDecisionAudit().record({result});
-   const payload={sequence:doc.lastSequence+1,
-    previousHash:doc.entries.length?
-     doc.entries[doc.entries.length-1].hash:doc.anchorHash,
-    status:receipt.status,evidenceCount:receipt.evidenceCount,
-    summary:receipt.summary,decisionDigest:receipt.decisionDigest,
-    contradictionDigest:receipt.contradictionDigest};
-   const entry={...payload,hash:hash(payload)};
-   const entries=[...doc.entries,entry];
-   let anchorHash=doc.anchorHash;
-   if(entries.length>maxEntries)anchorHash=entries.shift().hash;
-   const next={version:PERSISTENT_DECISION_AUDIT_VERSION,
-    anchorHash,lastSequence:entry.sequence,entries};
-   validate(next,maxEntries);
-   await atomicWrite(next);
-   doc=next;
+   // Exclusive lock is never stolen automatically: uncertain ownership fails closed.
+   // Refresh under lock to prevent two processes from overwriting each other's receipts.
+   await io.mkdir(dirname(filePath),{recursive:true});
+   let lock;
+   try{
+    lock=await open(filePath+".lock","wx",0o600);
+   }catch(e){
+    if(e?.code==="EEXIST")throw Object.assign(
+     new Error("Audit journal is locked."),{code:"XSUS_AUDIT_LOCKED"});
+    throw e;
+   }
+   let entry;
+   try{
+    let current;
+    try{
+     current=JSON.parse(await io.readFile(filePath,"utf8"));
+     validate(current,maxEntries);
+    }catch(e){
+     if(e?.code!=="ENOENT")throw e;
+     // A fresh journal must not silently replace a previously loaded journal.
+     if(doc.lastSequence!==0||doc.entries.length||doc.anchorHash!=="GENESIS")
+      throw new Error("Committed audit journal disappeared.");
+     current={version:PERSISTENT_DECISION_AUDIT_VERSION,
+      anchorHash:"GENESIS",lastSequence:0,entries:[]};
+    }
+    const payload={sequence:current.lastSequence+1,
+     previousHash:current.entries.length?
+      current.entries[current.entries.length-1].hash:current.anchorHash,
+     status:receipt.status,evidenceCount:receipt.evidenceCount,
+     summary:receipt.summary,decisionDigest:receipt.decisionDigest,
+     contradictionDigest:receipt.contradictionDigest};
+    entry={...payload,hash:hash(payload)};
+    const entries=[...current.entries,entry];
+    let anchorHash=current.anchorHash;
+    if(entries.length>maxEntries)anchorHash=entries.shift().hash;
+    const next={version:PERSISTENT_DECISION_AUDIT_VERSION,
+     anchorHash,lastSequence:entry.sequence,entries};
+    validate(next,maxEntries);
+    await atomicWrite(next);
+    doc=next;
+   }catch(e){
+    failed=true;
+    throw e;
+   }finally{
+    try{await lock.close();await unlink(filePath+".lock");}
+    catch(e){failed=true;throw e;}
+   }
    return structuredClone(entry);
   });
   queue=job.catch(()=>{});
