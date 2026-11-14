@@ -55,6 +55,7 @@ export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDi
   readTrustedAuditAnchor:()=>{if(!anchor)throw new Error("Trusted audit anchor not configured.");return anchor.read();},
   inspectTrustedAuditAnchor:()=>{if(!anchor)throw new Error("Trusted audit anchor not configured.");return anchor.assess();},
   advanceTrustedAuditAnchor:()=>{if(!anchor)throw new Error("Trusted audit anchor not configured.");return anchor.advance();},
+  inspectTrustedAuditAnchorHealth:()=>{if(!anchor)throw new Error("Trusted audit anchor not configured.");return anchor.inspectHealth();},
   promote:()=>promotion.promote(),
   readCheckpoint:()=>checkpoint.read(),
   verifyArchive:()=>archive.verify()
