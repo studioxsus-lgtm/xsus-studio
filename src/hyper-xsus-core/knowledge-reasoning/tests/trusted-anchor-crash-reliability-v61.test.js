@@ -118,4 +118,12 @@ describe("Hyper XSUS Core v6.1 — trusted anchor crash and reliability",()=>{
    await expect(denied.anchor.advance()).rejects.toMatchObject({code:"XSUS_AUDIT_ANCHOR_DENIED"});
   expect(await readFile(join(root,"anchor","checkpoint.json"),"utf8")).toBe(baseline);
  }));
+ it("keeps existing checkpoint initialization idempotent despite pending residue",async()=>fixture(async({anchor,directory})=>{
+  const pending=join(directory,"checkpoint.pending");
+  await writeFile(pending,"manual-review");
+  expect(await anchor.initialize()).toBe(false);
+  expect(await readFile(pending,"utf8")).toBe("manual-review");
+  expect((await anchor.read()).count).toBe(0);
+ }));
+
 });
