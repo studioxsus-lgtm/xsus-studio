@@ -13,6 +13,7 @@
  */
 
 import http from "node:http";
+import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js";
 import { processAIRequest } from "./src/core/ai-core.js";
 import { createPrivateChatHandler } from "./src/server/private-chat-handler.js";
 import { createAssistantMessageWriter } from "./src/server/assistant-message-writer.js";
@@ -23,6 +24,7 @@ import { createTrustedRecoveryAuditAnchor } from "./src/hyper-xsus-core/knowledg
 import { createDurableRecoveryAudit } from "./src/hyper-xsus-core/knowledge-reasoning/durable-recovery-audit.js";
 
 const PORT = Number(process.env.PORT) || 3000;
+const hyperV81Route = createHyperV81Route({ env: process.env });
 
 const privateReplyWriter = process.env.XSUS_PRIVATE_REPLY_WRITES_ENABLED === "true"
     ? createAssistantMessageWriter({
@@ -249,6 +251,15 @@ const server = http.createServer(
                     chat: "POST /api/chat"
                 }
             });
+        }
+
+        // New Hyper v8.1 route: fail-closed until independently verified.
+        if (pathname === "/api/xsus-app/hyper/v81/assurance") {
+            const result = await hyperV81Route.handle({
+                method: req.method,
+                authorization: req.headers.authorization
+            });
+            return sendJSON(res, result.status, result.data);
         }
 
         // Server-only authenticated, read-only Hyper XSUS Core status endpoint.
