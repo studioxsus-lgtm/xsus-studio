@@ -33,13 +33,13 @@ describe("Hyper Audit v4.5 — enforced promotion readiness",()=>{
   let calls=0;setReviewer(async()=>{calls++;return true;});
   const r=make();await r.initializeCheckpoint();await r.recordIncident(clean);
   await mkdir(join(checkpointDirectory,"checkpoint.lock"));
-  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED"});
+  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_CHECKPOINT_LOCKED"});
   expect(calls).toBe(0);
  }));
  it("blocks archive lock before reviewer",async()=>fixture(async({make,archiveDirectory})=>{
   const r=make();await r.initializeCheckpoint();await r.recordIncident(clean);
   await mkdir(join(archiveDirectory,"writer.lock"));
-  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED"});
+  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_BLOCKED"});
  }));
  it("blocks residue created during reviewer callback",async()=>fixture(async({make,checkpointDirectory,setReviewer})=>{
   const r=make();await r.initializeCheckpoint();await r.recordIncident(clean);
@@ -50,7 +50,7 @@ describe("Hyper Audit v4.5 — enforced promotion readiness",()=>{
  it("blocks checkpoint lock created during reviewer callback",async()=>fixture(async({make,checkpointDirectory,setReviewer})=>{
   const r=make();await r.initializeCheckpoint();await r.recordIncident(clean);
   setReviewer(async()=>{await mkdir(join(checkpointDirectory,"checkpoint.lock"));return true;});
-  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED"});
+  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_CHECKPOINT_LOCKED"});
  }));
  it("rejects unsafe symlink pending artifact",async()=>fixture(async({make,checkpointDirectory})=>{
   const r=make();await r.initializeCheckpoint();await r.recordIncident(clean);
@@ -65,6 +65,6 @@ describe("Hyper Audit v4.5 — enforced promotion readiness",()=>{
  }));
  it("does not allow promotion without a tail",async()=>fixture(async({make})=>{
   const r=make();await r.initializeCheckpoint();
-  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_READINESS_BLOCKED"});
+  await expect(r.promote()).rejects.toMatchObject({code:"XSUS_INCIDENT_PROMOTION_BLOCKED"});
  }));
 });
