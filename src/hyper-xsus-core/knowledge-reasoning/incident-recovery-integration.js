@@ -9,6 +9,7 @@ import {createIncidentCheckpointPromotion} from "./incident-checkpoint-promotion
 import {createRecoveryReadinessGuard} from "./recovery-readiness-guard.js";
 import {createRecoveryOperationalReport} from "./recovery-operational-report.js";
 import {createRecoveryDiagnostics} from "./recovery-diagnostics.js";
+import {createRecoveryDecisionIntelligence} from "./recovery-decision-intelligence.js";
 export const INCIDENT_RECOVERY_INTEGRATION_VERSION="4.1.0";
 export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDirectory,archiveKey,checkpointKey,archiveKeyId,checkpointKeyId,authorize}={}){
  if(typeof archiveDirectory!=="string"||typeof checkpointDirectory!=="string"||
@@ -20,6 +21,7 @@ export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDi
  const readiness=createRecoveryReadinessGuard({archiveDirectory,checkpointDirectory,inspect:()=>guard.inspect()});
  const operational=createRecoveryOperationalReport({inspectReadiness:()=>readiness.assess(),verifyArchive:()=>archive.verify(),readCheckpoint:()=>checkpoint.read()});
  const diagnostics=createRecoveryDiagnostics({inspectOperationalReadiness:()=>operational.assess()});
+ const decisions=createRecoveryDecisionIntelligence({inspectRecoveryDiagnostics:()=>diagnostics.assess()});
  const promotion=createIncidentCheckpointPromotion({guard,archive,checkpoint,authorize,readiness:()=>readiness.assess()});
  return Object.freeze({
   version:INCIDENT_RECOVERY_INTEGRATION_VERSION,
@@ -29,6 +31,7 @@ export function createIncidentRecoveryIntegration({archiveDirectory,checkpointDi
   inspectReadiness:()=>readiness.assess(),
   inspectOperationalReadiness:()=>operational.assess(),
   inspectRecoveryDiagnostics:()=>diagnostics.assess(),
+  inspectRecoveryDecisions:()=>decisions.assess(),
   promote:()=>promotion.promote(),
   readCheckpoint:()=>checkpoint.read(),
   verifyArchive:()=>archive.verify()
