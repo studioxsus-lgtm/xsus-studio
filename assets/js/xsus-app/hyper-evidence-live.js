@@ -19,7 +19,7 @@ function showLiveResult(verified,observationId){
  };
  const [title,detail]=labels[lang]||labels.en;
  liveTitle.textContent=title;
- liveId.textContent="Observation ID: "+observationId;
+ liveId.textContent=(lang==="fr"?"Identifiant d’observation":lang==="sq"?"ID e vëzhgimit":"Observation ID")+": "+observationId;
  liveDetail.textContent=detail;
  liveResult.hidden=false;
 }
@@ -27,11 +27,23 @@ const SUPABASE_URL="https://rdcwqjsmzklktfccebfs.supabase.co";
 const PUBLISHABLE_KEY="sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr";
 const RENDER_ENDPOINT="https://xsus-studio.onrender.com/api/xsus-app/hyper/evidence/verify";
 const messages={
- en:{working:"Verifying existing evidence…",success:"Evidence verified successfully.",missing:"Please sign in to XSUS Studio first.",failed:"Verification failed. Check the observation ID, ownership and backend status."},
- sq:{working:"Po verifikohet evidenca ekzistuese…",success:"Evidenca u verifikua me sukses.",missing:"Identifikohu fillimisht në XSUS Studio.",failed:"Verifikimi dështoi. Kontrollo ID-në, pronësinë dhe serverin."},
- fr:{working:"Vérification de la preuve existante…",success:"Preuve vérifiée avec succès.",missing:"Connectez-vous d’abord à XSUS Studio.",failed:"Échec de vérification. Vérifiez l’identifiant, le propriétaire et le serveur."}
+ en:{working:"Verifying existing evidence…",success:"Evidence verified successfully.",missing:"Please sign in to XSUS Studio first.",ready:"Signed in. Enter an Observation ID to verify your evidence.",failed:"Verification failed. Check the observation ID, ownership and backend status."},
+ sq:{working:"Po verifikohet evidenca ekzistuese…",success:"Evidenca u verifikua me sukses.",missing:"Identifikohu fillimisht në XSUS Studio.",ready:"Je i identifikuar. Vendos ID-në e vëzhgimit për verifikim.",failed:"Verifikimi dështoi. Kontrollo ID-në, pronësinë dhe serverin."},
+ fr:{working:"Vérification de la preuve existante…",success:"Preuve vérifiée avec succès.",missing:"Connectez-vous d’abord à XSUS Studio.",ready:"Vous êtes connecté. Saisissez un identifiant d’observation pour vérifier votre preuve.",failed:"Échec de vérification. Vérifiez l’identifiant, le propriétaire et le serveur."}
 };
 const t=()=>messages[document.documentElement.lang?.slice(0,2)]||messages.en;
+let lastState="missing";
+let lastObservationId="";
+let lastVerified=false;
+function setState(state){
+ lastState=state;
+ if(status)status.textContent=t()[state]||t().failed;
+}
+function refreshLanguage(){
+ if(status)status.textContent=t()[lastState]||t().failed;
+ if(liveResult&&!liveResult.hidden)showLiveResult(lastVerified,lastObservationId);
+}
+document.addEventListener("xsus:language-changed",refreshLanguage);
 
 let clientPromise;
 function getClient(){
@@ -43,10 +55,9 @@ async function updateSignInStatus(){
  try{
   const client=await getClient();
   const {data,error}=await client.auth.getUser();
-  if(error||!data?.user?.id){status.textContent=t().missing;return;}
-  const messages={en:"Signed in. Enter an Observation ID to verify your evidence.",sq:"Je i identifikuar. Vendos Observation ID për verifikim.",fr:"Vous êtes connecté. Saisissez un Observation ID pour vérifier."};
-  status.textContent=messages[document.documentElement.lang?.slice(0,2)]||messages.en;
- }catch{status.textContent=t().failed;}
+  if(error||!data?.user?.id){setState("missing");return;}
+  setState("ready");
+ }catch{setState("failed");}
 }
 if(form){
  updateSignInStatus();
@@ -59,7 +70,7 @@ form?.addEventListener("submit",async event=>{
  if(!form.reportValidity()||submit.disabled)return;
  submit.disabled=true;
  if(liveResult)liveResult.hidden=true;
- status.textContent=t().working;
+ setState("working");
  try{
   if(!["https://www.xsusstudio.com","https://xsusstudio.com"].includes(location.origin))
    throw new Error("Open XSUS App on its official HTTPS domain.");
@@ -72,11 +83,15 @@ form?.addEventListener("submit",async event=>{
     endpoint:RENDER_ENDPOINT
   });
   const verified=result.ok===true&&result.verified===true;
-  status.textContent=verified?t().success:t().failed;
-  showLiveResult(verified,input.value.trim());
+  setState(verified?"success":"failed");
+  lastVerified=verified;
+  lastObservationId=input.value.trim();
+  showLiveResult(verified,lastObservationId);
  }catch(error){
   // Do not log tokens or expose internal evidence payloads in the UI.
-  status.textContent=t().failed;
-  showLiveResult(false,input.value.trim());
+  setState("failed");
+  lastVerified=false;
+  lastObservationId=input.value.trim();
+  showLiveResult(false,lastObservationId);
  }finally{submit.disabled=false;}
 });
