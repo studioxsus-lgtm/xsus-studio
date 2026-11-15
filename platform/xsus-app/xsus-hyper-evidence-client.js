@@ -39,5 +39,7 @@ export async function verifyXsusHyperEvidence({
   const data=await response.json();
   if(!data || typeof data!=="object" || Array.isArray(data))
     throw new Error("Invalid Hyper verification response.");
+  if(data.ok!==true || data.verified!==true)
+    throw new Error("Hyper evidence verification was not confirmed.");
   return data;
 }
