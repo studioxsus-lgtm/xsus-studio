@@ -14,6 +14,25 @@ liveMeta.id="xsus-hyper-live-result-meta";
 liveMeta.style.cssText="margin:8px 0 0;font-size:12px;opacity:.8;overflow-wrap:anywhere";
 liveDetail?.insertAdjacentElement("afterend",liveMeta);
 let lastVerifiedAt=null;
+const copyButton=document.createElement("button");
+copyButton.type="button";
+copyButton.style.cssText="margin-top:10px;padding:7px 12px;border:1px solid #36758c;border-radius:7px;background:#123248;color:#e6faff;cursor:pointer";
+copyButton.hidden=true;
+liveMeta?.insertAdjacentElement("afterend",copyButton);
+const copyLabels={
+ en:{copy:"Copy Observation ID",copied:"Observation ID copied",failed:"Could not copy ID",time:"Checked on this device"},
+ sq:{copy:"Kopjo ID-në e vëzhgimit",copied:"ID-ja u kopjua",failed:"ID-ja nuk u kopjua",time:"Kontrolluar në këtë pajisje"},
+ fr:{copy:"Copier l’identifiant d’observation",copied:"Identifiant copié",failed:"Impossible de copier l’identifiant",time:"Contrôlé sur cet appareil"}
+};
+copyButton.addEventListener("click",async()=>{
+ if(!lastVerified||!lastObservationId||liveResult?.hidden)return;
+ const lang=document.documentElement.lang?.slice(0,2);
+ const labels=copyLabels[lang]||copyLabels.en;
+ try{
+  await navigator.clipboard.writeText(lastObservationId);
+  copyButton.textContent=labels.copied;
+ }catch{copyButton.textContent=labels.failed;}
+});
 const uiLabels={
  en:{title:"Hyper Evidence Verification",description:"Authenticated read-only check of evidence you own.",id:"Observation ID",button:"Verify Evidence"},
  fr:{title:"Vérification des preuves Hyper",description:"Vérification authentifiée en lecture seule des preuves qui vous appartiennent.",id:"Identifiant d’observation",button:"Vérifier la preuve"},
@@ -51,9 +70,12 @@ function showLiveResult(verified,observationId,resultState=verified?"success":"f
   fr:{real:"Vérification réelle par le serveur · Pas un résultat fictif",time:"Vérifié le"}
  };
  const meta=metaLabels[lang]||metaLabels.en;
+ const copyText=copyLabels[lang]||copyLabels.en;
+ copyButton.hidden=!verified;
+ copyButton.textContent=copyText.copy;
  const locale=lang==="sq"?"sq-AL":lang==="fr"?"fr-FR":"en-GB";
  const checked=lastVerifiedAt?new Intl.DateTimeFormat(locale,{dateStyle:"medium",timeStyle:"medium"}).format(lastVerifiedAt):"";
- liveMeta.textContent=meta.real+(checked?" · "+meta.time+" "+checked:"");
+ liveMeta.textContent=(verified?meta.real:"")+(checked?(verified?" · ":"")+copyText.time+" "+checked:"");
  liveResult.hidden=false;
 }
 const SUPABASE_URL="https://rdcwqjsmzklktfccebfs.supabase.co";
@@ -75,6 +97,7 @@ input?.addEventListener("input",()=>{
  inputRevision+=1;
  // A previous server verification must never be presented for an edited ID.
  if(liveResult)liveResult.hidden=true;
+ copyButton.hidden=true;
  lastVerifiedAt=null;
  lastVerified=false;
  lastObservationId="";
@@ -128,6 +151,7 @@ form?.addEventListener("submit",async event=>{
  const requestedId=input.value.trim();
  if(!/^[A-Za-z0-9_-]{1,128}$/.test(requestedId)){
   if(liveResult)liveResult.hidden=true;
+  copyButton.hidden=true;
   setState("invalid");
   return;
  }
@@ -136,6 +160,7 @@ form?.addEventListener("submit",async event=>{
  const activeRequest=++requestRevision;
  const isCurrent=()=>activeRequest===requestRevision&&requestedRevision===inputRevision&&input.value.trim()===requestedId;
  if(liveResult)liveResult.hidden=true;
+ copyButton.hidden=true;
  setState("working");
  try{
   if(!["https://www.xsusstudio.com","https://xsusstudio.com"].includes(location.origin))
