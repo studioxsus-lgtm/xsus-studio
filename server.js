@@ -541,7 +541,7 @@ server.listen(
         );
         // Safe, read-only check at boot. No HTTP route or secret output.
         void checkHyperStartupReadiness({ env: process.env })
-            .then(result => console.log("XSUS Hyper Supabase readiness:", result.status))
+            .then(result => console.log("XSUS Hyper Supabase readiness:", JSON.stringify(result)))
             .catch(() => console.log("XSUS Hyper Supabase readiness: CHECK_UNAVAILABLE"));
     }
 );
