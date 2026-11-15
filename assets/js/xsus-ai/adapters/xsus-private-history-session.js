@@ -95,11 +95,13 @@ export function createPrivateHistorySession({
      INVALIDATION
   ========================================== */
 
-  function invalidate() {
+  function invalidate({ preserveLoaded = false } = {}) {
     generation += 1;
 
     activeLoad = null;
-    loadedUserId = null;
+    if (!preserveLoaded) {
+      loadedUserId = null;
+    }
   }
 
   function clearPrivateMemory() {
@@ -417,7 +419,9 @@ export function createPrivateHistorySession({
      * the previous request.
      */
     if (force) {
-      invalidate();
+      // A forced refresh supersedes in-flight requests, not previously
+      // verified same-account history. Identity changes still clear it.
+      invalidate({ preserveLoaded: true });
     }
 
     const token = ++generation;
