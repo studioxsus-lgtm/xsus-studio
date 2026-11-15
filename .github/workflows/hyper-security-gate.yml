@@ -5,6 +5,7 @@ on:
     branches: [feature/xsus-ai-core]
     paths:
       - 'src/hyper-xsus-core/knowledge-graph/tests/integration/transaction-journal.crash-lock-boundaries.test.js'
+      - 'src/platform/xsus-app/hyper-v8234-backend-composition.test.js'
       - 'src/platform/xsus-app/hyper-evidence-runtime-integration.test.js'
       - 'src/platform/xsus-app/hyper-evidence-hmac-integration.test.js'
       - 'src/platform/xsus-app/hyper-v8235-node-runtime-route.test.js'
@@ -32,6 +33,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Verify authenticated ownership, signed evidence and HTTP boundary
         run: npx vitest run --config vitest.hyper-security-gate.config.js
+      - name: Verify backend composition evidence contracts
+        run: npx vitest run src/platform/xsus-app/hyper-v8234-backend-composition.test.js
 
   crash-lock-boundaries:
     runs-on: ubuntu-latest
