@@ -22,7 +22,7 @@ export const ALBANIAN_PHRASE_PATTERNS: AlbanianPhrasePattern[] = [
     id: "negative-perfect",
     type: "negative_perfect",
     pattern:
-      /\bnuk\s+(?:e|i|u|më|të|na|ju|mi|ia|ua)?\s*(?:kam|ke|ka|kemi|keni|kanë)\s+[\p{L}\p{M}]+\b/giu,
+      /\bnuk\s+(?:e|i|u|më|të|na|ju|mi|ia|ua)?\s*(?:kam|ke|ka|kemi|keni|kanë)\s+[\p{L}\p{M}]+(?![\p{L}\p{M}])/giu,
     description: {
       sq: "Formë foljore e përbërë me mohim",
       en: "Negative compound verb form",
@@ -34,7 +34,7 @@ export const ALBANIAN_PHRASE_PATTERNS: AlbanianPhrasePattern[] = [
     id: "future-do-te",
     type: "future",
     pattern:
-      /\bdo\s+të\s+[\p{L}\p{M}]+\b/giu,
+      /\bdo\s+të\s+[\p{L}\p{M}]+(?![\p{L}\p{M}])/giu,
     description: {
       sq: "Ndërtim i kohës së ardhme",
       en: "Future construction",
@@ -46,7 +46,7 @@ export const ALBANIAN_PHRASE_PATTERNS: AlbanianPhrasePattern[] = [
     id: "perfect-kam",
     type: "perfect",
     pattern:
-      /\b(?:kam|ke|ka|kemi|keni|kanë)\s+[\p{L}\p{M}]+\b/giu,
+      /\b(?:kam|ke|ka|kemi|keni|kanë)\s+[\p{L}\p{M}]+(?![\p{L}\p{M}])/giu,
     description: {
       sq: "Formë foljore e përbërë me kam",
       en: "Compound verb form with kam",
@@ -58,7 +58,7 @@ export const ALBANIAN_PHRASE_PATTERNS: AlbanianPhrasePattern[] = [
     id: "dative-clitic-aorist",
     type: "dative_clitic_construction",
     pattern:
-      /\b(?:ia|ua|ma|ta|na|ju|mi|t'i|m'i)\s+[\p{L}\p{M}]+\b/giu,
+      /\b(?:ia|ua|ma|ta|na|ju|mi|t'i|m'i)\s+[\p{L}\p{M}]+(?![\p{L}\p{M}])/giu,
     description: {
       sq: "Ndërtim me përemër të shkurtër dhe folje",
       en: "Clitic pronoun and verb construction",
