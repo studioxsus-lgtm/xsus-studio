@@ -143,7 +143,11 @@ export async function loadMyConversations() {
     );
   }
 
-  return normalizeConversations(data ?? []);
+  if (!Array.isArray(data)) {
+    throw new TypeError("Invalid private conversations.");
+  }
+
+  return normalizeConversations(data);
 }
 
 /* ============================================
@@ -196,8 +200,12 @@ export async function loadMyMessages(
     );
   }
 
+  if (!Array.isArray(data)) {
+    throw new TypeError("Invalid private messages.");
+  }
+
   return normalizeMessages(
-    data ?? [],
+    data,
     conversationId
   );
 }
