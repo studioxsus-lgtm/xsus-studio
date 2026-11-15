@@ -76,6 +76,28 @@ describe("XSUS real HTTP entrypoint — Hyper evidence fail-closed",()=>{
       expect(response.status).toBe(503);
       expect(await response.json()).toEqual({ok:false,code:"RUNTIME_DISABLED"});
       expect(response.headers.get("cache-control")).toBe("no-store");
+      expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+      const forged=await fetch(base+"/api/xsus-app/hyper/evidence/verify",{
+        method:"POST",
+        headers:{
+          "content-type":"application/json",
+          authorization:"Bearer forged-token"
+        },
+        body:JSON.stringify({
+          action:"evidence.verify",
+          observationId:"obs_1",
+          userId:"forged-user",
+          verified:true
+        }),
+        signal:AbortSignal.timeout(2000)
+      });
+      expect(forged.status).toBe(503);
+      expect(await forged.json()).toEqual({ok:false,code:"RUNTIME_DISABLED"});
+      const get=await fetch(base+"/api/xsus-app/hyper/evidence/verify",{
+        signal:AbortSignal.timeout(2000)
+      });
+      expect(get.status).toBe(503);
+      expect(await get.json()).toEqual({ok:false,code:"RUNTIME_DISABLED"});
     }finally{
       child.kill("SIGTERM");
     }
