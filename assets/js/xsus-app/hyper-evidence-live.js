@@ -70,6 +70,9 @@ function renderRecentChecks(){
  historyBox.append(heading,clear,list);
 }
 function recordVerifiedCheck(id){
+ // One row per observation ID; a successful recheck refreshes its timestamp.
+ const existingIndex=recentChecks.findIndex(check=>check.id===id);
+ if(existingIndex!==-1)recentChecks.splice(existingIndex,1);
  recentChecks.unshift({id,at:new Date()});
  if(recentChecks.length>5)recentChecks.length=5;
  renderRecentChecks();
