@@ -12,6 +12,36 @@ async function unusedPort() {
   return port;
 }
 describe("XSUS real HTTP entrypoint — Hyper evidence fail-closed",()=>{
+  it("refuses to start with evidence enabled and an invalid HMAC key",async()=>{
+    const port=await unusedPort();
+    const child=spawn(process.execPath,["server.js"],{
+      cwd:process.cwd(),
+      env:{
+        ...process.env,
+        PORT:String(port),
+        XSUS_HYPER_EVIDENCE_ROUTE_ENABLED:"true",
+        XSUS_HYPER_EVIDENCE_KEY:"not-a-valid-hex-key",
+        XSUS_HYPER_APP_ENABLED:"false",
+        XSUS_PRIVATE_CHAT_ENABLED:"false",
+        XSUS_HYPER_READINESS_ENABLED:"false"
+      },
+      stdio:"ignore"
+    });
+    try{
+      let stopped=false;
+      for(let i=0;i<60;i++){
+        if(child.exitCode!==null){stopped=true;break;}
+        await sleep(100);
+      }
+      expect(stopped).toBe(true);
+      expect(child.exitCode).not.toBe(0);
+      await expect(fetch("http://127.0.0.1:"+port+"/health",{
+        signal:AbortSignal.timeout(500)
+      })).rejects.toThrow();
+    }finally{
+      if(child.exitCode===null)child.kill("SIGTERM");
+    }
+  },12000);
   it("serves health and rejects evidence requests with feature flag off",async()=>{
     const port=await unusedPort();
     const child=spawn(process.execPath,["server.js"],{
