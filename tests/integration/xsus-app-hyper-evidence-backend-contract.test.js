@@ -54,4 +54,28 @@ describe("XSUS App → Render Hyper evidence backend contract (mocked, no networ
   await expect(request(mockResponse(302,{ok:true,verified:true,observationId})))
    .rejects.toThrow("Hyper verification request failed.");
  });
+ it.each([
+  [null,"Invalid Hyper backend response."],
+  [{ok:true},"Invalid Hyper backend response."],
+  [{ok:true,json:null},"Invalid Hyper backend response."]
+ ])("rejects malformed HTTP response envelopes without trusting them: %j",async(response,message)=>{
+  const fetchImpl=vi.fn(async()=>response);
+  await expect(request(fetchImpl)).rejects.toThrow(message);
+ });
+ it.each([
+  null,[],true,"verified",{ok:true,verified:true,observationId:"wrong"},
+  {ok:true,verified:false,observationId}
+ ])("rejects untrusted verification payload %j",async(payload)=>{
+  await expect(request(mockResponse(200,payload))).rejects.toThrow();
+ });
+ it("never includes evidence secrets or privileged keys in the browser request",async()=>{
+  const fetchImpl=mockResponse(200,{ok:true,verified:true,observationId});
+  await request(fetchImpl);
+  const [url,init]=fetchImpl.mock.calls[0];
+  const serialized=JSON.stringify({url,init});
+  expect(Object.keys(init.headers)).toEqual(["Content-Type","Authorization"]);
+  expect(Object.keys(JSON.parse(init.body))).toEqual(["action","observationId"]);
+  expect(serialized).not.toMatch(/service_role|service-role|hmacSecret|evidenceSecret|supabaseServiceKey/i);
+ });
+
 });
