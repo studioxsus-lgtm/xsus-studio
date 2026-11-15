@@ -481,6 +481,15 @@ export function createPrivateHistorySession({
     }
 
     if (event === "TOKEN_REFRESHED") {
+      // A token refresh without an authenticated user is not evidence
+      // that the previous account remains signed in. Fail closed.
+      if (!nextUserId) {
+        currentUserId = null;
+        clearPrivateMemory();
+        notify("signed-out");
+        return;
+      }
+
       // A refreshed JWT must invalidate any in-flight request carrying
       // the previous token, even when the account ID stays unchanged.
       notify("token-refreshed");
