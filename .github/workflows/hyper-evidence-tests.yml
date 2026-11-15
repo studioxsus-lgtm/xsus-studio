@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - run: npm ci
+      # No package-lock.json in this branch; install from package.json.
+      - run: npm install --no-audit --no-fund
       - name: Test owned evidence security and integration (mocked, no secrets)
         run: npx vitest run src/platform/xsus-app/hyper-owned-evidence-writer.test.js src/platform/xsus-app/hyper-owned-evidence-service.test.js
