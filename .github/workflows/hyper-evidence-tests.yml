@@ -9,6 +9,7 @@ on:
       - 'src/platform/xsus-app/hyper-readiness-diagnostic*.js'
       - 'src/platform/xsus-app/hyper-v8233-supabase-auth-verifier.js'
       - 'server.js'
+      - 'src/platform/xsus-app/hyper-startup-readiness*.js'
       - '.github/workflows/hyper-evidence-tests.yml'
       - 'vitest.hyper-evidence.config.js'
       - 'scripts/hyper-live-readiness.mjs'
