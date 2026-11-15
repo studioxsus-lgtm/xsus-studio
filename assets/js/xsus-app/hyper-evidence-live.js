@@ -45,9 +45,9 @@ const SUPABASE_URL="https://rdcwqjsmzklktfccebfs.supabase.co";
 const PUBLISHABLE_KEY="sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr";
 const RENDER_ENDPOINT="https://xsus-studio.onrender.com/api/xsus-app/hyper/evidence/verify";
 const messages={
- en:{working:"Verifying existing evidence…",success:"Evidence verified successfully.",missing:"Please sign in to XSUS Studio first.",ready:"Signed in. Enter an Observation ID to verify your evidence.",edited:"Observation ID changed. Verify again to see the result for this ID.",failed:"Verification failed. Check the observation ID, ownership and backend status."},
- sq:{working:"Po verifikohet evidenca ekzistuese…",success:"Evidenca u verifikua me sukses.",missing:"Identifikohu fillimisht në XSUS Studio.",ready:"Je i identifikuar. Vendos ID-në e vëzhgimit për verifikim.",edited:"ID-ja e vëzhgimit ndryshoi. Verifiko përsëri për të parë rezultatin e kësaj ID-je.",failed:"Verifikimi dështoi. Kontrollo ID-në, pronësinë dhe serverin."},
- fr:{working:"Vérification de la preuve existante…",success:"Preuve vérifiée avec succès.",missing:"Connectez-vous d’abord à XSUS Studio.",ready:"Vous êtes connecté. Saisissez un identifiant d’observation pour vérifier votre preuve.",edited:"L’identifiant d’observation a changé. Vérifiez à nouveau pour afficher le résultat correspondant.",failed:"Échec de vérification. Vérifiez l’identifiant, le propriétaire et le serveur."}
+ en:{working:"Verifying existing evidence…",success:"Evidence verified successfully.",missing:"Please sign in to XSUS Studio first.",ready:"Signed in. Enter an Observation ID to verify your evidence.",edited:"Observation ID changed. Verify again to see the result for this ID.",failed:"Verification failed. Check the observation ID, ownership and backend status.",invalid:"Use 1–128 characters: letters, numbers, underscore (_) or hyphen (-)."},
+ sq:{working:"Po verifikohet evidenca ekzistuese…",success:"Evidenca u verifikua me sukses.",missing:"Identifikohu fillimisht në XSUS Studio.",ready:"Je i identifikuar. Vendos ID-në e vëzhgimit për verifikim.",edited:"ID-ja e vëzhgimit ndryshoi. Verifiko përsëri për të parë rezultatin e kësaj ID-je.",failed:"Verifikimi dështoi. Kontrollo ID-në, pronësinë dhe serverin.",invalid:"Përdor 1–128 karaktere: shkronja, numra, nënvizë (_) ose vizë (-)."},
+ fr:{working:"Vérification de la preuve existante…",success:"Preuve vérifiée avec succès.",missing:"Connectez-vous d’abord à XSUS Studio.",ready:"Vous êtes connecté. Saisissez un identifiant d’observation pour vérifier votre preuve.",edited:"L’identifiant d’observation a changé. Vérifiez à nouveau pour afficher le résultat correspondant.",failed:"Échec de vérification. Vérifiez l’identifiant, le propriétaire et le serveur.",invalid:"Utilisez 1 à 128 caractères : lettres, chiffres, tiret bas (_) ou trait d’union (-)."}
 };
 const t=()=>messages[document.documentElement.lang?.slice(0,2)]||messages.en;
 let lastState="missing";
@@ -107,8 +107,13 @@ if(form){
 form?.addEventListener("submit",async event=>{
  event.preventDefault();
  if(!form.reportValidity()||submit.disabled)return;
- submit.disabled=true;
  const requestedId=input.value.trim();
+ if(!/^[A-Za-z0-9_-]{1,128}$/.test(requestedId)){
+  if(liveResult)liveResult.hidden=true;
+  setState("invalid");
+  return;
+ }
+ submit.disabled=true;
  const requestedRevision=inputRevision;
  const activeRequest=++requestRevision;
  const isCurrent=()=>activeRequest===requestRevision&&requestedRevision===inputRevision&&input.value.trim()===requestedId;
