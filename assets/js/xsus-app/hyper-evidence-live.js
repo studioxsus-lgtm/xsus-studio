@@ -33,6 +33,47 @@ copyButton.addEventListener("click",async()=>{
   copyButton.textContent=labels.copied;
  }catch{copyButton.textContent=labels.failed;}
 });
+// Session-only display history: never store credentials or evidence payloads.
+const recentChecks=[];
+const historyBox=document.createElement("section");
+historyBox.id="xsus-hyper-recent-checks";
+historyBox.style.cssText="margin-top:12px;padding:12px;border:1px solid #28506b;border-radius:9px;background:#0b182a";
+historyBox.hidden=true;
+liveResult?.insertAdjacentElement("afterend",historyBox);
+const historyLabels={
+ sq:{title:"Verifikimet e fundit",clear:"Pastro historikun",checked:"Kontrolluar në këtë pajisje"},
+ en:{title:"Recent verifications",clear:"Clear history",checked:"Checked on this device"},
+ fr:{title:"Vérifications récentes",clear:"Effacer l’historique",checked:"Contrôlé sur cet appareil"}
+};
+function renderRecentChecks(){
+ const lang=document.documentElement.lang?.slice(0,2);
+ const labels=historyLabels[lang]||historyLabels.en;
+ historyBox.replaceChildren();
+ historyBox.hidden=recentChecks.length===0;
+ if(!recentChecks.length)return;
+ const heading=document.createElement("strong");
+ heading.textContent=labels.title;
+ const clear=document.createElement("button");
+ clear.type="button";
+ clear.textContent=labels.clear;
+ clear.style.cssText="float:right;background:transparent;border:1px solid #36758c;border-radius:6px;color:#d7f5ff;padding:4px 8px;cursor:pointer";
+ clear.addEventListener("click",()=>{recentChecks.length=0;renderRecentChecks();});
+ const list=document.createElement("ol");
+ list.style.cssText="padding-left:20px;margin:10px 0 0;overflow-wrap:anywhere";
+ const locale=lang==="sq"?"sq-AL":lang==="fr"?"fr-FR":"en-GB";
+ for(const check of recentChecks){
+  const item=document.createElement("li");
+  item.style.marginBottom="7px";
+  item.textContent=check.id+" · "+labels.checked+" "+new Intl.DateTimeFormat(locale,{dateStyle:"short",timeStyle:"short"}).format(check.at);
+  list.append(item);
+ }
+ historyBox.append(heading,clear,list);
+}
+function recordVerifiedCheck(id){
+ recentChecks.unshift({id,at:new Date()});
+ if(recentChecks.length>5)recentChecks.length=5;
+ renderRecentChecks();
+}
 const uiLabels={
  en:{title:"Hyper Evidence Verification",description:"Authenticated read-only check of evidence you own.",id:"Observation ID",button:"Verify Evidence"},
  fr:{title:"Vérification des preuves Hyper",description:"Vérification authentifiée en lecture seule des preuves qui vous appartiennent.",id:"Identifiant d’observation",button:"Vérifier la preuve"},
@@ -111,7 +152,7 @@ function refreshLanguage(){
  if(status)status.textContent=t()[lastState]||t().failed;
  if(liveResult&&!liveResult.hidden)showLiveResult(lastVerified,lastObservationId,lastResultState);
 }
-document.addEventListener("xsus:language-changed",()=>{applyEvidenceLabels();refreshLanguage();});
+document.addEventListener("xsus:language-changed",()=>{applyEvidenceLabels();refreshLanguage();renderRecentChecks();});
 applyEvidenceLabels();
 setState("missing");
 
@@ -182,6 +223,7 @@ form?.addEventListener("submit",async event=>{
   lastResultState=verified?"success":"failed";
   lastObservationId=requestedId;
   lastVerifiedAt=new Date();
+  if(verified)recordVerifiedCheck(requestedId);
   showLiveResult(verified,lastObservationId);
  }catch(error){
   if(!isCurrent())return;
