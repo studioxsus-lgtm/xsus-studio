@@ -1,0 +1,26 @@
+name: Hyper authenticated evidence chain
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/xsus-ai-core]
+    paths:
+      - 'src/platform/xsus-app/hyper-evidence-runtime-integration.test.js'
+      - 'src/platform/xsus-app/hyper-evidence-owner-authorizer.js'
+      - 'src/platform/xsus-app/hyper-v823*.js'
+      - 'src/platform/xsus-app/hyper-v822*.js'
+      - 'vitest.hyper-auth-chain.config.js'
+      - '.github/workflows/hyper-auth-chain.yml'
+permissions:
+  contents: read
+jobs:
+  authenticated-chain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Test authenticated runtime and ownership gates (mocked)
+        run: npx vitest run --config vitest.hyper-auth-chain.config.js
