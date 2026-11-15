@@ -32,6 +32,8 @@ export async function verifyXsusHyperEvidence({
     throw new Error("Invalid Hyper backend response.");
   if(!response.ok) {
     if(response.status===503)throw new Error("Hyper verification is not enabled or unavailable.");
+    if(response.status===404)throw new Error("Hyper evidence was not found.");
+    if(response.status===429)throw new Error("Hyper verification rate limit reached.");
     if(response.status===401 || response.status===403)
       throw new Error("Hyper verification authorization failed.");
     throw new Error("Hyper verification request failed.");
