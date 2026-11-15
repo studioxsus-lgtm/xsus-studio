@@ -35,7 +35,7 @@ vi.mock("../../assets/js/xsus-ai/adapters/xsus-chat-history-adapter.js", () => (
   }),
   loadMyMessages: vi.fn(async id => {
     if (mock.deferredMessages?.id === id) return mock.deferredMessages.promise;
-    return mock.messages.get(id) ?? [];
+    return mock.messages.has(id) ? mock.messages.get(id) : [];
   })
 }));
 
