@@ -29,6 +29,26 @@ if (missing.length) {
     createHyperEvidenceOwnerAuthorizer({
       url: env.SUPABASE_URL, serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY
     });
+    // Read-only Supabase REST reachability; no rows or secrets are logged.
+    report.tablesReadable = {};
+    for (const table of ["hyper_runtime_evidence_bundles", "hyper_evidence_owners"]) {
+      try {
+        const endpoint = new URL("/rest/v1/" + table + "?select=observation_id&limit=0", env.SUPABASE_URL);
+        const response = await fetch(endpoint, {
+          method: "GET",
+          headers: {
+            apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+            Authorization: "Bearer " + env.SUPABASE_SERVICE_ROLE_KEY,
+            Accept: "application/json"
+          },
+          redirect: "error",
+          signal: AbortSignal.timeout(10000)
+        });
+        report.tablesReadable[table] = response.ok === true;
+      } catch {
+        report.tablesReadable[table] = false;
+      }
+    }
     report.authConfigValid = true;
     report.ownerLookupConfigValid = true;
     if (env.XSUS_TEST_ACCESS_TOKEN) {
@@ -39,7 +59,9 @@ if (missing.length) {
     }
     report.readyForControlledWriteTest = report.hmacKeyValid &&
       report.keyIdValid && report.authConfigValid &&
-      report.ownerLookupConfigValid && report.liveUserAuthVerified === true &&
+      report.ownerLookupConfigValid &&
+      Object.values(report.tablesReadable).every(Boolean) &&
+      report.liveUserAuthVerified === true &&
       !report.routeEnabled;
     if (!report.readyForControlledWriteTest) process.exitCode = 1;
   } catch {
