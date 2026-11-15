@@ -203,8 +203,15 @@ export function createPrivateHistorySession({
        * the newly assigned generation.
        */
       if (currentUserId !== userId) {
+        // Preserve the promise for callers joining this very first load.
+        // The identity switch still invalidates every older generation.
+        const initiatingLoad = activeLoad?.token === token ? activeLoad : null;
         changeIdentity(userId);
         token = generation;
+        if (initiatingLoad) {
+          initiatingLoad.token = token;
+          activeLoad = initiatingLoad;
+        }
       }
 
       localSnapshot =
