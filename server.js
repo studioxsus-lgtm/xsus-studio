@@ -13,6 +13,7 @@
  */
 
 import http from "node:http";
+import { checkHyperStartupReadiness } from "./src/platform/xsus-app/hyper-startup-readiness.js";
 import { createHyperReadinessDiagnostic } from "./src/platform/xsus-app/hyper-readiness-diagnostic.js";
 import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js";
 import { createHyperNodeRuntimeRoute } from "./src/platform/xsus-app/hyper-v8235-node-runtime-route.js";
@@ -538,5 +539,9 @@ server.listen(
         console.log(
             `XSUS AI API listening on port ${PORT}`
         );
+        // Safe, read-only check at boot. No HTTP route or secret output.
+        void checkHyperStartupReadiness({ env: process.env })
+            .then(result => console.log("XSUS Hyper Supabase readiness:", result.status))
+            .catch(() => console.log("XSUS Hyper Supabase readiness: CHECK_UNAVAILABLE"));
     }
 );
