@@ -71,6 +71,33 @@ describe("Hyper signed evidence end-to-end storage boundary",()=>{
       verified:false,reason:"BUNDLE_VERIFICATION_FAILED"
     });
   });
+  it("rejects a valid signature produced with a different secret",async()=>{
+    let persisted;
+    const writer=createHyperTrustedEvidenceStorage({
+      key:Buffer.alloc(32,0x42),keyId:"integration-key",
+      insertBundle:async bundle=>{
+        persisted=structuredClone(bundle);
+        return {inserted:true,observationId:bundle.row.observation_id};
+      },
+      readBundle:async()=>persisted,enabled:true
+    });
+    const verifier=createHyperTrustedEvidenceStorage({
+      key:KEY,keyId:"integration-key",
+      insertBundle:async()=>({inserted:false}),
+      readBundle:async()=>structuredClone(persisted),enabled:true
+    });
+    expect((await writer.store(input)).stored).toBe(true);
+    expect(await verifier.readVerified("obs_hmac_1")).toEqual({
+      verified:false,reason:"BUNDLE_VERIFICATION_FAILED"
+    });
+  });
+  it("rejects an altered evidence digest even when the row is unchanged",async()=>{
+    const {storage}=fixture({tamper:bundle=>({...bundle,envelope:{
+      ...bundle.envelope,evidenceDigest:"f".repeat(64)
+    }})});
+    await storage.store(input);
+    expect((await storage.readVerified("obs_hmac_1")).verified).toBe(false);
+  });
   it("never touches storage when disabled",async()=>{
     const insertBundle=vi.fn(),readBundle=vi.fn();
     const storage=createHyperTrustedEvidenceStorage({
