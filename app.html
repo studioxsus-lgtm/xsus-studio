@@ -404,6 +404,28 @@
         </div>
       </section>
 
+      <!-- HYPER EVIDENCE: authenticated, read-only backend operation -->
+      <section class="xsus-section" id="hyper-evidence">
+        <div class="xsus-section-header">
+          <div><div class="xsus-eyebrow">LIVE BACKEND INTEGRATION</div>
+            <h2>Hyper Evidence Verification</h2>
+            <p>Verify an evidence record owned by your signed-in account.</p></div>
+          <span class="xsus-badge">READ ONLY</span>
+        </div>
+        <div class="xsus-panel">
+          <form id="xsus-hyper-evidence-form" class="xsus-form">
+            <label for="xsus-hyper-observation">Observation ID</label>
+            <input id="xsus-hyper-observation" class="xsus-command-input"
+              type="text" maxlength="128" pattern="[A-Za-z0-9_-]{1,128}"
+              autocomplete="off" required placeholder="Enter your observation ID">
+            <button type="submit" class="xsus-button-primary" id="xsus-hyper-verify-button">Verify evidence</button>
+          </form>
+          <p id="xsus-hyper-evidence-status" role="status" aria-live="polite">Sign in before verification.</p>
+          <pre id="xsus-hyper-evidence-result" class="xsus-output-viewer">No verification requested.</pre>
+          <p class="xsus-card-description">This feature reads existing evidence only. If the server route is disabled, verification is unavailable.</p>
+        </div>
+      </section>
+
       <!-- FRONTIER ENGINES -->
       <section class="xsus-section" id="engines">
 
@@ -634,6 +656,7 @@
 <script type="module">
   import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
   import {createXsusHyperPanel} from "./platform/xsus-app/xsus-hyper-panel.js";
+  import {verifyXsusHyperEvidence} from "./platform/xsus-app/xsus-hyper-evidence-client.js";
 
   // Public Supabase project URL and publishable key; no server secrets.
   // Same auth configuration as XSUS Studio auth.html.
@@ -642,6 +665,31 @@
     "sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr",
     {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}
   );
+  const evidenceForm=document.getElementById("xsus-hyper-evidence-form");
+  const evidenceStatus=document.getElementById("xsus-hyper-evidence-status");
+  const evidenceResult=document.getElementById("xsus-hyper-evidence-result");
+  const evidenceButton=document.getElementById("xsus-hyper-verify-button");
+  evidenceForm.addEventListener("submit",async(event)=>{
+    event.preventDefault();
+    if(evidenceButton.disabled)return;
+    evidenceButton.disabled=true;
+    evidenceStatus.textContent="Verifying with XSUS Hyper backend...";
+    evidenceResult.textContent="Waiting for authenticated verification.";
+    try {
+      const {data,error}=await supabase.auth.getSession();
+      if(error||!data.session?.access_token)throw new Error("Sign in is required.");
+      const result=await verifyXsusHyperEvidence({
+        observationId:document.getElementById("xsus-hyper-observation").value.trim(),
+        accessToken:data.session.access_token,
+        endpoint:"https://xsus-studio.onrender.com/api/xsus-app/hyper/evidence/verify"
+      });
+      evidenceStatus.textContent=result.ok===true?"Verification response received.":"Verification not confirmed.";
+      evidenceResult.textContent=JSON.stringify(result,null,2);
+    } catch(error) {
+      evidenceStatus.textContent=error instanceof Error?error.message:"Verification unavailable.";
+      evidenceResult.textContent="No verified evidence returned.";
+    } finally {evidenceButton.disabled=false;}
+  });
   createXsusHyperPanel({
     root:document.getElementById("xsus-hyper-panel"),
     getAccessToken:async()=>{
