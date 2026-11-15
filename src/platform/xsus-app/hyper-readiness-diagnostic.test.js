@@ -3,6 +3,7 @@ import { createHyperReadinessDiagnostic } from "./hyper-readiness-diagnostic.js"
 
 const env = {
  SUPABASE_URL: "https://example.supabase.co",
+ XSUS_HYPER_READINESS_ADMIN_IDS: "550e8400-e29b-41d4-a716-446655440000",
  SUPABASE_ANON_KEY: "public-test-key",
  SUPABASE_SERVICE_ROLE_KEY: "server-only-test-key",
  XSUS_HYPER_EVIDENCE_ROUTE_ENABLED: "false"
@@ -53,4 +54,21 @@ describe("Hyper read-only diagnostic security",()=>{
    const d=createHyperReadinessDiagnostic({env,fetchImpl,enabled:true});
    expect((await d.handle(request)).status).toBe(503);
  });
+ it("denies everyone when administrator allowlist is missing",async()=>{
+   const fetchImpl=vi.fn();
+   const d=createHyperReadinessDiagnostic({
+     env:{...env,XSUS_HYPER_READINESS_ADMIN_IDS:""},fetchImpl,enabled:true
+   });
+   expect((await d.handle(request)).status).toBe(403);
+   expect(fetchImpl).not.toHaveBeenCalled();
+ });
+ it("denies a valid but non-admin user before any table reads",async()=>{
+   const fetchImpl=vi.fn(async()=>({
+     ok:true,json:async()=>({id:"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"})
+   }));
+   const d=createHyperReadinessDiagnostic({env,fetchImpl,enabled:true});
+   expect((await d.handle(request)).status).toBe(403);
+   expect(fetchImpl).toHaveBeenCalledTimes(1);
+ });
+
 });
