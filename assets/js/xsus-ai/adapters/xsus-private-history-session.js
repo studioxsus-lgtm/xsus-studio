@@ -231,10 +231,22 @@ export function createPrivateHistorySession({
         throw new TypeError("Invalid private conversations.");
       }
 
+      // Local edits made while the conversation list was loading take
+      // precedence over delayed remote results. Avoid further private reads.
+      if (localStateChanged(localSnapshot)) {
+        notify("local-changes");
+        return false;
+      }
+
       const messagesByConversation = {};
 
       for (const conversation of conversations) {
         if (!isCurrent(token)) {
+          return false;
+        }
+
+        if (localStateChanged(localSnapshot)) {
+          notify("local-changes");
           return false;
         }
 
