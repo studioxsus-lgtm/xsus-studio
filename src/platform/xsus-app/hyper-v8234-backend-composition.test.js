@@ -4,7 +4,7 @@ const base={
   supabaseUrl:"https://example.supabase.co",
   publishableKey:"test-publishable-key",
   serviceRoleKey:"test-service-key",
-  evidenceKey:"a".repeat(64),evidenceKeyId:"test-key",
+  evidenceKey:Buffer.alloc(32, 0xa5),evidenceKeyId:"test-key",
   authorizeEvidenceOwner:async()=>false,
   fetchImpl:vi.fn()
 };
