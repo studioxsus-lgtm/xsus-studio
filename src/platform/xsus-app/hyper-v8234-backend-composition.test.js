@@ -134,4 +134,39 @@ describe("Hyper v8.2.34 backend composition",()=>{
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(authorizeEvidenceOwner).toHaveBeenCalledWith({userId,observationId:"obs_1"});
   });
+  it("rejects tampered signed evidence after authentication and ownership",async()=>{
+    const userId="550e8400-e29b-41d4-a716-446655440000";
+    const input={
+      observationId:"obs_1",serviceId:"xsus-studio",
+      snapshot:{
+        instanceId:"instance-1234",processId:123,
+        startedAt:"2026-11-15T09:00:00.000Z",
+        observedAt:"2026-11-15T09:01:00.000Z",
+        source:"local-process-observation"
+      }
+    };
+    const envelope=createHyperEvidenceProvenance({
+      key:base.evidenceKey,keyId:base.evidenceKeyId
+    }).sign(input);
+    const record={
+      observation_id:input.observationId,service_id:input.serviceId,
+      instance_id:input.snapshot.instanceId,process_id:999,
+      started_at:input.snapshot.startedAt,observed_at:input.snapshot.observedAt,
+      source:input.snapshot.source,envelope_version:envelope.version,
+      envelope_algorithm:envelope.algorithm,envelope_key_id:envelope.keyId,
+      evidence_digest:envelope.evidenceDigest,authentication_tag:envelope.authenticationTag
+    };
+    const fetchImpl=vi.fn(async(url)=>{
+      if(String(url).endsWith("/auth/v1/user"))
+        return {ok:true,json:async()=>({id:userId})};
+      return {ok:true,json:async()=>[record]};
+    });
+    const authorizeEvidenceOwner=vi.fn(async()=>true);
+    const app=create({...base,fetchImpl,authorizeEvidenceOwner,enabled:true});
+    const result=await app.handle(request);
+    expect(result.status).toBe(503);
+    expect(result.body).toEqual({ok:false,code:"VERIFICATION_UNAVAILABLE"});
+    expect(authorizeEvidenceOwner).toHaveBeenCalledWith({userId,observationId:"obs_1"});
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
 });
