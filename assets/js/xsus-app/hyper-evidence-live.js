@@ -79,14 +79,24 @@ function getClient(){
  if(!clientPromise) clientPromise=import("https://esm.sh/@supabase/supabase-js@2").then(({createClient})=>createClient(SUPABASE_URL,PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}));
  return clientPromise;
 }
+let authCheckRevision=0;
 async function updateSignInStatus(){
  if(!status||submit?.disabled)return;
+ const check=++authCheckRevision;
+ const startingInputRevision=inputRevision;
+ const startingRequestRevision=requestRevision;
+ const mayUpdate=()=>check===authCheckRevision&&
+  startingInputRevision===inputRevision&&
+  startingRequestRevision===requestRevision&&
+  !submit?.disabled&&["missing","ready"].includes(lastState);
  try{
   const client=await getClient();
   const {data,error}=await client.auth.getUser();
-  if(error||!data?.user?.id){setState("missing");return;}
-  setState("ready");
- }catch{setState("failed");}
+  if(!mayUpdate())return;
+  setState(error||!data?.user?.id?"missing":"ready");
+ }catch{
+  if(mayUpdate())setState("missing");
+ }
 }
 if(form){
  updateSignInStatus();
