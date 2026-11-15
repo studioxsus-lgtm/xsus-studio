@@ -65,4 +65,33 @@ describe("Hyper owned evidence internal service",()=>{
   expect(fetchImpl).not.toHaveBeenCalled();
  });
 
+ it("sends only the verified server principal ID, never a client supplied user ID",async()=>{
+  const fetchImpl=vi.fn(async()=>({ok:true,json:async()=> "obs-1"}));
+  const result=await make(fetchImpl).create({
+    input:{...input,userId:"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"},
+    verifiedPrincipal:principal
+  });
+  expect(result.stored).toBe(true);
+  const payload=JSON.parse(fetchImpl.mock.calls[0][1].body);
+  expect(payload.p_user_id).toBe(principal.userId);
+  expect(payload.p_bundle).not.toHaveProperty("userId");
+ });
+ it("does not call Supabase if the verified principal ID is invalid",async()=>{
+  const fetchImpl=vi.fn();
+  const result=await make(fetchImpl).create({
+    input,verifiedPrincipal:{...principal,userId:"invalid"}
+  });
+  expect(result.reason).toBe("UNVERIFIED_PRINCIPAL");
+  expect(fetchImpl).not.toHaveBeenCalled();
+ });
+ it("never sends the HMAC secret in the RPC request body",async()=>{
+  const fetchImpl=vi.fn(async()=>({ok:true,json:async()=> "obs-1"}));
+  await make(fetchImpl).create({input,verifiedPrincipal:principal});
+  const payload=JSON.parse(fetchImpl.mock.calls[0][1].body);
+  expect(Object.keys(payload).sort()).toEqual(["p_bundle","p_user_id"]);
+  expect(payload.p_bundle).not.toHaveProperty("key");
+  expect(payload.p_bundle).not.toHaveProperty("secret");
+  expect(payload.p_bundle.envelope_key_id).toBe("key-v1");
+ });
+
 });
