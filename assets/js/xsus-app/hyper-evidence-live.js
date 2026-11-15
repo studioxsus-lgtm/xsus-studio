@@ -126,9 +126,9 @@ const SUPABASE_URL="https://rdcwqjsmzklktfccebfs.supabase.co";
 const PUBLISHABLE_KEY="sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr";
 const RENDER_ENDPOINT="https://xsus-studio.onrender.com/api/xsus-app/hyper/evidence/verify";
 const messages={
- en:{working:"Verifying existing evidence…",success:"Evidence verified successfully.",missing:"Please sign in to XSUS Studio first.",ready:"Signed in. Enter an Observation ID to verify your evidence.",edited:"Observation ID changed. Verify again to see the result for this ID.",failed:"Verification failed. Check the observation ID, ownership and backend status.",invalid:"Use 1–128 characters: letters, numbers, underscore (_) or hyphen (-).",unauthorized:"Your session is invalid or you do not have access to this evidence.",unavailable:"The verification service is temporarily unavailable. Try again later."},
- sq:{working:"Po verifikohet evidenca ekzistuese…",success:"Evidenca u verifikua me sukses.",missing:"Identifikohu fillimisht në XSUS Studio.",ready:"Je i identifikuar. Vendos ID-në e vëzhgimit për verifikim.",edited:"ID-ja e vëzhgimit ndryshoi. Verifiko përsëri për të parë rezultatin e kësaj ID-je.",failed:"Verifikimi dështoi. Kontrollo ID-në, pronësinë dhe serverin.",invalid:"Përdor 1–128 karaktere: shkronja, numra, nënvizë (_) ose vizë (-).",unauthorized:"Sesioni yt është i pavlefshëm ose nuk ke akses në këtë evidencë.",unavailable:"Shërbimi i verifikimit nuk është përkohësisht i disponueshëm. Provo më vonë."},
- fr:{working:"Vérification de la preuve existante…",success:"Preuve vérifiée avec succès.",missing:"Connectez-vous d’abord à XSUS Studio.",ready:"Vous êtes connecté. Saisissez un identifiant d’observation pour vérifier votre preuve.",edited:"L’identifiant d’observation a changé. Vérifiez à nouveau pour afficher le résultat correspondant.",failed:"Échec de vérification. Vérifiez l’identifiant, le propriétaire et le serveur.",invalid:"Utilisez 1 à 128 caractères : lettres, chiffres, tiret bas (_) ou trait d’union (-).",unauthorized:"Votre session est invalide ou vous n’avez pas accès à cette preuve.",unavailable:"Le service de vérification est temporairement indisponible. Réessayez plus tard."}
+ en:{working:"Verifying existing evidence…",success:"Evidence verified successfully.",missing:"Please sign in to XSUS Studio first.",ready:"Signed in. Enter an Observation ID to verify your evidence.",edited:"Observation ID changed. Verify again to see the result for this ID.",failed:"Verification failed. Check the observation ID, ownership and backend status.",invalid:"Use 1–128 characters: letters, numbers, underscore (_) or hyphen (-).",unauthorized:"Your session is invalid or you do not have access to this evidence.",unavailable:"The verification service is temporarily unavailable. Try again later.",notfound:"Evidence not found or unavailable to your account.",limited:"Too many requests. Wait a moment and try again."},
+ sq:{working:"Po verifikohet evidenca ekzistuese…",success:"Evidenca u verifikua me sukses.",missing:"Identifikohu fillimisht në XSUS Studio.",ready:"Je i identifikuar. Vendos ID-në e vëzhgimit për verifikim.",edited:"ID-ja e vëzhgimit ndryshoi. Verifiko përsëri për të parë rezultatin e kësaj ID-je.",failed:"Verifikimi dështoi. Kontrollo ID-në, pronësinë dhe serverin.",invalid:"Përdor 1–128 karaktere: shkronja, numra, nënvizë (_) ose vizë (-).",unauthorized:"Sesioni yt është i pavlefshëm ose nuk ke akses në këtë evidencë.",unavailable:"Shërbimi i verifikimit nuk është përkohësisht i disponueshëm. Provo më vonë.",notfound:"Evidenca nuk u gjet ose nuk është e disponueshme për llogarinë tënde.",limited:"Shumë kërkesa. Prit pak dhe provo përsëri."},
+ fr:{working:"Vérification de la preuve existante…",success:"Preuve vérifiée avec succès.",missing:"Connectez-vous d’abord à XSUS Studio.",ready:"Vous êtes connecté. Saisissez un identifiant d’observation pour vérifier votre preuve.",edited:"L’identifiant d’observation a changé. Vérifiez à nouveau pour afficher le résultat correspondant.",failed:"Échec de vérification. Vérifiez l’identifiant, le propriétaire et le serveur.",invalid:"Utilisez 1 à 128 caractères : lettres, chiffres, tiret bas (_) ou trait d’union (-).",unauthorized:"Votre session est invalide ou vous n’avez pas accès à cette preuve.",unavailable:"Le service de vérification est temporairement indisponible. Réessayez plus tard.",notfound:"Preuve introuvable ou inaccessible depuis votre compte.",limited:"Trop de demandes. Patientez un instant avant de réessayer."}
 };
 const t=()=>messages[document.documentElement.lang?.slice(0,2)]||messages.en;
 let lastState="missing";
@@ -210,7 +210,8 @@ form?.addEventListener("submit",async event=>{
   if(!["https://www.xsusstudio.com","https://xsusstudio.com"].includes(location.origin))
    throw new Error("Open XSUS App on its official HTTPS domain.");
   const supabase=await getClient();
-  const {data:{session},error}=await supabase.auth.getSession();
+  const {data,error}=await supabase.auth.getSession();
+  const session=data?.session;
   if(!isCurrent())return;
   if(error||!session?.access_token){setState("missing");return;}
   const {verifyXsusHyperEvidence}=await import("../../../platform/xsus-app/xsus-hyper-evidence-client.js");
@@ -232,7 +233,9 @@ form?.addEventListener("submit",async event=>{
   if(!isCurrent())return;
   // Do not log tokens or expose internal evidence payloads in the UI.
   const reason=error?.message==="Hyper verification authorization failed."?"unauthorized":
-   error?.message==="Hyper verification is not enabled or unavailable."?"unavailable":"failed";
+   error?.message==="Hyper verification is not enabled or unavailable."?"unavailable":
+   error?.message==="Hyper evidence was not found."?"notfound":
+   error?.message==="Hyper verification rate limit reached."?"limited":"failed";
   setState(reason);
   lastVerified=false;
   lastResultState=reason;
