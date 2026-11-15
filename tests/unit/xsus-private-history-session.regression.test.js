@@ -500,6 +500,59 @@ describe(
       }
     );
 
+    test(
+      "late rejected history from account A cannot affect signed-out state",
+      async () => {
+        const pending = deferred();
+        mocks.loadMyConversations.mockReturnValue(pending.promise);
+
+        setup();
+        session.start();
+        await tick();
+
+        auth("SIGNED_OUT", null);
+        const clearsAfterSignOut = chat.clearHistory.mock.calls.length;
+        const statusesAfterSignOut = statuses.length;
+
+        pending.reject(new Error("Old account A network failure"));
+        await tick();
+
+        expect(session.getCurrentUserId()).toBe(null);
+        expect(chat.clearHistory).toHaveBeenCalledTimes(clearsAfterSignOut);
+        expect(chat.hydrateHistory).not.toHaveBeenCalled();
+        expect(statuses).toHaveLength(statusesAfterSignOut);
+        expect(errors).toHaveLength(0);
+      }
+    );
+
+    test(
+      "late resolved history from account A cannot overwrite account B",
+      async () => {
+        const pending = deferred();
+        mocks.loadMyConversations
+          .mockReturnValueOnce(pending.promise)
+          .mockResolvedValue([conv(C)]);
+
+        setup();
+        session.start();
+        await tick();
+
+        userId = B;
+        auth("SIGNED_IN", B);
+        await tick();
+
+        const hydrationCount = chat.hydrateHistory.mock.calls.length;
+        const clearsAfterSwitch = chat.clearHistory.mock.calls.length;
+        pending.resolve([conv(C)]);
+        await tick();
+
+        expect(session.getCurrentUserId()).toBe(B);
+        expect(chat.hydrateHistory).toHaveBeenCalledTimes(hydrationCount);
+        expect(chat.clearHistory).toHaveBeenCalledTimes(clearsAfterSwitch);
+        expect(errors).toHaveLength(0);
+      }
+    );
+
     /* TEST 8 */
 
     test(
