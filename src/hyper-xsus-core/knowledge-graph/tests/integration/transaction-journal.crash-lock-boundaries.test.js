@@ -23,7 +23,7 @@ async function killLockHolder(filePath) {
     import { withExclusiveFileLock } from ${JSON.stringify(lockUrl)};
     await withExclusiveFileLock(process.argv[1], async () => {
       process.stdout.write("LOCKED\\n");
-      await new Promise(() => {});
+      await new Promise(() => { setInterval(() => {}, 1000); });
     });
   `;
   const child = spawn(process.execPath,
@@ -47,9 +47,10 @@ async function killLockHolder(filePath) {
         timer.unref();
       }),
     ]);
-    child.kill("SIGKILL");
-    const code = await new Promise((resolve) => child.once("exit", (_, signal) => resolve(signal)));
-    expect(code).toBe("SIGKILL");
+    const exited = new Promise((resolve) => child.once("exit", (code, signal) => resolve({ code, signal })));
+    expect(child.kill("SIGKILL")).toBe(true);
+    const result = await exited;
+    expect(result).toEqual({ code: null, signal: "SIGKILL" });
   } finally {
     if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
   }
