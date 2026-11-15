@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 // Importet nga motori leksikor dhe gjuhësor
-import { analyzeAlbanianWord } from "../src/lib/language/morphology";
-import { analyzeAlbanianSentence } from "../src/lib/language/grammar-rules";
-import { analyzeAlbanian } from "../src/lib/language/analyze-albanian";
+import { analyzeAlbanianWord } from "../morphology";
+import { analyzeAlbanianSentence } from "../grammar-rules";
+import { analyzeAlbanian } from "../language-engine";
 
 // Importet nga motori gramatikor dhe morfologjik
-import { analyzeNoun } from "../src/lib/language/noun-morphology";
-import { analyzeVerb } from "../src/lib/language/verb-morphology";
-import { parseAlbanianSentence } from "../src/lib/language/sentence-parser";
-import { analyzeAlbanianGrammar } from "../src/lib/language/grammar-engine";
+import { analyzeNoun } from "../noun-morphology";
+import { analyzeVerb } from "../verb-morphology";
+import { parseAlbanianSentence } from "../sentence-parser";
+import { analyzeAlbanianGrammar } from "../grammar-engine";
 
 // RISIA: Importi i analizuesit të frazave komplekse
-import { analyzeAlbanianPhrases } from "../src/lib/language/phrase-analyzer";
+import { analyzeAlbanianPhrases } from "../phrase-analyzer";
 
 describe("XSUS Albanian Language Engine", () => {
   it("normalizon shkronjat Unicode", () => {
