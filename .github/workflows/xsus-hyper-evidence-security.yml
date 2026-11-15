@@ -27,3 +27,15 @@ jobs:
         run: npm install --no-package-lock --ignore-scripts
       - name: Hyper evidence security regressions
         run: npx vitest run tests/integration/xsus-app-hyper-evidence-response-binding.test.js tests/integration/xsus-app-hyper-evidence-security-regression.test.js tests/integration/xsus-app-hyper-evidence-backend-contract.test.js
+  full-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test dependencies without a lockfile
+        run: npm install --no-package-lock --ignore-scripts
+      - name: Run complete XSUS test suite
+        run: npm test
