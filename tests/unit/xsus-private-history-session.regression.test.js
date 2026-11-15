@@ -751,7 +751,7 @@ describe(
     );
 
     test(
-      "same-account forced refresh failure retains previously hydrated history and permits retry",
+      "same-account forced refresh failure clears unverified history and permits retry",
       async () => {
         setup();
         session.start();
@@ -766,7 +766,7 @@ describe(
 
         expect(await session.refresh({ force: true })).toBe(false);
         expect(session.getCurrentUserId()).toBe(A);
-        expect(chat.clearHistory).toHaveBeenCalledTimes(clearsBefore);
+        expect(chat.clearHistory).toHaveBeenCalledTimes(clearsBefore + 1);
         expect(chat.hydrateHistory).toHaveBeenCalledTimes(1);
         expect(errors).toHaveLength(1);
         expect(statuses.at(-1)).toBe("error");
