@@ -9,6 +9,11 @@ const liveResult=document.getElementById("xsus-hyper-live-result");
 const liveTitle=document.getElementById("xsus-hyper-live-result-title");
 const liveId=document.getElementById("xsus-hyper-live-result-id");
 const liveDetail=document.getElementById("xsus-hyper-live-result-detail");
+const liveMeta=document.createElement("p");
+liveMeta.id="xsus-hyper-live-result-meta";
+liveMeta.style.cssText="margin:8px 0 0;font-size:12px;opacity:.8;overflow-wrap:anywhere";
+liveDetail?.insertAdjacentElement("afterend",liveMeta);
+let lastVerifiedAt=null;
 const uiLabels={
  en:{title:"Hyper Evidence Verification",description:"Authenticated read-only check of evidence you own.",id:"Observation ID",button:"Verify Evidence"},
  fr:{title:"Vérification des preuves Hyper",description:"Vérification authentifiée en lecture seule des preuves qui vous appartiennent.",id:"Identifiant d’observation",button:"Vérifier la preuve"},
@@ -40,6 +45,15 @@ function showLiveResult(verified,observationId,resultState=verified?"success":"f
  liveTitle.textContent=title;
  liveId.textContent=(lang==="fr"?"Identifiant d’observation":lang==="sq"?"ID e vëzhgimit":"Observation ID")+": "+observationId;
  liveDetail.textContent=detail;
+ const metaLabels={
+  en:{real:"Live backend verification · Not a demo result",time:"Checked at"},
+  sq:{real:"Verifikim real nga serveri · Jo rezultat demonstrativ",time:"Kontrolluar më"},
+  fr:{real:"Vérification réelle par le serveur · Pas un résultat fictif",time:"Vérifié le"}
+ };
+ const meta=metaLabels[lang]||metaLabels.en;
+ const locale=lang==="sq"?"sq-AL":lang==="fr"?"fr-FR":"en-GB";
+ const checked=lastVerifiedAt?new Intl.DateTimeFormat(locale,{dateStyle:"medium",timeStyle:"medium"}).format(lastVerifiedAt):"";
+ liveMeta.textContent=meta.real+(checked?" · "+meta.time+" "+checked:"");
  liveResult.hidden=false;
 }
 const SUPABASE_URL="https://rdcwqjsmzklktfccebfs.supabase.co";
@@ -61,6 +75,7 @@ input?.addEventListener("input",()=>{
  inputRevision+=1;
  // A previous server verification must never be presented for an edited ID.
  if(liveResult)liveResult.hidden=true;
+ lastVerifiedAt=null;
  lastVerified=false;
  lastObservationId="";
  if(lastState!=="missing")setState("edited");
@@ -141,6 +156,7 @@ form?.addEventListener("submit",async event=>{
   lastVerified=verified;
   lastResultState=verified?"success":"failed";
   lastObservationId=requestedId;
+  lastVerifiedAt=new Date();
   showLiveResult(verified,lastObservationId);
  }catch(error){
   if(!isCurrent())return;
@@ -151,6 +167,7 @@ form?.addEventListener("submit",async event=>{
   lastVerified=false;
   lastResultState=reason;
   lastObservationId=requestedId;
+  lastVerifiedAt=new Date();
   showLiveResult(false,lastObservationId,reason);
  }finally{if(activeRequest===requestRevision)submit.disabled=false;}
 });
