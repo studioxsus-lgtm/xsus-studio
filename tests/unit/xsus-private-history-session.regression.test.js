@@ -750,6 +750,57 @@ describe(
       }
     );
 
+    test(
+      "same-account forced refresh failure retains previously hydrated history and permits retry",
+      async () => {
+        setup();
+        session.start();
+        await tick();
+
+        expect(chat.hydrateHistory).toHaveBeenCalledTimes(1);
+        const clearsBefore = chat.clearHistory.mock.calls.length;
+
+        mocks.loadMyConversations.mockRejectedValueOnce(
+          new Error("Temporary network outage")
+        );
+
+        expect(await session.refresh({ force: true })).toBe(false);
+        expect(session.getCurrentUserId()).toBe(A);
+        expect(chat.clearHistory).toHaveBeenCalledTimes(clearsBefore);
+        expect(chat.hydrateHistory).toHaveBeenCalledTimes(1);
+        expect(errors).toHaveLength(1);
+        expect(statuses.at(-1)).toBe("error");
+
+        expect(await session.refresh({ force: true })).toBe(true);
+        expect(chat.hydrateHistory).toHaveBeenCalledTimes(2);
+        expect(statuses.at(-1)).toBe("ready");
+      }
+    );
+
+    test(
+      "normal refresh joins pending forced refresh instead of reporting cached ready",
+      async () => {
+        setup();
+        session.start();
+        await tick();
+
+        const wait = deferred();
+        mocks.loadMyConversations.mockReturnValueOnce(wait.promise);
+
+        const forced = session.refresh({ force: true });
+        await tick();
+        const concurrent = session.refresh();
+
+        expect(concurrent).toBe(forced);
+        expect(statuses.at(-1)).toBe("loading");
+
+        wait.resolve([conv(C)]);
+        expect(await forced).toBe(true);
+        expect(await concurrent).toBe(true);
+        expect(statuses.at(-1)).toBe("ready");
+      }
+    );
+
     /* TEST 14 */
 
     test(
