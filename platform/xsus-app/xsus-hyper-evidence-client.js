@@ -15,8 +15,7 @@ export async function verifyXsusHyperEvidence({
     let url;
     try { url=new URL(endpoint); } catch { throw new TypeError("Invalid Hyper endpoint."); }
     const host=url.hostname.toLowerCase();
-    const renderHost=host.endsWith(".onrender.com") &&
-      /^[a-z0-9-]+$/.test(host.slice(0,-".onrender.com".length));
+    const renderHost=host==="xsus-studio.onrender.com";
     if(url.protocol!=="https:" || !renderHost ||
        url.pathname!=="/api/xsus-app/hyper/evidence/verify" ||
        url.search || url.hash || url.username || url.password || url.port)
