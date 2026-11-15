@@ -14,6 +14,8 @@
 
 import http from "node:http";
 import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js";
+import { createHyperNodeRuntimeRoute } from "./src/platform/xsus-app/hyper-v8235-node-runtime-route.js";
+import { createHyperAppBackendComposition } from "./src/platform/xsus-app/hyper-v8234-backend-composition.js";
 import { processAIRequest } from "./src/core/ai-core.js";
 import { createPrivateChatHandler } from "./src/server/private-chat-handler.js";
 import { createAssistantMessageWriter } from "./src/server/assistant-message-writer.js";
@@ -25,6 +27,18 @@ import { createDurableRecoveryAudit } from "./src/hyper-xsus-core/knowledge-reas
 
 const PORT = Number(process.env.PORT) || 3000;
 const hyperV81Route = createHyperV81Route({ env: process.env });
+
+// v8.2.35: route is registered but remains fail-closed until an independently
+// verified evidence-ownership provider and database migration are available.
+// Never enable this by a public request or client-supplied userId.
+const hyperEvidenceRoute = createHyperNodeRuntimeRoute({
+    composition: {
+        async handle() {
+            return { status: 503, body: { ok: false, code: "OWNERSHIP_PROVIDER_NOT_CONFIGURED" } };
+        }
+    },
+    enabled: false
+});
 
 const privateReplyWriter = process.env.XSUS_PRIVATE_REPLY_WRITES_ENABLED === "true"
     ? createAssistantMessageWriter({
@@ -251,6 +265,12 @@ const server = http.createServer(
                     chat: "POST /api/chat"
                 }
             });
+        }
+
+        // Registered Hyper evidence verification path; intentionally disabled.
+        // No database access or user identity can bypass this security gate.
+        if (pathname === hyperEvidenceRoute.path) {
+            return hyperEvidenceRoute.handle(req, res);
         }
 
         // New Hyper v8.1 route: fail-closed until independently verified.
