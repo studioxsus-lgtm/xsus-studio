@@ -54,13 +54,14 @@ let lastState="missing";
 let lastObservationId="";
 let lastVerified=false;
 let inputRevision=0;
+let requestRevision=0;
 input?.addEventListener("input",()=>{
  inputRevision+=1;
  // A previous server verification must never be presented for an edited ID.
  if(liveResult)liveResult.hidden=true;
  lastVerified=false;
  lastObservationId="";
- if(lastState==="success"||lastState==="failed"||lastState==="edited"||lastState==="working")setState("edited");
+ if(lastState!=="missing")setState("edited");
 });
 function setState(state){
  lastState=state;
@@ -99,7 +100,8 @@ form?.addEventListener("submit",async event=>{
  submit.disabled=true;
  const requestedId=input.value.trim();
  const requestedRevision=inputRevision;
- const isCurrent=()=>requestedRevision===inputRevision&&input.value.trim()===requestedId;
+ const activeRequest=++requestRevision;
+ const isCurrent=()=>activeRequest===requestRevision&&requestedRevision===inputRevision&&input.value.trim()===requestedId;
  if(liveResult)liveResult.hidden=true;
  setState("working");
  try{
@@ -127,5 +129,5 @@ form?.addEventListener("submit",async event=>{
   lastVerified=false;
   lastObservationId=requestedId;
   showLiveResult(false,lastObservationId);
- }finally{submit.disabled=false;}
+ }finally{if(activeRequest===requestRevision)submit.disabled=false;}
 });
