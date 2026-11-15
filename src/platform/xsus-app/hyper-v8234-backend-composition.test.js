@@ -191,4 +191,48 @@ describe("Hyper v8.2.34 backend composition",()=>{
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(String(fetchImpl.mock.calls[1][0])).toContain("hyper_evidence_owners");
   });
+  it("verifies signed evidence with the actual Supabase owner authorizer",async()=>{
+    const userId="550e8400-e29b-41d4-a716-446655440000";
+    const input={observationId:"obs_1",serviceId:"xsus-studio",snapshot:{
+      instanceId:"instance-1234",processId:123,
+      startedAt:"2026-11-15T09:00:00.000Z",
+      observedAt:"2026-11-15T09:01:00.000Z",
+      source:"local-process-observation"
+    }};
+    const envelope=createHyperEvidenceProvenance({
+      key:base.evidenceKey,keyId:base.evidenceKeyId
+    }).sign(input);
+    const record={
+      observation_id:input.observationId,service_id:input.serviceId,
+      instance_id:input.snapshot.instanceId,process_id:input.snapshot.processId,
+      started_at:input.snapshot.startedAt,observed_at:input.snapshot.observedAt,
+      source:input.snapshot.source,envelope_version:envelope.version,
+      envelope_algorithm:envelope.algorithm,envelope_key_id:envelope.keyId,
+      evidence_digest:envelope.evidenceDigest,authentication_tag:envelope.authenticationTag
+    };
+    const fetchImpl=vi.fn(async(url)=>{
+      const target=String(url);
+      if(target.endsWith("/auth/v1/user"))
+        return {ok:true,json:async()=>({id:userId})};
+      if(target.includes("/rest/v1/hyper_evidence_owners"))
+        return {ok:true,json:async()=>[{user_id:userId,observation_id:"obs_1"}]};
+      if(target.includes("/rest/v1/hyper_runtime_evidence_bundles"))
+        return {ok:true,json:async()=>[record]};
+      throw Error("Unexpected endpoint");
+    });
+    const authorizeEvidenceOwner=createHyperEvidenceOwnerAuthorizer({
+      url:base.supabaseUrl,serviceRoleKey:base.serviceRoleKey,fetchImpl
+    });
+    const app=create({...base,fetchImpl,authorizeEvidenceOwner,enabled:true});
+    const result=await app.handle(request);
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({
+      ok:true,verified:true,observationId:"obs_1",
+      runtimeAttested:false,productionEligible:false
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(String(fetchImpl.mock.calls[1][0])).toContain("hyper_evidence_owners");
+    expect(String(fetchImpl.mock.calls[2][0])).toContain("hyper_runtime_evidence_bundles");
+    expect(JSON.stringify(result)).not.toContain(base.serviceRoleKey);
+  });
 });
