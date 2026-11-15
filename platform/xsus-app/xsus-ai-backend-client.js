@@ -14,7 +14,10 @@ export async function requestXsusAI({prompt,language="en",endpoint="/api/chat",f
   if(endpoint!=="/api/chat"){
     let parsed;
     try{parsed=new URL(endpoint);}catch{throw new TypeError("Invalid XSUS AI endpoint.");}
-    if(parsed.protocol!=="https:" || !/^[a-z0-9-]+\.onrender\.com$/i.test(parsed.hostname) ||
+    const host=parsed.hostname.toLowerCase();
+    const renderHost=host.endsWith(".onrender.com") &&
+      /^[a-z0-9-]+$/.test(host.slice(0,-".onrender.com".length));
+    if(parsed.protocol!=="https:" || !renderHost ||
        parsed.pathname!=="/api/chat" || parsed.search || parsed.hash || parsed.username || parsed.password || parsed.port)
       throw new TypeError("Only HTTPS Render XSUS AI /api/chat endpoints are allowed.");
   }
