@@ -5,6 +5,8 @@ export default defineConfig({
     environment: "node",
     include: [
       "src/platform/xsus-app/hyper-evidence-runtime-integration.test.js",
+      "src/platform/xsus-app/hyper-v8234-backend-composition.test.js",
+      "src/platform/xsus-app/hyper-v8233-supabase-auth-verifier.test.js",
       "src/platform/xsus-app/hyper-evidence-owner-authorizer.test.js",
       "src/platform/xsus-app/hyper-evidence-hmac-integration.test.js",
       "src/platform/xsus-app/hyper-v8235-node-runtime-route.test.js",
