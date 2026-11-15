@@ -15,6 +15,8 @@
 import http from "node:http";
 import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js";
 import { createHyperNodeRuntimeRoute } from "./src/platform/xsus-app/hyper-v8235-node-runtime-route.js";
+import { createHyperAppBackendComposition } from "./src/platform/xsus-app/hyper-v8234-backend-composition.js";
+import { createHyperEvidenceOwnerAuthorizer } from "./src/platform/xsus-app/hyper-evidence-owner-authorizer.js";
 import { processAIRequest } from "./src/core/ai-core.js";
 import { createPrivateChatHandler } from "./src/server/private-chat-handler.js";
 import { createAssistantMessageWriter } from "./src/server/assistant-message-writer.js";
@@ -30,13 +32,26 @@ const hyperV81Route = createHyperV81Route({ env: process.env });
 // v8.2.35: route is registered but remains fail-closed until an independently
 // verified evidence-ownership provider and database migration are available.
 // Never enable this by a public request or client-supplied userId.
+const hyperEvidenceEnabled = process.env.XSUS_HYPER_EVIDENCE_ROUTE_ENABLED === "true";
+const hyperEvidenceComposition = hyperEvidenceEnabled
+    ? createHyperAppBackendComposition({
+        supabaseUrl: process.env.SUPABASE_URL,
+        publishableKey: process.env.SUPABASE_ANON_KEY,
+        serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        evidenceKey: process.env.XSUS_HYPER_EVIDENCE_KEY,
+        evidenceKeyId: process.env.XSUS_HYPER_EVIDENCE_KEY_ID,
+        authorizeEvidenceOwner: createHyperEvidenceOwnerAuthorizer({
+            url: process.env.SUPABASE_URL,
+            serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY
+        }),
+        enabled: true
+    })
+    : { async handle() {
+        return { status: 503, body: { ok: false, code: "EVIDENCE_ROUTE_DISABLED" } };
+    } };
 const hyperEvidenceRoute = createHyperNodeRuntimeRoute({
-    composition: {
-        async handle() {
-            return { status: 503, body: { ok: false, code: "OWNERSHIP_PROVIDER_NOT_CONFIGURED" } };
-        }
-    },
-    enabled: false
+    composition: hyperEvidenceComposition,
+    enabled: hyperEvidenceEnabled
 });
 
 const privateReplyWriter = process.env.XSUS_PRIVATE_REPLY_WRITES_ENABLED === "true"
