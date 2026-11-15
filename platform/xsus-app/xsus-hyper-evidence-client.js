@@ -43,5 +43,8 @@ export async function verifyXsusHyperEvidence({
     throw new Error("Invalid Hyper verification response.");
   if(data.ok!==true || data.verified!==true)
     throw new Error("Hyper evidence verification was not confirmed.");
+  // Never display a successful verification for a different observation.
+  if(Object.hasOwn(data,"observationId") && data.observationId!==observationId)
+    throw new Error("Hyper evidence verification ID mismatch.");
   return data;
 }
