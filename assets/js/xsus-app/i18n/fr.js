@@ -1,4 +1,8 @@
 export default {
+  "Hyper Evidence Verification": "Vérification des preuves Hyper",
+  "Authenticated read-only check of evidence you own.": "Vérification authentifiée en lecture seule des preuves qui vous appartiennent.",
+  "Observation ID": "Identifiant d’observation",
+  "Verify Evidence": "Vérifier la preuve",
   "My Account": "Mon compte",
   "Your app.": "Votre application.",
   "Bring your idea to life.": "Donnez forme à vos idées.",
