@@ -801,6 +801,63 @@ describe(
       }
     );
 
+    test(
+      "account switch during forced refresh clears A history and ignores A response",
+      async () => {
+        setup();
+        session.start();
+        await tick();
+        expect(session.getCurrentUserId()).toBe(A);
+        expect(chat.hydrateHistory).toHaveBeenCalledTimes(1);
+
+        const pendingA = deferred();
+        mocks.loadMyConversations
+          .mockReturnValueOnce(pendingA.promise)
+          .mockResolvedValue([conv(C)]);
+
+        const oldRefresh = session.refresh({ force: true });
+        await tick();
+
+        userId = B;
+        auth("SIGNED_IN", B);
+        await tick();
+
+        expect(session.getCurrentUserId()).toBe(B);
+        const clearsAfterSwitch = chat.clearHistory.mock.calls.length;
+        const hydratedAfterSwitch = chat.hydrateHistory.mock.calls.length;
+
+        pendingA.resolve([conv(C)]);
+        expect(await oldRefresh).toBe(false);
+        await tick();
+
+        expect(session.getCurrentUserId()).toBe(B);
+        expect(chat.clearHistory).toHaveBeenCalledTimes(clearsAfterSwitch);
+        expect(chat.hydrateHistory).toHaveBeenCalledTimes(hydratedAfterSwitch);
+        expect(errors).toHaveLength(0);
+      }
+    );
+
+    test(
+      "initial load failure never treats an unverified history as cached",
+      async () => {
+        mocks.loadMyConversations.mockRejectedValueOnce(
+          new Error("Initial connection unavailable")
+        );
+
+        setup();
+        session.start();
+        await tick();
+
+        expect(chat.hydrateHistory).not.toHaveBeenCalled();
+        expect(errors).toHaveLength(1);
+        expect(statuses.at(-1)).toBe("error");
+
+        expect(await session.refresh()).toBe(true);
+        expect(chat.hydrateHistory).toHaveBeenCalledTimes(1);
+        expect(statuses.at(-1)).toBe("ready");
+      }
+    );
+
     /* TEST 14 */
 
     test(
