@@ -346,21 +346,9 @@ export function createPrivateHistorySession({
       // A failed network refresh must not erase edits made locally
       // while that same-account request was pending.
       if (localSnapshot !== null && localStateChanged(localSnapshot)) {
+        loadedUserId = null;
         notify("local-changes");
         onError(error instanceof Error ? error : new Error("Private history loading failed."));
-        return false;
-      }
-
-      // A transient failure while refreshing an already hydrated account
-      // must not erase that account's previously verified history.
-      // For an initial load or identity switch, continue to fail closed.
-      if (currentUserId && loadedUserId === currentUserId) {
-        notify("error");
-        onError(
-          error instanceof Error
-            ? error
-            : new Error("Private history loading failed.")
-        );
         return false;
       }
 
