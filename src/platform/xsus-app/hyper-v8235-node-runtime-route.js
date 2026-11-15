@@ -1,8 +1,8 @@
 /**
- * Hyper v8.2.35 — Node HTTP runtime boundary for XSUS App.
- * Mount explicitly in server.js only after ownership authorization and
- * database security gates are independently verified.
+ * Hyper v8.2.35 — hardened Node HTTP runtime boundary for XSUS App.
+ * Deliberately not mounted; production activation requires independent gates.
  */
+import { StringDecoder } from "node:string_decoder";
 export const HYPER_NODE_RUNTIME_VERSION = "8.2.35";
 const MAX_BYTES = 2048;
 const PATH = "/api/xsus-app/hyper/evidence/verify";
@@ -30,35 +30,48 @@ export function createHyperNodeRuntimeRoute({composition,enabled=false}={}) {
         respond(res,405,{ok:false,code:"METHOD_NOT_ALLOWED"});
         return;
       }
-      const length=Number(req.headers["content-length"]);
-      if (Number.isFinite(length) && length>MAX_BYTES) {
+      const declared = req.headers?.["content-length"];
+      if (declared !== undefined &&
+          (typeof declared !== "string" || !/^(0|[1-9][0-9]*)$/.test(declared))) {
+        respond(res,400,{ok:false,code:"INVALID_CONTENT_LENGTH"});
+        return;
+      }
+      if (declared !== undefined && Number(declared)>MAX_BYTES) {
         respond(res,413,{ok:false,code:"INVALID_BODY_SIZE"});
         return;
       }
       let rawBody="";
       let bytes=0;
+      const decoder=new StringDecoder("utf8");
       try {
         for await (const chunk of req) {
-          bytes+=Buffer.byteLength(chunk);
+          if (!Buffer.isBuffer(chunk) && typeof chunk!=="string")
+            throw Error("invalid chunk");
+          const buffer=Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk);
+          bytes+=buffer.length;
           if (bytes>MAX_BYTES) {
             respond(res,413,{ok:false,code:"INVALID_BODY_SIZE"});
             return;
           }
-          rawBody+=chunk.toString("utf8");
+          rawBody+=decoder.write(buffer);
         }
+        rawBody+=decoder.end();
       } catch {
         respond(res,400,{ok:false,code:"BODY_READ_FAILED"});
         return;
       }
+      if (declared !== undefined && bytes!==Number(declared)) {
+        respond(res,400,{ok:false,code:"CONTENT_LENGTH_MISMATCH"});
+        return;
+      }
       try {
         const result=await composition.handle({
-          method:req.method,
-          headers:req.headers,
-          rawBody
+          method:req.method,headers:req.headers,rawBody
         });
         if (!Number.isInteger(result?.status) || result.status<200 ||
-            result.status>599 || !result.body || typeof result.body!=="object")
-          throw new Error("invalid response");
+            result.status>599 || !result.body || typeof result.body!=="object" ||
+            Array.isArray(result.body))
+          throw Error("invalid response");
         respond(res,result.status,result.body);
       } catch {
         respond(res,503,{ok:false,code:"RUNTIME_UNAVAILABLE"});
