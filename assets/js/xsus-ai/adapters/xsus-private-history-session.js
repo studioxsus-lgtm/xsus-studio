@@ -390,10 +390,10 @@ export function createPrivateHistorySession({
      * Clean up only the operation that
      * still owns the active-load slot.
      */
-    void promise.finally(() => {
-      if (activeLoad === load) {
-        activeLoad = null;
-      }
+    void promise.then(() => {
+      if (activeLoad === load) activeLoad = null;
+    }, () => {
+      if (activeLoad === load) activeLoad = null;
     });
 
     return promise;
@@ -437,10 +437,8 @@ export function createPrivateHistorySession({
       notify("token-refreshed");
       // A pending history request may have started under the previous JWT.
       // Discard its result and revalidate under the refreshed session.
-      if (activeLoad) {
-        invalidate();
-        scheduleRefresh();
-      }
+      // Same-account token refresh retains the pending load; identity is
+      // rechecked before hydration and duplicate callers share the promise.
       if (
         nextUserId &&
         currentUserId &&
