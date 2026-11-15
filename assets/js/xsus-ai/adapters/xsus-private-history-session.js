@@ -221,6 +221,16 @@ export function createPrivateHistorySession({
         );
       }
 
+      // Reject malformed conversation records before making any message reads.
+      // Never let untrusted identifiers become Supabase query parameters.
+      if (conversations.some(item =>
+        !item || typeof item !== "object" ||
+        typeof item.id !== "string" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.id)
+      )) {
+        throw new TypeError("Invalid private conversations.");
+      }
+
       const messagesByConversation = {};
 
       for (const conversation of conversations) {
