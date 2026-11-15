@@ -9,6 +9,24 @@ const liveResult=document.getElementById("xsus-hyper-live-result");
 const liveTitle=document.getElementById("xsus-hyper-live-result-title");
 const liveId=document.getElementById("xsus-hyper-live-result-id");
 const liveDetail=document.getElementById("xsus-hyper-live-result-detail");
+const uiLabels={
+ en:{title:"Hyper Evidence Verification",description:"Authenticated read-only check of evidence you own.",id:"Observation ID",button:"Verify Evidence"},
+ fr:{title:"Vérification des preuves Hyper",description:"Vérification authentifiée en lecture seule des preuves qui vous appartiennent.",id:"Identifiant d’observation",button:"Vérifier la preuve"},
+ sq:{title:"Verifikimi i evidencës Hyper",description:"Verifikim i autentikuar, vetëm për lexim, i evidencës që zotëron.",id:"ID e vëzhgimit",button:"Verifiko evidencën"}
+};
+function applyEvidenceLabels(){
+ const lang=document.documentElement.lang?.slice(0,2);
+ const labels=uiLabels[lang]||uiLabels.en;
+ const title=document.getElementById("xsus-hyper-live-title");
+ const description=document.querySelector("#xsus-hyper-live > p[data-i18n]");
+ const idLabel=document.querySelector('label span[data-i18n="Observation ID"]');
+ if(title)title.textContent=labels.title;
+ if(description)description.textContent=labels.description;
+ if(idLabel)idLabel.textContent=labels.id;
+ if(input)input.placeholder=labels.id;
+ if(submit)submit.textContent=labels.button;
+}
+
 function showLiveResult(verified,observationId){
  if(!liveResult)return;
  const lang=document.documentElement.lang?.slice(0,2);
@@ -43,7 +61,8 @@ function refreshLanguage(){
  if(status)status.textContent=t()[lastState]||t().failed;
  if(liveResult&&!liveResult.hidden)showLiveResult(lastVerified,lastObservationId);
 }
-document.addEventListener("xsus:language-changed",refreshLanguage);
+document.addEventListener("xsus:language-changed",()=>{applyEvidenceLabels();refreshLanguage();});
+applyEvidenceLabels();
 
 let clientPromise;
 function getClient(){
