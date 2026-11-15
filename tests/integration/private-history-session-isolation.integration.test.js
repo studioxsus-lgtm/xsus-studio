@@ -4130,10 +4130,10 @@ describe("Private history session account and refresh isolation (mocked)", () =>
 
       let resolveOld;
       let rejectOld;
-      mock.deferred = new Promise((resolve, reject) => {
+      mock.deferred = { promise: new Promise((resolve, reject) => {
         resolveOld = resolve;
         rejectOld = reject;
-      });
+      }) };
       const staleLoad = session.refresh({ force: true });
       await tick();
 
@@ -4216,10 +4216,10 @@ describe("Private history session account and refresh isolation (mocked)", () =>
 
       let resolveOld;
       let rejectOld;
-      mock.deferred = new Promise((resolve, reject) => {
+      mock.deferred = { promise: new Promise((resolve, reject) => {
         resolveOld = resolve;
         rejectOld = reject;
-      });
+      }) };
       const staleLoad = session.refresh({ force: true });
       await tick();
 
@@ -4481,10 +4481,10 @@ describe("Private history session account and refresh isolation (mocked)", () =>
 
         let resolvePending;
         let rejectPending;
-        mock.deferred = new Promise((resolve, reject) => {
+        mock.deferred = { promise: new Promise((resolve, reject) => {
           resolvePending = resolve;
           rejectPending = reject;
-        });
+        }) };
         const pending = session.refresh({ force: true });
         await tick();
         const hydrateCount = controller.hydrateHistory.mock.calls.length;
@@ -4549,10 +4549,10 @@ describe("Private history session account and refresh isolation (mocked)", () =>
 
         let resolvePending;
         let rejectPending;
-        mock.deferred = new Promise((resolve, reject) => {
+        mock.deferred = { promise: new Promise((resolve, reject) => {
           resolvePending = resolve;
           rejectPending = reject;
-        });
+        }) };
         const collided = session.refresh({ force: true });
         await tick();
         edit.apply(controller);
