@@ -95,4 +95,28 @@ describe("XSUS App authenticated AI Core boundary", () => {
       .rejects.toThrow("Authentication session changed during AI request.");
   });
 
+  it("never releases a reply when the request is cancelled while waiting for the backend", async () => {
+    const ctx = setup();
+    const controller = new AbortController();
+    ctx.fetchImpl.mockImplementationOnce(async () => {
+      controller.abort();
+      return { ok: true, json: async () => ({ answer: "late reply" }) };
+    });
+    await expect(ctx.adapter({ message: "Hello", conversationId: id, signal: controller.signal }))
+      .rejects.toThrow("XSUS AI Core request cancelled.");
+  });
+  it("never releases a reply when cancellation happens during response parsing", async () => {
+    const ctx = setup();
+    const controller = new AbortController();
+    ctx.fetchImpl.mockResolvedValueOnce({
+      ok: true,
+      json: async () => {
+        controller.abort();
+        return { answer: "late parsed reply" };
+      }
+    });
+    await expect(ctx.adapter({ message: "Hello", conversationId: id, signal: controller.signal }))
+      .rejects.toThrow("XSUS AI Core request cancelled.");
+  });
+
 });
