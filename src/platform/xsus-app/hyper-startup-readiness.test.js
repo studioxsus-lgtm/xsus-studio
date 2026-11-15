@@ -17,7 +17,7 @@ describe("Hyper startup readiness (read-only)", () => {
     const fetchImpl = vi.fn(async () => ({ ok: true }));
     expect(await checkHyperStartupReadiness({ env, fetchImpl }))
       .toMatchObject({ status: "TABLES_REACHABLE", tablesReachable: true });
-    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
     for (const [url, options] of fetchImpl.mock.calls) {
       expect(url).toContain("select=observation_id&limit=0");
       expect(options.method).toBe("GET");
@@ -60,6 +60,24 @@ describe("Hyper startup readiness (read-only)", () => {
       .toBe("TABLE_OR_ENDPOINT_NOT_FOUND");
     expect(result.checks.hyper_evidence_owners.category).toBe("TIMEOUT");
     expect(JSON.stringify(result)).not.toContain("private detail");
+  });
+
+  it("distinguishes rejected REST gateway credentials from table permissions", async () => {
+    const fetchImpl = vi.fn(async url => ({
+      ok: false, status: url.endsWith("/rest/v1/") ? 403 : 403
+    }));
+    const result = await checkHyperStartupReadiness({ env, fetchImpl });
+    expect(result.gatewayReachable).toBe(false);
+    expect(result.diagnosis).toBe("CHECK_API_KEY_OR_GATEWAY");
+    expect(result.checks.restGateway.category).toBe("GATEWAY_AUTHORIZATION");
+  });
+  it("identifies table access failure when REST gateway works", async () => {
+    const fetchImpl = vi.fn(async url => ({
+      ok: url.endsWith("/rest/v1/"), status: url.endsWith("/rest/v1/") ? 200 : 403
+    }));
+    const result = await checkHyperStartupReadiness({ env, fetchImpl });
+    expect(result.gatewayReachable).toBe(true);
+    expect(result.diagnosis).toBe("CHECK_TABLE_PERMISSIONS_OR_SCHEMA");
   });
 
 });
