@@ -12,6 +12,12 @@ export function createHyperReadinessDiagnostic({ env = {}, fetchImpl = globalThi
     async handle({ method, authorization } = {}) {
       if (!active) return { status: 503, body: { ok: false, code: "DIAGNOSTIC_DISABLED" } };
       if (method !== "GET") return { status: 405, body: { ok: false, code: "METHOD_NOT_ALLOWED" } };
+      // Only explicitly approved administrator UUIDs may inspect infrastructure.
+      // Empty or malformed allowlists deny everyone, including valid users.
+      const admins = new Set((env.XSUS_HYPER_READINESS_ADMIN_IDS || "")
+        .split(",").map(id => id.trim().toLowerCase())
+        .filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id)));
+      if (admins.size === 0) return { status: 403, body: { ok: false, code: "DIAGNOSTIC_FORBIDDEN" } };
       const match = typeof authorization === "string" &&
         /^Bearer ([A-Za-z0-9._~-]{16,4096})$/.exec(authorization);
       if (!match) return { status: 401, body: { ok: false, code: "UNAUTHENTICATED" } };
@@ -22,6 +28,7 @@ export function createHyperReadinessDiagnostic({ env = {}, fetchImpl = globalThi
         });
         const principal = await verifier.verifyBearerToken(match[1]);
         if (principal?.verified !== true) return { status: 401, body: { ok: false, code: "UNAUTHENTICATED" } };
+        if (!admins.has(String(principal.userId).toLowerCase())) return { status: 403, body: { ok: false, code: "DIAGNOSTIC_FORBIDDEN" } };
       } catch {
         return { status: 503, body: { ok: false, code: "DIAGNOSTIC_UNAVAILABLE" } };
       }
