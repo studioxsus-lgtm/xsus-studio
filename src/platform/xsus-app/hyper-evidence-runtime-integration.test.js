@@ -80,6 +80,34 @@ describe("Hyper evidence runtime full-chain security integration",()=>{
     expect(result.status).toBe(400);
     expect(fetchImpl.mock.calls.some(([,opts])=>opts?.method==="POST")).toBe(false);
   });
+  it("ignores a forged userId in the request body and uses the token identity",async()=>{
+    const {route,fetchImpl}=setup({owner:OTHER});
+    const result=await invoke(route,{payload:JSON.stringify({
+      action:"evidence.verify",observationId:"obs_1",userId:OTHER,
+      verified:true,role:"service_role"
+    })});
+    expect(result.status).toBe(403);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl.mock.calls.some(([url])=>url.includes("hyper_runtime_evidence_bundles"))).toBe(false);
+  });
+  it("rejects malformed JSON before contacting the authentication provider",async()=>{
+    const {route,fetchImpl}=setup();
+    const result=await invoke(route,{payload:"{broken-json"});
+    expect(result.status).toBe(400);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+  it("rejects oversized requests before authentication or evidence access",async()=>{
+    const {route,fetchImpl}=setup();
+    const result=await invoke(route,{payload:"x".repeat(2049)});
+    expect(result.status).toBe(413);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+  it("rejects unsupported methods before any Supabase calls",async()=>{
+    const {route,fetchImpl}=setup();
+    const result=await invoke(route,{method:"GET"});
+    expect(result.status).toBe(405);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
   it("authorized user reaches evidence read, but missing evidence cannot be verified",async()=>{
     const {route,fetchImpl}=setup();
     const result=await invoke(route);
