@@ -18,13 +18,13 @@ const committedCode=[
  'await store.append(evaluation,{timestamp:2});',
  'await store.close();',
  'process.stdout.write("COMMITTED\\n");',
- 'await new Promise(()=>{});',
+ 'await new Promise(resolve=>{const timer=setInterval(()=>{},1000);process.once("SIGTERM",()=>{clearInterval(timer);resolve();});});',
 ].join("\n");
 const holdLockCode=[
  'import {withExclusiveFileLock} from '+JSON.stringify(lockUrl)+';',
  'await withExclusiveFileLock(process.argv[1],async()=>{',
  'process.stdout.write("LOCKED\\n");',
- 'await new Promise(()=>{});',
+ 'await new Promise(resolve=>{const timer=setInterval(()=>{},1000);process.once("SIGTERM",()=>{clearInterval(timer);resolve();});});',
  '});',
 ].join("\n");
 const evaluation=()=>evaluateHealthHistoryAlerts({status:"missing",lockPresent:false});
