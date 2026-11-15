@@ -60,7 +60,7 @@ input?.addEventListener("input",()=>{
  if(liveResult)liveResult.hidden=true;
  lastVerified=false;
  lastObservationId="";
- if(lastState==="success"||lastState==="failed"||lastState==="edited")setState("edited");
+ if(lastState==="success"||lastState==="failed"||lastState==="edited"||lastState==="working")setState("edited");
 });
 function setState(state){
  lastState=state;
