@@ -215,6 +215,13 @@ export function createPrivateHistorySession({
         return false;
       }
 
+      // A local draft wins even if the delayed remote response is malformed.
+      // Do not classify the stale response as a current-session error.
+      if (localStateChanged(localSnapshot)) {
+        notify("local-changes");
+        return false;
+      }
+
       if (!Array.isArray(conversations)) {
         throw new TypeError(
           "Invalid private conversations."
@@ -256,6 +263,12 @@ export function createPrivateHistorySession({
           );
 
         if (!isCurrent(token)) {
+          return false;
+        }
+
+        // Ignore delayed message responses after a local edit.
+        if (localStateChanged(localSnapshot)) {
+          notify("local-changes");
           return false;
         }
 
