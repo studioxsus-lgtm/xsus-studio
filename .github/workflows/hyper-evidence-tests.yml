@@ -1,0 +1,24 @@
+name: Hyper evidence isolated tests
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/xsus-ai-core
+    paths:
+      - 'src/platform/xsus-app/hyper-owned-evidence-*.js'
+      - '.github/workflows/hyper-evidence-tests.yml'
+permissions:
+  contents: read
+jobs:
+  isolated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Test owned evidence security and integration (mocked, no secrets)
+        run: npx vitest run src/platform/xsus-app/hyper-owned-evidence-writer.test.js src/platform/xsus-app/hyper-owned-evidence-service.test.js
