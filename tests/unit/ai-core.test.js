@@ -107,6 +107,8 @@ describe("XSUS AI Core", () => {
   });
 
   test("përgjigjja përfshin metadata të kontekstit", async () => {
+    deleteMemorySession("test-context-integration");
+
     const result = await processAIRequest({
       query: "Çfarë është JavaScript?",
       language: "sq",
