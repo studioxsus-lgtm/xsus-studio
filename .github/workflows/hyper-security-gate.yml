@@ -1,0 +1,28 @@
+name: Hyper XSUS App security gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/xsus-ai-core]
+    paths:
+      - 'src/platform/xsus-app/hyper-evidence-runtime-integration.test.js'
+      - 'src/platform/xsus-app/hyper-evidence-hmac-integration.test.js'
+      - 'src/platform/xsus-app/hyper-v8235-node-runtime-route.test.js'
+      - 'src/platform/xsus-app/hyper-v82*.js'
+      - 'src/platform/xsus-app/hyper-evidence-owner-authorizer.js'
+      - 'vitest.hyper-security-gate.config.js'
+      - '.github/workflows/hyper-security-gate.yml'
+permissions:
+  contents: read
+jobs:
+  security-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies (no production credentials)
+        run: npm install --no-audit --no-fund
+      - name: Verify authenticated ownership, signed evidence and HTTP boundary
+        run: npx vitest run --config vitest.hyper-security-gate.config.js
