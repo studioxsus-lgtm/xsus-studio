@@ -378,8 +378,17 @@ export function createPrivateHistorySession({
     }
 
     /*
+     * Concurrent callers must observe an in-flight forced refresh,
+     * even if an older snapshot was already hydrated. Returning
+     * "ready" here would incorrectly report a pending load as complete.
+     */
+    if (!force && activeLoad) {
+      return activeLoad.promise;
+    }
+
+    /*
      * Normal refresh preserves already
-     * hydrated conversations.
+     * hydrated conversations when no load is pending.
      */
     if (
       !force &&
@@ -388,14 +397,6 @@ export function createPrivateHistorySession({
     ) {
       notify("ready");
       return Promise.resolve(true);
-    }
-
-    /*
-     * Concurrent callers share the same
-     * pending operation.
-     */
-    if (!force && activeLoad) {
-      return activeLoad.promise;
     }
 
     /*
