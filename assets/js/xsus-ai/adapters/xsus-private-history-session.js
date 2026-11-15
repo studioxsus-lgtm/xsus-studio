@@ -452,14 +452,14 @@ export function createPrivateHistorySession({
      AUTH EVENTS
   ========================================== */
 
-  function scheduleRefresh() {
+  function scheduleRefresh({ force = false } = {}) {
     const scheduledGeneration = generation;
 
     queueMicrotask(() => {
       if (
         isCurrent(scheduledGeneration)
       ) {
-        void refresh();
+        void refresh({ force });
       }
     });
   }
@@ -504,7 +504,7 @@ export function createPrivateHistorySession({
       } else {
         // Forced refreshes started under the previous token are obsolete.
         invalidate({ preserveLoaded: true });
-        scheduleRefresh();
+        scheduleRefresh({ force: true });
       }
       return;
     }
