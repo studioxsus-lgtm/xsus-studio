@@ -35,6 +35,7 @@ export function createXsusAppAiCoreAdapter({
     if (sessionError || !session?.access_token || session.user?.id !== userId)
       throw new Error("Authentication session mismatch.");
 
+    const initialAccessToken = session.access_token;
     const response = await fetchImpl(endpoint, {
       method: "POST",
       headers: {
@@ -56,6 +57,10 @@ export function createXsusAppAiCoreAdapter({
     const { data: finalIdentity, error: finalError } = await supabase.auth.getUser();
     if (finalError || finalIdentity?.user?.id !== userId)
       throw new Error("Account changed during AI request.");
+    const { data: finalSessionData, error: finalSessionError } = await supabase.auth.getSession();
+    if (finalSessionError || finalSessionData?.session?.user?.id !== userId ||
+        finalSessionData?.session?.access_token !== initialAccessToken)
+      throw new Error("Authentication session changed during AI request.");
     return {
       answer: payload.answer,
       source: payload.source ?? null,
