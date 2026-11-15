@@ -14,6 +14,27 @@ export async function checkHyperStartupReadiness({
       checks: Object.freeze({}) });
   }
   const checks = {};
+  // Read-only REST gateway probe, separate from table permissions.
+  try {
+    const response = await fetchImpl(new URL("/rest/v1/", url).toString(), {
+      method: "GET", redirect: "error",
+      headers: { apikey: key, Authorization: "Bearer " + key, Accept: "application/openapi+json" },
+      signal: AbortSignal.timeout(timeoutMs)
+    });
+    checks.restGateway = Object.freeze({
+      reachable: response?.ok === true,
+      httpStatus: Number.isInteger(response?.status) ? response.status : null,
+      category: response?.ok === true ? "OK"
+        : [401,403].includes(response?.status) ? "GATEWAY_AUTHORIZATION"
+        : "GATEWAY_UNAVAILABLE"
+    });
+  } catch (error) {
+    checks.restGateway = Object.freeze({
+      reachable: false, httpStatus: null,
+      category: ["TimeoutError", "AbortError"].includes(error?.name)
+        ? "TIMEOUT" : "NETWORK_OR_TLS_ERROR"
+    });
+  }
   for (const table of ["hyper_runtime_evidence_bundles", "hyper_evidence_owners"]) {
     try {
       const endpoint = new URL("/rest/v1/" + table + "?select=observation_id&limit=0", url);
@@ -45,10 +66,13 @@ export async function checkHyperStartupReadiness({
       });
     }
   }
-  const tablesReachable = Object.values(checks).every(check => check.reachable);
+  const tablesReachable = ["hyper_runtime_evidence_bundles", "hyper_evidence_owners"].every(table => checks[table].reachable);
+  const gatewayReachable = checks.restGateway.reachable;
   return Object.freeze({
     status: tablesReachable ? "TABLES_REACHABLE" : "TABLES_UNAVAILABLE",
     tablesReachable,
+    gatewayReachable,
+    diagnosis: !gatewayReachable ? "CHECK_API_KEY_OR_GATEWAY" : !tablesReachable ? "CHECK_TABLE_PERMISSIONS_OR_SCHEMA" : "REST_READS_OK",
     checks: Object.freeze(checks)
   });
 }
