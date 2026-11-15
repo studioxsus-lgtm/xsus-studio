@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 // Importet nga motori leksikor dhe gjuhësor
 import { analyzeAlbanianWord } from "../morphology";
 import { analyzeAlbanianSentence } from "../grammar-rules";
-import { analyzeAlbanian } from "../language-engine";
+import { analyzeAlbanian } from "../language-engine.ts";
 
 // Importet nga motori gramatikor dhe morfologjik
 import { analyzeNoun } from "../noun-morphology";
