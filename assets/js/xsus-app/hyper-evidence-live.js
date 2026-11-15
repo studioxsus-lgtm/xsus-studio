@@ -4,6 +4,25 @@ const form=document.getElementById("xsus-hyper-live-form");
 const status=document.getElementById("xsus-hyper-live-status");
 const submit=document.getElementById("xsus-hyper-live-submit");
 const input=document.getElementById("xsus-hyper-live-id");
+
+const liveResult=document.getElementById("xsus-hyper-live-result");
+const liveTitle=document.getElementById("xsus-hyper-live-result-title");
+const liveId=document.getElementById("xsus-hyper-live-result-id");
+const liveDetail=document.getElementById("xsus-hyper-live-result-detail");
+function showLiveResult(verified,observationId){
+ if(!liveResult)return;
+ const lang=document.documentElement.lang?.slice(0,2);
+ const labels={
+  sq:verified?["Evidencë e verifikuar","Konfirmuar nga serveri me autentikim."]:["Verifikimi nuk u konfirmua","Kontrollo ID-në, pronësinë dhe serverin."],
+  en:verified?["Evidence verified","Authenticated verification confirmed by backend."]:["Verification not confirmed","Check ID, ownership and backend."],
+  fr:verified?["Preuve vérifiée","Vérification authentifiée confirmée par le serveur."]:["Vérification non confirmée","Vérifiez l’identifiant, les droits et le serveur."]
+ };
+ const [title,detail]=labels[lang]||labels.en;
+ liveTitle.textContent=title;
+ liveId.textContent="Observation ID: "+observationId;
+ liveDetail.textContent=detail;
+ liveResult.hidden=false;
+}
 const SUPABASE_URL="https://rdcwqjsmzklktfccebfs.supabase.co";
 const PUBLISHABLE_KEY="sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr";
 const RENDER_ENDPOINT="https://xsus-studio.onrender.com/api/xsus-app/hyper/evidence/verify";
@@ -39,6 +58,7 @@ form?.addEventListener("submit",async event=>{
  event.preventDefault();
  if(!form.reportValidity()||submit.disabled)return;
  submit.disabled=true;
+ if(liveResult)liveResult.hidden=true;
  status.textContent=t().working;
  try{
   if(!["https://www.xsusstudio.com","https://xsusstudio.com"].includes(location.origin))
@@ -51,9 +71,12 @@ form?.addEventListener("submit",async event=>{
     accessToken:session.access_token,
     endpoint:RENDER_ENDPOINT
   });
-  status.textContent=result.ok===true&&result.verified===true?t().success:t().failed;
+  const verified=result.ok===true&&result.verified===true;
+  status.textContent=verified?t().success:t().failed;
+  showLiveResult(verified,input.value.trim());
  }catch(error){
   // Do not log tokens or expose internal evidence payloads in the UI.
-  status.textContent=t().failed+" ("+String(error?.message||"Unavailable")+")";
+  status.textContent=t().failed;
+  showLiveResult(false,input.value.trim());
  }finally{submit.disabled=false;}
 });
