@@ -425,6 +425,7 @@ export function createPrivateHistorySession({
 
     const load = {
       token,
+      force,
       promise: null
     };
 
@@ -496,10 +497,15 @@ export function createPrivateHistorySession({
       // A different identity must clear private memory before loading.
       if (nextUserId !== currentUserId) {
         changeIdentity(nextUserId);
+        scheduleRefresh();
+      } else if (activeLoad && !activeLoad.force) {
+        // A normal initial hydration remains shared across repeated
+        // same-account token events; its final getUser check still gates UI.
       } else {
+        // Forced refreshes started under the previous token are obsolete.
         invalidate({ preserveLoaded: true });
+        scheduleRefresh();
       }
-      scheduleRefresh();
       return;
     }
 
