@@ -8,9 +8,16 @@ export async function requestXsusAI({prompt,language="en",endpoint="/api/chat",f
   if(typeof prompt!=="string" || !prompt.trim() || prompt.length>8000)
     throw new TypeError("A nonempty prompt of at most 8000 characters is required.");
   if(!LANGUAGES.has(language))throw new TypeError("Unsupported language.");
-  if(typeof endpoint!=="string" || !endpoint.startsWith("/") || endpoint.startsWith("//") ||
-     !/^\/api\/chat$/.test(endpoint))
-    throw new TypeError("Only the same-origin XSUS AI API endpoint is allowed.");
+  if(typeof endpoint!=="string")throw new TypeError("Invalid XSUS AI endpoint.");
+  // Explicit HTTPS Render deployment URL or the existing same-origin route.
+  // No client-supplied URL, credentials or arbitrary destinations are accepted.
+  if(endpoint!=="/api/chat"){
+    let parsed;
+    try{parsed=new URL(endpoint);}catch{throw new TypeError("Invalid XSUS AI endpoint.");}
+    if(parsed.protocol!=="https:" || !/^[a-z0-9-]+\\.onrender\\.com$/i.test(parsed.hostname) ||
+       parsed.pathname!=="/api/chat" || parsed.search || parsed.hash || parsed.username || parsed.password || parsed.port)
+      throw new TypeError("Only HTTPS Render XSUS AI /api/chat endpoints are allowed.");
+  }
   if(typeof fetchImpl!=="function")throw new TypeError("A fetch implementation is required.");
   const response=await fetchImpl(endpoint,{
     method:"POST",headers:{"Content-Type":"application/json"},
