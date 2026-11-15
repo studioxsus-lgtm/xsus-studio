@@ -1,4 +1,8 @@
 export default {
+  "Hyper Evidence Verification": "Verifikimi i evidencës Hyper",
+  "Authenticated read-only check of evidence you own.": "Verifikim i autentikuar, vetëm për lexim, i evidencës që zotëron.",
+  "Observation ID": "ID e vëzhgimit",
+  "Verify Evidence": "Verifiko evidencën",
   "My Account": "Llogaria ime",
   "Your app.": "Aplikacioni yt.",
   "Bring your idea to life.": "Jepi formë asaj që ke në mendje.",
