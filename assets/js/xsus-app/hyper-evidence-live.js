@@ -53,7 +53,9 @@ const t=()=>messages[document.documentElement.lang?.slice(0,2)]||messages.en;
 let lastState="missing";
 let lastObservationId="";
 let lastVerified=false;
+let inputRevision=0;
 input?.addEventListener("input",()=>{
+ inputRevision+=1;
  // A previous server verification must never be presented for an edited ID.
  if(liveResult)liveResult.hidden=true;
  lastVerified=false;
@@ -95,6 +97,9 @@ form?.addEventListener("submit",async event=>{
  event.preventDefault();
  if(!form.reportValidity()||submit.disabled)return;
  submit.disabled=true;
+ const requestedId=input.value.trim();
+ const requestedRevision=inputRevision;
+ const isCurrent=()=>requestedRevision===inputRevision&&input.value.trim()===requestedId;
  if(liveResult)liveResult.hidden=true;
  setState("working");
  try{
@@ -102,22 +107,25 @@ form?.addEventListener("submit",async event=>{
    throw new Error("Open XSUS App on its official HTTPS domain.");
   const supabase=await getClient();
   const {data:{session},error}=await supabase.auth.getSession();
-  if(error||!session?.access_token){status.textContent=t().missing;return;}
+  if(!isCurrent())return;
+  if(error||!session?.access_token){setState("missing");return;}
   const result=await verifyXsusHyperEvidence({
-    observationId:input.value.trim(),
+    observationId:requestedId,
     accessToken:session.access_token,
     endpoint:RENDER_ENDPOINT
   });
+  if(!isCurrent())return;
   const verified=result.ok===true&&result.verified===true;
   setState(verified?"success":"failed");
   lastVerified=verified;
-  lastObservationId=input.value.trim();
+  lastObservationId=requestedId;
   showLiveResult(verified,lastObservationId);
  }catch(error){
+  if(!isCurrent())return;
   // Do not log tokens or expose internal evidence payloads in the UI.
   setState("failed");
   lastVerified=false;
-  lastObservationId=input.value.trim();
+  lastObservationId=requestedId;
   showLiveResult(false,lastObservationId);
  }finally{submit.disabled=false;}
 });
