@@ -39,6 +39,13 @@ export function createPrivateReplyBoundary({
       localConversationId: conversationId, localMessageId: messageId, content: message
     });
     if (token !== generation) throw new Error("Private chat session changed.");
+    // Revalidate identity before examining any receipt from a previous account.
+    const afterWrite = await session();
+    if (afterWrite.user.id !== initial.user.id ||
+        afterWrite.access_token !== initial.access_token) {
+      invalidate();
+      throw new Error("Private chat session changed.");
+    }
     if (!receipt || receipt.role !== "user" || receipt.content !== message ||
         typeof receipt.conversationId !== "string" ||
         typeof receipt.operationId !== "string") {
