@@ -35,7 +35,7 @@ function setup({owner=USER,authOK=true,ownerOK=true}={}) {
   });
   const composition=createHyperAppBackendComposition({
     supabaseUrl:URL,publishableKey:"public-test-key",
-    serviceRoleKey:"server-only-test-key",evidenceKey:"a".repeat(64),
+    serviceRoleKey:"server-only-test-key",evidenceKey:Buffer.alloc(32, 0x41),
     evidenceKeyId:"test-key",fetchImpl,authorizeEvidenceOwner,enabled:true
   });
   return {route:createHyperNodeRuntimeRoute({composition,enabled:true}),fetchImpl};
