@@ -485,19 +485,14 @@ export function createPrivateHistorySession({
       // A refreshed JWT must invalidate any in-flight request carrying
       // the previous token, even when the account ID stays unchanged.
       notify("token-refreshed");
-      // A pending history request may have started under the previous JWT.
-      // Discard its result and revalidate under the refreshed session.
-      // Same-account token refresh retains the pending load; identity is
-      // rechecked before hydration and duplicate callers share the promise.
-      if (
-        nextUserId &&
-        currentUserId &&
-        nextUserId !== currentUserId
-      ) {
+      // A refreshed JWT supersedes reads started under the old token.
+      // A different identity must clear private memory before loading.
+      if (nextUserId !== currentUserId) {
         changeIdentity(nextUserId);
-        scheduleRefresh();
+      } else {
+        invalidate({ preserveLoaded: true });
       }
-
+      scheduleRefresh();
       return;
     }
 
