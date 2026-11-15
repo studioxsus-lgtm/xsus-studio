@@ -10,6 +10,25 @@ const input={observationId:"obs-1",serviceId:"xsus-app",snapshot:{
 const make=(fetchImpl,enabled=true)=>createHyperOwnedEvidenceService({
  url:"https://example.supabase.co",serviceRoleKey:"server-secret",
  key:Buffer.alloc(32,7),keyId:"key-v1",fetchImpl,enabled
+ it("rejects RPC response with a different observation ID",async()=>{
+  const fetchImpl=vi.fn(async()=>({ok:true,json:async()=> "other-id"}));
+  const result=await make(fetchImpl).create({input,verifiedPrincipal:principal});
+  expect(result).toEqual({stored:false,reason:"ATOMIC_PROVISIONING_FAILED"});
+ });
+ it("fails closed if RPC returns an invalid JSON response",async()=>{
+  const fetchImpl=vi.fn(async()=>({ok:true,json:async()=>{throw Error("invalid JSON");}}));
+  const result=await make(fetchImpl).create({input,verifiedPrincipal:principal});
+  expect(result.reason).toBe("ATOMIC_PROVISIONING_FAILED");
+ });
+ it("rejects a user ID supplied without the trusted principal marker",async()=>{
+  const fetchImpl=vi.fn();
+  const result=await make(fetchImpl).create({input,verifiedPrincipal:{
+   verified:true,userId:principal.userId
+  }});
+  expect(result.reason).toBe("UNVERIFIED_PRINCIPAL");
+  expect(fetchImpl).not.toHaveBeenCalled();
+ });
+
 });
 describe("Hyper owned evidence internal service",()=>{
  it("signs and provisions evidence and owner in a single RPC",async()=>{
