@@ -1,0 +1,29 @@
+name: XSUS Hyper Evidence Security
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'platform/xsus-app/xsus-hyper-evidence-client.js'
+      - 'tests/integration/xsus-app-hyper-evidence-*.test.js'
+      - '.github/workflows/xsus-hyper-evidence-security.yml'
+  pull_request:
+    paths:
+      - 'platform/xsus-app/xsus-hyper-evidence-client.js'
+      - 'tests/integration/xsus-app-hyper-evidence-*.test.js'
+      - '.github/workflows/xsus-hyper-evidence-security.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  security-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Hyper evidence security regressions
+        run: npx vitest run tests/integration/xsus-app-hyper-evidence-response-binding.test.js tests/integration/xsus-app-hyper-evidence-security-regression.test.js
