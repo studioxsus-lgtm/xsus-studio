@@ -26,4 +26,4 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Hyper evidence security regressions
-        run: npx vitest run tests/integration/xsus-app-hyper-evidence-response-binding.test.js tests/integration/xsus-app-hyper-evidence-security-regression.test.js
+        run: npx vitest run tests/integration/xsus-app-hyper-evidence-response-binding.test.js tests/integration/xsus-app-hyper-evidence-security-regression.test.js tests/integration/xsus-app-hyper-evidence-backend-contract.test.js
