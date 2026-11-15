@@ -10,6 +10,7 @@ export function createXsusAppController({
   documentRef=globalThis.document,
   processApp=processXsusAppRequest,
   requestAI=requestXsusAI,
+  aiEndpoint=globalThis.XSUS_AI_API_ENDPOINT || "/api/chat",
   getStatus=getXsusAppBridgeStatus
 }={}){
   const find=id=>documentRef.getElementById(id);
@@ -55,7 +56,7 @@ export function createXsusAppController({
         const ai=await requestAI({prompt:
           "Analyze the following application specification for "+platform.value+
           ". Provide architecture recommendations, security considerations and implementation steps:\n"+text,
-          language:"en"
+          language:"en",endpoint:aiEndpoint
         });
         result.textContent=JSON.stringify({app,ai:{status:"completed",...ai}},null,2);
         message.textContent="XSUS App architecture and XSUS AI analysis completed.";
