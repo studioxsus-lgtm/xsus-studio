@@ -1,0 +1,24 @@
+name: Hyper Node runtime boundary
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/xsus-ai-core]
+    paths:
+      - 'src/platform/xsus-app/hyper-v8235-node-runtime-route.js'
+      - 'src/platform/xsus-app/hyper-v8235-node-runtime-route.test.js'
+      - 'vitest.hyper-runtime-boundary.config.js'
+      - '.github/workflows/hyper-runtime-boundary.yml'
+permissions:
+  contents: read
+jobs:
+  runtime-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Verify runtime boundary (no external services)
+        run: npx vitest run --config vitest.hyper-runtime-boundary.config.js
