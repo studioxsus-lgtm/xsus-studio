@@ -73,4 +73,26 @@ describe("XSUS App authenticated AI Core boundary", () => {
       supabase: ctx.supabase, fetchImpl: ctx.fetchImpl, endpoint: "https://example.com/api/chat"
     })).toThrow("Unapproved XSUS AI Core endpoint.");
   });
+  it("rejects a response when the same account rotates its access token mid-request", async () => {
+    const ctx = setup();
+    ctx.fetchImpl.mockImplementationOnce(async () => {
+      ctx.supabase.auth.getSession.mockResolvedValue({
+        data: { session: { user: { id: user }, access_token: "rotated_test_jwt" } },
+        error: null
+      });
+      return { ok: true, json: async () => ({ answer: "stale token reply" }) };
+    });
+    await expect(ctx.adapter({ message: "Hello", conversationId: id }))
+      .rejects.toThrow("Authentication session changed during AI request.");
+  });
+  it("rejects a response when the session disappears after the request", async () => {
+    const ctx = setup();
+    ctx.fetchImpl.mockImplementationOnce(async () => {
+      ctx.supabase.auth.getSession.mockResolvedValue({ data: { session: null }, error: null });
+      return { ok: true, json: async () => ({ answer: "stale session reply" }) };
+    });
+    await expect(ctx.adapter({ message: "Hello", conversationId: id }))
+      .rejects.toThrow("Authentication session changed during AI request.");
+  });
+
 });
