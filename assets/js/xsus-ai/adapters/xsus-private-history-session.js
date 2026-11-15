@@ -498,11 +498,14 @@ export function createPrivateHistorySession({
       if (nextUserId !== currentUserId) {
         changeIdentity(nextUserId);
         scheduleRefresh();
-      } else if (activeLoad && !activeLoad.force) {
-        // A normal initial hydration remains shared across repeated
-        // same-account token events; its final getUser check still gates UI.
+      } else if (!activeLoad) {
+        // An already hydrated account does not need a database read
+        // merely because Supabase rotated its JWT.
+      } else if (!activeLoad.force) {
+        // Normal in-flight hydration remains shared by concurrent callers.
+        // The final verifiedUserId check still protects identity isolation.
       } else {
-        // Forced refreshes started under the previous token are obsolete.
+        // A forced read started under the old JWT must be superseded.
         invalidate({ preserveLoaded: true });
         scheduleRefresh({ force: true });
       }
