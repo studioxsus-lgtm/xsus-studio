@@ -1,6 +1,7 @@
 import {describe,it,expect,vi} from "vitest";
 import {createHyperAppBackendComposition as create} from "./hyper-v8234-backend-composition.js";
 import {createHyperEvidenceProvenance} from "./hyper-v8222-evidence-provenance.js";
+import {createHyperEvidenceOwnerAuthorizer} from "./hyper-evidence-owner-authorizer.js";
 const base={
   supabaseUrl:"https://example.supabase.co",
   publishableKey:"test-publishable-key",
@@ -168,5 +169,26 @@ describe("Hyper v8.2.34 backend composition",()=>{
     expect(result.body).toEqual({ok:false,code:"VERIFICATION_UNAVAILABLE"});
     expect(authorizeEvidenceOwner).toHaveBeenCalledWith({userId,observationId:"obs_1"});
     expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+  it("uses the actual Supabase owner authorizer and denies mismatched ownership before evidence reads",async()=>{
+    const userId="550e8400-e29b-41d4-a716-446655440000";
+    const otherUser="11111111-1111-4111-8111-111111111111";
+    const fetchImpl=vi.fn(async(url)=>{
+      const target=String(url);
+      if(target.endsWith("/auth/v1/user"))
+        return {ok:true,json:async()=>({id:userId})};
+      if(target.includes("/rest/v1/hyper_evidence_owners"))
+        return {ok:true,json:async()=>[{user_id:otherUser,observation_id:"obs_1"}]};
+      throw Error("evidence storage must not be read");
+    });
+    const authorizeEvidenceOwner=createHyperEvidenceOwnerAuthorizer({
+      url:base.supabaseUrl,serviceRoleKey:base.serviceRoleKey,fetchImpl
+    });
+    const app=create({...base,fetchImpl,authorizeEvidenceOwner,enabled:true});
+    const result=await app.handle(request);
+    expect(result.status).toBe(403);
+    expect(result.body).toEqual({ok:false,code:"FORBIDDEN"});
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(String(fetchImpl.mock.calls[1][0])).toContain("hyper_evidence_owners");
   });
 });
