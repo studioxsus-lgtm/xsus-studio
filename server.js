@@ -32,13 +32,20 @@ const hyperV81Route = createHyperV81Route({ env: process.env });
 // v8.2.35: route is registered but remains fail-closed until an independently
 // verified evidence-ownership provider and database migration are available.
 // Never enable this by a public request or client-supplied userId.
+// A 64-character hexadecimal secret is decoded to the 32-byte key required
+// by the HMAC provenance engine. Reject malformed secrets before enabling.
+function readHyperEvidenceKey(value) {
+    if (typeof value !== "string" || !/^[0-9a-fA-F]{64}$/.test(value))
+        throw new Error("Hyper evidence HMAC key must be 64 hexadecimal characters.");
+    return Buffer.from(value, "hex");
+}
 const hyperEvidenceEnabled = process.env.XSUS_HYPER_EVIDENCE_ROUTE_ENABLED === "true";
 const hyperEvidenceComposition = hyperEvidenceEnabled
     ? createHyperAppBackendComposition({
         supabaseUrl: process.env.SUPABASE_URL,
         publishableKey: process.env.SUPABASE_ANON_KEY,
         serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-        evidenceKey: process.env.XSUS_HYPER_EVIDENCE_KEY,
+        evidenceKey: readHyperEvidenceKey(process.env.XSUS_HYPER_EVIDENCE_KEY),
         evidenceKeyId: process.env.XSUS_HYPER_EVIDENCE_KEY_ID,
         authorizeEvidenceOwner: createHyperEvidenceOwnerAuthorizer({
             url: process.env.SUPABASE_URL,
