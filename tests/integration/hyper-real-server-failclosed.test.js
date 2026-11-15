@@ -48,6 +48,11 @@ describe("XSUS real HTTP entrypoint — Hyper evidence fail-closed",()=>{
       cwd:process.cwd(),
       env:{
         ...process.env,PORT:String(port),
+        SUPABASE_URL:"",
+        SUPABASE_ANON_KEY:"",
+        SUPABASE_SERVICE_ROLE_KEY:"",
+        XSUS_HYPER_EVIDENCE_KEY:"",
+        XSUS_HYPER_EVIDENCE_KEY_ID:"",
         XSUS_HYPER_EVIDENCE_ROUTE_ENABLED:"false",
         XSUS_HYPER_APP_ENABLED:"false",
         XSUS_PRIVATE_CHAT_ENABLED:"false",
@@ -98,6 +103,12 @@ describe("XSUS real HTTP entrypoint — Hyper evidence fail-closed",()=>{
       });
       expect(get.status).toBe(503);
       expect(await get.json()).toEqual({ok:false,code:"RUNTIME_DISABLED"});
+      const oversized=await fetch(base+"/api/xsus-app/hyper/evidence/verify",{
+        method:"POST",headers:{"content-type":"application/json"},
+        body:"x".repeat(4096),signal:AbortSignal.timeout(2000)
+      });
+      expect(oversized.status).toBe(503);
+      expect(await oversized.json()).toEqual({ok:false,code:"RUNTIME_DISABLED"});
     }finally{
       child.kill("SIGTERM");
     }
