@@ -1,0 +1,23 @@
+name: Hyper real server smoke
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/xsus-ai-core]
+    paths:
+      - 'server.js'
+      - 'tests/integration/hyper-real-server-failclosed.test.js'
+      - '.github/workflows/hyper-real-server-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Real Node server fail-closed smoke test
+        run: npx vitest run tests/integration/hyper-real-server-failclosed.test.js
