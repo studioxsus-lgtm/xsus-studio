@@ -48,12 +48,14 @@ export function createXsusAppAiCoreAdapter({
       redirect: "error",
       signal
     });
+    if (signal?.aborted) throw new Error("XSUS AI Core request cancelled.");
     if (!response?.ok) throw new Error("XSUS AI Core request failed.");
     const payload = await response.json();
     if (!payload || typeof payload !== "object" || payload.error ||
         typeof payload.answer !== "string")
       throw new Error("Invalid XSUS AI Core response.");
 
+    if (signal?.aborted) throw new Error("XSUS AI Core request cancelled.");
     const { data: finalIdentity, error: finalError } = await supabase.auth.getUser();
     if (finalError || finalIdentity?.user?.id !== userId)
       throw new Error("Account changed during AI request.");
@@ -61,6 +63,7 @@ export function createXsusAppAiCoreAdapter({
     if (finalSessionError || finalSessionData?.session?.user?.id !== userId ||
         finalSessionData?.session?.access_token !== initialAccessToken)
       throw new Error("Authentication session changed during AI request.");
+    if (signal?.aborted) throw new Error("XSUS AI Core request cancelled.");
     return {
       answer: payload.answer,
       source: payload.source ?? null,
