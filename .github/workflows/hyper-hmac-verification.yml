@@ -1,0 +1,27 @@
+name: Hyper HMAC verification
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/xsus-ai-core]
+    paths:
+      - 'src/platform/xsus-app/hyper-evidence-hmac-integration.test.js'
+      - 'src/platform/xsus-app/hyper-v8223-trusted-evidence-storage.js'
+      - 'src/platform/xsus-app/hyper-v8222-evidence-provenance.js'
+      - 'src/platform/xsus-app/hyper-v8221-evidence-integrity.js'
+      - 'src/platform/xsus-app/hyper-v8216-runtime-evidence-schema.js'
+      - 'vitest.hyper-hmac.config.js'
+      - '.github/workflows/hyper-hmac-verification.yml'
+permissions:
+  contents: read
+jobs:
+  hmac:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Verify signed evidence integrity (mocked storage; no credentials)
+        run: npx vitest run --config vitest.hyper-hmac.config.js
