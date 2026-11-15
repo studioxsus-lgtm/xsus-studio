@@ -57,13 +57,17 @@ if (missing.length) {
     } else {
       report.liveUserAuthVerified = "NOT_TESTED";
     }
-    report.readyForControlledWriteTest = report.hmacKeyValid &&
+    report.infrastructureReady = report.hmacKeyValid &&
       report.keyIdValid && report.authConfigValid &&
       report.ownerLookupConfigValid &&
       Object.values(report.tablesReadable).every(Boolean) &&
-      report.liveUserAuthVerified === true &&
       !report.routeEnabled;
-    if (!report.readyForControlledWriteTest) process.exitCode = 1;
+    report.readyForControlledWriteTest = report.infrastructureReady &&
+      report.liveUserAuthVerified === true;
+    report.status = !report.infrastructureReady ? "INFRASTRUCTURE_NOT_READY" :
+      report.liveUserAuthVerified === true ? "READY_FOR_CONTROLLED_WRITE_TEST" :
+      "INFRASTRUCTURE_READY_AUTH_TEST_PENDING";
+    if (!report.infrastructureReady) process.exitCode = 1;
   } catch {
     report.configurationError = true;
     process.exitCode = 1;
