@@ -349,6 +349,19 @@ export function createPrivateHistorySession({
         return false;
       }
 
+      // A transient failure while refreshing an already hydrated account
+      // must not erase that account's previously verified history.
+      // For an initial load or identity switch, continue to fail closed.
+      if (currentUserId && loadedUserId === currentUserId) {
+        notify("error");
+        onError(
+          error instanceof Error
+            ? error
+            : new Error("Private history loading failed.")
+        );
+        return false;
+      }
+
       clearPrivateMemory();
 
       notify("error");
