@@ -148,4 +148,30 @@ describe("Hyper evidence runtime full-chain security integration",()=>{
     expect(fetchImpl.mock.calls.some(([,opts])=>opts?.method==="POST")).toBe(false);
     expect(JSON.stringify(result)).not.toContain("server-only-test-key");
   });
+  it("rejects tampered evidence across the complete Node HTTP and Supabase ownership chain",async()=>{
+    const input={observationId:"obs_1",serviceId:"xsus-studio",snapshot:{
+      instanceId:"instance-1234",processId:123,
+      startedAt:"2026-11-15T09:00:00.000Z",
+      observedAt:"2026-11-15T09:01:00.000Z",
+      source:"local-process-observation"
+    }};
+    const envelope=createHyperEvidenceProvenance({
+      key:Buffer.alloc(32,0x41),keyId:"test-key"
+    }).sign(input);
+    const evidenceRecord={
+      observation_id:input.observationId,service_id:input.serviceId,
+      instance_id:input.snapshot.instanceId,process_id:999,
+      started_at:input.snapshot.startedAt,observed_at:input.snapshot.observedAt,
+      source:input.snapshot.source,envelope_version:envelope.version,
+      envelope_algorithm:envelope.algorithm,envelope_key_id:envelope.keyId,
+      evidence_digest:envelope.evidenceDigest,authentication_tag:envelope.authenticationTag
+    };
+    const {route,fetchImpl}=setup({evidenceRecord});
+    const result=await invoke(route);
+    expect(result.status).toBe(503);
+    expect(result.body).toEqual({ok:false,code:"VERIFICATION_UNAVAILABLE"});
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(fetchImpl.mock.calls.some(([,opts])=>opts?.method==="POST")).toBe(false);
+    expect(JSON.stringify(result)).not.toContain("server-only-test-key");
+  });
 });
