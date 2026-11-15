@@ -39,6 +39,18 @@ describe("XSUS App -> authenticated Hyper evidence backend",()=>{
     await expect(verifyXsusHyperEvidence({observationId:"obs",accessToken:"bad",fetchImpl})).rejects.toThrow();
     expect(fetchImpl).not.toHaveBeenCalled();
   });
+  it.each([
+    {ok:true,verified:false},
+    {ok:false,verified:true},
+    {ok:true},
+    {verified:true},
+    {ok:true,verified:"true"}
+  ])("rejects unconfirmed successful HTTP responses: %j",async(payload)=>{
+    const fetchImpl=vi.fn(async()=>({ok:true,json:async()=>payload}));
+    await expect(verifyXsusHyperEvidence({observationId:"obs",accessToken:token,fetchImpl}))
+      .rejects.toThrow(/not confirmed/);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
   it("handles disabled route without claiming success",async()=>{
     const fetchImpl=vi.fn(async()=>({ok:false,status:503,json:async()=>({code:"RUNTIME_DISABLED"})}));
     await expect(verifyXsusHyperEvidence({observationId:"obs",accessToken:token,fetchImpl})).rejects.toThrow(/not enabled/);
