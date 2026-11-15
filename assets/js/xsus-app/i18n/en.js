@@ -1,4 +1,8 @@
 export default {
+  "Hyper Evidence Verification": "Hyper Evidence Verification",
+  "Authenticated read-only check of evidence you own.": "Authenticated read-only check of evidence you own.",
+  "Observation ID": "Observation ID",
+  "Verify Evidence": "Verify Evidence",
   "My Account": "My Account",
   "Your app.": "Your app.",
   "Bring your idea to life.": "Bring your idea to life.",
