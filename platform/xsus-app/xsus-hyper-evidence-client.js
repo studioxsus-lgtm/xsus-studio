@@ -11,8 +11,17 @@ export async function verifyXsusHyperEvidence({
     throw new TypeError("Invalid observation ID.");
   if(typeof accessToken!=="string" || !/^[A-Za-z0-9_.-]{16,8192}$/.test(accessToken))
     throw new TypeError("A valid Supabase access token is required.");
-  if(endpoint!=="/api/xsus-app/hyper/evidence/verify")
-    throw new TypeError("Only the same-origin Hyper verification route is allowed.");
+  if(endpoint!=="/api/xsus-app/hyper/evidence/verify") {
+    let url;
+    try { url=new URL(endpoint); } catch { throw new TypeError("Invalid Hyper endpoint."); }
+    const host=url.hostname.toLowerCase();
+    const renderHost=host.endsWith(".onrender.com") &&
+      /^[a-z0-9-]+$/.test(host.slice(0,-".onrender.com".length));
+    if(url.protocol!=="https:" || !renderHost ||
+       url.pathname!=="/api/xsus-app/hyper/evidence/verify" ||
+       url.search || url.hash || url.username || url.password || url.port)
+      throw new TypeError("Only HTTPS Render Hyper verification endpoints are allowed.");
+  }
   if(typeof fetchImpl!=="function")throw new TypeError("A fetch implementation is required.");
   const response=await fetchImpl(endpoint,{
     method:"POST",
