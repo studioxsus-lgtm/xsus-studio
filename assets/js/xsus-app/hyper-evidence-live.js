@@ -1,5 +1,5 @@
 /** XSUS App Builder → Tests: authenticated, read-only Hyper evidence verification. */
-import { verifyXsusHyperEvidence } from "../../../platform/xsus-app/xsus-hyper-evidence-client.js";
+// Load the backend transport only when needed, so UI and localization remain available if it fails to load.
 const form=document.getElementById("xsus-hyper-live-form");
 const status=document.getElementById("xsus-hyper-live-status");
 const submit=document.getElementById("xsus-hyper-live-submit");
@@ -75,6 +75,7 @@ function refreshLanguage(){
 }
 document.addEventListener("xsus:language-changed",()=>{applyEvidenceLabels();refreshLanguage();});
 applyEvidenceLabels();
+setState("missing");
 
 let clientPromise;
 function getClient(){
@@ -128,6 +129,7 @@ form?.addEventListener("submit",async event=>{
   const {data:{session},error}=await supabase.auth.getSession();
   if(!isCurrent())return;
   if(error||!session?.access_token){setState("missing");return;}
+  const {verifyXsusHyperEvidence}=await import("../../../platform/xsus-app/xsus-hyper-evidence-client.js");
   const result=await verifyXsusHyperEvidence({
     observationId:requestedId,
     accessToken:session.access_token,
