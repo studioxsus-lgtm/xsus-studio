@@ -361,6 +361,45 @@ describe(
       }
     );
 
+    test(
+      "TOKEN_REFRESHED without identity clears previously hydrated private history",
+      async () => {
+        setup();
+        session.start();
+        await tick();
+
+        expect(session.getCurrentUserId()).toBe(A);
+        const clearsBefore = chat.clearHistory.mock.calls.length;
+
+        auth("TOKEN_REFRESHED", null);
+        await tick();
+
+        expect(session.getCurrentUserId()).toBe(null);
+        expect(chat.clearHistory.mock.calls.length).toBeGreaterThan(clearsBefore);
+        expect(statuses.at(-1)).toBe("signed-out");
+      }
+    );
+
+    test(
+      "TOKEN_REFRESHED without identity invalidates a pending history response",
+      async () => {
+        const wait = deferred();
+        mocks.loadMyConversations.mockReturnValue(wait.promise);
+
+        setup();
+        session.start();
+        await tick();
+
+        auth("TOKEN_REFRESHED", null);
+        wait.resolve([conv(C)]);
+        await tick();
+
+        expect(session.getCurrentUserId()).toBe(null);
+        expect(chat.hydrateHistory).not.toHaveBeenCalled();
+        expect(mocks.loadMyMessages).not.toHaveBeenCalled();
+      }
+    );
+
     /* TEST 6 */
 
     test(
