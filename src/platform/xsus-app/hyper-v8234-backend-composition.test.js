@@ -64,4 +64,35 @@ describe("Hyper v8.2.34 backend composition",()=>{
     expect(result.status).toBe(403);
     expect(JSON.stringify(result)).not.toContain("private");
   });
+  it("allows storage read only after verified identity and ownership",async()=>{
+    const userId="550e8400-e29b-41d4-a716-446655440000";
+    const fetchImpl=vi.fn(async(url)=>{
+      if (String(url).endsWith("/auth/v1/user"))
+        return {ok:true,json:async()=>({id:userId})};
+      return {ok:false,status:404,json:async()=>({})};
+    });
+    const authorizeEvidenceOwner=vi.fn(async()=>true);
+    const app=create({...base,fetchImpl,authorizeEvidenceOwner,enabled:true});
+    const result=await app.handle(request);
+    expect(result.status).toBe(503);
+    expect(result.body.code).toBe("VERIFICATION_UNAVAILABLE");
+    expect(authorizeEvidenceOwner).toHaveBeenCalledWith({userId,observationId:"obs_1"});
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(String(fetchImpl.mock.calls[1][0])).toContain("hyper_runtime_evidence_bundles");
+    expect(JSON.stringify(result)).not.toContain(base.serviceRoleKey);
+  });
+  it("never trusts a userId supplied in the request body",async()=>{
+    const userId="550e8400-e29b-41d4-a716-446655440000";
+    const fetchImpl=vi.fn(async()=>({ok:true,json:async()=>({id:userId})}));
+    const authorizeEvidenceOwner=vi.fn(async()=>false);
+    const app=create({...base,fetchImpl,authorizeEvidenceOwner,enabled:true});
+    const forged={...request,rawBody:JSON.stringify({
+      action:"evidence.verify",observationId:"obs_1",
+      userId:"11111111-1111-4111-8111-111111111111",role:"service_role"
+    })};
+    const result=await app.handle(forged);
+    expect(result.status).toBe(403);
+    expect(authorizeEvidenceOwner).toHaveBeenCalledWith({userId,observationId:"obs_1"});
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
 });
