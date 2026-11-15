@@ -13,6 +13,7 @@
  */
 
 import http from "node:http";
+import { createHyperReadinessDiagnostic } from "./src/platform/xsus-app/hyper-readiness-diagnostic.js";
 import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js";
 import { createHyperNodeRuntimeRoute } from "./src/platform/xsus-app/hyper-v8235-node-runtime-route.js";
 import { createHyperAppBackendComposition } from "./src/platform/xsus-app/hyper-v8234-backend-composition.js";
@@ -28,6 +29,10 @@ import { createDurableRecoveryAudit } from "./src/hyper-xsus-core/knowledge-reas
 
 const PORT = Number(process.env.PORT) || 3000;
 const hyperV81Route = createHyperV81Route({ env: process.env });
+const hyperReadinessDiagnostic = createHyperReadinessDiagnostic({
+    env: process.env,
+    enabled: process.env.XSUS_HYPER_READINESS_ENABLED === "true"
+});
 
 // v8.2.35: route is registered but remains fail-closed until an independently
 // verified evidence-ownership provider and database migration are available.
@@ -286,6 +291,14 @@ const server = http.createServer(
                     chat: "POST /api/chat"
                 }
             });
+        }
+
+        // Read-only diagnostic; requires verified Supabase user and explicit flag.
+        if (pathname === hyperReadinessDiagnostic.path) {
+            const result = await hyperReadinessDiagnostic.handle({
+                method: req.method, authorization: req.headers.authorization
+            });
+            return sendJSON(res, result.status, result.body);
         }
 
         // Registered Hyper evidence verification path; intentionally disabled.
