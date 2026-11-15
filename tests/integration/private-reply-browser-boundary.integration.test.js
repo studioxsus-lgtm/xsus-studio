@@ -17,8 +17,8 @@ function setup({ status = 200, persisted = true } = {}) {
     error: null
   })) } };
   const persistence = {
-    saveWithReceipt: vi.fn(async () => ({
-      conversationId, operationId, content: request.message, role: "user"
+    saveWithReceipt: vi.fn(async ({ content }) => ({
+      conversationId, operationId, content, role: "user"
     })),
     invalidate: vi.fn()
   };
