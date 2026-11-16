@@ -40,3 +40,6 @@ export * from "./knowledge-impact-analyzer.js";
 
 // Policy-driven dependency risk assessment and safe deletion preflight
 export * from "./knowledge-dependency-risk.js";
+
+// Controlled change proposals, approvals and atomic execution
+export * from "./knowledge-change-governance.js";
