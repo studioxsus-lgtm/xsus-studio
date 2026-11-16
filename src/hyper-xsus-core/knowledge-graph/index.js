@@ -66,3 +66,8 @@ export * from "./knowledge-evidence-backend-runtime.js";
 export * from "./evidence-crash-recovery-inspector.js";
 // Pull-based runtime health and readiness diagnostics
 export * from "./evidence-runtime-health-supervisor.js";
+
+// Independent proof and two-person recovery approval
+export * from "./recovery-authorization-engine.js";
+// Pull-based integrity incident monitoring
+export * from "./evidence-integrity-monitor.js";
