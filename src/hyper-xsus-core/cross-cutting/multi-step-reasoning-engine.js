@@ -29,8 +29,10 @@ export function createMultiStepReasoningEngine({ maxFacts = 1024, maxRules = 102
     let rounds = 0, changed = true;
     while (changed && rounds < maxRounds) {
       changed = false; rounds++;
+      // Each round reasons from a fixed snapshot, independent of rule ordering.
+      const roundFacts = new Set(known);
       for (const rule of validated) {
-        if (!known.has(rule.conclusion) && rule.premises.every(p => known.has(p))) {
+        if (!known.has(rule.conclusion) && rule.premises.every(p => roundFacts.has(p))) {
           known.add(rule.conclusion);
           provenance.set(rule.conclusion, Object.freeze({ fact: rule.conclusion, source: "derived", ruleId: rule.id }));
           steps.push(Object.freeze({ ruleId: rule.id, conclusion: rule.conclusion,
