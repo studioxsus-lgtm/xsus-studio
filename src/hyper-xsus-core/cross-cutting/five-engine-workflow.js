@@ -9,12 +9,14 @@ import { createIntelligentTaskPlanner } from "./intelligent-task-planner.js";
 import { createResponseEvaluationEngine } from "./response-evaluation-engine.js";
 import { createSpecializedEngineCoordinator } from "./specialized-engine-coordinator.js";
 import { createFiveEngineResourceBudget } from "./five-engine-resource-budget.js";
+import { createReasoningProofVerifier } from "./reasoning-proof-verifier.js";
 export const FIVE_ENGINE_WORKFLOW_VERSION = "1.0.0";
 export function createFiveEngineWorkflow({
   engines, minimumScore = 0.8, maxEvidence = 32, maxTasks = 512, maxEngines = 16
 } = {}) {
   const semantic = createSemanticEvidenceAnalyzer({ maxEvidence });
   const reasoning = createMultiStepReasoningEngine();
+  const proofVerifier = createReasoningProofVerifier();
   const planner = createIntelligentTaskPlanner({ maxTasks });
   const evaluator = createResponseEvaluationEngine({ minimumScore });
   const coordinator = createSpecializedEngineCoordinator({ engines, maxEngines });
@@ -28,6 +30,12 @@ export function createFiveEngineWorkflow({
     // Prepare and validate every pure stage before invoking any specialized engine.
     const analysis = semantic.analyze({ query, evidence });
     const inference = reasoning.reason({ facts, rules });
+    const proof = proofVerifier.verify({ facts, rules, proof: inference });
+    if (!proof.verified) {
+      const error = new Error("Reasoning proof verification failed; workflow not executed.");
+      error.code = "HYPER_REASONING_PROOF_INVALID";
+      throw error;
+    }
     if (inference.incomplete) {
       const error = new Error("Reasoning round limit reached; workflow not executed.");
       error.code = "HYPER_REASONING_INCOMPLETE";
