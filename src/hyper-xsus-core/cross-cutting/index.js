@@ -14,3 +14,5 @@ export * from "./written-script-profile-engine.js";
 export * from "./unicode-tokenization-engine.js";
 export * from "./context-window-selector.js";
 export * from "./language-processing-diagnostics.js";
+export * from "./language-capability-registry.js";
+export * from "./language-quality-gate.js";
