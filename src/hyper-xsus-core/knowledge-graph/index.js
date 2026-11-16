@@ -71,3 +71,8 @@ export * from "./evidence-runtime-health-supervisor.js";
 export * from "./recovery-authorization-engine.js";
 // Pull-based integrity incident monitoring
 export * from "./evidence-integrity-monitor.js";
+
+// Durable CAS-backed recovery decision journal
+export * from "./recovery-decision-journal.js";
+// Authorized atomic anchor recovery executor
+export * from "./authorized-anchor-recovery-executor.js";
