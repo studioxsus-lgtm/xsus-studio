@@ -16,12 +16,4 @@ values (
 )
 on conflict (id) do nothing;
 
--- Deny browser roles direct object access. Policies for other buckets
--- are left unchanged; review existing global storage.objects policies.
-revoke all on storage.objects from anon;
-revoke all on storage.objects from authenticated;
-
--- IMPORTANT: PostgREST/Storage privilege behavior depends on the actual
--- project configuration. Review before applying these global revokes.
--- No authenticated/anon object policy is added for this bucket.
-commit;
+-- No object-level policies are created here. Before deployment, audit\n-- ALL existing storage.objects policies for broad authenticated/anon access\n-- to this bucket. Do not revoke global storage.objects privileges: other\n-- applications may depend on them.\ncommit;
