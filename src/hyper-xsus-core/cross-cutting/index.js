@@ -25,3 +25,4 @@ export * from "./five-engine-workflow.js";
 export * from "./five-engine-diagnostics.js";
 export * from "./five-engine-batch-runner.js";
 export * from "./five-engine-resource-budget.js";
+export * from "./five-engine-concurrency-gate.js";
