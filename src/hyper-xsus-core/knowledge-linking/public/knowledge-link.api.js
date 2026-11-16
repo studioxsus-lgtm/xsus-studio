@@ -140,6 +140,11 @@ export function createKnowledgeLinkAPI(options = {}) {
     );
   }
 
+  function removeMany(ids) {
+    assertOpen();
+    return engine.removeLinks(ids);
+  }
+
   function clear() {
     assertOpen();
 
@@ -188,6 +193,7 @@ export function createKnowledgeLinkAPI(options = {}) {
     findByStrategy,
     findByEntity,
     remove,
+    removeMany,
     clear,
 
     getStatus,
