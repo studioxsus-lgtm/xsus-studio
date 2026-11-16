@@ -90,7 +90,7 @@ describe("Hyper XSUS Core — evidence checkpoint recovery", () => {
     const stored = await storage.read("graph-1");
     stored.snapshot.records[0].event.actorId = "intruder";
     expect(await storage.compareAndSwap("graph-1", 1, stored)).toBe(true);
-    await expect(store.recover()).rejects.toThrow("integrity|checksum");
+    await expect(store.recover()).rejects.toThrow(/integrity|checksum/i);
   });
 
   it("rejects trusted head mismatches and missing trusted checkpoints", async () => {
