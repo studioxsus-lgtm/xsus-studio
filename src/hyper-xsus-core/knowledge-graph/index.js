@@ -125,3 +125,6 @@ export * from "./recovery-incident-history-engine.js";
 
 // Server-injected Supabase incident history CAS adapter
 export * from "./supabase-recovery-incident-history-adapter.js";
+
+// Server-only recovery incident backend composition (no browser credentials)
+export * from "./recovery-incident-backend-runtime.js";
