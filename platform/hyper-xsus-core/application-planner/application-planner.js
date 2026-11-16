@@ -13,7 +13,7 @@ const FEATURES = Object.freeze([
   ["search", /\b(search|filter|kerkim|kërkim|recherche|filtre)\b/i],
   ["notifications", /\b(notification|alert|njoftim|notification)\b/i],
   ["payments", /\b(payment|checkout|billing|pages|pagesa|paiement)\b/i],
-  ["reporting", /\b(report|analytics|raport|statistik|rapport)\b/i],
+  ["reporting", /\b(reports?|reporting|analytics|raport|statistik|rapport)\b/i],
   ["uploads", /\b(upload|attachment|ngarkim|fichier|file)\b/i],
   ["settings", /\b(settings|preferences|cilësim|paramètres)\b/i]
 ]);
