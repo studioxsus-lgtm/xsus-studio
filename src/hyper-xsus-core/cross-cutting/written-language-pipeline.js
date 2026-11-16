@@ -8,6 +8,7 @@ import { createTextBoundaryEngine } from "./text-boundary-engine.js";
 import { createSentenceSegmentationEngine } from "./sentence-segmentation-engine.js";
 import { createEngineRoutingCoordinator } from "./engine-routing-coordinator.js";
 import { createEngineExecutionBudget } from "./engine-execution-budget.js";
+import { createWrittenScriptProfileEngine } from "./written-script-profile-engine.js";
 export const WRITTEN_LANGUAGE_PIPELINE_VERSION = "1.0.0";
 const LANG = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/;
 export function createWrittenLanguagePipeline({
@@ -25,6 +26,7 @@ export function createWrittenLanguagePipeline({
   const input = createTextBoundaryEngine({ maxCodePoints });
   const contextBoundary = createTextBoundaryEngine({ maxCodePoints: maxContextCodePoints });
   const segmentation = createSentenceSegmentationEngine({ maxCodePoints, maxSentences });
+  const scripts = createWrittenScriptProfileEngine({ maxCodePoints });
   const router = createEngineRoutingCoordinator({
     engines, maxCodePoints, failureThreshold, resetAfterMs, clock, maxOutputDepth, maxOutputNodes
   });
@@ -66,7 +68,8 @@ export function createWrittenLanguagePipeline({
     }
     return Object.freeze({
       version: WRITTEN_LANGUAGE_PIPELINE_VERSION, language,
-      normalizedText: normalized.text, contextMessages: safeContext.length,
+      normalizedText: normalized.text, scriptProfile: scripts.profile(normalized.text),
+      contextMessages: safeContext.length,
       sentences: Object.freeze(outputs), degraded: outputs.some(item => item.degraded),
       execution: budget.snapshot(), readOnly: true
     });
