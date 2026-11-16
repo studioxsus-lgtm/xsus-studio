@@ -15,7 +15,7 @@ function validRecord(r) {
     ID.test(r.id) && ID.test(r.key) && ID.test(r.proposer) &&
     HASH.test(r.trustedHead) && HASH.test(r.checkpointHead) &&
     r.trustedHead !== r.checkpointHead &&
-    ["pending", "approved", "revoked", "executed", "failed"].includes(r.status) &&
+    ["pending", "approved", "executing", "revoked", "executed", "failed"].includes(r.status) &&
     Number.isSafeInteger(r.createdAt) && r.createdAt >= 0 &&
     (r.approvedBy === null || ID.test(r.approvedBy)) &&
     (r.status !== "approved" || (r.approvedBy && r.approvedBy !== r.proposer));
@@ -81,7 +81,8 @@ export function createPersistentRecoveryStateEngine({
       if (!current) throw new Error("Recovery request not found.");
       if (current.status !== expectedStatus) throw new Error("Recovery state transition conflict.");
       const permitted = (expectedStatus === "pending" && ["approved", "revoked"].includes(nextStatus)) ||
-        (expectedStatus === "approved" && ["executed", "failed", "revoked"].includes(nextStatus));
+        (expectedStatus === "approved" && ["executing", "executed", "failed", "revoked"].includes(nextStatus)) ||
+        (expectedStatus === "executing" && ["executed", "failed"].includes(nextStatus));
       if (!permitted) throw new Error("Invalid recovery state transition.");
       if (nextStatus === "approved" && actorId === current.proposer) {
         throw new Error("Recovery approval requires independent actor.");
