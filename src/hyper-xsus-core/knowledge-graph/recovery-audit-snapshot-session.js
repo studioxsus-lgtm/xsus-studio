@@ -54,6 +54,12 @@ export function createRecoveryAuditSnapshotSession({
     const snapshot = await readSnapshot();
     const startedAt = now();
     const evidence = evidenceGate ? await evidenceGate.begin({ key: evidenceKey, actorId }) : null;
+    // Fail closed if state changed while the independent evidence was pinned.
+    if (evidence && evidence.stateRevision !== snapshot.revision) {
+      const error = new Error("Recovery audit snapshot changed during initialization.");
+      error.code = "RECOVERY_AUDIT_REVISION_CHANGED";
+      throw error;
+    }
     // No mutable external snapshot is retained; only identifiers and revision.
     session = Object.freeze({
       actorId, revision: snapshot.revision,
