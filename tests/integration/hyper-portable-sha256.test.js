@@ -30,7 +30,21 @@ describe("Hyper XSUS Core — portable SHA-256", () => {
     const body = {
       sequence: record.sequence, previousHash: record.previousHash, event: record.event
     };
-    const expected = createHash("sha256").update(JSON.stringify(body), "utf8").digest("hex");
+    // Ledger hashes canonical JSON with recursively sorted object keys.
+    // Ordinary JSON.stringify(body) retains insertion order and is not the
+    // same byte sequence as the ledger's canonical serialization.
+    const canonical = (value) => {
+      if (Array.isArray(value)) return value.map(canonical);
+      if (value !== null && typeof value === "object") {
+        return Object.fromEntries(
+          Object.keys(value).sort().map(key => [key, canonical(value[key])])
+        );
+      }
+      return value;
+    };
+    const expected = createHash("sha256")
+      .update(JSON.stringify(canonical(body)), "utf8")
+      .digest("hex");
     expect(record.hash).toBe(expected);
     expect(restoreKnowledgeChangeEvidenceLedger(ledger.exportSnapshot()).verify().valid).toBe(true);
   });
