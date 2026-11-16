@@ -52,3 +52,6 @@ export * from "./governed-change-evidence.js";
 
 // Governance/evidence discrepancy diagnostics and explicit reconciliation
 export * from "./knowledge-governance-reconciliation.js";
+
+// CAS-backed evidence checkpoints and verified recovery
+export * from "./knowledge-evidence-checkpoints.js";
