@@ -588,6 +588,43 @@ export function createKnowledgeGraphEngine(options = {}) {
     });
   }
 
+  /**
+   * Inspect direct neighbors without mutating graph state.
+   * Direction: outgoing, incoming or both. Parallel edges are preserved,
+   * while neighbor nodes are unique and follow graph insertion order.
+   */
+  function getNeighborhood(nodeId, options = {}) {
+    ensureOpen();
+    const id = assertNonEmptyString(nodeId, "nodeId");
+    if (!isPlainObject(options)) {
+      throw new TypeError("Neighborhood options must be a plain object.");
+    }
+    const direction = options.direction ?? "both";
+    if (!["outgoing", "incoming", "both"].includes(direction)) {
+      throw new TypeError("Invalid neighborhood direction.");
+    }
+    if (getNodeIndex(id) === -1) {
+      throw new Error(`Node not found: ${id}`);
+    }
+    const matched = graph.links.filter((link) =>
+      (direction !== "incoming" && link.sourceId === id) ||
+      (direction !== "outgoing" && link.targetId === id)
+    );
+    const neighborIds = new Set();
+    for (const link of matched) {
+      if (link.sourceId === id) neighborIds.add(link.targetId);
+      if (link.targetId === id) neighborIds.add(link.sourceId);
+    }
+    const result = {
+      nodeId: id,
+      direction,
+      degree: matched.length,
+      neighborIds: graph.nodes.filter((node) => neighborIds.has(node.id)).map((node) => node.id),
+      links: cloneJsonValue(matched)
+    };
+    return deepFreeze(result);
+  }
+
   function traverse(startNodeId, options = {}) {
     ensureOpen();
 
@@ -760,6 +797,7 @@ export function createKnowledgeGraphEngine(options = {}) {
 
     findNodes,
     findLinks,
+    getNeighborhood,
 
     traverse,
     traverseDepthFirst,
