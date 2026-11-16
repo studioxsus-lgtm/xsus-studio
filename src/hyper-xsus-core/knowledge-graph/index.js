@@ -46,3 +46,6 @@ export * from "./knowledge-change-governance.js";
 
 // Tamper-evident governance evidence ledger and snapshot recovery
 export * from "./knowledge-change-evidence-ledger.js";
+
+// Governance + Evidence Ledger integration facade
+export * from "./governed-change-evidence.js";
