@@ -23,6 +23,7 @@ export function createRecoveryEvidenceSnapshotGate({
       typeof authorize !== "function") {
     throw new TypeError("Recovery evidence gate requires state, journal, anchor, trust and authorization.");
   }
+  const issued = new WeakMap();
   async function sample(key) {
     const before = await state.snapshot();
     const trusted = await trustedJournalHead(key);
@@ -49,14 +50,17 @@ export function createRecoveryEvidenceSnapshotGate({
   }
   async function begin({ key, actorId } = {}) {
     if (typeof key !== "string" || !ID.test(key) ||
-        typeof actorId !== "string" || !ID.test(actorId)) {
+        typeof actorId !== "string" || !ID.test(actorId) ||
+        issued.get(baseline) !== actorId) {
       throw new TypeError("Invalid recovery evidence audit identity.");
     }
     if (await authorize({ action: "audit", actorId, key }) !== true) {
       throw new Error("Recovery evidence audit access denied.");
     }
     const pinned = await sample(key);
-    return freeze({ version: RECOVERY_EVIDENCE_SNAPSHOT_GATE_VERSION, key, ...pinned });
+    const baseline = freeze({ version: RECOVERY_EVIDENCE_SNAPSHOT_GATE_VERSION, key, ...pinned });
+    issued.set(baseline, actorId);
+    return baseline;
   }
   async function verify({ baseline, actorId } = {}) {
     if (!baseline || baseline.version !== RECOVERY_EVIDENCE_SNAPSHOT_GATE_VERSION ||
