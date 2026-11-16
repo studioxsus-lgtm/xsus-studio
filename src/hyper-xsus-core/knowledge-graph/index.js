@@ -107,3 +107,6 @@ export * from "./recovery-restart-audit-engine.js";
 
 // Revision-consistent, read-only recovery audit pagination
 export * from "./recovery-audit-snapshot-session.js";
+
+// Cross-source optimistic recovery audit evidence consistency
+export * from "./recovery-evidence-snapshot-gate.js";
