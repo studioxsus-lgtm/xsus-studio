@@ -22,7 +22,9 @@ export function createEngineRoutingCoordinator({
       process: engine.process,
       breaker: createRuntimeCircuitBreaker({ failureThreshold, resetAfterMs, clock }) });
   });
-  async function route({ text, language = "en", context = null } = {}) {
+  async function route({ text, language = "en", context = null, onAttempt = null } = {}) {
+    if (onAttempt !== null && typeof onAttempt !== "function")
+      throw new TypeError("Invalid engine attempt accounting callback.");
     const normalized = boundary.normalize(text);
     if (typeof language !== "string" || !ID.test(language) || normalized.empty)
       throw new TypeError("Invalid engine routing request.");
@@ -32,6 +34,7 @@ export function createEngineRoutingCoordinator({
       try { supported = await engine.supports({ language }); }
       catch { failures.push(engine.name); continue; }
       if (supported !== true) continue;
+      if (onAttempt) onAttempt();
       try {
         const result = await engine.breaker.execute(() => engine.process({
           text: normalized.text, language, context
