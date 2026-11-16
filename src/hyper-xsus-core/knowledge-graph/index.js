@@ -110,3 +110,6 @@ export * from "./recovery-audit-snapshot-session.js";
 
 // Cross-source optimistic recovery audit evidence consistency
 export * from "./recovery-evidence-snapshot-gate.js";
+
+// Bounded, read-only recovery audit reporting
+export * from "./recovery-audit-report-engine.js";
