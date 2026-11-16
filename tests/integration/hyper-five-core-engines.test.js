@@ -84,6 +84,6 @@ describe("Hyper XSUS Core — five independent engines", () => {
     await expect(coordinator.coordinate({ requests: [
       { engine: "one", payload: {} }, { engine: "one", payload: {} }
     ] })).rejects.toThrow("request");
-    expect(calls).toBe(1);
+    expect(calls).toBe(0);
   });
 });
