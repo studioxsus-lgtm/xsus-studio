@@ -41,7 +41,7 @@ describe("Hyper XSUS Core — knowledge change impact analyzer", () => {
     expect(analyzeKnowledgeImpact(snapshot, ["b"], { direction: "incoming" })
       .affectedNodes.map(node => node.id)).toEqual(["a", "e"]);
     expect(analyzeKnowledgeImpact(snapshot, ["b"], { direction: "both", maxDepth: 1 })
-      .affectedNodes.map(node => node.id)).toEqual(["c", "a", "e"]);
+      .affectedNodes.map(node => node.id)).toEqual(["a", "c", "e"]);
     expect(analyzeKnowledgeImpact(snapshot, ["a"], { maxDepth: 0 }).affectedCount).toBe(0);
   });
 
