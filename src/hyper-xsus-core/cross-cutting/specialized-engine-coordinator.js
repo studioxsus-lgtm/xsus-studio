@@ -44,5 +44,5 @@ export function createSpecializedEngineCoordinator({ engines, maxEngines = 16, m
       results: Object.freeze(results), completed: results.filter(r => r.status === "completed").length,
       failed: results.filter(r => r.status === "failed").length, sideEffectsGuaranteedAbsent: false });
   }
-  return Object.freeze({ version: SPECIALIZED_ENGINE_COORDINATOR_VERSION, coordinate });
+  return Object.freeze({ version: SPECIALIZED_ENGINE_COORDINATOR_VERSION, coordinate, validateRequests });
 }
