@@ -16,3 +16,8 @@ export * from "./context-window-selector.js";
 export * from "./language-processing-diagnostics.js";
 export * from "./language-capability-registry.js";
 export * from "./language-quality-gate.js";
+export * from "./semantic-evidence-analyzer.js";
+export * from "./multi-step-reasoning-engine.js";
+export * from "./intelligent-task-planner.js";
+export * from "./response-evaluation-engine.js";
+export * from "./specialized-engine-coordinator.js";
