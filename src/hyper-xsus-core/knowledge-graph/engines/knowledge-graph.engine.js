@@ -299,6 +299,7 @@ export function createKnowledgeGraphEngine(options = {}) {
   }
 
   function getNode(nodeId) {
+    ensureOpen();
     const id = assertNonEmptyString(nodeId, "nodeId");
 
     return graph.nodes.find(
@@ -307,6 +308,7 @@ export function createKnowledgeGraphEngine(options = {}) {
   }
 
   function getLink(linkId) {
+    ensureOpen();
     const id = assertNonEmptyString(linkId, "linkId");
 
     return graph.links.find(
