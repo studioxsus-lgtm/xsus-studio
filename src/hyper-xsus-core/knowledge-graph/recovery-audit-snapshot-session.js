@@ -24,6 +24,7 @@ export function createRecoveryAuditSnapshotSession({
     throw new TypeError("Invalid recovery audit snapshot session configuration.");
   }
   let session = null;
+  let generation = 0;
   function now() {
     const t = clock();
     if (!Number.isSafeInteger(t) || t < 0) throw new TypeError("Invalid recovery audit clock.");
@@ -45,6 +46,8 @@ export function createRecoveryAuditSnapshotSession({
     return { revision: s.revision, ids, requests: s.requests };
   }
   async function begin({ actorId } = {}) {
+    const requestedGeneration = ++generation;
+    session = null;
     if (typeof actorId !== "string" || !ID.test(actorId)) {
       throw new TypeError("Invalid recovery audit actor.");
     }
@@ -60,6 +63,9 @@ export function createRecoveryAuditSnapshotSession({
       error.code = "RECOVERY_AUDIT_REVISION_CHANGED";
       throw error;
     }
+    if (requestedGeneration !== generation) {
+      throw new Error("Recovery audit session superseded by another begin.");
+    }
     // No mutable external snapshot is retained; only identifiers and revision.
     session = Object.freeze({
       actorId, revision: snapshot.revision,
@@ -72,7 +78,8 @@ export function createRecoveryAuditSnapshotSession({
   }
   async function page({ actorId, offset = 0, limit = maxPageSize } = {}) {
     if (!session) throw new Error("Recovery audit session not started.");
-    if (typeof actorId !== "string" || actorId !== session.actorId ||
+    const active = session;
+    if (typeof actorId !== "string" || actorId !== active.actorId ||
         !Number.isSafeInteger(offset) || offset < 0 ||
         !Number.isSafeInteger(limit) || limit < 1 || limit > maxPageSize) {
       throw new TypeError("Invalid recovery audit page request.");
@@ -80,17 +87,17 @@ export function createRecoveryAuditSnapshotSession({
     if (await authorize({ action: "audit", actorId }) !== true) {
       throw new Error("Recovery audit access denied.");
     }
-    if (evidenceGate) await evidenceGate.verify({ baseline: session.evidence, actorId });
+    if (evidenceGate) await evidenceGate.verify({ baseline: active.evidence, actorId });
     const snapshot = await readSnapshot();
-    if (snapshot.revision !== session.revision ||
-        snapshot.ids.length !== session.ids.length ||
-        snapshot.ids.some((id, i) => id !== session.ids[i])) {
-      session = null;
+    if (snapshot.revision !== active.revision ||
+        snapshot.ids.length !== active.ids.length ||
+        snapshot.ids.some((id, i) => id !== active.ids[i])) {
+      if (session === active) session = null;
       const error = new Error("Recovery audit snapshot changed; restart required.");
       error.code = "RECOVERY_AUDIT_REVISION_CHANGED";
       throw error;
     }
-    const ids = session.ids.slice(offset, offset + limit);
+    const ids = active.ids.slice(offset, offset + limit);
     const records = [];
     for (const id of ids) {
       const request = snapshot.requests[id];
@@ -109,18 +116,21 @@ export function createRecoveryAuditSnapshotSession({
     // Recheck revision after potentially slow inspection to avoid mixed pages.
     const after = await readSnapshot();
     if (evidenceGate) await evidenceGate.verify({ baseline: session.evidence, actorId });
-    if (after.revision !== session.revision) {
-      session = null;
+    if (after.revision !== active.revision) {
+      if (session === active) session = null;
       const error = new Error("Recovery audit snapshot changed during inspection.");
       error.code = "RECOVERY_AUDIT_REVISION_CHANGED";
       throw error;
     }
+    if (session !== active) {
+      throw new Error("Recovery audit session superseded during page inspection.");
+    }
     return freezeRecord({
       version: RECOVERY_AUDIT_SNAPSHOT_SESSION_VERSION,
-      revision: session.revision,
+      revision: active.revision,
       records: Object.freeze(records),
-      nextOffset: offset + ids.length < session.ids.length ? offset + ids.length : null,
-      total: session.ids.length, readOnly: true
+      nextOffset: offset + ids.length < active.ids.length ? offset + ids.length : null,
+      total: active.ids.length, readOnly: true
     });
   }
   return freezeRecord({ version: RECOVERY_AUDIT_SNAPSHOT_SESSION_VERSION, begin, page });
