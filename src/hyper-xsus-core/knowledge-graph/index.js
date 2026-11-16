@@ -37,3 +37,6 @@ export * from "./public/knowledge-graph.api.js";
 
 // Read-only change impact analysis and deletion preflight
 export * from "./knowledge-impact-analyzer.js";
+
+// Policy-driven dependency risk assessment and safe deletion preflight
+export * from "./knowledge-dependency-risk.js";
