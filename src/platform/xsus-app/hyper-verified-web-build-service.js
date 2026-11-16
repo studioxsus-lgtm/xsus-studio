@@ -5,6 +5,7 @@
 import { createHyperWebBuildExecutor } from "./hyper-web-build-executor.js";
 import { createHyperWebArtifactStore } from "./hyper-web-artifact-store.js";
 import { createHyperWebArtifactVerifier } from "./hyper-web-artifact-verifier.js";
+import { createHyperWebArtifactCleanup } from "./hyper-web-artifact-cleanup.js";
 
 export function createVerifiedHyperWebBuildService({
   supabaseUrl, serviceRoleKey, fetchImpl, createArtifactId, createRequestId
@@ -15,9 +16,16 @@ export function createVerifiedHyperWebBuildService({
   const verify = createHyperWebArtifactVerifier({
     url: supabaseUrl, serviceRoleKey, fetchImpl
   });
+  const cleanup = createHyperWebArtifactCleanup({
+    url: supabaseUrl, serviceRoleKey, fetchImpl
+  });
   const saveArtifact = async context => {
     if (await upload(context) !== true) return false;
-    return await verify(context) === true;
+    if (await verify(context) === true) return true;
+    // A failed readback must not leave a build reported as completed.
+    // Cleanup is best-effort; reconciliation remains necessary if it fails.
+    await cleanup(context);
+    return false;
   };
   const buildApplication = createHyperWebBuildExecutor({
     saveArtifact,
