@@ -49,8 +49,6 @@ export function parseHyperApplicationResponse(value, { operation, projectId } = 
     operation,
     projectId,
     requestId: value.requestId,
-    status: value.status,
-    ...(operation === "application.build" && value.artifactId !== undefined
-      ? { artifactId: value.artifactId } : {})
+    status: value.status
   });
 }
