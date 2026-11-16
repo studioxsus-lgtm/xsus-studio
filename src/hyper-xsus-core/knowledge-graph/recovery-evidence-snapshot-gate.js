@@ -50,8 +50,7 @@ export function createRecoveryEvidenceSnapshotGate({
   }
   async function begin({ key, actorId } = {}) {
     if (typeof key !== "string" || !ID.test(key) ||
-        typeof actorId !== "string" || !ID.test(actorId) ||
-        issued.get(baseline) !== actorId) {
+        typeof actorId !== "string" || !ID.test(actorId)) {
       throw new TypeError("Invalid recovery evidence audit identity.");
     }
     if (await authorize({ action: "audit", actorId, key }) !== true) {
@@ -65,7 +64,8 @@ export function createRecoveryEvidenceSnapshotGate({
   async function verify({ baseline, actorId } = {}) {
     if (!baseline || baseline.version !== RECOVERY_EVIDENCE_SNAPSHOT_GATE_VERSION ||
         typeof baseline.key !== "string" || !ID.test(baseline.key) ||
-        typeof actorId !== "string" || !ID.test(actorId)) {
+        typeof actorId !== "string" || !ID.test(actorId) ||
+        issued.get(baseline) !== actorId) {
       throw new TypeError("Invalid recovery evidence baseline request.");
     }
     if (await authorize({ action: "audit", actorId, key: baseline.key }) !== true) {
