@@ -286,6 +286,16 @@ export function createKnowledgeGraphAPI(options = {}) {
     return engine.isConnectedGraph(options);
   }
 
+  function previewChanges(operations) {
+    assertOpen();
+    return engine.previewChanges(operations);
+  }
+
+  function applyChanges(operations) {
+    assertOpen();
+    return engine.applyChanges(operations);
+  }
+
   function clear() {
     assertOpen();
     return engine.clear();
@@ -319,6 +329,8 @@ export function createKnowledgeGraphAPI(options = {}) {
     version: KNOWLEDGE_GRAPH_API_VERSION,
 
     getGraph,
+    previewChanges,
+    applyChanges,
 
     addNode,
     addNodes,
