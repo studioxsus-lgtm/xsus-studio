@@ -55,3 +55,6 @@ export * from "./knowledge-governance-reconciliation.js";
 
 // CAS-backed evidence checkpoints and verified recovery
 export * from "./knowledge-evidence-checkpoints.js";
+
+// Server-injected Supabase CAS adapter (no embedded credentials)
+export * from "./supabase-evidence-checkpoint-adapter.js";
