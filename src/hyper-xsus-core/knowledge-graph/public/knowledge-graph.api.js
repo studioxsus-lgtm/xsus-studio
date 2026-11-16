@@ -178,6 +178,17 @@ export function createKnowledgeGraphAPI(options = {}) {
     return engine.findLinks(filters);
   }
 
+  function getNeighborhood(nodeId, options = {}) {
+    assertOpen();
+    if (!isPlainObject(options)) {
+      throw new TypeError("Neighborhood options must be a plain object.");
+    }
+    return engine.getNeighborhood(
+      requireNonEmptyString(nodeId, "nodeId"),
+      options
+    );
+  }
+
   function traverse(startNodeId, options = {}) {
     assertOpen();
 
@@ -324,6 +335,7 @@ export function createKnowledgeGraphAPI(options = {}) {
 
     findNodes,
     findLinks,
+    getNeighborhood,
 
     traverse,
     traverseDepthFirst,
