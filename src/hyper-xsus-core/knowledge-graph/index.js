@@ -34,3 +34,6 @@ export * from "./engines/knowledge-graph.engine.js";
 
 // Public API
 export * from "./public/knowledge-graph.api.js";
+
+// Read-only change impact analysis and deletion preflight
+export * from "./knowledge-impact-analyzer.js";
