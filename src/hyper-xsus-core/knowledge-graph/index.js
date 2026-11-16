@@ -79,3 +79,8 @@ export * from "./authorized-anchor-recovery-executor.js";
 
 // Integrated recovery authorization, durable journaling and guarded execution
 export * from "./recovery-workflow-coordinator.js";
+
+// Durable CAS-backed recovery request state machine
+export * from "./persistent-recovery-state-engine.js";
+// Multi-instance recovery leases with fencing tokens
+export * from "./distributed-recovery-lease-coordinator.js";
