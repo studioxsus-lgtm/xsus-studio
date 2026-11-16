@@ -18,6 +18,7 @@ export function createRequestReplayGuard({ ttlMs = 60000, maxEntries = 10000, cl
     const key = JSON.stringify([actorId, requestId]);
     if (seen.has(key)) return false;
     if (seen.size >= maxEntries) throw new Error("Replay guard capacity reached.");
+    if (now > Number.MAX_SAFE_INTEGER - ttlMs) throw new RangeError("Replay guard clock overflow.");
     seen.set(key, now + ttlMs);
     return true;
   }
