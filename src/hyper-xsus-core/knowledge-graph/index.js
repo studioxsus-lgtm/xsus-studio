@@ -116,3 +116,6 @@ export * from "./recovery-audit-report-engine.js";
 
 // Read-only incident classification for verified recovery audit reports
 export * from "./recovery-incident-triage-engine.js";
+
+// Read-only incident trends between independently audited revisions
+export * from "./recovery-incident-trend-engine.js";
