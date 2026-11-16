@@ -24,3 +24,4 @@ export * from "./specialized-engine-coordinator.js";
 export * from "./five-engine-workflow.js";
 export * from "./five-engine-diagnostics.js";
 export * from "./five-engine-batch-runner.js";
+export * from "./five-engine-resource-budget.js";
