@@ -115,7 +115,7 @@ export function createDistributedRecoveryWorkflow({
       }
       // Durable reservation prevents another process from reusing approval.
       await state.transition({
-        id, actorId, expectedStatus: "approved", nextStatus: "failed"
+        id, actorId, expectedStatus: "approved", nextStatus: "executing"
       });
       attempted = true;
       const advanced = await fencedAnchor.compareAndSwap({
@@ -124,11 +124,11 @@ export function createDistributedRecoveryWorkflow({
       });
       if (advanced !== true) throw new Error("Fenced recovery anchor CAS rejected.");
       await audit(fresh, actorId, "executed");
-      // Terminal "failed" is a reservation/needs-reconciliation marker.
-      // The state engine cannot transition failed->executed; record success
-      // in the durable journal and require a verified reconciliation process.
+      await state.transition({
+        id, actorId, expectedStatus: "executing", nextStatus: "executed"
+      });
       return freeze({
-        status: "anchor-advanced-reconciliation-required", id,
+        status: "executed", id,
         key: fresh.key, fencingToken: acquired.fencingToken
       });
     } catch (cause) {
