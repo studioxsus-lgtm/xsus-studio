@@ -23,13 +23,15 @@ export function createRuntimeCircuitBreaker({
     const attemptGeneration = generation;
     try {
       const result = await operation();
-      if (state === "half-open" || (openedAt === null && attemptGeneration === generation)) {
+      if (attemptGeneration === generation &&
+          (state === "half-open" || openedAt === null)) {
         failures = 0; openedAt = null;
         generation++;
       }
       return result;
     } catch (error) {
-      if (state === "half-open" || (openedAt === null && attemptGeneration === generation)) {
+      if (attemptGeneration === generation &&
+          (state === "half-open" || openedAt === null)) {
         failures = state === "half-open" ? failureThreshold : failures + 1;
         if (failures >= failureThreshold) { openedAt = clock(); generation++; }
       }
