@@ -20,7 +20,8 @@ describe("Hyper XSUS Core — audit session authorization and evidence race", ()
   });
   it("never uses a replacement session baseline for an in-flight page", async () => {
     const entered = deferred(), release = deferred();
-    let checks = 0, baselineNumber = 0;
+    let baselineNumber = 0;
+    const seen = [];
     const session = createRecoveryAuditSnapshotSession({
       state: { async snapshot() { return { revision: 1, requests }; } },
       reconciliation: { async inspect() {
@@ -33,8 +34,8 @@ describe("Hyper XSUS Core — audit session authorization and evidence race", ()
       evidenceGate: {
         async begin() { return Object.freeze({ stateRevision: 1, marker: ++baselineNumber }); },
         async verify({ baseline }) {
-          checks++;
-          if (baseline.marker !== (checks <= 1 ? 1 : 1)) {
+          seen.push(baseline.marker);
+          if (baseline.marker !== 1) {
             throw new Error("Wrong audit baseline.");
           }
           return { consistent: true };
@@ -47,5 +48,6 @@ describe("Hyper XSUS Core — audit session authorization and evidence race", ()
     await session.begin({ actorId: "auditor" });
     release.release();
     await expect(stalePage).rejects.toThrow("superseded");
+    expect(seen).toEqual([1, 1]);
   });
 });
