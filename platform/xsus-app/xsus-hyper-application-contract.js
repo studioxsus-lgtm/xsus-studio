@@ -39,7 +39,10 @@ export function parseHyperApplicationResponse(value, { operation, projectId } = 
       value.operation !== operation || value.projectId !== projectId ||
       typeof value.requestId !== "string" ||
       !/^[A-Za-z0-9_-]{1,128}$/.test(value.requestId) ||
-      !["accepted", "completed"].includes(value.status))
+      !["accepted", "completed"].includes(value.status) ||
+      (value.status === "completed" && operation === "application.build" &&
+       value.artifactId !== undefined &&
+       (typeof value.artifactId !== "string" || !UUID.test(value.artifactId))))
     throw new Error("Invalid Hyper application response.");
   return Object.freeze({
     contractVersion: HYPER_APP_CONTRACT_VERSION,
