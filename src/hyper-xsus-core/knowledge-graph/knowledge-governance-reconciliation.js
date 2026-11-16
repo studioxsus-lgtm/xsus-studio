@@ -78,7 +78,8 @@ export function createKnowledgeGovernanceReconciler({
     if (!expected) throw new Error("Unknown governance proposal status.");
     const missing = [];
     // Every proposal must have an initial event, either proposed or blocked.
-    if (!actions.includes("proposed") && !actions.includes("blocked")) missing.push("proposed");
+    if (!actions.includes("proposed") && !actions.includes("blocked") &&
+        !(TERMINAL.has(proposal.status) && actions.includes(expected))) missing.push("proposed");
     if (TERMINAL.has(proposal.status) && !actions.includes(expected)) missing.push(expected);
     // For pending proposals, the number of unique approval actors is evidence.
     const approvers = new Set(records.filter(record => record.event.action === "approved")
@@ -93,7 +94,8 @@ export function createKnowledgeGovernanceReconciler({
       proposalId, status: proposal.status, integrity, classification,
       recordedActions: actions, missingActions: missing,
       unrecordedApprovals, unexpectedTerminalActions: extraTerminalActions,
-      repairable: missing.length > 0 && unrecordedApprovals.length === 0 &&
+      repairable: missing.length > 0 && TERMINAL.has(proposal.status) &&
+        unrecordedApprovals.length === 0 &&
         extraTerminalActions.length === 0
     });
   }
