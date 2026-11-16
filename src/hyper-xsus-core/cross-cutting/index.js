@@ -7,3 +7,5 @@ export * from "./sentence-segmentation-engine.js";
 export * from "./graph-dependency-order-engine.js";
 export * from "./engine-routing-coordinator.js";
 export * from "./structured-output-guard.js";
+export * from "./written-language-pipeline.js";
+export * from "./knowledge-dependency-impact-planner.js";
