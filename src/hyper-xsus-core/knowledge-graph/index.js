@@ -76,3 +76,6 @@ export * from "./evidence-integrity-monitor.js";
 export * from "./recovery-decision-journal.js";
 // Authorized atomic anchor recovery executor
 export * from "./authorized-anchor-recovery-executor.js";
+
+// Integrated recovery authorization, durable journaling and guarded execution
+export * from "./recovery-workflow-coordinator.js";
