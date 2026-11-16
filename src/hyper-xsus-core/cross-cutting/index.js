@@ -10,3 +10,4 @@ export * from "./structured-output-guard.js";
 export * from "./written-language-pipeline.js";
 export * from "./knowledge-dependency-impact-planner.js";
 export * from "./engine-execution-budget.js";
+export * from "./written-script-profile-engine.js";
