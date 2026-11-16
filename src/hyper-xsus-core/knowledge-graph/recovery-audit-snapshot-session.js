@@ -46,14 +46,14 @@ export function createRecoveryAuditSnapshotSession({
     return { revision: s.revision, ids, requests: s.requests };
   }
   async function begin({ actorId } = {}) {
-    const requestedGeneration = ++generation;
-    session = null;
     if (typeof actorId !== "string" || !ID.test(actorId)) {
       throw new TypeError("Invalid recovery audit actor.");
     }
     if (await authorize({ action: "audit", actorId }) !== true) {
       throw new Error("Recovery audit access denied.");
     }
+    const requestedGeneration = ++generation;
+    session = null;
     const snapshot = await readSnapshot();
     const startedAt = now();
     const evidence = evidenceGate ? await evidenceGate.begin({ key: evidenceKey, actorId }) : null;
@@ -115,7 +115,7 @@ export function createRecoveryAuditSnapshotSession({
     }
     // Recheck revision after potentially slow inspection to avoid mixed pages.
     const after = await readSnapshot();
-    if (evidenceGate) await evidenceGate.verify({ baseline: session.evidence, actorId });
+    if (evidenceGate) await evidenceGate.verify({ baseline: active.evidence, actorId });
     if (after.revision !== active.revision) {
       if (session === active) session = null;
       const error = new Error("Recovery audit snapshot changed during inspection.");
