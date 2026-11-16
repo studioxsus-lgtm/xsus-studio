@@ -19,17 +19,31 @@ export function createGraphDependencyOrderEngine({ maxNodes = 10000 } = {}) {
       }
       graph.set(node.id, deps);
     }
-    const result = [], visited = new Set(), visiting = new Set();
-    function visit(id) {
-      if (!graph.has(id)) throw new Error("Unknown dependency: " + id);
-      if (visiting.has(id)) throw new Error("Dependency cycle detected.");
-      if (visited.has(id)) return;
-      visiting.add(id);
-      for (const dep of [...graph.get(id)].sort()) visit(dep);
-      visiting.delete(id);
-      visited.add(id); result.push(id);
+    // Iterative topological sort avoids stack overflow for deep dependency graphs.
+    const dependents = new Map([...graph.keys()].map(id => [id, []]));
+    const indegree = new Map();
+    for (const [id, deps] of graph) {
+      indegree.set(id, deps.size);
+      for (const dep of deps) {
+        if (!graph.has(dep)) throw new Error("Unknown dependency: " + dep);
+        dependents.get(dep).push(id);
+      }
     }
-    for (const id of [...graph.keys()].sort()) visit(id);
+    const ready = [...graph.keys()].filter(id => indegree.get(id) === 0).sort();
+    const result = [];
+    while (ready.length > 0) {
+      const id = ready.shift();
+      result.push(id);
+      for (const next of dependents.get(id)) {
+        const remaining = indegree.get(next) - 1;
+        indegree.set(next, remaining);
+        if (remaining === 0) {
+          ready.push(next);
+          ready.sort();
+        }
+      }
+    }
+    if (result.length !== graph.size) throw new Error("Dependency cycle detected.");
     return Object.freeze({ version: GRAPH_DEPENDENCY_ORDER_VERSION,
       order: Object.freeze(result), readOnly: true });
   }
