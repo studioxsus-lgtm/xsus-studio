@@ -11,20 +11,23 @@ export function createKnowledgeDependencyImpactPlanner({ maxNodes = 10000 } = {}
   const dependencies = createGraphDependencyOrderEngine({ maxNodes });
   function plan({ before, after, dependencyNodes } = {}) {
     const changeSet = changes.compare(before, after);
+    // Classify dangling references to deleted nodes before the general
+    // dependency validator, so callers receive the actionable error.
+    const removed = new Set(changeSet.removed);
+    if (Array.isArray(dependencyNodes)) {
+      for (const node of dependencyNodes) {
+        if (node && Array.isArray(node.dependsOn) &&
+            node.dependsOn.some(dep => removed.has(dep)))
+          throw new TypeError("Current dependency graph references removed nodes.");
+      }
+    }
     const order = dependencies.order(dependencyNodes).order;
     const afterIds = new Set(after.map(node => node.id));
     const orderIds = new Set(order);
     if (orderIds.size !== afterIds.size ||
         [...orderIds].some(id => !afterIds.has(id)))
       throw new TypeError("Dependency graph must match the current snapshot.");
-    const removed = new Set(changeSet.removed);
     const changed = new Set([...changeSet.added, ...changeSet.revised]);
-    // Removed dependencies are absent from the current graph. A surviving node
-    // must not silently retain a reference to a removed dependency.
-    for (const node of dependencyNodes) {
-      if (node.dependsOn.some(dep => removed.has(dep)))
-        throw new TypeError("Current dependency graph references removed nodes.");
-    }
     const affected = new Set(changed);
     const nodeMap = new Map(dependencyNodes.map(node => [node.id, node.dependsOn]));
     for (const id of order) {
