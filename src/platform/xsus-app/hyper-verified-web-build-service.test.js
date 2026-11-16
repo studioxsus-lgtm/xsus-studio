@@ -38,7 +38,8 @@ describe("XSUS App verified web build integration", () => {
       });
     await expect(make(fetchImpl).buildApplication(input))
       .rejects.toThrow("persistence failed");
-    expect(fetchImpl).toHaveBeenCalledTimes(4);
+    expect(fetchImpl).toHaveBeenCalledTimes(5);
+    expect(fetchImpl.mock.calls[4][1].method).toBe("DELETE");
   });
   it("does not read back if an upload fails", async () => {
     const fetchImpl = vi.fn(async () => ({ status: 403 }));
