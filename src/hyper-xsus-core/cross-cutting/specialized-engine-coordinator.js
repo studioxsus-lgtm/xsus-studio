@@ -17,12 +17,17 @@ export function createSpecializedEngineCoordinator({ engines, maxEngines = 16, m
   async function coordinate({ requests } = {}) {
     if (!Array.isArray(requests) || requests.length > maxEngines)
       throw new TypeError("Invalid specialized requests.");
-    const used = new Set(), results = [];
-    for (const request of requests) {
+    // Validate the entire batch before invoking any engine.
+    const used = new Set();
+    const prepared = requests.map(request => {
       if (!request || typeof request.engine !== "string" || !map.has(request.engine) ||
           used.has(request.engine)) throw new TypeError("Invalid specialized engine request.");
       used.add(request.engine);
-      const payload = guard.validate(request.payload);
+      return { engine: request.engine, payload: guard.validate(request.payload) };
+    });
+    const results = [];
+    for (const request of prepared) {
+      const payload = request.payload;
       try {
         const output = await map.get(request.engine)(payload);
         results.push(Object.freeze({ engine: request.engine, status: "completed",
