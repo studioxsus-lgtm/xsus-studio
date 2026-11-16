@@ -44,7 +44,7 @@ describe("Hyper authorized web build integration", () => {
     });
     const result = await make(fetchImpl).handle(request());
     expect(result.status).toBe(200);
-    expect(result.body.artifactId).toBe(artifactId);
+    expect(result.body).not.toHaveProperty("artifactId");
     expect(saved.size).toBe(3);
     expect(fetchImpl).toHaveBeenCalledTimes(8);
   });
