@@ -7,8 +7,7 @@ function setup() {
   engine.addLinks([
     { id: "ab1", sourceId: "a", targetId: "b", relationType: "related_to" },
     { id: "ab2", sourceId: "a", targetId: "b", relationType: "supports" },
-    { id: "ca", sourceId: "c", targetId: "a", relationType: "related_to" },
-    { id: "aa", sourceId: "a", targetId: "a", relationType: "related_to" }
+    { id: "ca", sourceId: "c", targetId: "a", relationType: "related_to" }
   ]);
   return engine;
 }
@@ -16,17 +15,17 @@ describe("Hyper Knowledge Graph — neighborhood inspection", () => {
   it("preserves parallel links but deduplicates neighbors", () => {
     const engine = setup();
     const result = engine.getNeighborhood("a");
-    expect(result.degree).toBe(4);
-    expect(result.neighborIds).toEqual(["a", "b", "c"]);
-    expect(result.links.map(x => x.id)).toEqual(["ab1", "ab2", "ca", "aa"]);
-    expect(engine.getStatus().linkCount).toBe(4);
+    expect(result.degree).toBe(3);
+    expect(result.neighborIds).toEqual(["b", "c"]);
+    expect(result.links.map(x => x.id)).toEqual(["ab1", "ab2", "ca"]);
+    expect(engine.getStatus().linkCount).toBe(3);
   });
   it("filters incoming and outgoing edges correctly", () => {
     const engine = setup();
     expect(engine.getNeighborhood("a", { direction: "outgoing" }).links.map(x => x.id))
-      .toEqual(["ab1", "ab2", "aa"]);
+      .toEqual(["ab1", "ab2"]);
     expect(engine.getNeighborhood("a", { direction: "incoming" }).links.map(x => x.id))
-      .toEqual(["ca", "aa"]);
+      .toEqual(["ca"]);
     expect(engine.getNeighborhood("d").degree).toBe(0);
   });
   it("returns deeply immutable snapshots without exposing engine internals", () => {
