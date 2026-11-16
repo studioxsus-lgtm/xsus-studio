@@ -25,12 +25,14 @@ export function createMultiStepReasoningEngine({ maxFacts = 1024, maxRules = 102
       return { id: rule.id, conclusion: rule.conclusion, premises: [...rule.premises] };
     }).sort((a,b) => a.id.localeCompare(b.id));
     const steps = [];
+    const provenance = new Map([...known].map(fact => [fact, Object.freeze({ fact, source: "input", ruleId: null })]));
     let rounds = 0, changed = true;
     while (changed && rounds < maxRounds) {
       changed = false; rounds++;
       for (const rule of validated) {
         if (!known.has(rule.conclusion) && rule.premises.every(p => known.has(p))) {
           known.add(rule.conclusion);
+          provenance.set(rule.conclusion, Object.freeze({ fact: rule.conclusion, source: "derived", ruleId: rule.id }));
           steps.push(Object.freeze({ ruleId: rule.id, conclusion: rule.conclusion,
             premises: Object.freeze([...rule.premises]) }));
           changed = true;
@@ -41,6 +43,7 @@ export function createMultiStepReasoningEngine({ maxFacts = 1024, maxRules = 102
       !known.has(rule.conclusion) && rule.premises.every(p => known.has(p)));
     return Object.freeze({ version: MULTI_STEP_REASONING_VERSION,
       facts: Object.freeze([...known].sort()), steps: Object.freeze(steps),
+      provenance: Object.freeze([...provenance.values()].sort((a,b) => a.fact.localeCompare(b.fact))),
       rounds, incomplete, method: "forward-chaining", externallyVerified: false });
   }
   return Object.freeze({ version: MULTI_STEP_REASONING_VERSION, reason });
