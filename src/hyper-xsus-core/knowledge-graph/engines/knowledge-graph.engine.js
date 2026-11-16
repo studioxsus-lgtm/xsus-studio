@@ -513,6 +513,104 @@ export function createKnowledgeGraphEngine(options = {}) {
     return graph.metadata;
   }
 
+  /**
+   * Atomic graph changeset: validate every operation against an isolated
+   * working copy, then commit once. previewChanges never modifies state.
+   * Supported operations: addNode, updateNode, removeNode, addLink, removeLink.
+   */
+  function evaluateChanges(operations) {
+    ensureOpen();
+    if (!Array.isArray(operations) || operations.length === 0 || operations.length > 1000) {
+      throw new TypeError("Graph changes must contain 1 to 1000 operations.");
+    }
+
+    let working = cloneJsonValue(graph);
+    const results = [];
+    for (const operation of operations) {
+      if (!isPlainObject(operation) || typeof operation.type !== "string") {
+        throw new TypeError("Each graph operation must have a type.");
+      }
+
+      switch (operation.type) {
+        case "addNode": {
+          const node = normalizeNode(operation.node);
+          if (working.nodes.some((entry) => entry.id === node.id)) {
+            throw new Error("Graph node ID already exists.");
+          }
+          working.nodes.push(node);
+          results.push({ type: operation.type, id: node.id });
+          break;
+        }
+        case "updateNode": {
+          const id = assertNonEmptyString(operation.id, "operation.id");
+          if (!isPlainObject(operation.updates)) {
+            throw new TypeError("Node updates must be a plain object.");
+          }
+          const index = working.nodes.findIndex((node) => node.id === id);
+          if (index < 0) throw new Error("Node not found.");
+          working.nodes[index] = normalizeNode({
+            ...working.nodes[index],
+            ...cloneJsonValue(operation.updates),
+            id
+          });
+          results.push({ type: operation.type, id });
+          break;
+        }
+        case "removeNode": {
+          const id = assertNonEmptyString(operation.id, "operation.id");
+          if (!working.nodes.some((node) => node.id === id)) {
+            throw new Error("Node not found.");
+          }
+          working.nodes = working.nodes.filter((node) => node.id !== id);
+          working.links = working.links.filter((link) =>
+            link.sourceId !== id && link.targetId !== id
+          );
+          results.push({ type: operation.type, id });
+          break;
+        }
+        case "addLink": {
+          const link = createLinkFromInput(operation.link);
+          if (working.links.some((entry) => entry.id === link.id)) {
+            throw new Error("Graph link ID already exists.");
+          }
+          working.links.push(link);
+          results.push({ type: operation.type, id: link.id });
+          break;
+        }
+        case "removeLink": {
+          const id = assertNonEmptyString(operation.id, "operation.id");
+          if (!working.links.some((link) => link.id === id)) {
+            throw new Error("Link not found.");
+          }
+          working.links = working.links.filter((link) => link.id !== id);
+          results.push({ type: operation.type, id });
+          break;
+        }
+        default:
+          throw new TypeError("Unsupported graph operation type.");
+      }
+    }
+
+    // The canonical model validator enforces references, unique IDs,
+    // metadata and schema integrity before anything is committed.
+    const validated = createKnowledgeGraph(working);
+    return deepFreeze({
+      graph: validated,
+      operationCount: results.length,
+      results
+    });
+  }
+
+  function previewChanges(operations) {
+    return evaluateChanges(operations);
+  }
+
+  function applyChanges(operations) {
+    const preview = evaluateChanges(operations);
+    commit(preview.graph);
+    return preview;
+  }
+
   function getGraph() {
     ensureOpen();
     return cloneKnowledgeGraph(graph);
@@ -783,6 +881,8 @@ export function createKnowledgeGraphEngine(options = {}) {
 
     getGraph,
     getStatus,
+    previewChanges,
+    applyChanges,
 
     addNode,
     addNodes,
