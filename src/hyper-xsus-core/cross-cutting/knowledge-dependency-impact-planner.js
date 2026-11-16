@@ -17,7 +17,14 @@ export function createKnowledgeDependencyImpactPlanner({ maxNodes = 10000 } = {}
     if (orderIds.size !== afterIds.size ||
         [...orderIds].some(id => !afterIds.has(id)))
       throw new TypeError("Dependency graph must match the current snapshot.");
+    const removed = new Set(changeSet.removed);
     const changed = new Set([...changeSet.added, ...changeSet.revised]);
+    // Removed dependencies are absent from the current graph. A surviving node
+    // must not silently retain a reference to a removed dependency.
+    for (const node of dependencyNodes) {
+      if (node.dependsOn.some(dep => removed.has(dep)))
+        throw new TypeError("Current dependency graph references removed nodes.");
+    }
     const affected = new Set(changed);
     const nodeMap = new Map(dependencyNodes.map(node => [node.id, node.dependsOn]));
     for (const id of order) {
