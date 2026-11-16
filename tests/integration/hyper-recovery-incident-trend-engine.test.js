@@ -6,8 +6,10 @@ const action = { critical: "quarantine-and-investigate", high: "investigate-evid
 function triage(revision, items) {
   const incidents = Object.entries(items).map(([id, priority]) => ({
     id, priority, action: action[priority], automaticRecoveryAllowed: false
-  })).sort((a, b) => ({ critical: 3, high: 2, medium: 1 }[b.priority] -
-    { critical: 3, high: 2, medium: 1 }[a.priority] || a.id.localeCompare(b.id, "en"));
+  })).sort((a, b) => {
+    const rank = { critical: 3, high: 2, medium: 1 };
+    return rank[b.priority] - rank[a.priority] || a.id.localeCompare(b.id, "en");
+  });
   const summary = { critical: 0, high: 0, medium: 0 };
   for (const item of incidents) summary[item.priority]++;
   return { revision, total: incidents.length, incidentCount: incidents.length,
