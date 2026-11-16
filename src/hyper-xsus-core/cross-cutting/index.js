@@ -23,3 +23,4 @@ export * from "./response-evaluation-engine.js";
 export * from "./specialized-engine-coordinator.js";
 export * from "./five-engine-workflow.js";
 export * from "./five-engine-diagnostics.js";
+export * from "./five-engine-batch-runner.js";
