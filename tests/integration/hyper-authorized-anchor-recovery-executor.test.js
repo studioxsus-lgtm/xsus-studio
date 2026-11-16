@@ -35,7 +35,7 @@ describe("Hyper XSUS Core — authorized anchor recovery executor", () => {
     expect(result.status).toBe("executed");
     expect(f.getHead()).toBe(newHead);
     expect(f.entries.map(item => item.action)).toEqual(["executed"]);
-    await expect(f.executor.execute(request)).rejects.toThrow("already attempted|state changed");
+    await expect(f.executor.execute(request)).rejects.toThrow(/already attempted|state changed/);
   });
   it("rejects missing proof and denied identities without touching anchor", async () => {
     const f = fixture();
