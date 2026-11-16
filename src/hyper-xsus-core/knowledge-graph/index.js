@@ -113,3 +113,6 @@ export * from "./recovery-evidence-snapshot-gate.js";
 
 // Bounded, read-only recovery audit reporting
 export * from "./recovery-audit-report-engine.js";
+
+// Read-only incident classification for verified recovery audit reports
+export * from "./recovery-incident-triage-engine.js";
