@@ -99,4 +99,22 @@ describe("XSUS App Hyper application contract — disabled until server verified
     }, { operation: "application.plan", projectId })).toThrow("Invalid Hyper application response.");
   });
 
+  it("rejects malformed artifact IDs in completed Hyper build responses", () => {
+    expect(() => parseHyperApplicationResponse({
+      ok: true, contractVersion: HYPER_APP_CONTRACT_VERSION,
+      operation: "application.build", projectId,
+      requestId: "req_artifact", status: "completed", artifactId: "../another-project"
+    }, { operation: "application.build", projectId })).toThrow("Invalid Hyper application response.");
+  });
+
+  it("does not expose optional build artifact IDs before the backend contract is verified", () => {
+    const response = parseHyperApplicationResponse({
+      ok: true, contractVersion: HYPER_APP_CONTRACT_VERSION,
+      operation: "application.build", projectId,
+      requestId: "req_artifact", status: "completed",
+      artifactId: "33333333-3333-4333-8333-333333333333"
+    }, { operation: "application.build", projectId });
+    expect(response).not.toHaveProperty("artifactId");
+  });
+
 });
