@@ -104,3 +104,6 @@ export * from "./recovery-finalization-engine.js";
 
 // Bounded read-only post-restart recovery audit
 export * from "./recovery-restart-audit-engine.js";
+
+// Revision-consistent, read-only recovery audit pagination
+export * from "./recovery-audit-snapshot-session.js";
