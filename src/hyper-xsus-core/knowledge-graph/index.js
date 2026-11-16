@@ -84,3 +84,6 @@ export * from "./recovery-workflow-coordinator.js";
 export * from "./persistent-recovery-state-engine.js";
 // Multi-instance recovery leases with fencing tokens
 export * from "./distributed-recovery-lease-coordinator.js";
+
+// Durable, multi-instance recovery workflow with fenced anchor execution
+export * from "./distributed-recovery-workflow.js";
