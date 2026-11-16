@@ -98,3 +98,6 @@ export * from "./guarded-distributed-recovery-workflow.js";
 // Read-only recovery reconciliation and infrastructure fault isolation
 export * from "./recovery-reconciliation-engine.js";
 export * from "./recovery-fault-tolerance-engine.js";
+
+// Verified post-crash recovery state finalization
+export * from "./recovery-finalization-engine.js";
