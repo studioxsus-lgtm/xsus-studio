@@ -13,3 +13,4 @@ export * from "./engine-execution-budget.js";
 export * from "./written-script-profile-engine.js";
 export * from "./unicode-tokenization-engine.js";
 export * from "./context-window-selector.js";
+export * from "./language-processing-diagnostics.js";
