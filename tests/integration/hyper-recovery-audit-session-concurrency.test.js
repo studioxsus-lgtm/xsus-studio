@@ -6,7 +6,7 @@ function deferred() {
   const promise = new Promise(resolve => { release = resolve; });
   return { promise, release };
 }
-function fixture({ inspectionWait = null, snapshotWait = null } = {}) {
+function fixture({ inspectionWait = null, inspectionEntered = null, snapshotWait = null } = {}) {
   let reads = 0;
   const session = createRecoveryAuditSnapshotSession({
     state: { async snapshot() {
@@ -15,6 +15,7 @@ function fixture({ inspectionWait = null, snapshotWait = null } = {}) {
       return { revision: 1, requests };
     } },
     reconciliation: { async inspect() {
+      if (inspectionEntered) inspectionEntered.release();
       if (inspectionWait) await inspectionWait.promise;
       return { status: "consistent", reason: "approved-awaiting-execution" };
     } },
@@ -25,13 +26,11 @@ function fixture({ inspectionWait = null, snapshotWait = null } = {}) {
 }
 describe("Hyper XSUS Core — concurrent audit session isolation", () => {
   it("does not return a stale page after a new begin", async () => {
-    const wait = deferred();
-    const session = fixture({ inspectionWait: wait });
+    const wait = deferred(), entered = deferred();
+    const session = fixture({ inspectionWait: wait, inspectionEntered: entered });
     await session.begin({ actorId: "auditor" });
     const pending = session.page({ actorId: "auditor" });
-    // Wait for the first page to enter its asynchronous inspection.
-    await Promise.resolve();
-    await Promise.resolve();
+    await entered.promise;
     await session.begin({ actorId: "auditor" });
     wait.release();
     await expect(pending).rejects.toThrow("superseded");
