@@ -31,6 +31,8 @@ export function createFiveEngineWorkflow({
     }
     const plan = planner.plan(tasks);
     const quality = evaluator.evaluate({ checks: qualityChecks, findings });
+    // Invalid specialist batches must never be disguised as quality rejections.
+    const preparedRequests = coordinator.validateRequests(requests);
     // The caller supplies actual quality evidence; no invented scoring.
     if (!quality.accepted) {
       return Object.freeze({
@@ -39,7 +41,7 @@ export function createFiveEngineWorkflow({
         coordination: null, executionAttempted: false
       });
     }
-    const coordination = await coordinator.coordinate({ requests });
+    const coordination = await coordinator.coordinate({ requests: preparedRequests });
     return Object.freeze({
       version: FIVE_ENGINE_WORKFLOW_VERSION,
       status: coordination.failed === 0 ? "completed" : "degraded",
