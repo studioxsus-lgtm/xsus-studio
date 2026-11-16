@@ -122,3 +122,6 @@ export * from "./recovery-incident-trend-engine.js";
 
 // Authorized CAS-backed recovery incident history and restart-safe reads
 export * from "./recovery-incident-history-engine.js";
+
+// Server-injected Supabase incident history CAS adapter
+export * from "./supabase-recovery-incident-history-adapter.js";
