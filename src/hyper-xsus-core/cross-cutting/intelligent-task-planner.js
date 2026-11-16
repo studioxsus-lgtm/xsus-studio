@@ -16,15 +16,22 @@ export function createIntelligentTaskPlanner({ maxTasks = 512 } = {}) {
     const ordered = graph.order(nodes).order;
     const byId = new Map(tasks.map(t => [t.id, t]));
     let totalCost = 0;
+    const finishAt = new Map();
     const steps = ordered.map((id, index) => {
       const t = byId.get(id);
       totalCost += t.cost;
       if (!Number.isSafeInteger(totalCost)) throw new RangeError("Task cost overflow.");
+      const earliestStart = t.dependsOn.reduce((max, dep) => Math.max(max, finishAt.get(dep)), 0);
+      const earliestFinish = earliestStart + t.cost;
+      if (!Number.isSafeInteger(earliestFinish)) throw new RangeError("Task schedule overflow.");
+      finishAt.set(id, earliestFinish);
       return Object.freeze({ sequence: index + 1, id, title: t.title,
-        cost: t.cost, dependsOn: Object.freeze([...t.dependsOn]) });
+        cost: t.cost, earliestStart, earliestFinish,
+        dependsOn: Object.freeze([...t.dependsOn]) });
     });
     return Object.freeze({ version: INTELLIGENT_TASK_PLANNER_VERSION,
-      steps: Object.freeze(steps), totalCost, executable: false });
+      steps: Object.freeze(steps), totalCost,
+      criticalPathCost: Math.max(0, ...finishAt.values()), executable: false });
   }
   return Object.freeze({ version: INTELLIGENT_TASK_PLANNER_VERSION, plan });
 }
