@@ -14,7 +14,7 @@ export function createSpecializedEngineCoordinator({ engines, maxEngines = 16, m
       throw new TypeError("Invalid specialized engine.");
     map.set(engine.name, engine.execute);
   }
-  async function coordinate({ requests } = {}) {
+  function validateRequests(requests) {
     if (!Array.isArray(requests) || requests.length > maxEngines)
       throw new TypeError("Invalid specialized requests.");
     // Validate the entire batch before invoking any engine.
@@ -25,6 +25,10 @@ export function createSpecializedEngineCoordinator({ engines, maxEngines = 16, m
       used.add(request.engine);
       return { engine: request.engine, payload: guard.validate(request.payload) };
     });
+    return Object.freeze(prepared.map(request => Object.freeze(request)));
+  }
+  async function coordinate({ requests } = {}) {
+    const prepared = validateRequests(requests);
     const results = [];
     for (const request of prepared) {
       const payload = request.payload;
