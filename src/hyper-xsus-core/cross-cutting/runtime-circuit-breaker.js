@@ -7,6 +7,7 @@ export function createRuntimeCircuitBreaker({
       !Number.isSafeInteger(resetAfterMs) || resetAfterMs < 1 ||
       typeof clock !== "function") throw new TypeError("Invalid circuit breaker configuration.");
   let failures = 0, openedAt = null, probe = false;
+  let generation = 0;
   function status() {
     const now = clock();
     if (!Number.isFinite(now)) throw new TypeError("Invalid circuit breaker clock.");
@@ -19,13 +20,19 @@ export function createRuntimeCircuitBreaker({
     if (state === "open" || (state === "half-open" && probe))
       throw new Error("Circuit breaker unavailable.");
     if (state === "half-open") probe = true;
+    const attemptGeneration = generation;
     try {
       const result = await operation();
-      failures = 0; openedAt = null;
+      if (state === "half-open" || (openedAt === null && attemptGeneration === generation)) {
+        failures = 0; openedAt = null;
+        generation++;
+      }
       return result;
     } catch (error) {
-      failures = state === "half-open" ? failureThreshold : failures + 1;
-      if (failures >= failureThreshold) openedAt = clock();
+      if (state === "half-open" || (openedAt === null && attemptGeneration === generation)) {
+        failures = state === "half-open" ? failureThreshold : failures + 1;
+        if (failures >= failureThreshold) { openedAt = clock(); generation++; }
+      }
       throw error;
     } finally { if (state === "half-open") probe = false; }
   }
