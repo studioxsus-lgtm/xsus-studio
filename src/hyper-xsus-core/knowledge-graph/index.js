@@ -49,3 +49,6 @@ export * from "./knowledge-change-evidence-ledger.js";
 
 // Governance + Evidence Ledger integration facade
 export * from "./governed-change-evidence.js";
+
+// Governance/evidence discrepancy diagnostics and explicit reconciliation
+export * from "./knowledge-governance-reconciliation.js";
