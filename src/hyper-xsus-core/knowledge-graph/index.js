@@ -87,3 +87,7 @@ export * from "./distributed-recovery-lease-coordinator.js";
 
 // Durable, multi-instance recovery workflow with fenced anchor execution
 export * from "./distributed-recovery-workflow.js";
+
+// Atomic fenced anchor persistence and trusted-head journal guard
+export * from "./fenced-anchor-storage-engine.js";
+export * from "./recovery-journal-consistency-guard.js";
