@@ -69,4 +69,34 @@ describe("XSUS App Hyper application contract — disabled until server verified
       })).rejects.toThrow("not verified");
     }
   });
+  it("accepts exactly 8000 meaningful characters after trimming", () => {
+    const request = createHyperApplicationRequest({
+      operation: "application.plan", projectId, prompt: "  " + "a".repeat(8000) + "  "
+    });
+    expect(request.prompt).toHaveLength(8000);
+  });
+
+  it("rejects a prompt longer than 8000 meaningful characters", () => {
+    expect(() => createHyperApplicationRequest({
+      operation: "application.build", projectId, prompt: "  " + "a".repeat(8001) + "  "
+    })).toThrow("Prompt must contain 1 to 8000 characters.");
+  });
+
+  it("rejects responses for a different project, even with a success flag", () => {
+    expect(() => parseHyperApplicationResponse({
+      ok: true, contractVersion: HYPER_APP_CONTRACT_VERSION,
+      operation: "application.plan",
+      projectId: "33333333-3333-4333-8333-333333333333",
+      requestId: "req_2", status: "completed"
+    }, { operation: "application.plan", projectId })).toThrow("Invalid Hyper application response.");
+  });
+
+  it("rejects an unrecognized response contract version", () => {
+    expect(() => parseHyperApplicationResponse({
+      ok: true, contractVersion: "2.0.0",
+      operation: "application.plan", projectId,
+      requestId: "req_3", status: "accepted"
+    }, { operation: "application.plan", projectId })).toThrow("Invalid Hyper application response.");
+  });
+
 });
