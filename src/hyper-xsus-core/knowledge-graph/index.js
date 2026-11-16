@@ -61,3 +61,8 @@ export * from "./supabase-evidence-checkpoint-adapter.js";
 
 // Backend composition with injected Supabase client and independent trusted anchor
 export * from "./knowledge-evidence-backend-runtime.js";
+
+// Read-only crash recovery classification
+export * from "./evidence-crash-recovery-inspector.js";
+// Pull-based runtime health and readiness diagnostics
+export * from "./evidence-runtime-health-supervisor.js";
