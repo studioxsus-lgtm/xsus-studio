@@ -214,13 +214,14 @@ form?.addEventListener("submit",async event=>{
   const session=data?.session;
   if(!isCurrent())return;
   if(error||!session?.access_token){setState("missing");return;}
-  const {verifyXsusHyperEvidence}=await import("../../../platform/xsus-app/xsus-hyper-evidence-client.js");
+  const [{verifyXsusHyperEvidence},{createXsusAppHyperGateway}]=await Promise.all([import("../../../platform/xsus-app/xsus-hyper-evidence-client.js"),import("../../../platform/xsus-app/xsus-hyper-gateway.js")]);
+  const hyperGateway=createXsusAppHyperGateway({verifyEvidence:verifyXsusHyperEvidence});
   // Limit network wait; never leave the verification button disabled indefinitely.
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),20000);
   let result;
   try{
-   result=await verifyXsusHyperEvidence({
+   result=await hyperGateway.execute("evidence.verify",{
     observationId:requestedId,
     accessToken:session.access_token,
     endpoint:RENDER_ENDPOINT,
