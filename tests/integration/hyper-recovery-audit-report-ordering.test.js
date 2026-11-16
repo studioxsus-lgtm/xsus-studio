@@ -11,7 +11,11 @@ function makeEngine(ids, { mutate = false, revisionDrift = false } = {}) {
       async begin() { return { revision: 3, total: ids.length }; },
       async page({ offset, limit }) {
         calls++;
-        if (mutate && calls === 2) ids.reverse();
+        if (mutate && calls === 2) {
+          // Reorder only the unread page: no duplicate IDs, so ordering
+          // validation (rather than duplicate detection) must reject it.
+          [ids[2], ids[3]] = [ids[3], ids[2]];
+        }
         return {
           revision: revisionDrift && calls === 2 ? 4 : 3,
           total: ids.length,
