@@ -11,13 +11,16 @@ const STATES = new Set(["pending", "approved", "executing", "executed", "failed"
 function freezeRecord(x) { return Object.freeze(x); }
 export function createRecoveryAuditSnapshotSession({
   state, reconciliation, authorize, clock = () => Date.now(),
-  maxRecords = 1000, maxPageSize = 100
+  maxRecords = 1000, maxPageSize = 100, evidenceGate = null, evidenceKey = null
 } = {}) {
   if (!state || typeof state.snapshot !== "function" ||
       !reconciliation || typeof reconciliation.inspect !== "function" ||
       typeof authorize !== "function" || typeof clock !== "function" ||
       !Number.isSafeInteger(maxRecords) || maxRecords < 1 || maxRecords > 10000 ||
-      !Number.isSafeInteger(maxPageSize) || maxPageSize < 1 || maxPageSize > maxRecords) {
+      !Number.isSafeInteger(maxPageSize) || maxPageSize < 1 || maxPageSize > maxRecords ||
+      (evidenceGate !== null && (typeof evidenceGate.begin !== "function" ||
+        typeof evidenceGate.verify !== "function" ||
+        typeof evidenceKey !== "string" || !ID.test(evidenceKey)))) {
     throw new TypeError("Invalid recovery audit snapshot session configuration.");
   }
   let session = null;
@@ -50,10 +53,11 @@ export function createRecoveryAuditSnapshotSession({
     }
     const snapshot = await readSnapshot();
     const startedAt = now();
+    const evidence = evidenceGate ? await evidenceGate.begin({ key: evidenceKey, actorId }) : null;
     // No mutable external snapshot is retained; only identifiers and revision.
     session = Object.freeze({
       actorId, revision: snapshot.revision,
-      ids: Object.freeze([...snapshot.ids]), startedAt
+      ids: Object.freeze([...snapshot.ids]), startedAt, evidence
     });
     return freezeRecord({
       version: RECOVERY_AUDIT_SNAPSHOT_SESSION_VERSION,
@@ -70,6 +74,7 @@ export function createRecoveryAuditSnapshotSession({
     if (await authorize({ action: "audit", actorId }) !== true) {
       throw new Error("Recovery audit access denied.");
     }
+    if (evidenceGate) await evidenceGate.verify({ baseline: session.evidence, actorId });
     const snapshot = await readSnapshot();
     if (snapshot.revision !== session.revision ||
         snapshot.ids.length !== session.ids.length ||
@@ -97,6 +102,7 @@ export function createRecoveryAuditSnapshotSession({
     }
     // Recheck revision after potentially slow inspection to avoid mixed pages.
     const after = await readSnapshot();
+    if (evidenceGate) await evidenceGate.verify({ baseline: session.evidence, actorId });
     if (after.revision !== session.revision) {
       session = null;
       const error = new Error("Recovery audit snapshot changed during inspection.");
