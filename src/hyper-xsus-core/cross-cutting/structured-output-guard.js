@@ -19,6 +19,9 @@ export function createStructuredOutputGuard({ maxDepth = 8, maxNodes = 2048 } = 
       ancestors.add(node);
       let result;
       if (Array.isArray(node)) {
+        if (Object.keys(node).length !== node.length ||
+            Object.keys(node).some(key => !/^(0|[1-9][0-9]*)$/.test(key) || Number(key) >= node.length))
+          throw new TypeError("Invalid structured output array.");
         result = node.map(item => walk(item, depth + 1));
       } else {
         result = Object.create(null);
