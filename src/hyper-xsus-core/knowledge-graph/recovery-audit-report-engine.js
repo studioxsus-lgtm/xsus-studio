@@ -38,6 +38,8 @@ export function createRecoveryAuditReportEngine({
     }
     const counts = Object.create(null);
     const records = [];
+    const seenIds = new Set();
+    let previousId = null;
     let offset = 0;
     while (offset < start.total) {
       const limit = Math.min(pageSize, start.total - offset);
@@ -51,9 +53,14 @@ export function createRecoveryAuditReportEngine({
       for (const record of page.records) {
         if (!record || !ASSESSMENTS.has(record.assessment) ||
             typeof record.id !== "string" || !ID.test(record.id) ||
-            records.some(previous => previous.id === record.id)) {
+            seenIds.has(record.id)) {
           throw new Error("Recovery audit report contains invalid or repeated records.");
         }
+        if (previousId !== null && record.id <= previousId) {
+          throw new Error("Recovery audit report page order consistency failure.");
+        }
+        seenIds.add(record.id);
+        previousId = record.id;
         counts[record.assessment] = (counts[record.assessment] ?? 0) + 1;
         records.push(freeze({
           id: record.id,
