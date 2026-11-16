@@ -653,6 +653,39 @@ export function createKnowledgeLinkEngine(options = {}) {
     return true;
   }
 
+  /**
+   * Remove a bounded batch of links atomically. Every ID must be present;
+   * otherwise indexes and primary storage remain unchanged.
+   */
+  function removeLinks(ids) {
+    assertOpen();
+
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 1000) {
+      throw new TypeError("ids must contain 1 to 1000 link IDs.");
+    }
+
+    const normalized = ids.map((id) => requireNonEmptyString(id, "id"));
+    const unique = new Set(normalized);
+
+    if (unique.size !== normalized.length) {
+      throw new TypeError("Duplicate link ID in removal batch.");
+    }
+
+    for (const id of normalized) {
+      if (!links.has(id)) {
+        throw new Error("Link not found in removal batch.");
+      }
+    }
+
+    const removed = normalized.map((id) => links.get(id));
+    for (const link of removed) {
+      unindexLink(link);
+      links.delete(link.id);
+    }
+
+    return createResult(removed);
+  }
+
   function clear() {
     assertOpen();
 
@@ -716,6 +749,7 @@ export function createKnowledgeLinkEngine(options = {}) {
     search,
     searchByStrategy,
     removeLink,
+    removeLinks,
     clear,
     getStatus,
     verifyIndexIntegrity,
