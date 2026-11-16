@@ -101,3 +101,6 @@ export * from "./recovery-fault-tolerance-engine.js";
 
 // Verified post-crash recovery state finalization
 export * from "./recovery-finalization-engine.js";
+
+// Bounded read-only post-restart recovery audit
+export * from "./recovery-restart-audit-engine.js";
