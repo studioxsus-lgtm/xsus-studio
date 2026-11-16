@@ -8,6 +8,7 @@ import { createMultiStepReasoningEngine } from "./multi-step-reasoning-engine.js
 import { createIntelligentTaskPlanner } from "./intelligent-task-planner.js";
 import { createResponseEvaluationEngine } from "./response-evaluation-engine.js";
 import { createSpecializedEngineCoordinator } from "./specialized-engine-coordinator.js";
+import { createFiveEngineResourceBudget } from "./five-engine-resource-budget.js";
 export const FIVE_ENGINE_WORKFLOW_VERSION = "1.0.0";
 export function createFiveEngineWorkflow({
   engines, minimumScore = 0.8, maxEvidence = 32, maxTasks = 512, maxEngines = 16
@@ -17,10 +18,13 @@ export function createFiveEngineWorkflow({
   const planner = createIntelligentTaskPlanner({ maxTasks });
   const evaluator = createResponseEvaluationEngine({ minimumScore });
   const coordinator = createSpecializedEngineCoordinator({ engines, maxEngines });
+  const resourceBudget = createFiveEngineResourceBudget({ maxEvidence, maxTasks, maxRequests: maxEngines });
   async function run({
     query, evidence = [], facts = [], rules = [], tasks = [], requests = [],
     qualityChecks = [], findings = []
   } = {}) {
+    // Reject oversized requests before analysis or specialized engine execution.
+    resourceBudget.check({ query, evidence, facts, rules, tasks, requests });
     // Prepare and validate every pure stage before invoking any specialized engine.
     const analysis = semantic.analyze({ query, evidence });
     const inference = reasoning.reason({ facts, rules });
