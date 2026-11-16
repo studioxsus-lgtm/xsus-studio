@@ -16,6 +16,8 @@ import http from "node:http";
 import { checkHyperStartupReadiness } from "./src/platform/xsus-app/hyper-startup-readiness.js";
 import { createHyperReadinessDiagnostic } from "./src/platform/xsus-app/hyper-readiness-diagnostic.js";
 import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js";
+import { createHyperApplicationHttpHandler } from "./src/platform/xsus-app/xsus-hyper-application-http.js";
+import { createHyperApplicationDispatcher } from "./src/platform/xsus-app/xsus-hyper-application-dispatcher.js";
 import { createHyperNodeRuntimeRoute } from "./src/platform/xsus-app/hyper-v8235-node-runtime-route.js";
 import { createHyperAppBackendComposition } from "./src/platform/xsus-app/hyper-v8234-backend-composition.js";
 import { createHyperEvidenceOwnerAuthorizer } from "./src/platform/xsus-app/hyper-evidence-owner-authorizer.js";
@@ -113,6 +115,14 @@ const hyperAdapter = process.env.XSUS_HYPER_APP_ENABLED === "true"
         });
     })()
     : null;
+
+// The Hyper application route is registered, but its server-side project-owner
+// provider and real plan/build executors have not been verified. Keep this
+// capability disabled instead of falling back to XSUS AI Core.
+// The HTTP handler/dispatcher require trusted injected dependencies and cannot
+// be constructed from request input. This handler is intentionally not mounted.
+void createHyperApplicationHttpHandler;
+void createHyperApplicationDispatcher;
 
 const MAX_BODY_BYTES = 32 * 1024;
 const MAX_QUERY_LENGTH = 8000;
