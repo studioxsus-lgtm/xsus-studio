@@ -91,3 +91,6 @@ export * from "./distributed-recovery-workflow.js";
 // Atomic fenced anchor persistence and trusted-head journal guard
 export * from "./fenced-anchor-storage-engine.js";
 export * from "./recovery-journal-consistency-guard.js";
+
+// Trusted journal consistency gate for distributed recovery execution
+export * from "./guarded-distributed-recovery-workflow.js";
