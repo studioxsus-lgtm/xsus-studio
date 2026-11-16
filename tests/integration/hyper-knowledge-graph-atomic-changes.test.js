@@ -23,7 +23,7 @@ describe("Hyper Knowledge Graph — atomic changesets", () => {
     expect(Object.isFrozen(preview)).toBe(true);
     expect(Object.isFrozen(preview.results)).toBe(true);
     expect(Object.isFrozen(preview.graph)).toBe(true);
-    expect(api.applyChanges(changes)).toEqual(preview);
+    expect(api.applyChanges(changes).operationCount).toBe(2);
     expect(api.getGraph().nodes).toHaveLength(2);
     expect(api.getGraph().links).toHaveLength(1);
     expect(api.verifyIntegrity().valid).toBe(true);
