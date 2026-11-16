@@ -21,3 +21,4 @@ export * from "./multi-step-reasoning-engine.js";
 export * from "./intelligent-task-planner.js";
 export * from "./response-evaluation-engine.js";
 export * from "./specialized-engine-coordinator.js";
+export * from "./five-engine-workflow.js";
