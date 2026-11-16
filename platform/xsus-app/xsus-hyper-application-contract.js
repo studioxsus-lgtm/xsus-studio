@@ -16,7 +16,7 @@ export function createHyperApplicationRequest({ operation, projectId, prompt } =
     throw new TypeError("Unsupported Hyper application operation.");
   if (typeof projectId !== "string" || !UUID.test(projectId))
     throw new TypeError("Valid project ID is required.");
-  if (typeof prompt !== "string" || !prompt.trim() || prompt.length > MAX_PROMPT_LENGTH)
+  if (typeof prompt !== "string" || !prompt.trim() || prompt.trim().length > MAX_PROMPT_LENGTH)
     throw new TypeError("Prompt must contain 1 to 8000 characters.");
   return Object.freeze({
     contractVersion: HYPER_APP_CONTRACT_VERSION,
