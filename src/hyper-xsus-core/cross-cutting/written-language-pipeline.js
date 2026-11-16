@@ -10,6 +10,7 @@ import { createEngineRoutingCoordinator } from "./engine-routing-coordinator.js"
 import { createEngineExecutionBudget } from "./engine-execution-budget.js";
 import { createWrittenScriptProfileEngine } from "./written-script-profile-engine.js";
 import { createUnicodeTokenizationEngine } from "./unicode-tokenization-engine.js";
+import { createContextWindowSelector } from "./context-window-selector.js";
 export const WRITTEN_LANGUAGE_PIPELINE_VERSION = "1.0.0";
 const LANG = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/;
 export function createWrittenLanguagePipeline({
@@ -18,17 +19,24 @@ export function createWrittenLanguagePipeline({
   maxTotalContextCodePoints = 8192,
   failureThreshold = 3, resetAfterMs = 30000, clock = Date.now,
   maxOutputDepth = 8, maxOutputNodes = 2048,
-  maxEngineAttempts = 256, maxTokens = 2048
+  maxEngineAttempts = 256, maxTokens = 2048,
+  contextMode = "strict"
 } = {}) {
   if (!Number.isSafeInteger(maxContextMessages) || maxContextMessages < 0 || maxContextMessages > 64 ||
       !Number.isSafeInteger(maxContextCodePoints) || maxContextCodePoints < 1 || maxContextCodePoints > 100000 ||
       !Number.isSafeInteger(maxTotalContextCodePoints) || maxTotalContextCodePoints < 1 || maxTotalContextCodePoints > 1000000)
     throw new TypeError("Invalid written language context configuration.");
+  if (contextMode !== "strict" && contextMode !== "recent")
+    throw new TypeError("Invalid written language context mode.");
   const input = createTextBoundaryEngine({ maxCodePoints });
   const contextBoundary = createTextBoundaryEngine({ maxCodePoints: maxContextCodePoints });
   const segmentation = createSentenceSegmentationEngine({ maxCodePoints, maxSentences });
   const scripts = createWrittenScriptProfileEngine({ maxCodePoints });
   const tokenizer = createUnicodeTokenizationEngine({ maxCodePoints, maxTokens });
+  const windowSelector = createContextWindowSelector({
+    maxMessages: maxContextMessages, maxCodePoints: maxTotalContextCodePoints,
+    maxMessageCodePoints: maxContextCodePoints
+  });
   const router = createEngineRoutingCoordinator({
     engines, maxCodePoints, failureThreshold, resetAfterMs, clock, maxOutputDepth, maxOutputNodes
   });
@@ -53,7 +61,8 @@ export function createWrittenLanguagePipeline({
       throw new TypeError("Invalid written language code.");
     const normalized = input.normalize(text);
     if (normalized.empty) throw new TypeError("Empty written language request.");
-    const safeContext = prepareContext(context);
+    const selection = contextMode === "recent" ? windowSelector.select(context) : null;
+    const safeContext = selection ? selection.messages : prepareContext(context);
     const segmented = segmentation.segment(normalized.text);
     const tokenized = tokenizer.tokenize(normalized.text);
     if (segmented.sentences.length === 0)
@@ -74,6 +83,7 @@ export function createWrittenLanguagePipeline({
       normalizedText: normalized.text, scriptProfile: scripts.profile(normalized.text),
       tokens: tokenized.tokens, tokenCount: tokenized.count,
       contextMessages: safeContext.length,
+      omittedContextMessages: selection ? selection.omittedMessages : 0,
       sentences: Object.freeze(outputs), degraded: outputs.some(item => item.degraded),
       execution: budget.snapshot(), readOnly: true
     });
