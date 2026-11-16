@@ -58,3 +58,6 @@ export * from "./knowledge-evidence-checkpoints.js";
 
 // Server-injected Supabase CAS adapter (no embedded credentials)
 export * from "./supabase-evidence-checkpoint-adapter.js";
+
+// Backend composition with injected Supabase client and independent trusted anchor
+export * from "./knowledge-evidence-backend-runtime.js";
