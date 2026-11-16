@@ -43,3 +43,6 @@ export * from "./knowledge-dependency-risk.js";
 
 // Controlled change proposals, approvals and atomic execution
 export * from "./knowledge-change-governance.js";
+
+// Tamper-evident governance evidence ledger and snapshot recovery
+export * from "./knowledge-change-evidence-ledger.js";
