@@ -12,11 +12,13 @@ const LANG = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/;
 export function createWrittenLanguagePipeline({
   engines, maxCodePoints = 4096, maxSentences = 64,
   maxContextMessages = 8, maxContextCodePoints = 2048,
+  maxTotalContextCodePoints = 8192,
   failureThreshold = 3, resetAfterMs = 30000, clock = Date.now,
   maxOutputDepth = 8, maxOutputNodes = 2048
 } = {}) {
   if (!Number.isSafeInteger(maxContextMessages) || maxContextMessages < 0 || maxContextMessages > 64 ||
-      !Number.isSafeInteger(maxContextCodePoints) || maxContextCodePoints < 1 || maxContextCodePoints > 100000)
+      !Number.isSafeInteger(maxContextCodePoints) || maxContextCodePoints < 1 || maxContextCodePoints > 100000 ||
+      !Number.isSafeInteger(maxTotalContextCodePoints) || maxTotalContextCodePoints < 1 || maxTotalContextCodePoints > 1000000)
     throw new TypeError("Invalid written language context configuration.");
   const input = createTextBoundaryEngine({ maxCodePoints });
   const contextBoundary = createTextBoundaryEngine({ maxCodePoints: maxContextCodePoints });
@@ -27,10 +29,14 @@ export function createWrittenLanguagePipeline({
   function prepareContext(messages) {
     if (!Array.isArray(messages) || messages.length > maxContextMessages)
       throw new TypeError("Invalid written language context.");
+    let totalCodePoints = 0;
     return Object.freeze(messages.map(message => {
       if (!message || (message.role !== "user" && message.role !== "assistant"))
         throw new TypeError("Invalid written language context message.");
       const content = contextBoundary.normalize(message.content).text;
+      totalCodePoints += Array.from(content).length;
+      if (totalCodePoints > maxTotalContextCodePoints)
+        throw new RangeError("Total written language context limit exceeded.");
       if (content.trim().length === 0)
         throw new TypeError("Empty written language context message.");
       return Object.freeze({ role: message.role, content });
