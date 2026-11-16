@@ -7,6 +7,7 @@
 import { createTextBoundaryEngine } from "./text-boundary-engine.js";
 import { createSentenceSegmentationEngine } from "./sentence-segmentation-engine.js";
 import { createEngineRoutingCoordinator } from "./engine-routing-coordinator.js";
+import { createEngineExecutionBudget } from "./engine-execution-budget.js";
 export const WRITTEN_LANGUAGE_PIPELINE_VERSION = "1.0.0";
 const LANG = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/;
 export function createWrittenLanguagePipeline({
@@ -14,7 +15,8 @@ export function createWrittenLanguagePipeline({
   maxContextMessages = 8, maxContextCodePoints = 2048,
   maxTotalContextCodePoints = 8192,
   failureThreshold = 3, resetAfterMs = 30000, clock = Date.now,
-  maxOutputDepth = 8, maxOutputNodes = 2048
+  maxOutputDepth = 8, maxOutputNodes = 2048,
+  maxEngineAttempts = 256
 } = {}) {
   if (!Number.isSafeInteger(maxContextMessages) || maxContextMessages < 0 || maxContextMessages > 64 ||
       !Number.isSafeInteger(maxContextCodePoints) || maxContextCodePoints < 1 || maxContextCodePoints > 100000 ||
@@ -51,9 +53,12 @@ export function createWrittenLanguagePipeline({
     const segmented = segmentation.segment(normalized.text);
     if (segmented.sentences.length === 0)
       throw new TypeError("No processable written language sentences.");
+    const budget = createEngineExecutionBudget({ maxAttempts: maxEngineAttempts, maxOutputs: maxSentences });
     const outputs = [];
     for (const sentence of segmented.sentences) {
-      const routed = await router.route({ text: sentence.text, language, context: safeContext });
+      const routed = await router.route({ text: sentence.text, language, context: safeContext,
+        onAttempt: budget.claimAttempt });
+      budget.claimOutput();
       outputs.push(Object.freeze({
         text: sentence.text, start: sentence.start, end: sentence.end,
         engine: routed.engine, result: routed.result, degraded: routed.degraded
@@ -63,7 +68,7 @@ export function createWrittenLanguagePipeline({
       version: WRITTEN_LANGUAGE_PIPELINE_VERSION, language,
       normalizedText: normalized.text, contextMessages: safeContext.length,
       sentences: Object.freeze(outputs), degraded: outputs.some(item => item.degraded),
-      readOnly: true
+      execution: budget.snapshot(), readOnly: true
     });
   }
   return Object.freeze({ version: WRITTEN_LANGUAGE_PIPELINE_VERSION, process, health: router.health });
