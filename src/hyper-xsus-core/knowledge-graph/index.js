@@ -119,3 +119,6 @@ export * from "./recovery-incident-triage-engine.js";
 
 // Read-only incident trends between independently audited revisions
 export * from "./recovery-incident-trend-engine.js";
+
+// Authorized CAS-backed recovery incident history and restart-safe reads
+export * from "./recovery-incident-history-engine.js";
