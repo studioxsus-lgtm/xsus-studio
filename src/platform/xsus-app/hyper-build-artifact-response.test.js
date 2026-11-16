@@ -7,8 +7,8 @@ const result = { ok: true, contractVersion: "1.0.0",
   operation: "application.build", projectId,
   requestId: "build_1", status: "completed", artifactId };
 describe("XSUS App build artifact response contract", () => {
-  it("preserves the validated artifact reference", () => {
-    expect(parseHyperApplicationResponse(result, context).artifactId).toBe(artifactId);
+  it("keeps the validated artifact reference internal until the public contract is approved", () => {
+    expect(parseHyperApplicationResponse(result, context)).not.toHaveProperty("artifactId");
   });
   it("rejects a malformed artifact reference", () => {
     expect(() => parseHyperApplicationResponse({
