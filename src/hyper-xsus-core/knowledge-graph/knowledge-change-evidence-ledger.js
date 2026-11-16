@@ -6,7 +6,7 @@
  * the trusted head hash is retained separately; this is NOT a signature.
  * No automatic persistence or identity authentication is provided.
  */
-import { createHash } from "node:crypto";
+import { sha256Hex } from "./portable-sha256.js";
 
 export const KNOWLEDGE_CHANGE_EVIDENCE_VERSION = "1.0.0";
 const GENESIS = "0".repeat(64);
@@ -63,7 +63,7 @@ function validId(value, name) {
   return value;
 }
 function digest(value) {
-  return createHash("sha256").update(JSON.stringify(canonical(value)), "utf8").digest("hex");
+  return sha256Hex(JSON.stringify(canonical(value)));
 }
 function makeRecord(sequence, previousHash, event) {
   const body = { sequence, previousHash, event: canonical(event) };
