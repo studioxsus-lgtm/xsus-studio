@@ -20,4 +20,4 @@ select
     from pg_policy
     where polrelid = to_regclass('public.xsus_app_projects')
   ), false) as expected_policies_exist,
-  not has_table_privilege('anon', 'public.xsus_app_projects', 'SELECT') as anon_select_denied;
+  coalesce((select not has_table_privilege('anon', c.oid, 'SELECT')\n    from pg_class c where c.oid = to_regclass('public.xsus_app_projects')), false) as anon_select_denied;
