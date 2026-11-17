@@ -17,11 +17,7 @@ export function createReviewTrustBoundary({maxBytes=65536,maxDepth=16,maxNodes=4
     !Number.isSafeInteger(maxNodes)||maxNodes<1)throw invalid();
  function isolate(input){
   object(input,"input");
-  let bytes;
-  try{bytes=Buffer.byteLength(JSON.stringify(input),"utf8");}
-  catch{throw invalid();}
-  if(bytes>maxBytes)throw new EngineContractError("REQUEST_TOO_LARGE","Trust boundary byte limit exceeded");
-  const seen=new WeakSet();
+   const seen=new WeakSet();
   let nodes=0;
   function copy(value,depth){
    if(depth>maxDepth||++nodes>maxNodes)throw invalid();
@@ -41,6 +37,8 @@ export function createReviewTrustBoundary({maxBytes=65536,maxDepth=16,maxNodes=4
    return result;
   }
   const isolated=copy(input,0);
+  const bytes=Buffer.byteLength(JSON.stringify(isolated),"utf8");
+  if(bytes>maxBytes)throw new EngineContractError("REQUEST_TOO_LARGE","Trust boundary byte limit exceeded");
   const inputs=object(object(isolated.payload,"payload").inputs,"inputs");
   if(Object.keys(inputs).some(name=>!STAGES.has(name)))throw invalid();
   return isolated;
