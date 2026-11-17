@@ -26,13 +26,12 @@ export function createFiveEngineExecutionSupervisor({
     try {
       resources.check(input);
       stage = "execution";
-      // Capture admission outcome separately from untrusted workflow error codes.
-      const rejectedBefore = capacity.stats().rejected;
+      // Gate-owned error identity is safe even when other calls reject concurrently.
       let result;
       try {
         result = await capacity.run(input);
       } catch (error) {
-        if (capacity.stats().rejected > rejectedBefore) stage = "capacity";
+        if (capacity.isCapacityRejection(error)) stage = "capacity";
         throw error;
       }
       stage = "integrity";
