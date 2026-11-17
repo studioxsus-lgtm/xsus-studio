@@ -7,14 +7,37 @@ export function createIntelligentTaskPlanner({ maxTasks = 512 } = {}) {
   const graph = createGraphDependencyOrderEngine({ maxNodes: maxTasks });
   function plan(tasks) {
     if (!Array.isArray(tasks) || tasks.length > maxTasks) throw new TypeError("Invalid tasks.");
-    const nodes = tasks.map(t => {
-      if (!t || typeof t.title !== "string" || !t.title.trim() || t.title.length > 256 ||
-          !Number.isSafeInteger(t.cost) || t.cost < 1 || t.cost > 1000000)
+    const prepared = Array.from({ length: tasks.length }, (_, index) => {
+      const entry = Object.getOwnPropertyDescriptor(tasks, String(index));
+      if (!entry || !Object.hasOwn(entry, "value"))
         throw new TypeError("Invalid task specification.");
-      return { id: t.id, dependsOn: t.dependsOn };
+      const task = entry.value;
+      if (!task || typeof task !== "object" || Array.isArray(task) ||
+          (Object.getPrototypeOf(task) !== Object.prototype && Object.getPrototypeOf(task) !== null))
+        throw new TypeError("Invalid task specification.");
+      const fields = Object.create(null);
+      for (const name of ["id", "title", "cost", "dependsOn"]) {
+        const descriptor = Object.getOwnPropertyDescriptor(task, name);
+        if (!descriptor || !Object.hasOwn(descriptor, "value"))
+          throw new TypeError("Invalid task specification.");
+        fields[name] = descriptor.value;
+      }
+      if (typeof fields.title !== "string" || !fields.title.trim() ||
+          fields.title.length > 256 || !Number.isSafeInteger(fields.cost) ||
+          fields.cost < 1 || fields.cost > 1000000 ||
+          !Array.isArray(fields.dependsOn))
+        throw new TypeError("Invalid task specification.");
+      const dependsOn = Array.from({ length: fields.dependsOn.length }, (_, i) => {
+        const descriptor = Object.getOwnPropertyDescriptor(fields.dependsOn, String(i));
+        if (!descriptor || !Object.hasOwn(descriptor, "value"))
+          throw new TypeError("Invalid task dependency.");
+        return descriptor.value;
+      });
+      return { id: fields.id, title: fields.title, cost: fields.cost, dependsOn };
     });
+    const nodes = prepared.map(({ id, dependsOn }) => ({ id, dependsOn }));
     const ordered = graph.order(nodes).order;
-    const byId = new Map(tasks.map(t => [t.id, t]));
+    const byId = new Map(prepared.map(t => [t.id, t]));
     let totalCost = 0;
     const finishAt = new Map();
     const steps = ordered.map((id, index) => {
