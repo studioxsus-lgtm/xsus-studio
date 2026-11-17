@@ -19,11 +19,24 @@ export function createSpecializedEngineCoordinator({ engines, maxEngines = 16, m
       throw new TypeError("Invalid specialized requests.");
     // Validate the entire batch before invoking any engine.
     const used = new Set();
-    const prepared = requests.map(request => {
-      if (!request || typeof request.engine !== "string" || !map.has(request.engine) ||
-          used.has(request.engine)) throw new TypeError("Invalid specialized engine request.");
-      used.add(request.engine);
-      return { engine: request.engine, payload: guard.validate(request.payload) };
+    const prepared = Array.from({ length: requests.length }, (_, index) => {
+      const entry = Object.getOwnPropertyDescriptor(requests, String(index));
+      if (!entry || !Object.hasOwn(entry, "value"))
+        throw new TypeError("Invalid specialized engine request.");
+      const request = entry.value;
+      if (!request || typeof request !== "object" || Array.isArray(request) ||
+          (Object.getPrototypeOf(request) !== Object.prototype && Object.getPrototypeOf(request) !== null))
+        throw new TypeError("Invalid specialized engine request.");
+      const engineField = Object.getOwnPropertyDescriptor(request, "engine");
+      const payloadField = Object.getOwnPropertyDescriptor(request, "payload");
+      if (!engineField || !Object.hasOwn(engineField, "value") ||
+          !payloadField || !Object.hasOwn(payloadField, "value"))
+        throw new TypeError("Invalid specialized engine request.");
+      const engine = engineField.value;
+      if (typeof engine !== "string" || !map.has(engine) || used.has(engine))
+        throw new TypeError("Invalid specialized engine request.");
+      used.add(engine);
+      return { engine, payload: guard.validate(payloadField.value) };
     });
     return Object.freeze(prepared.map(request => Object.freeze(request)));
   }
