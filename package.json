@@ -20,7 +20,8 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "check": "npm test && npm run test:coverage",
-    "check:hyper-deployment": "node scripts/check-hyper-deployment.js"
+    "check:hyper-deployment": "node scripts/check-hyper-deployment.js",
+    "check:dependencies": "node scripts/check-rollup-install.js"
   },
   "engines": {
     "node": ">=20"
