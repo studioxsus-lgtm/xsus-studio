@@ -5,6 +5,7 @@
  */
 export const FIVE_ENGINE_RESULT_INTEGRITY_VERSION = "1.0.0";
 const STATUS = new Set(["completed", "degraded", "quality-rejected"]);
+const PLAN_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const count = n => Number.isSafeInteger(n) && n >= 0;
 export function createFiveEngineResultIntegrityGate({ maxResults = 256 } = {}) {
   if (!Number.isSafeInteger(maxResults) || maxResults < 1 || maxResults > 10000)
@@ -121,7 +122,8 @@ export function createFiveEngineResultIntegrityGate({ maxResults = 256 } = {}) {
       }
       const idField = Object.getOwnPropertyDescriptor(step, "id");
       if (!idField || !Object.hasOwn(idField, "value") ||
-          typeof idField.value !== "string" || seen.has(idField.value)) {
+          typeof idField.value !== "string" || !PLAN_ID.test(idField.value) ||
+          seen.has(idField.value)) {
         errors.push("PLAN_STEPS_INCONSISTENT");
         break;
       }
