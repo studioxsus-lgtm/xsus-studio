@@ -19,6 +19,16 @@ const scenarios = [
     contains: ["no glob dependency found"]
   },
   {
+    name: "reports modern glob without legacy warning",
+    output: JSON.stringify({ dependencies: { parent: { dependencies: { glob: { version: "11.0.0" } } } } }),
+    exit: 0, contains: ["glob report: 11.0.0", "parent > glob"],
+    excludes: ["legacy glob 10.x"]
+  },
+  {
+    name: "rejects empty npm output",
+    output: "", exit: 1, contains: ["unable to inspect installed dependencies"]
+  },
+  {
     name: "rejects malformed npm JSON",
     output: "{broken-json", exit: 1, contains: ["invalid JSON"]
   },
@@ -44,6 +54,7 @@ for (const scenario of scenarios) {
       expect(run.status).toBe(scenario.exit);
       const output = run.stdout + run.stderr;
       for (const part of scenario.contains) expect(output).toContain(part);
+      for (const part of scenario.excludes ?? []) expect(output).not.toContain(part);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
