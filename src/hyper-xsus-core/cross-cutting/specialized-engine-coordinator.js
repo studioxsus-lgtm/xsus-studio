@@ -8,11 +8,25 @@ export function createSpecializedEngineCoordinator({ engines, maxEngines = 16, m
     throw new TypeError("Invalid specialized engine configuration.");
   const guard = createStructuredOutputGuard({ maxDepth, maxNodes });
   const map = new Map();
-  for (const engine of engines) {
-    if (!engine || typeof engine.name !== "string" || !ID.test(engine.name) ||
-        map.has(engine.name) || typeof engine.execute !== "function")
+  for (let index = 0; index < engines.length; index++) {
+    const entry = Object.getOwnPropertyDescriptor(engines, String(index));
+    if (!entry || !Object.hasOwn(entry, "value"))
       throw new TypeError("Invalid specialized engine.");
-    map.set(engine.name, engine.execute);
+    const engine = entry.value;
+    if (!engine || typeof engine !== "object" || Array.isArray(engine) ||
+        (Object.getPrototypeOf(engine) !== Object.prototype && Object.getPrototypeOf(engine) !== null))
+      throw new TypeError("Invalid specialized engine.");
+    const nameField = Object.getOwnPropertyDescriptor(engine, "name");
+    const executeField = Object.getOwnPropertyDescriptor(engine, "execute");
+    if (!nameField || !Object.hasOwn(nameField, "value") ||
+        !executeField || !Object.hasOwn(executeField, "value"))
+      throw new TypeError("Invalid specialized engine.");
+    const name = nameField.value;
+    const execute = executeField.value;
+    if (typeof name !== "string" || !ID.test(name) ||
+        map.has(name) || typeof execute !== "function")
+      throw new TypeError("Invalid specialized engine.");
+    map.set(name, execute);
   }
   function validateRequests(requests) {
     if (!Array.isArray(requests) || requests.length > maxEngines)
