@@ -31,7 +31,7 @@ export function createFiveEngineResultIntegrityGate({ maxResults = 256 } = {}) {
     result.reasoning = snapshot(result.reasoning, ["facts", "steps"]);
     result.plan = snapshot(result.plan, ["steps"]);
     result.quality = snapshot(result.quality, ["accepted"]);
-    if (result.coordination !== null)
+    if (record(result.coordination))
       result.coordination = snapshot(result.coordination, ["completed", "failed", "results"]);
     if (!STATUS.has(result.status) ||
         !result.semantic || !Array.isArray(result.semantic.ranked) ||
