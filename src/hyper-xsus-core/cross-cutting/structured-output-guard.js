@@ -22,13 +22,21 @@ export function createStructuredOutputGuard({ maxDepth = 8, maxNodes = 2048 } = 
         if (Object.keys(node).length !== node.length ||
             Object.keys(node).some(key => !/^(0|[1-9][0-9]*)$/.test(key) || Number(key) >= node.length))
           throw new TypeError("Invalid structured output array.");
-        result = node.map(item => walk(item, depth + 1));
+        result = Array.from({ length: node.length }, (_, index) => {
+          const descriptor = Object.getOwnPropertyDescriptor(node, String(index));
+          if (!descriptor || !Object.hasOwn(descriptor, "value"))
+            throw new TypeError("Invalid structured output accessor.");
+          return walk(descriptor.value, depth + 1);
+        });
       } else {
         result = Object.create(null);
         for (const key of Object.keys(node)) {
           if (key === "__proto__" || key === "constructor" || key === "prototype")
             throw new TypeError("Unsafe structured output key.");
-          result[key] = walk(node[key], depth + 1);
+          const descriptor = Object.getOwnPropertyDescriptor(node, key);
+          if (!descriptor || !Object.hasOwn(descriptor, "value"))
+            throw new TypeError("Invalid structured output accessor.");
+          result[key] = walk(descriptor.value, depth + 1);
         }
       }
       ancestors.delete(node);
