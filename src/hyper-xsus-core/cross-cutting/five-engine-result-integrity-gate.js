@@ -80,12 +80,25 @@ export function createFiveEngineResultIntegrityGate({ maxResults = 256 } = {}) {
     }
     const steps = result.plan.steps;
     const seen = new Set();
-    for (const step of steps) {
-      if (!step || typeof step.id !== "string" || seen.has(step.id)) {
+    for (let index = 0; index < steps.length; index++) {
+      const slot = Object.getOwnPropertyDescriptor(steps, String(index));
+      if (!slot || !Object.hasOwn(slot, "value")) {
         errors.push("PLAN_STEPS_INCONSISTENT");
         break;
       }
-      seen.add(step.id);
+      const step = slot.value;
+      if (!step || typeof step !== "object" || Array.isArray(step) ||
+          (Object.getPrototypeOf(step) !== Object.prototype && Object.getPrototypeOf(step) !== null)) {
+        errors.push("PLAN_STEPS_INCONSISTENT");
+        break;
+      }
+      const idField = Object.getOwnPropertyDescriptor(step, "id");
+      if (!idField || !Object.hasOwn(idField, "value") ||
+          typeof idField.value !== "string" || seen.has(idField.value)) {
+        errors.push("PLAN_STEPS_INCONSISTENT");
+        break;
+      }
+      seen.add(idField.value);
     }
     return Object.freeze({
       version: FIVE_ENGINE_RESULT_INTEGRITY_VERSION,
