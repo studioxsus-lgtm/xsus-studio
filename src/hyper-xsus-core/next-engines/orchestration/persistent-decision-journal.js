@@ -7,8 +7,9 @@ import {createRecoveryCheckpoint,inspectRecoveryCheckpoint} from "./recovery-che
 import {EngineContractError,string,object} from "../contracts.js";
 const VERSION=1;
 const digest=value=>createHash("sha256").update(JSON.stringify(value)).digest("hex");
-export function createPersistentDecisionJournalStore({filePath}) {
+export function createPersistentDecisionJournalStore({filePath, atomicWriter = writeAtomicJson}) {
   string(filePath,"filePath");
+  if(typeof atomicWriter!=="function")throw new EngineContractError("INVALID_INPUT","atomicWriter must be a function");
   let queue=Promise.resolve();
   const serialize=fn=>{
     const operation=queue.catch(()=>{}).then(()=>withExclusiveFileLock(filePath,fn));
@@ -36,7 +37,7 @@ export function createPersistentDecisionJournalStore({filePath}) {
       const current=await readSnapshot();
       if(current&&current.journal.requestId!==journal.requestId)throw new EngineContractError("JOURNAL_CONFLICT","Existing request differs");
       if(current&&digest(current)!==digest(payload))throw new EngineContractError("JOURNAL_CONFLICT","Existing journal or checkpoint differs");
-      if(!current)await writeAtomicJson(filePath,{version:VERSION,payload,digest:digest(payload)});
+      if(!current)await atomicWriter(filePath,{version:VERSION,payload,digest:digest(payload)});
       return {saved:true,requestId:journal.requestId,executionAuthorized:false};
     });
   }
