@@ -8,21 +8,48 @@ export function createMultiStepReasoningEngine({ maxFacts = 1024, maxRules = 102
     if (!Array.isArray(facts) || facts.length > maxFacts || !Array.isArray(rules) || rules.length > maxRules)
       throw new TypeError("Invalid reasoning input.");
     const known = new Set();
-    for (const fact of facts) {
+    for (let index = 0; index < facts.length; index++) {
+      const descriptor = Object.getOwnPropertyDescriptor(facts, String(index));
+      if (!descriptor || !Object.hasOwn(descriptor, "value"))
+        throw new TypeError("Invalid reasoning fact.");
+      const fact = descriptor.value;
       if (typeof fact !== "string" || !ID.test(fact) || known.has(fact))
         throw new TypeError("Invalid reasoning fact.");
       known.add(fact);
     }
     const ids = new Set();
-    const validated = rules.map(rule => {
-      if (!rule || typeof rule.id !== "string" || !ID.test(rule.id) || ids.has(rule.id) ||
-          typeof rule.conclusion !== "string" || !ID.test(rule.conclusion) ||
-          !Array.isArray(rule.premises) || rule.premises.length > 64 ||
-          rule.premises.some(p => typeof p !== "string" || !ID.test(p)) ||
-          new Set(rule.premises).size !== rule.premises.length)
+    const validated = Array.from({ length: rules.length }, (_, index) => {
+      const entry = Object.getOwnPropertyDescriptor(rules, String(index));
+      if (!entry || !Object.hasOwn(entry, "value"))
         throw new TypeError("Invalid reasoning rule.");
-      ids.add(rule.id);
-      return { id: rule.id, conclusion: rule.conclusion, premises: [...rule.premises] };
+      const rule = entry.value;
+      if (!rule || typeof rule !== "object" || Array.isArray(rule) ||
+          (Object.getPrototypeOf(rule) !== Object.prototype && Object.getPrototypeOf(rule) !== null))
+        throw new TypeError("Invalid reasoning rule.");
+      const fields = Object.create(null);
+      for (const name of ["id", "conclusion", "premises"]) {
+        const descriptor = Object.getOwnPropertyDescriptor(rule, name);
+        if (!descriptor || !Object.hasOwn(descriptor, "value"))
+          throw new TypeError("Invalid reasoning rule.");
+        fields[name] = descriptor.value;
+      }
+      if (typeof fields.id !== "string" || !ID.test(fields.id) || ids.has(fields.id) ||
+          typeof fields.conclusion !== "string" || !ID.test(fields.conclusion) ||
+          !Array.isArray(fields.premises) || fields.premises.length > 64)
+        throw new TypeError("Invalid reasoning rule.");
+      const premises = Array.from({ length: fields.premises.length }, (_, i) => {
+        const descriptor = Object.getOwnPropertyDescriptor(fields.premises, String(i));
+        if (!descriptor || !Object.hasOwn(descriptor, "value"))
+          throw new TypeError("Invalid reasoning premise.");
+        const premise = descriptor.value;
+        if (typeof premise !== "string" || !ID.test(premise))
+          throw new TypeError("Invalid reasoning premise.");
+        return premise;
+      });
+      if (new Set(premises).size !== premises.length)
+        throw new TypeError("Invalid reasoning rule.");
+      ids.add(fields.id);
+      return { id: fields.id, conclusion: fields.conclusion, premises };
     }).sort((a,b) => a.id.localeCompare(b.id));
     const steps = [];
     const provenance = new Map([...known].map(fact => [fact, Object.freeze({ fact, source: "input", ruleId: null })]));
