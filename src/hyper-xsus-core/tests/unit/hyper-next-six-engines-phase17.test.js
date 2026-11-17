@@ -36,7 +36,7 @@ describe("Hyper six engines phase 17 — local resource admission",()=>{
   release();
   await expect(first).rejects.toThrow("INJECT_FAILURE");
   expect(guard.metrics()).toMatchObject({inFlight:0,accepted:1,rejected:1});
- }));
+ });
  it("releases capacity after a persistence failure",async()=>fixture(async filePath=>{
   const guard=createReviewResourceGuard({maxInFlight:1});
   await expect(guard.run(req(),{save:async()=>{throw new Error("IO_ERROR");},load:async()=>null})).rejects.toThrow("IO_ERROR");
