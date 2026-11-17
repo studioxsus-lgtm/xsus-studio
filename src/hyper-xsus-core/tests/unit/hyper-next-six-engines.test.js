@@ -1,5 +1,5 @@
 import {describe,it,expect} from "vitest";
-import {truthVerification,learning,strategicPlanning,autonomousExecution,selfImprovement,multiAgent} from "../../src/hyper-xsus-core/next-engines/index.js";
+import {truthVerification,learning,strategicPlanning,autonomousExecution,selfImprovement,multiAgent} from "../../next-engines/index.js";
 const cases=[
   [truthVerification,"truth.verifyClaim",{claim:"Example",evidence:[]}],
   [learning,"learning.propose",{content:"Candidate",sourceRef:"source:1"}],
