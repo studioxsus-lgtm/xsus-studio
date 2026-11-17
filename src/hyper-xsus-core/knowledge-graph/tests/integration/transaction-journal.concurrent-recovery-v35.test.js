@@ -11,46 +11,49 @@ const workerCode = [
   'import { createTransactionJournalStore } from ' + JSON.stringify(moduleUrl) + ';',
   'const filePath = process.argv[1];',
   'const store = createTransactionJournalStore({filePath,exclusiveLock:true});',
-  'process.stdin.once("data",async()=>{',
+  'process.once("message",async message=>{',
+  '  if(message!=="GO")return;',
   '  try {',
   '    const entries=await store.recoverInterrupted();',
-  '    process.stdout.write("RESULT:"+JSON.stringify({ok:true,entries})+"\\n");',
+  '    process.send({type:"RESULT",ok:true,entries});',
   '  } catch(error) {',
-  '    process.stdout.write("RESULT:"+JSON.stringify({ok:false,code:error.code||"UNEXPECTED"})+"\\n");',
-  '  } finally {await store.close();}',
+  '    process.send({type:"RESULT",ok:false,code:error.code||"UNEXPECTED"});',
+  '  } finally {await store.close();process.disconnect();}',
   '});',
-  'process.stdin.resume();',
-  'process.stdout.write("READY\\n");',
-].join("\n");
+  'process.send({type:"READY"});',
+].join("\\n");
 
 function launch(filePath) {
+  // IPC remains open until the parent sends GO; stdin/stdout scheduling
+  // cannot accidentally let a READY worker exit before its assignment.
   const child=spawn(process.execPath,["--input-type=module","-e",workerCode,filePath],
-    {stdio:["pipe","pipe","pipe"]});
-  let output="",stderr="";
-  child.stdout.on("data",chunk=>{output+=chunk.toString();});
+    {stdio:["ignore","pipe","pipe","ipc"]});
+  let stderr="";
   child.stderr.on("data",chunk=>{stderr+=chunk.toString();});
-  function waitFor(marker) {
-    return new Promise((resolve,reject)=>{
-      const timer=setTimeout(()=>finish(new Error("Timeout waiting for "+marker+": "+stderr)),90000);
-      const poll=setInterval(()=>{
-        if(output.includes(marker))finish(null,output);
-        else if(child.exitCode!==null || child.signalCode!==null)
-          finish(new Error("Worker exited early (code="+child.exitCode+", signal="+child.signalCode+"): stdout="+JSON.stringify(output)+" stderr="+JSON.stringify(stderr)));
-      },10);
-      function finish(error,value) {
-        clearTimeout(timer);clearInterval(poll);
-        if(error)reject(error);else resolve(value);
-      }
-    });
-  }
+  let readyResolve,readyReject,resultResolve,resultReject;
+  const ready=new Promise((resolve,reject)=>{readyResolve=resolve;readyReject=reject;});
+  const result=new Promise((resolve,reject)=>{resultResolve=resolve;resultReject=reject;});
+  // Attach handlers immediately, before any READY or RESULT can arrive.
+  child.on("message",message=>{
+    if(message?.type==="READY")readyResolve();
+    else if(message?.type==="RESULT")resultResolve(message);
+  });
+  const failure=error=>{
+    readyReject(error);
+    resultReject(error);
+  };
+  child.on("error",failure);
+  child.on("exit",(code,signal)=>{
+    failure(new Error("Worker exited (code="+code+", signal="+signal+"): stderr="+JSON.stringify(stderr)));
+  });
   return {
-    child,ready:waitFor("READY\n"),
+    child,ready,
     run:async()=>{
-      const pending=waitFor("RESULT:");
-      child.stdin.end("GO\n");
-      const data=await pending;
-      const line=data.split("\n").find(line=>line.startsWith("RESULT:"));
-      return JSON.parse(line.slice(7));
+      if(!child.connected)throw new Error("Worker IPC disconnected before GO");
+      child.send("GO");
+      const message=await result;
+      const {type,...outcome}=message;
+      return outcome;
     },
   };
 }
