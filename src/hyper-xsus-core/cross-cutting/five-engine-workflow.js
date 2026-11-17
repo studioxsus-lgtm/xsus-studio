@@ -32,10 +32,21 @@ export function createFiveEngineWorkflow({
     }
     return result;
   }
-  async function run({
-    query, evidence = [], facts = [], rules = [], tasks = [], requests = [],
-    qualityChecks = [], findings = []
-  } = {}) {
+  async function run(input = {}) {
+    if (!input || typeof input !== "object" || Array.isArray(input) ||
+        (Object.getPrototypeOf(input) !== Object.prototype && Object.getPrototypeOf(input) !== null))
+      throw new TypeError("Invalid five-engine workflow input.");
+    // Read all top-level fields as own data descriptors, without invoking getters.
+    const fields = Object.create(null);
+    for (const name of ["query", "evidence", "facts", "rules", "tasks",
+      "requests", "qualityChecks", "findings"]) {
+      const descriptor = Object.getOwnPropertyDescriptor(input, name);
+      if (descriptor && !Object.hasOwn(descriptor, "value"))
+        throw new TypeError("Invalid five-engine workflow input accessor: " + name);
+      fields[name] = descriptor ? descriptor.value : undefined;
+    }
+    const { query, evidence = [], facts = [], rules = [], tasks = [],
+      requests = [], qualityChecks = [], findings = [] } = fields;
     // Reject oversized requests before analysis or specialized engine execution.
     resourceBudget.check({ query, evidence, facts, rules, tasks, requests });
     // Prepare and validate every pure stage before invoking any specialized engine.
