@@ -25,8 +25,10 @@ if (run.error || !run.stdout?.trim()) {
   }
   if (tree) {
     const matches = [];
+    const visited = new WeakSet();
     const visit = (node, path, depth) => {
-      if (!node || typeof node !== "object" || depth > 64) return;
+      if (!node || typeof node !== "object" || depth > 64 || visited.has(node)) return;
+      visited.add(node);
       const dependencies = node.dependencies;
       if (!dependencies || typeof dependencies !== "object") return;
       for (const [name, child] of Object.entries(dependencies)) {
@@ -38,6 +40,7 @@ if (run.error || !run.stdout?.trim()) {
       }
     };
     visit(tree, [], 0);
+    matches.sort((a, b) => a.via.localeCompare(b.via) || a.version.localeCompare(b.version));
     if (matches.length === 0) {
       console.log("XSUS glob report: no glob dependency found in npm's installed tree.");
     } else {
