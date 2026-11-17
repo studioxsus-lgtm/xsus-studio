@@ -47,11 +47,11 @@ describe("Hyper six engines phase 30 — integrated readiness regression",()=>{
    controlSnapshot:plane.snapshot(),recoveredSnapshot:recovered
   })).toThrowError(expect.objectContaining({code:"JOURNAL_CONFLICT"}));
  }));
- it("blocks readiness when circuit has opened after persistence failures",async()=>fixture(async filePath=>{
+ it("blocks readiness when circuit has opened after an operational persistence failure",async()=>fixture(async filePath=>{
   const store=createPersistentDecisionJournalStore({filePath});
   const plane=createReviewControlPlane({failureThreshold:1,cooldownMs:100000});
   await plane.run(req(),store);
-  await expect(plane.run(req("conflict"),store)).rejects.toMatchObject({code:"JOURNAL_CONFLICT"});
+  await expect(plane.run(req("failure"),{save:async()=>{throw Error("STORAGE_DOWN");},load:()=>store.load()})).rejects.toThrow("STORAGE_DOWN");
   const recovered=await store.load();
   const report=assessReviewReadiness({
    requestId:"phase30",traceId:"trace-phase30",
