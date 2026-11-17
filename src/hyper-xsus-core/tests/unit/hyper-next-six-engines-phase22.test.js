@@ -47,10 +47,10 @@ describe("Hyper six engines phase 22 — local review circuit breaker",()=>{
   await expect(breaker.run(async()=>{calls++;})).rejects.toMatchObject({code:"CIRCUIT_OPEN"});
   expect(calls).toBe(1);
  });
- it("validates configuration and exposes immutable counters",()=>{
+ it("validates configuration and exposes immutable counters",async()=>{
   expect(()=>createReviewCircuitBreaker({failureThreshold:0})).toThrow();
   expect(()=>createReviewCircuitBreaker({cooldownMs:-1})).toThrow();
-  expect(()=>createReviewCircuitBreaker({clock:()=>NaN}).run(()=>{})).rejects.toMatchObject({code:"INVALID_INPUT"});
+  await expect(createReviewCircuitBreaker({clock:()=>NaN}).run(()=>{})).rejects.toMatchObject({code:"INVALID_INPUT"});
   const metrics=createReviewCircuitBreaker().metrics();
   expect(Object.isFrozen(metrics)).toBe(true);
   expect(metrics).toMatchObject({state:"closed",accepted:0,rejected:0});
