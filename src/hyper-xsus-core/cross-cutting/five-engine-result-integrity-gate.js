@@ -108,7 +108,7 @@ export function createFiveEngineResultIntegrityGate({ maxResults = 256 } = {}) {
       errors.push("PLAN_STEPS_INCONSISTENT");
     }
     const seen = new Set();
-    for (let index = 0; index < Math.min(steps.length, 10000); index++) {
+    for (let index = 0; index < (steps.length > 10000 ? 0 : steps.length); index++) {
       const slot = Object.getOwnPropertyDescriptor(steps, String(index));
       if (!slot || !Object.hasOwn(slot, "value")) {
         errors.push("PLAN_STEPS_INCONSISTENT");
