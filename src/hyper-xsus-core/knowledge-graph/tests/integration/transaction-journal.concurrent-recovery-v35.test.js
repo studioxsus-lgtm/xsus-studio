@@ -11,7 +11,6 @@ const workerCode = [
   'import { createTransactionJournalStore } from ' + JSON.stringify(moduleUrl) + ';',
   'const filePath = process.argv[1];',
   'const store = createTransactionJournalStore({filePath,exclusiveLock:true});',
-  'process.stdout.write("READY\\n");',
   'process.stdin.once("data",async()=>{',
   '  try {',
   '    const entries=await store.recoverInterrupted();',
@@ -20,6 +19,8 @@ const workerCode = [
   '    process.stdout.write("RESULT:"+JSON.stringify({ok:false,code:error.code||"UNEXPECTED"})+"\\n");',
   '  } finally {await store.close();}',
   '});',
+  'process.stdin.resume();',
+  'process.stdout.write("READY\\n");',
 ].join("\n");
 
 function launch(filePath) {
@@ -34,7 +35,7 @@ function launch(filePath) {
       const poll=setInterval(()=>{
         if(output.includes(marker))finish(null,output);
         else if(child.exitCode!==null || child.signalCode!==null)
-          finish(new Error("Worker exited early: "+stderr));
+          finish(new Error("Worker exited early (code="+child.exitCode+", signal="+child.signalCode+"): stdout="+JSON.stringify(output)+" stderr="+JSON.stringify(stderr)));
       },10);
       function finish(error,value) {
         clearTimeout(timer);clearInterval(poll);
