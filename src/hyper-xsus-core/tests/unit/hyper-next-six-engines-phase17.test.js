@@ -24,7 +24,7 @@ describe("Hyper six engines phase 17 — local resource admission",()=>{
   const input=req();input.self=input;
   const guard=createReviewResourceGuard();
   await expect(guard.run(input,{})).rejects.toMatchObject({code:"INVALID_INPUT"});
- }));
+ });
  it("enforces concurrency limit while the first request is pending",async()=>{
   const guard=createReviewResourceGuard({maxInFlight:1});
   let release;
