@@ -28,3 +28,4 @@ export * from "./five-engine-resource-budget.js";
 export * from "./five-engine-concurrency-gate.js";
 export * from "./reasoning-proof-verifier.js";
 export * from "./five-engine-result-integrity-gate.js";
+export * from "./five-engine-execution-supervisor.js";
