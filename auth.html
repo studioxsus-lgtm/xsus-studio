@@ -77,7 +77,7 @@
 
     .container {
       width: 100%;
-      max-width: 470px;
+      max-width: 620px;
       min-width: 0;
       margin: auto;
     }
@@ -364,7 +364,7 @@
         margin-bottom: 8px;
       }
 
-      h1 { font-size: 27px; }
+      h1 { font-size: 30px; }
 
       .subtitle {
         max-width: 100%;
@@ -374,7 +374,7 @@
       .panel {
         width: 100%;
         max-width: none;
-        padding: 20px 14px;
+        padding: 24px 20px;
         border-radius: 16px;
       }
 
@@ -396,7 +396,7 @@
         font-size: 15px;
       }
 
-      h2 { font-size: 22px; }
+      h2 { font-size: 25px; }
 
       .description { margin-bottom: 16px; }
 
@@ -413,7 +413,7 @@
     }
 
     @media (max-width: 360px) {
-      .panel { padding: 17px 11px; }
+      .panel { padding: 20px 14px; }
       .tab { font-size: 14px; }
       h1 { font-size: 25px; }
     }
@@ -421,16 +421,16 @@
     /* Tableta */
     @media (min-width: 600px) {
       body { padding: 32px 24px; }
-      .container { max-width: 480px; }
-      .panel { padding: 32px; }
+      .container { max-width: min(620px, 100%); }
+      .panel { padding: 36px; }
       .logo { width: 64px; height: 64px; }
     }
 
     /* Desktop */
     @media (min-width: 1024px) {
       body { padding: 40px 30px; }
-      .container { max-width: 470px; }
-      .panel { padding: 34px; }
+      .container { max-width: 620px; }
+      .panel { padding: 38px; }
     }
 
     @media (max-height: 650px) {
