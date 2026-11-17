@@ -92,7 +92,7 @@ function installStyles() {
 
 function getLanguage() {
   const select = document.querySelector(
-    "#language, [data-xsus-language-select]"
+    "#language, #language-select, [data-xsus-language-select]"
   );
 
   const selected = select?.value?.toLowerCase();
@@ -111,7 +111,7 @@ function getLanguage() {
 
 function findContainer() {
   return document.querySelector(
-    ".xsus-ai-header-actions, .header .actions"
+    "[data-xsus-auth-host], .xsus-ai-header-actions, .header .actions"
   );
 }
 
@@ -263,7 +263,7 @@ export function initializeXSUSAuthUI() {
   }
 
   const languageSelect = document.querySelector(
-    "#language, [data-xsus-language-select]"
+    "#language, #language-select, [data-xsus-language-select]"
   );
 
   languageSelect?.addEventListener(
