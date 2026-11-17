@@ -19,11 +19,15 @@ export function createFiveEngineExecutionSupervisor({
   const integrity = createFiveEngineResultIntegrityGate({ maxResults });
   const diagnostics = createFiveEngineDiagnostics({ maxEngines: maxResults });
   let verified = 0, failed = 0;
+  let resourceRejected = 0, capacityRejected = 0, integrityRejected = 0, executionFailed = 0;
   async function run(input) {
     // Admission is entirely synchronous and precedes all specialist execution.
+    let stage = "admission";
     try {
       resources.check(input);
+      stage = "execution";
       const result = await capacity.run(input);
+      stage = "integrity";
       const check = integrity.verify(result);
       if (!check.valid) {
         const error = new Error("Supervised workflow integrity verification failed.");
@@ -35,6 +39,10 @@ export function createFiveEngineExecutionSupervisor({
       return Object.freeze({ result, diagnostics: summary });
     } catch (error) {
       failed++;
+      if (stage === "admission") resourceRejected++;
+      else if (error && error.code === "HYPER_WORKFLOW_CAPACITY_EXCEEDED") capacityRejected++;
+      else if (stage === "integrity") integrityRejected++;
+      else executionFailed++;
       throw error;
     }
   }
@@ -43,6 +51,7 @@ export function createFiveEngineExecutionSupervisor({
       ...capacity.stats(),
       version: FIVE_ENGINE_SUPERVISOR_VERSION,
       verified, failed,
+      resourceRejected, capacityRejected, integrityRejected, executionFailed,
       retriesPerformed: 0
     });
   }
