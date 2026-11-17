@@ -16,7 +16,19 @@ export function createLanguageQualityGate({
       !Number.isSafeInteger(maxFindings) || maxFindings < 1 || maxFindings > 10000)
     throw new TypeError("Invalid language quality gate configuration.");
   const required = Object.freeze([...requiredChecks].sort());
-  function evaluate({ checks, findings = [] } = {}) {
+  function evaluate(input = {}) {
+    if (!input || typeof input !== "object" || Array.isArray(input) ||
+        (Object.getPrototypeOf(input) !== Object.prototype && Object.getPrototypeOf(input) !== null))
+      throw new TypeError("Invalid language quality evidence.");
+    function readInput(name, fallback) {
+      const descriptor = Object.getOwnPropertyDescriptor(input, name);
+      if (!descriptor) return fallback;
+      if (!Object.hasOwn(descriptor, "value"))
+        throw new TypeError("Invalid language quality evidence accessor.");
+      return descriptor.value;
+    }
+    const checks = readInput("checks", undefined);
+    const findings = readInput("findings", []);
     if (!Array.isArray(checks) || checks.length > 6 ||
         !Array.isArray(findings) || findings.length > maxFindings)
       throw new TypeError("Invalid language quality evidence.");
