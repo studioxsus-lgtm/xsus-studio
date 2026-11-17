@@ -11,7 +11,9 @@ const cases = [
   { name: "accepts the expected nested Rollup version", versions: ["4.68.4"], exit: 0 },
   { name: "rejects mismatched nested Rollup version", versions: ["4.68.5"], exit: 1 },
   { name: "rejects mixed Rollup versions", versions: ["4.68.4", "4.68.5"], exit: 1 },
-  { name: "rejects absent Rollup", versions: [], exit: 1 }
+  { name: "rejects absent Rollup", versions: [], exit: 1 },
+  { name: "rejects npm tree errors even with correct Rollup", versions: ["4.68.4"], npmExit: 1, exit: 1 },
+  { name: "rejects malformed npm JSON", malformed: true, exit: 1 }
 ];
 
 for (const scenario of cases) {
