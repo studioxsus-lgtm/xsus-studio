@@ -26,7 +26,15 @@ export function createFiveEngineExecutionSupervisor({
     try {
       resources.check(input);
       stage = "execution";
-      const result = await capacity.run(input);
+      // Capture admission outcome separately from untrusted workflow error codes.
+      const rejectedBefore = capacity.stats().rejected;
+      let result;
+      try {
+        result = await capacity.run(input);
+      } catch (error) {
+        if (capacity.stats().rejected > rejectedBefore) stage = "capacity";
+        throw error;
+      }
       stage = "integrity";
       const check = integrity.verify(result);
       if (!check.valid) {
@@ -40,7 +48,7 @@ export function createFiveEngineExecutionSupervisor({
     } catch (error) {
       failed++;
       if (stage === "admission") resourceRejected++;
-      else if (error && error.code === "HYPER_WORKFLOW_CAPACITY_EXCEEDED") capacityRejected++;
+      else if (stage === "capacity") capacityRejected++;
       else if (stage === "integrity") integrityRejected++;
       else executionFailed++;
       throw error;
