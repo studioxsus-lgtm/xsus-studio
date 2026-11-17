@@ -21,7 +21,7 @@ const workerCode = [
   '  } finally {await store.close();process.disconnect();}',
   '});',
   'process.send({type:"READY"});',
-].join("\\n");
+].join("\n");
 
 function launch(filePath) {
   // IPC remains open until the parent sends GO; stdin/stdout scheduling
@@ -33,6 +33,8 @@ function launch(filePath) {
   let readyResolve,readyReject,resultResolve,resultReject;
   const ready=new Promise((resolve,reject)=>{readyResolve=resolve;readyReject=reject;});
   const result=new Promise((resolve,reject)=>{resultResolve=resolve;resultReject=reject;});
+  // A worker may fail before run() is called; observe rejection immediately.
+  result.catch(()=>{});
   // Attach handlers immediately, before any READY or RESULT can arrive.
   child.on("message",message=>{
     if(message?.type==="READY")readyResolve();
