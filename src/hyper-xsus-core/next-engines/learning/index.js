@@ -5,5 +5,6 @@ export function proposeLearning(input) {
   const content=string(req.payload.content,"content");
   const sourceRef=string(req.payload.sourceRef,"sourceRef");
   if(content.length>10000 || sourceRef.length>512) throw new EngineContractError("INPUT_TOO_LARGE","Learning proposal exceeds limits");
-  return result(req,{state:"proposed",verified:false,persisted:false,sourceRef});
+  const normalized=content.trim().replace(/\s+/g," ");
+  return result(req,{state:"proposed",verified:false,persisted:false,sourceRef,contentLength:normalized.length,requiresVerification:true});
 }
