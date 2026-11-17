@@ -1,0 +1,21 @@
+import {describe,it,expect} from "vitest";
+import {auditProvenance} from "../../next-engines/truth-verification/provenance.js";
+import {reviewCandidates} from "../../next-engines/learning/candidate-registry.js";
+import {analyzeCriticalPath} from "../../next-engines/strategic-planning/critical-path.js";
+import {inspectExecutionManifest} from "../../next-engines/autonomous-execution/approval-policy.js";
+import {evaluateBenchmarkGate} from "../../next-engines/self-improvement/benchmark-gate.js";
+import {inspectDelegationGraph} from "../../next-engines/multi-agent/delegation-graph.js";
+describe("Hyper six engines phase 5",()=>{
+  it("audits source reuse without verification",()=>expect(auditProvenance([{id:"a",sourceRef:"s"},{id:"b",sourceRef:"s"}])).toMatchObject({distinctSourceCount:1,independentlyVerified:false}));
+  it("rejects duplicate evidence",()=>expect(()=>auditProvenance([{id:"a",sourceRef:"s"},{id:"a",sourceRef:"s"}])).toThrow());
+  it("reviews candidates without writing",()=>expect(reviewCandidates([{id:"a",sourceRef:"s"}])[0]).toMatchObject({committed:false,state:"pending_verification"}));
+  it("rejects duplicate candidates",()=>expect(()=>reviewCandidates([{id:"a",sourceRef:"s"},{id:"a",sourceRef:"s"}])).toThrow());
+  it("computes critical path duration",()=>expect(analyzeCriticalPath([{id:"a",duration:3,dependsOn:[]},{id:"b",duration:4,dependsOn:["a"]},{id:"c",duration:2,dependsOn:[]}]).minimumEstimatedDuration).toBe(7));
+  it("rejects critical path cycle",()=>expect(()=>analyzeCriticalPath([{id:"a",duration:1,dependsOn:["b"]},{id:"b",duration:1,dependsOn:["a"]}])).toThrow());
+  it("permits simulation manifest without authorizing execution",()=>expect(inspectExecutionManifest({id:"m",operation:"simulate"})).toMatchObject({simulationOnly:true,approved:false}));
+  it("rejects shell commands",()=>expect(()=>inspectExecutionManifest({id:"m",operation:"simulate",command:"echo hi"})).toThrow());
+  it("flags benchmark regression",()=>expect(evaluateBenchmarkGate({baseline:{accuracy:0.9},candidate:{accuracy:0.8}}).regressions).toEqual(["accuracy"]));
+  it("does not apply benchmark changes",()=>expect(evaluateBenchmarkGate({baseline:{accuracy:0.9},candidate:{accuracy:1}}).changesApplied).toBe(false));
+  it("validates acyclic delegation without dispatch",()=>expect(inspectDelegationGraph([{from:"a",to:"b"}])).toMatchObject({acyclic:true,dispatched:0}));
+  it("rejects delegation cycles",()=>expect(()=>inspectDelegationGraph([{from:"a",to:"b"},{from:"b",to:"a"}])).toThrow());
+});
