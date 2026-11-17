@@ -48,7 +48,7 @@ describe("Hyper six engines phase 17 — local resource admission",()=>{
   expect(()=>createReviewResourceGuard({maxInFlight:0})).toThrow();
   expect(()=>createReviewResourceGuard({maxRequestBytes:-1})).toThrow();
   expect(()=>createReviewResourceGuard({maxInFlight:1.5})).toThrow();
- }));
+ });
  it("reports a read-only snapshot of counters",()=>{
   const guard=createReviewResourceGuard();
   const snapshot=guard.metrics();
