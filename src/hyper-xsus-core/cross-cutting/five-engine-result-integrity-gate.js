@@ -9,8 +9,31 @@ const count = n => Number.isSafeInteger(n) && n >= 0;
 export function createFiveEngineResultIntegrityGate({ maxResults = 256 } = {}) {
   if (!Number.isSafeInteger(maxResults) || maxResults < 1 || maxResults > 10000)
     throw new TypeError("Invalid result integrity configuration.");
-  function verify(result) {
-    if (!result || typeof result !== "object" || !STATUS.has(result.status) ||
+  function verify(input) {
+    // Snapshot the workflow envelope before inspecting any stage.
+    // Own data descriptors prevent caller-supplied getters from executing.
+    const record = value => value && typeof value === "object" && !Array.isArray(value) &&
+      (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
+    const snapshot = (value, names) => {
+      if (!record(value)) throw new TypeError("Invalid five-engine result.");
+      const copy = Object.create(null);
+      for (const name of names) {
+        const descriptor = Object.getOwnPropertyDescriptor(value, name);
+        if (!descriptor || !Object.hasOwn(descriptor, "value"))
+          throw new TypeError("Invalid five-engine result.");
+        copy[name] = descriptor.value;
+      }
+      return copy;
+    };
+    const result = snapshot(input, ["status", "semantic", "reasoning", "plan",
+      "quality", "coordination", "executionAttempted"]);
+    result.semantic = snapshot(result.semantic, ["ranked"]);
+    result.reasoning = snapshot(result.reasoning, ["facts", "steps"]);
+    result.plan = snapshot(result.plan, ["steps"]);
+    result.quality = snapshot(result.quality, ["accepted"]);
+    if (result.coordination !== null)
+      result.coordination = snapshot(result.coordination, ["completed", "failed", "results"]);
+    if (!STATUS.has(result.status) ||
         !result.semantic || !Array.isArray(result.semantic.ranked) ||
         !result.reasoning || !Array.isArray(result.reasoning.facts) ||
         !Array.isArray(result.reasoning.steps) ||
