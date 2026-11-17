@@ -35,7 +35,7 @@ export function createPersistentDecisionJournalStore({filePath}) {
     return serialize(async()=>{
       const current=await readSnapshot();
       if(current&&current.journal.requestId!==journal.requestId)throw new EngineContractError("JOURNAL_CONFLICT","Existing request differs");
-      if(current&&digest(current.journal)!==digest(journal))throw new EngineContractError("JOURNAL_CONFLICT","Existing journal differs");
+      if(current&&digest(current)!==digest(payload))throw new EngineContractError("JOURNAL_CONFLICT","Existing journal or checkpoint differs");
       if(!current)await writeAtomicJson(filePath,{version:VERSION,payload,digest:digest(payload)});
       return {saved:true,requestId:journal.requestId,executionAuthorized:false};
     });
