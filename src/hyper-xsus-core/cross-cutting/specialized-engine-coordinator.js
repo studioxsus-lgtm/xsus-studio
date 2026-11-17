@@ -54,8 +54,14 @@ export function createSpecializedEngineCoordinator({ engines, maxEngines = 16, m
     });
     return Object.freeze(prepared.map(request => Object.freeze(request)));
   }
-  async function coordinate({ requests } = {}) {
-    const prepared = validateRequests(requests);
+  async function coordinate(input = {}) {
+    if (!input || typeof input !== "object" || Array.isArray(input) ||
+        (Object.getPrototypeOf(input) !== Object.prototype && Object.getPrototypeOf(input) !== null))
+      throw new TypeError("Invalid specialized requests.");
+    const requestsField = Object.getOwnPropertyDescriptor(input, "requests");
+    if (requestsField && !Object.hasOwn(requestsField, "value"))
+      throw new TypeError("Invalid specialized requests accessor.");
+    const prepared = validateRequests(requestsField ? requestsField.value : undefined);
     const results = [];
     for (const request of prepared) {
       const payload = request.payload;
