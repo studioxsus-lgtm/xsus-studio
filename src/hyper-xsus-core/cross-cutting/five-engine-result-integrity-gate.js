@@ -34,8 +34,27 @@ export function createFiveEngineResultIntegrityGate({ maxResults = 256 } = {}) {
         if ((result.status === "completed" && failed !== 0) ||
             (result.status === "degraded" && failed === 0))
           errors.push("STATUS_INCONSISTENT");
-        if (coordination.results.length > 0 && !result.executionAttempted)
+        if (result.executionAttempted !== (coordination.results.length > 0))
           errors.push("EXECUTION_FLAG_INCONSISTENT");
+        let completed = 0;
+        let failedCount = 0;
+        const engineNames = new Set();
+        for (const entry of coordination.results) {
+          if (!entry || typeof entry !== "object" ||
+              typeof entry.engine !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(entry.engine) ||
+              engineNames.has(entry.engine) ||
+              (entry.status !== "completed" && entry.status !== "failed") ||
+              (entry.status === "failed" && entry.output !== null)) {
+            errors.push("COORDINATION_RESULTS_INCONSISTENT");
+            break;
+          }
+          engineNames.add(entry.engine);
+          if (entry.status === "completed") completed++;
+          else failedCount++;
+        }
+        if (!errors.includes("COORDINATION_RESULTS_INCONSISTENT") &&
+            (completed !== coordination.completed || failedCount !== coordination.failed))
+          errors.push("COORDINATION_RESULTS_INCONSISTENT");
       }
     }
     const steps = result.plan.steps;
