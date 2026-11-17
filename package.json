@@ -22,7 +22,9 @@
     "check": "npm test && npm run test:coverage",
     "check:hyper-deployment": "node scripts/check-hyper-deployment.js",
     "check:dependencies": "node scripts/check-rollup-install.js",
-    "report:glob": "node scripts/report-glob-dependencies.js"
+    "report:glob": "node scripts/report-glob-dependencies.js",
+    "test:hyper-regression": "vitest run tests/integration/hyper-specialist-output-workflow-contract.test.js tests/integration/hyper-result-plan-bounded-scan.test.js tests/integration/hyper-result-plan-id-contract-parity.test.js tests/integration/hyper-result-envelope-descriptor-admission.test.js tests/integration/hyper-five-engine-workflow.test.js",
+    "check:hyper-regression": "npm run check:dependencies && npm run test:hyper-regression"
   },
   "engines": {
     "node": ">=20"
