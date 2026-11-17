@@ -102,8 +102,12 @@ export function createFiveEngineResultIntegrityGate({ maxResults = 256 } = {}) {
       }
     }
     const steps = result.plan.steps;
+    // Bound adversarial plan payloads before scanning individual descriptors.
+    if (steps.length > 10000) {
+      errors.push("PLAN_STEPS_INCONSISTENT");
+    }
     const seen = new Set();
-    for (let index = 0; index < steps.length; index++) {
+    for (let index = 0; index < Math.min(steps.length, 10000); index++) {
       const slot = Object.getOwnPropertyDescriptor(steps, String(index));
       if (!slot || !Object.hasOwn(slot, "value")) {
         errors.push("PLAN_STEPS_INCONSISTENT");
