@@ -27,9 +27,8 @@ for (const scenario of cases) {
         };
       });
       const fakeNpm = join(dir, "npm");
-      writeFileSync(fakeNpm, "#!/bin/sh\nprintf '%s\\n' " +
-        JSON.stringify(JSON.stringify({ dependencies })).replace(/'/g, "'\\''").replace(/^|$/g, "'") +
-        "\n");
+      writeFileSync(fakeNpm, "#!/bin/sh\ncat <<'XSUS_JSON'\n" +
+        JSON.stringify({ dependencies }) + "\nXSUS_JSON\n");
       chmodSync(fakeNpm, 0o755);
       const run = spawnSync(process.execPath, [script], {
         encoding: "utf8", timeout: 10000,
