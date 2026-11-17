@@ -14,6 +14,14 @@ export function createFiveEngineResourceBudget({
   function check(input) {
     if (!input || typeof input !== "object" || Array.isArray(input))
       throw new TypeError("Invalid workflow resource request.");
+    // Inspect own data descriptors only: never invoke user-defined accessors.
+    function readField(name, fallback) {
+      const descriptor = Object.getOwnPropertyDescriptor(input, name);
+      if (!descriptor) return fallback;
+      if (!Object.hasOwn(descriptor, "value"))
+        throw new TypeError("Invalid workflow resource accessor: " + name);
+      return descriptor.value;
+    }
     const fields = [
       ["evidence",maxEvidence],["facts",maxFacts],["rules",maxRules],
       ["tasks",maxTasks],["requests",maxRequests]
@@ -21,20 +29,21 @@ export function createFiveEngineResourceBudget({
     let total = 0;
     const counts = {};
     for (const [name,limit] of fields) {
-      const items = input[name] ?? [];
+      const items = readField(name, []);
       if (!Array.isArray(items) || items.length > limit)
         throw new RangeError("Workflow resource budget exceeded: " + name);
       counts[name] = items.length;
       total += items.length;
     }
     if (total > maxTotalItems) throw new RangeError("Workflow total resource budget exceeded.");
-    if (typeof input.query !== "string" ||
-        Array.from(input.query).length > maxTextCodePoints)
+    const query = readField("query", undefined);
+    if (typeof query !== "string" ||
+        Array.from(query).length > maxTextCodePoints)
       throw new RangeError("Workflow query resource budget exceeded.");
     return Object.freeze({
       version: FIVE_ENGINE_RESOURCE_BUDGET_VERSION,
       accepted: true, totalItems: total,
-      queryCodePoints: Array.from(input.query).length,
+      queryCodePoints: Array.from(query).length,
       counts: Object.freeze(counts)
     });
   }
