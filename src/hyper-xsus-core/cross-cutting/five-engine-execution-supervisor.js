@@ -21,8 +21,8 @@ export function createFiveEngineExecutionSupervisor({
   let verified = 0, failed = 0;
   async function run(input) {
     // Admission is entirely synchronous and precedes all specialist execution.
-    resources.check(input);
     try {
+      resources.check(input);
       const result = await capacity.run(input);
       const check = integrity.verify(result);
       if (!check.valid) {
