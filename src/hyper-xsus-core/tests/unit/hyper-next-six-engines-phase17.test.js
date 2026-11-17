@@ -54,5 +54,5 @@ describe("Hyper six engines phase 17 — local resource admission",()=>{
   const snapshot=guard.metrics();
   expect(Object.isFrozen(snapshot)).toBe(true);
   expect(snapshot).toMatchObject({accepted:0,rejected:0,inFlight:0});
- }));
+ });
 });
