@@ -37,13 +37,19 @@ export function createFiveEngineResourceBudget({
     }
     if (total > maxTotalItems) throw new RangeError("Workflow total resource budget exceeded.");
     const query = readField("query", undefined);
-    if (typeof query !== "string" ||
-        Array.from(query).length > maxTextCodePoints)
+    if (typeof query !== "string")
       throw new RangeError("Workflow query resource budget exceeded.");
+    // Count code points without allocating an array proportional to input size.
+    // Reject as soon as the configured limit is exceeded.
+    let queryCodePoints = 0;
+    for (const _codePoint of query) {
+      if (++queryCodePoints > maxTextCodePoints)
+        throw new RangeError("Workflow query resource budget exceeded.");
+    }
     return Object.freeze({
       version: FIVE_ENGINE_RESOURCE_BUDGET_VERSION,
       accepted: true, totalItems: total,
-      queryCodePoints: Array.from(query).length,
+      queryCodePoints,
       counts: Object.freeze(counts)
     });
   }
