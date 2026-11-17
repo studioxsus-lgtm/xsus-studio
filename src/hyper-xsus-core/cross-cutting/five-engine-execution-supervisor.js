@@ -40,8 +40,9 @@ export function createFiveEngineExecutionSupervisor({
   }
   function stats() {
     return Object.freeze({
+      ...capacity.stats(),
       version: FIVE_ENGINE_SUPERVISOR_VERSION,
-      ...capacity.stats(), verified, failed,
+      verified, failed,
       retriesPerformed: 0
     });
   }
