@@ -1,17 +1,18 @@
 import {EngineContractError,object} from "../contracts.js";
-import {coordinateSixEngines} from "./index.js";
+import {createReviewTrustBoundary} from "./review-trust-boundary.js";
 import {createDecisionJournal,replayDecisionJournal} from "./decision-journal.js";
 import {createRecoveryCheckpoint,inspectRecoveryCheckpoint} from "./recovery-checkpoint.js";
 
 /**
  * Review-only end-to-end pipeline. No authorization, dispatch or execution.
+ * All direct callers pass through the trust boundary before persistence.
  * A successful persistence acknowledgment is required before reporting "recorded".
  */
 export async function coordinateAndRecord(input, store) {
   object(store,"store");
   if(typeof store.save!=="function"||typeof store.load!=="function")
     throw new EngineContractError("INVALID_INPUT","Store must expose save and load");
-  const response=coordinateSixEngines(input);
+  const response=createReviewTrustBoundary().coordinate(input);
   const journal=createDecisionJournal(response);
   const checkpoint=createRecoveryCheckpoint(journal);
   const saved=await store.save(response);
