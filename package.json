@@ -24,7 +24,9 @@
     "check:dependencies": "node scripts/check-rollup-install.js",
     "report:glob": "node scripts/report-glob-dependencies.js",
     "test:hyper-regression": "vitest run tests/integration/hyper-specialist-output-workflow-contract.test.js tests/integration/hyper-result-plan-bounded-scan.test.js tests/integration/hyper-result-plan-id-contract-parity.test.js tests/integration/hyper-result-envelope-descriptor-admission.test.js tests/integration/hyper-five-engine-workflow.test.js",
-    "check:hyper-regression": "npm run check:dependencies && npm run test:hyper-regression"
+    "check:hyper-regression": "npm run check:dependencies && npm run test:hyper-regression",
+    "audit:dependencies": "npm audit --omit=dev --audit-level=high",
+    "audit:all": "npm audit --audit-level=high"
   },
   "engines": {
     "node": ">=20"
