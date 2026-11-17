@@ -1,4 +1,4 @@
-import {byteLength} from "node:buffer";
+import {Buffer} from "node:buffer";
 import {EngineContractError,object} from "../contracts.js";
 import {coordinateAndRecord} from "./review-pipeline.js";
 
@@ -21,7 +21,7 @@ export function createReviewResourceGuard({maxRequestBytes=65536,maxInFlight=8}=
     if(typeof serialized!=="string"){
       rejected++;throw new EngineContractError("INVALID_INPUT","Request is not JSON serializable");
     }
-    const bytes=byteLength(serialized,"utf8");
+    const bytes=Buffer.byteLength(serialized,"utf8");
     if(bytes>maxRequestBytes){
       rejected++;throw new EngineContractError("REQUEST_TOO_LARGE","Request exceeds byte limit");
     }
