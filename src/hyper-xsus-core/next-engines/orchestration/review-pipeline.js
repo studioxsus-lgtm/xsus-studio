@@ -20,11 +20,13 @@ export async function coordinateAndRecord(input, store) {
   const loaded=await store.load();
   if(!loaded||loaded.recovered!==true||loaded.executionAuthorized!==false)
     throw new EngineContractError("PERSISTENCE_UNVERIFIED","Stored journal was not recovered");
-  const replay=replayDecisionJournal(loaded.journal);
-  inspectRecoveryCheckpoint(loaded.checkpoint,loaded.journal);
+  // Compare with the expected record first: a forged trace must not be
+  // misclassified as a checkpoint-only mismatch.
   if(JSON.stringify(loaded.journal)!==JSON.stringify(journal)||
      JSON.stringify(loaded.checkpoint)!==JSON.stringify(checkpoint))
     throw new EngineContractError("PERSISTENCE_MISMATCH","Recovered journal differs from request");
+  const replay=replayDecisionJournal(loaded.journal);
+  inspectRecoveryCheckpoint(loaded.checkpoint,loaded.journal);
   return Object.freeze({
     requestId:journal.requestId,
     traceId:journal.traceId,
