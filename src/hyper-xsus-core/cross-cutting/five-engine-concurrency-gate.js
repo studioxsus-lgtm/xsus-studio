@@ -12,6 +12,7 @@ export function createFiveEngineConcurrencyGate({ workflow, maxConcurrent = 4 } 
   let active = 0;
   let accepted = 0;
   let rejected = 0;
+  const capacityErrors = new WeakSet();
   function stats() {
     return Object.freeze({ version: FIVE_ENGINE_CONCURRENCY_VERSION,
       active, maxConcurrent, accepted, rejected });
@@ -21,6 +22,7 @@ export function createFiveEngineConcurrencyGate({ workflow, maxConcurrent = 4 } 
       rejected++;
       const error = new Error("Workflow concurrency limit exceeded.");
       error.code = "HYPER_WORKFLOW_CAPACITY_EXCEEDED";
+      capacityErrors.add(error);
       throw error;
     }
     active++;
@@ -31,5 +33,8 @@ export function createFiveEngineConcurrencyGate({ workflow, maxConcurrent = 4 } 
       active--;
     }
   }
-  return Object.freeze({ version: FIVE_ENGINE_CONCURRENCY_VERSION, run, stats });
+  function isCapacityRejection(error) {
+    return !!error && typeof error === "object" && capacityErrors.has(error);
+  }
+  return Object.freeze({ version: FIVE_ENGINE_CONCURRENCY_VERSION, run, stats, isCapacityRejection });
 }
