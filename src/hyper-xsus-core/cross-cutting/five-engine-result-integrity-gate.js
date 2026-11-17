@@ -44,7 +44,9 @@ export function createFiveEngineResultIntegrityGate({ maxResults = 256 } = {}) {
               typeof entry.engine !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(entry.engine) ||
               engineNames.has(entry.engine) ||
               (entry.status !== "completed" && entry.status !== "failed") ||
-              (entry.status === "failed" && entry.output !== null)) {
+              !Object.hasOwn(entry, "output") ||
+              (entry.status === "failed" && entry.output !== null) ||
+              (entry.status === "completed" && entry.output === undefined)) {
             errors.push("COORDINATION_RESULTS_INCONSISTENT");
             break;
           }
