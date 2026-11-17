@@ -16,7 +16,7 @@ import {writeAtomicJson} from ${JSON.stringify(writerUrl)};
 import {createPersistentDecisionJournalStore} from ${JSON.stringify(storeUrl)};
 import {coordinateSixEngines} from ${JSON.stringify(coordinatorUrl)};
 const filePath=process.argv[1],requestId=process.argv[2];
-const atomicWriter=(path,payload)=>writeAtomicJson(path,payload,{io:{
+const keepAlive=setInterval(()=>{},1000);\nconst atomicWriter=(path,payload)=>writeAtomicJson(path,payload,{io:{
   rename:async()=>{process.stdout.write("BEFORE_RENAME\\n");await new Promise(()=>{});}
 }});
 const store=createPersistentDecisionJournalStore({filePath,atomicWriter});
