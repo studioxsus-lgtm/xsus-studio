@@ -37,7 +37,8 @@ describe("Hyper six engines phase 27 — trust boundaries",()=>{
  it("rejects excessive bytes, depth and node counts",()=>{
   const input=req();input.payload.extra="x".repeat(1000);
   expect(()=>createReviewTrustBoundary({maxBytes:100}).isolate(input)).toThrowError(expect.objectContaining({code:"REQUEST_TOO_LARGE"}));
-  expect(()=>createReviewTrustBoundary({maxDepth:2}).isolate(req())).toThrow();
+  const deep=req();deep.payload.inputs.truth={claim:"nested"};
+  expect(()=>createReviewTrustBoundary({maxDepth:2}).isolate(deep)).toThrowError(expect.objectContaining({code:"INVALID_INPUT"}));
   expect(()=>createReviewTrustBoundary({maxNodes:3}).isolate(req())).toThrow();
  });
  it("rejects invalid boundary configuration",()=>{
