@@ -22,3 +22,26 @@ export function createPlan(input) {
   for(const id of ids) visit(id);
   return result(req,{goal,steps,state:"draft",executable:false,dependencyGraphValid:true});
 }
+
+export function schedulePlan(input) {
+  const req=request(input,ENGINE_ID,"planning.schedule");
+  const steps=req.payload.steps;
+  if(!Array.isArray(steps)||steps.length>100)throw new EngineContractError("INVALID_INPUT","Invalid steps");
+  const nodes=new Map();
+  for(const step of steps){
+    object(step,"step");const id=string(step.id,"step.id");
+    if(nodes.has(id))throw new EngineContractError("DUPLICATE_STEP","Duplicate step");
+    if(!Array.isArray(step.dependsOn)||step.dependsOn.some(x=>typeof x!=="string"||!x.trim()))throw new EngineContractError("INVALID_INPUT","Invalid dependencies");
+    nodes.set(id,{id,dependsOn:[...step.dependsOn]});
+  }
+  const state=new Map(),order=[];
+  function visit(id){
+    if(!nodes.has(id))throw new EngineContractError("UNKNOWN_DEPENDENCY","Unknown dependency");
+    if(state.get(id)===1)throw new EngineContractError("CYCLIC_DEPENDENCY","Cycle");
+    if(state.get(id)===2)return;
+    state.set(id,1);for(const dep of nodes.get(id).dependsOn)visit(dep);
+    state.set(id,2);order.push(id);
+  }
+  for(const id of nodes.keys())visit(id);
+  return result(req,{orderedStepIds:order,dependencyGraphValid:true,executable:false});
+}
