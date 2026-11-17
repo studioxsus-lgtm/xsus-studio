@@ -10,6 +10,7 @@ import { createResponseEvaluationEngine } from "./response-evaluation-engine.js"
 import { createSpecializedEngineCoordinator } from "./specialized-engine-coordinator.js";
 import { createFiveEngineResourceBudget } from "./five-engine-resource-budget.js";
 import { createReasoningProofVerifier } from "./reasoning-proof-verifier.js";
+import { createFiveEngineResultIntegrityGate } from "./five-engine-result-integrity-gate.js";
 export const FIVE_ENGINE_WORKFLOW_VERSION = "1.0.0";
 export function createFiveEngineWorkflow({
   engines, minimumScore = 0.8, maxEvidence = 32, maxTasks = 512, maxEngines = 16
@@ -21,6 +22,16 @@ export function createFiveEngineWorkflow({
   const evaluator = createResponseEvaluationEngine({ minimumScore });
   const coordinator = createSpecializedEngineCoordinator({ engines, maxEngines });
   const resourceBudget = createFiveEngineResourceBudget({ maxEvidence, maxTasks, maxRequests: maxEngines });
+  const resultIntegrity = createFiveEngineResultIntegrityGate({ maxResults: maxEngines });
+  function acceptResult(result) {
+    const verification = resultIntegrity.verify(result);
+    if (!verification.valid) {
+      const error = new Error("Five-engine workflow result integrity check failed.");
+      error.code = "HYPER_WORKFLOW_RESULT_INTEGRITY_FAILED";
+      throw error;
+    }
+    return result;
+  }
   async function run({
     query, evidence = [], facts = [], rules = [], tasks = [], requests = [],
     qualityChecks = [], findings = []
@@ -47,19 +58,19 @@ export function createFiveEngineWorkflow({
     const preparedRequests = coordinator.validateRequests(requests);
     // The caller supplies actual quality evidence; no invented scoring.
     if (!quality.accepted) {
-      return Object.freeze({
+      return acceptResult(Object.freeze({
         version: FIVE_ENGINE_WORKFLOW_VERSION, status: "quality-rejected",
         semantic: analysis, reasoning: inference, plan, quality,
         coordination: null, executionAttempted: false
-      });
+      }));
     }
     const coordination = await coordinator.coordinate({ requests: preparedRequests });
-    return Object.freeze({
+    return acceptResult(Object.freeze({
       version: FIVE_ENGINE_WORKFLOW_VERSION,
       status: coordination.failed === 0 ? "completed" : "degraded",
       semantic: analysis, reasoning: inference, plan, quality, coordination,
       executionAttempted: requests.length > 0
-    });
+    }));
   }
   return Object.freeze({ version: FIVE_ENGINE_WORKFLOW_VERSION, run });
 }
