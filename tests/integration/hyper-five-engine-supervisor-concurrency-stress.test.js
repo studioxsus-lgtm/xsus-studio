@@ -64,7 +64,7 @@ describe("Hyper XSUS Core — supervised concurrent execution stress", () => {
     const results = await Promise.allSettled(attempts);
     expect(results.every(r => r.status === "rejected")).toBe(true);
     expect(calls).toBe(0);
-    expect(s.stats().active).toBe(0);
+    expect(s.stats()).toMatchObject({ active: 0, accepted: 0, failed: 30 });
   });
   it("reuses released capacity after a rejected burst", async () => {
     const hold = deferred();
