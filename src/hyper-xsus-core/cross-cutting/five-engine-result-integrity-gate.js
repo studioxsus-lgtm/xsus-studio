@@ -39,19 +39,38 @@ export function createFiveEngineResultIntegrityGate({ maxResults = 256 } = {}) {
         let completed = 0;
         let failedCount = 0;
         const engineNames = new Set();
-        for (const entry of coordination.results) {
-          if (!entry || typeof entry !== "object" ||
-              typeof entry.engine !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(entry.engine) ||
-              engineNames.has(entry.engine) ||
-              (entry.status !== "completed" && entry.status !== "failed") ||
-              !Object.hasOwn(entry, "output") ||
-              (entry.status === "failed" && entry.output !== null) ||
-              (entry.status === "completed" && entry.output === undefined)) {
+        for (let index = 0; index < coordination.results.length; index++) {
+          const slot = Object.getOwnPropertyDescriptor(coordination.results, String(index));
+          if (!slot || !Object.hasOwn(slot, "value")) {
             errors.push("COORDINATION_RESULTS_INCONSISTENT");
             break;
           }
-          engineNames.add(entry.engine);
-          if (entry.status === "completed") completed++;
+          const entry = slot.value;
+          if (!entry || typeof entry !== "object" || Array.isArray(entry) ||
+              (Object.getPrototypeOf(entry) !== Object.prototype && Object.getPrototypeOf(entry) !== null)) {
+            errors.push("COORDINATION_RESULTS_INCONSISTENT");
+            break;
+          }
+          const read = name => {
+            const descriptor = Object.getOwnPropertyDescriptor(entry, name);
+            return descriptor && Object.hasOwn(descriptor, "value")
+              ? { valid: true, value: descriptor.value } : { valid: false };
+          };
+          const engine = read("engine");
+          const status = read("status");
+          const output = read("output");
+          if (!engine.valid || typeof engine.value !== "string" ||
+              !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(engine.value) ||
+              engineNames.has(engine.value) || !status.valid ||
+              (status.value !== "completed" && status.value !== "failed") ||
+              !output.valid ||
+              (status.value === "failed" && output.value !== null) ||
+              (status.value === "completed" && output.value === undefined)) {
+            errors.push("COORDINATION_RESULTS_INCONSISTENT");
+            break;
+          }
+          engineNames.add(engine.value);
+          if (status.value === "completed") completed++;
           else failedCount++;
         }
         if (!errors.includes("COORDINATION_RESULTS_INCONSISTENT") &&
