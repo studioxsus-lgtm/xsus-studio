@@ -28,7 +28,7 @@
     "audit:dependencies": "npm audit --omit=dev --audit-level=high",
     "audit:all": "npm audit --audit-level=high",
     "check:dependency-tools": "node --check scripts/check-rollup-install.js && node --check scripts/report-glob-dependencies.js && npm run test:dependency-tools",
-    "test:dependency-tools": "vitest run tests/unit/rollup-preflight.test.js"
+    "test:dependency-tools": "vitest run tests/unit/rollup-preflight.test.js tests/unit/glob-dependency-report.test.js"
   },
   "engines": {
     "node": ">=20"
