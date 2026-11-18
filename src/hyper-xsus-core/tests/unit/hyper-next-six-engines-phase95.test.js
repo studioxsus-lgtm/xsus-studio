@@ -128,7 +128,7 @@ const makeAuthenticated=()=>{
 const makeContinuity=()=>{
  const data=makeAuthenticated();
  const first={sequence:100,report:data.report,authentication:data.authentication,
-  auditKey,expectedIssuerId:"audit-issuer",anchors:data.anchors,
+  expectedIssuerId:"audit-issuer",anchors:data.anchors,
   expectedAnchorIds:data.expectedAnchorIds};
  const authentication=createReviewWitnessDecisionAuditAuthentication({
   report:data.report,issuerId:"audit-issuer",reportId:"report-95",auditKey});
@@ -195,6 +195,23 @@ describe("Hyper phase 95 — sequential authenticated audit continuity",()=>{
   const data=makeContinuity(),record={...data.records[1]};
   Object.defineProperty(record,"sequence",{get(){throw Error("unsafe");}});
   denied(inspect({...data,records:[data.records[0],record]}));
+ });
+ it("rejects an externally untrusted issuer even if records agree",()=>{
+  const data=makeContinuity();
+  expect(inspect({...data,expectedIssuerId:"different-issuer"}).findings)
+   .toContain("AUDIT_CONTINUITY_ISSUER_MISMATCH");
+ });
+ it("rejects wrong externally trusted audit key",()=>{
+  const data=makeContinuity();
+  expect(inspect({...data,auditKey:Buffer.alloc(32,17)}).findings)
+   .toContain("AUDIT_CONTINUITY_AUTHENTICATION_UNVERIFIED");
+ });
+ it("does not accept attacker-supplied per-record keys",()=>{
+  const data=makeContinuity();
+  const records=data.records.map(r=>({...r,auditKey:Buffer.alloc(32,17)}));
+  expect(inspect({...data,records}).state)
+   .toBe("witness_decision_audit_continuity_observed_for_manual_review");
+  denied(inspect({...data,records}));
  });
  it("rejects invalid bounds and excessive records",()=>{
   expect(()=>inspect({expectedLastSequence:105})).toThrow();
