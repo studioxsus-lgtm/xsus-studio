@@ -14,12 +14,12 @@ const id=x=>typeof x==="string"&&/^[a-zA-Z0-9._-]{1,128}$/.test(x);
 const seq=x=>Number.isSafeInteger(x)&&x>=0;
 /**
  * Phase 95: read-only sequential authenticated audit verification.
- * Trusted expected IDs and sequence bounds MUST originate outside this
+ * Trusted expected IDs, auditKey, issuer and sequence bounds MUST originate outside this
  * input. The function cannot establish completeness or independent custody.
  * A changed report digest is not automatically a fork: audit inputs may evolve.
  */
 export function inspectReviewWitnessDecisionAuditContinuity({
- records,expectedReportIds,expectedFirstSequence,expectedLastSequence,
+ records,expectedReportIds,expectedFirstSequence,expectedLastSequence,auditKey,expectedIssuerId,
  beforeRegistry,afterRegistry,receipt,authorityKey,expectedAttemptId,
  expectedBeforeEpochId,expectedRegistryRevision,expectedMinimumRevision,
  decision,reviewKey,expectedReviewerId,expectedDecisionId,
@@ -30,7 +30,8 @@ export function inspectReviewWitnessDecisionAuditContinuity({
  if(!Array.isArray(records)||!Array.isArray(expectedReportIds)||
   records.length<2||records.length>16||
   records.length!==expectedReportIds.length||
-  !seq(expectedFirstSequence)||!seq(expectedLastSequence)||
+  !Buffer.isBuffer(auditKey)||auditKey.length<32||auditKey.length>4096||
+  !id(expectedIssuerId)||!seq(expectedFirstSequence)||!seq(expectedLastSequence)||
   expectedLastSequence-expectedFirstSequence!==records.length-1)
   throw new EngineContractError("INVALID_INPUT","Invalid audit continuity configuration");
  try{
@@ -41,7 +42,6 @@ export function inspectReviewWitnessDecisionAuditContinuity({
    previousRounds,previousChain,trustedPreviousHeadTag,trustedPreviousRoundCount,
    candidates,ledgerId,ledgerKey,chainKey,startingRevision,minimumSequence,
    requiredWitnesses,maxWitnesses,maxRounds};
-  let issuer=null;
   for(let i=0;i<records.length;i++){
    const d=Object.getOwnPropertyDescriptor(records,String(i));
    const e=Object.getOwnPropertyDescriptor(expectedReportIds,String(i));
@@ -51,13 +51,11 @@ export function inspectReviewWitnessDecisionAuditContinuity({
    const record=d.value,sequence=own(record,"sequence");
    if(sequence!==expectedFirstSequence+i)
     return blocked("AUDIT_CONTINUITY_SEQUENCE_GAP");
-   const expectedIssuerId=own(record,"expectedIssuerId");
-   if(!id(expectedIssuerId)||issuer!==null&&issuer!==expectedIssuerId)
+   if(own(record,"expectedIssuerId")!==expectedIssuerId)
     return blocked("AUDIT_CONTINUITY_ISSUER_MISMATCH");
-   issuer=expectedIssuerId;
    const verdict=inspectReviewWitnessDecisionAuditAuthentication({
     ...common,report:own(record,"report"),authentication:own(record,"authentication"),
-    auditKey:own(record,"auditKey"),expectedIssuerId,
+    auditKey,expectedIssuerId,
     expectedReportId:e.value,anchors:own(record,"anchors"),
     expectedAnchorIds:own(record,"expectedAnchorIds")});
    if(verdict.state!=="witness_decision_audit_authenticated_for_manual_review")
