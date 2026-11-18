@@ -55,9 +55,14 @@ describe("Hyper phase 39 — real cross-process journal behavior",()=>{
    expect(contender.code).toBe(1);
    expect(contender.stderr).toContain("XSUS_FILE_LOCK_BUSY");
   }finally{
-   holder.child.stdin.write("release");
-   const timer=setTimeout(()=>holder.child.kill("SIGKILL"),2000);
-   try{expect((await holder.done).code).toBe(0);}finally{clearTimeout(timer);}
+   // End the parent write stream after the release signal. The worker
+   // pauses its read stream and should exit normally after lock cleanup.
+   if(!holder.child.killed)holder.child.stdin.end("release");
+   const timer=setTimeout(()=>holder.child.kill("SIGKILL"),5000);
+   try{
+    const stopped=await holder.done;
+    expect(stopped).toMatchObject({code:0,signal:null});
+   }finally{clearTimeout(timer);}
   }
   expect((await run("save",path)).code).toBe(0);
  }));
