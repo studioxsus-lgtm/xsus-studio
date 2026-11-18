@@ -232,3 +232,34 @@ OPENBLAS_NUM_THREADS=1 python3 -m languages.en.training.train \
 | Mësimet e v4 | 36/36 | 36/36 |
 | Biseda dhe sqarime | 16/16 | 16/16 |
 | Riformulime | 12/12 | 12/12 |
+
+## Korrigjimi i fjalive
+
+`text/editing/` përdor analizuesin e anglishtes për të korrigjuar një
+fjali në një kohë. Për strukturat e mbështetura kontrollon përputhjen
+kryefjalë–folje, format e foljeve pas ndihmëseve, trajtat e përemrave
+dhe numrin e përcaktorëve. Mund të korrigjojë edhe pyetje dhe fjali në
+zërin pësor brenda gramatikës së mbuluar.
+
+Çdo ndryshim duhet të ketë një pozicion të vetëm të mundshëm. Fjalia e
+korrigjuar analizohet përsëri para pranimit. Rezultati `review_required`
+ruan tekstin origjinal kur analiza mungon ose korrigjimi mbetet i paqartë.
+`unchanged` tregon se analizuesi nuk gjeti problem brenda rregullave që
+mbulon. Rezultati i komandës përfshin pozicionet e ndryshimeve në vargun
+origjinal. Hapësirat dhe pikësimi ruhen.
+
+```sh
+python3 -m languages.en.text.editing 'What did Alex wrote?'
+printf '%s\n' 'They writes.' 'They write.' | python3 -m languages.en.text.editing --lines
+```
+
+Me profilin `written-v5`, mund të kërkosh korrigjim në bisedë duke e
+paraprirë fjalinë me `Proofread:` ose `Correct the grammar:`.
+
+```sh
+XSUS_EN_MODEL_PROFILE=written-v5 \
+  python3 -m languages.en.evaluation.demo 'Proofread: Was those reports written by she?'
+```
+
+Vlerësimi krahasohet me pritjet e përcaktuara për 44 raste dhe raportohet
+me `python3 -m languages.en.evaluation.proofreading`.

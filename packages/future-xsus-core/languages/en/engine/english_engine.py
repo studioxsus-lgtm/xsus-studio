@@ -13,7 +13,9 @@ from core.contracts.response import EngineResponse, TextResult
 
 from ..models.checkpoint import load_checkpoint
 from ..models.profiles import load_profile
+from ..text.editing.requests import answer_proofreading_request
 from ..text.generation.generate import generate
+from ..text.normalization.model_input import WRITTEN_V5
 
 ENGLISH = LanguageTag("en")
 DEFAULT_CHECKPOINT = Path(__file__).resolve().parents[1] / "models" / "checkpoints" / "xsus-en-seed-v1.json.gz"
@@ -29,6 +31,8 @@ class EnglishEngine:
             self._tokenizer, self._model, revision = load_checkpoint(
                 DEFAULT_CHECKPOINT if checkpoint is None else checkpoint,
             )
+        if self._model.prompt_format == WRITTEN_V5:
+            revision += "-proofreader-v1"
         identity = EngineIdentity("xsus-en", revision, V1)
         self._descriptor = EngineDescriptor(
             identity, (LanguageSupport(ENGLISH, frozenset({Capability.CONVERSATION})),),
@@ -43,6 +47,13 @@ class EnglishEngine:
     def instance(self) -> EngineInstance:
         return self._instance
 
+    def _answer(self, operation: Conversation, stop: Event) -> str:
+        if self._model.prompt_format == WRITTEN_V5:
+            edited = answer_proofreading_request(operation.text)
+            if edited is not None:
+                return edited
+        return generate(self._tokenizer, self._model, operation, stop=stop)
+
     async def execute(self, request: EngineRequest) -> EngineResponse:
         operation = request.operation
         outcome: TextResult | EngineError
@@ -51,7 +62,7 @@ class EnglishEngine:
         else:
             stop = Event()
             try:
-                text = await asyncio.to_thread(generate, self._tokenizer, self._model, operation, stop=stop)
+                text = await asyncio.to_thread(self._answer, operation, stop)
             except asyncio.CancelledError:
                 stop.set()
                 raise
