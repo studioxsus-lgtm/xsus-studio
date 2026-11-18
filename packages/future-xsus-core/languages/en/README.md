@@ -321,3 +321,27 @@ XSUS_EN_MODEL_PROFILE=written-v5 \
   python3 -m languages.en.evaluation.demo 'Proofread: Although they writes, Nina have checked the report.'
 python3 -m languages.en.evaluation.proofreading --cases languages/en/evaluation/proofreading-dependent-v1.jsonl
 ```
+
+## Korrigjimi i dokumenteve Markdown
+
+`Proofread Markdown:` me profilin `written-v5` kontrollon prozën e një
+dokumenti. Mjeti lokal pranon dokumentin nga hyrja standarde dhe jep JSON
+me pjesët e kontrolluara, statuset dhe pozicionet në tekstin origjinal.
+Me `--text-only` jep skedarin e redaktuar pa JSON.
+
+```sh
+python3 -m languages.en.text.editing --markdown < draft.md
+python3 -m languages.en.text.editing --markdown --text-only < draft.md > revised.md
+python3 -m languages.en.evaluation.proofreading --documents
+```
+
+Titujt, listat, citimet, tabelat, HTML-ja, metadata në krye të skedarit dhe
+blloqet e kodit ruhen. Edhe një bllok që përmban lidhje ose shënim Markdown
+brenda rreshtit ruhet si njësi. Për rreshta të mbështjellë në prozë, mjeti
+lexon fjalinë së bashku dhe ruan ndarjet origjinale, përfshirë CRLF. Proza
+që kërkon rishikim shënohet veçmas nga pjesët e mbrojtura.
+
+Kufiri është 65 536 karaktere dhe 512 blloqe. Një rrethim kodi i pambyllur
+mbron pjesën pas tij deri në fund të skedarit. Kjo qasje konservatore
+mbështet formatet e testuara të Markdown-it dhe mund të anashkalojë prozën
+kur ajo ndan të njëjtin bllok me shënimin strukturor.

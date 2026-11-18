@@ -1,0 +1,34 @@
+{"id":"plain-prose","input":"They writes the report.","status":"corrected","output":"They write the report."}
+{"id":"two-clean-prose-paragraphs","input":"Nina writes the report.\n\nThey read the notes.","status":"unchanged","output":"Nina writes the report.\n\nThey read the notes."}
+{"id":"two-corrected-prose-paragraphs","input":"They writes the report.\n\nWhat did Nina wrote?","status":"corrected","output":"They write the report.\n\nWhat did Nina write?"}
+{"id":"two-prose-paragraphs-with-review","input":"They writes the report.\n\nDespite the uncertainty.","status":"partial","output":"They write the report.\n\nDespite the uncertainty."}
+{"id":"prose-review-only","input":"Under the old table.","status":"review_required","output":"Under the old table."}
+{"id":"clean-prose-with-review","input":"The students read.\n\nUnder the old table.","status":"review_required","output":"The students read.\n\nUnder the old table."}
+{"id":"mixed-in-one-paragraph","input":"They writes the report. Despite the uncertainty.","status":"partial","output":"They write the report. Despite the uncertainty."}
+{"id":"keep-blank-lines-and-tabs","input":"  They writes the report.\t\n\n\nThey read the notes.  ","status":"corrected","output":"  They write the report.\t\n\n\nThey read the notes.  "}
+{"id":"keep-crlf","input":"They writes the report.\r\n\r\nWhat did Nina wrote?\r\n","status":"corrected","output":"They write the report.\r\n\r\nWhat did Nina write?\r\n"}
+{"id":"keep-dependent-punctuation","input":"Although they writes, Nina have checked the report.","status":"corrected","output":"Although they write, Nina has checked the report."}
+{"id":"atx-heading-and-prose","input":"# They writes the title.\n\nThey writes the report.\n","status":"corrected","output":"# They writes the title.\n\nThey write the report.\n"}
+{"id":"atx-heading-only","input":"## They writes the title.\n","status":"unchanged","output":"## They writes the title.\n"}
+{"id":"blockquote-and-prose","input":"> They writes the quote.\n> What did Alex wrote?\n\nThey writes the report.","status":"corrected","output":"> They writes the quote.\n> What did Alex wrote?\n\nThey write the report."}
+{"id":"nested-blockquote-only","input":">> They writes the quote.\n> What did Alex wrote?","status":"unchanged","output":">> They writes the quote.\n> What did Alex wrote?"}
+{"id":"ordered-list-and-prose","input":"1. They writes the report.\n2. What did Alex wrote?\n\nThey writes the notes.","status":"corrected","output":"1. They writes the report.\n2. What did Alex wrote?\n\nThey write the notes."}
+{"id":"unordered-list-continuation","input":"- They writes the report.\n  What did Alex wrote?\n\nThey writes the notes.","status":"corrected","output":"- They writes the report.\n  What did Alex wrote?\n\nThey write the notes."}
+{"id":"task-list-only","input":"- [x] They writes the report.\n- [ ] What did Alex wrote?","status":"unchanged","output":"- [x] They writes the report.\n- [ ] What did Alex wrote?"}
+{"id":"backtick-fence-and-prose","input":"```text\nThey writes the report.\n\nWhat did Alex wrote?\n```\n\nThey writes the notes.","status":"corrected","output":"```text\nThey writes the report.\n\nWhat did Alex wrote?\n```\n\nThey write the notes."}
+{"id":"tilde-fence-and-prose","input":"~~~text\nThey writes the report.\n~~~\n\nThey writes the notes.","status":"corrected","output":"~~~text\nThey writes the report.\n~~~\n\nThey write the notes."}
+{"id":"fenced-code-only","input":"```\nThey writes the report.\n\nWhat did Alex wrote?\n```","status":"unchanged","output":"```\nThey writes the report.\n\nWhat did Alex wrote?\n```"}
+{"id":"fence-with-shorter-marker-inside","input":"````text\n```\nThey writes the report.\n````\n\nThey writes the notes.","status":"corrected","output":"````text\n```\nThey writes the report.\n````\n\nThey write the notes."}
+{"id":"markdown-table-and-prose","input":"| Example | Detail |\n| --- | --- |\n| They writes the report. | What did Alex wrote? |\n\nThey writes the notes.","status":"corrected","output":"| Example | Detail |\n| --- | --- |\n| They writes the report. | What did Alex wrote? |\n\nThey write the notes."}
+{"id":"markdown-table-only","input":"| Example |\n| --- |\n| They writes the report. |\n","status":"unchanged","output":"| Example |\n| --- |\n| They writes the report. |\n"}
+{"id":"thematic-line-between-prose","input":"They writes the report.\n\n***\n\nThey writes the notes.","status":"corrected","output":"They write the report.\n\n***\n\nThey write the notes."}
+{"id":"front-matter-and-prose","input":"---\ntitle: They writes the report.\n---\n\nThey writes the notes.","status":"corrected","output":"---\ntitle: They writes the report.\n---\n\nThey write the notes."}
+{"id":"front-matter-only","input":"---\ntitle: They writes the report.\n---\n","status":"unchanged","output":"---\ntitle: They writes the report.\n---\n"}
+{"id":"html-block-and-prose","input":"<div>\nThey writes the report.\n\nWhat did Alex wrote?\n</div>\n\nThey writes the notes.","status":"corrected","output":"<div>\nThey writes the report.\n\nWhat did Alex wrote?\n</div>\n\nThey write the notes."}
+{"id":"html-comment-only","input":"<!--\nThey writes the report.\n-->","status":"unchanged","output":"<!--\nThey writes the report.\n-->"}
+{"id":"inline-emphasis-protects-paragraph","input":"They writes the **report**. What did Alex wrote?\n\nThey writes the notes.","status":"corrected","output":"They writes the **report**. What did Alex wrote?\n\nThey write the notes."}
+{"id":"inline-code-protects-paragraph","input":"They writes the `report`. What did Alex wrote?","status":"unchanged","output":"They writes the `report`. What did Alex wrote?"}
+{"id":"inline-link-protects-paragraph","input":"They writes the [report](./report.md).\n\nThey writes the notes.","status":"corrected","output":"They writes the [report](./report.md).\n\nThey write the notes."}
+{"id":"bare-url-protects-paragraph","input":"They writes the report. https://example.com/report\n\nThey writes the notes.","status":"corrected","output":"They writes the report. https://example.com/report\n\nThey write the notes."}
+{"id":"protected-content-with-prose-review","input":"> They writes the report.\n\nDespite the uncertainty.","status":"review_required","output":"> They writes the report.\n\nDespite the uncertainty."}
+{"id":"corrected-prose-plus-protected-plus-review","input":"They writes the report.\n\n## They writes the title.\n\nDespite the uncertainty.","status":"partial","output":"They write the report.\n\n## They writes the title.\n\nDespite the uncertainty."}

@@ -34,6 +34,10 @@ class EnglishProofreadingIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 "This sentence needs manual review.\nIf she were ready, Nina would read the report."
                 "\n\nReview notes:\n- In a hypothetical condition, 'were' can be valid with a singular subject.",
             ),
+            (
+                "Proofread Markdown:\n---\ntitle: They writes\n---\n\nThey writes.\n\n~~~\nThey writes.\n~~~",
+                "---\ntitle: They writes\n---\n\nThey write.\n\n~~~\nThey writes.\n~~~",
+            ),
             ("Proofread: ", "Please provide one English sentence to proofread."),
             (
                 "Proofread paragraph: They writes. What did Alex wrote?",

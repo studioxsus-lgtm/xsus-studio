@@ -5,16 +5,25 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from ..text.editing.document import proofread_markdown
 from ..text.editing.paragraph import ParagraphStatus, proofread_paragraph
 from ..text.editing.proofreader import ProofreadingStatus, proofread_sentence
 
 _SENTENCE_CASES = Path(__file__).with_name("proofreading-v1.jsonl")
 _PARAGRAPH_CASES = Path(__file__).with_name("proofreading-paragraphs-v1.jsonl")
+_DOCUMENT_CASES = Path(__file__).with_name("proofreading-documents-v1.jsonl")
 
 
-def evaluate(path: Path, *, paragraphs: bool = False) -> dict:
-    status_type = ParagraphStatus if paragraphs else ProofreadingStatus
-    proofread = proofread_paragraph if paragraphs else proofread_sentence
+def evaluate(path: Path, *, paragraphs: bool = False, documents: bool = False) -> dict:
+    if paragraphs and documents:
+        raise ValueError("Choose either paragraph or document mode")
+    status_type = ParagraphStatus if paragraphs or documents else ProofreadingStatus
+    if documents:
+        proofread = proofread_markdown
+    elif paragraphs:
+        proofread = proofread_paragraph
+    else:
+        proofread = proofread_sentence
     totals: Counter[str] = Counter()
     failures = []
     identifiers: set[str] = set()
@@ -45,10 +54,12 @@ def evaluate(path: Path, *, paragraphs: bool = False) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cases", type=Path)
-    parser.add_argument("--paragraphs", action="store_true")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--paragraphs", action="store_true")
+    modes.add_argument("--documents", action="store_true")
     args = parser.parse_args()
-    default_cases = _PARAGRAPH_CASES if args.paragraphs else _SENTENCE_CASES
-    report = evaluate(args.cases or default_cases, paragraphs=args.paragraphs)
+    default_cases = _DOCUMENT_CASES if args.documents else _PARAGRAPH_CASES if args.paragraphs else _SENTENCE_CASES
+    report = evaluate(args.cases or default_cases, paragraphs=args.paragraphs, documents=args.documents)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return int(bool(report["failures"]))
 

@@ -2,12 +2,13 @@
 
 import re
 
+from .document import proofread_markdown
 from .feedback import explain_edits, explain_review
 from .paragraph import ParagraphStatus, proofread_paragraph
 from .proofreader import ProofreadingStatus, proofread_sentence
 
 _COMMAND = re.compile(
-    r"\A[ \t]*(?P<command>proofread paragraph|explain paragraph corrections|"
+    r"\A[ \t]*(?P<command>proofread markdown|proofread paragraph|explain paragraph corrections|"
     r"proofread|correct the grammar|explain corrections)[ \t]*:[ \t]*(?P<sentence>.*)\Z",
     re.IGNORECASE | re.DOTALL,
 )
@@ -20,6 +21,20 @@ def answer_proofreading_request(text: str) -> str | None:
         return None
     sentence = command["sentence"]
     operation = command["command"].casefold()
+    if operation == "proofread markdown":
+        # A newline immediately after the command separates it from the document.
+        if sentence.startswith("\r\n"):
+            sentence = sentence[2:]
+        elif sentence.startswith("\n"):
+            sentence = sentence[1:]
+        if not sentence.strip():
+            return "Please provide an English Markdown document to proofread."
+        document = proofread_markdown(sentence)
+        if document.status is ParagraphStatus.PARTIAL:
+            return f"Some prose still needs manual review.\n{document.text}"
+        if document.status is ParagraphStatus.REVIEW_REQUIRED:
+            return f"This document needs manual review.\n{document.text}"
+        return document.text
     if operation in {"proofread paragraph", "explain paragraph corrections"}:
         if not sentence.strip():
             return "Please provide an English paragraph to proofread."
