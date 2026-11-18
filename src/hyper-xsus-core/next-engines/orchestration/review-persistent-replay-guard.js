@@ -1,5 +1,5 @@
-import {readFile,writeFile,rename,lstat,open,mkdir} from "node:fs/promises";
-import {dirname} from "node:path";
+import {readFile,rename,lstat,open,mkdir,readdir} from "node:fs/promises";
+import {dirname,basename} from "node:path";
 import {randomUUID,createHash} from "node:crypto";
 import {EngineContractError} from "../contracts.js";
 import {withExclusiveFileLock} from "../../knowledge-graph/integration/exclusive-file-lock.js";
@@ -17,14 +17,27 @@ const identity=receipt=>{
   throw Error("Unsafe receipt");
  return createHash("sha256").update(JSON.stringify([id.value,tag.value])).digest("hex");
 };
+const registryDigest=ids=>createHash("sha256").update(JSON.stringify([1,ids])).digest("hex");
+async function assertNoInterruptedWrites(filePath){
+ const prefix=basename(filePath)+".";
+ const names=await readdir(dirname(filePath));
+ if(names.some(name=>name.startsWith(prefix)&&name.endsWith(".tmp")))
+  throw Error("Unresolved replay registry write");
+}
 async function readRegistry(filePath,maxReceipts){
  try{
   const stat=await lstat(filePath);
   if(!stat.isFile()||stat.size>maxReceipts*80+128)throw Error("Unsafe registry");
-  const data=JSON.parse(await readFile(filePath,"utf8"));
+  const bytes=await readFile(filePath,"utf8");
+  const after=await lstat(filePath);
+  if(!after.isFile()||stat.dev!==after.dev||stat.ino!==after.ino||
+   stat.size!==after.size||stat.mtimeMs!==after.mtimeMs)
+   throw Error("Replay registry changed while reading");
+  const data=JSON.parse(bytes);
   if(data?.version!==1||!Array.isArray(data.ids)||data.ids.length>maxReceipts||
    data.ids.some(x=>typeof x!=="string"||!/^[a-f0-9]{64}$/.test(x))||
-   new Set(data.ids).size!==data.ids.length)throw Error("Invalid registry");
+   new Set(data.ids).size!==data.ids.length||
+   data.digest!==registryDigest(data.ids))throw Error("Invalid registry");
   return data.ids;
  }catch(error){
   if(error?.code==="ENOENT")return [];
@@ -37,7 +50,7 @@ async function persist(filePath,ids){
  let handle;
  try{
   handle=await open(temporary,"wx",0o600);
-  await handle.writeFile(JSON.stringify({version:1,ids}),"utf8");
+  await handle.writeFile(JSON.stringify({version:1,ids,digest:registryDigest(ids)}),"utf8");
   await handle.sync();
   await handle.close();handle=null;
   await rename(temporary,filePath);
@@ -49,7 +62,7 @@ async function persist(filePath,ids){
  }
 }
 /**
- * Phase 61: local-filesystem persistent replay tracking under exclusive lock.
+ * Phase 61-62: local-filesystem replay tracking with interruption detection,\n * digest-checked records and pathname-change checks under exclusive lock.\n * Digest is corruption detection, NOT an authentication or rollback anchor.
  * The lock is never stolen; failure blocks the receipt. Requires trusted
  * storage and durable backups; not a distributed consensus mechanism.
  */
@@ -64,6 +77,7 @@ export function createPersistentReviewReplayGuard({
  async function verify({observations,receipt,maxObservations}={}){
   try{
    return await withExclusiveFileLock(filePath,async()=>{
+    await assertNoInterruptedWrites(filePath);
     const ids=await readRegistry(filePath,maxReceipts);
     const local=createReviewAuditKeyRotationGuard({keys,activeKeyId,maxReceipts});
     const result=local.verify({observations,receipt,maxObservations});
