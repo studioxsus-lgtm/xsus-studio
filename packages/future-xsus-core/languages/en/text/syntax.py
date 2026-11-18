@@ -32,7 +32,12 @@ _AUXILIARIES = {
     "have": "have", "has": "have", "had": "have",
     "am": "be", "is": "be", "are": "be", "was": "be", "were": "be",
 }
+_MODALS = frozenset({"can", "could", "may", "might", "must", "shall", "should", "will", "would"})
 _NEGATIVE_CONTRACTIONS = {f"{form}n't": form for form in _AUXILIARIES if form != "am"}
+_NEGATIVE_CONTRACTIONS.update({
+    "can't": "can", "couldn't": "could", "mightn't": "might", "mustn't": "must",
+    "shan't": "shall", "shouldn't": "should", "won't": "will", "wouldn't": "would",
+})
 
 
 class Number(StrEnum):
@@ -128,10 +133,13 @@ def _noun_phrase(tokens: list[str]) -> Phrase | None:
 
 
 def _auxiliary(word: str) -> Auxiliary | None:
-    lemma = _AUXILIARIES.get(word.lower())
+    normalized = word.lower()
+    if normalized in _MODALS:
+        return Auxiliary(word, normalized, frozenset({VerbForm.MODAL}))
+    lemma = _AUXILIARIES.get(normalized)
     if lemma is None:
         return None
-    return Auxiliary(word, lemma, frozenset(_VERB_FORMS[word.lower()][lemma]))
+    return Auxiliary(word, lemma, frozenset(_VERB_FORMS[normalized][lemma]))
 
 
 def _predicate(
@@ -187,13 +195,13 @@ def _statement(tokens: list[str]) -> list[Clause]:
     analyses = []
     for index in range(1, len(tokens)):
         verb = tokens[index]
-        if verb.lower() not in _VERB_FORMS:
+        auxiliary = _auxiliary(verb)
+        if auxiliary is None and verb.lower() not in _VERB_FORMS:
             continue
         subject = _noun_phrase(tokens[:index])
         if subject is None:
             continue
         negated, predicate = _negation(tokens[index + 1:])
-        auxiliary = _auxiliary(verb)
         if auxiliary and predicate:
             analyses.extend(_predicate(subject, predicate[0], predicate[1:], ClauseKind.DECLARATIVE, negated, auxiliary))
         if not negated or (auxiliary and auxiliary.lemma == "be"):
@@ -210,6 +218,8 @@ def analyze_clause(sentence: str) -> Clause | None:
     tokens = []
     for word in words:
         expanded = _NEGATIVE_CONTRACTIONS.get(word.lower())
+        if word.lower() == "cannot":
+            expanded = "can"
         if expanded is None:
             tokens.append(word)
         else:

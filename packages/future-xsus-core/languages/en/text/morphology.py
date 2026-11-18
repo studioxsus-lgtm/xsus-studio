@@ -81,6 +81,7 @@ class VerbForm(StrEnum):
     FIRST_PERSON = "first_person_singular"
     NON_THIRD_PRESENT = "non_third_present"
     NON_SINGULAR_PAST = "non_singular_past"
+    MODAL = "modal"
 
 
 @dataclass(frozen=True, slots=True)

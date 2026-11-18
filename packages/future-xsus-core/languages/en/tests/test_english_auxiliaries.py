@@ -6,7 +6,7 @@ from pathlib import Path
 
 from languages.en.text.grammar import IssueCode
 from languages.en.text.linguistics import analyze_english
-from languages.en.text.morphology import inflect_verb
+from languages.en.text.morphology import VerbForm, inflect_verb
 from languages.en.text.syntax import ClauseKind
 
 
@@ -77,6 +77,61 @@ class EnglishAuxiliaryTests(unittest.TestCase):
             (IssueCode.SUBJECT_VERB_AGREEMENT, "do"),
             (IssueCode.AUXILIARY_VERB_FORM, "write"),
         ])
+
+    def test_modals_take_the_same_form_with_every_subject(self):
+        for subject, modal in (
+            ("I", "can"), ("She", "could"), ("They", "may"),
+            ("Alex", "might"), ("The children", "must"), ("We", "shall"),
+            ("He", "should"), ("You", "will"), ("It", "would"),
+        ):
+            with self.subTest(subject=subject, modal=modal):
+                result = analyze_english(f"{subject} {modal} write the report.")
+                clause = result.clause
+                self.assertEqual((clause.subject.text, clause.verb, clause.object.text), (subject, "write", "the report"))
+                self.assertEqual((clause.auxiliary.lemma, clause.auxiliary.forms), (modal, {VerbForm.MODAL}))
+                self.assertEqual(result.issues, ())
+
+    def test_modal_negation_and_questions_preserve_clause_roles(self):
+        for sentence, modal, kind, negated in (
+            ("Alex cannot write the report.", "can", ClauseKind.DECLARATIVE, True),
+            ("Alex can not write the report.", "can", ClauseKind.DECLARATIVE, True),
+            ("Could Alex write the report?", "could", ClauseKind.QUESTION, False),
+            ("Should Alex not write the report?", "should", ClauseKind.QUESTION, True),
+            ("Won’t Alex write the report?", "will", ClauseKind.QUESTION, True),
+            ("Alex shan't write the report.", "shall", ClauseKind.DECLARATIVE, True),
+            ("Can't Alex write the report?", "can", ClauseKind.QUESTION, True),
+        ):
+            with self.subTest(sentence=sentence):
+                result = analyze_english(sentence)
+                clause = result.clause
+                self.assertEqual((clause.subject.text, clause.verb, clause.object.text), ("Alex", "write", "the report"))
+                self.assertEqual((clause.auxiliary.lemma, clause.kind, clause.negated), (modal, kind, negated))
+                self.assertEqual(result.issues, ())
+
+    def test_modal_requires_base_form_for_lexical_verbs_and_be(self):
+        for sentence, observed, suggestion in (
+            ("She can writes the report.", "writes", "write"),
+            ("Could they drove?", "drove", "drive"),
+            ("They must not sleeping.", "sleeping", "sleep"),
+            ("Should Alex is ready?", "is", "be"),
+        ):
+            with self.subTest(sentence=sentence):
+                (issue,) = analyze_english(sentence).issues
+                self.assertEqual(
+                    (issue.code, issue.observed, issue.suggested),
+                    (IssueCode.AUXILIARY_VERB_FORM, observed, suggestion),
+                )
+        result = analyze_english("May can be ready.")
+        self.assertEqual((result.clause.subject.text, result.clause.complement), ("May", "ready"))
+        self.assertEqual(result.issues, ())
+
+    def test_modal_chains_and_misplaced_negation_stay_unsupported(self):
+        for sentence in (
+            "Alex could have written the report.", "Alex will be working.",
+            "Can not Alex write?", "Can't Alex not write?", "Alex should could work.",
+        ):
+            with self.subTest(sentence=sentence):
+                self.assertIsNone(analyze_english(sentence))
 
     def test_lexical_have_and_copular_be_remain_distinct(self):
         for sentence, lemma in (("Alex has the report.", "have"), ("Is Nora ready?", "be"), ("Nora is not a teacher.", "be")):

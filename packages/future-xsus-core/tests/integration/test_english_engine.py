@@ -13,6 +13,7 @@ from core.registry.engine_registry import EngineRegistry
 from core.registry.instance import InstanceStatus
 from core.routing.metrics import RoutingMetrics
 from core.routing.request_router import RequestRouter
+from core.sessions.session_store import InMemorySessionStore
 from languages.en.engine.english_engine import DEFAULT_CHECKPOINT, ENGLISH, EnglishEngine
 
 
@@ -25,15 +26,20 @@ class EnglishEngineIntegrationTests(unittest.IsolatedAsyncioTestCase):
         executor = RequestExecutor(RequestRouter(registry, RoutingMetrics()), LocalEngineTransport((engine,)))
         deadline = time_ns() // 1_000_000 + 5_000
         prompt = "Make this polite: Send me the file today."
-        first = await executor.execute(EngineRequest("req-1", "try-1", V1, ENGLISH, deadline, Conversation(prompt)))
+        store = InMemorySessionStore()
+        session = store.create("test-user")
+        first = await executor.execute(
+            EngineRequest("req-1", "try-1", V1, ENGLISH, deadline, session.conversation(prompt))
+        )
         self.assertIsInstance(first, EngineResponse)
         self.assertEqual(first.outcome, TextResult("Could you please send me the file today?", ENGLISH))
-        history = (
-            ConversationTurn(ConversationRole.USER, prompt),
-            ConversationTurn(ConversationRole.ASSISTANT, first.outcome.text),
+        store.append_exchange(
+            "test-user", session.session_id, expected_revision=session.revision,
+            user_text=prompt, assistant_text=first.outcome.text,
         )
+        updated = store.get("test-user", session.session_id)
         second = await executor.execute(
-            EngineRequest("req-2", "try-2", V1, ENGLISH, deadline, Conversation("Make it shorter.", history))
+            EngineRequest("req-2", "try-2", V1, ENGLISH, deadline, updated.conversation("Make it shorter."))
         )
         self.assertIsInstance(second, EngineResponse)
         self.assertEqual(second.outcome, TextResult("Please send the file today.", ENGLISH))

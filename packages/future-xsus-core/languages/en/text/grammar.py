@@ -38,6 +38,8 @@ def _verb_issue(clause: Clause) -> GrammarIssue | None:
     verb = auxiliary.text if auxiliary else clause.verb
     lemma = auxiliary.lemma if auxiliary else clause.lemma
     forms = auxiliary.forms if auxiliary else clause.forms
+    if VerbForm.MODAL in forms:
+        return None
     observed = verb.lower()
     subject = clause.subject
     if (lemma == "be" and observed == "be") or not forms & (_PRESENT | _PAST):
@@ -68,7 +70,11 @@ def check_grammar(clause: Clause) -> tuple[GrammarIssue, ...]:
     if (verb_issue := _verb_issue(clause)) is not None:
         issues.append(verb_issue)
     if clause.auxiliary is not None:
-        required = _AUXILIARY_FORMS[clause.auxiliary.lemma]
+        required = (
+            VerbForm.BASE
+            if VerbForm.MODAL in clause.auxiliary.forms
+            else _AUXILIARY_FORMS[clause.auxiliary.lemma]
+        )
         if required not in clause.forms:
             expected = getattr(inflect_verb(clause.lemma), required.value)
             issues.append(GrammarIssue(IssueCode.AUXILIARY_VERB_FORM, clause.verb, expected))

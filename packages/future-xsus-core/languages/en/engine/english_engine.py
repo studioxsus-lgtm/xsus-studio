@@ -12,6 +12,7 @@ from core.contracts.request import Conversation, EngineRequest
 from core.contracts.response import EngineResponse, TextResult
 
 from ..models.checkpoint import load_checkpoint
+from ..models.profiles import load_profile
 from ..text.generation.generate import generate
 
 ENGLISH = LanguageTag("en")
@@ -19,8 +20,15 @@ DEFAULT_CHECKPOINT = Path(__file__).resolve().parents[1] / "models" / "checkpoin
 
 
 class EnglishEngine:
-    def __init__(self, checkpoint: Path, instance_id: str) -> None:
-        self._tokenizer, self._model, revision = load_checkpoint(checkpoint)
+    def __init__(self, checkpoint: Path | None, instance_id: str, *, profile: str | None = None) -> None:
+        if profile is not None and checkpoint is not None:
+            raise ValueError("Choose an English model profile or a checkpoint path")
+        if profile is not None:
+            self._tokenizer, self._model, revision = load_profile(profile)
+        else:
+            self._tokenizer, self._model, revision = load_checkpoint(
+                DEFAULT_CHECKPOINT if checkpoint is None else checkpoint,
+            )
         identity = EngineIdentity("xsus-en", revision, V1)
         self._descriptor = EngineDescriptor(
             identity, (LanguageSupport(ENGLISH, frozenset({Capability.CONVERSATION})),),
@@ -55,5 +63,10 @@ class EnglishEngine:
 
 
 def create_engine() -> EnglishEngine:
-    checkpoint = Path(os.environ.get("XSUS_EN_CHECKPOINT", str(DEFAULT_CHECKPOINT)))
-    return EnglishEngine(checkpoint, os.environ.get("XSUS_ENGINE_INSTANCE_ID", "en-local-1"))
+    checkpoint = os.environ.get("XSUS_EN_CHECKPOINT")
+    profile = os.environ.get("XSUS_EN_MODEL_PROFILE")
+    return EnglishEngine(
+        Path(checkpoint) if checkpoint is not None else None,
+        os.environ.get("XSUS_ENGINE_INSTANCE_ID", "en-local-1"),
+        profile=profile,
+    )
