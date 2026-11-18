@@ -55,6 +55,7 @@ describe("Hyper phase 78 — challenge-bound witness authentication",()=>{
  it("blocks missing keys and malformed attestations",()=>{
   denied(inspect({witnessKeys:{"w-1":w1}}));
   const obs=observations(),atts=attestations(obs);
+  atts[1]={...atts[1]};
   Object.defineProperty(atts[1],"authenticationTag",{get(){throw Error("unsafe");}});
   denied(inspect({attestations:atts}));
  });
