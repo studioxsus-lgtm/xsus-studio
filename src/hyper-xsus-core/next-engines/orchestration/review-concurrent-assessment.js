@@ -22,6 +22,11 @@ export async function assessConcurrentReviewRecovery({filePath,store,requests,ma
   string(request.traceId,"traceId");
   return {requestId:request.requestId,traceId:request.traceId,signal:request.signal};
  });
+ const interrupted=()=>Object.freeze({state:"review_blocked",
+  lockState:"unverified",journalState:"unverified",
+  errorCode:"ASSESSMENT_INTERRUPTED",recoveryAuthorized:false,
+  deletionAuthorized:false,retrySafe:false,executionAuthorized:false,
+  sideEffects:false,nextAction:"manual_investigation"});
  // Workers claim distinct indices synchronously; at most maxConcurrent
  // assessments can be in flight. Results retain original request order.
  const settled=new Array(normalized.length);
@@ -30,6 +35,12 @@ export async function assessConcurrentReviewRecovery({filePath,store,requests,ma
   while(cursor<normalized.length){
    const index=cursor++;
    try{
+    // Skip queued cancellations before any filesystem or store access.
+    // Already-running assessments remain responsible for their own signal.
+    if(normalized[index].signal?.aborted===true){
+     settled[index]={status:"fulfilled",value:interrupted()};
+     continue;
+    }
     const value=await assessReviewRecovery({...normalized[index],filePath,store});
     settled[index]={status:"fulfilled",value};
    }catch(reason){settled[index]={status:"rejected",reason};}
