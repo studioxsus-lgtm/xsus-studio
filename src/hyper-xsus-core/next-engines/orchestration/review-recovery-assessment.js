@@ -4,7 +4,9 @@ import {reconcileReviewRecord} from "./review-reconciliation.js";
 
 /**
  * Read-only recovery assessment. Lock and journal are separate observations,
- * not an atomic snapshot. Re-check the lock after journal reconciliation to\n * detect observable changes; matching checks do NOT prove atomic consistency.\n * Never grants retries, lock removal or execution.
+ * not an atomic snapshot. Re-check the lock after journal reconciliation to
+ * detect observable changes; matching checks do NOT prove atomic consistency.
+ * Never grants retries, lock removal or execution.
  */
 export async function assessReviewRecovery({filePath,requestId,traceId,store}={}){
  string(filePath,"filePath");
@@ -32,7 +34,8 @@ export async function assessReviewRecovery({filePath,requestId,traceId,store}={}
  // This is a conservative check, not a transaction or linearizable snapshot.
  const stable=lock.state===lockAfter.state&&
   lock.lockPresent===lockAfter.lockPresent&&
-  lock.ownerPid===lockAfter.ownerPid;
+  lock.ownerPid===lockAfter.ownerPid&&
+  lock.ownerFingerprint===lockAfter.ownerFingerprint;
  const recorded=journal.state==="recorded_for_manual_review";
  const clear=stable&&lock.state==="not_observed";
  return Object.freeze({
