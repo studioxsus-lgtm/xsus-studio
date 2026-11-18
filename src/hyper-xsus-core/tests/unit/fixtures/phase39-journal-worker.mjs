@@ -8,14 +8,14 @@ const request={contractVersion:"1.0.0",requestId:id,engineId:"six-engine-orchest
 async function main(){
  if(mode==="hold"){
   await withExclusiveFileLock(filePath,async()=>{
-   process.stdout.write("LOCKED\\n");
+   process.stdout.write("LOCKED\n");
    await new Promise(resolve=>process.stdin.once("data",resolve));
   });
   return;
  }
  const store=createPersistentDecisionJournalStore({filePath});
- if(mode==="save"){const result=await store.save(coordinateSixEngines(request));process.stdout.write(JSON.stringify(result)+"\\n");return;}
- if(mode==="load"){const result=await store.load();process.stdout.write(JSON.stringify(result)+"\\n");return;}
+ if(mode==="save"){const result=await store.save(coordinateSixEngines(request));process.stdout.write(JSON.stringify(result)+"\n");return;}
+ if(mode==="load"){const result=await store.load();process.stdout.write(JSON.stringify(result)+"\n");return;}
  throw Error("Unknown worker mode");
 }
-main().catch(error=>{process.stderr.write(JSON.stringify({code:error.code??null,message:error.message})+"\\n");process.exitCode=1;});
+main().catch(error=>{process.stderr.write(JSON.stringify({code:error.code??null,message:error.message})+"\n");process.exitCode=1;});
