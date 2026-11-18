@@ -31,10 +31,12 @@ describe("Hyper six engines phase 24 — combined failure integrity",()=>{
     expect(plane.snapshot().health).toMatchObject({inFlight:1,timedOut:1});
     await expect(plane.run(req("overflow"),delayed)).rejects.toMatchObject({code:"CAPACITY_EXCEEDED"});
     gate.resolve();
-    // Reconciliation waits on the journal store's exclusive lock when needed.
-    // The guard can remain busy briefly after the caller times out.
-    for(let i=0;i<30&&plane.snapshot().health.inFlight!==0;i++)
-      await new Promise(resolve=>setTimeout(resolve,5));
+    // Caller timeout does not cancel the underlying write. Wait for the
+    // resource guard to release capacity, using a bounded wall-clock deadline
+    // rather than assuming CI will settle within 150 ms.
+    const settleBy=Date.now()+5000;
+    while(plane.snapshot().health.inFlight!==0&&Date.now()<settleBy)
+      await new Promise(resolve=>setTimeout(resolve,10));
     expect(plane.snapshot().health.inFlight).toBe(0);
     const recovered=await reconcileReviewRecord({requestId:"phase24",traceId:"trace24"},store);
     expect(recovered).toMatchObject({recorded:true,retrySafe:false,executionAuthorized:false,sideEffects:false});
