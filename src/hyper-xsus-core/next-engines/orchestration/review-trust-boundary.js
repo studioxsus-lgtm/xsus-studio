@@ -18,17 +18,30 @@ export function createReviewTrustBoundary({maxBytes=65536,maxDepth=16,maxNodes=4
  function isolate(input){
   object(input,"input");
    const seen=new WeakSet();
-  let nodes=0;
+  let nodes=0,bytes=0;
+  function budget(n){bytes+=n;if(bytes>maxBytes)throw new EngineContractError("REQUEST_TOO_LARGE","Trust boundary byte limit exceeded");}
   function copy(value,depth){
    if(depth>maxDepth||++nodes>maxNodes)throw invalid();
-   if(value===null||typeof value==="string"||typeof value==="boolean")return value;
-   if(typeof value==="number"&&Number.isFinite(value))return value;
+   if(value===null||typeof value==="string"||typeof value==="boolean"){
+    budget(Buffer.byteLength(JSON.stringify(value),"utf8"));return value;
+   }
+   if(typeof value==="number"&&Number.isFinite(value)){
+    budget(Buffer.byteLength(JSON.stringify(value),"utf8"));return value;
+   }
    if(typeof value!=="object"||seen.has(value))throw invalid();
    if(Object.getPrototypeOf(value)!==Object.prototype&&
       Object.getPrototypeOf(value)!==null&&!Array.isArray(value))throw invalid();
    seen.add(value);
-   const result=Array.isArray(value)?[]:Object.create(null);
-   for(const key of Object.keys(value)){
+   const array=Array.isArray(value);
+   if(array&&(Object.keys(value).length!==value.length||
+      Object.keys(value).some(key=>!(/^(0|[1-9]\\d*)$/.test(key))||Number(key)>=value.length)))throw invalid();
+   const result=array?[]:Object.create(null);
+   budget(2);
+   const keys=Object.keys(value);
+   for(let i=0;i<keys.length;i++){
+    const key=keys[i];
+    if(i)budget(1);
+    if(!array)budget(Buffer.byteLength(JSON.stringify(key),"utf8")+1);
     if(FORBIDDEN.has(key))throw invalid();
     const descriptor=Object.getOwnPropertyDescriptor(value,key);
     if(!descriptor||!("value" in descriptor))throw invalid();
@@ -37,8 +50,10 @@ export function createReviewTrustBoundary({maxBytes=65536,maxDepth=16,maxNodes=4
    return result;
   }
   const isolated=copy(input,0);
-  const bytes=Buffer.byteLength(JSON.stringify(isolated),"utf8");
-  if(bytes>maxBytes)throw new EngineContractError("REQUEST_TOO_LARGE","Trust boundary byte limit exceeded");
+  // Budget is charged during traversal, before allocating the full copy.
+  // Keep the final serialization check as a defensive consistency assertion.
+  if(Buffer.byteLength(JSON.stringify(isolated),"utf8")>maxBytes)
+   throw new EngineContractError("REQUEST_TOO_LARGE","Trust boundary byte limit exceeded");
   const inputs=object(object(isolated.payload,"payload").inputs,"inputs");
   if(Object.keys(inputs).some(name=>!STAGES.has(name)))throw invalid();
   return isolated;
