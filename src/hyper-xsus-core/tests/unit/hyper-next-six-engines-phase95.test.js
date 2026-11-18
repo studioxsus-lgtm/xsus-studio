@@ -91,7 +91,7 @@ const makeAnchored=()=>{
  return {...data,anchor,anchorKey,trustedAnchorTag:anchor.authenticationTag,
   trustedObservationCount:2};
 };
-const makeContinuity=()=>{
+const makeAnchorContinuity=()=>{
  const data=makeAnchored();
  const earlier={observations:data.observations,expectedEpochIds:data.expectedEpochIds,
   anchor:data.anchor,anchorKey,trustedAnchorTag:data.trustedAnchorTag,
@@ -111,7 +111,7 @@ const makeContinuity=()=>{
  return {...data,earlier,later};
 };
 const makeForks=()=>{
- const data=makeContinuity();
+ const data=makeAnchorContinuity();
  const first={...data.earlier,anchorId:"anchor-one"};
  const second={...data.later,anchorId:"anchor-two"};
  return {...data,anchors:[first,second],expectedAnchorIds:["anchor-one","anchor-two"]};
