@@ -32,6 +32,9 @@ export function inspectReviewWitnessDecisionAnchorAudit({
  if(!id(ledgerId)||!id(expectedDecisionId))
   throw new EngineContractError("INVALID_INPUT","Invalid anchor audit context");
  try{
+  if(!Array.isArray(anchors)||!Array.isArray(expectedAnchorIds)||
+   anchors.length<2||anchors.length>8||anchors.length!==expectedAnchorIds.length)
+   return blocked("ANCHOR_AUDIT_EVIDENCE_UNVERIFIED");
   const verdict=inspectReviewWitnessDecisionAnchorForks({
    anchors,expectedAnchorIds,beforeRegistry,afterRegistry,receipt,authorityKey,
    expectedAttemptId,expectedBeforeEpochId,expectedRegistryRevision,
