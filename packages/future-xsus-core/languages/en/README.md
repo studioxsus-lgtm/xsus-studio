@@ -121,7 +121,7 @@ Analizuesi i anglishtes ekzekutohet lokalisht dhe përdor fjalorë të vegjël e
 | Skedari | Përgjegjësia |
 | --- | --- |
 | `text/morphology.py` | Gjeneron format kryesore të foljeve dhe shumësin e emrave. Përdor një fjalor për format e parregullta dhe rregulla drejtshkrimore për format e rregullta. |
-| `text/syntax.py` | Dallon kryefjalën, foljen kryesore, foljen ndihmëse, kundrinorin, plotësuesin dhe mohimin. Mbulon pohime, mohime dhe pyetje po/jo me `do`, `have`, `be` dhe foljet modale. |
+| `text/syntax.py` | Dallon kryefjalën, foljen kryesore, foljen ndihmëse, kundrinorin, plotësuesin dhe mohimin. Mbulon pohime, mohime, pyetje po/jo dhe pyetje të thjeshta për kryefjalën ose kundrinorin. |
 | `text/grammar.py` | Kontrollon përputhjen me kryefjalën, rasën e përemrave, numrin e përcaktorëve dhe formën që kërkon folja ndihmëse. |
 | `text/linguistics.py` | Ekspozon analizën e përbashkët përmes `analyze_english()` dhe komandës lokale. |
 
@@ -135,10 +135,14 @@ python3 -m languages.en.text.linguistics clause 'Alex called Sam.'
 python3 -m languages.en.text.linguistics clause 'Did Alex wrote the report?'
 python3 -m languages.en.text.linguistics clause 'Alex has wrote the report.'
 python3 -m languages.en.text.linguistics clause "Isn't Alex writing the report?"
+python3 -m languages.en.text.linguistics clause 'Who wrote the report?'
+python3 -m languages.en.text.linguistics clause 'What did Alex write?'
 ```
 
 Pas `do` pritet forma bazë, pas `have` pjesorja e shkuar dhe pas `be` në ndërtimin progresiv forma me `-ing`. Për shembull, `Did Alex wrote` merr sugjerimin `write`, ndërsa `Alex has wrote` merr `written`. Pas foljeve modale si `can`, `should` dhe `will` pritet gjithashtu forma bazë.
 Për shembull, `Can Alex writes the report?` merr sugjerimin `write`.
 Mohimi njihet si `not`, si `cannot` dhe në shkurtime si `didn't`, `isn't` dhe `can't`.
 
-Analizuesi përdor një fjalor të kufizuar dhe mbulon një folje ndihmëse për ndërtim. Pyetjet me fjalë pyetëse, zinxhirët me disa folje ndihmëse dhe analiza e zërit pësor mbeten jashtë mbulimit. Për strukturat që nuk i analizon, komanda kthen `unsupported_clause`. Analizuesi ekzekutohet më vete nga gjenerimi i bisedës.
+Pyetjet me `who` dhe `what` mund të kërkojnë kryefjalën ose kundrinorin e drejtë. `Whom` përdoret për kundrinorin. Kur dallon një prej këtyre strukturave, rezultati jep `interrogative_role` si `subject` ose `object`. Numri i një kryefjale pyetëse mbetet i papërcaktuar kur mungon konteksti.
+
+Analizuesi përdor një fjalor të kufizuar dhe mbulon një folje ndihmëse për ndërtim. Pyetjet për vendin, kohën dhe mënyrën, ndërtimet pyetëse këpujore, zinxhirët me disa folje ndihmëse dhe zëri pësor mbeten jashtë mbulimit. Për strukturat që nuk i analizon, komanda kthen `unsupported_clause`. Analizuesi ekzekutohet më vete nga gjenerimi i bisedës.

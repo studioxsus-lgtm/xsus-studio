@@ -143,7 +143,7 @@ class EnglishAuxiliaryTests(unittest.TestCase):
 
     def test_unsupported_forms_do_not_receive_misleading_progressive_diagnostics(self):
         for sentence in (
-            "The report was written.", "Was the report written?", "What did Alex write?",
+            "The report was written.", "Was the report written?", "Where did Alex write?",
             "Alex has been writing.", "Did not Alex write?",
         ):
             with self.subTest(sentence=sentence):

@@ -2,7 +2,7 @@
 
 import re
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 
 from .morphology import VerbForm, inflect_verb, pluralize_noun
@@ -33,6 +33,17 @@ _AUXILIARIES = {
     "am": "be", "is": "be", "are": "be", "was": "be", "were": "be",
 }
 _MODALS = frozenset({"can", "could", "may", "might", "must", "shall", "should", "will", "would"})
+_WH_SUBJECTS = frozenset({"who", "what"})
+_WH_OBJECTS = _WH_SUBJECTS | {"whom"}
+# Existing lexical senses that license a direct object.
+_WH_TRANSITIVE_VERBS = frozenset({
+    "answer", "ask", "break", "bring", "build", "buy", "call", "check", "choose",
+    "do", "drink", "drive", "drop", "eat", "explain", "find", "finish", "forget",
+    "give", "have", "help", "keep", "know", "leave", "like", "lose", "make", "meet",
+    "need", "open", "pay", "plan", "read", "receive", "return", "say", "see", "sell",
+    "send", "share", "study", "take", "teach", "tell", "thank", "visit", "wear",
+    "win", "write",
+})
 _NEGATIVE_CONTRACTIONS = {f"{form}n't": form for form in _AUXILIARIES if form != "am"}
 _NEGATIVE_CONTRACTIONS.update({
     "can't": "can", "couldn't": "could", "mightn't": "might", "mustn't": "must",
@@ -48,6 +59,11 @@ class Number(StrEnum):
 class ClauseKind(StrEnum):
     DECLARATIVE = "declarative"
     QUESTION = "question"
+
+
+class InterrogativeRole(StrEnum):
+    SUBJECT = "subject"
+    OBJECT = "object"
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +92,7 @@ class Clause:
     kind: ClauseKind = ClauseKind.DECLARATIVE
     negated: bool = False
     auxiliary: Auxiliary | None = None
+    interrogative_role: InterrogativeRole | None = None
 
 
 _PRONOUNS = {
@@ -191,14 +208,15 @@ def _question(tokens: list[str], *, contracted_start: bool) -> list[Clause]:
     return analyses
 
 
-def _statement(tokens: list[str]) -> list[Clause]:
+def _statement(tokens: list[str], *, wh_subject: Phrase | None = None) -> list[Clause]:
     analyses = []
-    for index in range(1, len(tokens)):
+    subject_boundaries = (1,) if wh_subject else range(1, len(tokens))
+    for index in subject_boundaries:
         verb = tokens[index]
         auxiliary = _auxiliary(verb)
         if auxiliary is None and verb.lower() not in _VERB_FORMS:
             continue
-        subject = _noun_phrase(tokens[:index])
+        subject = wh_subject or _noun_phrase(tokens[:index])
         if subject is None:
             continue
         negated, predicate = _negation(tokens[index + 1:])
@@ -206,6 +224,26 @@ def _statement(tokens: list[str]) -> list[Clause]:
             analyses.extend(_predicate(subject, predicate[0], predicate[1:], ClauseKind.DECLARATIVE, negated, auxiliary))
         if not negated or (auxiliary and auxiliary.lemma == "be"):
             analyses.extend(_predicate(subject, verb, predicate, ClauseKind.DECLARATIVE, negated))
+    return analyses
+
+
+def _wh_question(tokens: list[str], *, contracted_auxiliary: bool) -> list[Clause]:
+    if len(tokens) < 2:
+        return []
+    interrogative = tokens[0].lower()
+    phrase = Phrase(tokens[0], interrogative, 3, None)
+    analyses = []
+    if interrogative in _WH_SUBJECTS:
+        analyses.extend(
+            replace(clause, kind=ClauseKind.QUESTION, interrogative_role=InterrogativeRole.SUBJECT)
+            for clause in _statement(tokens, wh_subject=phrase)
+            if clause.lemma != "be"
+        )
+    analyses.extend(
+        replace(clause, object=phrase, interrogative_role=InterrogativeRole.OBJECT)
+        for clause in _question(tokens[1:], contracted_start=contracted_auxiliary)
+        if clause.object is None and clause.lemma in _WH_TRANSITIVE_VERBS
+    )
     return analyses
 
 
@@ -224,7 +262,10 @@ def analyze_clause(sentence: str) -> Clause | None:
             tokens.append(word)
         else:
             tokens.extend((expanded.capitalize() if word[0].isupper() else expanded, "not"))
-    if text.endswith("?"):
+    if text.endswith("?") and words[0].lower() in _WH_OBJECTS:
+        contracted_auxiliary = len(words) > 1 and words[1].lower() in _NEGATIVE_CONTRACTIONS
+        analyses = _wh_question(tokens, contracted_auxiliary=contracted_auxiliary)
+    elif text.endswith("?"):
         analyses = _question(tokens, contracted_start=words[0].lower() in _NEGATIVE_CONTRACTIONS)
     else:
         analyses = _statement(tokens)

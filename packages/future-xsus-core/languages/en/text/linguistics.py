@@ -36,6 +36,8 @@ def main() -> int:
             return 1
         result = asdict(analysis)
         result["clause"]["forms"] = sorted(analysis.clause.forms)
+        if analysis.clause.interrogative_role is None:
+            del result["clause"]["interrogative_role"]
         if analysis.clause.auxiliary is not None:
             result["clause"]["auxiliary"]["forms"] = sorted(analysis.clause.auxiliary.forms)
     else:
