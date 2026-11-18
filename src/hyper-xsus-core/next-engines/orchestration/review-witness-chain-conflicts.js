@@ -30,13 +30,16 @@ export function inspectReviewWitnessChainConflicts({
  if(!seq(trustedPreviousRoundCount)||trustedPreviousRoundCount<3||
   !hex(trustedPreviousHeadTag)||!Array.isArray(candidates)||candidates.length!==2)
   throw new EngineContractError("INVALID_INPUT","Invalid witness chain conflict configuration");
+ let stage="INITIAL";
  try{
   const checked=[];
   for(let i=0;i<2;i++){
+   stage="CANDIDATE_"+i;
    const d=Object.getOwnPropertyDescriptor(candidates,String(i));
    if(!d||!("value" in d))return blocked("CHAIN_CANDIDATE_UNVERIFIED");
    const c=d.value,rounds=own(c,"rounds"),chain=own(c,"chain");
    const head=own(c,"trustedHeadTag"),count=own(c,"trustedRoundCount");
+   stage="EXTENSION_"+i;
    const result=inspectReviewWitnessChainExtension({
     previousRounds,previousChain,trustedPreviousHeadTag,trustedPreviousRoundCount,
     nextRounds:rounds,nextChain:chain,trustedNextHeadTag:head,
@@ -48,7 +51,9 @@ export function inspectReviewWitnessChainConflicts({
    if(!Array.isArray(links)||links.length!==count)
     return blocked("CHAIN_CANDIDATE_UNVERIFIED");
    checked.push({links,count,head});
+   stage="CANDIDATE_CHECKED_"+i;
   }
+  stage="COMPARE";
   const [a,b]=checked;
   for(let i=0;i<Math.min(a.count,b.count);i++){
    const da=Object.getOwnPropertyDescriptor(a.links,String(i));
@@ -70,5 +75,5 @@ export function inspectReviewWitnessChainConflicts({
    longerRoundCount:Math.max(a.count,b.count),
    recoveryAuthorized:false,deletionAuthorized:false,retrySafe:false,
    executionAuthorized:false,sideEffects:false,nextAction:"manual_review"});
- }catch{return blocked("CHAIN_CONFLICT_UNVERIFIED");}
+ }catch{return blocked("CHAIN_CONFLICT_UNVERIFIED_"+stage);}
 }
