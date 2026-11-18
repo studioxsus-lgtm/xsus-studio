@@ -14,6 +14,9 @@ async function main(){
    process.stdin.resume();
    process.stdout.write("LOCKED\n");
    await released;
+   // A flowing stdin stream otherwise keeps this worker alive even after
+   // the exclusive lock has been released and main() has returned.
+   process.stdin.pause();
   });
   return;
  }
