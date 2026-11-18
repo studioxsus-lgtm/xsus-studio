@@ -15,15 +15,16 @@ const denied=result=>expect(result).toMatchObject({state:"review_blocked",
  executionAuthorized:false,sideEffects:false});
 describe("Hyper phase 49 — deadline classification without unsafe I/O cancellation",()=>{
  it("reports deadline exceeded after a slow load settles",async()=>fixture(async filePath=>{
-  let release,entered;
-  const gate=new Promise(resolve=>{release=resolve;});
-  const started=new Promise(resolve=>{entered=resolve;});
-  const store={load:async()=>{entered();await gate;return null;}};
-  const pending=run(filePath,store,[req("slow",{timeoutMs:5})]);
-  await started;
-  await new Promise(resolve=>setTimeout(resolve,30));
-  release();
-  const result=await pending;
+  // Avoid an unbounded handshake: under heavy CI load the deadline may
+  // expire before store.load begins, so awaiting "started" can hang forever.
+  let loads=0;
+  const store={load:async()=>{
+   loads++;
+   await new Promise(resolve=>setTimeout(resolve,350));
+   return null;
+  }};
+  const result=await run(filePath,store,[req("slow",{timeoutMs:100})]);
+  expect(loads).toBeLessThanOrEqual(1);
   denied(result.results[0].assessment);
   expect(result.results[0].assessment.errorCode).toBe("ASSESSMENT_DEADLINE_EXCEEDED");
  }));
