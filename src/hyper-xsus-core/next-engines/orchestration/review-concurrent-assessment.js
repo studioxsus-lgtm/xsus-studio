@@ -53,6 +53,7 @@ export async function assessConcurrentReviewRecovery({filePath,store,requests,ma
      const controller=new AbortController();
      const onAbort=()=>controller.abort();
      let timer;
+     let timedOut=false;
      try{
       if(request.signal!==undefined){
        if(typeof request.signal?.addEventListener!=="function"||
@@ -62,11 +63,15 @@ export async function assessConcurrentReviewRecovery({filePath,store,requests,ma
        if(request.signal.aborted)controller.abort();
       }
       if(!controller.signal.aborted)
-       timer=setTimeout(()=>controller.abort(),request.timeoutMs);
+       timer=setTimeout(()=>{timedOut=true;controller.abort();},request.timeoutMs);
       // Wait for the underlying read to settle; timeout does not cancel I/O.
       const value=await assessReviewRecovery({...request,filePath,
        signal:controller.signal,store});
-      settled[index]={status:"fulfilled",value};
+      settled[index]={status:"fulfilled",value:timedOut?
+       Object.freeze({state:"review_blocked",lockState:"unverified",journalState:"unverified",
+        errorCode:"ASSESSMENT_DEADLINE_EXCEEDED",recoveryAuthorized:false,
+        deletionAuthorized:false,retrySafe:false,executionAuthorized:false,
+        sideEffects:false,nextAction:"manual_investigation"}):value};
      }finally{
       if(timer!==undefined)clearTimeout(timer);
       request.signal?.removeEventListener?.("abort",onAbort);
