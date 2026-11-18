@@ -20,8 +20,12 @@ describe("Hyper phase 43 — lock ownership identity stability",()=>{
  it("detects token replacement with the same PID between observations",async()=>fixture(async(filePath,store)=>{
   const lockPath=filePath+".lock";
   await writeFile(lockPath,JSON.stringify({pid:process.pid,token:randomUUID()}));
-  const injected={load:async()=>{const record=await store.load();
-   await writeFile(lockPath,JSON.stringify({pid:process.pid,token:randomUUID()}));return record;}};
+  const injected={load:async()=>{
+   // Rotate ownership before the underlying store attempts to acquire
+   // its lock; store.load may fail closed with XSUS_FILE_LOCK_BUSY.
+   await writeFile(lockPath,JSON.stringify({pid:process.pid,token:randomUUID()}));
+   return store.load();
+  }};
   const result=await assess(filePath,injected);
   expect(result).toMatchObject({state:"review_blocked",lockState:"changed_during_assessment"});
   denied(result);
