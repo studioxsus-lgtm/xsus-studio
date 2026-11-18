@@ -25,11 +25,10 @@ const opts={ledgerId,ledgerKey,chainKey,startingRevision:5,minimumSequence:8};
 const make=()=>{
  const base=[round(0),round(1),round(2)];
  const previousChain=createReviewWitnessRotationChain({...opts,rounds:base});
- const candidate=rounds=>({
-  rounds,chain:createReviewWitnessRotationChain({...opts,rounds}),
-  trustedRoundCount:rounds.length,
-  get trustedHeadTag(){return this.chain.headTag;}
- });
+ const candidate=rounds=>{
+  const chain=createReviewWitnessRotationChain({...opts,rounds});
+  return {rounds,chain,trustedRoundCount:rounds.length,trustedHeadTag:chain.headTag};
+ };
  const first=candidate([...base,round(3)]);
  const second=candidate([...base,round(3)]);
  return {...opts,previousRounds:base,previousChain,
