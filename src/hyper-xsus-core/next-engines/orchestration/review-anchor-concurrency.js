@@ -1,5 +1,5 @@
 import {EngineContractError} from "../contracts.js";
-import {createReviewReplayRollbackAnchor,verifyReviewReplayRollbackAnchor} from "./review-replay-rollback-anchor.js";
+import {verifyReviewReplayRollbackAnchor} from "./review-replay-rollback-anchor.js";
 
 const blocked=code=>Object.freeze({state:"anchor_conflict_blocked",
  findings:Object.freeze([code]),recoveryAuthorized:false,deletionAuthorized:false,
@@ -14,7 +14,6 @@ const own=(value,name)=>{
 const validDigest=x=>typeof x==="string"&&/^[a-f0-9]{64}$/.test(x);
 const validTag=x=>typeof x==="string"&&/^[a-f0-9]{64}$/.test(x);
 const validSequence=x=>Number.isSafeInteger(x)&&x>=0;
-const same=(a,b)=>a.sequence===b.sequence&&a.tag===b.tag&&a.digest===b.digest;
 function verifyProposal(proposal,current,key){
  const state=own(proposal,"state");
  const expectedSequence=own(proposal,"expectedSequence");
