@@ -1,5 +1,6 @@
 import {lstat,readFile} from "node:fs/promises";
-import {EngineContractError,string} from "../contracts.js";
+import {createHash} from "node:crypto";
+import {string} from "../contracts.js";
 
 /**
  * Read-only, fail-closed inspection of a journal's filesystem lock.
@@ -38,7 +39,23 @@ export async function inspectReviewLock({filePath}={}){
   return Object.freeze({state:"unverifiable_lock",lockPresent:true,
    recoveryAuthorized:false,deletionAuthorized:false,retrySafe:false,
    nextAction:"manual_investigation"});
+ let after;
+ try{after=await lstat(lockPath);}
+ catch(error){
+  if(error?.code==="ENOENT")return Object.freeze({state:"changed_during_inspection",lockPresent:false,
+   recoveryAuthorized:false,deletionAuthorized:false,retrySafe:false,nextAction:"manual_investigation"});
+  throw error;
+ }
+ if(!after.isFile()||after.isSymbolicLink()||stat.dev!==after.dev||stat.ino!==after.ino||
+    stat.size!==after.size||stat.mtimeMs!==after.mtimeMs||stat.ctimeMs!==after.ctimeMs)
+  return Object.freeze({state:"changed_during_inspection",lockPresent:true,
+   recoveryAuthorized:false,deletionAuthorized:false,retrySafe:false,nextAction:"manual_investigation"});
+ // A digest is for comparison only: it does not prove ownership or liveness.
+ // Do not expose the raw lock token in diagnostic results.
+ const ownerFingerprint=createHash("sha256").update(JSON.stringify({
+  pid:owner.pid,token:owner.token,dev:String(stat.dev),ino:String(stat.ino)
+ })).digest("hex");
  return Object.freeze({state:"lock_observed",lockPresent:true,
-  ownerPid:owner.pid,recoveryAuthorized:false,deletionAuthorized:false,
+  ownerPid:owner.pid,ownerFingerprint,recoveryAuthorized:false,deletionAuthorized:false,
   retrySafe:false,nextAction:"manual_investigation"});
 }
