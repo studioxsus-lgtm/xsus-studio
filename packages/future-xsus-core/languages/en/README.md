@@ -195,3 +195,40 @@ OPENBLAS_NUM_THREADS=1 python3 -m languages.en.training.train \
   --written-v4 --vectorized --merges 192 --hidden-size 32 --context-size 64 --epochs 32 \
   --output /tmp/xsus-en-written-v4.json.gz
 ```
+
+## Modeli v5 për anglishten e shkruar
+
+Profili `written-v5` shton 24 mësime. Gramatika dhe pikësimi mbulojnë ndër të
+tjera fjalitë lidhore, modifikuesit, referencat e përemrave, kohët e foljeve,
+vizën lidhëse dhe përdorimin e nyjave. Mësimet e redaktimit trajtojnë qartësinë
+dhe organizimin e tekstit. Burimet e dy grupeve gjenden në `data/lessons/`.
+
+Korpusi ka 2 573 shembuj. Nga këta, 2 160 janë formulime të reja për 24 tema,
+me 90 formulime për temë. Trajnimi kufizon në 12 përsëritjet e një shembulli
+pas normalizimit. Grupi i vlerësimit v5 përdor 72 kërkesa të veçuara me
+formulime dhe terma alternativë për të njëjtat tema.
+
+```sh
+XSUS_EN_MODEL_PROFILE=written-v5 \
+  python3 -m languages.en.evaluation.demo 'What should an editor know about defining relative clauses?'
+```
+
+Për të rindërtuar korpusin dhe për të trajnuar checkpoint-in, përdor
+NumPy 2.3.5. Për ekzekutimin e modelit të trajnuar mjafton biblioteka
+standarde e Python-it.
+
+```sh
+python3 -m languages.en.data.preparation.build_written_v5 --output-root /tmp/xsus-written-v5
+OPENBLAS_NUM_THREADS=1 python3 -m languages.en.training.train \
+  --training /tmp/xsus-written-v5/data/training-v5.jsonl \
+  --evaluation /tmp/xsus-written-v5/evaluation/quality-v5.jsonl \
+  --written-v5 --vectorized --merges 256 --hidden-size 40 --context-size 64 \
+  --epochs 32 --max-prepared-repeats 12 --output /tmp/xsus-en-written-v5.json.gz
+```
+
+| Vlerësimi | v4 | v5 |
+| --- | ---: | ---: |
+| Mësimet e reja të anglishtes së shkruar | 0/72 | 72/72 |
+| Mësimet e v4 | 36/36 | 36/36 |
+| Biseda dhe sqarime | 16/16 | 16/16 |
+| Riformulime | 12/12 | 12/12 |

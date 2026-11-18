@@ -1,0 +1,88 @@
+"""Original lessons for editing and revising written English."""
+
+LESSONS = (
+    (
+        "paragraph-transitions",
+        "paragraph transitions",
+        r"(?:paragraph transitions|links between paragraphs|connections between paragraphs|transitions between paragraphs)",
+        "Show how the new paragraph relates to the last one. Use however for contrast or for example when introducing an illustration.",
+        ("links between paragraphs", "connections between paragraphs", "transitions between paragraphs"),
+    ),
+    (
+        "evidence-integration",
+        "evidence integration",
+        r"(?:evidence integration|embedding evidence|introducing evidence|using evidence in a paragraph)",
+        "Introduce the evidence, present it accurately, and explain how it supports your claim. Give readers enough context to judge its relevance.",
+        ("embedding evidence", "introducing evidence", "using evidence in a paragraph"),
+    ),
+    (
+        "calibrated-claims",
+        "claim qualification",
+        r"(?:claim qualification|qualified claims|hedging a claim|qualifying an argument)",
+        "Match the strength of your claim to the evidence. If results are uncertain, write suggests rather than proves.",
+        ("qualified claims", "hedging a claim", "qualifying an argument"),
+    ),
+    (
+        "point-of-view",
+        "consistent point of view",
+        r"(?:consistent point of view|point of view consistency|avoiding pronoun shifts|keeping a consistent perspective)",
+        "Keep the same perspective unless the meaning requires a change. Do not switch from students to you when referring to the same readers.",
+        ("point of view consistency", "avoiding pronoun shifts", "keeping a consistent perspective"),
+    ),
+    (
+        "reader-instructions",
+        "actionable instructions",
+        r"(?:actionable instructions|task instructions|instructions readers can follow|writing useful directions)",
+        "Start each step with an action verb and name the object. Write Open the settings menu so the reader knows exactly what to do.",
+        ("task instructions", "instructions readers can follow", "writing useful directions"),
+    ),
+    (
+        "concrete-detail",
+        "concrete details",
+        r"(?:concrete details|specific details|replacing vague descriptions|concrete description)",
+        "Use a detail readers can picture or verify. Replace a large box with a box one meter wide when the measurement matters.",
+        ("specific details", "replacing vague descriptions", "concrete description"),
+    ),
+    (
+        "sentence-variety",
+        "sentence variety",
+        r"(?:sentence variety|varying sentences|sentence rhythm|varying sentence length)",
+        "Mix sentence lengths and openings to suit the meaning. A short sentence after a longer one can emphasize a key point.",
+        ("varying sentences", "sentence rhythm", "varying sentence length"),
+    ),
+    (
+        "editing-order",
+        "revision order",
+        r"(?:revision order|order of revision|editing priorities|revising before proofreading)",
+        "Revise ideas and organization first. Then improve sentences and proofread spelling and punctuation, so you spend time polishing text that will stay.",
+        ("order of revision", "editing priorities", "revising before proofreading"),
+    ),
+    (
+        "paragraph-conclusions",
+        "paragraph conclusions",
+        r"(?:paragraph conclusions|closing a paragraph|paragraph endings|concluding a paragraph)",
+        "Close a paragraph by showing what its evidence adds to the main idea. Avoid introducing an unrelated point in the final sentence.",
+        ("closing a paragraph", "paragraph endings", "concluding a paragraph"),
+    ),
+    (
+        "source-attribution",
+        "source attribution",
+        r"(?:source attribution|attributing a source|crediting sources|naming the source of an idea)",
+        "Name the source when quoting or paraphrasing its ideas. Mark exact borrowed wording as a quotation and follow the required citation style.",
+        ("attributing a source", "crediting sources", "naming the source of an idea"),
+    ),
+    (
+        "nominalizations",
+        "nominalizations",
+        r"(?:nominalizations|verbs hidden in nouns|turning action nouns into verbs|revising nominalized verbs)",
+        "A nominalization turns an action into a noun. When a verb is clearer, replace make a decision with decide.",
+        ("verbs hidden in nouns", "turning action nouns into verbs", "revising nominalized verbs"),
+    ),
+    (
+        "document-headings",
+        "informative headings",
+        r"(?:informative headings|useful section headings|writing descriptive headings|headings readers can scan)",
+        "Use headings that predict the content beneath them. A heading such as How to apply is more helpful than Other information.",
+        ("useful section headings", "writing descriptive headings", "headings readers can scan"),
+    ),
+)

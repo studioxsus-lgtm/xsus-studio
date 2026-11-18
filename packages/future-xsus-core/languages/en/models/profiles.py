@@ -10,6 +10,7 @@ _MANIFESTS = {
     "rewrite-v2": "rewrite-v2.toml",
     "conversation-v3": "conversation-v3.toml",
     "written-v4": "written-v4.toml",
+    "written-v5": "written-v5.toml",
 }
 _LANGUAGE_ROOT = Path(__file__).resolve().parents[1]
 

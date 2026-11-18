@@ -14,12 +14,12 @@ class EnglishProfileTests(unittest.TestCase):
 
     def test_bundled_profiles_load_with_distinct_verified_revisions(self):
         revisions = set()
-        for profile in ("seed-v1", "rewrite-v2", "conversation-v3", "written-v4"):
+        for profile in ("seed-v1", "rewrite-v2", "conversation-v3", "written-v4", "written-v5"):
             with self.subTest(profile=profile):
                 with patch.dict(os.environ, {"XSUS_EN_MODEL_PROFILE": profile}, clear=True):
                     engine = create_engine()
                 revisions.add(engine.descriptor.identity.revision)
-        self.assertEqual(len(revisions), 4)
+        self.assertEqual(len(revisions), 5)
 
     def test_invalid_or_conflicting_configuration_fails_at_startup(self):
         cases = (

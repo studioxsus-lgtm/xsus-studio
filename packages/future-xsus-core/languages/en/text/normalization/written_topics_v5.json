@@ -1,0 +1,98 @@
+[
+  [
+    "restrictive-clauses",
+    "restrictive clauses|essential relative clauses|defining relative clauses|essential modifiers"
+  ],
+  [
+    "nonrestrictive-clauses",
+    "nonrestrictive clauses|nonessential relative clauses|nondefining relative clauses|supplementary relative clauses"
+  ],
+  [
+    "dangling-modifiers",
+    "dangling modifiers|dangling participles|unattached modifiers|dangling introductory phrases"
+  ],
+  [
+    "misplaced-modifiers",
+    "misplaced modifiers|modifier placement|misplaced adverbs|positioning modifiers"
+  ],
+  [
+    "pronoun-antecedents",
+    "pronoun antecedents|pronoun references|unclear pronoun references|pronoun clarity"
+  ],
+  [
+    "verb-tense-consistency",
+    "verb tense consistency|consistent verb tenses|unnecessary tense shifts|tense consistency"
+  ],
+  [
+    "fused-sentences",
+    "fused sentences|fused independent clauses|sentences with no clause boundary|unpunctuated run-ons"
+  ],
+  [
+    "introducing-lists",
+    "colons before lists|list colons|colons introducing lists|colon use in lists"
+  ],
+  [
+    "compound-adjectives",
+    "compound adjectives|hyphenated modifiers|compound modifiers|hyphens in compound adjectives"
+  ],
+  [
+    "fewer-and-less",
+    "fewer and less|fewer versus less|choosing less or fewer|counting with fewer and less"
+  ],
+  [
+    "its-and-it-is",
+    "its and it's|its versus it's|possessive its and contracted it's|choosing its or it's"
+  ],
+  [
+    "articles-a-and-an",
+    "articles a and an|a versus an|indefinite article sounds|choosing a or an"
+  ],
+  [
+    "paragraph-transitions",
+    "(?:paragraph transitions|links between paragraphs|connections between paragraphs|transitions between paragraphs)"
+  ],
+  [
+    "evidence-integration",
+    "(?:evidence integration|embedding evidence|introducing evidence|using evidence in a paragraph)"
+  ],
+  [
+    "calibrated-claims",
+    "(?:claim qualification|qualified claims|hedging a claim|qualifying an argument)"
+  ],
+  [
+    "point-of-view",
+    "(?:consistent point of view|point of view consistency|avoiding pronoun shifts|keeping a consistent perspective)"
+  ],
+  [
+    "reader-instructions",
+    "(?:actionable instructions|task instructions|instructions readers can follow|writing useful directions)"
+  ],
+  [
+    "concrete-detail",
+    "(?:concrete details|specific details|replacing vague descriptions|concrete description)"
+  ],
+  [
+    "sentence-variety",
+    "(?:sentence variety|varying sentences|sentence rhythm|varying sentence length)"
+  ],
+  [
+    "editing-order",
+    "(?:revision order|order of revision|editing priorities|revising before proofreading)"
+  ],
+  [
+    "paragraph-conclusions",
+    "(?:paragraph conclusions|closing a paragraph|paragraph endings|concluding a paragraph)"
+  ],
+  [
+    "source-attribution",
+    "(?:source attribution|attributing a source|crediting sources|naming the source of an idea)"
+  ],
+  [
+    "nominalizations",
+    "(?:nominalizations|verbs hidden in nouns|turning action nouns into verbs|revising nominalized verbs)"
+  ],
+  [
+    "document-headings",
+    "(?:informative headings|useful section headings|writing descriptive headings|headings readers can scan)"
+  ]
+]

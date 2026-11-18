@@ -2,6 +2,7 @@
 
 import argparse
 import json
+from collections import Counter
 from math import isfinite
 from pathlib import Path
 from random import Random
@@ -12,7 +13,7 @@ from ..models.neural_model import NeuralLanguageModel
 from ..text.generation.conversation_format import prompt_tokens
 from ..text.generation.generate import generate
 from ..text.normalization.model_input import (
-    CONVERSATION_V3, PLAIN, REWRITE_SLOTS, WRITTEN_V4, prepare_model_input,
+    CONVERSATION_V3, PLAIN, REWRITE_SLOTS, WRITTEN_V4, WRITTEN_V5, prepare_model_input,
 )
 from ..text.tokenizer import EOS, BytePairTokenizer
 
@@ -65,10 +66,12 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.055)
     parser.add_argument("--vectorized", action="store_true", help="Use the optional NumPy training backend")
+    parser.add_argument("--max-prepared-repeats", type=int, help="Cap identical normalized training examples")
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--copy-rewrite-slots", action="store_true")
     modes.add_argument("--conversation-v3", action="store_true")
     modes.add_argument("--written-v4", action="store_true")
+    modes.add_argument("--written-v5", action="store_true")
     args = parser.parse_args()
     if args.epochs < 1 or not isfinite(args.learning_rate) or args.learning_rate <= 0:
         parser.error("epochs and learning rate must be positive and finite")
@@ -77,7 +80,11 @@ def main() -> None:
     training = load_corpus(args.training)
     evaluation = load_corpus(args.evaluation)
     validate_splits(training, evaluation)
-    if args.written_v4:
+    if args.max_prepared_repeats is not None and args.max_prepared_repeats < 1:
+        parser.error("--max-prepared-repeats must be positive")
+    if args.written_v5:
+        prompt_format = WRITTEN_V5
+    elif args.written_v4:
         prompt_format = WRITTEN_V4
     elif args.conversation_v3:
         prompt_format = CONVERSATION_V3
@@ -86,6 +93,14 @@ def main() -> None:
     else:
         prompt_format = PLAIN
     train_for_model = _prepare_examples(training, prompt_format)
+    if args.max_prepared_repeats is not None:
+        frequencies = Counter()
+        balanced = []
+        for example in train_for_model:
+            if frequencies[example] < args.max_prepared_repeats:
+                balanced.append(example)
+                frequencies[example] += 1
+        train_for_model = tuple(balanced)
     eval_for_model = _prepare_examples(evaluation, prompt_format)
     tokenizer = BytePairTokenizer.train(
         (text for example in train_for_model for text in (
@@ -131,6 +146,7 @@ def main() -> None:
         "revision": revision,
         "training_examples": len(training),
         "evaluation_examples": len(evaluation),
+        "prepared_training_examples": len(train_for_model),
         "vocabulary_size": tokenizer.vocab_size,
         "train_loss_before": round(initial_train_loss, 4),
         "train_loss_after": round(_mean_loss(model, train_encoded), 4),

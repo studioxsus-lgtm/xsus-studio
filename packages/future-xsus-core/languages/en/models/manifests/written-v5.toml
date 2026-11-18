@@ -1,0 +1,42 @@
+id = "xsus-en-written-v5"
+checkpoint = "models/checkpoints/xsus-en-written-v5.json.gz"
+sha256 = "911134441ed81f2fafb63aba624dc39191095781c9835e826da25e9c8586bad5"
+prompt_format = "written-english-v5"
+initialization = "seeded random weights"
+
+[training]
+corpus = "data/training-v5.jsonl"
+corpus_sha256 = "52e792b6a12ca2aecde49f021f3494a116df0f7aedffa4a9d5cdd911239b7a71"
+raw_examples = 2573
+prepared_examples = 575
+new_topics = 24
+new_prompt_variants = 2160
+seed = 23
+backend = "numpy"
+numpy_version = "2.3.5"
+merges = 256
+hidden_size = 40
+context_size = 64
+epochs = 32
+max_prepared_repeats = 12
+learning_rate = 0.055
+
+[benchmarks.written_v5]
+file = "evaluation/quality-v5.jsonl"
+cases = 72
+accepted = 72
+
+[benchmarks.written_v4]
+file = "evaluation/quality-v4.jsonl"
+cases = 36
+accepted = 36
+
+[benchmarks.conversation_v3]
+file = "evaluation/quality-v3.jsonl"
+cases = 16
+accepted = 16
+
+[benchmarks.rewrite_v2]
+file = "evaluation/quality-v2.jsonl"
+cases = 12
+accepted = 12
