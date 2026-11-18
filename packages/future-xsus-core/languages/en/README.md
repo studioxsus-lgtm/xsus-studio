@@ -263,3 +263,24 @@ XSUS_EN_MODEL_PROFILE=written-v5 \
 
 Vlerësimi krahasohet me pritjet e përcaktuara për 44 raste dhe raportohet
 me `python3 -m languages.en.evaluation.proofreading`.
+
+## Korrigjimi i paragrafëve
+
+Me profilin `written-v5`, përdor `Proofread paragraph:` për disa fjali
+në një kërkesë. Motori korrigjon fjalitë e mbështetura dhe ruan origjinalin
+për pjesët që kërkojnë rishikim. Kur rezultati është i pjesshëm, përgjigjja
+e shënon këtë qartë.
+
+```sh
+XSUS_EN_MODEL_PROFILE=written-v5 \
+  python3 -m languages.en.evaluation.demo 'Proofread paragraph: They writes. What did Alex wrote?'
+printf 'They writes.\r\n\r\nWhat did Alex wrote?\r\n' | python3 -m languages.en.text.editing --paragraph
+python3 -m languages.en.evaluation.proofreading --paragraphs
+```
+
+Rezultati JSON jep pozicionet e pjesëve dhe të ndryshimeve në tekstin
+origjinal. Ai dallon `corrected`, `unchanged`, `partial` dhe
+`review_required`. Ndarja shmang pikësimin brenda citimeve, kllapave,
+shkurtimeve të njohura dhe elipsave. Kufiri i një kërkese është 8 192
+karaktere dhe 128 pjesë. Strukturat e ndërlikuara mund të kërkojnë
+rishikim manual. Vlerësimi i dedikuar ka 31 raste.

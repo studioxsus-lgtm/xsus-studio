@@ -2,9 +2,10 @@
 
 import re
 
+from .paragraph import ParagraphStatus, proofread_paragraph
 from .proofreader import ProofreadingStatus, proofread_sentence
 
-_COMMAND = re.compile(r"\A[ \t]*(proofread|correct the grammar)[ \t]*:[ \t]*(?P<sentence>.*)\Z", re.IGNORECASE | re.DOTALL)
+_COMMAND = re.compile(r"\A[ \t]*(?P<command>proofread paragraph|proofread|correct the grammar)[ \t]*:[ \t]*(?P<sentence>.*)\Z", re.IGNORECASE | re.DOTALL)
 
 
 def answer_proofreading_request(text: str) -> str | None:
@@ -13,6 +14,17 @@ def answer_proofreading_request(text: str) -> str | None:
     if command is None:
         return None
     sentence = command["sentence"]
+    if command["command"].casefold() == "proofread paragraph":
+        if not sentence.strip():
+            return "Please provide an English paragraph to proofread."
+        paragraph = proofread_paragraph(sentence)
+        if paragraph.status is ParagraphStatus.CORRECTED:
+            return paragraph.text
+        if paragraph.status is ParagraphStatus.PARTIAL:
+            return f"Some sentences still need manual review.\n{paragraph.text}"
+        if paragraph.status is ParagraphStatus.UNCHANGED:
+            return f"No grammar correction found in these sentences.\n{paragraph.text}"
+        return f"This paragraph needs manual review.\n{paragraph.text}"
     if not sentence.strip():
         return "Please provide one English sentence to proofread."
     result = proofread_sentence(sentence)

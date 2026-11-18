@@ -5,12 +5,16 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from ..text.editing.paragraph import ParagraphStatus, proofread_paragraph
 from ..text.editing.proofreader import ProofreadingStatus, proofread_sentence
 
-_DEFAULT_CASES = Path(__file__).with_name("proofreading-v1.jsonl")
+_SENTENCE_CASES = Path(__file__).with_name("proofreading-v1.jsonl")
+_PARAGRAPH_CASES = Path(__file__).with_name("proofreading-paragraphs-v1.jsonl")
 
 
-def evaluate(path: Path) -> dict:
+def evaluate(path: Path, *, paragraphs: bool = False) -> dict:
+    status_type = ParagraphStatus if paragraphs else ProofreadingStatus
+    proofread = proofread_paragraph if paragraphs else proofread_sentence
     totals: Counter[str] = Counter()
     failures = []
     identifiers: set[str] = set()
@@ -23,14 +27,14 @@ def evaluate(path: Path) -> dict:
                     raise ValueError("Fields must be strings")
                 if not identifier or identifier in identifiers:
                     raise ValueError("Invalid or duplicate case identifier")
-                status = ProofreadingStatus(status)
-                if (status == ProofreadingStatus.CORRECTED) == (sentence == expected):
+                status = status_type(status)
+                if (status in {"corrected", "partial"}) == (sentence == expected):
                     raise ValueError("Expected output contradicts the status")
             except (KeyError, TypeError, ValueError) as error:
                 raise ValueError(f"Invalid proofreading case at {path}:{number}") from error
             identifiers.add(identifier)
             totals[status] += 1
-            actual = proofread_sentence(sentence)
+            actual = proofread(sentence)
             if actual.status != status or actual.text != expected:
                 failures.append({"id": identifier, "actual_status": actual.status, "actual_output": actual.text})
     if not identifiers:
@@ -40,8 +44,11 @@ def evaluate(path: Path) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cases", type=Path, default=_DEFAULT_CASES)
-    report = evaluate(parser.parse_args().cases)
+    parser.add_argument("--cases", type=Path)
+    parser.add_argument("--paragraphs", action="store_true")
+    args = parser.parse_args()
+    default_cases = _PARAGRAPH_CASES if args.paragraphs else _SENTENCE_CASES
+    report = evaluate(args.cases or default_cases, paragraphs=args.paragraphs)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return int(bool(report["failures"]))
 

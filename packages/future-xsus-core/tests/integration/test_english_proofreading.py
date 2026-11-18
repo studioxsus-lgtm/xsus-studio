@@ -16,6 +16,14 @@ class EnglishProofreadingIntegrationTests(unittest.IsolatedAsyncioTestCase):
             ("Proofread: I told Sam that he write.", "This sentence needs manual review.\nI told Sam that he write."),
             ("Proofread: ", "Please provide one English sentence to proofread."),
             (
+                "Proofread paragraph: They writes. What did Alex wrote?",
+                "They write. What did Alex write?",
+            ),
+            (
+                "Proofread paragraph: They writes. I told Sam that he write.",
+                "Some sentences still need manual review.\nThey write. I told Sam that he write.",
+            ),
+            (
                 "Could you explain essential relative clauses?",
                 "A restrictive clause identifies which person or thing you mean. Do not separate it with commas: "
                 "The files that contain errors need review.",

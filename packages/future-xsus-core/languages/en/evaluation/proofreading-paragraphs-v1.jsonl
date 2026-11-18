@@ -1,0 +1,31 @@
+{"id":"two-independent-agreement-edits","input":"She write reports. They checks the budget.","status":"corrected","output":"She writes reports. They check the budget."}
+{"id":"clean-sentence-before-correction","input":"The files are ready. The student write the report.","status":"corrected","output":"The files are ready. The student writes the report."}
+{"id":"punctuation-and-capitalization","input":"Does the teachers read? HE CHECK THE BUDGET!","status":"corrected","output":"Do the teachers read? HE CHECKS THE BUDGET!"}
+{"id":"tabs-and-multiple-spaces","input":"\tWe  has\tchose the files. \t They checks the budget.  ","status":"corrected","output":"\tWe  have\tchosen the files. \t They check the budget.  "}
+{"id":"line-break-after-period","input":"I is ready.\nThe students writes.","status":"corrected","output":"I am ready.\nThe students write."}
+{"id":"body-with-blank-line","input":"She write the report.\n\nThe teachers plans the meeting.\n","status":"corrected","output":"She writes the report.\n\nThe teachers plan the meeting.\n"}
+{"id":"blank-line-without-terminal-punctuation","input":"The files is ready\n \t\nThe child were happy.","status":"corrected","output":"The files are ready\n \t\nThe child was happy."}
+{"id":"crlf-preserved","input":"The files is ready.\r\n\r\nWhat have Mia wrote?\r\n","status":"corrected","output":"The files are ready.\r\n\r\nWhat has Mia written?\r\n"}
+{"id":"passive-followed-by-question","input":"The files was sent by he. What did Nina wrote?","status":"corrected","output":"The files were sent by him. What did Nina write?"}
+{"id":"pronoun-and-demonstrative","input":"The student visited we. This reports were written.","status":"corrected","output":"The student visited us. These reports were written."}
+{"id":"same-edit-target-across-sentences","input":"Does the students read? The teacher does read.","status":"corrected","output":"Do the students read? The teacher does read."}
+{"id":"unterminated-final-sentence","input":"The child were happy. She write reports","status":"corrected","output":"The child was happy. She writes reports"}
+{"id":"clean-passive-and-active","input":"They were visited by us. The teachers read the notes.","status":"unchanged","output":"They were visited by us. The teachers read the notes."}
+{"id":"clean-question-and-assertion","input":"When is the meeting? The files are ready.","status":"unchanged","output":"When is the meeting? The files are ready."}
+{"id":"clean-curly-contraction-and-modal","input":"The file isn’t ready. The colleague could share the file.","status":"unchanged","output":"The file isn’t ready. The colleague could share the file."}
+{"id":"clean-spaced-document","input":"  These  folders\tare ready.\n\n The student reads the report.  ","status":"unchanged","output":"  These  folders\tare ready.\n\n The student reads the report.  "}
+{"id":"clean-single-clause","input":"  The students have the notes.  ","status":"unchanged","output":"  The students have the notes.  "}
+{"id":"ambiguous-clause-with-safe-neighbor","input":"This student likes this reports. Does the students read?","status":"partial","output":"This student likes this reports. Do the students read?"}
+{"id":"correctable-before-and-after-opaque-clause","input":"The files is ready. I told Sam that he write. The teachers plans the meeting.","status":"partial","output":"The files are ready. I told Sam that he write. The teachers plan the meeting."}
+{"id":"honorific-period-is-not-a-break","input":"Dr. Lane writes reports. The files is ready.","status":"partial","output":"Dr. Lane writes reports. The files are ready."}
+{"id":"initial-period-is-not-a-break","input":"J. Lane reads the report. The files is ready.","status":"partial","output":"J. Lane reads the report. The files are ready."}
+{"id":"quoted-sentence-not-rewritten","input":"Alex said, \"They writes. They checks.\"\n\nThe files is ready.","status":"partial","output":"Alex said, \"They writes. They checks.\"\n\nThe files are ready."}
+{"id":"parentheses-protect-internal-punctuation","input":"The teacher (Mia writes. She reads.) is ready. The files is ready.","status":"partial","output":"The teacher (Mia writes. She reads.) is ready. The files are ready."}
+{"id":"unsupported-numeral-with-decimal","input":"The file has 2.5 pages. The files is ready.","status":"partial","output":"The file has 2.5 pages. The files are ready."}
+{"id":"curly-quote-with-sentence-inside","input":"Alex wrote, “They writes.”\n\nI is ready.","status":"partial","output":"Alex wrote, “They writes.”\n\nI am ready."}
+{"id":"ellipsis-does-not-release-following-words","input":"Alex waited... She writes reports. The files is ready.","status":"partial","output":"Alex waited... She writes reports. The files are ready."}
+{"id":"two-unsupported-clause-forms","input":"The dog may have been called. Writes the budget.","status":"review_required","output":"The dog may have been called. Writes the budget."}
+{"id":"unresolved-and-clean","input":"The files isn’t ready. The teacher reads the report.","status":"review_required","output":"The files isn’t ready. The teacher reads the report."}
+{"id":"unsupported-paragraph-with-quotes","input":"Sam said “She write reports. They checks the notes.”","status":"review_required","output":"Sam said “She write reports. They checks the notes.”"}
+{"id":"ambiguous-and-unresolved","input":"Her sees her. The teacher answered a questions.","status":"review_required","output":"Her sees her. The teacher answered a questions."}
+{"id":"punctuation-with-no-clause","input":"?!","status":"review_required","output":"?!"}
