@@ -39,7 +39,7 @@ describe("Hyper phase 59 — authenticated audit chain",()=>{
  it("rejects short keys and receipt accessors",()=>{
   expect(()=>authenticateReviewAuditChain({
    observations:observations(),key:Buffer.alloc(8),keyId:"test-key"})).toThrow();
-  const receipt=sign();
+  const receipt={...sign()};
   Object.defineProperty(receipt,"authenticationTag",{get(){throw Error("getter");}});
   expect(verify(receipt).state).toBe("authentication_blocked");
  });
