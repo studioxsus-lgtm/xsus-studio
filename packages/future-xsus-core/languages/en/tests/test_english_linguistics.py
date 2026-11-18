@@ -42,7 +42,7 @@ class EnglishMorphologyTests(unittest.TestCase):
 
 class EnglishClauseTests(unittest.TestCase):
     def test_combined_analysis_distinguishes_unknown_clauses_from_correct_clauses(self):
-        self.assertIsNone(analyze_english("Where did Alex call Sam?"))
+        self.assertIsNone(analyze_english("Where did Alex say Sam went?"))
         result = analyze_english("Alex called Sam.")
         self.assertEqual(result.clause.object.text, "Sam")
         self.assertEqual(result.issues, ())
@@ -66,7 +66,7 @@ class EnglishClauseTests(unittest.TestCase):
         self.assertEqual((clause.lemma, clause.complement, clause.object), ("be", "ready", None))
 
     def test_unsupported_structures_do_not_invent_a_parse(self):
-        for sentence in ("Where did Alex call Sam?", "Alex and Sam called Lee.", "Alex has been writing.", "Alex called Sam on Monday.", "The report was written."):
+        for sentence in ("Where did Alex say Sam went?", "Alex and Sam called Lee.", "Alex has been writing.", "Alex called Sam on Monday.", "The report was written."):
             with self.subTest(sentence=sentence):
                 self.assertIsNone(analyze_clause(sentence))
 

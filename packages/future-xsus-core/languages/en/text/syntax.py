@@ -64,6 +64,18 @@ class ClauseKind(StrEnum):
 class InterrogativeRole(StrEnum):
     SUBJECT = "subject"
     OBJECT = "object"
+    LOCATION = "location"
+    TIME = "time"
+    MANNER = "manner"
+    REASON = "reason"
+
+
+_WH_ADVERBS = {
+    "where": InterrogativeRole.LOCATION,
+    "when": InterrogativeRole.TIME,
+    "how": InterrogativeRole.MANNER,
+    "why": InterrogativeRole.REASON,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,7 +198,9 @@ def _negation(tokens: list[str]) -> tuple[bool, list[str]]:
     return False, tokens
 
 
-def _question(tokens: list[str], *, contracted_start: bool) -> list[Clause]:
+def _question(
+    tokens: list[str], *, contracted_start: bool, wh_complement: str | None = None,
+) -> list[Clause]:
     auxiliary = _auxiliary(tokens[0])
     if auxiliary is None:
         return []
@@ -194,14 +208,24 @@ def _question(tokens: list[str], *, contracted_start: bool) -> list[Clause]:
     if contracted and not contracted_start:
         return []
     analyses = []
-    for index in range(1, len(remainder)):
+    # A fronted place or time can supply the complement of a bare copula.
+    bare_copula = wh_complement is not None and auxiliary.lemma == "be"
+    subject_boundaries = range(1, len(remainder) + 1) if bare_copula else range(1, len(remainder))
+    for index in subject_boundaries:
         subject = _noun_phrase(remainder[:index])
         if subject is None:
             continue
         negative, predicate = _negation(remainder[index:])
-        if not predicate or (contracted and negative):
+        if contracted and negative:
             continue
         negated = contracted or negative
+        if not predicate:
+            if bare_copula:
+                analyses.append(Clause(
+                    subject, auxiliary.text, auxiliary.lemma, auxiliary.forms,
+                    None, wh_complement, ClauseKind.QUESTION, negated,
+                ))
+            continue
         analyses.extend(_predicate(subject, predicate[0], predicate[1:], ClauseKind.QUESTION, negated, auxiliary))
         if auxiliary.lemma == "be":
             analyses.extend(_predicate(subject, auxiliary.text, predicate, ClauseKind.QUESTION, negated))
@@ -231,6 +255,13 @@ def _wh_question(tokens: list[str], *, contracted_auxiliary: bool) -> list[Claus
     if len(tokens) < 2:
         return []
     interrogative = tokens[0].lower()
+    if (role := _WH_ADVERBS.get(interrogative)) is not None:
+        complement = tokens[0] if role in {InterrogativeRole.LOCATION, InterrogativeRole.TIME} else None
+        return [
+            replace(clause, interrogative_role=role)
+            for clause in _question(tokens[1:], contracted_start=contracted_auxiliary, wh_complement=complement)
+        ]
+
     phrase = Phrase(tokens[0], interrogative, 3, None)
     analyses = []
     if interrogative in _WH_SUBJECTS:
@@ -262,7 +293,8 @@ def analyze_clause(sentence: str) -> Clause | None:
             tokens.append(word)
         else:
             tokens.extend((expanded.capitalize() if word[0].isupper() else expanded, "not"))
-    if text.endswith("?") and words[0].lower() in _WH_OBJECTS:
+    initial = words[0].lower()
+    if text.endswith("?") and (initial in _WH_OBJECTS or initial in _WH_ADVERBS):
         contracted_auxiliary = len(words) > 1 and words[1].lower() in _NEGATIVE_CONTRACTIONS
         analyses = _wh_question(tokens, contracted_auxiliary=contracted_auxiliary)
     elif text.endswith("?"):

@@ -121,7 +121,7 @@ Analizuesi i anglishtes ekzekutohet lokalisht dhe përdor fjalorë të vegjël e
 | Skedari | Përgjegjësia |
 | --- | --- |
 | `text/morphology.py` | Gjeneron format kryesore të foljeve dhe shumësin e emrave. Përdor një fjalor për format e parregullta dhe rregulla drejtshkrimore për format e rregullta. |
-| `text/syntax.py` | Dallon kryefjalën, foljen kryesore, foljen ndihmëse, kundrinorin, plotësuesin dhe mohimin. Mbulon pohime, mohime, pyetje po/jo dhe pyetje të thjeshta për kryefjalën ose kundrinorin. |
+| `text/syntax.py` | Dallon kryefjalën, foljen kryesore, foljen ndihmëse, kundrinorin, plotësuesin dhe mohimin. Mbulon pohime, mohime, pyetje po/jo dhe pyetje të thjeshta për kryefjalën, kundrinorin, vendin, kohën, mënyrën dhe arsyen. |
 | `text/grammar.py` | Kontrollon përputhjen me kryefjalën, rasën e përemrave, numrin e përcaktorëve dhe formën që kërkon folja ndihmëse. |
 | `text/linguistics.py` | Ekspozon analizën e përbashkët përmes `analyze_english()` dhe komandës lokale. |
 
@@ -137,6 +137,8 @@ python3 -m languages.en.text.linguistics clause 'Alex has wrote the report.'
 python3 -m languages.en.text.linguistics clause "Isn't Alex writing the report?"
 python3 -m languages.en.text.linguistics clause 'Who wrote the report?'
 python3 -m languages.en.text.linguistics clause 'What did Alex write?'
+python3 -m languages.en.text.linguistics clause 'When is the meeting?'
+python3 -m languages.en.text.linguistics clause 'Why did Alex call Sam?'
 ```
 
 Pas `do` pritet forma bazë, pas `have` pjesorja e shkuar dhe pas `be` në ndërtimin progresiv forma me `-ing`. Për shembull, `Did Alex wrote` merr sugjerimin `write`, ndërsa `Alex has wrote` merr `written`. Pas foljeve modale si `can`, `should` dhe `will` pritet gjithashtu forma bazë.
@@ -145,4 +147,6 @@ Mohimi njihet si `not`, si `cannot` dhe në shkurtime si `didn't`, `isn't` dhe `
 
 Pyetjet me `who` dhe `what` mund të kërkojnë kryefjalën ose kundrinorin e drejtë. `Whom` përdoret për kundrinorin. Kur dallon një prej këtyre strukturave, rezultati jep `interrogative_role` si `subject` ose `object`. Numri i një kryefjale pyetëse mbetet i papërcaktuar kur mungon konteksti.
 
-Analizuesi përdor një fjalor të kufizuar dhe mbulon një folje ndihmëse për ndërtim. Pyetjet për vendin, kohën dhe mënyrën, ndërtimet pyetëse këpujore, zinxhirët me disa folje ndihmëse dhe zëri pësor mbeten jashtë mbulimit. Për strukturat që nuk i analizon, komanda kthen `unsupported_clause`. Analizuesi ekzekutohet më vete nga gjenerimi i bisedës.
+`Where`, `when`, `how` dhe `why` japin rolet `location`, `time`, `manner` dhe `reason`. Në pyetje si `Where is Alex?` dhe `When is the meeting?`, fjala pyetëse shfaqet edhe si plotësues i këpujës. Pyetjet që përdorin një folje kryesore ruajnë kundrinorin e saj, si `Sam` në `Why did Alex call Sam?`.
+
+Analizuesi përdor një fjalor të kufizuar dhe mbulon një folje ndihmëse për ndërtim. Pyetjet e ndërthurura, shprehjet si `how many`, zinxhirët me disa folje ndihmëse dhe zëri pësor mbeten jashtë mbulimit. Për strukturat që nuk i analizon, komanda kthen `unsupported_clause`. Analizuesi ekzekutohet më vete nga gjenerimi i bisedës.

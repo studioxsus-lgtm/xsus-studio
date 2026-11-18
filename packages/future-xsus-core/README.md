@@ -13,6 +13,7 @@ për motorët e ardhshëm.
 | `core/conversation/` | Ekzekutimi i bisedës me historik të versionuar |
 | `languages/en/` | Modelet, analizuesi, të dhënat dhe vlerësimi i anglishtes |
 | `services/engine-worker/` | Shërbimi HTTP për një instancë motori |
+| `services/api/` | API-ja lokale HTTP për bisedat dhe sesionet |
 | `templates/language-engine/` | Struktura për një motor të ri |
 
 Nga kjo dosje, me Python 3.12:
@@ -44,3 +45,8 @@ XSUS_EN_MODEL_PROFILE=conversation-v3 python3 -m languages.en.evaluation.demo \
 
 Databaza përmban tekstin e bisedës. Ruaje në një dosje ku vetëm përdoruesit
 e autorizuar kanë leje leximi.
+
+
+[API-ja lokale](services/api/README.md) ofron të njëjtën rrjedhë bisedash
+për klientët HTTP. Nisja e saj përdor motorin e anglishtes dhe një
+databazë lokale SQLite.

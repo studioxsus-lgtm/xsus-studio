@@ -51,7 +51,7 @@ class EnglishInterrogativeTests(unittest.TestCase):
     def test_rejects_unimplemented_roles_and_invalid_argument_structures(self):
         for sentence in (
             "What?", "What did Maya write the report?", "What did Maya sleep?",
-            "Whom wrote the report?", "Who is Maya?", "Where did Maya write?",
+            "Whom wrote the report?", "Who is Maya?", "How many reports did Maya write?",
             "I know who wrote the report.", "What might Maya have written?",
         ):
             with self.subTest(sentence=sentence):
