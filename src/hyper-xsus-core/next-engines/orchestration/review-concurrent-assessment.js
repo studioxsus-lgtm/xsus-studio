@@ -20,7 +20,11 @@ export async function assessConcurrentReviewRecovery({filePath,store,requests,ma
    throw new EngineContractError("INVALID_INPUT","Invalid recovery request");
   string(request.requestId,"requestId");
   string(request.traceId,"traceId");
-  return {requestId:request.requestId,traceId:request.traceId,signal:request.signal};
+  if(request.timeoutMs!==undefined&&(!Number.isSafeInteger(request.timeoutMs)||
+     request.timeoutMs<1||request.timeoutMs>60000))
+   throw new EngineContractError("INVALID_INPUT","timeoutMs must be between 1 and 60000");
+  return {requestId:request.requestId,traceId:request.traceId,
+   signal:request.signal,timeoutMs:request.timeoutMs};
  });
  const interrupted=()=>Object.freeze({state:"review_blocked",
   lockState:"unverified",journalState:"unverified",
@@ -41,8 +45,33 @@ export async function assessConcurrentReviewRecovery({filePath,store,requests,ma
      settled[index]={status:"fulfilled",value:interrupted()};
      continue;
     }
-    const value=await assessReviewRecovery({...normalized[index],filePath,store});
-    settled[index]={status:"fulfilled",value};
+    const request=normalized[index];
+    if(request.timeoutMs===undefined){
+     const value=await assessReviewRecovery({...request,filePath,store});
+     settled[index]={status:"fulfilled",value};
+    }else{
+     const controller=new AbortController();
+     const onAbort=()=>controller.abort();
+     let timer;
+     try{
+      if(request.signal!==undefined){
+       if(typeof request.signal?.addEventListener!=="function"||
+          typeof request.signal?.aborted!=="boolean")
+        throw new EngineContractError("INVALID_INPUT","Invalid AbortSignal");
+       request.signal.addEventListener("abort",onAbort,{once:true});
+       if(request.signal.aborted)controller.abort();
+      }
+      if(!controller.signal.aborted)
+       timer=setTimeout(()=>controller.abort(),request.timeoutMs);
+      // Wait for the underlying read to settle; timeout does not cancel I/O.
+      const value=await assessReviewRecovery({...request,filePath,
+       signal:controller.signal,store});
+      settled[index]={status:"fulfilled",value};
+     }finally{
+      if(timer!==undefined)clearTimeout(timer);
+      request.signal?.removeEventListener?.("abort",onAbort);
+     }
+    }
    }catch(reason){settled[index]={status:"rejected",reason};}
   }
  };
