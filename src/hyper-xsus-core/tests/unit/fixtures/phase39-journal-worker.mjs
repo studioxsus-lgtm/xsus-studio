@@ -8,8 +8,12 @@ const request={contractVersion:"1.0.0",requestId:id,engineId:"six-engine-orchest
 async function main(){
  if(mode==="hold"){
   await withExclusiveFileLock(filePath,async()=>{
+   // Arm the release listener before publishing LOCKED: the parent may
+   // respond immediately, otherwise a fast release can be missed.
+   const released=new Promise(resolve=>process.stdin.once("data",resolve));
+   process.stdin.resume();
    process.stdout.write("LOCKED\n");
-   await new Promise(resolve=>process.stdin.once("data",resolve));
+   await released;
   });
   return;
  }
