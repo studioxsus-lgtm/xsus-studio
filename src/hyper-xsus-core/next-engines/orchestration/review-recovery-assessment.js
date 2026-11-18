@@ -9,15 +9,26 @@ import {reconcileReviewRecord} from "./review-reconciliation.js";
  * detect observable changes; matching checks do NOT prove atomic consistency.
  * Never grants retries, lock removal or execution.
  */
-export async function assessReviewRecovery({filePath,requestId,traceId,store}={}){
+export async function assessReviewRecovery({filePath,requestId,traceId,store,signal}={}){
  string(filePath,"filePath");
  string(requestId,"requestId");
  string(traceId,"traceId");
  object(store,"store");
  if(typeof store.load!=="function")
   throw new EngineContractError("INVALID_INPUT","Store must expose load");
+ if(signal!==undefined&&(typeof signal?.aborted!=="boolean"||
+    typeof signal?.addEventListener!=="function"))
+  throw new EngineContractError("INVALID_INPUT","signal must be an AbortSignal");
+ const interrupted=()=>Object.freeze({state:"review_blocked",
+  lockState:"unverified",journalState:"unverified",
+  errorCode:"ASSESSMENT_INTERRUPTED",recoveryAuthorized:false,
+  deletionAuthorized:false,retrySafe:false,executionAuthorized:false,
+  sideEffects:false,nextAction:"manual_investigation"});
+ // Cancellation affects the assessment result, never an in-flight store operation.
+ if(signal?.aborted)return interrupted();
  const lock=await inspectReviewLock({filePath});
  const journalBefore=await observeReviewJournal({filePath});
+ if(signal?.aborted)return interrupted();
  const sameJournal=(a,b)=>a.state===b.state&&a.fingerprint===b.fingerprint;
  const sameLock=(a,b)=>a.state===b.state&&
   a.lockPresent===b.lockPresent&&a.ownerPid===b.ownerPid&&
@@ -26,6 +37,7 @@ export async function assessReviewRecovery({filePath,requestId,traceId,store}={}
  try{
   journal=await reconcileReviewRecord({requestId,traceId},store);
  }catch(error){
+  if(signal?.aborted)return interrupted();
   // A held lock, corrupted journal or inconsistent recovery record is never
   // evidence that a retry is safe. Preserve only the code, not private details.
   let lockAfter,journalAfter;
@@ -43,8 +55,10 @@ export async function assessReviewRecovery({filePath,requestId,traceId,store}={}
    executionAuthorized:false,sideEffects:false,nextAction:"manual_investigation"
   });
  }
+ if(signal?.aborted)return interrupted();
  const lockAfter=await inspectReviewLock({filePath});
  const journalAfter=await observeReviewJournal({filePath});
+ if(signal?.aborted)return interrupted();
  // Any observed lock transition blocks even a successfully replayed journal.
  // This is a conservative check, not a transaction or linearizable snapshot.
  const stable=sameLock(lock,lockAfter);
