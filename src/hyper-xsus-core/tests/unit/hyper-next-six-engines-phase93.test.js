@@ -176,7 +176,10 @@ describe("Hyper phase 93 — redacted anchor audit",()=>{
  });
  it("rejects invalid ledger context and oversized candidate sets",()=>{
   expect(()=>inspect({ledgerId:"bad ledger"})).toThrow();
-  expect(()=>inspect({anchors:Array(9).fill(makeForks().anchors[0]),
-   expectedAnchorIds:Array(9).fill("anchor-one")})).toThrow();
+  const oversized=inspect({anchors:Array(9).fill(makeForks().anchors[0]),
+   expectedAnchorIds:Array(9).fill("anchor-one")});
+  expect(oversized).toMatchObject({state:"witness_decision_anchor_audit_blocked",
+   findings:["ANCHOR_AUDIT_EVIDENCE_UNVERIFIED"],nextAction:"manual_investigation"});
+  denied(oversized);
  });
 });
