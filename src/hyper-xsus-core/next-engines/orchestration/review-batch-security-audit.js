@@ -23,20 +23,43 @@ const stableOwn=(obj,key)=>{
 const safeIdentity=x=>typeof x==="string"&&x.length>0&&x.length<=256;
 const allowedStates=new Set(["review_blocked","recorded_for_manual_review"]);
 const allowedActions=new Set(["manual_review","manual_investigation"]);
-const safeAssessment=x=>record(x)&&allowedStates.has(stableOwn(x,"state"))&&
- stableOwn(x,"recoveryAuthorized")===false&&stableOwn(x,"deletionAuthorized")===false&&
- stableOwn(x,"retrySafe")===false&&stableOwn(x,"executionAuthorized")===false&&
- stableOwn(x,"sideEffects")===false&&allowedActions.has(stableOwn(x,"nextAction"));
-const sanitizedAssessment=x=>Object.freeze({
- state:stableOwn(x,"state"),
- ...(Object.getOwnPropertyDescriptor(x,"lockState")?{lockState:stableOwn(x,"lockState")}:{}),
- ...(Object.getOwnPropertyDescriptor(x,"journalState")?{journalState:stableOwn(x,"journalState")}:{}),
- ...(Object.getOwnPropertyDescriptor(x,"errorCode")?
-  {errorCode:stableOwn(x,"errorCode")}:{}),
- recoveryAuthorized:false,deletionAuthorized:false,retrySafe:false,
- executionAuthorized:false,sideEffects:false,nextAction:stableOwn(x,"nextAction")
-});
-
+// Phase 54: optional metadata is bounded, scalar and never copied by reference.
+const optionalText=(x,key)=>{
+ const descriptor=Object.getOwnPropertyDescriptor(x,key);
+ if(!descriptor)return undefined;
+ const value=stableOwn(x,key);
+ if(typeof value!=="string"||value.length>128)
+  throw new EngineContractError("INVALID_INPUT","Invalid audit metadata");
+ return value;
+};
+const safeAssessment=x=>{
+ if(!record(x))return false;
+ const state=stableOwn(x,"state"),action=stableOwn(x,"nextAction");
+ if(!allowedStates.has(state)||!allowedActions.has(action)||
+  (state==="recorded_for_manual_review"&&action!=="manual_review")||
+  (state==="review_blocked"&&action!=="manual_investigation"))
+  return false;
+ if(stableOwn(x,"recoveryAuthorized")!==false||
+  stableOwn(x,"deletionAuthorized")!==false||
+  stableOwn(x,"retrySafe")!==false||
+  stableOwn(x,"executionAuthorized")!==false||
+  stableOwn(x,"sideEffects")!==false)return false;
+ for(const key of ["lockState","journalState","errorCode"])optionalText(x,key);
+ return true;
+};
+const sanitizedAssessment=x=>{
+ const lockState=optionalText(x,"lockState");
+ const journalState=optionalText(x,"journalState");
+ const errorCode=optionalText(x,"errorCode");
+ return Object.freeze({
+  state:stableOwn(x,"state"),
+  ...(lockState===undefined?{}:{lockState}),
+  ...(journalState===undefined?{}:{journalState}),
+  ...(errorCode===undefined?{}:{errorCode}),
+  recoveryAuthorized:false,deletionAuthorized:false,retrySafe:false,
+  executionAuthorized:false,sideEffects:false,nextAction:stableOwn(x,"nextAction")
+ });
+};
 /**
  * Phase 52: defensive audit of bounded, data-only batch results.
  * Accessors, proxies, exotic prototypes and unexpected fields fail closed.
