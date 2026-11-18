@@ -1,0 +1,7 @@
+id = "xsus-en-written-v4"
+file = "data/training-v4.jsonl"
+sha256 = "6a9f284526facc78ad1562e86963a2b98f1394b6cb54d6c816bbdda87f4de21a"
+training_examples = 413
+new_prompt_variants = 216
+writing_lessons = 12
+source = "Original XSUS authored prompts and teaching responses"

@@ -1,0 +1,40 @@
+id = "xsus-en-written-v4"
+checkpoint = "models/checkpoints/xsus-en-written-v4.json.gz"
+sha256 = "a398a01ecca89a9170ab4f02fffe02a4b7bfdc1024bf025d878011b04399dc89"
+initialization = "seeded random weights"
+architecture = "causal neural language model with recency-weighted token embeddings"
+prompt_format = "written-english-v4"
+corpus = "xsus-en-written-v4"
+
+[training]
+seed = 23
+merges = 192
+hidden_size = 32
+context_size = 64
+epochs = 32
+learning_rate = 0.055
+backend = "numpy"
+numpy_version = "2.3.5"
+examples = 413
+vocabulary_size = 452
+
+[benchmarks.written_v4]
+file = "evaluation/quality-v4.jsonl"
+cases = 36
+accepted = 36
+fact_cases = 36
+preserved_all_facts = 36
+
+[benchmarks.conversation_v3]
+file = "evaluation/quality-v3.jsonl"
+cases = 16
+accepted = 16
+fact_cases = 6
+preserved_all_facts = 6
+
+[benchmarks.rewrite_v2]
+file = "evaluation/quality-v2.jsonl"
+cases = 12
+accepted = 12
+fact_cases = 7
+preserved_all_facts = 7

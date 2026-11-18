@@ -4,11 +4,13 @@ from core.contracts.request import Conversation
 
 from .conversation_intents import canonical_prompt, normalize_rewrite_alias
 from .rewrite_slots import PreparedRewrite, prepare_rewrite
+from .written_intents import canonical_written_prompt
 
 PLAIN = "plain"
 REWRITE_SLOTS = "rewrite-slots-v1"
 CONVERSATION_V3 = "conversation-intents-v1"
-FORMATS = (PLAIN, REWRITE_SLOTS, CONVERSATION_V3)
+WRITTEN_V4 = "written-english-v4"
+FORMATS = (PLAIN, REWRITE_SLOTS, CONVERSATION_V3, WRITTEN_V4)
 
 
 def prepare_model_input(
@@ -16,7 +18,11 @@ def prepare_model_input(
 ) -> tuple[Conversation, PreparedRewrite | None]:
     if prompt_format == PLAIN:
         return conversation, None
-    expanded = prompt_format == CONVERSATION_V3
+    if prompt_format == WRITTEN_V4:
+        written = canonical_written_prompt(conversation)
+        if written != conversation:
+            return written, None
+    expanded = prompt_format in (CONVERSATION_V3, WRITTEN_V4)
     if expanded:
         conversation = normalize_rewrite_alias(conversation)
     rewrite = prepare_rewrite(conversation, expanded=expanded)

@@ -11,7 +11,9 @@ from ..models.checkpoint import load_checkpoint, save_checkpoint
 from ..models.neural_model import NeuralLanguageModel
 from ..text.generation.conversation_format import prompt_tokens
 from ..text.generation.generate import generate
-from ..text.normalization.model_input import CONVERSATION_V3, PLAIN, REWRITE_SLOTS, prepare_model_input
+from ..text.normalization.model_input import (
+    CONVERSATION_V3, PLAIN, REWRITE_SLOTS, WRITTEN_V4, prepare_model_input,
+)
 from ..text.tokenizer import EOS, BytePairTokenizer
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -62,9 +64,11 @@ def main() -> None:
     parser.add_argument("--context-size", type=int, default=32)
     parser.add_argument("--epochs", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.055)
+    parser.add_argument("--vectorized", action="store_true", help="Use the optional NumPy training backend")
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--copy-rewrite-slots", action="store_true")
     modes.add_argument("--conversation-v3", action="store_true")
+    modes.add_argument("--written-v4", action="store_true")
     args = parser.parse_args()
     if args.epochs < 1 or not isfinite(args.learning_rate) or args.learning_rate <= 0:
         parser.error("epochs and learning rate must be positive and finite")
@@ -73,7 +77,14 @@ def main() -> None:
     training = load_corpus(args.training)
     evaluation = load_corpus(args.evaluation)
     validate_splits(training, evaluation)
-    prompt_format = CONVERSATION_V3 if args.conversation_v3 else REWRITE_SLOTS if args.copy_rewrite_slots else PLAIN
+    if args.written_v4:
+        prompt_format = WRITTEN_V4
+    elif args.conversation_v3:
+        prompt_format = CONVERSATION_V3
+    elif args.copy_rewrite_slots:
+        prompt_format = REWRITE_SLOTS
+    else:
+        prompt_format = PLAIN
     train_for_model = _prepare_examples(training, prompt_format)
     eval_for_model = _prepare_examples(evaluation, prompt_format)
     tokenizer = BytePairTokenizer.train(
@@ -91,14 +102,25 @@ def main() -> None:
     eval_encoded = _encode(tokenizer, eval_for_model)
     initial_train_loss = _mean_loss(model, train_encoded)
     initial_eval_loss = _mean_loss(model, eval_encoded)
+    trainer = model
+    if args.vectorized:
+        try:
+            from .vectorized import VectorizedTrainer
+        except ModuleNotFoundError as error:
+            if error.name != "numpy":
+                raise
+            parser.error("--vectorized requires NumPy")
+        trainer = VectorizedTrainer(model)
     rng = Random(args.seed)
     for _ in range(args.epochs):
         rng.shuffle(train_encoded)
         for prompt, targets in train_encoded:
             prefix = prompt.copy()
             for target in targets:
-                model.train_step(prefix, target, args.learning_rate)
+                trainer.train_step(prefix, target, args.learning_rate)
                 prefix.append(target)
+    if args.vectorized:
+        trainer.copy_to(model)
     save_checkpoint(args.output, tokenizer, model)
     tokenizer, model, revision = load_checkpoint(args.output)
     examples = [

@@ -6,6 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from .corpus import load_corpus, validate_splits
+from .written_corpus import build_written_rows
 
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -136,21 +137,23 @@ def build_v3_rows(seed_path: Path) -> list[dict]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--version", choices=("v2", "v3"), default="v2")
+    parser.add_argument("--version", choices=("v2", "v3", "v4"), default="v2")
     args = parser.parse_args()
     seed = _ROOT / "data" / "training.jsonl"
-    evaluations = tuple(_ROOT / "evaluation" / f"quality-{version}.jsonl" for version in ("v2", "v3"))
+    evaluations = tuple(_ROOT / "evaluation" / f"quality-{version}.jsonl" for version in ("v2", "v3", "v4"))
     if args.output.resolve() in {seed.resolve(), *(path.resolve() for path in evaluations)}:
         parser.error("choose a separate output file")
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    rows = build_v3_rows(seed) if args.version == "v3" else build_rows(seed)
+    rows = build_rows(seed) if args.version == "v2" else build_v3_rows(seed)
+    if args.version == "v4":
+        rows.extend(build_written_rows())
     data = "".join(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n" for row in rows)
     # Check the new split before touching any existing output file.
     with TemporaryDirectory() as temporary:
         path = Path(temporary) / "training.jsonl"
         path.write_text(data, encoding="utf-8")
         training = load_corpus(path)
-        for evaluation in evaluations[:1] if args.version == "v2" else evaluations:
+        for evaluation in evaluations[:int(args.version[1:]) - 1]:
             validate_splits(training, load_corpus(evaluation))
     args.output.write_text(data, encoding="utf-8")
     print(f"Wrote {len(rows)} XSUS training examples")

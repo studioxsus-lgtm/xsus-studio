@@ -158,3 +158,40 @@ grup të kufizuar emrash që mund të jenë veprues. Shprehjet kohore si
 `by Friday` mbeten jashtë analizës së ndërtimit pësor.
 
 Analizuesi përdor një fjalor të kufizuar dhe mbulon një folje ndihmëse për ndërtim. Pyetjet e ndërthurura, shprehjet si `how many` dhe zinxhirët me disa folje ndihmëse mbeten jashtë mbulimit. Për strukturat që nuk i analizon, komanda kthen `unsupported_clause`. Analizuesi ekzekutohet më vete nga gjenerimi i bisedës.
+
+## Modeli v4 për anglishten e shkruar
+
+Profili `written-v4` shton 12 mësime për gramatikën dhe shkrimin. Ato mbulojnë
+fjalitë e paplota, lidhjen e fjalive vetëm me presje, zërin vepror dhe pësor,
+përputhjen e kryefjalës me foljen, paralelizmin, fjalinë kryesore të paragrafit,
+shkrimin e përmbledhur, tonin formal, pikëpresjen, apostrofin pronor dhe
+gjuhën e thjeshtë.
+
+Korpusi përfshin 197 shembujt e v3 dhe 216 formulime të reja. Normalizuesi
+identifikon vetëm kërkesa të mbështetura për një temë të vetme. Modeli
+gjeneron shpjegimin nga checkpoint-i. Për 36 kërkesat në vlerësimin v4,
+formulimet janë të reja dhe temat janë ato të trajnuara.
+
+| Vlerësimi | v3 | v4 |
+| --- | ---: | ---: |
+| Anglishtja e shkruar | 0/36 | 36/36 |
+| Biseda dhe sqarime | 16/16 | 16/16 |
+| Riformulime | 12/12 | 12/12 |
+
+Zgjedhja e profilit:
+
+```sh
+XSUS_EN_MODEL_PROFILE=written-v4 \
+  python3 -m languages.en.evaluation.demo 'Could you briefly explain apostrophes for possession?'
+```
+
+Trajnimi mund të riprodhohet me NumPy 2.3.5 dhe bibliotekën standarde të Python-it.
+Gjatë gjenerimit dhe testimit të checkpoint-it nuk kërkohet NumPy.
+
+```sh
+python3 -m languages.en.data.preparation.expand_corpus --version v4 --output /tmp/xsus-training-v4.jsonl
+OPENBLAS_NUM_THREADS=1 python3 -m languages.en.training.train \
+  --training /tmp/xsus-training-v4.jsonl --evaluation languages/en/evaluation/quality-v4.jsonl \
+  --written-v4 --vectorized --merges 192 --hidden-size 32 --context-size 64 --epochs 32 \
+  --output /tmp/xsus-en-written-v4.json.gz
+```
