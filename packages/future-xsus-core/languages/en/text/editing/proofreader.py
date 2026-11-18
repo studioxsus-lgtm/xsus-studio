@@ -1,12 +1,13 @@
 """Apply independently verifiable edits to supported written English clauses."""
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 
 from ..grammar import GrammarIssue, IssueCode
-from ..linguistics import analyze_english
-from ..syntax import Clause
+from ..linguistics import ClauseAnalysis, analyze_english
+from ..syntax import Clause, ClauseKind
+from .compounds import clause_link
 
 _WORD = re.compile(r"[A-Za-z]+(?:[-'’][A-Za-z]+)*")
 _MAX_CHARS = 2048
@@ -66,8 +67,17 @@ def proofread_sentence(sentence: str) -> ProofreadingResult:
         return ProofreadingResult(ProofreadingStatus.REVIEW_REQUIRED, sentence, review_reason="input_limit")
 
     analysis = analyze_english(sentence)
-    if analysis is None:
-        return ProofreadingResult(ProofreadingStatus.REVIEW_REQUIRED, sentence, review_reason="unsupported_clause")
+    if analysis is not None:
+        return _proofread_clause(sentence, analysis, words)
+    compound = _proofread_compound(sentence)
+    if compound is not None:
+        return compound
+    return ProofreadingResult(ProofreadingStatus.REVIEW_REQUIRED, sentence, review_reason="unsupported_clause")
+
+
+def _proofread_clause(
+    sentence: str, analysis: ClauseAnalysis, words: tuple[re.Match[str], ...],
+) -> ProofreadingResult:
     if not analysis.issues:
         return ProofreadingResult(ProofreadingStatus.UNCHANGED, sentence)
 
@@ -84,13 +94,47 @@ def proofread_sentence(sentence: str) -> ProofreadingResult:
         original = match.group()
         edits.append(Edit(match.start(), match.end(), original, _case(original, issue.suggested), issue.code))
 
-    output = sentence
     edits.sort(key=lambda edit: edit.start)
-    for edit in reversed(edits):
-        output = output[:edit.start] + edit.replacement + output[edit.end:]
+    output = _apply_edits(sentence, edits)
     verified = analyze_english(output)
     if verified is None or verified.issues or _structure(verified.clause) != _structure(analysis.clause):
         return ProofreadingResult(
             ProofreadingStatus.REVIEW_REQUIRED, sentence, issues=analysis.issues, review_reason="verification_failed",
         )
     return ProofreadingResult(ProofreadingStatus.CORRECTED, output, tuple(edits), analysis.issues)
+
+
+def _apply_edits(text: str, edits: list[Edit]) -> str:
+    for edit in reversed(edits):
+        text = text[:edit.start] + edit.replacement + text[edit.end:]
+    return text
+
+
+def _proofread_compound(sentence: str) -> ProofreadingResult | None:
+    link = clause_link(sentence)
+    if link is None:
+        return None
+    clauses = ((0, sentence[:link.start]), (link.end, sentence[link.end:]))
+    edits = []
+    issues = []
+    for offset, text in clauses:
+        analysis = analyze_english(text)
+        if analysis is None or analysis.clause.kind is not ClauseKind.DECLARATIVE:
+            return None
+        result = _proofread_clause(text, analysis, tuple(_WORD.finditer(text)))
+        if result.status is ProofreadingStatus.REVIEW_REQUIRED:
+            return ProofreadingResult(
+                ProofreadingStatus.REVIEW_REQUIRED, sentence,
+                issues=result.issues, review_reason=result.review_reason,
+            )
+        edits.extend(replace(edit, start=edit.start + offset, end=edit.end + offset) for edit in result.edits)
+        issues.extend(result.issues)
+    if link.comma_splice:
+        edits.append(Edit(link.start, link.start + 1, ",", ";", IssueCode.COMMA_SPLICE))
+        issues.append(GrammarIssue(IssueCode.COMMA_SPLICE, ",", ";"))
+    edits.sort(key=lambda edit: edit.start)
+    if not edits:
+        return ProofreadingResult(ProofreadingStatus.UNCHANGED, sentence)
+    return ProofreadingResult(
+        ProofreadingStatus.CORRECTED, _apply_edits(sentence, edits), tuple(edits), tuple(issues),
+    )

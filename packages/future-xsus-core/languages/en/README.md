@@ -284,3 +284,22 @@ origjinal. Ai dallon `corrected`, `unchanged`, `partial` dhe
 shkurtimeve të njohura dhe elipsave. Kufiri i një kërkese është 8 192
 karaktere dhe 128 pjesë. Strukturat e ndërlikuara mund të kërkojnë
 rishikim manual. Vlerësimi i dedikuar ka 31 raste.
+
+## Fjalitë me dy pjesë dhe shpjegimi i korrigjimeve
+
+Korrigjuesi mund të analizojë dy fjali deklarative të pavarura të
+bashkuara me presje, pikëpresje ose një lidhëz të zakonshme
+(`and`, `but`, `or`, `yet`, `so`). Nëse vetëm një presje i bashkon
+dy fjalitë e pavarura, motori e zëvendëson me pikëpresje. Kur njëra pjesë
+kërkon rishikim, korrigjuesi e ruan të gjithë fjalinë.
+
+Me profilin `written-v5`, `Explain corrections:` kthen fjalinë e
+korrigjuar dhe arsyen e çdo ndryshimi deri në tetë ndryshime.
+`Explain paragraph corrections:` jep të njëjtin shpjegim për paragrafë.
+Dalja JSON e mjetit lokal përmban të gjitha ndryshimet.
+
+```sh
+XSUS_EN_MODEL_PROFILE=written-v5 \
+  python3 -m languages.en.evaluation.demo 'Explain corrections: They writes, Alex reads.'
+python3 -m languages.en.evaluation.proofreading --cases languages/en/evaluation/proofreading-compounds-v1.jsonl
+```

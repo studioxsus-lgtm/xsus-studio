@@ -2,10 +2,15 @@
 
 import re
 
+from .feedback import explain_edits
 from .paragraph import ParagraphStatus, proofread_paragraph
 from .proofreader import ProofreadingStatus, proofread_sentence
 
-_COMMAND = re.compile(r"\A[ \t]*(?P<command>proofread paragraph|proofread|correct the grammar)[ \t]*:[ \t]*(?P<sentence>.*)\Z", re.IGNORECASE | re.DOTALL)
+_COMMAND = re.compile(
+    r"\A[ \t]*(?P<command>proofread paragraph|explain paragraph corrections|"
+    r"proofread|correct the grammar|explain corrections)[ \t]*:[ \t]*(?P<sentence>.*)\Z",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 def answer_proofreading_request(text: str) -> str | None:
@@ -14,14 +19,16 @@ def answer_proofreading_request(text: str) -> str | None:
     if command is None:
         return None
     sentence = command["sentence"]
-    if command["command"].casefold() == "proofread paragraph":
+    operation = command["command"].casefold()
+    if operation in {"proofread paragraph", "explain paragraph corrections"}:
         if not sentence.strip():
             return "Please provide an English paragraph to proofread."
         paragraph = proofread_paragraph(sentence)
+        feedback = explain_edits(paragraph.edits) if operation == "explain paragraph corrections" else ""
         if paragraph.status is ParagraphStatus.CORRECTED:
-            return paragraph.text
+            return paragraph.text + feedback
         if paragraph.status is ParagraphStatus.PARTIAL:
-            return f"Some sentences still need manual review.\n{paragraph.text}"
+            return f"Some sentences still need manual review.\n{paragraph.text}" + feedback
         if paragraph.status is ParagraphStatus.UNCHANGED:
             return f"No grammar correction found in these sentences.\n{paragraph.text}"
         return f"This paragraph needs manual review.\n{paragraph.text}"
@@ -29,7 +36,7 @@ def answer_proofreading_request(text: str) -> str | None:
         return "Please provide one English sentence to proofread."
     result = proofread_sentence(sentence)
     if result.status is ProofreadingStatus.CORRECTED:
-        return result.text
+        return result.text + (explain_edits(result.edits) if operation == "explain corrections" else "")
     if result.status is ProofreadingStatus.UNCHANGED:
         return f"No grammar correction found in this sentence.\n{result.text}"
     return f"This sentence needs manual review.\n{result.text}"

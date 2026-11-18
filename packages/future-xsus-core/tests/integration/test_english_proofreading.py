@@ -14,6 +14,17 @@ class EnglishProofreadingIntegrationTests(unittest.IsolatedAsyncioTestCase):
             ("Correct the grammar: What did Nina wrote?", "What did Nina write?"),
             ("Proofread: They write reports.", "No grammar correction found in this sentence.\nThey write reports."),
             ("Proofread: I told Sam that he write.", "This sentence needs manual review.\nI told Sam that he write."),
+            (
+                "Explain corrections: They writes, Alex reads.",
+                "They write; Alex reads.\n\nChanges:\n"
+                "- 'writes' → 'write'. Make the finite verb agree with its subject.\n"
+                "- ',' → ';'. A semicolon can join two independent clauses without a conjunction.",
+            ),
+            (
+                "Explain paragraph corrections: They writes. This is a test sentence with a relative clause that it does not recognize.",
+                "Some sentences still need manual review.\nThey write. This is a test sentence with a relative clause that it does not recognize."
+                "\n\nChanges:\n- 'writes' → 'write'. Make the finite verb agree with its subject.",
+            ),
             ("Proofread: ", "Please provide one English sentence to proofread."),
             (
                 "Proofread paragraph: They writes. What did Alex wrote?",

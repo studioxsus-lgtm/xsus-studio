@@ -13,6 +13,7 @@ class IssueCode(StrEnum):
     AUXILIARY_VERB_FORM = "auxiliary_verb_form"
     PRONOUN_CASE = "pronoun_case"
     DETERMINER_NUMBER = "determiner_number"
+    COMMA_SPLICE = "comma_splice"
 
 
 @dataclass(frozen=True, slots=True)

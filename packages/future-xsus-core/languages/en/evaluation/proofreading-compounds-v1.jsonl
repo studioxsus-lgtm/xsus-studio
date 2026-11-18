@@ -1,0 +1,40 @@
+{"id":"semicolon-clean","input":"Mia checks the budget; Alex opens the folder.","status":"unchanged","output":"Mia checks the budget; Alex opens the folder."}
+{"id":"coordinator-clean-with-comma","input":"They send the reports, and Nina reads the notes.","status":"unchanged","output":"They send the reports, and Nina reads the notes."}
+{"id":"coordinator-clean-bare","input":"Theo reads the summary but Isla writes the agenda.","status":"unchanged","output":"Theo reads the summary but Isla writes the agenda."}
+{"id":"comma-splice-clean","input":"The students read the draft, the teacher checks the folders.","status":"corrected","output":"The students read the draft; the teacher checks the folders."}
+{"id":"comma-splice-preserves-proper-name","input":"We open the folder, Maya reads the file.","status":"corrected","output":"We open the folder; Maya reads the file."}
+{"id":"comma-splice-and-agreement","input":"The teachers checks the draft, the student reads the note.","status":"corrected","output":"The teachers check the draft; the student reads the note."}
+{"id":"comma-splice-and-auxiliary","input":"Nina has chose the file, the colleague reads the report.","status":"corrected","output":"Nina has chosen the file; the colleague reads the report."}
+{"id":"comma-splice-and-passive","input":"The invoices was sent by he, the students check the forms.","status":"corrected","output":"The invoices were sent by him; the students check the forms."}
+{"id":"comma-splice-multiple-grammar-edits","input":"He have chose the notes, these ticket is ready.","status":"corrected","output":"He has chosen the notes; this ticket is ready."}
+{"id":"semicolon-left-agreement","input":"The dog see the mouse; the child reads the report.","status":"corrected","output":"The dog sees the mouse; the child reads the report."}
+{"id":"semicolon-both-agreement","input":"Nora check the report; the files is ready.","status":"corrected","output":"Nora checks the report; the files are ready."}
+{"id":"semicolon-both-case","input":"Him sends the receipt; Mia writes the notes.","status":"corrected","output":"He sends the receipt; Mia writes the notes."}
+{"id":"explicit-and-case","input":"Nora thanked they, and the students read the notes.","status":"corrected","output":"Nora thanked them, and the students read the notes."}
+{"id":"explicit-but-determiner","input":"He reads this reports, but Maya writes the summary.","status":"corrected","output":"He reads these reports, but Maya writes the summary."}
+{"id":"explicit-or-modal","input":"The teacher could opens the folder, or the student can read the notes.","status":"corrected","output":"The teacher could open the folder, or the student can read the notes."}
+{"id":"explicit-yet-agreement","input":"The reports is ready, yet the students have the drafts.","status":"corrected","output":"The reports are ready, yet the students have the drafts."}
+{"id":"explicit-so-agreement","input":"The meeting starts, so the teachers opens the files.","status":"corrected","output":"The meeting starts, so the teachers open the files."}
+{"id":"bare-and-two-edits","input":"Mia write the report and Noah open the folder.","status":"corrected","output":"Mia writes the report and Noah opens the folder."}
+{"id":"bare-but-auxiliary","input":"The teacher has wrote the draft but they read the notes.","status":"corrected","output":"The teacher has written the draft but they read the notes."}
+{"id":"bare-or-determiner","input":"The students read those report or the teacher shares the notes.","status":"corrected","output":"The students read that report or the teacher shares the notes."}
+{"id":"bare-yet-passive","input":"The files was opened yet Mia does not read the report.","status":"corrected","output":"The files were opened yet Mia does not read the report."}
+{"id":"bare-so-right-agreement","input":"The meeting starts so the students leaves.","status":"corrected","output":"The meeting starts so the students leave."}
+{"id":"bare-all-caps","input":"THE FILES IS READY AND NINA READS THE NOTES.","status":"corrected","output":"THE FILES ARE READY AND NINA READS THE NOTES."}
+{"id":"comma-tab-and-outer-space","input":"  Alex  have read the notes,\t  Maya writes the agenda.  ","status":"corrected","output":"  Alex  has read the notes;\t  Maya writes the agenda.  "}
+{"id":"review-initial-subordinate-because","input":"Because Alex checks the files, Nina opens the folder.","status":"review_required","output":"Because Alex checks the files, Nina opens the folder."}
+{"id":"review-initial-subordinate-if","input":"If Mia writes the notes, Alex reads the report.","status":"review_required","output":"If Mia writes the notes, Alex reads the report."}
+{"id":"review-embedded-subordinate","input":"Alex read the draft, although Nina checks the budget.","status":"review_required","output":"Alex read the draft, although Nina checks the budget."}
+{"id":"review-dependent-initial-although","input":"Although Nina checks the budget, Alex reads the report.","status":"review_required","output":"Although Nina checks the budget, Alex reads the report."}
+{"id":"review-coordinated-object","input":"Maya reads the report and the notes.","status":"review_required","output":"Maya reads the report and the notes."}
+{"id":"review-shared-subject","input":"Nina writes the report and reads the draft.","status":"review_required","output":"Nina writes the report and reads the draft."}
+{"id":"review-list","input":"Maya checked the draft, the report, and the budget.","status":"review_required","output":"Maya checked the draft, the report, and the budget."}
+{"id":"review-question-pair","input":"What did Nina wrote, what did Alex read?","status":"review_required","output":"What did Nina wrote, what did Alex read?"}
+{"id":"review-second-half-question","input":"He reads the draft; did Nina wrote the report?","status":"review_required","output":"He reads the draft; did Nina wrote the report?"}
+{"id":"review-atomic-ambiguous-right","input":"The teachers writes the draft, and her sees her.","status":"review_required","output":"The teachers writes the draft, and her sees her."}
+{"id":"review-atomic-unsupported-left","input":"The person we met writes the notes; Nina open the folder.","status":"review_required","output":"The person we met writes the notes; Nina open the folder."}
+{"id":"review-atomic-contraction","input":"The files isn’t ready, but Alex writes the report.","status":"review_required","output":"The files isn’t ready, but Alex writes the report."}
+{"id":"review-three-clause-separators","input":"The teachers writes the draft; Mia opens the file; Alex read the notes.","status":"review_required","output":"The teachers writes the draft; Mia opens the file; Alex read the notes."}
+{"id":"review-quotes","input":"Nina said \"The teachers writes\", Alex reads the notes.","status":"review_required","output":"Nina said \"The teachers writes\", Alex reads the notes."}
+{"id":"review-parenthetical","input":"Mia wrote the report (a short note, a draft); Alex opens the folder.","status":"review_required","output":"Mia wrote the report (a short note, a draft); Alex opens the folder."}
+{"id":"review-missing-second-clause","input":"Nina writes the report;","status":"review_required","output":"Nina writes the report;"}
