@@ -1,0 +1,47 @@
+{"id":"because-initial-clean","input":"Because Nina opens the folder, Alex reads the draft.","status":"unchanged","output":"Because Nina opens the folder, Alex reads the draft."}
+{"id":"although-trailing-clean","input":"The teacher checks the report although the students read the notes.","status":"unchanged","output":"The teacher checks the report although the students read the notes."}
+{"id":"if-trailing-comma-clean","input":"Mia reads the draft, if the student opens the folder.","status":"unchanged","output":"Mia reads the draft, if the student opens the folder."}
+{"id":"while-initial-clean","input":"While Maya checks the file, Nina writes the agenda.","status":"unchanged","output":"While Maya checks the file, Nina writes the agenda."}
+{"id":"unless-trailing-negative-clean","input":"They do not read the report unless the teacher opens the folder.","status":"unchanged","output":"They do not read the report unless the teacher opens the folder."}
+{"id":"after-initial-passive-clean","input":"After the report was written by Mia, Alex read the draft.","status":"unchanged","output":"After the report was written by Mia, Alex read the draft."}
+{"id":"before-trailing-modal-clean","input":"They check the forms before Nina can share the notes.","status":"unchanged","output":"They check the forms before Nina can share the notes."}
+{"id":"when-initial-irregular-past-clean","input":"When Mia found the file, Alex chose the report.","status":"unchanged","output":"When Mia found the file, Alex chose the report."}
+{"id":"because-initial-main-agreement","input":"Because Maya reads the agenda, the teachers writes the notes.","status":"corrected","output":"Because Maya reads the agenda, the teachers write the notes."}
+{"id":"because-initial-dependent-agreement","input":"Because the teachers reads the report, Maya checks the form.","status":"corrected","output":"Because the teachers read the report, Maya checks the form."}
+{"id":"because-trailing-dependent-agreement","input":"Nina checks the budget because the students reads the notes.","status":"corrected","output":"Nina checks the budget because the students read the notes."}
+{"id":"because-trailing-remains-comma","input":"Nina check the budget, because the students read the notes.","status":"corrected","output":"Nina checks the budget, because the students read the notes."}
+{"id":"if-initial-auxiliary-and-main-agreement","input":"If the teacher does opens the file, the students reads the report.","status":"corrected","output":"If the teacher does open the file, the students read the report."}
+{"id":"if-trailing-case","input":"Mia checks the notes if him reads the report.","status":"corrected","output":"Mia checks the notes if he reads the report."}
+{"id":"unless-initial-case","input":"Unless her reads the draft, Mia sees they.","status":"corrected","output":"Unless she reads the draft, Mia sees them."}
+{"id":"unless-trailing-modal-form","input":"Alex reads the report unless Nina can opens the folder.","status":"corrected","output":"Alex reads the report unless Nina can open the folder."}
+{"id":"although-initial-agreement","input":"Although the reports is ready, the teacher reads the notes.","status":"corrected","output":"Although the reports are ready, the teacher reads the notes."}
+{"id":"although-trailing-determiner","input":"The student reads this reports although the teacher writes notes.","status":"corrected","output":"The student reads these reports although the teacher writes notes."}
+{"id":"while-initial-both-clauses","input":"While Mia have checked the file, the students reads the notes.","status":"corrected","output":"While Mia has checked the file, the students read the notes."}
+{"id":"while-trailing-progressive","input":"Mia checks the budget while the teachers are write the notes.","status":"corrected","output":"Mia checks the budget while the teachers are writing the notes."}
+{"id":"when-initial-passive-agent-case","input":"When the reports was sent by she, the teacher read the notes.","status":"corrected","output":"When the reports were sent by her, the teacher read the notes."}
+{"id":"when-trailing-passive-agreement","input":"The teachers read the draft when the reports was sent.","status":"corrected","output":"The teachers read the draft when the reports were sent."}
+{"id":"before-initial-pronoun-object","input":"Before Nina called they, the teacher opened the file.","status":"corrected","output":"Before Nina called them, the teacher opened the file."}
+{"id":"before-trailing-auxiliary","input":"The teacher has wrote the report before Nina opens the folders.","status":"corrected","output":"The teacher has written the report before Nina opens the folders."}
+{"id":"after-initial-determiner","input":"After the student reads those report, Alex opens the folder.","status":"corrected","output":"After the student reads that report, Alex opens the folder."}
+{"id":"after-trailing-verb-choice","input":"They check the reports after the teacher has chose the folders.","status":"corrected","output":"They check the reports after the teacher has chosen the folders."}
+{"id":"outer-spacing-and-tab","input":"  Because Mia  write the notes,\t Alex reads the report.  ","status":"corrected","output":"  Because Mia  writes the notes,\t Alex reads the report.  "}
+{"id":"all-caps-and-trailing-space","input":"THE REPORTS IS READY WHEN NINA READS THE NOTES.\t","status":"corrected","output":"THE REPORTS ARE READY WHEN NINA READS THE NOTES.\t"}
+{"id":"main-verbs-identical-across-clauses","input":"Alex reads the notes while the students reads the draft.","status":"corrected","output":"Alex reads the notes while the students read the draft."}
+{"id":"review-missing-initial-comma","input":"Because the students reads the notes Alex opens the folder.","status":"review_required","output":"Because the students reads the notes Alex opens the folder."}
+{"id":"review-initial-fragment-only","input":"Although Nina has wrote the report.","status":"review_required","output":"Although Nina has wrote the report."}
+{"id":"review-trailing-fragment-only","input":"Alex reads the draft because.","status":"review_required","output":"Alex reads the draft because."}
+{"id":"review-trailing-prepositional-because-of","input":"Alex opens the folder because of the new report.","status":"review_required","output":"Alex opens the folder because of the new report."}
+{"id":"review-before-preposition","input":"Nina reads the notes before the meeting.","status":"review_required","output":"Nina reads the notes before the meeting."}
+{"id":"review-when-embedded-question","input":"Alex knows when Nina reads the notes.","status":"review_required","output":"Alex knows when Nina reads the notes."}
+{"id":"review-nested-when-if","input":"If Mia opens the folder when Alex reads the notes, the teacher writes the report.","status":"review_required","output":"If Mia opens the folder when Alex reads the notes, the teacher writes the report."}
+{"id":"review-question-main","input":"Because Mia opens the folder, did Alex wrote the report?","status":"review_required","output":"Because Mia opens the folder, did Alex wrote the report?"}
+{"id":"whole-word-marker-does-not-block-comma-splice","input":"Mia reads the notes, Afterton checks the files.","status":"corrected","output":"Mia reads the notes; Afterton checks the files."}
+{"id":"review-malformed-extra-comma","input":"When Mia opens the folder, the teacher reads the notes, and Alex writes the report.","status":"review_required","output":"When Mia opens the folder, the teacher reads the notes, and Alex writes the report."}
+{"id":"review-ambiguous-token-in-dependent","input":"Alex write the notes if her sees her.","status":"review_required","output":"Alex write the notes if her sees her."}
+{"id":"review-ambiguous-token-in-main","input":"After Nina read the draft, her sees her.","status":"review_required","output":"After Nina read the draft, her sees her."}
+{"id":"review-quoted-because","input":"Alex reads the draft because Nina said \"The folders is ready.\"","status":"review_required","output":"Alex reads the draft because Nina said \"The folders is ready.\""}
+{"id":"review-protected-parenthesis","input":"After Mia (the teacher) reads the file, Alex write the notes.","status":"review_required","output":"After Mia (the teacher) reads the file, Alex write the notes."}
+{"id":"review-relative-clause-in-main","input":"Because they writes the notes, the student that Nina knows reads the report.","status":"review_required","output":"Because they writes the notes, the student that Nina knows reads the report."}
+{"id":"review-semicolon-instead-of-initial-comma","input":"While Nina reads the notes; Alex write the report.","status":"review_required","output":"While Nina reads the notes; Alex write the report."}
+{"id":"review-initial-marker-without-clause","input":"After the meeting, Alex write the report.","status":"review_required","output":"After the meeting, Alex write the report."}
+{"id":"review-if-irrealis","input":"If he were ready, Alex would read the report.","status":"review_required","output":"If he were ready, Alex would read the report."}

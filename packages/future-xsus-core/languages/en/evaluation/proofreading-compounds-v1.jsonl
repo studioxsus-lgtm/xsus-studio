@@ -22,10 +22,10 @@
 {"id":"bare-so-right-agreement","input":"The meeting starts so the students leaves.","status":"corrected","output":"The meeting starts so the students leave."}
 {"id":"bare-all-caps","input":"THE FILES IS READY AND NINA READS THE NOTES.","status":"corrected","output":"THE FILES ARE READY AND NINA READS THE NOTES."}
 {"id":"comma-tab-and-outer-space","input":"  Alex  have read the notes,\t  Maya writes the agenda.  ","status":"corrected","output":"  Alex  has read the notes;\t  Maya writes the agenda.  "}
-{"id":"review-initial-subordinate-because","input":"Because Alex checks the files, Nina opens the folder.","status":"review_required","output":"Because Alex checks the files, Nina opens the folder."}
-{"id":"review-initial-subordinate-if","input":"If Mia writes the notes, Alex reads the report.","status":"review_required","output":"If Mia writes the notes, Alex reads the report."}
-{"id":"review-embedded-subordinate","input":"Alex read the draft, although Nina checks the budget.","status":"review_required","output":"Alex read the draft, although Nina checks the budget."}
-{"id":"review-dependent-initial-although","input":"Although Nina checks the budget, Alex reads the report.","status":"review_required","output":"Although Nina checks the budget, Alex reads the report."}
+{"id":"review-initial-subordinate-because","input":"Because Alex checks the files, Nina opens the folder.","status":"unchanged","output":"Because Alex checks the files, Nina opens the folder."}
+{"id":"review-initial-subordinate-if","input":"If Mia writes the notes, Alex reads the report.","status":"unchanged","output":"If Mia writes the notes, Alex reads the report."}
+{"id":"review-embedded-subordinate","input":"Alex read the draft, although Nina checks the budget.","status":"unchanged","output":"Alex read the draft, although Nina checks the budget."}
+{"id":"review-dependent-initial-although","input":"Although Nina checks the budget, Alex reads the report.","status":"unchanged","output":"Although Nina checks the budget, Alex reads the report."}
 {"id":"review-coordinated-object","input":"Maya reads the report and the notes.","status":"review_required","output":"Maya reads the report and the notes."}
 {"id":"review-shared-subject","input":"Nina writes the report and reads the draft.","status":"review_required","output":"Nina writes the report and reads the draft."}
 {"id":"review-list","input":"Maya checked the draft, the report, and the budget.","status":"review_required","output":"Maya checked the draft, the report, and the budget."}

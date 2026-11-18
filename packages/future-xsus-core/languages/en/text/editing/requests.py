@@ -2,7 +2,7 @@
 
 import re
 
-from .feedback import explain_edits
+from .feedback import explain_edits, explain_review
 from .paragraph import ParagraphStatus, proofread_paragraph
 from .proofreader import ProofreadingStatus, proofread_sentence
 
@@ -24,14 +24,17 @@ def answer_proofreading_request(text: str) -> str | None:
         if not sentence.strip():
             return "Please provide an English paragraph to proofread."
         paragraph = proofread_paragraph(sentence)
-        feedback = explain_edits(paragraph.edits) if operation == "explain paragraph corrections" else ""
+        feedback = ""
+        if operation == "explain paragraph corrections":
+            feedback = explain_edits(paragraph.edits)
+            feedback += explain_review([passage.review_reason for passage in paragraph.passages])
         if paragraph.status is ParagraphStatus.CORRECTED:
             return paragraph.text + feedback
         if paragraph.status is ParagraphStatus.PARTIAL:
             return f"Some sentences still need manual review.\n{paragraph.text}" + feedback
         if paragraph.status is ParagraphStatus.UNCHANGED:
             return f"No grammar correction found in these sentences.\n{paragraph.text}"
-        return f"This paragraph needs manual review.\n{paragraph.text}"
+        return f"This paragraph needs manual review.\n{paragraph.text}" + feedback
     if not sentence.strip():
         return "Please provide one English sentence to proofread."
     result = proofread_sentence(sentence)
@@ -39,4 +42,5 @@ def answer_proofreading_request(text: str) -> str | None:
         return result.text + (explain_edits(result.edits) if operation == "explain corrections" else "")
     if result.status is ProofreadingStatus.UNCHANGED:
         return f"No grammar correction found in this sentence.\n{result.text}"
-    return f"This sentence needs manual review.\n{result.text}"
+    review = explain_review([result.review_reason]) if operation == "explain corrections" else ""
+    return f"This sentence needs manual review.\n{result.text}" + review

@@ -25,3 +25,14 @@ def explain_edits(edits: Sequence[Edit]) -> str:
     if len(edits) > _MAX_EXPLAINED:
         explanations.append(f"- {len(edits) - _MAX_EXPLAINED} additional edits applied.")
     return "\n\nChanges:\n" + "\n".join(explanations)
+
+
+_REVIEW_EXPLANATIONS = {
+    "possible_irrealis": "In a hypothetical condition, 'were' can be valid with a singular subject.",
+    "possible_embedded_question": "The clause may be an embedded question, so its structure needs review.",
+}
+
+
+def explain_review(reasons: Sequence[str | None]) -> str:
+    notes = [_REVIEW_EXPLANATIONS[reason] for reason in dict.fromkeys(reasons) if reason in _REVIEW_EXPLANATIONS]
+    return "\n\nReview notes:\n- " + "\n- ".join(notes) if notes else ""

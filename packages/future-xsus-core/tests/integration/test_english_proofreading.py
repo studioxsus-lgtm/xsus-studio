@@ -25,6 +25,15 @@ class EnglishProofreadingIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 "Some sentences still need manual review.\nThey write. This is a test sentence with a relative clause that it does not recognize."
                 "\n\nChanges:\n- 'writes' → 'write'. Make the finite verb agree with its subject.",
             ),
+            (
+                "Proofread: Although they writes, Nina have checked the report.",
+                "Although they write, Nina has checked the report.",
+            ),
+            (
+                "Explain corrections: If she were ready, Nina would read the report.",
+                "This sentence needs manual review.\nIf she were ready, Nina would read the report."
+                "\n\nReview notes:\n- In a hypothetical condition, 'were' can be valid with a singular subject.",
+            ),
             ("Proofread: ", "Please provide one English sentence to proofread."),
             (
                 "Proofread paragraph: They writes. What did Alex wrote?",

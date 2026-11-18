@@ -303,3 +303,21 @@ XSUS_EN_MODEL_PROFILE=written-v5 \
   python3 -m languages.en.evaluation.demo 'Explain corrections: They writes, Alex reads.'
 python3 -m languages.en.evaluation.proofreading --cases languages/en/evaluation/proofreading-compounds-v1.jsonl
 ```
+
+## Fjalitë me pjesë të varura
+
+Korrigjuesi mbulon dy pjesë deklarative dhe një lidhëz të vetme nga
+`because`, `although`, `if`, `unless`, `while`, `when`, `before`
+dhe `after`. Kur pjesa e varur vjen e para, duhet të jetë e ndarë me
+presje. Kur vjen e dyta, korrigjuesi ruan zgjedhjen ekzistuese të presjes.
+Ndryshimet zbatohen vetëm pasi kontrollohen të dyja pjesët.
+
+Ndërtimet e paqarta, si pyetjet e ndërfutura dhe përdorimi hipotetik
+i `were`, ruhen për rishikim. `Explain corrections:` mund të shpjegojë
+pse këto raste kërkojnë rishikim. Ky mbulim përfshin 47 raste të vlerësimit.
+
+```sh
+XSUS_EN_MODEL_PROFILE=written-v5 \
+  python3 -m languages.en.evaluation.demo 'Proofread: Although they writes, Nina have checked the report.'
+python3 -m languages.en.evaluation.proofreading --cases languages/en/evaluation/proofreading-dependent-v1.jsonl
+```
