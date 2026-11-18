@@ -98,6 +98,21 @@ export function auditReviewRecoveryBatch(batch){
   if(!valid)findings.push("REQUEST_INVARIANT_VIOLATION");
   return Object.freeze({index,requestId,traceId,assessment});
  });
+ // Phase 55: repeated request/trace pairs are ambiguous during reconciliation.
+ // Block every occurrence, not just the later duplicate.
+ const identities=new Map();
+ for(let i=0;i<results.length;i++){
+  const {requestId,traceId}=results[i];
+  if(!requestId||!traceId)continue;
+  const key=JSON.stringify([requestId,traceId]);
+  const previous=identities.get(key);
+  if(previous===undefined)identities.set(key,i);
+  else{
+   findings.push("DUPLICATE_REQUEST_IDENTITY");
+   results[previous]=Object.freeze({...results[previous],assessment:BLOCKED});
+   results[i]=Object.freeze({...results[i],assessment:BLOCKED});
+  }
+ }
  // A hostile Proxy can mutate its view while entries are inspected.
  // Re-check the array shape; any detected mutation invalidates the batch.
  let stable=true;
