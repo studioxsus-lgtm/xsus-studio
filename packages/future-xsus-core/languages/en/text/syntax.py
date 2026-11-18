@@ -36,13 +36,23 @@ _MODALS = frozenset({"can", "could", "may", "might", "must", "shall", "should", 
 _WH_SUBJECTS = frozenset({"who", "what"})
 _WH_OBJECTS = _WH_SUBJECTS | {"whom"}
 # Existing lexical senses that license a direct object.
-_WH_TRANSITIVE_VERBS = frozenset({
+_TRANSITIVE_VERBS = frozenset({
     "answer", "ask", "break", "bring", "build", "buy", "call", "check", "choose",
     "do", "drink", "drive", "drop", "eat", "explain", "find", "finish", "forget",
     "give", "have", "help", "keep", "know", "leave", "like", "lose", "make", "meet",
     "need", "open", "pay", "plan", "read", "receive", "return", "say", "see", "sell",
     "send", "share", "study", "take", "teach", "tell", "thank", "visit", "wear",
     "win", "write",
+})
+_AGENT_NOUNS = frozenset({
+    "child", "colleague", "deer", "dog", "engine", "friend", "man", "model",
+    "mouse", "person", "sheep", "student", "teacher", "woman",
+})
+_TEMPORAL_NAMES = frozenset({
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+    "january", "february", "march", "april", "may", "june", "july", "august",
+    "september", "october", "november", "december", "noon", "midnight",
+    "today", "tomorrow", "yesterday",
 })
 _NEGATIVE_CONTRACTIONS = {f"{form}n't": form for form in _AUXILIARIES if form != "am"}
 _NEGATIVE_CONTRACTIONS.update({
@@ -59,6 +69,11 @@ class Number(StrEnum):
 class ClauseKind(StrEnum):
     DECLARATIVE = "declarative"
     QUESTION = "question"
+
+
+class Voice(StrEnum):
+    ACTIVE = "active"
+    PASSIVE = "passive"
 
 
 class InterrogativeRole(StrEnum):
@@ -105,6 +120,8 @@ class Clause:
     negated: bool = False
     auxiliary: Auxiliary | None = None
     interrogative_role: InterrogativeRole | None = None
+    voice: Voice = Voice.ACTIVE
+    agent: Phrase | None = None
 
 
 _PRONOUNS = {
@@ -122,6 +139,8 @@ for _noun in _NOUNS:
     _NOUN_NUMBERS[pluralize_noun(_noun)].add(Number.PLURAL)
 
 _VERB_FORMS: dict[str, dict[str, set[VerbForm]]] = defaultdict(lambda: defaultdict(set))
+_AGENT_FORMS = _AGENT_NOUNS | {pluralize_noun(noun) for noun in _AGENT_NOUNS}
+
 for _lemma in _VERBS:
     for _form, _feature in inflect_verb(_lemma).forms():
         _VERB_FORMS[_form][_lemma].add(_feature)
@@ -161,6 +180,19 @@ def _noun_phrase(tokens: list[str]) -> Phrase | None:
     return None
 
 
+def _by_agent(tokens: list[str]) -> Phrase | None:
+    if not tokens or tokens[0].lower() != "by":
+        return None
+    agent = _noun_phrase(tokens[1:])
+    if agent is None:
+        return None
+    if agent.head in _AGENT_FORMS or agent.head in _PRONOUNS:
+        return agent
+    if agent.head not in _NOUN_NUMBERS and not any(token.lower() in _TEMPORAL_NAMES for token in tokens[1:]):
+        return agent
+    return None
+
+
 def _auxiliary(word: str) -> Auxiliary | None:
     normalized = word.lower()
     if normalized in _MODALS:
@@ -176,6 +208,8 @@ def _predicate(
     auxiliary: Auxiliary | None = None,
 ) -> list[Clause]:
     nominal = _noun_phrase(rest)
+    after_be = auxiliary is not None and auxiliary.lemma == "be"
+    agent = _by_agent(rest) if after_be else None
     analyses = []
     for lemma, forms in _VERB_FORMS.get(verb.lower(), {}).items():
         if lemma == "be":
@@ -184,10 +218,14 @@ def _predicate(
                 complement = rest[0]
             if complement is not None:
                 analyses.append(Clause(subject, verb, lemma, frozenset(forms), None, complement, kind, negated, auxiliary))
+        elif after_be and VerbForm.PAST_PARTICIPLE in forms and (agent is not None or not rest):
+            # Prefer the existing copular analysis for a known bare adjective.
+            if lemma in _TRANSITIVE_VERBS and (agent is not None or verb.lower() not in _ADJECTIVES):
+                analyses.append(Clause(
+                    subject, verb, lemma, frozenset(forms), None, None, kind, negated,
+                    auxiliary, voice=Voice.PASSIVE, agent=agent,
+                ))
         elif not rest or nominal is not None:
-            # A bare past participle after be may belong to the passive voice.
-            if auxiliary and auxiliary.lemma == "be" and not rest and VerbForm.PAST_PARTICIPLE in forms:
-                continue
             analyses.append(Clause(subject, verb, lemma, frozenset(forms), nominal, None, kind, negated, auxiliary))
     return analyses
 
@@ -273,7 +311,7 @@ def _wh_question(tokens: list[str], *, contracted_auxiliary: bool) -> list[Claus
     analyses.extend(
         replace(clause, object=phrase, interrogative_role=InterrogativeRole.OBJECT)
         for clause in _question(tokens[1:], contracted_start=contracted_auxiliary)
-        if clause.object is None and clause.lemma in _WH_TRANSITIVE_VERBS
+        if clause.voice is Voice.ACTIVE and clause.object is None and clause.lemma in _TRANSITIVE_VERBS
     )
     return analyses
 

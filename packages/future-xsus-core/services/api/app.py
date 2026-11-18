@@ -19,6 +19,7 @@ from core.conversation.session_conversation import SessionConversation
 from core.sessions.session_store import (
     SessionCapacityError,
     SessionNotFoundError,
+    SessionPage,
     SessionRevisionError,
     SessionSnapshot,
 )
@@ -30,6 +31,8 @@ class SessionStore(Protocol):
     def get(self, owner_id: str, session_id: str) -> SessionSnapshot: ...
 
     def delete(self, owner_id: str, session_id: str) -> None: ...
+
+    def list_sessions(self, owner_id: str, *, limit: int = 20, after: str | None = None) -> SessionPage: ...
 
 
 _BEARER_TOKEN = re.compile(r"[A-Za-z0-9._~+/=-]{1,512}", re.ASCII)
@@ -95,9 +98,9 @@ def _owner(request: web.Request, credentials: tuple[tuple[str, bytes], ...]) -> 
     return match
 
 
-def _message(payload: object) -> tuple[str, LanguageTag]:
-    if not isinstance(payload, dict) or set(payload) - {"text", "language"}:
-        raise ValueError("Expected an object with text and optional language")
+def _message(payload: object) -> tuple[str, LanguageTag, int | None]:
+    if not isinstance(payload, dict) or set(payload) - {"text", "language", "expected_revision"}:
+        raise ValueError("Unexpected message fields")
     text = payload.get("text")
     if not isinstance(text, str) or not text.strip() or len(text) > _MAX_TEXT_CHARS:
         raise ValueError(f"text must contain 1–{_MAX_TEXT_CHARS} characters")
@@ -105,7 +108,10 @@ def _message(payload: object) -> tuple[str, LanguageTag]:
     language = payload.get("language", "en")
     if not isinstance(language, str) or len(language) > 128:
         raise ValueError("Invalid language tag")
-    return text, LanguageTag(language)
+    expected_revision = payload.get("expected_revision")
+    if "expected_revision" in payload and (type(expected_revision) is not int or expected_revision < 0):
+        raise ValueError("Invalid expected revision")
+    return text, LanguageTag(language), expected_revision
 
 
 def create_app(
@@ -127,7 +133,7 @@ def create_app(
         except SessionNotFoundError:
             return _error(404, "session_not_found", "Session not found")
         except SessionRevisionError:
-            return _error(409, "session_conflict", "Session changed during the request")
+            return _error(409, "session_conflict", "Session revision no longer matches")
         except SessionCapacityError:
             return _error(503, "session_capacity", "Session capacity has been reached")
         except sqlite3.Error:
@@ -151,6 +157,30 @@ def create_app(
         location = "/v1/sessions/" + quote(snapshot.session_id, safe="")
         return _json(_snapshot(snapshot), status=201, headers={"Location": location})
 
+    async def list_sessions(request: web.Request) -> web.Response:
+        owner = _owner(request, credentials)
+        if owner is None:
+            return unauthorized()
+        query = request.query
+        keys = tuple(query.keys())
+        if set(keys) - {"limit", "after"} or len(set(keys)) != len(keys):
+            return _error(400, "invalid_pagination", "Use a single limit and after cursor")
+        raw_limit = query.get("limit", "20")
+        if re.fullmatch(r"[0-9]{1,3}", raw_limit) is None:
+            return _error(400, "invalid_pagination", "limit must be an integer from 1 to 100")
+        try:
+            page = await asyncio.to_thread(
+                store.list_sessions, owner, limit=int(raw_limit), after=query.get("after"),
+            )
+        except ValueError:
+            return _error(400, "invalid_pagination", "Invalid limit or after cursor")
+        return _json({
+            "sessions": [
+                {"session_id": item.session_id, "revision": item.revision} for item in page.sessions
+            ],
+            "next_cursor": page.next_cursor,
+        })
+
     async def get(request: web.Request) -> web.Response:
         owner = _owner(request, credentials)
         if owner is None:
@@ -173,9 +203,9 @@ def create_app(
         if request.content_type != "application/json":
             return _error(415, "unsupported_media_type", "Use application/json")
         try:
-            text, language = _message(json.loads((await request.read()).decode("utf-8")))
+            text, language, expected_revision = _message(json.loads((await request.read()).decode("utf-8")))
         except (ValueError, RecursionError):
-            return _error(400, "invalid_request", "Invalid message JSON, text, or language")
+            return _error(400, "invalid_request", "Invalid message JSON, text, language, or expected revision")
         if supported_languages is not None and language not in supported_languages:
             status, message = _ENGINE_FAILURES[ErrorCode.UNSUPPORTED_LANGUAGE]
             return _error(status, ErrorCode.UNSUPPORTED_LANGUAGE.value, message)
@@ -187,6 +217,7 @@ def create_app(
             result = await conversation.execute(
                 owner, session_id, text, language=language,
                 deadline_unix_ms=time_ns() // 1_000_000 + _REQUEST_TIMEOUT_MS,
+                expected_revision=expected_revision,
             )
         except ValueError:
             return _error(422, "message_rejected", "The message could not be saved to the session")
@@ -209,6 +240,7 @@ def create_app(
     resource = r"/v1/sessions/{session_id:[A-Za-z0-9][A-Za-z0-9._-]{0,127}}"
     app.router.add_get("/healthz", health)
     app.router.add_post("/v1/sessions", create)
+    app.router.add_get("/v1/sessions", list_sessions, allow_head=False)
     app.router.add_get(resource, get, allow_head=False)
     app.router.add_delete(resource, delete)
     app.router.add_post(resource + "/messages", send)

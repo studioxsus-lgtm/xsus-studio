@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 
 from .grammar import GrammarIssue, check_grammar
 from .morphology import inflect_verb, pluralize_noun
-from .syntax import Clause, analyze_clause
+from .syntax import Clause, Voice, analyze_clause
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +38,10 @@ def main() -> int:
         result["clause"]["forms"] = sorted(analysis.clause.forms)
         if analysis.clause.interrogative_role is None:
             del result["clause"]["interrogative_role"]
+        if analysis.clause.voice is Voice.ACTIVE:
+            del result["clause"]["voice"]
+        if analysis.clause.agent is None:
+            del result["clause"]["agent"]
         if analysis.clause.auxiliary is not None:
             result["clause"]["auxiliary"]["forms"] = sorted(analysis.clause.auxiliary.forms)
     else:

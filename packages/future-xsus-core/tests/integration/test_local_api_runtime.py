@@ -35,7 +35,12 @@ class LocalAPIRuntimeTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual((await first.json())["text"], "We would appreciate receiving the receipt by Friday at 9 a.m.")
 
             async with TestClient(TestServer(create_local_app(database, owner="test-owner", token=_TOKEN))) as client:
-                second = await client.post(endpoint, headers=_HEADERS, json={"text": "Can you say it in fewer words?"})
+                listed = await client.get("/v1/sessions", headers=_HEADERS)
+                self.assertEqual(listed.status, 200)
+                self.assertEqual((await listed.json())["sessions"], [{"session_id": session_id, "revision": 1}])
+                second = await client.post(endpoint, headers=_HEADERS, json={
+                    "text": "Can you say it in fewer words?", "expected_revision": 1,
+                })
                 self.assertEqual(second.status, 200)
                 self.assertEqual((await second.json())["text"], "Please send the receipt by Friday at 9 a.m.")
                 saved = await client.get(f"/v1/sessions/{session_id}", headers=_HEADERS)

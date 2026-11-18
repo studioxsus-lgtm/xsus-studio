@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from .morphology import VerbForm, inflect_verb
-from .syntax import Clause, Number
+from .syntax import Clause, Number, Voice
 
 
 class IssueCode(StrEnum):
@@ -70,16 +70,19 @@ def check_grammar(clause: Clause) -> tuple[GrammarIssue, ...]:
     if (verb_issue := _verb_issue(clause)) is not None:
         issues.append(verb_issue)
     if clause.auxiliary is not None:
-        required = (
-            VerbForm.BASE
-            if VerbForm.MODAL in clause.auxiliary.forms
-            else _AUXILIARY_FORMS[clause.auxiliary.lemma]
-        )
+        if clause.voice is Voice.PASSIVE:
+            required = VerbForm.PAST_PARTICIPLE
+        elif VerbForm.MODAL in clause.auxiliary.forms:
+            required = VerbForm.BASE
+        else:
+            required = _AUXILIARY_FORMS[clause.auxiliary.lemma]
         if required not in clause.forms:
             expected = getattr(inflect_verb(clause.lemma), required.value)
             issues.append(GrammarIssue(IssueCode.AUXILIARY_VERB_FORM, clause.verb, expected))
     for phrase, pronouns in (
-        (clause.subject, _SUBJECT_PRONOUNS), (clause.object, _OBJECT_PRONOUNS),
+        (clause.subject, _SUBJECT_PRONOUNS),
+        (clause.object, _OBJECT_PRONOUNS),
+        (clause.agent, _OBJECT_PRONOUNS),
     ):
         if phrase is None:
             continue

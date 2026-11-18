@@ -8,7 +8,7 @@ from core.contracts.common import LanguageTag, V1
 from core.contracts.request import EngineRequest
 from core.contracts.response import EngineResponse, TextResult
 from core.execution.request_executor import ExecutionResult, RequestExecutor
-from core.sessions.session_store import SessionSnapshot
+from core.sessions.session_store import SessionRevisionError, SessionSnapshot
 
 
 class ConversationHistory(Protocol):
@@ -27,10 +27,14 @@ class SessionConversation:
 
     async def execute(
         self, owner_id: str, session_id: str, text: str, *,
-        language: LanguageTag, deadline_unix_ms: int,
+        language: LanguageTag, deadline_unix_ms: int, expected_revision: int | None = None,
     ) -> ExecutionResult:
         """Return a successful response only after its exchange is saved."""
+        if expected_revision is not None and (type(expected_revision) is not int or expected_revision < 0):
+            raise ValueError("Expected revision must be a nonnegative integer")
         snapshot = await asyncio.to_thread(self._history.get, owner_id, session_id)
+        if expected_revision is not None and snapshot.revision != expected_revision:
+            raise SessionRevisionError("Conversation session revision changed")
         request = EngineRequest(
             uuid4().hex, uuid4().hex, V1, language, deadline_unix_ms, snapshot.conversation(text),
         )

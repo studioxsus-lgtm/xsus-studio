@@ -13,3 +13,7 @@ vendos nëse kërkesa duhet përsëritur mbi revizionin e ri.
 Afati i kërkesës zbatohet nga ekzekutuesi i motorit. Nëse thirrësi anulon
 pritjen pasi shkrimi ka nisur në një thread, transaksioni mund të përfundojë.
 Thirrësi mund ta rilexojë sesionin për të përcaktuar rezultatin.
+
+Kur aplikacioni e di cilin revizion ka parë klienti, ia kalon si
+`expected_revision`. Një revizion i vjetruar refuzohet para se të thirret
+motori. Kontrolli gjatë shkrimit zbatohet edhe kur kjo fushë lihet bosh.

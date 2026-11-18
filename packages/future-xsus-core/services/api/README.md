@@ -22,8 +22,9 @@ Mbaje këtë identitet të qëndrueshëm kur rinis serverin me të njëjtën dat
 | --- | --- |
 | `GET /healthz` | Kontrollon nëse serveri përgjigjet. |
 | `POST /v1/sessions` | Krijon një sesion dhe kthen `session_id`. |
+| `GET /v1/sessions` | Liston identifikuesit dhe revizionet e sesioneve të pronarit. |
 | `GET /v1/sessions/{session_id}` | Kthen revizionin dhe historikun e sesionit. |
-| `POST /v1/sessions/{session_id}/messages` | Merr objektin JSON me `text` dhe gjuhën opsionale `language` (fillimisht `en`). |
+| `POST /v1/sessions/{session_id}/messages` | Merr objektin JSON me `text` dhe fushat opsionale `language` (fillimisht `en`) dhe `expected_revision`. |
 | `DELETE /v1/sessions/{session_id}` | Fshin sesionin dhe historikun e tij. |
 
 Të gjitha rrugët e sesioneve kërkojnë `Authorization: Bearer TOKEN`.
@@ -47,3 +48,14 @@ API-ja pranon mesazhe deri në 4 096 karaktere dhe trupa HTTP deri në 32 KiB.
 Kur tetë kërkesa për mesazhe janë duke u përpunuar, kërkesa pasuese merr
 `503` me kodin `message_capacity`. Gjuha e disponueshme në këtë nisje
 është `en`. Një gjuhë tjetër merr `422` me kodin `unsupported_language`.
+
+
+Lista renditet sipas identifikuesit. `limit` pranon vlera nga 1 deri në 100,
+me parazgjedhje 20. Kur `next_cursor` ka vlerë, dërgoje si `after` për
+faqen pasuese. Lista përmban vetëm `session_id` dhe `revision`. Historiku
+lexohet duke hapur një sesion.
+
+Për ta lidhur një mesazh me versionin që ka parë klienti, merr `revision`
+nga sesioni dhe dërgoje si `expected_revision`. Nëse revizioni ka ndryshuar,
+API-ja kthen `409 session_conflict` para gjenerimit. Shkrimi kontrollon sërish
+revizionin pasi përgjigjet motori. Fusha është opsionale për klientët ekzistues.

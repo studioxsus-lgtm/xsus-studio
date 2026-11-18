@@ -1,6 +1,8 @@
 """Shared session model and process-local conversation history."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
+from heapq import nsmallest
 from threading import Lock
 from uuid import uuid4
 
@@ -29,6 +31,20 @@ class SessionSnapshot:
     def conversation(self, text: str) -> Conversation:
         """Build a contract operation from this exact version of the history."""
         return Conversation(text, self.history)
+
+
+@dataclass(frozen=True, slots=True)
+class SessionSummary:
+    """Session metadata without conversation history."""
+
+    session_id: str
+    revision: int
+
+
+@dataclass(frozen=True, slots=True)
+class SessionPage:
+    sessions: tuple[SessionSummary, ...]
+    next_cursor: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,6 +93,22 @@ def _session_key(owner_id: str, session_id: str) -> tuple[str, str]:
     return owner_id, session_id
 
 
+def _page_boundary(owner_id: str, limit: int, after: str | None) -> str:
+    require_identifier(owner_id, "owner_id")
+    if type(limit) is not int or not 1 <= limit <= 100:
+        raise ValueError("limit must be an integer between 1 and 100")
+    if after is None:
+        return ""
+    require_identifier(after, "after")
+    return after
+
+
+def _session_page(rows: Sequence[tuple[str, int]], limit: int) -> SessionPage:
+    sessions = tuple(SessionSummary(session_id, revision) for session_id, revision in rows[:limit])
+    next_cursor = sessions[-1].session_id if len(rows) > limit else None
+    return SessionPage(sessions, next_cursor)
+
+
 class InMemorySessionStore:
     def __init__(
         self,
@@ -102,6 +134,16 @@ class InMemorySessionStore:
         key = _session_key(owner_id, session_id)
         with self._lock:
             return self._require_session(key)
+
+    def list_sessions(self, owner_id: str, *, limit: int = 20, after: str | None = None) -> SessionPage:
+        boundary = _page_boundary(owner_id, limit, after)
+        with self._lock:
+            rows = nsmallest(limit + 1, (
+                (session_id, snapshot.revision)
+                for (owner, session_id), snapshot in self._sessions.items()
+                if owner == owner_id and session_id > boundary
+            ))
+        return _session_page(rows, limit)
 
     def delete(self, owner_id: str, session_id: str) -> None:
         key = _session_key(owner_id, session_id)

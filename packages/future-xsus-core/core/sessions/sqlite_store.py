@@ -13,8 +13,11 @@ from core.contracts.request import ConversationRole, ConversationTurn
 from .session_store import (
     SessionCapacityError,
     SessionNotFoundError,
+    SessionPage,
     SessionSnapshot,
     _SessionLimits,
+    _page_boundary,
+    _session_page,
     _session_key,
 )
 
@@ -77,6 +80,19 @@ class SQLiteSessionStore:
         key = _session_key(owner_id, session_id)
         with self._connection() as connection:
             return self._read(connection, key)
+
+    def list_sessions(self, owner_id: str, *, limit: int = 20, after: str | None = None) -> SessionPage:
+        boundary = _page_boundary(owner_id, limit, after)
+        with self._connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT session_id, revision FROM xsus_sessions_v1
+                WHERE owner_id = ? AND session_id > ?
+                ORDER BY session_id LIMIT ?
+                """,
+                (owner_id, boundary, limit + 1),
+            ).fetchall()
+        return _session_page(rows, limit)
 
     def delete(self, owner_id: str, session_id: str) -> None:
         key = _session_key(owner_id, session_id)

@@ -7,3 +7,9 @@ Aplikacioni lexon pamjen e sesionit me `get`, ndërton operacionin me `snapshot.
 Kufijtë e parazgjedhur janë 128 sesione, 8 shkëmbime dhe 16 384 karaktere historie për sesion. Kur historia kalon kufirin, hiqen shkëmbimet më të vjetra si çifte. Kur mbushet kapaciteti i sesioneve, krijimi refuzohet derisa aplikacioni të fshijë një sesion.
 
 Për ruajtje pas rinisjes, krijo `SQLiteSessionStore(path)`, ku `path` tregon te një skedar i aplikacionit. Proceset që hapin të njëjtin skedar duhet të përdorin të njëjtët kufij. Çdo shkrim bëhet në një transaksion dhe një revizion i caktuar pranohet vetëm një herë, edhe kur e përdorin dy procese njëkohësisht. Kontrolli sipas pronarit zbatohet në API-n e sesioneve, ndërsa lejet e sistemit operativ mbrojnë vetë skedarin.
+
+Për të gjetur bisedat e një pronari, përdor `list_sessions(owner_id, limit=20)`.
+Lista përmban vetëm identifikuesin dhe revizionin e secilit sesion. Kur
+`next_cursor` ka vlerë, kaloje si `after` në kërkesën pasuese. Kufiri
+pranon 1 deri në 100 sesione për faqe. Rezultatet renditen sipas identifikuesit,
+jo sipas kohës. Çdo faqe pasqyron gjendjen e ruajtjes në çastin e leximit.

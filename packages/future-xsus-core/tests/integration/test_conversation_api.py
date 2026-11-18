@@ -139,6 +139,92 @@ class ConversationAPITests(unittest.IsolatedAsyncioTestCase):
                 await first
             self.assertEqual(await self._status(client, url), (502, "internal"))
 
+    async def test_listing_is_private_paginated_and_excludes_history(self):
+        store = InMemorySessionStore()
+        items = [store.create("alice") for _ in range(3)]
+        first = min(items, key=lambda item: item.session_id)
+        store.append_exchange(
+            "alice", first.session_id, expected_revision=0,
+            user_text="Private prompt", assistant_text="Private response",
+        )
+        store.create("bob")
+        async with _client(store, AsyncMock(spec=SessionConversation)) as client:
+            async with client.get("/v1/sessions") as response:
+                self.assertEqual(response.status, 401)
+            async with client.get("/v1/sessions?limit=1", headers=ALICE) as response:
+                self.assertEqual(response.status, 200)
+                self.assertEqual(response.headers["Cache-Control"], "no-store")
+                self.assertEqual(await response.json(), {
+                    "sessions": [{"session_id": first.session_id, "revision": 1}],
+                    "next_cursor": first.session_id,
+                })
+            async with client.get("/v1/sessions", headers=ALICE, params={"after": first.session_id}) as response:
+                page = await response.json()
+                self.assertIsNone(page["next_cursor"])
+                self.assertEqual(
+                    [item["session_id"] for item in page["sessions"]],
+                    sorted(item.session_id for item in items if item != first),
+                )
+            for query in ("limit=0", "limit=101", "limit=1&limit=2", "after=%20", "owner=bob"):
+                with self.subTest(query=query):
+                    async with client.get("/v1/sessions?" + query, headers=ALICE) as response:
+                        self.assertEqual(response.status, 400)
+
+    async def test_expected_revision_rejects_stale_requests_before_generation(self):
+        store = InMemorySessionStore()
+        engine = create_engine()
+        executor = AsyncMock()
+        executor.execute.side_effect = lambda request: EngineResponse(
+            request.request_id, request.attempt_id, engine.instance, TextResult("Hello.", request.language),
+        )
+        async with _client(store, SessionConversation(executor, store)) as client:
+            _, item, location = await _create(client)
+            path = location + "/messages"
+            payload = {"text": "Hi", "expected_revision": 0}
+            async with client.post(path, headers=ALICE, json=payload) as response:
+                self.assertEqual(response.status, 200)
+            async with client.post(path, headers=ALICE, json=payload) as response:
+                self.assertEqual(response.status, 409)
+                self.assertEqual((await response.json())["error"]["code"], "session_conflict")
+            for invalid in (None, True, -1, "1", 1.5):
+                async with client.post(path, headers=ALICE, json={**payload, "expected_revision": invalid}) as response:
+                    self.assertEqual(response.status, 400)
+            executor.execute.assert_awaited_once()
+            self.assertEqual(store.get("alice", item["session_id"]).revision, 1)
+
+    async def test_revision_change_during_generation_prevents_stale_commit(self):
+        store = InMemorySessionStore()
+        engine = create_engine()
+        entered = asyncio.Event()
+        release = asyncio.Event()
+
+        async def reply(request):
+            entered.set()
+            await release.wait()
+            return EngineResponse(
+                request.request_id, request.attempt_id, engine.instance,
+                TextResult("Stale answer.", request.language),
+            )
+
+        async def send(client, path):
+            async with client.post(path, headers=ALICE, json={"text": "Stale prompt", "expected_revision": 0}) as response:
+                return response.status, (await response.json())["error"]["code"]
+
+        async with _client(store, SessionConversation(AsyncMock(execute=reply), store)) as client:
+            _, item, location = await _create(client)
+            pending = asyncio.create_task(send(client, location + "/messages"))
+            try:
+                await asyncio.wait_for(entered.wait(), 2)
+                winner = store.append_exchange(
+                    "alice", item["session_id"], expected_revision=0,
+                    user_text="New prompt", assistant_text="New answer",
+                )
+            finally:
+                release.set()
+                result = await pending
+            self.assertEqual(result, (409, "session_conflict"))
+            self.assertEqual(store.get("alice", item["session_id"]), winner)
+
     @staticmethod
     async def _status(client, url):
         async with client.post(url, headers=ALICE, json={"text": "Hi"}) as response:

@@ -49,7 +49,7 @@ class EnglishWhAdverbTests(unittest.TestCase):
     def test_complex_or_incomplete_questions_remain_unsupported(self):
         for sentence in (
             "Where?", "Where Alex lives?", "Why did Alex?", "How long did Alex wait?",
-            "Why didn't Alex not write?", "How was the report written?", "Where did Alex say Sam went?",
+            "Why didn't Alex not write?", "How was the report being written?", "Where did Alex say Sam went?",
         ):
             with self.subTest(sentence=sentence):
                 self.assertIsNone(analyze_english(sentence))

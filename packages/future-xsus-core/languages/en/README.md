@@ -138,6 +138,7 @@ python3 -m languages.en.text.linguistics clause "Isn't Alex writing the report?"
 python3 -m languages.en.text.linguistics clause 'Who wrote the report?'
 python3 -m languages.en.text.linguistics clause 'What did Alex write?'
 python3 -m languages.en.text.linguistics clause 'When is the meeting?'
+python3 -m languages.en.text.linguistics clause 'Was the report written by Alex?'
 python3 -m languages.en.text.linguistics clause 'Why did Alex call Sam?'
 ```
 
@@ -149,4 +150,11 @@ Pyetjet me `who` dhe `what` mund të kërkojnë kryefjalën ose kundrinorin e dr
 
 `Where`, `when`, `how` dhe `why` japin rolet `location`, `time`, `manner` dhe `reason`. Në pyetje si `Where is Alex?` dhe `When is the meeting?`, fjala pyetëse shfaqet edhe si plotësues i këpujës. Pyetjet që përdorin një folje kryesore ruajnë kundrinorin e saj, si `Sam` në `Why did Alex call Sam?`.
 
-Analizuesi përdor një fjalor të kufizuar dhe mbulon një folje ndihmëse për ndërtim. Pyetjet e ndërthurura, shprehjet si `how many`, zinxhirët me disa folje ndihmëse dhe zëri pësor mbeten jashtë mbulimit. Për strukturat që nuk i analizon, komanda kthen `unsupported_clause`. Analizuesi ekzekutohet më vete nga gjenerimi i bisedës.
+Ndërtimet pësore me një formë të fundme të `be` dhe pjesore të shkuar të
+një foljeje kalimtare raportojnë `voice: passive`. Në `Was the report
+written by Alex?`, raporti mbetet kryefjalë dhe rezultati jep `Alex` si
+`agent`. Fraza me `by` pranohet për përemra, emra të përveçëm dhe një
+grup të kufizuar emrash që mund të jenë veprues. Shprehjet kohore si
+`by Friday` mbeten jashtë analizës së ndërtimit pësor.
+
+Analizuesi përdor një fjalor të kufizuar dhe mbulon një folje ndihmëse për ndërtim. Pyetjet e ndërthurura, shprehjet si `how many` dhe zinxhirët me disa folje ndihmëse mbeten jashtë mbulimit. Për strukturat që nuk i analizon, komanda kthen `unsupported_clause`. Analizuesi ekzekutohet më vete nga gjenerimi i bisedës.

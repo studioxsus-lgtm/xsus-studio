@@ -66,7 +66,7 @@ class EnglishClauseTests(unittest.TestCase):
         self.assertEqual((clause.lemma, clause.complement, clause.object), ("be", "ready", None))
 
     def test_unsupported_structures_do_not_invent_a_parse(self):
-        for sentence in ("Where did Alex say Sam went?", "Alex and Sam called Lee.", "Alex has been writing.", "Alex called Sam on Monday.", "The report was written."):
+        for sentence in ("Where did Alex say Sam went?", "Alex and Sam called Lee.", "Alex has been writing.", "Alex called Sam on Monday.", "The report had been written."):
             with self.subTest(sentence=sentence):
                 self.assertIsNone(analyze_clause(sentence))
 
