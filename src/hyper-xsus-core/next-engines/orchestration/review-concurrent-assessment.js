@@ -6,14 +6,16 @@ import {assessReviewRecovery} from "./review-recovery-assessment.js";
  * A request's failure never becomes another request's approval.
  * Concurrent filesystem observations are NOT an atomic snapshot.
  */
-export async function assessConcurrentReviewRecovery({filePath,store,requests,maxRequests=16,maxConcurrent=4}={}){
+export async function assessConcurrentReviewRecovery({filePath,store,requests,maxRequests=16,maxConcurrent=4,batchTimeoutMs}={}){
  string(filePath,"filePath");
  if(!store||typeof store.load!=="function")
   throw new EngineContractError("INVALID_INPUT","store.load is required");
  if(!Array.isArray(requests)||requests.length===0||
     !Number.isSafeInteger(maxRequests)||maxRequests<1||maxRequests>64||
     requests.length>maxRequests||
-    !Number.isSafeInteger(maxConcurrent)||maxConcurrent<1||maxConcurrent>16)
+    !Number.isSafeInteger(maxConcurrent)||maxConcurrent<1||maxConcurrent>16||
+    (batchTimeoutMs!==undefined&&(!Number.isSafeInteger(batchTimeoutMs)||
+     batchTimeoutMs<1||batchTimeoutMs>60000)))
   throw new EngineContractError("INVALID_INPUT","Invalid recovery assessment batch");
  const normalized=requests.map((request)=>{
   if(!request||typeof request!=="object"||Array.isArray(request))
@@ -33,12 +35,25 @@ export async function assessConcurrentReviewRecovery({filePath,store,requests,ma
   sideEffects:false,nextAction:"manual_investigation"});
  // Workers claim distinct indices synchronously; at most maxConcurrent
  // assessments can be in flight. Results retain original request order.
+ const deadline=batchTimeoutMs===undefined?null:Date.now()+batchTimeoutMs;
+ const batchExpired=()=>deadline!==null&&Date.now()>=deadline;
+ const deadlineBlocked=()=>Object.freeze({state:"review_blocked",
+  lockState:"unverified",journalState:"unverified",
+  errorCode:"BATCH_DEADLINE_EXCEEDED",recoveryAuthorized:false,
+  deletionAuthorized:false,retrySafe:false,executionAuthorized:false,
+  sideEffects:false,nextAction:"manual_investigation"});
  const settled=new Array(normalized.length);
  let cursor=0;
  const worker=async()=>{
   while(cursor<normalized.length){
    const index=cursor++;
    try{
+    // Batch deadline is a queue admission limit, not forced I/O cancellation.
+    // Requests already running may finish; queued requests do not start.
+    if(batchExpired()){
+     settled[index]={status:"fulfilled",value:deadlineBlocked()};
+     continue;
+    }
     // Skip queued cancellations before any filesystem or store access.
     // Already-running assessments remain responsible for their own signal.
     if(normalized[index].signal?.aborted===true){
