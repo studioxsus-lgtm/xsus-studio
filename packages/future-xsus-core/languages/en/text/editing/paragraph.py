@@ -3,6 +3,7 @@
 from dataclasses import dataclass, replace
 from enum import StrEnum
 
+from .copyedit import copyedit_sentence
 from .proofreader import Edit, ProofreadingStatus, proofread_sentence
 from .sentences import sentence_spans
 
@@ -34,7 +35,7 @@ class ParagraphResult:
     review_reason: str | None = None
 
 
-def proofread_paragraph(text: str) -> ParagraphResult:
+def proofread_paragraph(text: str, *, orthography: bool = False) -> ParagraphResult:
     if not isinstance(text, str):
         raise TypeError("text must be a string")
     if len(text) > _MAX_CHARS:
@@ -48,8 +49,9 @@ def proofread_paragraph(text: str) -> ParagraphResult:
     edits = []
     pieces = []
     cursor = 0
+    edit_sentence = copyedit_sentence if orthography else proofread_sentence
     for start, end in spans:
-        result = proofread_sentence(text[start:end])
+        result = edit_sentence(text[start:end])
         passages.append(Passage(start, end, result.status, result.review_reason))
         edits.extend(replace(edit, start=edit.start + start, end=edit.end + start) for edit in result.edits)
         pieces.extend((text[cursor:start], result.text))

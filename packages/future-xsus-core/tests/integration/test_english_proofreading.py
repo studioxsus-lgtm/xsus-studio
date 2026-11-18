@@ -38,6 +38,15 @@ class EnglishProofreadingIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 "Proofread Markdown:\n---\ntitle: They writes\n---\n\nThey writes.\n\n~~~\nThey writes.\n~~~",
                 "---\ntitle: They writes\n---\n\nThey write.\n\n~~~\nThey writes.\n~~~",
             ),
+            ("Copyedit: They recieved an report.", "They received a report."),
+            (
+                "Explain copyedits: They received an report.",
+                "They received a report.\n\nChanges:\n- 'an' → 'a'. Choose a or an by the sound of the following word.",
+            ),
+            (
+                "Copyedit Markdown:\n# Teh file\n\nTeh files is ready.",
+                "# Teh file\n\nThe files are ready.",
+            ),
             ("Proofread: ", "Please provide one English sentence to proofread."),
             (
                 "Proofread paragraph: They writes. What did Alex wrote?",

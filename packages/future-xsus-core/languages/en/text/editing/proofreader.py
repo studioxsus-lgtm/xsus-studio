@@ -1,6 +1,7 @@
 """Apply independently verifiable edits to supported written English clauses."""
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from enum import StrEnum
 
@@ -111,7 +112,7 @@ def _proofread_clause(
     return ProofreadingResult(ProofreadingStatus.CORRECTED, output, tuple(edits), analysis.issues)
 
 
-def _apply_edits(text: str, edits: list[Edit]) -> str:
+def _apply_edits(text: str, edits: Sequence[Edit]) -> str:
     for edit in reversed(edits):
         text = text[:edit.start] + edit.replacement + text[edit.end:]
     return text

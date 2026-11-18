@@ -14,6 +14,8 @@ class IssueCode(StrEnum):
     PRONOUN_CASE = "pronoun_case"
     DETERMINER_NUMBER = "determiner_number"
     COMMA_SPLICE = "comma_splice"
+    SPELLING = "spelling"
+    ARTICLE_SOUND = "article_sound"
 
 
 @dataclass(frozen=True, slots=True)

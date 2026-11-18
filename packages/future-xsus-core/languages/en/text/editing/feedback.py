@@ -10,6 +10,8 @@ _EXPLANATIONS = {
     IssueCode.AUXILIARY_VERB_FORM: "Use the verb form required by the auxiliary.",
     IssueCode.PRONOUN_CASE: "Use the pronoun form required by its role in the clause.",
     IssueCode.DETERMINER_NUMBER: "Use a determiner that matches the noun's number.",
+    IssueCode.SPELLING: "Use the standard spelling of this word.",
+    IssueCode.ARTICLE_SOUND: "Choose a or an by the sound of the following word.",
     IssueCode.COMMA_SPLICE: "A semicolon can join two independent clauses without a conjunction.",
 }
 _MAX_EXPLAINED = 8
@@ -28,6 +30,7 @@ def explain_edits(edits: Sequence[Edit]) -> str:
 
 
 _REVIEW_EXPLANATIONS = {
+    "overlapping_edits": "The proposed spelling and grammar edits overlap, so the original wording is preserved.",
     "possible_irrealis": "In a hypothetical condition, 'were' can be valid with a singular subject.",
     "possible_embedded_question": "The clause may be an embedded question, so its structure needs review.",
 }

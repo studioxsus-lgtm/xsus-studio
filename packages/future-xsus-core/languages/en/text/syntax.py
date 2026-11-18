@@ -10,13 +10,13 @@ from .morphology import VerbForm, inflect_verb, pluralize_noun
 _TOKEN = r"[A-Za-z]+(?:[-'][A-Za-z]+)*"
 _CLAUSE = re.compile(rf"{_TOKEN}(?:[ \t]+{_TOKEN})*[.!?]?")
 _DETERMINERS = frozenset({"a", "an", "the", "my", "your", "his", "her", "its", "our", "their", "this", "that", "these", "those"})
-_ADJECTIVES = frozenset({"clear", "early", "final", "good", "happy", "late", "new", "old", "ready", "revised", "short", "small", "young"})
+_ADJECTIVES = frozenset({"clear", "early", "final", "good", "happy", "late", "new", "old", "ready", "revised", "short", "small", "young", "honest", "european"})
 _NOUNS = frozenset({
     "agenda", "answer", "badge", "budget", "calendar", "child", "class", "colleague", "copy",
     "deer", "dog", "draft", "engine", "file", "folder", "form", "friend", "invoice", "label",
     "link", "man", "meeting", "message", "model", "mouse", "note", "person", "plan",
     "proposal", "receipt", "report", "request", "sheep", "slide", "student", "summary",
-    "teacher", "ticket", "time", "woman",
+    "teacher", "ticket", "time", "woman", "heir", "honor", "hour", "uniform", "unit", "university", "user",
 })
 _VERBS = frozenset({
     "answer", "ask", "be", "begin", "break", "bring", "build", "buy", "call", "check",

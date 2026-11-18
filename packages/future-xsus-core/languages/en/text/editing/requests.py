@@ -2,6 +2,7 @@
 
 import re
 
+from .copyedit import copyedit_sentence
 from .document import proofread_markdown
 from .feedback import explain_edits, explain_review
 from .paragraph import ParagraphStatus, proofread_paragraph
@@ -9,7 +10,7 @@ from .proofreader import ProofreadingStatus, proofread_sentence
 
 _COMMAND = re.compile(
     r"\A[ \t]*(?P<command>proofread markdown|proofread paragraph|explain paragraph corrections|"
-    r"proofread|correct the grammar|explain corrections)[ \t]*:[ \t]*(?P<sentence>.*)\Z",
+    r"copyedit markdown|copyedit paragraph|copyedit|explain copyedits|proofread|correct the grammar|explain corrections)[ \t]*:[ \t]*(?P<sentence>.*)\Z",
     re.IGNORECASE | re.DOTALL,
 )
 
@@ -21,7 +22,7 @@ def answer_proofreading_request(text: str) -> str | None:
         return None
     sentence = command["sentence"]
     operation = command["command"].casefold()
-    if operation == "proofread markdown":
+    if operation in {"proofread markdown", "copyedit markdown"}:
         # A newline immediately after the command separates it from the document.
         if sentence.startswith("\r\n"):
             sentence = sentence[2:]
@@ -29,16 +30,16 @@ def answer_proofreading_request(text: str) -> str | None:
             sentence = sentence[1:]
         if not sentence.strip():
             return "Please provide an English Markdown document to proofread."
-        document = proofread_markdown(sentence)
+        document = proofread_markdown(sentence, orthography=operation == "copyedit markdown")
         if document.status is ParagraphStatus.PARTIAL:
             return f"Some prose still needs manual review.\n{document.text}"
         if document.status is ParagraphStatus.REVIEW_REQUIRED:
             return f"This document needs manual review.\n{document.text}"
         return document.text
-    if operation in {"proofread paragraph", "explain paragraph corrections"}:
+    if operation in {"proofread paragraph", "explain paragraph corrections", "copyedit paragraph"}:
         if not sentence.strip():
             return "Please provide an English paragraph to proofread."
-        paragraph = proofread_paragraph(sentence)
+        paragraph = proofread_paragraph(sentence, orthography=operation == "copyedit paragraph")
         feedback = ""
         if operation == "explain paragraph corrections":
             feedback = explain_edits(paragraph.edits)
@@ -52,10 +53,12 @@ def answer_proofreading_request(text: str) -> str | None:
         return f"This paragraph needs manual review.\n{paragraph.text}" + feedback
     if not sentence.strip():
         return "Please provide one English sentence to proofread."
-    result = proofread_sentence(sentence)
+    edit_sentence = copyedit_sentence if operation in {"copyedit", "explain copyedits"} else proofread_sentence
+    result = edit_sentence(sentence)
+    explain = operation in {"explain corrections", "explain copyedits"}
     if result.status is ProofreadingStatus.CORRECTED:
-        return result.text + (explain_edits(result.edits) if operation == "explain corrections" else "")
+        return result.text + (explain_edits(result.edits) if explain else "")
     if result.status is ProofreadingStatus.UNCHANGED:
         return f"No grammar correction found in this sentence.\n{result.text}"
-    review = explain_review([result.review_reason]) if operation == "explain corrections" else ""
+    review = explain_review([result.review_reason]) if explain else ""
     return f"This sentence needs manual review.\n{result.text}" + review

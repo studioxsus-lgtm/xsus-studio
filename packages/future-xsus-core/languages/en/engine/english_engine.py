@@ -32,7 +32,7 @@ class EnglishEngine:
                 DEFAULT_CHECKPOINT if checkpoint is None else checkpoint,
             )
         if self._model.prompt_format == WRITTEN_V5:
-            revision += "-proofreader-v5"
+            revision += "-proofreader-v6"
         identity = EngineIdentity("xsus-en", revision, V1)
         self._descriptor = EngineDescriptor(
             identity, (LanguageSupport(ENGLISH, frozenset({Capability.CONVERSATION})),),

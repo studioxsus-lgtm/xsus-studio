@@ -30,7 +30,7 @@ class DocumentResult:
     review_reason: str | None = None
 
 
-def proofread_markdown(text: str) -> DocumentResult:
+def proofread_markdown(text: str, *, orthography: bool = False) -> DocumentResult:
     """Apply only verified prose edits, using offsets into the original document."""
     if not isinstance(text, str):
         raise TypeError("text must be a string")
@@ -49,7 +49,7 @@ def proofread_markdown(text: str) -> DocumentResult:
         prose = text[block.start:block.end]
         # Markdown folds soft line breaks; matched offsets retain the original width.
         flat = _LINEBREAK.sub(lambda match: " " * len(match.group()), prose)
-        result = proofread_paragraph(flat)
+        result = proofread_paragraph(flat, orthography=orthography)
         sections.append(DocumentSection(block.start, block.end, "prose", result.status, result.review_reason))
         edits.extend(replace(edit, start=edit.start + block.start, end=edit.end + block.start) for edit in result.edits)
 

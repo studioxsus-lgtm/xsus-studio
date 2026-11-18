@@ -345,3 +345,24 @@ Kufiri është 65 536 karaktere dhe 512 blloqe. Një rrethim kodi i pambyllur
 mbron pjesën pas tij deri në fund të skedarit. Kjo qasje konservatore
 mbështet formatet e testuara të Markdown-it dhe mund të anashkalojë prozën
 kur ajo ndan të njëjtin bllok me shënimin strukturor.
+
+## Redaktimi drejtshkrimor
+
+`Copyedit:`, `Copyedit paragraph:` dhe `Copyedit Markdown:` shtojnë
+kontrolle drejtshkrimore te korrigjimi gramatikor. Ato përdorin një listë
+të kufizuar gabimesh të zakonshme dhe kontrollojnë `a` ose `an` sipas
+tingullit të fjalëve që njohin, si `an hour` dhe `a university`.
+Për shpjegimin e një fjalie përdor `Explain copyedits:`.
+
+Para ruajtjes së ndryshimeve, fjalia e përpunuar kalon në analizuesin
+gramatikor. Kur dy korrigjime prekin të njëjtën fjalë ose fjalia mbetet
+e paverifikueshme, origjinali ruhet për rishikim. Dalja JSON raporton
+pozicionet në origjinal. Në Markdown, pjesët e mbrojtura mbeten të paprekura.
+
+```sh
+XSUS_EN_MODEL_PROFILE=written-v5 \
+  python3 -m languages.en.evaluation.demo 'Copyedit: They recieved an report.'
+python3 -m languages.en.text.editing --orthography 'They recieved an report.'
+python3 -m languages.en.text.editing --markdown --orthography < draft.md
+python3 -m languages.en.evaluation.proofreading --copyedit
+```
