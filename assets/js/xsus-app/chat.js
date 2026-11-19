@@ -1,7 +1,8 @@
-import { t } from './i18n/language-manager.js?v=20261119-hyper-future-bridge2';
+import { t } from './i18n/language-manager.js?v=20261120-app-spec1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
 import { createDraftPlan, parsePlanSteps, BridgeRequestError } from './hyper-future-bridge-client.js?v=20261119-bridge2';
+import { createAppSpecification } from './app-specification/index.js?v=20261120-app-spec1';
 
 // Conversation drafts stay in memory on this page. Credentials and prompts are never persisted here.
 const sessions = [{ id: 1, name: 'New conversation', messages: [] }];
@@ -54,6 +55,37 @@ function addPlan(result) {
   const request = document.createElement('small'); request.className = 'bridge-request-id';
   request.textContent = `${t('Request ID')}: ${result.requestId}`;
   card.append(meta, heading, language, list, badges, note, request); bubble.append(card);
+  if (result.status === 'completed') {
+    try {
+      const specification = createAppSpecification(result);
+      const specCard = document.createElement('article'); specCard.className = 'concept-card app-specification-card';
+      const specHeading = document.createElement('h3'); specHeading.textContent = t('App specification draft');
+      const specStatus = document.createElement('p'); specStatus.textContent = t('Suggested structure — review before implementation');
+      specCard.append(specHeading, specStatus);
+      const addSection = (label, items) => {
+        const section = document.createElement('section'); section.className = 'app-specification-section';
+        const title = document.createElement('h4'); title.textContent = t(label); section.append(title);
+        const list = document.createElement('ul');
+        if (items.length) {
+          items.forEach(value => { const item = document.createElement('li'); item.textContent = t(value); list.append(item); });
+        } else {
+          const item = document.createElement('li'); item.textContent = t('Not defined yet'); list.append(item);
+        }
+        section.append(list); specCard.append(section);
+      };
+      addSection('Pages / screens', specification.proposedStructure.pages);
+      addSection('UI components', specification.proposedStructure.components);
+      addSection('Data models', specification.proposedStructure.dataModels);
+      addSection('Interactions', specification.proposedStructure.interactions);
+      addSection('User requirements', specification.requirements.map(item => item.text));
+      addSection('Open questions', specification.openQuestions);
+      const specNote = document.createElement('p'); specNote.className = 'bridge-plan-note';
+      specNote.textContent = t('No application code is generated, run or saved. Review these suggestions before implementation.');
+      specCard.append(specNote); bubble.append(specCard);
+    } catch {
+      // Keep the verified planning draft visible if a future spec contract rejects its input.
+    }
+  }
   $('#chatMessages').append(bubble); scrollChat();
 }
 
