@@ -36,6 +36,8 @@ _DEMONSTRATIVES = {
     "this": (Number.SINGULAR, "these"), "that": (Number.SINGULAR, "those"),
     "these": (Number.PLURAL, "this"), "those": (Number.PLURAL, "that"),
 }
+_SINGULAR_DETERMINERS = frozenset({"each", "every", "another", "either", "neither"})
+_PLURAL_DETERMINERS = frozenset({"both", "few", "many", "several"})
 
 
 def _verb_issue(clause: Clause) -> GrammarIssue | None:
@@ -101,5 +103,9 @@ def check_grammar(clause: Clause) -> tuple[GrammarIssue, ...]:
                 if phrase.number != expected:
                     issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, replacement))
             elif first in {"a", "an"} and phrase.number is Number.PLURAL:
+                issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, None))
+            elif first in _SINGULAR_DETERMINERS and phrase.number is Number.PLURAL:
+                issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, None))
+            elif first in _PLURAL_DETERMINERS and phrase.number is Number.SINGULAR:
                 issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, None))
     return tuple(issues)

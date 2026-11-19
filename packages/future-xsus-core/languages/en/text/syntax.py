@@ -5,19 +5,20 @@ from collections import defaultdict
 from dataclasses import dataclass, replace
 from enum import StrEnum
 
+from .lexicon import GENERAL_ENGLISH
 from .morphology import VerbForm, inflect_verb, pluralize_noun
 
 _TOKEN = r"[A-Za-z]+(?:[-'][A-Za-z]+)*"
 _CLAUSE = re.compile(rf"{_TOKEN}(?:[ \t]+{_TOKEN})*[.!?]?")
-_DETERMINERS = frozenset({"a", "an", "the", "my", "your", "his", "her", "its", "our", "their", "this", "that", "these", "those"})
-_ADJECTIVES = frozenset({"clear", "early", "final", "good", "happy", "late", "new", "old", "ready", "revised", "short", "small", "young", "honest", "european"})
+_DETERMINERS = frozenset({"a", "an", "the", "my", "your", "his", "her", "its", "our", "their", "this", "that", "these", "those"}) | GENERAL_ENGLISH.determiners
+_ADJECTIVES = frozenset({"clear", "early", "final", "good", "happy", "late", "new", "old", "ready", "revised", "short", "small", "young", "honest", "european"}) | GENERAL_ENGLISH.adjectives
 _NOUNS = frozenset({
     "agenda", "answer", "badge", "budget", "calendar", "child", "class", "colleague", "copy",
     "deer", "dog", "draft", "engine", "file", "folder", "form", "friend", "invoice", "label",
     "link", "man", "meeting", "message", "model", "mouse", "note", "person", "plan",
     "proposal", "receipt", "report", "request", "sheep", "slide", "student", "summary",
     "teacher", "ticket", "time", "woman", "heir", "honor", "hour", "uniform", "unit", "university", "user",
-})
+}) | GENERAL_ENGLISH.nouns | GENERAL_ENGLISH.mass_nouns
 _VERBS = frozenset({
     "answer", "ask", "be", "begin", "break", "bring", "build", "buy", "call", "check",
     "choose", "come", "do", "drink", "drive", "drop", "eat", "explain", "fall", "feel",
@@ -26,7 +27,7 @@ _VERBS = frozenset({
     "plan", "read", "receive", "return", "rise", "run", "say", "see", "sell", "send",
     "share", "sleep", "speak", "stand", "start", "stop", "study", "take", "teach",
     "tell", "thank", "visit", "walk", "wear", "win", "work", "write",
-})
+}) | GENERAL_ENGLISH.verbs
 _AUXILIARIES = {
     "do": "do", "does": "do", "did": "do",
     "have": "have", "has": "have", "had": "have",
@@ -43,11 +44,12 @@ _TRANSITIVE_VERBS = frozenset({
     "need", "open", "pay", "plan", "read", "receive", "return", "say", "see", "sell",
     "send", "share", "study", "take", "teach", "tell", "thank", "visit", "wear",
     "win", "write",
-})
+}) | GENERAL_ENGLISH.transitive_verbs
+_LINKING_VERBS = frozenset({"be", "become", "appear", "feel", "look", "remain", "seem", "smell", "sound", "stay", "taste"})
 _AGENT_NOUNS = frozenset({
     "child", "colleague", "deer", "dog", "engine", "friend", "man", "model",
     "mouse", "person", "sheep", "student", "teacher", "woman",
-})
+}) | GENERAL_ENGLISH.agent_nouns
 _TEMPORAL_NAMES = frozenset({
     "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
     "january", "february", "march", "april", "may", "june", "july", "august",
@@ -132,11 +134,12 @@ _PRONOUNS = {
     "it": (3, Number.SINGULAR),
     "we": (1, Number.PLURAL), "us": (1, Number.PLURAL),
     "they": (3, Number.PLURAL), "them": (3, Number.PLURAL),
-}
+} | {word: (3, Number.SINGULAR) for word in GENERAL_ENGLISH.singular_pronouns}
 _NOUN_NUMBERS: dict[str, set[Number]] = defaultdict(set)
 for _noun in _NOUNS:
     _NOUN_NUMBERS[_noun].add(Number.SINGULAR)
-    _NOUN_NUMBERS[pluralize_noun(_noun)].add(Number.PLURAL)
+    if _noun not in GENERAL_ENGLISH.mass_nouns:
+        _NOUN_NUMBERS[pluralize_noun(_noun)].add(Number.PLURAL)
 
 _VERB_FORMS: dict[str, dict[str, set[VerbForm]]] = defaultdict(lambda: defaultdict(set))
 _AGENT_FORMS = _AGENT_NOUNS | {pluralize_noun(noun) for noun in _AGENT_NOUNS}
@@ -218,6 +221,10 @@ def _predicate(
                 complement = rest[0]
             if complement is not None:
                 analyses.append(Clause(subject, verb, lemma, frozenset(forms), None, complement, kind, negated, auxiliary))
+        elif lemma == "become" and nominal is not None:
+            analyses.append(Clause(subject, verb, lemma, frozenset(forms), None, nominal.text, kind, negated, auxiliary))
+        elif lemma in _LINKING_VERBS and len(rest) == 1 and rest[0].lower() in _ADJECTIVES:
+            analyses.append(Clause(subject, verb, lemma, frozenset(forms), None, rest[0], kind, negated, auxiliary))
         elif after_be and VerbForm.PAST_PARTICIPLE in forms and (agent is not None or not rest):
             # Prefer the existing copular analysis for a known bare adjective.
             if lemma in _TRANSITIVE_VERBS and (agent is not None or verb.lower() not in _ADJECTIVES):
