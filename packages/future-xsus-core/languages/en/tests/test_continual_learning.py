@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -91,6 +92,10 @@ class LearningGateTests(unittest.TestCase):
                 for index in range(6)
             ]
             training_path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+            written_v4_path = root / "v4.jsonl"
+            written_v5_path = root / "v5.jsonl"
+            written_v4_path.write_text("benchmark fixture v4\n", encoding="utf-8")
+            written_v5_path.write_text("benchmark fixture v5\n", encoding="utf-8")
             tokenizer = BytePairTokenizer()
             model = NeuralLanguageModel.initialize(vocab_size=tokenizer.vocab_size, hidden_size=4, context_size=16, seed=17)
             save_checkpoint(baseline_path, tokenizer, model)
@@ -110,7 +115,7 @@ class LearningGateTests(unittest.TestCase):
                     store, "owner-a",
                     baseline_path=baseline_path,
                     training_path=training_path,
-                    evaluation_paths={"written-v4": root / "v4.jsonl", "written-v5": root / "v5.jsonl"},
+                    evaluation_paths={"written-v4": written_v4_path, "written-v5": written_v5_path},
                     candidate_path=candidate_path,
                     report_path=report_path,
                     epochs=1,
@@ -122,4 +127,16 @@ class LearningGateTests(unittest.TestCase):
             self.assertEqual(report["approved_feedback_examples"], 5)
             self.assertEqual(report["feedback_holdout_examples"], 1)
             self.assertTrue(report["requires_human_release"])
+            self.assertEqual(
+                report["input_sha256"]["baseline_checkpoint"],
+                hashlib.sha256(baseline_path.read_bytes()).hexdigest(),
+            )
+            self.assertEqual(
+                report["input_sha256"]["training_corpus"],
+                hashlib.sha256(training_path.read_bytes()).hexdigest(),
+            )
+            self.assertEqual(set(report["input_sha256"]["evaluation_corpora"]), {"written-v4", "written-v5"})
+            self.assertEqual(set(report["training_source_sha256"]), {
+                "continual", "train", "model", "checkpoint", "tokenizer", "model_input",
+            })
 

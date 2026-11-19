@@ -1,6 +1,7 @@
 """Build warm-started English candidates and gate them on private feedback and public holdouts."""
 
 from collections import Counter
+import hashlib
 import json
 from math import isfinite
 import os
@@ -15,6 +16,20 @@ from languages.en.models.checkpoint import load_checkpoint, save_checkpoint
 from languages.en.text.normalization.model_input import prepare_model_input
 from languages.en.text.tokenizer import BytePairTokenizer
 from languages.en.training.train import _encode, _mean_loss, _prepare_examples
+
+_EN_ROOT = Path(__file__).resolve().parents[1]
+_TRAINING_SOURCES = {
+    "continual": Path(__file__).resolve(),
+    "train": _EN_ROOT / "training" / "train.py",
+    "model": _EN_ROOT / "models" / "neural_model.py",
+    "checkpoint": _EN_ROOT / "models" / "checkpoint.py",
+    "tokenizer": _EN_ROOT / "text" / "tokenizer.py",
+    "model_input": _EN_ROOT / "text" / "normalization" / "model_input.py",
+}
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def promotion_decision(
@@ -185,6 +200,19 @@ def build_candidate(
         "replay_examples": len(replay),
         "epochs": epochs,
         "learning_rate": learning_rate,
+        "input_sha256": {
+            "baseline_checkpoint": _sha256_file(baseline_path),
+            "training_corpus": _sha256_file(training_path),
+            "evaluation_corpora": {
+                name: _sha256_file(path) for name, path in sorted(evaluation_paths.items())
+            },
+            "approved_feedback_set": hashlib.sha256(
+                "\n".join(sorted(record.example_id for record in records)).encode("ascii")
+            ).hexdigest(),
+        },
+        "training_source_sha256": {
+            name: _sha256_file(path) for name, path in sorted(_TRAINING_SOURCES.items())
+        },
         "feedback_loss_before": round(feedback_loss_before, 8),
         "feedback_loss_after": round(feedback_loss_after, 8),
         "benchmarks": {

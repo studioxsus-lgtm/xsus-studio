@@ -22,7 +22,9 @@ checkpoint; it never replaces the active model or edits a published profile.
    marked eligible only if it improves held-out feedback loss and does not
    reduce accepted cases or preserved facts on either benchmark. The report
    records the baseline and candidate revisions, counts, scores, losses, and
-   any blocking reason.
+any blocking reason. It also records SHA-256 fingerprints for the baseline,
+training and evaluation corpora, the approved feedback set, and the training
+code files. The feedback fingerprint contains no prompt or response text.
 
 ## Use
 
