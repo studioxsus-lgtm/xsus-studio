@@ -558,6 +558,6 @@ export default {
   "Welcome to My App": "Bienvenue dans mon application",
   "A beautiful starting point for your next application.": "Un beau point de départ pour votre prochaine application.",
   "Explore Now": "Explorer maintenant",
-  "Featured content": "Contenu à la une"
+  "Featured content": "Contenu à la une",
   "English Learning": "Apprentissage de l’anglais"
 };
