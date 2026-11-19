@@ -18,6 +18,7 @@ import { createHyperReadinessDiagnostic } from "./src/platform/xsus-app/hyper-re
 import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js";
 import { createHyperApplicationHttpHandler } from "./src/platform/xsus-app/xsus-hyper-application-http.js";
 import { createHyperApplicationDispatcher } from "./src/platform/xsus-app/xsus-hyper-application-dispatcher.js";
+import { createHyperFutureBridge, HYPER_FUTURE_BRIDGE_PATH } from "./src/platform/xsus-app/hyper-future-bridge.js";
 import { createHyperNodeRuntimeRoute } from "./src/platform/xsus-app/hyper-v8235-node-runtime-route.js";
 import { createHyperAppBackendComposition } from "./src/platform/xsus-app/hyper-v8234-backend-composition.js";
 import { createHyperEvidenceOwnerAuthorizer } from "./src/platform/xsus-app/hyper-evidence-owner-authorizer.js";
@@ -113,6 +114,18 @@ const hyperAdapter = process.env.XSUS_HYPER_APP_ENABLED === "true"
             verifyUser: authorization => auth.verifyUser(authorization),
             inspectHealth: () => trusted.inspectHealth()
         });
+    })()
+    : null;
+
+// A separate authenticated path composes Future's stateless language check
+// with Hyper's draft-plan validator. It remains closed until explicitly enabled.
+const hyperFutureBridge = process.env.XSUS_HYPER_FUTURE_BRIDGE_ENABLED === "true"
+    ? (() => {
+        const auth = createPrivateChatAuthorization({
+            supabaseUrl: process.env.SUPABASE_URL,
+            supabaseKey: process.env.SUPABASE_ANON_KEY
+        });
+        return createHyperFutureBridge({ verifyUser: auth.verifyUser });
     })()
     : null;
 
@@ -335,6 +348,34 @@ const server = http.createServer(
                 authorization: req.headers.authorization
             });
             return sendJSON(res, result.status, result.data);
+        }
+
+        // Explicit bridge between the independent Hyper and Future cores.
+        // Future proofreads without persistence; Hyper validates a non-executable draft.
+        if (pathname === HYPER_FUTURE_BRIDGE_PATH) {
+            if (!hyperFutureBridge) {
+                return sendJSON(res, 503, { error: "Hyper-Future bridge is not enabled." });
+            }
+            if (req.method !== "POST") {
+                return sendJSON(res, 405, { error: "Method not allowed." });
+            }
+            if (!req.headers["content-type"]?.includes("application/json")) {
+                return sendJSON(res, 415, { error: "Content-Type must be application/json." });
+            }
+            try {
+                const body = await readJSONBody(req);
+                const result = await hyperFutureBridge.handle({
+                    method: req.method,
+                    authorization: req.headers.authorization,
+                    body
+                });
+                return sendJSON(res, result.status, result.data);
+            } catch (error) {
+                const statusCode = Number.isInteger(error?.statusCode) ? error.statusCode : 400;
+                return sendJSON(res, statusCode, {
+                    error: statusCode === 413 ? "Request body is too large." : "Invalid bridge request."
+                });
+            }
         }
 
         // Separate authenticated route; disabled unless explicitly configured.
