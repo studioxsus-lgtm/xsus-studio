@@ -8,7 +8,7 @@ from core.contracts.request import Conversation
 from languages.en.data.preparation.corpus import Example
 from languages.en.learning.continual import build_candidate
 from languages.en.learning.feedback_store import SQLiteFeedbackStore
-from languages.en.learning.worker import run_once, run_supervised_cycle
+from languages.en.learning.worker import run_all_owners_once, run_once, run_supervised_cycle
 from languages.en.models.checkpoint import save_checkpoint
 from languages.en.models.neural_model import NeuralLanguageModel
 from languages.en.models.registry import EnglishModelRegistry
@@ -16,6 +16,58 @@ from languages.en.text.tokenizer import BytePairTokenizer
 
 
 class LearningWorkerTests(unittest.TestCase):
+    def test_all_owner_worker_uses_fair_bounded_cycles_and_hides_owner_ids(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            store = SQLiteFeedbackStore(root / "feedback.sqlite3")
+            registry = EnglishModelRegistry(root / "registry")
+            output = root / "candidates"
+            for owner in ("owner-a", "owner-b"):
+                for index in range(5):
+                    record = store.submit(
+                        owner,
+                        Example(
+                            Conversation(f"Feedback prompt {owner} {index}"),
+                            f"Reviewed response {owner} {index}.",
+                        ),
+                        consent=True,
+                    )
+                    store.review(owner, record.example_id, approved=True)
+
+            processed = []
+
+            def cycle(*, owner_id, **kwargs):
+                processed.append(owner_id)
+                return {"status": "candidate_blocked", "owner_scope": "safe-scope"}
+
+            with patch("languages.en.learning.worker.run_supervised_cycle", side_effect=cycle):
+                first = run_all_owners_once(
+                    store=store, registry=registry, output_dir=output, max_cycles_per_poll=1,
+                )
+                second = run_all_owners_once(
+                    store=store, registry=registry, output_dir=output, max_cycles_per_poll=1,
+                )
+
+            self.assertEqual(first["eligible_owners"], 2)
+            self.assertEqual(first["processed_owners"], 1)
+            self.assertEqual(second["processed_owners"], 1)
+            self.assertEqual(set(processed), {"owner-a", "owner-b"})
+            self.assertEqual(len(set(processed)), 2)
+            fleet_status = (output / "fleet-status.json").read_text(encoding="utf-8")
+            self.assertNotIn("owner-a", fleet_status)
+            self.assertNotIn("owner-b", fleet_status)
+
+    def test_all_owner_worker_rejects_unbounded_batch_size(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            store = SQLiteFeedbackStore(root / "feedback.sqlite3")
+            registry = EnglishModelRegistry(root / "registry")
+            with self.assertRaises(ValueError):
+                run_all_owners_once(
+                    store=store, registry=registry, output_dir=root / "candidates",
+                    max_cycles_per_poll=101,
+                )
+
     def test_supervised_cycle_persists_waiting_and_failure_states(self):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)

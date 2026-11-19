@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from hmac import compare_digest
 from time import time_ns
 from typing import Protocol
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 from aiohttp import web
 
@@ -24,6 +24,7 @@ from core.sessions.session_store import (
     SessionSnapshot,
 )
 from languages.en.data.preparation.corpus import Example, parse_example
+from services.api.identity.errors import IdentityProviderUnavailable
 
 
 class SessionStore(Protocol):
@@ -48,10 +49,16 @@ class LearningFeedbackStore(Protocol):
     def forget(self, owner_id: str, example_id: str) -> bool: ...
 
 
-_BEARER_TOKEN = re.compile(r"[A-Za-z0-9._~+/=-]{1,512}", re.ASCII)
+class OwnerAuthenticator(Protocol):
+    async def authenticate(self, request: web.Request) -> str | None: ...
+
+
+_BEARER_TOKEN = re.compile(r"[A-Za-z0-9._~+/=-]{1,8192}", re.ASCII)
 _MAX_BODY_BYTES = 32 * 1024
 _MAX_TEXT_CHARS = 4_096
 _REQUEST_TIMEOUT_MS = 10_000
+_CORS_METHODS = frozenset({"GET", "POST", "DELETE"})
+_CORS_HEADERS = frozenset({"authorization", "content-type"})
 
 _ENGINE_FAILURES = {
     ErrorCode.INVALID_REQUEST: (422, "The engine could not process this request"),
@@ -149,15 +156,42 @@ def _learning_example(payload: object) -> Example:
     return parse_example({"prompt": payload["prompt"], "response": payload["response"], "history": history})
 
 
+def _validate_origins(origins: frozenset[str]) -> frozenset[str]:
+    if not isinstance(origins, frozenset) or any(not isinstance(origin, str) for origin in origins):
+        raise ValueError("Allowed browser origins must be a frozenset of origin strings")
+    normalized = set()
+    for origin in origins:
+        parsed = urlsplit(origin)
+        local_http = parsed.scheme == "http" and parsed.hostname in {"localhost", "127.0.0.1", "::1"}
+        if (
+            (parsed.scheme != "https" and not local_http)
+            or not parsed.netloc
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.path not in ("", "/")
+            or parsed.query
+            or parsed.fragment
+            or origin != f"{parsed.scheme}://{parsed.netloc}"
+        ):
+            raise ValueError("Allowed browser values must be exact HTTPS origins (HTTP only for loopback)")
+        normalized.add(origin)
+    return frozenset(normalized)
+
+
 def create_app(
-    *, store: SessionStore, conversation: SessionConversation, owner_tokens: Mapping[str, str],
+    *, store: SessionStore, conversation: SessionConversation, owner_tokens: Mapping[str, str] | None = None,
+    owner_authenticator: OwnerAuthenticator | None = None,
     max_concurrent_messages: int = 8, supported_languages: frozenset[LanguageTag] | None = None,
-    feedback_store: LearningFeedbackStore | None = None,
+    feedback_store: LearningFeedbackStore | None = None, allowed_origins: frozenset[str] = frozenset(),
 ) -> web.Application:
     """Create an app using local owner-scoped session storage and engine routing."""
     if type(max_concurrent_messages) is not int or max_concurrent_messages < 1:
         raise ValueError("max_concurrent_messages must be a positive integer")
-    credentials = _encode_credentials(owner_tokens)
+    if owner_authenticator is None:
+        credentials = _encode_credentials(owner_tokens or {})
+    else:
+        credentials = _encode_credentials(owner_tokens) if owner_tokens else ()
+    cors_origins = _validate_origins(allowed_origins)
     active_messages = 0
 
     @web.middleware
@@ -172,19 +206,62 @@ def create_app(
             return _error(409, "session_conflict", "Session revision no longer matches")
         except SessionCapacityError:
             return _error(503, "session_capacity", "Session capacity has been reached")
+        except IdentityProviderUnavailable:
+            return _error(503, "identity_provider_unavailable", "The identity provider is temporarily unavailable")
         except sqlite3.Error:
             return _error(503, "storage_unavailable", "Persistent storage is unavailable")
+
+    @web.middleware
+    async def cors_boundary(request, handler):
+        origins = request.headers.getall("Origin", ())
+        if len(origins) > 1 or (origins and origins[0] not in cors_origins):
+            return _error(403, "origin_not_allowed", "This browser origin is not allowed")
+        origin = origins[0] if origins else None
+        if request.method == "OPTIONS" and request.headers.get("Access-Control-Request-Method"):
+            method = request.headers["Access-Control-Request-Method"].upper()
+            requested_headers = {
+                item.strip().lower() for item in request.headers.get("Access-Control-Request-Headers", "").split(",")
+                if item.strip()
+            }
+            if origin is None or method not in _CORS_METHODS or not requested_headers <= _CORS_HEADERS:
+                response = _error(403, "preflight_not_allowed", "The requested browser operation is not allowed")
+            else:
+                response = web.Response(status=204)
+                response.headers["Access-Control-Allow-Methods"] = ", ".join(sorted(_CORS_METHODS))
+                response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+                response.headers["Access-Control-Max-Age"] = "600"
+        else:
+            response = await handler(request)
+        if origin is not None:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers.add("Vary", "Origin")
+        return response
 
     def unauthorized() -> web.Response:
         return _error(
             401, "unauthorized", "A valid Bearer token is required", headers={"WWW-Authenticate": "Bearer"},
         )
 
+    async def authenticated_owner(request: web.Request) -> str | None:
+        if owner_authenticator is None:
+            return _owner(request, credentials)
+        owner = await owner_authenticator.authenticate(request)
+        if owner is None:
+            return None
+        try:
+            require_identifier(owner, "owner_id")
+        except ValueError:
+            return None
+        return owner
+
     async def health(request: web.Request) -> web.Response:
         return _json({"status": "ok"})
 
+    async def options(request: web.Request) -> web.Response:
+        return web.Response(status=204)
+
     async def create(request: web.Request) -> web.Response:
-        owner = _owner(request, credentials)
+        owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
         if await request.read():
@@ -194,7 +271,7 @@ def create_app(
         return _json(_snapshot(snapshot), status=201, headers={"Location": location})
 
     async def list_sessions(request: web.Request) -> web.Response:
-        owner = _owner(request, credentials)
+        owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
         query = request.query
@@ -218,14 +295,14 @@ def create_app(
         })
 
     async def get(request: web.Request) -> web.Response:
-        owner = _owner(request, credentials)
+        owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
         snapshot = await asyncio.to_thread(store.get, owner, request.match_info["session_id"])
         return _json(_snapshot(snapshot))
 
     async def delete(request: web.Request) -> web.Response:
-        owner = _owner(request, credentials)
+        owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
         await asyncio.to_thread(store.delete, owner, request.match_info["session_id"])
@@ -233,7 +310,7 @@ def create_app(
 
     async def send(request: web.Request) -> web.Response:
         nonlocal active_messages
-        owner = _owner(request, credentials)
+        owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
         if request.content_type != "application/json":
@@ -273,7 +350,7 @@ def create_app(
         })
 
     async def submit_feedback(request: web.Request) -> web.Response:
-        owner = _owner(request, credentials)
+        owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
         if request.content_type != "application/json":
@@ -290,7 +367,7 @@ def create_app(
         return _json({"example_id": record.example_id, "status": record.status}, status=202)
 
     async def list_feedback(request: web.Request) -> web.Response:
-        owner = _owner(request, credentials)
+        owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
         try:
@@ -300,7 +377,7 @@ def create_app(
         return _json({"pending": list(pending)})
 
     async def get_feedback(request: web.Request) -> web.Response:
-        owner = _owner(request, credentials)
+        owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
         try:
@@ -320,7 +397,7 @@ def create_app(
         })
 
     async def review_feedback(request: web.Request) -> web.Response:
-        owner = _owner(request, credentials)
+        owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
         decision = request.match_info["decision"]
@@ -337,7 +414,7 @@ def create_app(
         return _json({"example_id": record.example_id, "status": record.status})
 
     async def forget_feedback(request: web.Request) -> web.Response:
-        owner = _owner(request, credentials)
+        owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
         removed = await asyncio.to_thread(feedback_store.forget, owner, request.match_info["example_id"])
@@ -345,9 +422,17 @@ def create_app(
             return _error(404, "feedback_not_found", "Learning feedback not found")
         return web.Response(status=204, headers={"Cache-Control": "no-store"})
 
-    app = web.Application(client_max_size=_MAX_BODY_BYTES, middlewares=[boundary])
+    app = web.Application(client_max_size=_MAX_BODY_BYTES, middlewares=[cors_boundary, boundary])
+    if owner_authenticator is not None:
+        start = getattr(owner_authenticator, "start", None)
+        close = getattr(owner_authenticator, "close", None)
+        if callable(start):
+            app.on_startup.append(start)
+        if callable(close):
+            app.on_cleanup.append(close)
     resource = r"/v1/sessions/{session_id:[A-Za-z0-9][A-Za-z0-9._-]{0,127}}"
     app.router.add_get("/healthz", health)
+    app.router.add_route("OPTIONS", r"/{tail:.*}", options)
     app.router.add_post("/v1/sessions", create)
     app.router.add_get("/v1/sessions", list_sessions, allow_head=False)
     app.router.add_get(resource, get, allow_head=False)

@@ -1,8 +1,9 @@
 # API-ja lokale e Future XSUS Core
 
 API-ja lidh klientët HTTP me bërthamën e bisedave, motorin e anglishtes dhe
-sesionet në SQLite. Nisja nga komanda pranon adresat lokale `127.0.0.1` dhe
-`::1`. Një token i vetëm përfaqëson pronarin e konfiguruar të sesioneve.
+sesionet në SQLite. Nisja lokale përdor `127.0.0.1` ose `::1`; `0.0.0.0`
+mund të zgjidhet shprehimisht kur shërbimi vendoset pas një proxy-je HTTPS.
+Përdoruesit realë autentikohen veçmas përmes Supabase Auth.
 
 Nga `packages/future-xsus-core/`:
 
@@ -17,6 +18,35 @@ Mbaje tokenin e klientit të njëjtë me atë të procesit të serverit. Ruaje
 skedarin e databazës në një dosje ku përdoruesit e autorizuar kanë qasje.
 `XSUS_API_OWNER` cakton pronarin, me vlerë fillestare `local-api`.
 Mbaje këtë identitet të qëndrueshëm kur rinis serverin me të njëjtën databazë.
+
+## Llogari reale me Supabase
+
+Për shumë përdorues, konfiguro `XSUS_SUPABASE_URL` dhe
+`XSUS_SUPABASE_PUBLISHABLE_KEY`. Klienti dërgon access token-in e hyrjes së
+përdoruesit në `Authorization: Bearer ...`; API-ja e verifikon me Supabase Auth
+dhe i cakton sesionet UUID-së së llogarisë. Email-i dhe profili nuk ruhen në
+Future XSUS Core. Në këtë mënyrë, secili përdorues sheh vetëm sesionet dhe
+shembujt e vet të feedback-ut. Nëse aktivizohet Supabase, hiqe
+`XSUS_API_TOKEN` nga konfigurimi.
+
+Për frontend-in në browser, cakto `XSUS_API_ALLOWED_ORIGINS` në listën e
+origjinave HTTPS, të ndara me presje, për shembull
+`https://www.xsusstudio.com,https://xsusstudio.com`. API-ja pranon vetëm
+origjinat e listuara, metodat `GET`, `POST`, `DELETE` dhe titujt `Authorization`
+e `Content-Type`. Pa origjinë të konfiguruar, kërkesat nga browser-i bllokohen;
+klientët server-side dhe komandat lokale vazhdojnë të punojnë.
+
+## Vendosja në Render
+
+Blueprint-i i këtij shërbimi është te `services/api/deploy/render.yaml`.
+Në Render zgjidhni këtë rrugë si Blueprint Path, degën `future-xsus-core` dhe
+plotësoni `XSUS_SUPABASE_URL` dhe `XSUS_SUPABASE_PUBLISHABLE_KEY` kur kërkohen.
+Blueprint-i përdor një disk të qëndrueshëm për sesionet, feedback-un,
+kandidatët dhe regjistrat e modeleve. Worker-i aktivizohet në këtë shërbim dhe
+kontrollon çdo 60 sekonda: ai përdor vetëm shembujt që përdoruesi ka dërguar me
+pëlqim të qartë dhe më pas i ka pranuar. Pas të paktën pesë shembujve të
+pranuar krijon kandidat të ndarë për pronar; aktivizimi i kandidatit kërkon
+shqyrtim njerëzor. Endpoint-i publik duhet të përdoret vetëm përmes HTTPS.
 
 | Metoda dhe rruga | Funksioni |
 | --- | --- |

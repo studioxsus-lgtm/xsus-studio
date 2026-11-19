@@ -262,13 +262,86 @@ def run_supervised_cycle(*, store: SQLiteFeedbackStore, owner_id: str,
     return persist(result)
 
 
+def run_all_owners_once(
+    *, store: SQLiteFeedbackStore, registry: EnglishModelRegistry, output_dir: Path,
+    max_cycles_per_poll: int = 1, epochs: int = 1, learning_rate: float = 0.008,
+    replay_examples: int = 96, seed: int = 23,
+) -> dict:
+    """Process a fair, bounded number of eligible owners without mixing their models."""
+    if type(max_cycles_per_poll) is not int or not 1 <= max_cycles_per_poll <= 100:
+        raise ValueError("max_cycles_per_poll must be between 1 and 100")
+    output_dir = _require_external_path(output_dir, "Candidate output directory")
+    _require_external_path(store.path, "Feedback database")
+    _require_external_path(registry.root, "Model registry")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    owners = store.owners_with_accepted(minimum_count=_MINIMUM_EXAMPLES)
+    cursor_path = output_dir / "owner-cycle-cursor.json"
+    cursor = ""
+    if cursor_path.is_file():
+        try:
+            previous = json.loads(cursor_path.read_text(encoding="utf-8"))
+            candidate_cursor = previous.get("last_owner_scope", "") if isinstance(previous, dict) else ""
+            if isinstance(candidate_cursor, str) and len(candidate_cursor) == 64:
+                cursor = candidate_cursor
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            cursor = ""
+    ordered = sorted(owners, key=lambda owner: hashlib.sha256(owner.encode("utf-8")).hexdigest())
+    after_cursor = [owner for owner in ordered if hashlib.sha256(owner.encode("utf-8")).hexdigest() > cursor]
+    before_cursor = [owner for owner in ordered if hashlib.sha256(owner.encode("utf-8")).hexdigest() <= cursor]
+    cycle_owners = (after_cursor + before_cursor)[:max_cycles_per_poll]
+    if not cycle_owners:
+        result = {
+            "status": "waiting_for_feedback",
+            "eligible_owners": 0,
+            "minimum_approved_examples": _MINIMUM_EXAMPLES,
+            "cycles": [],
+        }
+        _write_json(output_dir / "fleet-status.json", {
+            "format": "xsus-en-learning-worker-fleet-v1",
+            "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            **result,
+        })
+        return result
+
+    cycles = [
+        run_supervised_cycle(
+            store=store,
+            owner_id=owner,
+            registry=registry,
+            output_dir=output_dir,
+            epochs=epochs,
+            learning_rate=learning_rate,
+            replay_examples=replay_examples,
+            seed=seed,
+        )
+        for owner in cycle_owners
+    ]
+    last_scope = hashlib.sha256(cycle_owners[-1].encode("utf-8")).hexdigest()
+    _write_json(cursor_path, {"last_owner_scope": last_scope})
+    result = {
+        "status": "owners_processed",
+        "eligible_owners": len(owners),
+        "processed_owners": len(cycles),
+        "cycles": cycles,
+    }
+    _write_json(output_dir / "fleet-status.json", {
+        "format": "xsus-en-learning-worker-fleet-v1",
+        "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        **result,
+    })
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--store", type=Path, required=True, help="Local SQLite feedback store")
-    parser.add_argument("--owner-id", required=True, help="Owner scope for reviewed examples")
+    owner_scope = parser.add_mutually_exclusive_group(required=True)
+    owner_scope.add_argument("--owner-id", help="Process one owner's reviewed examples")
+    owner_scope.add_argument("--all-owners", action="store_true", help="Process eligible owners in fair batches")
     parser.add_argument("--registry", type=Path, required=True, help="External local model registry")
     parser.add_argument("--output-dir", type=Path, required=True, help="External candidate/report directory")
     parser.add_argument("--poll-seconds", type=int, default=60, help="Wait between checks (10–3600 seconds)")
+    parser.add_argument("--max-cycles-per-poll", type=int, default=1, help="Maximum owner cycles per poll in all-owner mode")
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--learning-rate", type=float, default=0.008)
     parser.add_argument("--replay-examples", type=int, default=96)
@@ -283,11 +356,18 @@ def main() -> int:
     store = SQLiteFeedbackStore(store_path)
     registry = EnglishModelRegistry(registry_path)
     while True:
-        result = run_supervised_cycle(
-            store=store, owner_id=args.owner_id, registry=registry,
-            output_dir=output_dir, epochs=args.epochs,
-            learning_rate=args.learning_rate, replay_examples=args.replay_examples, seed=args.seed,
-        )
+        if args.all_owners:
+            result = run_all_owners_once(
+                store=store, registry=registry, output_dir=output_dir,
+                max_cycles_per_poll=args.max_cycles_per_poll, epochs=args.epochs,
+                learning_rate=args.learning_rate, replay_examples=args.replay_examples, seed=args.seed,
+            )
+        else:
+            result = run_supervised_cycle(
+                store=store, owner_id=args.owner_id, registry=registry,
+                output_dir=output_dir, epochs=args.epochs,
+                learning_rate=args.learning_rate, replay_examples=args.replay_examples, seed=args.seed,
+            )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True), flush=True)
         if args.once:
             return 0

@@ -152,6 +152,18 @@ class SQLiteFeedbackStore:
             ).fetchall()
         return tuple(row[0] for row in rows)
 
+    def owners_with_accepted(self, *, minimum_count: int = 5) -> tuple[str, ...]:
+        """List owner identifiers whose approved data can start a gated cycle."""
+        if type(minimum_count) is not int or not 1 <= minimum_count <= 10_000:
+            raise ValueError("Minimum approved-example count must be between 1 and 10000")
+        with self._connection() as connection:
+            rows = connection.execute(
+                f"SELECT owner_id FROM {_TABLE} WHERE status = 'accepted' "
+                "GROUP BY owner_id HAVING COUNT(*) >= ? ORDER BY owner_id",
+                (minimum_count,),
+            ).fetchall()
+        return tuple(row[0] for row in rows)
+
     def forget(self, owner_id: str, example_id: str) -> bool:
         require_identifier(owner_id, "owner_id")
         with self._connection(write=True) as connection:

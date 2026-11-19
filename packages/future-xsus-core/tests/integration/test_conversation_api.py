@@ -38,6 +38,54 @@ async def _create(client):
 
 
 class ConversationAPITests(unittest.IsolatedAsyncioTestCase):
+    async def test_browser_cors_allows_only_configured_origins_and_headers(self):
+        allowed_origin = "https://www.xsusstudio.com"
+        async with _client(
+            InMemorySessionStore(), AsyncMock(spec=SessionConversation),
+            allowed_origins=frozenset({allowed_origin}),
+        ) as client:
+            async with client.options(
+                "/v1/sessions",
+                headers={
+                    "Origin": allowed_origin,
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "authorization, content-type",
+                },
+            ) as response:
+                self.assertEqual(response.status, 204)
+                self.assertEqual(response.headers["Access-Control-Allow-Origin"], allowed_origin)
+                self.assertIn("Authorization", response.headers["Access-Control-Allow-Headers"])
+                self.assertIn("Origin", response.headers["Vary"])
+
+            async with client.options(
+                "/v1/sessions",
+                headers={
+                    "Origin": "https://attacker.example",
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "authorization",
+                },
+            ) as response:
+                self.assertEqual(response.status, 403)
+
+            async with client.options(
+                "/v1/sessions",
+                headers={
+                    "Origin": allowed_origin,
+                    "Access-Control-Request-Method": "PUT",
+                    "Access-Control-Request-Headers": "authorization",
+                },
+            ) as response:
+                self.assertEqual(response.status, 403)
+
+    async def test_browser_cors_rejects_insecure_remote_allowlist(self):
+        with self.assertRaises(ValueError):
+            create_app(
+                store=InMemorySessionStore(),
+                conversation=AsyncMock(spec=SessionConversation),
+                owner_tokens={"alice": "alice-test-token"},
+                allowed_origins=frozenset({"http://xsusstudio.com"}),
+            )
+
     async def test_learning_feedback_requires_consent_and_is_owner_scoped(self):
         with TemporaryDirectory() as temporary:
             feedback = SQLiteFeedbackStore(Path(temporary) / "feedback.sqlite3")

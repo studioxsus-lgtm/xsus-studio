@@ -74,6 +74,25 @@ worker creates a separate registry below `--registry` for each owner. Use the
 promotion command and as `XSUS_EN_MODEL_REGISTRY`; this keeps active models and
 release histories isolated by owner.
 
+For a shared API process with multiple authenticated owners, use bounded
+round-robin polling:
+
+```sh
+python3 -m languages.en.learning.worker \
+  --store /private/xsus-en-feedback.sqlite3 \
+  --all-owners \
+  --max-cycles-per-poll 2 \
+  --registry /private/xsus-en-models \
+  --output-dir /private/xsus-en-candidates \
+  --poll-seconds 60
+```
+
+The API deployment can run this same scheduler in its own process by setting
+`XSUS_LEARNING_WORKER_ENABLED=true`. Keep the feedback database, registry, and
+candidate output on persistent private storage. The worker stores only hashed
+owner scopes in fleet status and keeps each owner's candidate registry
+separate. It produces candidate checkpoints; it does not release them.
+
 For an explicit local release, the registry checks the candidate digest, the
 exact confirmation revision, the baseline revision, the feedback-loss gate,
 and both held-out benchmarks again before storing an immutable checkpoint:

@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: future-xsus-core-api
+    runtime: python
+    plan: starter
+    branch: future-xsus-core
+    rootDir: packages/future-xsus-core
+    buildCommand: python -m pip install -r requirements-remote.txt
+    startCommand: python -m services.api.server --database /var/data/xsus-core.sqlite3 --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    disk:
+      name: xsus-core-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: XSUS_SUPABASE_URL
+        sync: false
+      - key: XSUS_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: XSUS_API_ALLOWED_ORIGINS
+        value: https://www.xsusstudio.com,https://xsusstudio.com
+      - key: XSUS_LEARNING_WORKER_ENABLED
+        value: "true"
+      - key: XSUS_LEARNING_WORKER_POLL_SECONDS
+        value: "60"
+      - key: XSUS_LEARNING_REGISTRY_DIR
+        value: /var/data/xsus-core-models
+      - key: XSUS_LEARNING_OUTPUT_DIR
+        value: /var/data/xsus-core-learning
