@@ -9,6 +9,9 @@ identifying objects and passive agents. Version 4 adds broad everyday,
 workplace, academic, civic, and digital vocabulary while preserving the v3
 lexicon as a versioned snapshot.
 
+The feedback-driven model update workflow is documented in
+[`continual-learning.md`](continual-learning.md).
+
 ## Supported patterns
 
 - Short declarative clauses with a recognized subject, finite verb, and
