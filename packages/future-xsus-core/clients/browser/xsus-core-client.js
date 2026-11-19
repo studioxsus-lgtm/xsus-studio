@@ -91,6 +91,7 @@ export function createXsusCoreClient({ baseUrl, getAccessToken, fetchImpl = glob
         method: "POST", body: { consent, prompt, response, history },
       });
     },
+    getLearningStatus: () => request("/v1/learning/status"),
     listFeedback: () => request("/v1/learning/feedback"),
     getFeedback: (exampleId) => request(`/v1/learning/feedback/${encodeURIComponent(exampleId)}`),
     reviewFeedback: (exampleId, decision) => {

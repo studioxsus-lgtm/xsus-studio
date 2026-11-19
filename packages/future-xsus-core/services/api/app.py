@@ -1,11 +1,13 @@
 """HTTP adapter for owner-scoped conversations in Future XSUS Core."""
 
 import asyncio
+import hashlib
 import json
 import re
 import sqlite3
 from collections.abc import Mapping
 from hmac import compare_digest
+from pathlib import Path
 from time import time_ns
 from typing import Protocol
 from urllib.parse import quote, urlsplit
@@ -43,6 +45,8 @@ class LearningFeedbackStore(Protocol):
     def get(self, owner_id: str, example_id: str): ...
 
     def pending_ids(self, owner_id: str, *, limit: int = 100) -> tuple[str, ...]: ...
+
+    def counts(self, owner_id: str) -> dict[str, int]: ...
 
     def review(self, owner_id: str, example_id: str, *, approved: bool): ...
 
@@ -183,6 +187,7 @@ def create_app(
     owner_authenticator: OwnerAuthenticator | None = None,
     max_concurrent_messages: int = 8, supported_languages: frozenset[LanguageTag] | None = None,
     feedback_store: LearningFeedbackStore | None = None, allowed_origins: frozenset[str] = frozenset(),
+    learning_status_dir: Path | None = None,
 ) -> web.Application:
     """Create an app using local owner-scoped session storage and engine routing."""
     if type(max_concurrent_messages) is not int or max_concurrent_messages < 1:
@@ -376,6 +381,57 @@ def create_app(
             return _error(400, "invalid_learning_feedback_query", "Invalid feedback query")
         return _json({"pending": list(pending)})
 
+    async def learning_status(request: web.Request) -> web.Response:
+        owner = await authenticated_owner(request)
+        if owner is None:
+            return unauthorized()
+        try:
+            counts = await asyncio.to_thread(feedback_store.counts, owner)
+        except (AttributeError, ValueError):
+            return _error(503, "learning_status_unavailable", "Learning status is temporarily unavailable")
+
+        minimum = 5
+        owner_scope = hashlib.sha256(owner.encode("utf-8")).hexdigest()
+        worker = None
+        if learning_status_dir is not None:
+            status_path = learning_status_dir / f"status-{owner_scope}.json"
+            try:
+                parsed = json.loads(status_path.read_text(encoding="utf-8"))
+                if (
+                    isinstance(parsed, dict)
+                    and parsed.get("format") == "xsus-en-learning-worker-status-v1"
+                    and parsed.get("owner_scope") == owner_scope
+                ):
+                    worker = parsed
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                worker = None
+
+        allowed_states = {
+            "training", "candidate_ready", "candidate_blocked", "blocked", "failed",
+        }
+        state = worker.get("status") if isinstance(worker, dict) else None
+        if state not in allowed_states:
+            state = "waiting_for_feedback" if counts.get("accepted", 0) < minimum else "queued_for_learning"
+        candidate_revision = worker.get("candidate_revision") if isinstance(worker, dict) else None
+        if not isinstance(candidate_revision, str) or len(candidate_revision) > 128:
+            candidate_revision = None
+        updated_at = worker.get("updated_at") if isinstance(worker, dict) else None
+        if not isinstance(updated_at, str) or len(updated_at) > 64:
+            updated_at = None
+        return _json({
+            "language": "en",
+            "status": state,
+            "accepted_examples": counts.get("accepted", 0),
+            "pending_examples": counts.get("pending", 0),
+            "minimum_approved_examples": minimum,
+            "worker_updated_at": updated_at,
+            "candidate_revision": candidate_revision,
+            "eligible_for_promotion": (
+                worker.get("eligible_for_promotion") is True if isinstance(worker, dict) else False
+            ),
+            "requires_human_release": True,
+        })
+
     async def get_feedback(request: web.Request) -> web.Response:
         owner = await authenticated_owner(request)
         if owner is None:
@@ -441,6 +497,7 @@ def create_app(
     if feedback_store is not None:
         app.router.add_post("/v1/learning/feedback", submit_feedback)
         app.router.add_get("/v1/learning/feedback", list_feedback, allow_head=False)
+        app.router.add_get("/v1/learning/status", learning_status, allow_head=False)
         app.router.add_get(
             r"/v1/learning/feedback/{example_id:[0-9a-f]{64}}", get_feedback, allow_head=False,
         )

@@ -44,6 +44,8 @@ def create_local_app(
     executor = create_local_executor((create_engine(),))
     store = SQLiteSessionStore(database)
     feedback_store = SQLiteFeedbackStore(database.with_name(database.stem + ".feedback.sqlite3"))
+    resolved_learning_registry = learning_registry or database.parent / "xsus-core-models"
+    resolved_learning_output = learning_output_dir or database.parent / "xsus-core-learning"
     app = create_app(
         store=store,
         conversation=SessionConversation(executor, store),
@@ -52,6 +54,7 @@ def create_local_app(
         supported_languages=frozenset({ENGLISH}),
         feedback_store=feedback_store,
         allowed_origins=allowed_origins,
+        learning_status_dir=resolved_learning_output,
     )
     if type(learning_worker_enabled) is not bool:
         raise ValueError("Learning-worker enabled flag must be boolean")
@@ -59,8 +62,8 @@ def create_local_app(
         attach_learning_worker(
             app,
             feedback_store=feedback_store,
-            registry_path=learning_registry or database.parent / "xsus-core-models",
-            output_dir=learning_output_dir or database.parent / "xsus-core-learning",
+            registry_path=resolved_learning_registry,
+            output_dir=resolved_learning_output,
             poll_seconds=learning_poll_seconds,
         )
     return app

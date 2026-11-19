@@ -152,6 +152,18 @@ class SQLiteFeedbackStore:
             ).fetchall()
         return tuple(row[0] for row in rows)
 
+    def counts(self, owner_id: str) -> dict[str, int]:
+        """Return only the authenticated owner's pending and accepted totals."""
+        require_identifier(owner_id, "owner_id")
+        with self._connection() as connection:
+            rows = connection.execute(
+                f"SELECT status, COUNT(*) FROM {_TABLE} WHERE owner_id = ? GROUP BY status",
+                (owner_id,),
+            ).fetchall()
+        counts = {"pending": 0, "accepted": 0, "rejected": 0}
+        counts.update({status: amount for status, amount in rows})
+        return counts
+
     def owners_with_accepted(self, *, minimum_count: int = 5) -> tuple[str, ...]:
         """List owner identifiers whose approved data can start a gated cycle."""
         if type(minimum_count) is not int or not 1 <= minimum_count <= 10_000:

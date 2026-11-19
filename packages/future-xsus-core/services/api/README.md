@@ -58,6 +58,7 @@ shqyrtim njerëzor. Endpoint-i publik duhet të përdoret vetëm përmes HTTPS.
 | `DELETE /v1/sessions/{session_id}` | Fshin sesionin dhe historikun e tij. |
 | `POST /v1/learning/feedback` | Dërgon shembull vetëm me `consent: true`; shembulli mbetet në pritje për shqyrtim. |
 | `GET /v1/learning/feedback` | Liston ID-të e shembujve në pritje të pronarit. |
+| `GET /v1/learning/status` | Kthen numrin e shembujve të pronarit dhe gjendjen e ciklit të mësimit pa zbuluar tekst privat. |
 | `GET /v1/learning/feedback/{example_id}` | Lexon shembullin vetëm për pronarin e autentikuar. |
 | `POST /v1/learning/feedback/{example_id}/accept` | Pranon shembullin pas shqyrtimit të pronarit. |
 | `POST /v1/learning/feedback/{example_id}/reject` | Refuzon shembullin pas shqyrtimit të pronarit. |
@@ -73,6 +74,12 @@ shembullit kthen tekstin privat, dhe vetëm nëse ID-ja i përket pronarit.
 Historia, nëse dërgohet, lejon deri në 16 kthesa me role `user` ose
 `assistant`. Databaza e feedback-ut ruhet veçmas nga databaza e sesioneve, me
 prapashtesën `.feedback.sqlite3`.
+
+Klienti në browser mund të përdorë `clients/browser/learning-panel.js` për
+formularin e pëlqimit, radhën personale të shqyrtimit dhe përmbledhjen e
+statusit. Importo veçmas `learning-panel.css`; paneli nuk lexon automatikisht
+bisedat. Endpoint-i i statusit është vetëm për përdoruesin e autentikuar dhe
+kthen vetëm numëruesit e tij, gjendjen e worker-it dhe revizionin e kandidatit.
 
 Shembull dërgimi i shprehur nga përdoruesi:
 
