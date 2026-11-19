@@ -1,6 +1,6 @@
-import sq from './sq.js?v=20261119-hyper-future-bridge1';
-import fr from './fr.js?v=20261119-hyper-future-bridge1';
-import en from './en.js?v=20261119-hyper-future-bridge1';
+import sq from './sq.js?v=20261119-hyper-future-bridge2';
+import fr from './fr.js?v=20261119-hyper-future-bridge2';
+import en from './en.js?v=20261119-hyper-future-bridge2';
 const translations = {en,sq,fr};
 const supported = ['en','sq','fr'];
 const original = new WeakMap();

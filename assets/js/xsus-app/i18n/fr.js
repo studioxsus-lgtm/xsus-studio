@@ -604,4 +604,9 @@ export default {
   "English goal proofreading": "Relecture de l’objectif anglais",
 
   "The request timed out. Check your connection and try again.": "La demande a expiré. Vérifiez votre connexion et réessayez.",
+
+  "Draft plan needs review": "Le brouillon du plan doit être examiné",
+  "Future XSUS Core could not fully verify the English goal": "Future XSUS Core n’a pas pu vérifier complètement l’objectif anglais",
+  "Human review needed": "Vérification humaine nécessaire",
+  "Review the original English goal before relying on this structural draft. No code is generated, no steps run and no project is saved.": "Vérifiez l’objectif anglais d’origine avant de vous fier à ce brouillon structurel. Aucun code n’est généré, aucune étape n’est exécutée et aucun projet n’est enregistré.",
 };

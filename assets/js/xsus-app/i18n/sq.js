@@ -604,4 +604,9 @@ export default {
   "English goal proofreading": "Korrektim i qëllimit në anglisht",
 
   "The request timed out. Check your connection and try again.": "Kërkesës i përfundoi koha. Kontrollo lidhjen dhe provo përsëri.",
+
+  "Draft plan needs review": "Plani draft kërkon shqyrtim",
+  "Future XSUS Core could not fully verify the English goal": "Future XSUS Core nuk mundi ta verifikojë plotësisht qëllimin në anglisht",
+  "Human review needed": "Nevojitet shqyrtim njerëzor",
+  "Review the original English goal before relying on this structural draft. No code is generated, no steps run and no project is saved.": "Shqyrto qëllimin origjinal në anglisht para se të mbështetesh te ky draft strukturor. Nuk gjenerohet kod, nuk ekzekutohen hapa dhe projekti nuk ruhet.",
 };
