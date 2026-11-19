@@ -111,19 +111,12 @@ export function createHyperFutureBridge({
           !["corrected", "unchanged", "partial", "review_required"].includes(language.status)) {
         return { status: 502, data: { error: "Future XSUS Core returned an invalid language result." } };
       }
-      if (language.review_required || language.status === "partial" || language.status === "review_required") {
-        return {
-          status: 200,
-          data: {
-            bridgeVersion: HYPER_FUTURE_BRIDGE_VERSION,
-            requestId,
-            status: "review_required",
-            language: { core: "future-xsus-core", status: language.status, text: language.text },
-            plan: null,
-            safety: { executable: false, sideEffects: false }
-          }
-        };
-      }
+      // Future's conservative proofreading uncertainty is a warning, not a
+      // reason to discard the user's explicit plan. Preserve their original
+      // goal in the draft whenever proofreading needs review.
+      const reviewRequired = language.review_required ||
+        language.status === "partial" || language.status === "review_required";
+      const planningGoal = reviewRequired ? body.goal.trim() : language.text;
 
       let plan;
       try {
@@ -132,7 +125,7 @@ export function createHyperFutureBridge({
           requestId,
           engineId: "strategic-planning",
           operation: "planning.create",
-          payload: { goal: language.text, steps: body.steps },
+          payload: { goal: planningGoal, steps: body.steps },
           context: {
             traceId: requestId,
             principalId: user.userId,
@@ -150,8 +143,13 @@ export function createHyperFutureBridge({
         data: {
           bridgeVersion: HYPER_FUTURE_BRIDGE_VERSION,
           requestId,
-          status: "completed",
-          language: { core: "future-xsus-core", status: language.status, text: language.text },
+          status: reviewRequired ? "review_required" : "completed",
+          language: {
+            core: "future-xsus-core",
+            status: language.status,
+            text: language.text,
+            review_required: reviewRequired
+          },
           plan: { core: "hyper-xsus-core", ...plan.result },
           safety: { executable: false, sideEffects: false }
         }
