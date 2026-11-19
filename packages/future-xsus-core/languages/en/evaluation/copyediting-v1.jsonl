@@ -99,3 +99,46 @@
 {"id": "capital-unsupported-opening-01", "input": "Yesterday i read the report.", "status": "review_required", "output": "Yesterday i read the report."}
 {"id": "capital-quoted-lowercase-01", "input": "\"they write the report.\"", "status": "review_required", "output": "\"they write the report.\""}
 {"id": "capital-spelling-and-agreement-01", "input": "teh student write a report.", "status": "corrected", "output": "The student writes a report."}
+{"id": "spelling-modal-would", "input": "They woudl read the report.", "status": "corrected", "output": "They would read the report."}
+{"id": "spelling-modal-should", "input": "They shoudl read the report.", "status": "corrected", "output": "They should read the report."}
+{"id": "spelling-modal-could", "input": "They coudl read the report.", "status": "corrected", "output": "They could read the report."}
+{"id": "spelling-contraction-do", "input": "They dont read the report.", "status": "corrected", "output": "They don't read the report."}
+{"id": "spelling-contraction-does", "input": "She doesnt read the report.", "status": "corrected", "output": "She doesn't read the report."}
+{"id": "spelling-contraction-did", "input": "They didnt read the report.", "status": "corrected", "output": "They didn't read the report."}
+{"id": "spelling-contraction-is", "input": "The file isnt ready.", "status": "corrected", "output": "The file isn't ready."}
+{"id": "spelling-contraction-are", "input": "The files arent ready.", "status": "corrected", "output": "The files aren't ready."}
+{"id": "spelling-contraction-was", "input": "The file wasnt ready.", "status": "corrected", "output": "The file wasn't ready."}
+{"id": "spelling-contraction-were", "input": "The files werent ready.", "status": "corrected", "output": "The files weren't ready."}
+{"id": "spelling-contraction-have", "input": "They havent read the report.", "status": "corrected", "output": "They haven't read the report."}
+{"id": "spelling-contraction-has", "input": "She hasnt read the report.", "status": "corrected", "output": "She hasn't read the report."}
+{"id": "spelling-contraction-couldnt", "input": "They couldnt read the report.", "status": "corrected", "output": "They couldn't read the report."}
+{"id": "spelling-contraction-shouldnt", "input": "They shouldnt read the report.", "status": "corrected", "output": "They shouldn't read the report."}
+{"id": "spelling-contraction-wouldnt", "input": "They wouldnt read the report.", "status": "corrected", "output": "They wouldn't read the report."}
+{"id": "spelling-because-01", "input": "Becuase they write the report, Nina reads the notes.", "status": "corrected", "output": "Because they write the report, Nina reads the notes."}
+{"id": "spelling-because-02", "input": "Beacuse they write the report, Nina reads the notes.", "status": "corrected", "output": "Because they write the report, Nina reads the notes."}
+{"id": "spelling-because-03", "input": "Becasue they write the report, Nina reads the notes.", "status": "corrected", "output": "Because they write the report, Nina reads the notes."}
+{"id": "spelling-this", "input": "They read thsi report.", "status": "corrected", "output": "They read this report."}
+{"id": "spelling-that", "input": "They read thta report.", "status": "corrected", "output": "They read that report."}
+{"id": "spelling-received-01", "input": "They recevied the message.", "status": "corrected", "output": "They received the message."}
+{"id": "spelling-received-02", "input": "They recived the message.", "status": "corrected", "output": "They received the message."}
+{"id": "spelling-receive-01", "input": "They receiev the message.", "status": "corrected", "output": "They receive the message."}
+{"id": "spelling-receive-02", "input": "They receieve the message.", "status": "corrected", "output": "They receive the message."}
+{"id": "spelling-message-01", "input": "The messege is ready.", "status": "corrected", "output": "The message is ready."}
+{"id": "spelling-message-02", "input": "The messsage is ready.", "status": "corrected", "output": "The message is ready."}
+{"id": "spelling-message-03", "input": "The messge is ready.", "status": "corrected", "output": "The message is ready."}
+{"id": "spelling-student-01", "input": "The stduent reads the report.", "status": "corrected", "output": "The student reads the report."}
+{"id": "spelling-student-02", "input": "The studennt reads the report.", "status": "corrected", "output": "The student reads the report."}
+{"id": "spelling-proposal-01", "input": "They check the proposel.", "status": "corrected", "output": "They check the proposal."}
+{"id": "spelling-proposal-02", "input": "They check the proposla.", "status": "corrected", "output": "They check the proposal."}
+{"id": "spelling-label", "input": "They check the laebl.", "status": "corrected", "output": "They check the label."}
+{"id": "spelling-folder", "input": "They open the foldr.", "status": "corrected", "output": "They open the folder."}
+{"id": "spelling-budget-01", "input": "They check the bidget.", "status": "corrected", "output": "They check the budget."}
+{"id": "spelling-budget-02", "input": "They check the budeget.", "status": "corrected", "output": "They check the budget."}
+{"id": "spelling-invoice-01", "input": "They open the invoce.", "status": "corrected", "output": "They open the invoice."}
+{"id": "spelling-invoice-02", "input": "They open the inovice.", "status": "corrected", "output": "They open the invoice."}
+{"id": "spelling-check-01", "input": "They chcek the report.", "status": "corrected", "output": "They check the report."}
+{"id": "spelling-check-02", "input": "They chek the report.", "status": "corrected", "output": "They check the report."}
+{"id": "spelling-checked-01", "input": "They checkd the report.", "status": "corrected", "output": "They checked the report."}
+{"id": "spelling-checked-02", "input": "They cheked the report.", "status": "corrected", "output": "They checked the report."}
+{"id": "spelling-write-01", "input": "They wirte the report.", "status": "corrected", "output": "They write the report."}
+{"id": "spelling-write-02", "input": "They wrte the report.", "status": "corrected", "output": "They write the report."}

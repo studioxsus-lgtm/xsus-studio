@@ -1,19 +1,43 @@
 """Curated corrections for written English forms with high confidence."""
 
+import json
 import re
+from pathlib import Path
 
 from ..grammar import IssueCode
 from .proofreader import Edit, _case
 
 _WORD = re.compile(r"(?<!\w)[A-Za-z]+(?:[-'’][A-Za-z]+)*(?!\w)")
-_TYPOS = {
-    "teh": "the", "thier": "their",
-    "recieve": "receive", "recieved": "received", "reciept": "receipt",
-    "mesage": "message", "studnet": "student", "propsoal": "proposal",
-    "lable": "label", "chekc": "check", "chekced": "checked",
-    "wriet": "write", "wrtie": "write", "invioce": "invoice",
-    "floder": "folder", "budegt": "budget",
-}
+_LEXICON_PATH = Path(__file__).resolve().parents[2] / "data" / "orthography" / "spelling-v1.json"
+
+
+def _unique_entries(pairs: list[tuple[str, str]]) -> dict[str, str]:
+    entries = {}
+    for source, target in pairs:
+        if source in entries:
+            raise ValueError(f"Duplicate English spelling entry: {source}")
+        entries[source] = target
+    return entries
+
+
+def _load_spelling_lexicon() -> dict[str, str]:
+    lexicon = json.loads(_LEXICON_PATH.read_text(encoding="utf-8"), object_pairs_hook=_unique_entries)
+    if not isinstance(lexicon, dict) or not lexicon or any(
+        not isinstance(source, str)
+        or source != source.lower()
+        or _WORD.fullmatch(source) is None
+        or not isinstance(target, str)
+        or not target
+        or target != target.lower()
+        or _WORD.fullmatch(target) is None
+        or source == target
+        for source, target in lexicon.items()
+    ):
+        raise ValueError("English spelling lexicon must map distinct lowercase forms to single lowercase words")
+    return lexicon
+
+
+_TYPOS = _load_spelling_lexicon()
 _VOWEL_SOUND = frozenset({
     "agenda", "answer", "early", "engine", "heir", "honest", "honor",
     "hour", "invoice", "old",

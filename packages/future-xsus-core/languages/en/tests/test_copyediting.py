@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 
@@ -13,9 +14,21 @@ _CASES = Path(__file__).resolve().parents[1] / "evaluation" / "copyediting-v1.js
 class CopyeditingTests(unittest.TestCase):
     def test_independent_cases(self):
         report = evaluate(_CASES, copyedit=True)
-        self.assertGreaterEqual(report["cases"], 70)
+        self.assertGreaterEqual(report["cases"], 140)
         self.assertEqual(set(report["by_status"]), set(ProofreadingStatus))
         self.assertEqual(report["failures"], [])
+
+    def test_spelling_lexicon_is_separate_curated_and_avoids_ambiguous_forms(self):
+        from languages.en.text.editing.orthography import _TYPOS, _unique_entries
+
+        self.assertGreaterEqual(len(_TYPOS), 55)
+        self.assertTrue(all(source == source.lower() and target for source, target in _TYPOS.items()))
+        self.assertEqual(_TYPOS["doesnt"], "doesn't")
+        for ambiguous in ("calender", "wether", "cant", "its"):
+            with self.subTest(ambiguous=ambiguous):
+                self.assertNotIn(ambiguous, _TYPOS)
+        with self.assertRaisesRegex(ValueError, "Duplicate"):
+            json.loads('{"teh":"the","teh":"the"}', object_pairs_hook=_unique_entries)
 
     def test_grammar_and_spelling_share_original_coordinates(self):
         source = "  They have recieved a invoice,\tNina reads an report. "

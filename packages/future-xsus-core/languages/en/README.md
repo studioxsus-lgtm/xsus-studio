@@ -352,8 +352,10 @@ kur ajo ndan të njëjtin bllok me shënimin strukturor.
 capitalization, article, and punctuation-spacing corrections to the existing
 grammar checks. When the clause analyzer can verify the sentence, the editor
 capitalizes its opening word and the first-person subject pronoun `I`.
-Spelling uses a deliberately small list of reviewed forms. Article choice
-uses the sound of recognized words, including `an hour` and `a university`.
+Spelling uses a curated 59-entry lexicon in `data/orthography/`, including
+common transpositions and contractions missing apostrophes, such as `doesnt`.
+Article choice uses the sound of recognized words, including `an hour` and
+`a university`.
 Punctuation handling removes horizontal spaces before common punctuation
 and inserts a missing space after commas, semicolons, colons, exclamation
 marks, and question marks when letters touch. It does not replace punctuation
@@ -375,7 +377,7 @@ python3 -m languages.en.text.editing --markdown --orthography < draft.md
 python3 -m languages.en.evaluation.proofreading --copyedit
 ```
 
-The copyediting evaluation corpus contains 101 independently written cases.
+The copyediting evaluation corpus contains 144 independently written cases.
 It covers supported spelling forms, article sounds, verified capitalization,
 punctuation spacing, source-coordinate edits, unchanged text, and conservative
 review decisions.
