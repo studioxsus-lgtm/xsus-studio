@@ -26,7 +26,7 @@
 {"id":"review-initial-subordinate-if","input":"If Mia writes the notes, Alex reads the report.","status":"unchanged","output":"If Mia writes the notes, Alex reads the report."}
 {"id":"review-embedded-subordinate","input":"Alex read the draft, although Nina checks the budget.","status":"unchanged","output":"Alex read the draft, although Nina checks the budget."}
 {"id":"review-dependent-initial-although","input":"Although Nina checks the budget, Alex reads the report.","status":"unchanged","output":"Although Nina checks the budget, Alex reads the report."}
-{"id":"review-coordinated-object","input":"Maya reads the report and the notes.","status":"review_required","output":"Maya reads the report and the notes."}
+{"id":"supported-coordinated-object","input":"Maya reads the report and the notes.","status":"unchanged","output":"Maya reads the report and the notes."}
 {"id":"review-shared-subject","input":"Nina writes the report and reads the draft.","status":"review_required","output":"Nina writes the report and reads the draft."}
 {"id":"review-list","input":"Maya checked the draft, the report, and the budget.","status":"review_required","output":"Maya checked the draft, the report, and the budget."}
 {"id":"review-question-pair","input":"What did Nina wrote, what did Alex read?","status":"review_required","output":"What did Nina wrote, what did Alex read?"}
