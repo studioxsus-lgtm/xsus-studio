@@ -55,6 +55,7 @@ shqyrtim njerëzor. Endpoint-i publik duhet të përdoret vetëm përmes HTTPS.
 | `GET /v1/sessions` | Liston identifikuesit dhe revizionet e sesioneve të pronarit. |
 | `GET /v1/sessions/{session_id}` | Kthen revizionin dhe historikun e sesionit. |
 | `POST /v1/sessions/{session_id}/messages` | Merr objektin JSON me `text` dhe fushat opsionale `language` (fillimisht `en`) dhe `expected_revision`. |
+| `POST /v1/language/proofread` | Korrigjon një paragraf anglisht pa krijuar sesion ose ruajtur tekstin; përdoret edhe nga ura e Hyper XSUS Core. |
 | `DELETE /v1/sessions/{session_id}` | Fshin sesionin dhe historikun e tij. |
 | `POST /v1/learning/feedback` | Dërgon shembull vetëm me `consent: true`; shembulli mbetet në pritje për shqyrtim. |
 | `GET /v1/learning/feedback` | Liston ID-të e shembujve në pritje të pronarit. |
@@ -74,6 +75,15 @@ shembullit kthen tekstin privat, dhe vetëm nëse ID-ja i përket pronarit.
 Historia, nëse dërgohet, lejon deri në 16 kthesa me role `user` ose
 `assistant`. Databaza e feedback-ut ruhet veçmas nga databaza e sesioneve, me
 prapashtesën `.feedback.sqlite3`.
+
+## Përpunim i përkohshëm për Hyper XSUS Core
+
+`POST /v1/language/proofread` përdor të njëjtin autentikim të pronarit dhe
+pranon vetëm `{"text":"...","language":"en"}`. Teksti kufizohet në 4 096
+karaktere; përgjigjja kthen gjendjen `corrected`, `unchanged`, `partial` ose
+`review_required`. Rruga nuk krijon sesion, nuk shkruan në databazë dhe vendos
+`persisted: false`. Ura e Hyper XSUS Core e përdor rezultatin vetëm kur nuk
+kërkohet shqyrtim njerëzor. Gjuhët e tjera marrin `422 unsupported_language`.
 
 Klienti në browser mund të përdorë `clients/browser/learning-panel.js` për
 formularin e pëlqimit, radhën personale të shqyrtimit dhe përmbledhjen e
