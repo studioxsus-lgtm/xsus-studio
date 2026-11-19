@@ -46,6 +46,24 @@ class StatelessLanguageAPITests(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(store.list_sessions("alice").sessions, ())
 
+    async def test_supported_imperative_product_goal_does_not_require_review(self):
+        async with _client(InMemorySessionStore()) as client:
+            async with client.post(
+                "/v1/language/proofread",
+                headers=ALICE,
+                json={
+                    "text": "Plan a task manager with projects, deadlines, and team boards.",
+                    "language": "en",
+                },
+            ) as response:
+                payload = await response.json()
+
+            self.assertEqual(response.status, 200)
+            self.assertEqual(payload["status"], "unchanged")
+            self.assertEqual(payload["text"], "Plan a task manager with projects, deadlines, and team boards.")
+            self.assertFalse(payload["review_required"])
+            self.assertFalse(payload["persisted"])
+
     async def test_proofreading_rejects_extra_fields_and_unsupported_languages(self):
         async with _client(InMemorySessionStore()) as client:
             for payload, expected in (

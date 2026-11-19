@@ -1,4 +1,4 @@
-"""Analyze simple English statements, negatives and auxiliary-led questions."""
+"""Analyze supported English statements, imperatives and auxiliary-led questions."""
 
 import re
 from collections import defaultdict
@@ -9,9 +9,9 @@ from .lexicon import GENERAL_ENGLISH
 from .morphology import VerbForm, inflect_verb, pluralize_noun
 
 _TOKEN = r"[A-Za-z]+(?:[-'][A-Za-z]+)*"
-_CLAUSE = re.compile(rf"{_TOKEN}(?:[ \t]+{_TOKEN})*[.!?]?")
+_CLAUSE = re.compile(rf"{_TOKEN}(?:(?:[ \t]+|,[ \t]*){_TOKEN})*[.!?]?")
 _DETERMINERS = frozenset({"a", "an", "the", "my", "your", "his", "her", "its", "our", "their", "this", "that", "these", "those"}) | GENERAL_ENGLISH.determiners
-_ADJECTIVES = frozenset({"clear", "early", "final", "good", "happy", "late", "new", "old", "ready", "revised", "short", "small", "young", "honest", "european"}) | GENERAL_ENGLISH.adjectives
+_ADJECTIVES = frozenset({"clear", "early", "final", "good", "happy", "late", "new", "old", "ready", "revised", "safe", "short", "small", "young", "honest", "european"}) | GENERAL_ENGLISH.adjectives
 _NOUNS = frozenset({
     "agenda", "answer", "badge", "budget", "calendar", "child", "class", "colleague", "copy",
     "deer", "dog", "draft", "engine", "file", "folder", "form", "friend", "invoice", "label",
@@ -80,6 +80,7 @@ class Number(StrEnum):
 class ClauseKind(StrEnum):
     DECLARATIVE = "declarative"
     QUESTION = "question"
+    IMPERATIVE = "imperative"
 
 
 class Voice(StrEnum):
@@ -154,6 +155,7 @@ _PRONOUNS = {
     "we": (1, Number.PLURAL), "us": (1, Number.PLURAL),
     "they": (3, Number.PLURAL), "them": (3, Number.PLURAL),
 } | {word: (3, Number.SINGULAR) for word in GENERAL_ENGLISH.singular_pronouns}
+_IMPLICIT_YOU = Phrase("you", "you", 2, None)
 _NOUN_NUMBERS: dict[str, set[Number]] = defaultdict(set)
 for _noun in _NOUNS:
     _NOUN_NUMBERS[_noun].add(Number.SINGULAR)
@@ -181,7 +183,13 @@ def _noun_phrase(tokens: list[str]) -> Phrase | None:
     modifiers = words[1:-1] if determiner else words[:-1]
     head = words[-1]
     numbers = _NOUN_NUMBERS.get(head)
-    if numbers and all(modifier in _ADJECTIVES for modifier in modifiers):
+    adjective_modifiers = all(modifier in _ADJECTIVES for modifier in modifiers)
+    compound_noun_modifier = (
+        len(modifiers) <= 2
+        and any(modifier in _NOUN_NUMBERS for modifier in modifiers)
+        and all(modifier in _ADJECTIVES or modifier in _NOUN_NUMBERS for modifier in modifiers)
+    )
+    if numbers and (adjective_modifiers or compound_noun_modifier):
         if len(numbers) == 1:
             number = next(iter(numbers))
         elif determiner in {"a", "an", "this", "that"}:
@@ -454,6 +462,18 @@ def _statement(tokens: list[str], *, wh_subject: Phrase | None = None) -> list[C
     return analyses
 
 
+def _imperative(tokens: list[str]) -> list[Clause]:
+    """Parse a positive imperative with an understood second-person subject."""
+    if not tokens:
+        return []
+    forms_by_lemma = _VERB_FORMS.get(tokens[0].lower(), {})
+    base_lemmas = [lemma for lemma, forms in forms_by_lemma.items() if VerbForm.BASE in forms]
+    if len(base_lemmas) != 1:
+        return []
+    analyses = _predicate(_IMPLICIT_YOU, tokens[0], tokens[1:], ClauseKind.IMPERATIVE, False)
+    return [clause for clause in analyses if VerbForm.BASE in clause.forms]
+
+
 def _wh_question(tokens: list[str], *, contracted_auxiliary: bool) -> list[Clause]:
     if len(tokens) < 2:
         return []
@@ -487,15 +507,19 @@ def analyze_clause(sentence: str) -> Clause | None:
     if not _CLAUSE.fullmatch(text):
         return None
     words = text.rstrip(".!?").split()
-    tokens = []
+    tokens = [word.strip(",") for word in words]
+    if any(not token for token in tokens):
+        return None
+    expanded_tokens = []
     for word in words:
         expanded = _NEGATIVE_CONTRACTIONS.get(word.lower())
         if word.lower() == "cannot":
             expanded = "can"
         if expanded is None:
-            tokens.append(word)
+            expanded_tokens.append(word.strip(","))
         else:
-            tokens.extend((expanded.capitalize() if word[0].isupper() else expanded, "not"))
+            expanded_tokens.extend((expanded.capitalize() if word[0].isupper() else expanded, "not"))
+    tokens = expanded_tokens
     initial = words[0].lower()
     if text.endswith("?") and (initial in _WH_OBJECTS or initial in _WH_ADVERBS):
         contracted_auxiliary = len(words) > 1 and words[1].lower() in _NEGATIVE_CONTRACTIONS
@@ -503,5 +527,7 @@ def analyze_clause(sentence: str) -> Clause | None:
     elif text.endswith("?"):
         analyses = _question(tokens, contracted_start=words[0].lower() in _NEGATIVE_CONTRACTIONS)
     else:
-        analyses = _statement(tokens)
+        analyses = _imperative(tokens)
+        if not analyses:
+            analyses = _statement(tokens)
     return analyses[0] if len(analyses) == 1 else None
