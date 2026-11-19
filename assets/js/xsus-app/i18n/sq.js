@@ -559,4 +559,5 @@ export default {
   "A beautiful starting point for your next application.": "Një pikënisje e bukur për aplikacionin tënd të ardhshëm.",
   "Explore Now": "Eksploro tani",
   "Featured content": "Përmbajtje e veçuar"
+  "English Learning": "Mësimi i anglishtes"
 };

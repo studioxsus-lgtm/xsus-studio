@@ -542,4 +542,5 @@ export default {
   "A beautiful starting point for your next application.": "A beautiful starting point for your next application.",
   "Explore Now": "Explore Now",
   "Featured content": "Featured content"
+  "English Learning": "English Learning"
 };
