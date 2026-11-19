@@ -65,7 +65,11 @@ Use `--once` to run one check and exit. Its JSON output reports whether it is
 waiting, blocked by a validation error, or has created a candidate. Keep the
 worker running under a process supervisor if continuous checks are wanted.
 It never promotes a candidate; the explicit registry release step below still
-requires a person to review and confirm the exact candidate revision.
+requires a person to review and confirm the exact candidate revision. The
+worker creates a separate registry below `--registry` for each owner. Use the
+`registry` path printed in its JSON output as the registry argument to the
+promotion command and as `XSUS_EN_MODEL_REGISTRY`; this keeps active models and
+release histories isolated by owner.
 
 For an explicit local release, the registry checks the candidate digest, the
 exact confirmation revision, the baseline revision, the feedback-loss gate,

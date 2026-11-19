@@ -69,6 +69,26 @@ class LearningWorkerTests(unittest.TestCase):
                 self.assertNotEqual(third["candidate_revision"], first["candidate_revision"])
                 self.assertIsNone(registry.active())
 
+                for index in range(5):
+                    record = store.submit(
+                        "owner-b",
+                        Example(
+                            Conversation(f"Private worker example prompt {index}"),
+                            f"Distinct reviewed answer number {index}.",
+                        ),
+                        consent=True,
+                    )
+                    store.review("owner-b", record.example_id, approved=True)
+                other_owner = run_once(
+                    store=store, owner_id="owner-b", registry=registry,
+                    output_dir=root / "candidates", replay_examples=8,
+                )
+                self.assertEqual(build.call_count, 3)
+                self.assertNotEqual(other_owner["owner_scope"], first["owner_scope"])
+                self.assertNotEqual(other_owner["registry"], first["registry"])
+                self.assertNotEqual(other_owner["candidate"], first["candidate"])
+                self.assertIsNone(registry.active())
+
     def test_worker_waits_until_feedback_has_a_held_out_example(self):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -78,8 +98,7 @@ class LearningWorkerTests(unittest.TestCase):
                 store=store, owner_id="owner-a", registry=registry,
                 output_dir=root / "candidates",
             )
-            self.assertEqual(result, {
-                "status": "waiting_for_feedback",
-                "approved_examples": 0,
-                "minimum_approved_examples": 5,
-            })
+            self.assertEqual(result["status"], "waiting_for_feedback")
+            self.assertEqual(result["approved_examples"], 0)
+            self.assertEqual(result["minimum_approved_examples"], 5)
+            self.assertEqual(len(result["owner_scope"]), 64)

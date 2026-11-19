@@ -53,6 +53,7 @@ def _write_json(path: Path, payload: dict) -> None:
 def _candidate_key(
     feedback_revision: str,
     baseline_revision: str,
+    owner_scope: str,
     sources: dict[str, str],
     training_path: Path,
     evaluation_paths: dict[str, Path],
@@ -61,6 +62,7 @@ def _candidate_key(
     identity = {
         "feedback_revision": feedback_revision,
         "baseline_revision": baseline_revision,
+        "owner_scope": owner_scope,
         "training_sources": sources,
         "training_corpus": hashlib.sha256(training_path.read_bytes()).hexdigest(),
         "evaluation_corpora": {
@@ -75,7 +77,7 @@ def _candidate_key(
 
 def _existing_candidate(candidate_path: Path, report_path: Path, *, feedback_revision: str,
                         baseline_revision: str, source_fingerprints: dict[str, str],
-                        cycle_parameters: dict) -> dict | None:
+                        cycle_parameters: dict, registry_path: Path, owner_scope: str) -> dict | None:
     if not candidate_path.is_file() or not report_path.is_file():
         return None
     try:
@@ -103,6 +105,8 @@ def _existing_candidate(candidate_path: Path, report_path: Path, *, feedback_rev
         "reasons": report.get("reasons", []),
         "feedback_set_revision": feedback_revision,
         "baseline_revision": baseline_revision,
+        "registry": str(registry_path),
+        "owner_scope": owner_scope,
     }
 
 
@@ -115,7 +119,9 @@ def run_once(
     """Create at most one candidate for the current reviewed dataset revision."""
     output_dir = _require_external_path(output_dir, "Candidate output directory")
     _require_external_path(store.path, "Feedback database")
-    _require_external_path(registry.root, "Model registry")
+    registry_root = _require_external_path(registry.root, "Model registry")
+    owner_scope = hashlib.sha256(owner_id.encode("utf-8")).hexdigest()
+    owner_registry = EnglishModelRegistry(registry_root / "owners" / owner_scope)
     if not output_dir.is_dir():
         output_dir.mkdir(parents=True, exist_ok=True)
     records = store.accepted(owner_id)
@@ -124,9 +130,10 @@ def run_once(
             "status": "waiting_for_feedback",
             "approved_examples": len(records),
             "minimum_approved_examples": _MINIMUM_EXAMPLES,
+            "owner_scope": owner_scope,
         }
 
-    active = registry.active()
+    active = owner_registry.active()
     baseline_path = Path(active["artifact"]) if active is not None else _DEFAULT_BASELINE
     baseline_revision = load_checkpoint(baseline_path)[2]
     feedback_revision = feedback_set_revision(records)
@@ -139,7 +146,7 @@ def run_once(
         "replay_limit": replay_examples,
     }
     key = _candidate_key(
-        feedback_revision, baseline_revision, source_fingerprints,
+        feedback_revision, baseline_revision, owner_scope, source_fingerprints,
         training_path, selected_evaluations, cycle_parameters,
     )
     candidate_path = output_dir / f"candidate-{key}.json.gz"
@@ -150,6 +157,8 @@ def run_once(
         baseline_revision=baseline_revision,
         source_fingerprints=source_fingerprints,
         cycle_parameters=cycle_parameters,
+        registry_path=owner_registry.root,
+        owner_scope=owner_scope,
     )
     if existing is not None:
         return existing
@@ -161,8 +170,14 @@ def run_once(
         except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             blocked = None
         if isinstance(blocked, dict) and blocked.get("key") == key:
-            return {"status": "blocked", "reason": blocked.get("reason", "Learning preconditions failed"),
-                    "feedback_set_revision": feedback_revision, "baseline_revision": baseline_revision}
+            return {
+                "status": "blocked",
+                "reason": blocked.get("reason", "Learning preconditions failed"),
+                "feedback_set_revision": feedback_revision,
+                "baseline_revision": baseline_revision,
+                "registry": str(owner_registry.root),
+                "owner_scope": owner_scope,
+            }
 
     try:
         report = build_candidate(
@@ -186,6 +201,7 @@ def run_once(
             "reason": reason,
             "feedback_set_revision": feedback_revision,
             "baseline_revision": baseline_revision,
+            "owner_scope": owner_scope,
         }
     verified = _existing_candidate(
         candidate_path, report_path,
@@ -193,6 +209,8 @@ def run_once(
         baseline_revision=baseline_revision,
         source_fingerprints=source_fingerprints,
         cycle_parameters=cycle_parameters,
+        registry_path=owner_registry.root,
+        owner_scope=owner_scope,
     )
     if verified is None:
         raise RuntimeError("Learning worker could not verify its candidate and report")
