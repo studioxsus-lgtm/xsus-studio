@@ -13,6 +13,28 @@ _HEADERS = {"Authorization": f"Bearer {_TOKEN}"}
 
 
 class LocalAPIRuntimeTests(unittest.IsolatedAsyncioTestCase):
+    async def test_learning_feedback_is_available_and_persists_after_restart(self):
+        with TemporaryDirectory() as directory:
+            database = Path(directory) / "conversation.db"
+            payload = {
+                "consent": True,
+                "prompt": "Explain a clear sentence.",
+                "response": "It expresses a complete thought.",
+            }
+            async with TestClient(TestServer(create_local_app(database, owner="test-owner", token=_TOKEN))) as client:
+                submitted = await client.post("/v1/learning/feedback", headers=_HEADERS, json=payload)
+                self.assertEqual(submitted.status, 202)
+                record = await submitted.json()
+                self.assertEqual(record["status"], "pending")
+
+            async with TestClient(TestServer(create_local_app(database, owner="test-owner", token=_TOKEN))) as client:
+                pending = await client.get("/v1/learning/feedback", headers=_HEADERS)
+                self.assertEqual((await pending.json())["pending"], [record["example_id"]])
+                reviewed = await client.post(
+                    f"/v1/learning/feedback/{record['example_id']}/accept", headers=_HEADERS,
+                )
+                self.assertEqual((await reviewed.json())["status"], "accepted")
+
     async def test_real_model_resumes_conversation_when_http_application_reopens(self):
         with TemporaryDirectory() as directory, patch.dict(os.environ, {"XSUS_EN_MODEL_PROFILE": "conversation-v3"}, clear=True):
             database = Path(directory) / "conversation.db"
