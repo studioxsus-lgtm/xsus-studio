@@ -314,6 +314,19 @@ def _predicate(
                     voice=Voice.PASSIVE, agent=agent,
                     prepositional_phrases=phrases, adverbs=adverbs,
                 ))
+            else:
+                # Keep malformed "be + base verb + object" clauses analyzable
+                # so the grammar checker can suggest the required -ing form.
+                for boundary in range(1, len(rest) + 1):
+                    nominal = _noun_phrase(rest[:boundary])
+                    trailing = _modifier_suffix(rest[boundary:])
+                    if nominal is not None and trailing is not None:
+                        phrases, adverbs = trailing
+                        analyses.append(Clause(
+                            subject, verb, lemma, frozenset(forms), nominal, None,
+                            kind, negated, auxiliary,
+                            prepositional_phrases=phrases, adverbs=adverbs,
+                        ))
         elif lemma in _LINKING_VERBS:
             adjective = _adjective_phrase(rest)
             if adjective is not None:

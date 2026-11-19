@@ -38,7 +38,7 @@
 {"id":"review-finite-verb","input":"The student reading the report.","status":"review_required","output":"The student reading the report."}
 {"id":"review-unsupported-passive-chain","input":"The dog may have been called.","status":"review_required","output":"The dog may have been called."}
 {"id":"review-unsupported-clause-pair","input":"The students writes. The teacher reads.","status":"review_required","output":"The students writes. The teacher reads."}
-{"id":"review-unsupported-adverb","input":"This child was called yesterday.","status":"review_required","output":"This child was called yesterday."}
+{"id":"unchanged-supported-passive-adverb","input":"This child was called yesterday.","status":"unchanged","output":"This child was called yesterday."}
 {"id":"review-unsupported-missing-subject","input":"Writes the budget.","status":"review_required","output":"Writes the budget."}
 {"id":"review-no-safe-article-choice","input":"The teacher answered a questions.","status":"review_required","output":"The teacher answered a questions."}
 {"id":"review-ambiguous-and-no-partial-write","input":"This student have chose this reports.","status":"review_required","output":"This student have chose this reports."}
