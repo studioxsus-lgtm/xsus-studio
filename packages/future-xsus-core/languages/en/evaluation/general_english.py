@@ -19,6 +19,7 @@ def _actual(sentence: str) -> dict | None:
         "number": clause.subject.number.value if clause.subject.number is not None else None,
         "verb": clause.lemma,
         "object": clause.object.head if clause.object is not None else None,
+        "object_conjuncts": [part.head for part in clause.object.conjuncts] if clause.object is not None else [],
         "complement": clause.complement,
         "kind": clause.kind.value,
         "voice": clause.voice.value,

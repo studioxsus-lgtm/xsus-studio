@@ -110,6 +110,8 @@ class Phrase:
     head: str
     person: int
     number: Number | None
+    conjuncts: tuple["Phrase", ...] = ()
+    conjunction: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -200,10 +202,29 @@ def _noun_phrase(tokens: list[str]) -> Phrase | None:
     return None
 
 
+def _coordinated_noun_phrase(tokens: list[str]) -> Phrase | None:
+    """Parse a two-part noun coordination without treating it as one word."""
+    boundaries = [index for index, token in enumerate(tokens) if token.lower() in {"and", "or"}]
+    if len(boundaries) != 1:
+        return None
+    boundary = boundaries[0]
+    left = _noun_phrase(tokens[:boundary])
+    right = _noun_phrase(tokens[boundary + 1:])
+    if left is None or right is None:
+        return None
+    conjunction = tokens[boundary].lower()
+    person = min(left.person, right.person)
+    number = Number.PLURAL if conjunction == "and" else right.number
+    return Phrase(
+        " ".join(tokens), right.head, person, number,
+        conjuncts=(left, right), conjunction=conjunction,
+    )
+
+
 def _by_agent(tokens: list[str]) -> Phrase | None:
     if not tokens or tokens[0].lower() != "by":
         return None
-    agent = _noun_phrase(tokens[1:])
+    agent = _noun_phrase(tokens[1:]) or _coordinated_noun_phrase(tokens[1:])
     if agent is None:
         return None
     if agent.head in _AGENT_FORMS or agent.head in _PRONOUNS:
@@ -225,7 +246,7 @@ def _modifier_suffix(tokens: list[str]) -> tuple[tuple[PrepositionalPhrase, ...]
             return phrases, (tokens[0], *adverbs)
     if first in _PREPOSITIONS:
         for boundary in range(len(tokens), 1, -1):
-            phrase = _noun_phrase(tokens[1:boundary])
+            phrase = _noun_phrase(tokens[1:boundary]) or _coordinated_noun_phrase(tokens[1:boundary])
             if phrase is None:
                 continue
             if phrase.head in _TEMPORAL_NAMES and phrase.head not in {"noon", "midnight"}:
@@ -363,7 +384,7 @@ def _predicate(
                     prepositional_phrases=phrases, adverbs=adverbs,
                 ))
             for boundary in range(1, len(rest) + 1):
-                nominal = _noun_phrase(rest[:boundary])
+                nominal = _noun_phrase(rest[:boundary]) or _coordinated_noun_phrase(rest[:boundary])
                 modifiers = _modifier_suffix(rest[boundary:])
                 if nominal is not None and modifiers is not None:
                     phrases, adverbs = modifiers

@@ -93,19 +93,20 @@ def check_grammar(clause: Clause) -> tuple[GrammarIssue, ...]:
     ):
         if phrase is None:
             continue
-        words = phrase.text.lower().split()
-        if len(words) == 1 and words[0] in pronouns:
-            issues.append(GrammarIssue(IssueCode.PRONOUN_CASE, phrase.text, pronouns[words[0]]))
-        if len(words) > 1 and phrase.number is not None:
-            first = words[0]
-            if first in _DEMONSTRATIVES:
-                expected, replacement = _DEMONSTRATIVES[first]
-                if phrase.number != expected:
-                    issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, replacement))
-            elif first in {"a", "an"} and phrase.number is Number.PLURAL:
-                issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, None))
-            elif first in _SINGULAR_DETERMINERS and phrase.number is Number.PLURAL:
-                issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, None))
-            elif first in _PLURAL_DETERMINERS and phrase.number is Number.SINGULAR:
-                issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, None))
+        for component in phrase.conjuncts or (phrase,):
+            words = component.text.lower().split()
+            if len(words) == 1 and words[0] in pronouns:
+                issues.append(GrammarIssue(IssueCode.PRONOUN_CASE, component.text, pronouns[words[0]]))
+            if len(words) > 1 and component.number is not None:
+                first = words[0]
+                if first in _DEMONSTRATIVES:
+                    expected, replacement = _DEMONSTRATIVES[first]
+                    if component.number != expected:
+                        issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, replacement))
+                elif first in {"a", "an"} and component.number is Number.PLURAL:
+                    issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, None))
+                elif first in _SINGULAR_DETERMINERS and component.number is Number.PLURAL:
+                    issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, None))
+                elif first in _PLURAL_DETERMINERS and component.number is Number.SINGULAR:
+                    issues.append(GrammarIssue(IssueCode.DETERMINER_NUMBER, first, None))
     return tuple(issues)

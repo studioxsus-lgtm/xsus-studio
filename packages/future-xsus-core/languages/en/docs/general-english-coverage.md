@@ -19,6 +19,8 @@ passive agents.
   `become`.
 - A curated set of trailing adverbs and prepositional phrases after verbs,
   direct objects, and copular subjects.
+- Two-part direct objects, prepositional objects, and passive agents joined by
+  `and` or `or`, with conjuncts retained in the parsed phrase.
 - Count and mass noun agreement, common determiners, singular indefinite
   pronouns, and targeted determiner-number diagnostics.
 
@@ -38,8 +40,9 @@ structures remain outside the parser's declared coverage.
 This is a deterministic, local clause analyzer, not a complete English
 grammar, dictionary, conversational model, or proof that a sentence is true.
 It deliberately declines clauses it cannot parse unambiguously. Multi-clause
-sentences, relative clauses, coordination, fronted modifiers, complex
-prepositional phrases, and stacked auxiliaries need separate grammar work.
+sentences, relative clauses, coordinated subjects and predicates, lists of
+three or more items, fronted modifiers, complex prepositional phrases, and
+stacked auxiliaries need separate grammar work.
 The curated lexicon is broad enough to exercise common written clauses, but it
 does not represent every English word, sense, inflection, or dialect.
 
