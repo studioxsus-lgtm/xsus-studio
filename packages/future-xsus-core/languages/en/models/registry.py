@@ -32,7 +32,9 @@ class EnglishModelRegistry:
             raise ValueError("Model registry path must not be empty")
         self._root = Path(root).absolute()
         self._versions = self._root / "versions"
+        self._reports = self._root / "reports"
         self._versions.mkdir(parents=True, exist_ok=True)
+        self._reports.mkdir(parents=True, exist_ok=True)
         with self._connection(write=True) as connection:
             connection.execute(f"""
                 CREATE TABLE IF NOT EXISTS xsus_en_model_releases_v{_REGISTRY_VERSION} (
@@ -113,8 +115,10 @@ class EnglishModelRegistry:
 
         filename = artifact_sha + ".json.gz"
         artifact_path = self._versions / filename
-        self._store_artifact(artifact_path, candidate_bytes, artifact_sha)
         report_sha = hashlib.sha256(report_bytes).hexdigest()
+        report_artifact = self._reports / (report_sha + ".json")
+        self._store_immutable(artifact_path, candidate_bytes, artifact_sha, "checkpoint")
+        self._store_immutable(report_artifact, report_bytes, report_sha, "learning report")
         published_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
         with self._connection(write=True) as connection:
             table = f"xsus_en_model_releases_v{_REGISTRY_VERSION}"
@@ -144,7 +148,14 @@ class EnglishModelRegistry:
                 "VALUES ('promote', ?, ?, ?)",
                 (previous, revision, published_at),
             )
-        return {"revision": revision, "previous_revision": previous, "active": True, "artifact": str(artifact_path)}
+        return {
+            "revision": revision,
+            "previous_revision": previous,
+            "active": True,
+            "artifact": str(artifact_path),
+            "report": str(report_artifact),
+            "report_sha256": report_sha,
+        }
 
     def rollback(self, target_revision: str, *, confirm_current_revision: str) -> dict:
         occurred_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -209,8 +220,34 @@ class EnglishModelRegistry:
             active = self._active(connection)
         return tuple({
             "revision": row[0], "artifact": row[1], "artifact_sha256": row[2],
+            "report": str(self._reports / (row[3] + ".json")),
             "report_sha256": row[3], "published_at": row[4], "active": row[0] == active,
         } for row in rows)
+
+    def release_report(self, revision: str) -> dict:
+        """Load and verify the immutable evaluation report for one release."""
+        with self._connection() as connection:
+            table = f"xsus_en_model_releases_v{_REGISTRY_VERSION}"
+            row = connection.execute(
+                f"SELECT report_sha256 FROM {table} WHERE revision = ?", (revision,),
+            ).fetchone()
+        if row is None:
+            raise KeyError("English checkpoint revision is not registered")
+        report_sha = row[0]
+        path = self._reports / (report_sha + ".json")
+        try:
+            report_bytes = path.read_bytes()
+        except OSError as error:
+            raise ValueError("Registered learning report is unavailable") from error
+        if hashlib.sha256(report_bytes).hexdigest() != report_sha:
+            raise ValueError("Registered learning report checksum does not match")
+        try:
+            report = json.loads(report_bytes)
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ValueError("Registered learning report is not valid UTF-8 JSON") from error
+        if not isinstance(report, dict):
+            raise ValueError("Registered learning report has an invalid format")
+        return report
 
     def _verified_artifact(self, filename: str, artifact_sha: str, revision: str) -> Path:
         if filename != artifact_sha + ".json.gz" or revision != "sha256-" + artifact_sha:
@@ -225,10 +262,10 @@ class EnglishModelRegistry:
         return path
 
     @staticmethod
-    def _store_artifact(path: Path, data: bytes, expected_sha: str) -> None:
+    def _store_immutable(path: Path, data: bytes, expected_sha: str, description: str) -> None:
         if path.exists():
             if hashlib.sha256(path.read_bytes()).hexdigest() != expected_sha:
-                raise ValueError("Existing registry artifact has a checksum mismatch")
+                raise ValueError(f"Existing registry {description} has a checksum mismatch")
             return
         with NamedTemporaryFile(dir=path.parent, delete=False) as temporary:
             temporary_path = Path(temporary.name)
@@ -238,7 +275,7 @@ class EnglishModelRegistry:
                 os.fsync(temporary.fileno())
                 temporary.close()
                 if hashlib.sha256(temporary_path.read_bytes()).hexdigest() != expected_sha:
-                    raise ValueError("Copied registry artifact failed checksum verification")
+                    raise ValueError(f"Copied registry {description} failed checksum verification")
                 os.replace(temporary_path, path)
             finally:
                 temporary_path.unlink(missing_ok=True)

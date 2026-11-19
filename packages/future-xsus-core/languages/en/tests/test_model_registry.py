@@ -50,6 +50,8 @@ class EnglishModelRegistryTests(unittest.TestCase):
                  patch("languages.en.models.registry.compare_checkpoint", return_value=scores):
                 one = registry.promote_candidate(first, first_report, confirm_revision=first_revision)
                 self.assertEqual(registry.load_active()[2], first_revision)
+                self.assertEqual(registry.release_report(first_revision)["candidate_revision"], first_revision)
+                self.assertTrue(Path(one["report"]).is_file())
                 second, second_report, second_revision = self._candidate(
                     root, "second", 29,
                     baseline_path=registry.root / "versions" / f"{first_revision.removeprefix('sha256-')}.json.gz",
@@ -64,6 +66,22 @@ class EnglishModelRegistryTests(unittest.TestCase):
             releases = registry.releases()
             self.assertEqual(len(releases), 2)
             self.assertEqual(sum(item["active"] for item in releases), 1)
+            self.assertTrue(all(Path(item["report"]).is_file() for item in releases))
+
+    def test_registered_learning_report_is_immutable_and_checksum_verified(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            registry = EnglishModelRegistry(root / "registry")
+            candidate, report, revision = self._candidate(root, "candidate", 53)
+            scores = {"cases": 1, "accepted": 1, "preserved_all_facts": 1}
+            with patch("languages.en.models.registry.load_cases", return_value=(object(),)), \
+                 patch("languages.en.models.registry.compare_checkpoint", return_value=scores):
+                promoted = registry.promote_candidate(candidate, report, confirm_revision=revision)
+            saved_report = Path(promoted["report"])
+            self.assertEqual(registry.release_report(revision)["candidate_revision"], revision)
+            saved_report.write_text("{}", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "report checksum does not match"):
+                registry.release_report(revision)
 
     def test_rechecks_benchmarks_and_requires_exact_confirmation(self):
         with TemporaryDirectory() as temporary:

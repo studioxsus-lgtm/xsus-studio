@@ -49,7 +49,14 @@ and both held-out benchmarks again before storing an immutable checkpoint:
 python -m languages.en.models.registry_cli --registry /private/xsus-en-models promote --candidate /private/xsus-en-candidate.json.gz --report /private/xsus-en-candidate-report.json --confirm-revision sha256-CANDIDATE_DIGEST
 python -m languages.en.models.registry_cli --registry /private/xsus-en-models releases
 python -m languages.en.models.registry_cli --registry /private/xsus-en-models active
+python -m languages.en.models.registry_cli --registry /private/xsus-en-models show --revision sha256-CANDIDATE_DIGEST
 ```
+
+The registry stores the reviewed JSON report beside the immutable checkpoint,
+keyed by its SHA-256 digest. `show` verifies that digest before displaying the
+report, and `releases` lists the local report path and digest for every release.
+The report contains benchmark and training metadata, not prompt or response
+text.
 
 Start the English engine with `XSUS_EN_MODEL_PROFILE=active` and
 `XSUS_EN_MODEL_REGISTRY=/private/xsus-en-models` to load the registered active

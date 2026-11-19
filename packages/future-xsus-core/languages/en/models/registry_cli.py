@@ -23,6 +23,8 @@ def main() -> int:
 
     actions.add_parser("releases", help="List immutable revisions in this registry")
     actions.add_parser("active", help="Show the verified active checkpoint revision and path")
+    show = actions.add_parser("show", help="Verify and display a published revision's evaluation report")
+    show.add_argument("--revision", required=True)
     args = parser.parse_args()
     registry = EnglishModelRegistry(args.registry)
     if args.action == "promote":
@@ -33,6 +35,8 @@ def main() -> int:
         result = registry.rollback(args.target_revision, confirm_current_revision=args.confirm_current_revision)
     elif args.action == "active":
         result = {"active": registry.active()}
+    elif args.action == "show":
+        result = {"revision": args.revision, "report": registry.release_report(args.revision)}
     else:
         result = {"releases": registry.releases()}
     print(json.dumps(result, ensure_ascii=False, indent=2))
