@@ -1,11 +1,11 @@
-# General English Coverage — Lexicon v2
+# General English Coverage — Lexicon v3
 
 The written English clause analyzer uses a local, versioned vocabulary at
-`languages/en/data/lexicon/general-v2.json`. The vocabulary currently contains
-**342 count nouns, 35 mass nouns, 174 adjectives, 218 verbs, 20 determiners,
-11 singular pronouns, and 64 adverbs**. Transitive verbs and agent nouns are
-recorded separately so the parser can use them when identifying objects and
-passive agents.
+`languages/en/data/lexicon/general-v3.json`. The vocabulary currently contains
+**374 count nouns, 35 mass nouns, 174 adjectives, 257 verbs, 195 transitive
+verbs, 20 determiners, 11 singular pronouns, and 64 adverbs**. Transitive verbs
+and agent nouns are recorded separately so the parser can use them when
+identifying objects and passive agents.
 
 ## Supported patterns
 
@@ -13,6 +13,8 @@ passive agents.
   optional direct object.
 - Present and past forms, common irregular verb paradigms, and subject–verb
   agreement diagnostics.
+- Expanded irregular verb paradigms and irregular noun plurals, including
+  common `-ves`, `-ies`, and `-es` spellings.
 - Basic auxiliary and modal questions, negation, perfect forms, and passive
   clauses with optional `by` agents.
 - Adjective complements after common linking verbs and noun complements after
@@ -44,7 +46,9 @@ sentences, relative clauses, coordinated subjects and predicates, lists of
 three or more items, fronted modifiers, complex prepositional phrases, and
 stacked auxiliaries need separate grammar work.
 The curated lexicon is broad enough to exercise common written clauses, but it
-does not represent every English word, sense, inflection, or dialect.
+does not represent every English word, sense, inflection, or dialect. Some
+verbs and nouns have multiple standard forms; the morphology engine selects a
+common default and does not yet preserve all regional or sense-based variants.
 
 ## Adding vocabulary safely
 
