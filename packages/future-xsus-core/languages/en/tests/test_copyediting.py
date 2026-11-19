@@ -44,6 +44,42 @@ class CopyeditingTests(unittest.TestCase):
             restored = restored[:edit.start] + edit.replacement + restored[edit.end:]
         self.assertEqual(restored, result.text)
 
+    def test_capitalization_composes_with_verified_grammar(self):
+        source = "  i has a report."
+        result = copyedit_sentence(source)
+        self.assertEqual(result.status, ProofreadingStatus.CORRECTED)
+        self.assertEqual(result.text, "  I have a report.")
+        restored = source
+        for edit in reversed(result.edits):
+            self.assertEqual(source[edit.start:edit.end], edit.original)
+            restored = restored[:edit.start] + edit.replacement + restored[edit.end:]
+        self.assertEqual(restored, result.text)
+
+    def test_initial_spelling_edit_capitalizes_without_overlapping_grammar(self):
+        result = copyedit_sentence("teh student write a report.")
+        self.assertEqual((result.status, result.text), (
+            ProofreadingStatus.CORRECTED, "The student writes a report."
+        ))
+
+    def test_subject_pronoun_i_is_fixed_inside_supported_questions(self):
+        result = copyedit_sentence("What did i write?")
+        self.assertEqual((result.status, result.text), (
+            ProofreadingStatus.CORRECTED, "What did I write?"
+        ))
+
+    def test_unsupported_lowercase_openings_and_quoted_fragments_are_preserved(self):
+        for source in ("Yesterday i read the report.", '"they write the report."'):
+            with self.subTest(source=source):
+                result = copyedit_sentence(source)
+                self.assertEqual((result.status, result.text), (
+                    ProofreadingStatus.REVIEW_REQUIRED, source
+                ))
+
+    def test_clean_capitalization_is_unchanged(self):
+        for source in ("They write the report.", "I write the report.", "What did I write?"):
+            with self.subTest(source=source):
+                self.assertEqual(copyedit_sentence(source).status, ProofreadingStatus.UNCHANGED)
+
     def test_punctuation_spacing_does_not_rewrite_numeric_separators(self):
         from languages.en.text.editing.punctuation import punctuation_edits
 
@@ -101,3 +137,9 @@ class CopyeditingTests(unittest.TestCase):
             "# Draft\r\n\r\nThe report is ready, today.\r\n\r\n"
             "~~~text\r\nThe report is ready ,today.\r\n~~~"
         ))
+
+    def test_markdown_copyediting_capitalizes_only_verified_prose(self):
+        source = "they write the report.\n\n~~~text\nthey write the report.\n~~~"
+        result = proofread_markdown(source, orthography=True)
+        self.assertEqual(result.status, ParagraphStatus.CORRECTED)
+        self.assertEqual(result.text, "They write the report.\n\n~~~text\nthey write the report.\n~~~")

@@ -19,6 +19,8 @@ class EnglishProfileTests(unittest.TestCase):
                 with patch.dict(os.environ, {"XSUS_EN_MODEL_PROFILE": profile}, clear=True):
                     engine = create_engine()
                 revisions.add(engine.descriptor.identity.revision)
+                if profile == "written-v5":
+                    self.assertTrue(engine.descriptor.identity.revision.endswith("-proofreader-v7"))
         self.assertEqual(len(revisions), 5)
 
     def test_invalid_or_conflicting_configuration_fails_at_startup(self):

@@ -39,6 +39,9 @@ class EnglishProofreadingIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 "---\ntitle: They writes\n---\n\nThey write.\n\n~~~\nThey writes.\n~~~",
             ),
             ("Copyedit: They recieved an report.", "They received a report."),
+            ("Copyedit: they write the report.", "They write the report."),
+            ("Copyedit: i has a invoice.", "I have an invoice."),
+            ("Copyedit: What did i write?", "What did I write?"),
             (
                 "Explain copyedits: They received an report.",
                 "They received a report.\n\nChanges:\n- 'an' → 'a'. Choose a or an by the sound of the following word.",

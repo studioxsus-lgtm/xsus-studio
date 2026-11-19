@@ -38,7 +38,10 @@ def orthographic_edits(text: str) -> tuple[Edit, ...]:
         lower = original.lower()
         replacement = _TYPOS.get(lower)
         if replacement is not None and (original.islower() or (index == 0 and original.istitle())):
-            edits.append(Edit(word.start(), word.end(), original, _case(original, replacement), IssueCode.SPELLING))
+            corrected = _case(original, replacement)
+            if not text[:word.start()].strip() and original.islower():
+                corrected = corrected.capitalize()
+            edits.append(Edit(word.start(), word.end(), original, corrected, IssueCode.SPELLING))
             continue
         if lower not in {"a", "an"} or index + 1 >= len(words):
             continue

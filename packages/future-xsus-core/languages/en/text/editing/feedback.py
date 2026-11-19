@@ -12,6 +12,7 @@ _EXPLANATIONS = {
     IssueCode.DETERMINER_NUMBER: "Use a determiner that matches the noun's number.",
     IssueCode.SPELLING: "Use the standard spelling of this word.",
     IssueCode.ARTICLE_SOUND: "Choose a or an by the sound of the following word.",
+    IssueCode.CAPITALIZATION: "Use a capital letter for this pronoun or sentence opening.",
     IssueCode.COMMA_SPLICE: "A semicolon can join two independent clauses without a conjunction.",
 }
 _MAX_EXPLAINED = 8

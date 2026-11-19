@@ -349,7 +349,9 @@ kur ajo ndan të njëjtin bllok me shënimin strukturor.
 ## English copyediting
 
 `Copyedit:`, `Copyedit paragraph:`, and `Copyedit Markdown:` add spelling,
-article, and punctuation-spacing corrections to the existing grammar checks.
+capitalization, article, and punctuation-spacing corrections to the existing
+grammar checks. When the clause analyzer can verify the sentence, the editor
+capitalizes its opening word and the first-person subject pronoun `I`.
 Spelling uses a deliberately small list of reviewed forms. Article choice
 uses the sound of recognized words, including `an hour` and `a university`.
 Punctuation handling removes horizontal spaces before common punctuation
@@ -373,6 +375,7 @@ python3 -m languages.en.text.editing --markdown --orthography < draft.md
 python3 -m languages.en.evaluation.proofreading --copyedit
 ```
 
-The copyediting evaluation corpus contains 75 independently written cases.
-It covers supported spelling forms, article sounds, punctuation spacing,
-source-coordinate edits, unchanged text, and conservative review decisions.
+The copyediting evaluation corpus contains 101 independently written cases.
+It covers supported spelling forms, article sounds, verified capitalization,
+punctuation spacing, source-coordinate edits, unchanged text, and conservative
+review decisions.

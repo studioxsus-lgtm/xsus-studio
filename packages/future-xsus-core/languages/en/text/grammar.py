@@ -17,6 +17,7 @@ class IssueCode(StrEnum):
     SPELLING = "spelling"
     ARTICLE_SOUND = "article_sound"
     PUNCTUATION_SPACING = "punctuation_spacing"
+    CAPITALIZATION = "capitalization"
 
 
 @dataclass(frozen=True, slots=True)

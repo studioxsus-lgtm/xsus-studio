@@ -73,3 +73,29 @@
 {"id": "exclamation-space-before-01", "input": "Stop ! the file is incomplete.", "status": "corrected", "output": "Stop! the file is incomplete."}
 {"id": "punctuation-combined-01", "input": "They check ,the final report .", "status": "corrected", "output": "They check, the final report."}
 {"id": "punctuation-combined-02", "input": "Status :ready;the report is ready .", "status": "corrected", "output": "Status: ready; the report is ready."}
+{"id": "capital-sentence-opening-01", "input": "they write the report.", "status": "corrected", "output": "They write the report."}
+{"id": "capital-sentence-opening-02", "input": "we check the file.", "status": "corrected", "output": "We check the file."}
+{"id": "capital-sentence-opening-03", "input": "the student reads the report.", "status": "corrected", "output": "The student reads the report."}
+{"id": "capital-sentence-opening-04", "input": "the final report is ready.", "status": "corrected", "output": "The final report is ready."}
+{"id": "capital-sentence-opening-05", "input": "the files are ready.", "status": "corrected", "output": "The files are ready."}
+{"id": "capital-sentence-opening-06", "input": "is the file ready?", "status": "corrected", "output": "Is the file ready?"}
+{"id": "capital-sentence-opening-07", "input": "you write the report.", "status": "corrected", "output": "You write the report."}
+{"id": "capital-sentence-opening-08", "input": "she has the file.", "status": "corrected", "output": "She has the file."}
+{"id": "capital-sentence-opening-09", "input": "  they write the report.  ", "status": "corrected", "output": "  They write the report.  "}
+{"id": "capital-pronoun-subject-01", "input": "i write the report.", "status": "corrected", "output": "I write the report."}
+{"id": "capital-pronoun-subject-02", "input": "i has the file.", "status": "corrected", "output": "I have the file."}
+{"id": "capital-pronoun-subject-03", "input": "i writes the report.", "status": "corrected", "output": "I write the report."}
+{"id": "capital-pronoun-subject-04", "input": "i am ready.", "status": "corrected", "output": "I am ready."}
+{"id": "capital-pronoun-question-01", "input": "what did i write?", "status": "corrected", "output": "What did I write?"}
+{"id": "capital-pronoun-question-02", "input": "where does i read the report?", "status": "corrected", "output": "Where do I read the report?"}
+{"id": "capital-pronoun-question-03", "input": "do i check the file?", "status": "corrected", "output": "Do I check the file?"}
+{"id": "capital-pronoun-question-04", "input": "did i receive the report?", "status": "corrected", "output": "Did I receive the report?"}
+{"id": "capital-pronoun-question-05", "input": "can i open the folder?", "status": "corrected", "output": "Can I open the folder?"}
+{"id": "capital-pronoun-question-06", "input": "why do i check the file?", "status": "corrected", "output": "Why do I check the file?"}
+{"id": "capital-open-and-pronoun-01", "input": "i has a invoice.", "status": "corrected", "output": "I have an invoice."}
+{"id": "capital-clean-01", "input": "I write the report.", "status": "unchanged", "output": "I write the report."}
+{"id": "capital-clean-02", "input": "They write the report.", "status": "unchanged", "output": "They write the report."}
+{"id": "capital-clean-03", "input": "What did I write?", "status": "unchanged", "output": "What did I write?"}
+{"id": "capital-unsupported-opening-01", "input": "Yesterday i read the report.", "status": "review_required", "output": "Yesterday i read the report."}
+{"id": "capital-quoted-lowercase-01", "input": "\"they write the report.\"", "status": "review_required", "output": "\"they write the report.\""}
+{"id": "capital-spelling-and-agreement-01", "input": "teh student write a report.", "status": "corrected", "output": "The student writes a report."}

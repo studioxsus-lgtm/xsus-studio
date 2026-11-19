@@ -1,8 +1,9 @@
-"""Compose spelling, article, and verified grammar edits in source coordinates."""
+"""Compose spelling, capitalization, punctuation, and verified grammar edits."""
 
 from dataclasses import replace
 
 from ..grammar import GrammarIssue
+from .capitalization import capitalization_edits
 from .orthography import orthographic_edits
 from .punctuation import punctuation_edits
 from .proofreader import Edit, ProofreadingResult, ProofreadingStatus, _apply_edits, proofread_sentence
@@ -10,16 +11,16 @@ from .proofreader import Edit, ProofreadingResult, ProofreadingStatus, _apply_ed
 _MAX_CHARS = 2048
 
 
-def _source_edits(orthographic: tuple[Edit, ...], grammatical: tuple[Edit, ...]) -> list[Edit] | None:
+def _source_edits(initial: tuple[Edit, ...], grammatical: tuple[Edit, ...]) -> list[Edit] | None:
     staged_positions = []
     shift = 0
-    for edit in orthographic:
+    for edit in initial:
         start = edit.start + shift
         end = start + len(edit.replacement)
         shift += len(edit.replacement) - (edit.end - edit.start)
         staged_positions.append((start, end, shift))
 
-    combined = list(orthographic)
+    combined = list(initial)
     for edit in grammatical:
         shift = 0
         for start, end, total_shift in staged_positions:
@@ -38,11 +39,13 @@ def copyedit_sentence(text: str) -> ProofreadingResult:
     if not isinstance(text, str) or len(text) > _MAX_CHARS:
         return proofread_sentence(text)
     orthographic = orthographic_edits(text)
+    capitalization = capitalization_edits(text)
     punctuation = punctuation_edits(text)
-    pre_edits = tuple(sorted((*orthographic, *punctuation), key=lambda item: (item.start, item.end)))
+    lexical_edits = tuple(sorted((*orthographic, *capitalization), key=lambda item: item.start))
+    pre_edits = tuple(sorted((*lexical_edits, *punctuation), key=lambda item: (item.start, item.end)))
     if not pre_edits:
         return proofread_sentence(text)
-    if not orthographic:
+    if not lexical_edits:
         # Punctuation spacing does not alter tokens or clause structure; it can
         # therefore be applied safely even when the grammar parser declines a sentence.
         issues = tuple(GrammarIssue(edit.code, edit.original, edit.replacement) for edit in punctuation)
