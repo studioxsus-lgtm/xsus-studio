@@ -85,7 +85,7 @@ describe("Hyper-Future Core bridge", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
-  it("stops before Hyper planning when Future requires human review", async () => {
+  it("returns a non-executable draft with a review warning when Future is uncertain", async () => {
     const fetchImpl = vi.fn(async () => jsonResponse(200, {
       language: "en",
       status: "review_required",
@@ -97,7 +97,10 @@ describe("Hyper-Future Core bridge", () => {
     const response = await bridge.handle({ authorization: AUTHORIZATION, body: input });
     expect(response.status).toBe(200);
     expect(response.data.status).toBe("review_required");
-    expect(response.data.plan).toBeNull();
+    expect(response.data.language.review_required).toBe(true);
+    expect(response.data.plan.goal).toBe(input.goal);
+    expect(response.data.plan.steps).toEqual(input.steps);
+    expect(response.data.plan.executable).toBe(false);
     expect(response.data.safety).toEqual({ executable: false, sideEffects: false });
     expect(fetchImpl).toHaveBeenCalledOnce();
   });
