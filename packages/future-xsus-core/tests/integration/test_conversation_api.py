@@ -1,6 +1,8 @@
 import asyncio
 import unittest
 from contextlib import asynccontextmanager
+from tempfile import TemporaryDirectory
+from pathlib import Path
 from unittest.mock import AsyncMock
 
 from aiohttp.test_utils import TestClient, TestServer
@@ -11,6 +13,7 @@ from core.contracts.response import EngineResponse, TextResult
 from core.conversation.session_conversation import SessionConversation
 from core.sessions.session_store import InMemorySessionStore, SessionRevisionError
 from languages.en.engine.english_engine import create_engine
+from languages.en.learning.feedback_store import SQLiteFeedbackStore
 from services.api.app import create_app
 
 ALICE = {"Authorization": "Bearer alice-test-token"}
@@ -35,6 +38,62 @@ async def _create(client):
 
 
 class ConversationAPITests(unittest.IsolatedAsyncioTestCase):
+    async def test_learning_feedback_requires_consent_and_is_owner_scoped(self):
+        with TemporaryDirectory() as temporary:
+            feedback = SQLiteFeedbackStore(Path(temporary) / "feedback.sqlite3")
+            async with _client(
+                InMemorySessionStore(), AsyncMock(spec=SessionConversation), feedback_store=feedback,
+            ) as client:
+                endpoint = "/v1/learning/feedback"
+                async with client.post(endpoint, headers=ALICE, json={
+                    "prompt": "Explain a clear sentence.", "response": "It expresses a complete thought.",
+                }) as response:
+                    self.assertEqual(response.status, 400)
+                async with client.post(endpoint, headers=ALICE, json={
+                    "consent": True, "prompt": "Explain a clear sentence.",
+                    "response": "It expresses a complete thought.",
+                }) as response:
+                    self.assertEqual(response.status, 202)
+                    submitted = await response.json()
+                    self.assertEqual(submitted["status"], "pending")
+                    self.assertEqual(response.headers["Cache-Control"], "no-store")
+                example_id = submitted["example_id"]
+                review_url = f"{endpoint}/{example_id}/accept"
+                async with client.get(endpoint, headers=BOB) as response:
+                    self.assertEqual(await response.json(), {"pending": []})
+                async with client.post(review_url, headers=BOB) as response:
+                    self.assertEqual(response.status, 404)
+                async with client.delete(f"{endpoint}/{example_id}", headers=BOB) as response:
+                    self.assertEqual(response.status, 404)
+                async with client.get(endpoint, headers=ALICE) as response:
+                    self.assertEqual((await response.json())["pending"], [example_id])
+                async with client.post(review_url, headers=ALICE) as response:
+                    self.assertEqual((await response.json())["status"], "accepted")
+                async with client.post(f"{endpoint}/{example_id}/reject", headers=ALICE) as response:
+                    self.assertEqual(response.status, 409)
+                self.assertEqual(len(feedback.accepted("alice")), 1)
+                async with client.delete(f"{endpoint}/{example_id}", headers=ALICE) as response:
+                    self.assertEqual(response.status, 204)
+                self.assertEqual(feedback.accepted("alice"), ())
+
+    async def test_learning_feedback_rejects_invalid_payload_and_requires_auth(self):
+        with TemporaryDirectory() as temporary:
+            feedback = SQLiteFeedbackStore(Path(temporary) / "feedback.sqlite3")
+            async with _client(
+                InMemorySessionStore(), AsyncMock(spec=SessionConversation), feedback_store=feedback,
+            ) as client:
+                endpoint = "/v1/learning/feedback"
+                async with client.post(endpoint, json={"consent": True, "prompt": "x", "response": "y"}) as response:
+                    self.assertEqual(response.status, 401)
+                for payload in (
+                    {"consent": False, "prompt": "x", "response": "y"},
+                    {"consent": True, "prompt": "x", "response": "y", "extra": "unexpected"},
+                    {"consent": True, "prompt": "x", "response": "y", "history": [{"role": "system", "text": "x"}]},
+                ):
+                    async with client.post(endpoint, headers=ALICE, json=payload) as response:
+                        self.assertEqual(response.status, 400)
+                self.assertEqual(feedback.pending_ids("alice"), ())
+
     async def test_lifecycle_and_owner_isolation(self):
         store = InMemorySessionStore()
         instance = create_engine().instance

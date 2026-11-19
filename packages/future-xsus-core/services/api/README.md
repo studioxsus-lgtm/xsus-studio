@@ -26,6 +26,34 @@ Mbaje këtë identitet të qëndrueshëm kur rinis serverin me të njëjtën dat
 | `GET /v1/sessions/{session_id}` | Kthen revizionin dhe historikun e sesionit. |
 | `POST /v1/sessions/{session_id}/messages` | Merr objektin JSON me `text` dhe fushat opsionale `language` (fillimisht `en`) dhe `expected_revision`. |
 | `DELETE /v1/sessions/{session_id}` | Fshin sesionin dhe historikun e tij. |
+| `POST /v1/learning/feedback` | Dërgon shembull vetëm me `consent: true`; shembulli mbetet në pritje për shqyrtim. |
+| `GET /v1/learning/feedback` | Liston ID-të e shembujve në pritje të pronarit. |
+| `POST /v1/learning/feedback/{example_id}/accept` | Pranon shembullin pas shqyrtimit të pronarit. |
+| `POST /v1/learning/feedback/{example_id}/reject` | Refuzon shembullin pas shqyrtimit të pronarit. |
+| `DELETE /v1/learning/feedback/{example_id}` | Fshin shembullin e pronarit nga databaza e feedback-ut. |
+
+Të gjitha rrugët e sesioneve kërkojnë `Authorization: Bearer TOKEN`.
+Rrugët e feedback-ut kërkojnë të njëjtin autorizim. API-ja nuk mbledh
+automatikisht bisedat: dërgimi kërkon pëlqim të qartë dhe ruan vetëm shembullin
+e dorëzuar në pritje. Pronari e shqyrton para se të bëhet i përdorshëm nga
+cikli lokal i mësimit; vendimi i shqyrtuar nuk mund të ndryshohet, ndërsa
+shembulli mund të fshihet. Përgjigjet e API-së nuk kthejnë tekstin privat të
+shembujve. Historia, nëse dërgohet, lejon deri në 16 kthesa me role `user` ose
+`assistant`. Databaza e feedback-ut ruhet veçmas nga databaza e sesioneve, me
+prapashtesën `.feedback.sqlite3`.
+
+Shembull dërgimi i shprehur nga përdoruesi:
+
+```sh
+curl -sS -X POST http://127.0.0.1:8080/v1/learning/feedback \
+  -H "Authorization: Bearer $XSUS_API_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"consent":true,"prompt":"Explain a clear sentence.","response":"It expresses a complete thought."}'
+```
+
+Ruaj `example_id` nga përgjigjja për ta shqyrtuar me `POST .../{example_id}/accept`
+ose `POST .../{example_id}/reject`. Për ta fshirë, përdor
+`DELETE .../{example_id}`.
 
 Të gjitha rrugët e sesioneve kërkojnë `Authorization: Bearer TOKEN`.
 Zëvendëso `SESSION_ID` me vlerën nga përgjigjja e parë:

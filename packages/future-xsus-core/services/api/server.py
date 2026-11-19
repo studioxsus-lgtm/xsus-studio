@@ -13,6 +13,7 @@ from core.conversation.session_conversation import SessionConversation
 from core.execution.local_runtime import create_local_executor
 from core.sessions.sqlite_store import SQLiteSessionStore
 from languages.en.engine.english_engine import ENGLISH, create_engine
+from languages.en.learning.feedback_store import SQLiteFeedbackStore
 
 from .app import create_app
 
@@ -25,11 +26,13 @@ def create_local_app(database: Path, *, owner: str, token: str) -> web.Applicati
         raise ValueError("XSUS_API_TOKEN must contain 32–256 URL-safe characters")
     executor = create_local_executor((create_engine(),))
     store = SQLiteSessionStore(database)
+    feedback_store = SQLiteFeedbackStore(database.with_name(database.stem + ".feedback.sqlite3"))
     return create_app(
         store=store,
         conversation=SessionConversation(executor, store),
         owner_tokens={owner: token},
         supported_languages=frozenset({ENGLISH}),
+        feedback_store=feedback_store,
     )
 
 

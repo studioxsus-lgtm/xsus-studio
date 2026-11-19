@@ -23,6 +23,7 @@ from core.sessions.session_store import (
     SessionRevisionError,
     SessionSnapshot,
 )
+from languages.en.data.preparation.corpus import Example, parse_example
 
 
 class SessionStore(Protocol):
@@ -33,6 +34,16 @@ class SessionStore(Protocol):
     def delete(self, owner_id: str, session_id: str) -> None: ...
 
     def list_sessions(self, owner_id: str, *, limit: int = 20, after: str | None = None) -> SessionPage: ...
+
+
+class LearningFeedbackStore(Protocol):
+    def submit(self, owner_id: str, example: Example, *, consent: bool): ...
+
+    def pending_ids(self, owner_id: str, *, limit: int = 100) -> tuple[str, ...]: ...
+
+    def review(self, owner_id: str, example_id: str, *, approved: bool): ...
+
+    def forget(self, owner_id: str, example_id: str) -> bool: ...
 
 
 _BEARER_TOKEN = re.compile(r"[A-Za-z0-9._~+/=-]{1,512}", re.ASCII)
@@ -114,9 +125,32 @@ def _message(payload: object) -> tuple[str, LanguageTag, int | None]:
     return text, LanguageTag(language), expected_revision
 
 
+def _learning_example(payload: object) -> Example:
+    allowed_fields = {"consent", "prompt", "response", "history"}
+    required_fields = {"consent", "prompt", "response"}
+    if not isinstance(payload, dict) or not required_fields <= set(payload) or set(payload) - allowed_fields:
+        raise ValueError("Unexpected learning feedback fields")
+    if payload.get("consent") is not True:
+        raise ValueError("Explicit consent is required")
+    if not isinstance(payload.get("prompt"), str) or len(payload["prompt"]) > _MAX_TEXT_CHARS:
+        raise ValueError("Invalid prompt")
+    if not isinstance(payload.get("response"), str) or len(payload["response"]) > _MAX_TEXT_CHARS:
+        raise ValueError("Invalid response")
+    history = payload.get("history", [])
+    if not isinstance(history, list) or len(history) > 16:
+        raise ValueError("Invalid feedback history")
+    for turn in history:
+        if not isinstance(turn, dict) or set(turn) != {"role", "text"}:
+            raise ValueError("Invalid feedback history turn")
+        if not isinstance(turn["text"], str) or len(turn["text"]) > _MAX_TEXT_CHARS:
+            raise ValueError("Invalid feedback history text")
+    return parse_example({"prompt": payload["prompt"], "response": payload["response"], "history": history})
+
+
 def create_app(
     *, store: SessionStore, conversation: SessionConversation, owner_tokens: Mapping[str, str],
     max_concurrent_messages: int = 8, supported_languages: frozenset[LanguageTag] | None = None,
+    feedback_store: LearningFeedbackStore | None = None,
 ) -> web.Application:
     """Create an app using local owner-scoped session storage and engine routing."""
     if type(max_concurrent_messages) is not int or max_concurrent_messages < 1:
@@ -137,7 +171,7 @@ def create_app(
         except SessionCapacityError:
             return _error(503, "session_capacity", "Session capacity has been reached")
         except sqlite3.Error:
-            return _error(503, "storage_unavailable", "Session storage is unavailable")
+            return _error(503, "storage_unavailable", "Persistent storage is unavailable")
 
     def unauthorized() -> web.Response:
         return _error(
@@ -236,6 +270,59 @@ def create_app(
             "language": outcome.language.value,
         })
 
+    async def submit_feedback(request: web.Request) -> web.Response:
+        owner = _owner(request, credentials)
+        if owner is None:
+            return unauthorized()
+        if request.content_type != "application/json":
+            return _error(415, "unsupported_media_type", "Use application/json")
+        try:
+            payload = json.loads((await request.read()).decode("utf-8"))
+            example = _learning_example(payload)
+        except (UnicodeError, ValueError, TypeError, KeyError, RecursionError):
+            return _error(400, "invalid_learning_feedback", "Feedback must include valid English text and explicit consent")
+        try:
+            record = await asyncio.to_thread(feedback_store.submit, owner, example, consent=True)
+        except ValueError:
+            return _error(400, "invalid_learning_feedback", "Feedback could not be accepted")
+        return _json({"example_id": record.example_id, "status": record.status}, status=202)
+
+    async def list_feedback(request: web.Request) -> web.Response:
+        owner = _owner(request, credentials)
+        if owner is None:
+            return unauthorized()
+        try:
+            pending = await asyncio.to_thread(feedback_store.pending_ids, owner, limit=100)
+        except ValueError:
+            return _error(400, "invalid_learning_feedback_query", "Invalid feedback query")
+        return _json({"pending": list(pending)})
+
+    async def review_feedback(request: web.Request) -> web.Response:
+        owner = _owner(request, credentials)
+        if owner is None:
+            return unauthorized()
+        decision = request.match_info["decision"]
+        if decision not in {"accept", "reject"}:
+            return _error(404, "feedback_not_found", "Learning feedback not found")
+        try:
+            record = await asyncio.to_thread(
+                feedback_store.review, owner, request.match_info["example_id"], approved=decision == "accept",
+            )
+        except KeyError:
+            return _error(404, "feedback_not_found", "Learning feedback not found")
+        except ValueError:
+            return _error(409, "feedback_already_reviewed", "A reviewed decision cannot be changed")
+        return _json({"example_id": record.example_id, "status": record.status})
+
+    async def forget_feedback(request: web.Request) -> web.Response:
+        owner = _owner(request, credentials)
+        if owner is None:
+            return unauthorized()
+        removed = await asyncio.to_thread(feedback_store.forget, owner, request.match_info["example_id"])
+        if not removed:
+            return _error(404, "feedback_not_found", "Learning feedback not found")
+        return web.Response(status=204, headers={"Cache-Control": "no-store"})
+
     app = web.Application(client_max_size=_MAX_BODY_BYTES, middlewares=[boundary])
     resource = r"/v1/sessions/{session_id:[A-Za-z0-9][A-Za-z0-9._-]{0,127}}"
     app.router.add_get("/healthz", health)
@@ -244,4 +331,11 @@ def create_app(
     app.router.add_get(resource, get, allow_head=False)
     app.router.add_delete(resource, delete)
     app.router.add_post(resource + "/messages", send)
+    if feedback_store is not None:
+        app.router.add_post("/v1/learning/feedback", submit_feedback)
+        app.router.add_get("/v1/learning/feedback", list_feedback, allow_head=False)
+        app.router.add_post(
+            r"/v1/learning/feedback/{example_id:[0-9a-f]{64}}/{decision:accept|reject}", review_feedback,
+        )
+        app.router.add_delete(r"/v1/learning/feedback/{example_id:[0-9a-f]{64}}", forget_feedback)
     return app
