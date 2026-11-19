@@ -125,6 +125,21 @@ class SQLiteFeedbackStore:
             ).fetchall()
         return tuple(self._record(row[0], row[1:]) for row in rows)
 
+    def get(self, owner_id: str, example_id: str) -> FeedbackRecord:
+        """Return one private example only to its owner."""
+        require_identifier(owner_id, "owner_id")
+        if not isinstance(example_id, str) or len(example_id) != 64 or any(char not in "0123456789abcdef" for char in example_id):
+            raise ValueError("Invalid learning example ID")
+        with self._connection() as connection:
+            row = connection.execute(
+                f"SELECT prompt, history_json, response, status, submitted_at FROM {_TABLE} "
+                "WHERE owner_id = ? AND example_id = ?",
+                (owner_id, example_id),
+            ).fetchone()
+        if row is None:
+            raise KeyError("Learning example not found for this owner")
+        return self._record(example_id, row)
+
     def pending_ids(self, owner_id: str, *, limit: int = 100) -> tuple[str, ...]:
         require_identifier(owner_id, "owner_id")
         if type(limit) is not int or not 1 <= limit <= 1000:

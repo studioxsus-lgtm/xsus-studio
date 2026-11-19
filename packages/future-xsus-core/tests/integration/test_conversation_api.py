@@ -59,6 +59,16 @@ class ConversationAPITests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(response.headers["Cache-Control"], "no-store")
                 example_id = submitted["example_id"]
                 review_url = f"{endpoint}/{example_id}/accept"
+                async with client.get(f"{endpoint}/{example_id}") as response:
+                    self.assertEqual(response.status, 401)
+                async with client.get(f"{endpoint}/{example_id}", headers=ALICE) as response:
+                    private_example = await response.json()
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(private_example["prompt"], "Explain a clear sentence.")
+                    self.assertEqual(private_example["response"], "It expresses a complete thought.")
+                    self.assertEqual(private_example["status"], "pending")
+                async with client.get(f"{endpoint}/{example_id}", headers=BOB) as response:
+                    self.assertEqual(response.status, 404)
                 async with client.get(endpoint, headers=BOB) as response:
                     self.assertEqual(await response.json(), {"pending": []})
                 async with client.post(review_url, headers=BOB) as response:

@@ -28,6 +28,7 @@ Mbaje këtë identitet të qëndrueshëm kur rinis serverin me të njëjtën dat
 | `DELETE /v1/sessions/{session_id}` | Fshin sesionin dhe historikun e tij. |
 | `POST /v1/learning/feedback` | Dërgon shembull vetëm me `consent: true`; shembulli mbetet në pritje për shqyrtim. |
 | `GET /v1/learning/feedback` | Liston ID-të e shembujve në pritje të pronarit. |
+| `GET /v1/learning/feedback/{example_id}` | Lexon shembullin vetëm për pronarin e autentikuar. |
 | `POST /v1/learning/feedback/{example_id}/accept` | Pranon shembullin pas shqyrtimit të pronarit. |
 | `POST /v1/learning/feedback/{example_id}/reject` | Refuzon shembullin pas shqyrtimit të pronarit. |
 | `DELETE /v1/learning/feedback/{example_id}` | Fshin shembullin e pronarit nga databaza e feedback-ut. |
@@ -37,8 +38,9 @@ Rrugët e feedback-ut kërkojnë të njëjtin autorizim. API-ja nuk mbledh
 automatikisht bisedat: dërgimi kërkon pëlqim të qartë dhe ruan vetëm shembullin
 e dorëzuar në pritje. Pronari e shqyrton para se të bëhet i përdorshëm nga
 cikli lokal i mësimit; vendimi i shqyrtuar nuk mund të ndryshohet, ndërsa
-shembulli mund të fshihet. Përgjigjet e API-së nuk kthejnë tekstin privat të
-shembujve. Historia, nëse dërgohet, lejon deri në 16 kthesa me role `user` ose
+shembulli mund të fshihet. Vetëm kërkesa e autentikuar `GET` me ID-në e
+shembullit kthen tekstin privat, dhe vetëm nëse ID-ja i përket pronarit.
+Historia, nëse dërgohet, lejon deri në 16 kthesa me role `user` ose
 `assistant`. Databaza e feedback-ut ruhet veçmas nga databaza e sesioneve, me
 prapashtesën `.feedback.sqlite3`.
 

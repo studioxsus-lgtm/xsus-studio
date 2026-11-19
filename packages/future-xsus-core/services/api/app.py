@@ -39,6 +39,8 @@ class SessionStore(Protocol):
 class LearningFeedbackStore(Protocol):
     def submit(self, owner_id: str, example: Example, *, consent: bool): ...
 
+    def get(self, owner_id: str, example_id: str): ...
+
     def pending_ids(self, owner_id: str, *, limit: int = 100) -> tuple[str, ...]: ...
 
     def review(self, owner_id: str, example_id: str, *, approved: bool): ...
@@ -297,6 +299,26 @@ def create_app(
             return _error(400, "invalid_learning_feedback_query", "Invalid feedback query")
         return _json({"pending": list(pending)})
 
+    async def get_feedback(request: web.Request) -> web.Response:
+        owner = _owner(request, credentials)
+        if owner is None:
+            return unauthorized()
+        try:
+            record = await asyncio.to_thread(feedback_store.get, owner, request.match_info["example_id"])
+        except KeyError:
+            return _error(404, "feedback_not_found", "Learning feedback not found")
+        except ValueError:
+            return _error(400, "invalid_learning_feedback_id", "Invalid learning feedback ID")
+        example = record.example
+        return _json({
+            "example_id": record.example_id,
+            "status": record.status,
+            "submitted_at": record.submitted_at,
+            "prompt": example.conversation.text,
+            "history": [{"role": turn.role.value, "text": turn.text} for turn in example.conversation.history],
+            "response": example.response,
+        })
+
     async def review_feedback(request: web.Request) -> web.Response:
         owner = _owner(request, credentials)
         if owner is None:
@@ -334,6 +356,9 @@ def create_app(
     if feedback_store is not None:
         app.router.add_post("/v1/learning/feedback", submit_feedback)
         app.router.add_get("/v1/learning/feedback", list_feedback, allow_head=False)
+        app.router.add_get(
+            r"/v1/learning/feedback/{example_id:[0-9a-f]{64}}", get_feedback, allow_head=False,
+        )
         app.router.add_post(
             r"/v1/learning/feedback/{example_id:[0-9a-f]{64}}/{decision:accept|reject}", review_feedback,
         )
