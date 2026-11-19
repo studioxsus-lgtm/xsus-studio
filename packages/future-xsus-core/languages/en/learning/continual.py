@@ -32,6 +32,18 @@ def _sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def feedback_set_revision(records: tuple[FeedbackRecord, ...]) -> str:
+    """Fingerprint the accepted example set without exposing its text or IDs."""
+    return hashlib.sha256(
+        "\n".join(sorted(record.example_id for record in records)).encode("ascii")
+    ).hexdigest()
+
+
+def training_source_fingerprints() -> dict[str, str]:
+    """Return hashes for the implementation files that affect learning."""
+    return {name: _sha256_file(path) for name, path in sorted(_TRAINING_SOURCES.items())}
+
+
 def promotion_decision(
     baseline_scores: dict[str, dict],
     candidate_scores: dict[str, dict],
@@ -198,6 +210,8 @@ def build_candidate(
         "feedback_training_examples": len(feedback_train),
         "feedback_holdout_examples": len(feedback_holdout),
         "replay_examples": len(replay),
+        "replay_limit": replay_examples,
+        "seed": seed,
         "epochs": epochs,
         "learning_rate": learning_rate,
         "input_sha256": {
@@ -206,13 +220,9 @@ def build_candidate(
             "evaluation_corpora": {
                 name: _sha256_file(path) for name, path in sorted(evaluation_paths.items())
             },
-            "approved_feedback_set": hashlib.sha256(
-                "\n".join(sorted(record.example_id for record in records)).encode("ascii")
-            ).hexdigest(),
+            "approved_feedback_set": feedback_set_revision(records),
         },
-        "training_source_sha256": {
-            name: _sha256_file(path) for name, path in sorted(_TRAINING_SOURCES.items())
-        },
+        "training_source_sha256": training_source_fingerprints(),
         "feedback_loss_before": round(feedback_loss_before, 8),
         "feedback_loss_after": round(feedback_loss_after, 8),
         "benchmarks": {

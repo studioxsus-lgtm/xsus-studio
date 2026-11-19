@@ -43,6 +43,30 @@ the repository. `eligible_for_promotion` is a quality-gate result, not an
 automatic release: a human must review the report and explicitly promote a
 checkpoint through the separate model registry.
 
+## Automatic local candidate worker
+
+Run the worker as a separately supervised local process to check for new
+approved feedback and create a candidate when at least five examples are
+available:
+
+```sh
+python3 -m languages.en.learning.worker \
+  --store /private/xsus-en-feedback.sqlite3 \
+  --owner-id local-owner \
+  --registry /private/xsus-en-models \
+  --output-dir /private/xsus-en-candidates \
+  --poll-seconds 60
+```
+
+The worker ignores pending and rejected examples. It fingerprints the approved
+set, baseline, corpora, training code, and parameters so it creates a candidate
+once per distinct learning cycle and reuses a verified result on later polls.
+Use `--once` to run one check and exit. Its JSON output reports whether it is
+waiting, blocked by a validation error, or has created a candidate. Keep the
+worker running under a process supervisor if continuous checks are wanted.
+It never promotes a candidate; the explicit registry release step below still
+requires a person to review and confirm the exact candidate revision.
+
 For an explicit local release, the registry checks the candidate digest, the
 exact confirmation revision, the baseline revision, the feedback-loss gate,
 and both held-out benchmarks again before storing an immutable checkpoint:
