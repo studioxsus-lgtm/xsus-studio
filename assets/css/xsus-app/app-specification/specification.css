@@ -1,0 +1,30 @@
+.app-specification-card {
+  margin-top: 12px;
+  border-color: #356478;
+  background: linear-gradient(145deg, #102b38, #10243a);
+}
+
+.app-specification-card > p {
+  color: #8fe2ed;
+}
+
+.app-specification-section {
+  border-top: 1px solid #29445a;
+  padding-top: 8px;
+}
+
+.app-specification-section h4 {
+  margin: 0 0 6px;
+  color: #a6c4d4;
+  font-size: 11px;
+}
+
+.app-specification-section ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: #d4e4ef;
+  font-size: 12px;
+  line-height: 1.5;
+}
