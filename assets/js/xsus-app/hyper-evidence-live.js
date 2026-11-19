@@ -1,3 +1,4 @@
+import { getSupabaseClient } from "./auth-session.js";
 /** XSUS App Builder → Tests: authenticated, read-only Hyper evidence verification. */
 // Load the backend transport only when needed, so UI and localization remain available if it fails to load.
 const form=document.getElementById("xsus-hyper-live-form");
@@ -122,8 +123,6 @@ function showLiveResult(verified,observationId,resultState=verified?"success":"f
  liveMeta.textContent=(verified?meta.real:"")+(checked?(verified?" · ":"")+copyText.time+" "+checked:"");
  liveResult.hidden=false;
 }
-const SUPABASE_URL="https://rdcwqjsmzklktfccebfs.supabase.co";
-const PUBLISHABLE_KEY="sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr";
 const RENDER_ENDPOINT="https://xsus-studio.onrender.com/api/xsus-app/hyper/evidence/verify";
 const messages={
  en:{working:"Verifying existing evidence…",success:"Evidence verified successfully.",missing:"Please sign in to XSUS Studio first.",ready:"Signed in. Enter an Observation ID to verify your evidence.",edited:"Observation ID changed. Verify again to see the result for this ID.",failed:"Verification failed. Check the observation ID, ownership and backend status.",invalid:"Use 1–128 characters: letters, numbers, underscore (_) or hyphen (-).",unauthorized:"Your session is invalid or you do not have access to this evidence.",unavailable:"The verification service is temporarily unavailable. Try again later.",notfound:"Evidence not found or unavailable to your account.",limited:"Too many requests. Wait a moment and try again.",timeout:"Verification timed out. Please try again."},
@@ -159,11 +158,6 @@ document.addEventListener("xsus:language-changed",()=>{applyEvidenceLabels();ref
 applyEvidenceLabels();
 setState("missing");
 
-let clientPromise;
-function getClient(){
- if(!clientPromise) clientPromise=import("https://esm.sh/@supabase/supabase-js@2").then(({createClient})=>createClient(SUPABASE_URL,PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}));
- return clientPromise;
-}
 let authCheckRevision=0;
 async function updateSignInStatus(){
  if(!status||submit?.disabled)return;
@@ -175,7 +169,7 @@ async function updateSignInStatus(){
   startingRequestRevision===requestRevision&&
   !submit?.disabled&&["missing","ready"].includes(lastState);
  try{
-  const client=await getClient();
+  const client=await getSupabaseClient();
   const {data,error}=await client.auth.getUser();
   if(!mayUpdate())return;
   setState(error||!data?.user?.id?"missing":"ready");
@@ -209,7 +203,7 @@ form?.addEventListener("submit",async event=>{
  try{
   if(!["https://www.xsusstudio.com","https://xsusstudio.com"].includes(location.origin))
    throw new Error("Open XSUS App on its official HTTPS domain.");
-  const supabase=await getClient();
+  const supabase=await getSupabaseClient();
   const {data,error}=await supabase.auth.getSession();
   const session=data?.session;
   if(!isCurrent())return;

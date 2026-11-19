@@ -1,7 +1,6 @@
+import { getSupabaseClient } from "./auth-session.js";
 /** XSUS Studio authentication status adapter. UI-only; not an authorization gate. */
 const STUDIO_ORIGIN = "https://www.xsusstudio.com";
-const SUPABASE_URL = "https://rdcwqjsmzklktfccebfs.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_v7Pi4OUbk9JkeqXTIfwQzQ_Mxv9KMkr";
 const labels = {
   en: { signedOut: "", signedIn: "Signed in", unavailable: "Account status unavailable" },
   sq: { signedOut: "", signedIn: "I identifikuar", unavailable: "Gjendja e llogarisë nuk u verifikua" },
@@ -28,10 +27,7 @@ function render(user, error = false) {
 // Only check the actual account when XSUS App is served on the same origin.
 if (window.location.origin === STUDIO_ORIGIN || window.location.origin === "https://xsusstudio.com") {
   try {
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
-    });
+    const supabase = await getSupabaseClient();
     const { data, error } = await supabase.auth.getUser();
     render(error ? null : data?.user, Boolean(error));
     supabase.auth.onAuthStateChange((_event, session) => render(session?.user ?? null));
