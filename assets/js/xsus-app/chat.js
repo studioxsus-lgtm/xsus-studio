@@ -1,7 +1,7 @@
-import { t } from './i18n/language-manager.js?v=20261119-hyper-future-bridge1';
+import { t } from './i18n/language-manager.js?v=20261119-hyper-future-bridge2';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
-import { createDraftPlan, parsePlanSteps, BridgeRequestError } from './hyper-future-bridge-client.js?v=20261119-bridge1';
+import { createDraftPlan, parsePlanSteps, BridgeRequestError } from './hyper-future-bridge-client.js?v=20261119-bridge2';
 
 // Conversation drafts stay in memory on this page. Credentials and prompts are never persisted here.
 const sessions = [{ id: 1, name: 'New conversation', messages: [] }];
@@ -31,9 +31,10 @@ function addPlan(result) {
   bubble.className = 'chat-bubble assistant';
   const card = document.createElement('article'); card.className = 'concept-card bridge-plan-card';
   const meta = document.createElement('div'); meta.className = 'message-meta'; meta.textContent = t('✦ HYPER XSUS CORE + FUTURE XSUS CORE');
-  const heading = document.createElement('h3'); heading.textContent = t('Validated draft plan');
+  const needsReview = result.status === 'review_required' || result.language?.review_required === true;
+  const heading = document.createElement('h3'); heading.textContent = t(needsReview ? 'Draft plan needs review' : 'Validated draft plan');
   const language = document.createElement('p');
-  language.textContent = `${t('Future XSUS Core reviewed the English goal')}: “${result.language.text}” (${result.language.status}).`;
+  language.textContent = `${t(needsReview ? 'Future XSUS Core could not fully verify the English goal' : 'Future XSUS Core reviewed the English goal')}: “${result.language.text}” (${result.language.status}).`;
   const list = document.createElement('ol'); list.className = 'bridge-plan-steps';
   for (const step of result.plan.steps) {
     const item = document.createElement('li');
@@ -45,9 +46,11 @@ function addPlan(result) {
     list.append(item);
   }
   const badges = document.createElement('div'); badges.className = 'concept-badges';
-  [t('Draft only'), t('Not executable'), t('Not saved')].forEach(label => { const tag = document.createElement('span'); tag.textContent = label; badges.append(tag); });
+  [t('Draft only'), ...(needsReview ? [t('Human review needed')] : []), t('Not executable'), t('Not saved')].forEach(label => { const tag = document.createElement('span'); tag.textContent = label; badges.append(tag); });
   const note = document.createElement('p'); note.className = 'bridge-plan-note';
-  note.textContent = t('This is a validated planning draft. It does not generate app code, run steps or save a project.');
+  note.textContent = t(needsReview
+    ? 'Review the original English goal before relying on this structural draft. No code is generated, no steps run and no project is saved.'
+    : 'This is a validated planning draft. It does not generate app code, run steps or save a project.');
   const request = document.createElement('small'); request.className = 'bridge-request-id';
   request.textContent = `${t('Request ID')}: ${result.requestId}`;
   card.append(meta, heading, language, list, badges, note, request); bubble.append(card);
@@ -146,7 +149,7 @@ async function send() {
   try {
     const result = await createDraftPlan({ goal, steps, signal: controller.signal });
     if (sessionId === activeId) {
-      session.messages.push(result.status === 'completed' ? { role: 'plan', result } : { role: 'review', result });
+      session.messages.push(result.plan ? { role: 'plan', result } : { role: 'review', result });
       renderMessages();
     }
   } catch (error) {

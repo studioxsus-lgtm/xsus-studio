@@ -587,4 +587,9 @@ export default {
   "English goal proofreading": "English goal proofreading",
 
   "The request timed out. Check your connection and try again.": "The request timed out. Check your connection and try again.",
+
+  "Draft plan needs review": "Draft plan needs review",
+  "Future XSUS Core could not fully verify the English goal": "Future XSUS Core could not fully verify the English goal",
+  "Human review needed": "Human review needed",
+  "Review the original English goal before relying on this structural draft. No code is generated, no steps run and no project is saved.": "Review the original English goal before relying on this structural draft. No code is generated, no steps run and no project is saved.",
 };

@@ -50,7 +50,9 @@ export async function createDraftPlan({ goal, steps, signal } = {}) {
   if (!response.ok) throw new BridgeRequestError(response.status >= 500 ? "service_unavailable" : "request_rejected");
   if (!result || !["completed", "review_required"].includes(result.status) ||
       result.safety?.executable !== false || result.safety?.sideEffects !== false ||
-      (result.status === "completed" && !Array.isArray(result.plan?.steps))) {
+      result.plan?.state !== "draft" || result.plan?.executable !== false ||
+      result.plan?.dependencyGraphValid !== true || !Array.isArray(result.plan?.steps) ||
+      (result.status === "review_required" && result.language?.review_required !== true)) {
     throw new BridgeRequestError("invalid_response");
   }
   return result;
