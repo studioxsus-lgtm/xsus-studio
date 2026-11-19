@@ -1,11 +1,11 @@
-# General English Coverage — Lexicon v1
+# General English Coverage — Lexicon v2
 
 The written English clause analyzer uses a local, versioned vocabulary at
-`languages/en/data/lexicon/general-v1.json`. The vocabulary currently contains
-**342 count nouns, 35 mass nouns, 174 adjectives, 216 verbs, 20 determiners,
-and 11 singular pronouns**. Transitive verbs and agent nouns are recorded
-separately so the parser can use them when identifying objects and passive
-agents.
+`languages/en/data/lexicon/general-v2.json`. The vocabulary currently contains
+**342 count nouns, 35 mass nouns, 174 adjectives, 218 verbs, 20 determiners,
+11 singular pronouns, and 64 adverbs**. Transitive verbs and agent nouns are
+recorded separately so the parser can use them when identifying objects and
+passive agents.
 
 ## Supported patterns
 
@@ -17,10 +17,12 @@ agents.
   clauses with optional `by` agents.
 - Adjective complements after common linking verbs and noun complements after
   `become`.
+- A curated set of trailing adverbs and prepositional phrases after verbs,
+  direct objects, and copular subjects.
 - Count and mass noun agreement, common determiners, singular indefinite
   pronouns, and targeted determiner-number diagnostics.
 
-The authored evaluation set is `languages/en/evaluation/general-vocabulary-v1.jsonl`.
+The authored evaluation set is `languages/en/evaluation/general-vocabulary-v2.jsonl`.
 Run it from the package root with:
 
 ```sh
@@ -36,8 +38,8 @@ structures remain outside the parser's declared coverage.
 This is a deterministic, local clause analyzer, not a complete English
 grammar, dictionary, conversational model, or proof that a sentence is true.
 It deliberately declines clauses it cannot parse unambiguously. Multi-clause
-sentences, relative clauses, coordination, many prepositional phrases,
-sentence-final adverbs, and stacked auxiliaries need separate grammar work.
+sentences, relative clauses, coordination, fronted modifiers, complex
+prepositional phrases, and stacked auxiliaries need separate grammar work.
 The curated lexicon is broad enough to exercise common written clauses, but it
 does not represent every English word, sense, inflection, or dialect.
 

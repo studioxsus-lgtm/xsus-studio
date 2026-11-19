@@ -46,6 +46,15 @@ _TRANSITIVE_VERBS = frozenset({
     "win", "write",
 }) | GENERAL_ENGLISH.transitive_verbs
 _LINKING_VERBS = frozenset({"be", "become", "appear", "feel", "look", "remain", "seem", "smell", "sound", "stay", "taste"})
+_PREPOSITIONS = frozenset({
+    "about", "above", "across", "after", "against", "along", "among", "around", "at", "before",
+    "behind", "below", "beneath", "beside", "between", "beyond", "by", "despite", "during", "for",
+    "from", "in", "inside", "into", "near", "of", "off", "on", "onto", "opposite", "outside",
+    "over", "past", "through", "throughout", "to", "toward", "under", "underneath", "until", "up",
+    "upon", "with", "within", "without",
+})
+_ADVERBS = GENERAL_ENGLISH.adverbs
+_DEGREE_ADVERBS = frozenset({"almost", "completely", "especially", "fairly", "quite", "rather", "really", "so", "too", "very"})
 _AGENT_NOUNS = frozenset({
     "child", "colleague", "deer", "dog", "engine", "friend", "man", "model",
     "mouse", "person", "sheep", "student", "teacher", "woman",
@@ -111,6 +120,12 @@ class Auxiliary:
 
 
 @dataclass(frozen=True, slots=True)
+class PrepositionalPhrase:
+    preposition: str
+    object: Phrase
+
+
+@dataclass(frozen=True, slots=True)
 class Clause:
     subject: Phrase
     verb: str
@@ -124,6 +139,8 @@ class Clause:
     interrogative_role: InterrogativeRole | None = None
     voice: Voice = Voice.ACTIVE
     agent: Phrase | None = None
+    prepositional_phrases: tuple[PrepositionalPhrase, ...] = ()
+    adverbs: tuple[str, ...] = ()
 
 
 _PRONOUNS = {
@@ -196,6 +213,55 @@ def _by_agent(tokens: list[str]) -> Phrase | None:
     return None
 
 
+def _modifier_suffix(tokens: list[str]) -> tuple[tuple[PrepositionalPhrase, ...], tuple[str, ...]] | None:
+    """Parse a closed set of trailing adverbs and prepositional phrases."""
+    if not tokens:
+        return (), ()
+    first = tokens[0].lower()
+    if first in _ADVERBS:
+        tail = _modifier_suffix(tokens[1:])
+        if tail is not None:
+            phrases, adverbs = tail
+            return phrases, (tokens[0], *adverbs)
+    if first in _PREPOSITIONS:
+        for boundary in range(len(tokens), 1, -1):
+            phrase = _noun_phrase(tokens[1:boundary])
+            if phrase is None:
+                continue
+            if phrase.head in _TEMPORAL_NAMES and phrase.head not in {"noon", "midnight"}:
+                continue
+            tail = _modifier_suffix(tokens[boundary:])
+            if tail is not None:
+                phrases, adverbs = tail
+                return (PrepositionalPhrase(tokens[0], phrase), *phrases), adverbs
+    return None
+
+
+def _adjective_complement(tokens: list[str]) -> tuple[str, tuple[str, ...]] | None:
+    if not tokens:
+        return None
+    words = [word.lower() for word in tokens]
+    if words[-1] not in _ADJECTIVES:
+        return None
+    modifiers = words[:-1]
+    if len(tokens) == 1 or (modifiers and all(word in _DEGREE_ADVERBS for word in modifiers)):
+        return " ".join(tokens), tuple(tokens[:-1])
+    return None
+
+
+def _adjective_phrase(
+    tokens: list[str],
+) -> tuple[str, tuple[str, ...], tuple[PrepositionalPhrase, ...]] | None:
+    for boundary in range(1, len(tokens) + 1):
+        adjective = _adjective_complement(tokens[:boundary])
+        modifiers = _modifier_suffix(tokens[boundary:])
+        if adjective is not None and modifiers is not None:
+            complement, degree = adjective
+            phrases, adverbs = modifiers
+            return complement, (*degree, *adverbs), phrases
+    return None
+
+
 def _auxiliary(word: str) -> Auxiliary | None:
     normalized = word.lower()
     if normalized in _MODALS:
@@ -210,30 +276,88 @@ def _predicate(
     subject: Phrase, verb: str, rest: list[str], kind: ClauseKind, negated: bool,
     auxiliary: Auxiliary | None = None,
 ) -> list[Clause]:
-    nominal = _noun_phrase(rest)
     after_be = auxiliary is not None and auxiliary.lemma == "be"
     agent = _by_agent(rest) if after_be else None
     analyses = []
     for lemma, forms in _VERB_FORMS.get(verb.lower(), {}).items():
         if lemma == "be":
-            complement = nominal.text if nominal else None
-            if len(rest) == 1 and rest[0].lower() in _ADJECTIVES:
-                complement = rest[0]
-            if complement is not None:
-                analyses.append(Clause(subject, verb, lemma, frozenset(forms), None, complement, kind, negated, auxiliary))
-        elif lemma == "become" and nominal is not None:
-            analyses.append(Clause(subject, verb, lemma, frozenset(forms), None, nominal.text, kind, negated, auxiliary))
-        elif lemma in _LINKING_VERBS and len(rest) == 1 and rest[0].lower() in _ADJECTIVES:
-            analyses.append(Clause(subject, verb, lemma, frozenset(forms), None, rest[0], kind, negated, auxiliary))
-        elif after_be and VerbForm.PAST_PARTICIPLE in forms and (agent is not None or not rest):
-            # Prefer the existing copular analysis for a known bare adjective.
-            if lemma in _TRANSITIVE_VERBS and (agent is not None or verb.lower() not in _ADJECTIVES):
+            adjective = _adjective_phrase(rest)
+            if adjective is not None:
+                complement, adverbs, phrases = adjective
+                analyses.append(Clause(
+                    subject, verb, lemma, frozenset(forms), None, complement, kind, negated,
+                    auxiliary, prepositional_phrases=phrases, adverbs=adverbs,
+                ))
+            for boundary in range(1, len(rest) + 1):
+                nominal = _noun_phrase(rest[:boundary])
+                modifiers = _modifier_suffix(rest[boundary:])
+                if nominal is not None and modifiers is not None:
+                    phrases, adverbs = modifiers
+                    analyses.append(Clause(
+                        subject, verb, lemma, frozenset(forms), None, nominal.text, kind, negated,
+                        auxiliary, prepositional_phrases=phrases, adverbs=adverbs,
+                    ))
+            modifiers = _modifier_suffix(rest)
+            if modifiers is not None and modifiers[0]:
+                phrases, adverbs = modifiers
                 analyses.append(Clause(
                     subject, verb, lemma, frozenset(forms), None, None, kind, negated,
-                    auxiliary, voice=Voice.PASSIVE, agent=agent,
+                    auxiliary, prepositional_phrases=phrases, adverbs=adverbs,
                 ))
-        elif not rest or nominal is not None:
-            analyses.append(Clause(subject, verb, lemma, frozenset(forms), nominal, None, kind, negated, auxiliary))
+        elif after_be and VerbForm.PAST_PARTICIPLE in forms:
+            modifiers = _modifier_suffix(rest)
+            valid_agent_tail = not rest or rest[0].lower() != "by" or agent is not None
+            if lemma in _TRANSITIVE_VERBS and modifiers is not None and valid_agent_tail:
+                phrases, adverbs = modifiers
+                analyses.append(Clause(
+                    subject, verb, lemma, frozenset(forms), None, None, kind, negated, auxiliary,
+                    voice=Voice.PASSIVE, agent=agent,
+                    prepositional_phrases=phrases, adverbs=adverbs,
+                ))
+        elif lemma in _LINKING_VERBS:
+            adjective = _adjective_phrase(rest)
+            if adjective is not None:
+                complement, adverbs, phrases = adjective
+                analyses.append(Clause(
+                    subject, verb, lemma, frozenset(forms), None, complement, kind, negated,
+                    auxiliary, prepositional_phrases=phrases, adverbs=adverbs,
+                ))
+            for boundary in range(1, len(rest) + 1):
+                nominal = _noun_phrase(rest[:boundary])
+                modifiers = _modifier_suffix(rest[boundary:])
+                if nominal is not None and modifiers is not None:
+                    phrases, adverbs = modifiers
+                    analyses.append(Clause(
+                        subject, verb, lemma, frozenset(forms), None, nominal.text, kind, negated,
+                        auxiliary, prepositional_phrases=phrases, adverbs=adverbs,
+                    ))
+            modifiers = _modifier_suffix(rest)
+            if modifiers is not None and modifiers[0]:
+                phrases, adverbs = modifiers
+                analyses.append(Clause(
+                    subject, verb, lemma, frozenset(forms), None, None, kind, negated,
+                    auxiliary, prepositional_phrases=phrases, adverbs=adverbs,
+                ))
+        else:
+            if not rest:
+                analyses.append(Clause(subject, verb, lemma, frozenset(forms), None, None, kind, negated, auxiliary))
+                continue
+            modifiers = _modifier_suffix(rest)
+            if modifiers is not None and (modifiers[0] or modifiers[1]):
+                phrases, adverbs = modifiers
+                analyses.append(Clause(
+                    subject, verb, lemma, frozenset(forms), None, None, kind, negated, auxiliary,
+                    prepositional_phrases=phrases, adverbs=adverbs,
+                ))
+            for boundary in range(1, len(rest) + 1):
+                nominal = _noun_phrase(rest[:boundary])
+                modifiers = _modifier_suffix(rest[boundary:])
+                if nominal is not None and modifiers is not None:
+                    phrases, adverbs = modifiers
+                    analyses.append(Clause(
+                        subject, verb, lemma, frozenset(forms), nominal, None, kind, negated,
+                        auxiliary, prepositional_phrases=phrases, adverbs=adverbs,
+                    ))
     return analyses
 
 

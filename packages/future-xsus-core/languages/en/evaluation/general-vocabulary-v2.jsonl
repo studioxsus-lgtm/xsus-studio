@@ -1,0 +1,103 @@
+{"id": "present-company", "input": "The modern company develops useful applications.", "expected": {"subject": "company", "number": "singular", "verb": "develop", "object": "applications"}}
+{"id": "present-manager", "input": "A local manager reviews a clear contract.", "expected": {"subject": "manager", "number": "singular", "verb": "review", "object": "contract"}}
+{"id": "present-customer", "input": "The customer accepts the proposal.", "expected": {"subject": "customer", "number": "singular", "verb": "accept", "object": "proposal"}}
+{"id": "present-designer", "input": "The designer creates a product.", "expected": {"subject": "designer", "number": "singular", "verb": "create", "object": "product"}}
+{"id": "multiple-adjectives", "input": "A careful teacher explains a difficult method.", "expected": {"subject": "teacher", "number": "singular", "verb": "explain", "object": "method"}}
+{"id": "technology-domain", "input": "The old technology changes the industry.", "expected": {"subject": "technology", "number": "singular", "verb": "change", "object": "industry"}}
+{"id": "art-domain", "input": "An active artist paints a picture.", "expected": {"subject": "artist", "number": "singular", "verb": "paint", "object": "picture"}}
+{"id": "language-domain", "input": "The student learns a new language.", "expected": {"subject": "student", "number": "singular", "verb": "learn", "object": "language"}}
+{"id": "government-domain", "input": "The government supports local businesses.", "expected": {"subject": "government", "number": "singular", "verb": "support", "object": "businesses"}}
+{"id": "platform-domain", "input": "This global platform connects an organization.", "expected": {"subject": "platform", "number": "singular", "verb": "connect", "object": "organization"}}
+{"id": "plural-subject", "input": "These communities develop local solutions.", "expected": {"subject": "communities", "number": "plural", "verb": "develop", "object": "solutions"}}
+{"id": "plural-services", "input": "The employees provide helpful services.", "expected": {"subject": "employees", "number": "plural", "verb": "provide", "object": "services"}}
+{"id": "do-question", "input": "Does the company provide a service?", "expected": {"subject": "company", "number": "singular", "verb": "provide", "object": "service", "kind": "question"}}
+{"id": "past-question", "input": "Did the customer receive a product?", "expected": {"subject": "customer", "number": "singular", "verb": "receive", "object": "product", "kind": "question"}}
+{"id": "modal-question", "input": "Can the owner change an account?", "expected": {"subject": "owner", "number": "singular", "verb": "change", "object": "account", "kind": "question"}}
+{"id": "perfect-aspect", "input": "The company has developed a useful application.", "expected": {"subject": "company", "number": "singular", "verb": "develop", "object": "application"}}
+{"id": "adjective-complement", "input": "The new application is effective.", "expected": {"subject": "application", "number": "singular", "verb": "be", "complement": "effective"}}
+{"id": "passive-company-agent", "input": "The application was developed by the company.", "expected": {"subject": "application", "number": "singular", "verb": "develop", "voice": "passive", "agent": "company"}}
+{"id": "industry-domain", "input": "The technology improves the process.", "expected": {"subject": "technology", "number": "singular", "verb": "improve", "object": "process"}}
+{"id": "client-domain", "input": "A responsible manager protects the client.", "expected": {"subject": "manager", "number": "singular", "verb": "protect", "object": "client"}}
+{"id": "singular-quantifier", "input": "Every customer reads a useful document.", "expected": {"subject": "customer", "number": "singular", "verb": "read", "object": "document"}}
+{"id": "plural-quantifier", "input": "Many customers read useful documents.", "expected": {"subject": "customers", "number": "plural", "verb": "read", "object": "documents"}}
+{"id": "singular-pronoun", "input": "Someone calls the manager.", "expected": {"subject": "someone", "number": "singular", "verb": "call", "object": "manager"}}
+{"id": "singular-pronoun-everyone", "input": "Everyone understands the problem.", "expected": {"subject": "everyone", "number": "singular", "verb": "understand", "object": "problem"}}
+{"id": "singular-pronoun-nothing", "input": "Nothing is impossible.", "expected": {"subject": "nothing", "number": "singular", "verb": "be", "complement": "impossible"}}
+{"id": "mass-software", "input": "The software is reliable.", "expected": {"subject": "software", "number": "singular", "verb": "be", "complement": "reliable"}}
+{"id": "mass-information", "input": "The information was useful.", "expected": {"subject": "information", "number": "singular", "verb": "be", "complement": "useful"}}
+{"id": "mass-evidence", "input": "The evidence supports the claim.", "expected": {"subject": "evidence", "number": "singular", "verb": "support", "object": "claim"}}
+{"id": "mass-traffic", "input": "The traffic was heavy.", "expected": {"subject": "traffic", "number": "singular", "verb": "be", "complement": "heavy"}}
+{"id": "mass-weather", "input": "The weather is clear.", "expected": {"subject": "weather", "number": "singular", "verb": "be", "complement": "clear"}}
+{"id": "linking-look", "input": "The furniture looks new.", "expected": {"subject": "furniture", "number": "singular", "verb": "look", "complement": "new"}}
+{"id": "linking-smell", "input": "The food smells good.", "expected": {"subject": "food", "number": "singular", "verb": "smell", "complement": "good"}}
+{"id": "linking-feel", "input": "The fabric feels soft.", "expected": {"subject": "fabric", "number": "singular", "verb": "feel", "complement": "soft"}}
+{"id": "linking-become", "input": "The company becomes successful.", "expected": {"subject": "company", "number": "singular", "verb": "become", "complement": "successful"}}
+{"id": "linking-become-noun", "input": "The designer became a manager.", "expected": {"subject": "designer", "number": "singular", "verb": "become", "complement": "a manager"}}
+{"id": "irregular-catch", "input": "The driver caught a ball.", "expected": {"subject": "driver", "number": "singular", "verb": "catch", "object": "ball"}}
+{"id": "irregular-hold", "input": "The manager held the document.", "expected": {"subject": "manager", "number": "singular", "verb": "hold", "object": "document"}}
+{"id": "irregular-set", "input": "The owner set a new price.", "expected": {"subject": "owner", "number": "singular", "verb": "set", "object": "price"}}
+{"id": "irregular-lead", "input": "The employee led the discussion.", "expected": {"subject": "employee", "number": "singular", "verb": "lead", "object": "discussion"}}
+{"id": "irregular-draw", "input": "The artist drew a picture.", "expected": {"subject": "artist", "number": "singular", "verb": "draw", "object": "picture"}}
+{"id": "irregular-spend", "input": "The company spent the budget.", "expected": {"subject": "company", "number": "singular", "verb": "spend", "object": "budget"}}
+{"id": "irregular-understand", "input": "The company understood the problem.", "expected": {"subject": "company", "number": "singular", "verb": "understand", "object": "problem"}}
+{"id": "irregular-lend", "input": "The bank lent money.", "expected": {"subject": "bank", "number": "singular", "verb": "lend", "object": "money"}}
+{"id": "organization", "input": "The director confirmed the agreement.", "expected": {"subject": "director", "number": "singular", "verb": "confirm", "object": "agreement"}}
+{"id": "account-domain", "input": "An account receives a new password.", "expected": {"subject": "account", "number": "singular", "verb": "receive", "object": "password"}}
+{"id": "writing-domain", "input": "The editor writes a sentence.", "expected": {"subject": "editor", "number": "singular", "verb": "write", "object": "sentence"}}
+{"id": "education-domain", "input": "A public school serves the community.", "expected": {"subject": "school", "number": "singular", "verb": "serve", "object": "community"}}
+{"id": "mass-advice", "input": "The doctor gives advice.", "expected": {"subject": "doctor", "number": "singular", "verb": "give", "object": "advice"}}
+{"id": "irregular-choose", "input": "The customer chooses an option.", "expected": {"subject": "customer", "number": "singular", "verb": "choose", "object": "option"}}
+{"id": "teaching-domain", "input": "A parent teaches the children.", "expected": {"subject": "parent", "number": "singular", "verb": "teach", "object": "children"}}
+{"id": "visitor-domain", "input": "A visitor enters the building.", "expected": {"subject": "visitor", "number": "singular", "verb": "enter", "object": "building"}}
+{"id": "quantifier-error-each", "input": "Each customers reads the report.", "expected": {"subject": "customers", "number": "plural", "verb": "read", "object": "report", "issues": ["subject_verb_agreement", "determiner_number"]}}
+{"id": "quantifier-error-many", "input": "Many customer reads the report.", "expected": {"subject": "customer", "number": "singular", "verb": "read", "object": "report", "issues": ["determiner_number"]}}
+{"id": "negative-do", "input": "The company does not develop the product.", "expected": {"subject": "company", "number": "singular", "verb": "develop", "object": "product", "negated": true}}
+{"id": "modal-negative", "input": "The manager should not change the policy.", "expected": {"subject": "manager", "number": "singular", "verb": "change", "object": "policy", "negated": true}}
+{"id": "supported-pp-adverb", "input": "The manager reviewed the contract yesterday.", "expected": {"subject": "manager", "number": "singular", "verb": "review", "object": "contract", "adverbs": ["yesterday"]}}
+{"id": "unparsed-relative", "input": "The company that hired the manager changed the system.", "expected": null}
+{"id": "unparsed-coordination", "input": "The team and the company developed an application.", "expected": null}
+{"id": "supported-preposition", "input": "The customer listened to the manager.", "expected": {"subject": "customer", "number": "singular", "verb": "listen", "prepositional_phrases": [{"preposition": "to", "object": "manager"}]}}
+{"id": "supported-adverb", "input": "The manager works quickly.", "expected": {"subject": "manager", "number": "singular", "verb": "work", "adverbs": ["quickly"]}}
+{"id": "unparsed-modal-chain", "input": "The company will have developed the product.", "expected": null}
+{"id": "expanded-child-book", "input": "The child reads a book.", "expected": {"subject": "child", "number": "singular", "verb": "read", "object": "book"}}
+{"id": "expanded-father-meal", "input": "The father cooks a meal.", "expected": {"subject": "father", "number": "singular", "verb": "cook", "object": "meal"}}
+{"id": "expanded-artist-picture", "input": "The artist paints an amazing picture.", "expected": {"subject": "artist", "number": "singular", "verb": "paint", "object": "picture"}}
+{"id": "expanded-manager-report", "input": "The manager publishes a report.", "expected": {"subject": "manager", "number": "singular", "verb": "publish", "object": "report"}}
+{"id": "expanded-students-issue", "input": "The students discuss the local issue.", "expected": {"subject": "students", "number": "plural", "verb": "discuss", "object": "issue"}}
+{"id": "expanded-customer-product", "input": "The customer chooses a popular product.", "expected": {"subject": "customer", "number": "singular", "verb": "choose", "object": "product"}}
+{"id": "expanded-company-economy", "input": "The company affects the local economy.", "expected": {"subject": "company", "number": "singular", "verb": "affect", "object": "economy"}}
+{"id": "expanded-president-election", "input": "The president announces the election.", "expected": {"subject": "president", "number": "singular", "verb": "announce", "object": "election"}}
+{"id": "expanded-every-student", "input": "Every student asks a question.", "expected": {"subject": "student", "number": "singular", "verb": "ask", "object": "question"}}
+{"id": "expanded-some-players", "input": "Some players enjoy the game.", "expected": {"subject": "players", "number": "plural", "verb": "enjoy", "object": "game"}}
+{"id": "expanded-speaker-idea", "input": "The speaker mentions a useful idea.", "expected": {"subject": "speaker", "number": "singular", "verb": "mention", "object": "idea"}}
+{"id": "expanded-owner-apartment", "input": "The owner rents an apartment.", "expected": {"subject": "owner", "number": "singular", "verb": "rent", "object": "apartment"}}
+{"id": "expanded-actor-song", "input": "The actor performs a popular song.", "expected": {"subject": "actor", "number": "singular", "verb": "perform", "object": "song"}}
+{"id": "expanded-friend-garden", "input": "The friend describes the garden.", "expected": {"subject": "friend", "number": "singular", "verb": "describe", "object": "garden"}}
+{"id": "expanded-brother-door", "input": "His brother opens the door.", "expected": {"subject": "brother", "number": "singular", "verb": "open", "object": "door"}}
+{"id": "expanded-visitor-building", "input": "The visitor searches the building.", "expected": {"subject": "visitor", "number": "singular", "verb": "search", "object": "building"}}
+{"id": "expanded-tool-problem", "input": "The new tool solves a difficult problem.", "expected": {"subject": "tool", "number": "singular", "verb": "solve", "object": "problem"}}
+{"id": "expanded-more-customers", "input": "More customers buy a useful product.", "expected": {"subject": "customers", "number": "plural", "verb": "buy", "object": "product"}}
+{"id": "expanded-any-customer", "input": "Any customer can choose an option.", "expected": {"subject": "customer", "number": "singular", "verb": "choose", "object": "option"}}
+{"id": "expanded-each-student", "input": "Each student reads the book.", "expected": {"subject": "student", "number": "singular", "verb": "read", "object": "book"}}
+{"id": "expanded-both-children", "input": "Both children write a sentence.", "expected": {"subject": "children", "number": "plural", "verb": "write", "object": "sentence"}}
+{"id": "expanded-room-linking", "input": "The room looks comfortable.", "expected": {"subject": "room", "number": "singular", "verb": "look", "complement": "comfortable"}}
+{"id": "expanded-coffee-linking", "input": "The coffee tastes good.", "expected": {"subject": "coffee", "number": "singular", "verb": "taste", "complement": "good"}}
+{"id": "expanded-news-mass", "input": "The news is important.", "expected": {"subject": "news", "number": "singular", "verb": "be", "complement": "important"}}
+{"id": "expanded-election-country", "input": "The election changed the country.", "expected": {"subject": "election", "number": "singular", "verb": "change", "object": "country"}}
+{"id": "pp-object-and-place", "input": "The student reads a book at school.", "expected": {"subject": "student", "number": "singular", "verb": "read", "object": "book", "prepositional_phrases": [{"preposition": "at", "object": "school"}]}}
+{"id": "pp-object-and-companion", "input": "The manager discusses the plan with a colleague.", "expected": {"subject": "manager", "number": "singular", "verb": "discuss", "object": "plan", "prepositional_phrases": [{"preposition": "with", "object": "colleague"}]}}
+{"id": "pp-copula-location", "input": "The folder is on the desk.", "expected": {"subject": "folder", "number": "singular", "verb": "be", "prepositional_phrases": [{"preposition": "on", "object": "desk"}]}}
+{"id": "pp-intransitive-motion", "input": "The visitors walk through the park.", "expected": {"subject": "visitors", "number": "plural", "verb": "walk", "prepositional_phrases": [{"preposition": "through", "object": "park"}]}}
+{"id": "adverb-final-carefully", "input": "The manager updated the report carefully.", "expected": {"subject": "manager", "number": "singular", "verb": "update", "object": "report", "adverbs": ["carefully"]}}
+{"id": "adverb-final-well", "input": "The system works well.", "expected": {"subject": "system", "number": "singular", "verb": "work", "adverbs": ["well"]}}
+{"id": "adverb-degree-linking", "input": "The manager is very helpful.", "expected": {"subject": "manager", "number": "singular", "verb": "be", "complement": "very helpful", "adverbs": ["very"]}}
+{"id": "pp-and-adverb", "input": "The worker arrives at the office early.", "expected": {"subject": "worker", "number": "singular", "verb": "arrive", "prepositional_phrases": [{"preposition": "at", "object": "office"}], "adverbs": ["early"]}}
+{"id": "adverb-after-adjective", "input": "The manager is very helpful today.", "expected": {"subject": "manager", "number": "singular", "verb": "be", "complement": "very helpful", "adverbs": ["very", "today"]}}
+{"id": "copula-place-and-time", "input": "The worker is in the office now.", "expected": {"subject": "worker", "number": "singular", "verb": "be", "prepositional_phrases": [{"preposition": "in", "object": "office"}], "adverbs": ["now"]}}
+{"id": "two-prepositional-phrases", "input": "The student studies at the library with a friend.", "expected": {"subject": "student", "number": "singular", "verb": "study", "prepositional_phrases": [{"preposition": "at", "object": "library"}, {"preposition": "with", "object": "friend"}]}}
+{"id": "new-intransitive-verb", "input": "The company operates efficiently.", "expected": {"subject": "company", "number": "singular", "verb": "operate", "adverbs": ["efficiently"]}}
+{"id": "verb-and-preposition-adverb", "input": "The employee responds quickly to a customer.", "expected": {"subject": "employee", "number": "singular", "verb": "respond", "prepositional_phrases": [{"preposition": "to", "object": "customer"}], "adverbs": ["quickly"]}}
+{"id": "look-preposition", "input": "The customer looks at the picture carefully.", "expected": {"subject": "customer", "number": "singular", "verb": "look", "prepositional_phrases": [{"preposition": "at", "object": "picture"}], "adverbs": ["carefully"]}}
+{"id": "temporal-pp-remains-unsupported", "input": "Alex called Sam on Monday.", "expected": null}
+{"id": "passive-time-agent-remains-unsupported", "input": "The report was written by Friday.", "expected": null}
+{"id": "invalid-passive-agent-remains-unsupported", "input": "The report was written by the meeting.", "expected": null}

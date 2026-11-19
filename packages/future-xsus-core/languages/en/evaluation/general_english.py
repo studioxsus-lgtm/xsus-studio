@@ -6,7 +6,7 @@ from pathlib import Path
 
 from ..text.linguistics import analyze_english
 
-_CASES = Path(__file__).with_name("general-vocabulary-v1.jsonl")
+_CASES = Path(__file__).with_name("general-vocabulary-v2.jsonl")
 
 
 def _actual(sentence: str) -> dict | None:
@@ -25,6 +25,11 @@ def _actual(sentence: str) -> dict | None:
         "agent": clause.agent.head if clause.agent is not None else None,
         "negated": clause.negated,
         "issues": [issue.code.value for issue in analysis.issues],
+        "prepositional_phrases": [
+            {"preposition": phrase.preposition.lower(), "object": phrase.object.head}
+            for phrase in clause.prepositional_phrases
+        ],
+        "adverbs": [adverb.lower() for adverb in clause.adverbs],
     }
 
 

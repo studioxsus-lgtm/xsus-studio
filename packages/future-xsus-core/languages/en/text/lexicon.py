@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .morphology import inflect_verb, pluralize_noun
 
-_LEXICON_PATH = Path(__file__).resolve().parents[1] / "data" / "lexicon" / "general-v1.json"
+_LEXICON_PATH = Path(__file__).resolve().parents[1] / "data" / "lexicon" / "general-v2.json"
 _WORD = re.compile(r"[a-z]+(?:-[a-z]+)*", re.ASCII)
 
 
@@ -21,6 +21,7 @@ class EnglishLexicon:
     agent_nouns: frozenset[str]
     determiners: frozenset[str]
     singular_pronouns: frozenset[str]
+    adverbs: frozenset[str]
 
 
 def _unique_entries(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -46,9 +47,9 @@ def _load_lexicon() -> EnglishLexicon:
     raw = json.loads(_LEXICON_PATH.read_text(encoding="utf-8"), object_pairs_hook=_unique_entries)
     expected = {
         "version", "nouns", "mass_nouns", "adjectives", "verbs", "transitive_verbs", "agent_nouns",
-        "determiners", "singular_pronouns",
+        "determiners", "singular_pronouns", "adverbs",
     }
-    if not isinstance(raw, dict) or set(raw) != expected or raw["version"] != 1:
+    if not isinstance(raw, dict) or set(raw) != expected or raw["version"] != 2:
         raise ValueError("Unsupported English lexicon schema")
     nouns = _word_set(raw["nouns"], "nouns")
     mass_nouns = _word_set(raw["mass_nouns"], "mass nouns")
@@ -58,13 +59,16 @@ def _load_lexicon() -> EnglishLexicon:
     agents = _word_set(raw["agent_nouns"], "agent nouns")
     determiners = _word_set(raw["determiners"], "determiners")
     singular_pronouns = _word_set(raw["singular_pronouns"], "singular pronouns")
+    adverbs = _word_set(raw["adverbs"], "adverbs")
     if not transitive <= verbs or not agents <= nouns or nouns & mass_nouns:
         raise ValueError("English lexicon word classes are inconsistent")
     for verb in verbs:
         inflect_verb(verb)
     for noun in nouns:
         pluralize_noun(noun)
-    return EnglishLexicon(nouns, mass_nouns, adjectives, verbs, transitive, agents, determiners, singular_pronouns)
+    return EnglishLexicon(
+        nouns, mass_nouns, adjectives, verbs, transitive, agents, determiners, singular_pronouns, adverbs,
+    )
 
 
 GENERAL_ENGLISH = _load_lexicon()
