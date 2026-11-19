@@ -6,6 +6,12 @@ from unittest.mock import patch
 
 from aiohttp.test_utils import TestClient, TestServer
 
+from languages.en.learning.feedback_store import SQLiteFeedbackStore
+from languages.en.learning.worker import run_once
+from languages.en.models.checkpoint import save_checkpoint
+from languages.en.models.neural_model import NeuralLanguageModel
+from languages.en.models.registry import EnglishModelRegistry
+from languages.en.text.tokenizer import BytePairTokenizer
 from services.api.server import create_local_app
 
 _TOKEN = "local-test-token-with-at-least-32-chars"
@@ -13,6 +19,48 @@ _HEADERS = {"Authorization": f"Bearer {_TOKEN}"}
 
 
 class LocalAPIRuntimeTests(unittest.IsolatedAsyncioTestCase):
+    async def test_consented_api_feedback_flows_into_a_separate_learning_candidate(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            database = root / "conversation.db"
+            async with TestClient(TestServer(create_local_app(database, owner="test-owner", token=_TOKEN))) as client:
+                example_ids = []
+                for index in range(5):
+                    submitted = await client.post("/v1/learning/feedback", headers=_HEADERS, json={
+                        "consent": True,
+                        "prompt": f"Private end-to-end worker prompt {index}",
+                        "response": f"A distinct reviewed end-to-end answer {index}.",
+                    })
+                    self.assertEqual(submitted.status, 202)
+                    record = await submitted.json()
+                    example_ids.append(record["example_id"])
+                for example_id in example_ids:
+                    reviewed = await client.post(
+                        f"/v1/learning/feedback/{example_id}/accept", headers=_HEADERS,
+                    )
+                    self.assertEqual((await reviewed.json())["status"], "accepted")
+
+            feedback = SQLiteFeedbackStore(root / "conversation.feedback.sqlite3")
+            self.assertEqual(len(feedback.accepted("test-owner")), 5)
+            baseline = root / "small-baseline.json.gz"
+            tokenizer = BytePairTokenizer()
+            model = NeuralLanguageModel.initialize(
+                vocab_size=tokenizer.vocab_size, hidden_size=4, context_size=16, seed=83,
+            )
+            save_checkpoint(baseline, tokenizer, model)
+            registry = EnglishModelRegistry(root / "registry")
+            benchmark_scores = {"cases": 1, "accepted": 1, "preserved_all_facts": 1}
+            with patch("languages.en.learning.worker._DEFAULT_BASELINE", baseline), \
+                 patch("languages.en.learning.continual.compare_checkpoint", return_value=benchmark_scores):
+                candidate = run_once(
+                    store=feedback, owner_id="test-owner", registry=registry,
+                    output_dir=root / "candidates", replay_examples=8,
+                )
+            self.assertIn(candidate["status"], {"candidate_ready", "candidate_blocked"})
+            self.assertTrue(Path(candidate["candidate"]).is_file())
+            self.assertTrue(Path(candidate["report"]).is_file())
+            self.assertIsNone(EnglishModelRegistry(Path(candidate["registry"])).active())
+
     async def test_learning_feedback_is_available_and_persists_after_restart(self):
         with TemporaryDirectory() as directory:
             database = Path(directory) / "conversation.db"
