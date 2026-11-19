@@ -1,10 +1,12 @@
 """Run a bounded local worker that turns reviewed feedback into model candidates."""
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
 from pathlib import Path
+import sqlite3
 import time
 from tempfile import NamedTemporaryFile
 
@@ -217,6 +219,49 @@ def run_once(
     return verified
 
 
+def run_supervised_cycle(*, store: SQLiteFeedbackStore, owner_id: str,
+                         registry: EnglishModelRegistry, output_dir: Path,
+                         epochs: int = 1, learning_rate: float = 0.008,
+                         replay_examples: int = 96, seed: int = 23) -> dict:
+    """Run one resilient cycle and persist a privacy-safe owner status snapshot."""
+    output_dir = _require_external_path(output_dir, "Candidate output directory")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    owner_scope = hashlib.sha256(owner_id.encode("utf-8")).hexdigest()
+    status_path = output_dir / f"status-{owner_scope}.json"
+
+    def persist(result: dict) -> dict:
+        snapshot = {
+            "format": "xsus-en-learning-worker-status-v1",
+            "owner_scope": owner_scope,
+            "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            **result,
+        }
+        _write_json(status_path, snapshot)
+        return {**result, "status_file": str(status_path)}
+
+    try:
+        approved_count = len(store.accepted(owner_id))
+        if approved_count >= _MINIMUM_EXAMPLES:
+            persist({"status": "training", "approved_examples": approved_count})
+        result = run_once(
+            store=store,
+            owner_id=owner_id,
+            registry=registry,
+            output_dir=output_dir,
+            epochs=epochs,
+            learning_rate=learning_rate,
+            replay_examples=replay_examples,
+            seed=seed,
+        )
+    except (OSError, RuntimeError, ValueError, sqlite3.Error) as error:
+        result = {
+            "status": "failed",
+            "error_type": type(error).__name__,
+            "reason": str(error),
+        }
+    return persist(result)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--store", type=Path, required=True, help="Local SQLite feedback store")
@@ -238,7 +283,7 @@ def main() -> int:
     store = SQLiteFeedbackStore(store_path)
     registry = EnglishModelRegistry(registry_path)
     while True:
-        result = run_once(
+        result = run_supervised_cycle(
             store=store, owner_id=args.owner_id, registry=registry,
             output_dir=output_dir, epochs=args.epochs,
             learning_rate=args.learning_rate, replay_examples=args.replay_examples, seed=args.seed,
@@ -246,7 +291,10 @@ def main() -> int:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True), flush=True)
         if args.once:
             return 0
-        time.sleep(args.poll_seconds)
+        try:
+            time.sleep(args.poll_seconds)
+        except KeyboardInterrupt:
+            return 0
 
 
 if __name__ == "__main__":

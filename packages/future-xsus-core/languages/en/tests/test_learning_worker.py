@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -7,7 +8,7 @@ from core.contracts.request import Conversation
 from languages.en.data.preparation.corpus import Example
 from languages.en.learning.continual import build_candidate
 from languages.en.learning.feedback_store import SQLiteFeedbackStore
-from languages.en.learning.worker import run_once
+from languages.en.learning.worker import run_once, run_supervised_cycle
 from languages.en.models.checkpoint import save_checkpoint
 from languages.en.models.neural_model import NeuralLanguageModel
 from languages.en.models.registry import EnglishModelRegistry
@@ -15,6 +16,33 @@ from languages.en.text.tokenizer import BytePairTokenizer
 
 
 class LearningWorkerTests(unittest.TestCase):
+    def test_supervised_cycle_persists_waiting_and_failure_states(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            store = SQLiteFeedbackStore(root / "feedback.sqlite3")
+            registry = EnglishModelRegistry(root / "registry")
+            output = root / "candidates"
+            with patch("languages.en.learning.worker.run_once", return_value={
+                "status": "waiting_for_feedback", "approved_examples": 0,
+                "minimum_approved_examples": 5,
+            }):
+                waiting = run_supervised_cycle(
+                    store=store, owner_id="owner-a", registry=registry, output_dir=output,
+                )
+            status_path = Path(waiting["status_file"])
+            snapshot = json.loads(status_path.read_text(encoding="utf-8"))
+            self.assertEqual(snapshot["format"], "xsus-en-learning-worker-status-v1")
+            self.assertEqual(snapshot["status"], "waiting_for_feedback")
+
+            with patch("languages.en.learning.worker.run_once", side_effect=RuntimeError("temporary failure")):
+                failed = run_supervised_cycle(
+                    store=store, owner_id="owner-a", registry=registry, output_dir=output,
+                )
+            snapshot = json.loads(status_path.read_text(encoding="utf-8"))
+            self.assertEqual(failed["status"], "failed")
+            self.assertEqual(snapshot["error_type"], "RuntimeError")
+            self.assertEqual(snapshot["reason"], "temporary failure")
+
     def test_worker_builds_once_per_approved_dataset_and_never_promotes(self):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)

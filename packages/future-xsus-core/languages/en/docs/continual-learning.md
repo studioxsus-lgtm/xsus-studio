@@ -64,6 +64,9 @@ once per distinct learning cycle and reuses a verified result on later polls.
 Use `--once` to run one check and exit. Its JSON output reports whether it is
 waiting, blocked by a validation error, or has created a candidate. Keep the
 worker running under a process supervisor if continuous checks are wanted.
+The worker atomically writes a privacy-safe `status-<owner-scope>.json` file in
+the output directory. It records the latest state and survives process
+restarts; transient local failures are reported there and the next poll retries.
 It never promotes a candidate; the explicit registry release step below still
 requires a person to review and confirm the exact candidate revision. The
 worker creates a separate registry below `--registry` for each owner. Use the
@@ -76,10 +79,10 @@ exact confirmation revision, the baseline revision, the feedback-loss gate,
 and both held-out benchmarks again before storing an immutable checkpoint:
 
 ```sh
-python -m languages.en.models.registry_cli --registry /private/xsus-en-models promote --candidate /private/xsus-en-candidate.json.gz --report /private/xsus-en-candidate-report.json --confirm-revision sha256-CANDIDATE_DIGEST
-python -m languages.en.models.registry_cli --registry /private/xsus-en-models releases
-python -m languages.en.models.registry_cli --registry /private/xsus-en-models active
-python -m languages.en.models.registry_cli --registry /private/xsus-en-models show --revision sha256-CANDIDATE_DIGEST
+python -m languages.en.models.registry_cli --registry /private/xsus-en-models/owners/OWNER_SCOPE_SHA256 promote --candidate /private/xsus-en-candidate.json.gz --report /private/xsus-en-candidate-report.json --confirm-revision sha256-CANDIDATE_DIGEST
+python -m languages.en.models.registry_cli --registry /private/xsus-en-models/owners/OWNER_SCOPE_SHA256 releases
+python -m languages.en.models.registry_cli --registry /private/xsus-en-models/owners/OWNER_SCOPE_SHA256 active
+python -m languages.en.models.registry_cli --registry /private/xsus-en-models/owners/OWNER_SCOPE_SHA256 show --revision sha256-CANDIDATE_DIGEST
 ```
 
 The registry stores the reviewed JSON report beside the immutable checkpoint,
