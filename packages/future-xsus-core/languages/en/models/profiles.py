@@ -27,3 +27,10 @@ def load_profile(name: str):
     if revision != "sha256-" + manifest["sha256"]:
         raise ValueError(f"Checkpoint checksum does not match the XSUS English profile {name!r}")
     return tokenizer, model, revision
+
+
+def load_active_profile(registry_path: str | Path):
+    """Load the explicitly promoted local revision from an external model registry."""
+    from .registry import EnglishModelRegistry
+
+    return EnglishModelRegistry(registry_path).load_active()

@@ -2,6 +2,8 @@
 
 For the structural written-English analyzer, its vocabulary categories, known
 limits, and evaluation command, see [General English Coverage](docs/general-english-coverage.md).
+For the consent-gated continual learning and versioned release workflow, see
+[Continual Learning](docs/continual-learning.md).
 
 Motori `xsus-en` zbaton kontratën v1.0 për bisedë me tekst. Gjenerimi përdor tokenizer-in UTF-8/BPE dhe modelin shkakor të XSUS, të trajnuar nga pesha rastësore. Kodi i trajnimit dhe gjenerimit përdor bibliotekën standarde të Python-it. Versioni fillestar përfshin peshat e trajnuara dhe mund të ekzekutohet lokalisht pas marrjes së repository-t.
 
@@ -11,6 +13,7 @@ Motori `xsus-en` zbaton kontratën v1.0 për bisedë me tekst. Gjenerimi përdor
 | `text/` | Tokenizer-i, formati i bisedës dhe gjenerimi i tokenëve |
 | `models/` | Modeli, formati i ruajtjes, peshat dhe manifesti |
 | `training/` | Trajnimi i riprodhueshëm dhe matja para e pas tij |
+| `learning/` | Shembujt e miratuar privatisht dhe përditësimi i vazhdueshëm me portë cilësie |
 | `engine/` | Lidhja e modelit me Future XSUS Core |
 | `evaluation/` | Dialogët e veçuar nga trajnimi dhe komanda për provën e bisedës |
 

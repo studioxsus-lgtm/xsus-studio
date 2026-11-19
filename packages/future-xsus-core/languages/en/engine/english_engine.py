@@ -12,7 +12,7 @@ from core.contracts.request import Conversation, EngineRequest
 from core.contracts.response import EngineResponse, TextResult
 
 from ..models.checkpoint import load_checkpoint
-from ..models.profiles import load_profile
+from ..models.profiles import load_active_profile, load_profile
 from ..text.editing.requests import answer_proofreading_request
 from ..text.generation.generate import generate
 from ..text.normalization.model_input import WRITTEN_V5
@@ -26,7 +26,13 @@ class EnglishEngine:
         if profile is not None and checkpoint is not None:
             raise ValueError("Choose an English model profile or a checkpoint path")
         if profile is not None:
-            self._tokenizer, self._model, revision = load_profile(profile)
+            if profile == "active":
+                registry = os.environ.get("XSUS_EN_MODEL_REGISTRY")
+                if not registry:
+                    raise ValueError("XSUS_EN_MODEL_REGISTRY is required for the active English profile")
+                self._tokenizer, self._model, revision = load_active_profile(Path(registry))
+            else:
+                self._tokenizer, self._model, revision = load_profile(profile)
         else:
             self._tokenizer, self._model, revision = load_checkpoint(
                 DEFAULT_CHECKPOINT if checkpoint is None else checkpoint,

@@ -38,8 +38,26 @@ python -m languages.en.learning.cli --store /private/xsus-en-feedback.sqlite3 --
 At least five approved examples are required so one can be withheld from
 training. Candidate files and private feedback databases should be kept outside
 the repository. `eligible_for_promotion` is a quality-gate result, not an
-automatic release: a human must review the report and update a model manifest
-to publish a new checkpoint.
+automatic release: a human must review the report and explicitly promote a
+checkpoint through the separate model registry.
+
+For an explicit local release, the registry checks the candidate digest, the
+exact confirmation revision, the baseline revision, the feedback-loss gate,
+and both held-out benchmarks again before storing an immutable checkpoint:
+
+```sh
+python -m languages.en.models.registry_cli --registry /private/xsus-en-models promote --candidate /private/xsus-en-candidate.json.gz --report /private/xsus-en-candidate-report.json --confirm-revision sha256-CANDIDATE_DIGEST
+python -m languages.en.models.registry_cli --registry /private/xsus-en-models releases
+python -m languages.en.models.registry_cli --registry /private/xsus-en-models active
+```
+
+Start the English engine with `XSUS_EN_MODEL_PROFILE=active` and
+`XSUS_EN_MODEL_REGISTRY=/private/xsus-en-models` to load the registered active
+revision. Rollback requires both the target revision and the exact currently
+active revision; the registry records each promotion and rollback event.
+For another learning cycle, use the verified active checkpoint path printed by
+`active` as the `learn --baseline` argument. The registry rejects candidates
+trained from a stale baseline.
 
 ## Current boundary
 
