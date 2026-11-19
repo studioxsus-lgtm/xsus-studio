@@ -16,6 +16,7 @@ class IssueCode(StrEnum):
     COMMA_SPLICE = "comma_splice"
     SPELLING = "spelling"
     ARTICLE_SOUND = "article_sound"
+    PUNCTUATION_SPACING = "punctuation_spacing"
 
 
 @dataclass(frozen=True, slots=True)

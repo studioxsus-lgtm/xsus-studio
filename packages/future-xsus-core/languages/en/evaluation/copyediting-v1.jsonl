@@ -53,3 +53,23 @@
 {"id":"untrusted-quoted-typo","input":"Mia said \"teh file\".","status":"review_required","output":"Mia said \"teh file\"."}
 {"id":"protected-ambiguous-word-calender","input":"They check the calender.","status":"review_required","output":"They check the calender."}
 {"id":"unsupported-typo-near-nested-clause","input":"They check teh file that he writes.","status":"review_required","output":"They check teh file that he writes."}
+{"id": "comma-no-space-01", "input": "They check,the report.", "status": "corrected", "output": "They check, the report."}
+{"id": "comma-no-space-02", "input": "Maya files,the notes.", "status": "corrected", "output": "Maya files, the notes."}
+{"id": "comma-no-space-03", "input": "We review,the draft.", "status": "corrected", "output": "We review, the draft."}
+{"id": "comma-no-space-04", "input": "Alex reads,the message.", "status": "corrected", "output": "Alex reads, the message."}
+{"id": "semicolon-no-space-01", "input": "They review;the team approves.", "status": "corrected", "output": "They review; the team approves."}
+{"id": "semicolon-no-space-02", "input": "Maya writes;Alex edits.", "status": "corrected", "output": "Maya writes; Alex edits."}
+{"id": "colon-no-space-01", "input": "Status:ready for review.", "status": "corrected", "output": "Status: ready for review."}
+{"id": "colon-no-space-02", "input": "The note says:check the file.", "status": "corrected", "output": "The note says: check the file."}
+{"id": "exclamation-no-space-01", "input": "Wait!the meeting starts now.", "status": "corrected", "output": "Wait! the meeting starts now."}
+{"id": "question-no-space-01", "input": "Ready?the team is waiting.", "status": "corrected", "output": "Ready? the team is waiting."}
+{"id": "period-space-01", "input": "They review the draft .", "status": "corrected", "output": "They review the draft."}
+{"id": "period-space-02", "input": "The report is ready .", "status": "corrected", "output": "The report is ready."}
+{"id": "comma-space-before-01", "input": "They review the draft , today.", "status": "corrected", "output": "They review the draft, today."}
+{"id": "comma-space-before-02", "input": "Maya checks the file  ,then she sends it.", "status": "corrected", "output": "Maya checks the file, then she sends it."}
+{"id": "semicolon-space-before-01", "input": "They finish the draft ; then they review it.", "status": "corrected", "output": "They finish the draft; then they review it."}
+{"id": "colon-space-before-01", "input": "Status  : ready for review.", "status": "corrected", "output": "Status: ready for review."}
+{"id": "question-space-before-01", "input": "Is the report ready ?", "status": "corrected", "output": "Is the report ready?"}
+{"id": "exclamation-space-before-01", "input": "Stop ! the file is incomplete.", "status": "corrected", "output": "Stop! the file is incomplete."}
+{"id": "punctuation-combined-01", "input": "They check ,the final report .", "status": "corrected", "output": "They check, the final report."}
+{"id": "punctuation-combined-02", "input": "Status :ready;the report is ready .", "status": "corrected", "output": "Status: ready; the report is ready."}

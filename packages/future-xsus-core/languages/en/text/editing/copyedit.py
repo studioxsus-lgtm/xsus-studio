@@ -4,6 +4,7 @@ from dataclasses import replace
 
 from ..grammar import GrammarIssue
 from .orthography import orthographic_edits
+from .punctuation import punctuation_edits
 from .proofreader import Edit, ProofreadingResult, ProofreadingStatus, _apply_edits, proofread_sentence
 
 _MAX_CHARS = 2048
@@ -37,20 +38,29 @@ def copyedit_sentence(text: str) -> ProofreadingResult:
     if not isinstance(text, str) or len(text) > _MAX_CHARS:
         return proofread_sentence(text)
     orthographic = orthographic_edits(text)
-    if not orthographic:
+    punctuation = punctuation_edits(text)
+    pre_edits = tuple(sorted((*orthographic, *punctuation), key=lambda item: (item.start, item.end)))
+    if not pre_edits:
         return proofread_sentence(text)
+    if not orthographic:
+        # Punctuation spacing does not alter tokens or clause structure; it can
+        # therefore be applied safely even when the grammar parser declines a sentence.
+        issues = tuple(GrammarIssue(edit.code, edit.original, edit.replacement) for edit in punctuation)
+        return ProofreadingResult(
+            ProofreadingStatus.CORRECTED, _apply_edits(text, punctuation), punctuation, issues,
+        )
 
-    staged = _apply_edits(text, orthographic)
+    staged = _apply_edits(text, pre_edits)
     verified = proofread_sentence(staged)
     if verified.status is ProofreadingStatus.REVIEW_REQUIRED:
         return ProofreadingResult(
             ProofreadingStatus.REVIEW_REQUIRED, text, issues=verified.issues,
             review_reason=verified.review_reason,
         )
-    edits = _source_edits(orthographic, verified.edits)
+    edits = _source_edits(pre_edits, verified.edits)
     if edits is None or _apply_edits(text, edits) != verified.text:
         return ProofreadingResult(
             ProofreadingStatus.REVIEW_REQUIRED, text, review_reason="overlapping_edits",
         )
-    issues = tuple(GrammarIssue(edit.code, edit.original, edit.replacement) for edit in orthographic)
+    issues = tuple(GrammarIssue(edit.code, edit.original, edit.replacement) for edit in pre_edits)
     return ProofreadingResult(ProofreadingStatus.CORRECTED, verified.text, tuple(edits), issues + verified.issues)

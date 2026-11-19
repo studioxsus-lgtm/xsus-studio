@@ -346,18 +346,24 @@ mbron pjesën pas tij deri në fund të skedarit. Kjo qasje konservatore
 mbështet formatet e testuara të Markdown-it dhe mund të anashkalojë prozën
 kur ajo ndan të njëjtin bllok me shënimin strukturor.
 
-## Redaktimi drejtshkrimor
+## English copyediting
 
-`Copyedit:`, `Copyedit paragraph:` dhe `Copyedit Markdown:` shtojnë
-kontrolle drejtshkrimore te korrigjimi gramatikor. Ato përdorin një listë
-të kufizuar gabimesh të zakonshme dhe kontrollojnë `a` ose `an` sipas
-tingullit të fjalëve që njohin, si `an hour` dhe `a university`.
-Për shpjegimin e një fjalie përdor `Explain copyedits:`.
+`Copyedit:`, `Copyedit paragraph:`, and `Copyedit Markdown:` add spelling,
+article, and punctuation-spacing corrections to the existing grammar checks.
+Spelling uses a deliberately small list of reviewed forms. Article choice
+uses the sound of recognized words, including `an hour` and `a university`.
+Punctuation handling removes horizontal spaces before common punctuation
+and inserts a missing space after commas, semicolons, colons, exclamation
+marks, and question marks when letters touch. It does not replace punctuation
+marks, change numeric separators, or normalize general whitespace. Use
+`Explain copyedits:` to explain sentence-level changes.
 
-Para ruajtjes së ndryshimeve, fjalia e përpunuar kalon në analizuesin
-gramatikor. Kur dy korrigjime prekin të njëjtën fjalë ose fjalia mbetet
-e paverifikueshme, origjinali ruhet për rishikim. Dalja JSON raporton
-pozicionet në origjinal. Në Markdown, pjesët e mbrojtura mbeten të paprekura.
+Spelling and grammar changes are applied together only after the resulting
+sentence passes the grammar verifier. If an edit overlaps another edit or
+the sentence cannot be verified, the original sentence is preserved for
+review. Punctuation-spacing edits do not change words or clause structure
+and can be applied independently. JSON output reports positions in the
+original text. Protected Markdown blocks remain unchanged.
 
 ```sh
 XSUS_EN_MODEL_PROFILE=written-v5 \
@@ -366,3 +372,7 @@ python3 -m languages.en.text.editing --orthography 'They recieved an report.'
 python3 -m languages.en.text.editing --markdown --orthography < draft.md
 python3 -m languages.en.evaluation.proofreading --copyedit
 ```
+
+The copyediting evaluation corpus contains 75 independently written cases.
+It covers supported spelling forms, article sounds, punctuation spacing,
+source-coordinate edits, unchanged text, and conservative review decisions.

@@ -20,10 +20,17 @@ _MAX_EXPLAINED = 8
 def explain_edits(edits: Sequence[Edit]) -> str:
     if not edits:
         return ""
-    explanations = [
-        f"- {edit.original!r} → {edit.replacement!r}. {_EXPLANATIONS[edit.code]}"
-        for edit in edits[:_MAX_EXPLAINED]
-    ]
+    explanations = []
+    for edit in edits[:_MAX_EXPLAINED]:
+        if edit.code is IssueCode.PUNCTUATION_SPACING:
+            if edit.original:
+                explanations.append("- Remove spaces before the punctuation mark.")
+            else:
+                explanations.append("- Insert a missing space after the punctuation mark.")
+            continue
+        explanations.append(
+            f"- {edit.original!r} → {edit.replacement!r}. {_EXPLANATIONS[edit.code]}"
+        )
     if len(edits) > _MAX_EXPLAINED:
         explanations.append(f"- {len(edits) - _MAX_EXPLAINED} additional edits applied.")
     return "\n\nChanges:\n" + "\n".join(explanations)
