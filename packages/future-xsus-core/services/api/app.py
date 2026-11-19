@@ -26,6 +26,7 @@ from core.sessions.session_store import (
     SessionSnapshot,
 )
 from languages.en.data.preparation.corpus import Example, parse_example
+from languages.en.text.editing.paragraph import ParagraphStatus, proofread_paragraph
 from services.api.identity.errors import IdentityProviderUnavailable
 
 
@@ -138,6 +139,19 @@ def _message(payload: object) -> tuple[str, LanguageTag, int | None]:
     return text, LanguageTag(language), expected_revision
 
 
+def _proofread_request(payload: object) -> tuple[str, LanguageTag]:
+    if not isinstance(payload, dict) or set(payload) - {"text", "language"}:
+        raise ValueError("Unexpected language request fields")
+    text = payload.get("text")
+    if not isinstance(text, str) or not text.strip() or len(text) > _MAX_TEXT_CHARS:
+        raise ValueError(f"text must contain 1–{_MAX_TEXT_CHARS} characters")
+    text.encode("utf-8")
+    language = payload.get("language", "en")
+    if not isinstance(language, str) or len(language) > 128:
+        raise ValueError("Invalid language tag")
+    return text, LanguageTag(language)
+
+
 def _learning_example(payload: object) -> Example:
     allowed_fields = {"consent", "prompt", "response", "history"}
     required_fields = {"consent", "prompt", "response"}
@@ -198,6 +212,7 @@ def create_app(
         credentials = _encode_credentials(owner_tokens) if owner_tokens else ()
     cors_origins = _validate_origins(allowed_origins)
     active_messages = 0
+    active_language_requests = 0
 
     @web.middleware
     async def boundary(request, handler):
@@ -280,7 +295,9 @@ def create_app(
         if owner is None:
             return unauthorized()
         query = request.query
-        keys = tuple(query.keys())
+        # Multidict.keys() de-duplicates names; inspect items to reject repeated
+        # query parameters instead of silently accepting the first value.
+        keys = tuple(key for key, _ in query.items())
         if set(keys) - {"limit", "after"} or len(set(keys)) != len(keys):
             return _error(400, "invalid_pagination", "Use a single limit and after cursor")
         raw_limit = query.get("limit", "20")
@@ -352,6 +369,35 @@ def create_app(
             "request_id": result.request_id,
             "text": outcome.text,
             "language": outcome.language.value,
+        })
+
+    async def proofread(request: web.Request) -> web.Response:
+        nonlocal active_language_requests
+        owner = await authenticated_owner(request)
+        if owner is None:
+            return unauthorized()
+        if request.content_type != "application/json":
+            return _error(415, "unsupported_media_type", "Use application/json")
+        try:
+            text, language = _proofread_request(json.loads((await request.read()).decode("utf-8")))
+        except (UnicodeError, ValueError, RecursionError):
+            return _error(400, "invalid_request", "Invalid proofreading request")
+        if language != LanguageTag("en"):
+            status, message = _ENGINE_FAILURES[ErrorCode.UNSUPPORTED_LANGUAGE]
+            return _error(status, ErrorCode.UNSUPPORTED_LANGUAGE.value, message)
+        if active_language_requests >= max_concurrent_messages:
+            return _error(503, "language_capacity", "The language service is busy")
+        active_language_requests += 1
+        try:
+            result = await asyncio.to_thread(proofread_paragraph, text)
+        finally:
+            active_language_requests -= 1
+        return _json({
+            "language": language.value,
+            "status": result.status.value,
+            "text": result.text,
+            "review_required": result.status in {ParagraphStatus.PARTIAL, ParagraphStatus.REVIEW_REQUIRED},
+            "persisted": False,
         })
 
     async def submit_feedback(request: web.Request) -> web.Response:
@@ -494,6 +540,7 @@ def create_app(
     app.router.add_get(resource, get, allow_head=False)
     app.router.add_delete(resource, delete)
     app.router.add_post(resource + "/messages", send)
+    app.router.add_post("/v1/language/proofread", proofread)
     if feedback_store is not None:
         app.router.add_post("/v1/learning/feedback", submit_feedback)
         app.router.add_get("/v1/learning/feedback", list_feedback, allow_head=False)
