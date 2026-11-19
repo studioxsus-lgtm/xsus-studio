@@ -46,7 +46,7 @@
 {"id":"clean-distinct-words","input":"They leave the folder.","status":"unchanged","output":"They leave the folder."}
 {"id":"clean-question","input":"Does the student write the report?","status":"unchanged","output":"Does the student write the report?"}
 {"id":"overlapping-spelling-and-grammar","input":"He recieve the message.","status":"review_required","output":"He recieve the message."}
-{"id":"atomic-failure-unknown-word","input":"They evaluate teh opportunity.","status":"review_required","output":"They evaluate teh opportunity."}
+{"id":"atomic-failure-unknown-word","input":"They evaluate teh quorble.","status":"review_required","output":"They evaluate teh quorble."}
 {"id":"atomic-failure-incomplete-clause","input":"Teh old file.","status":"review_required","output":"Teh old file."}
 {"id":"atomic-failure-unknown-reference-sound","input":"They use a SQL model.","status":"review_required","output":"They use a SQL model."}
 {"id":"atomic-failure-plural-article","input":"They read a reports.","status":"review_required","output":"They read a reports."}

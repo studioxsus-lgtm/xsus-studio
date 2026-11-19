@@ -1,11 +1,13 @@
-# General English Coverage — Lexicon v3
+# General English Coverage — Lexicon v4
 
 The written English clause analyzer uses a local, versioned vocabulary at
-`languages/en/data/lexicon/general-v3.json`. The vocabulary currently contains
-**374 count nouns, 35 mass nouns, 174 adjectives, 257 verbs, 195 transitive
+`languages/en/data/lexicon/general-v4.json`. The vocabulary currently contains
+**534 count nouns, 81 mass nouns, 249 adjectives, 391 verbs, 289 transitive
 verbs, 20 determiners, 11 singular pronouns, and 64 adverbs**. Transitive verbs
 and agent nouns are recorded separately so the parser can use them when
-identifying objects and passive agents.
+identifying objects and passive agents. Version 4 adds broad everyday,
+workplace, academic, civic, and digital vocabulary while preserving the v3
+lexicon as a versioned snapshot.
 
 ## Supported patterns
 
@@ -26,12 +28,15 @@ identifying objects and passive agents.
 - Count and mass noun agreement, common determiners, singular indefinite
   pronouns, and targeted determiner-number diagnostics.
 
-The authored evaluation set is `languages/en/evaluation/general-vocabulary-v2.jsonl`.
-Run it from the package root with:
+The authored evaluation sets are `languages/en/evaluation/general-vocabulary-v2.jsonl`
+and `languages/en/evaluation/general-vocabulary-v3.jsonl`. Run either set from
+the package root with:
 
 ```sh
 python3 -m languages.en.evaluation.general_english
 ```
+
+To evaluate the v3 cases explicitly, pass `--cases languages/en/evaluation/general-vocabulary-v3.jsonl`.
 
 Each expected result checks parsed grammatical roles rather than only whether
 the sentence was accepted. Cases with `expected: null` check that unsupported

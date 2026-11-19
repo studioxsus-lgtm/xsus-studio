@@ -1,0 +1,31 @@
+{"id":"analyst-evaluates-evidence","input":"The analyst evaluates the evidence.","expected":{"subject":"analyst","number":"singular","verb":"evaluate","object":"evidence"}}
+{"id":"assistants-arrange-meeting","input":"Several assistants arrange the meeting.","expected":{"subject":"assistants","number":"plural","verb":"arrange","object":"meeting"}}
+{"id":"service-improves-access","input":"An online service improves access.","expected":{"subject":"service","number":"singular","verb":"improve","object":"access"}}
+{"id":"journalist-interviews-candidate","input":"The journalist interviews a candidate.","expected":{"subject":"journalist","number":"singular","verb":"interview","object":"candidate"}}
+{"id":"supervisor-verifies-results","input":"The supervisor verifies the results.","expected":{"subject":"supervisor","number":"singular","verb":"verify","object":"results"}}
+{"id":"participant-completes-form","input":"Did the participant complete the form?","expected":{"subject":"participant","number":"singular","verb":"complete","object":"form","kind":"question"}}
+{"id":"committee-reviews-proposal","input":"The committee reviews the proposal.","expected":{"subject":"committee","number":"singular","verb":"review","object":"proposal"}}
+{"id":"intelligent-system-analyzes-request","input":"An intelligent system analyzes the request.","expected":{"subject":"system","number":"singular","verb":"analyze","object":"request"}}
+{"id":"engineer-calculates-value","input":"An engineer calculates the value.","expected":{"subject":"engineer","number":"singular","verb":"calculate","object":"value"}}
+{"id":"colleagues-share-information","input":"Several colleagues share information.","expected":{"subject":"colleagues","number":"plural","verb":"share","object":"information"}}
+{"id":"agency-provides-assistance","input":"Does the agency provide assistance?","expected":{"subject":"agency","number":"singular","verb":"provide","object":"assistance","kind":"question"}}
+{"id":"inspector-examines-device","input":"An inspector examines the device.","expected":{"subject":"inspector","number":"singular","verb":"examine","object":"device"}}
+{"id":"translator-interprets-message","input":"The translator interprets the message.","expected":{"subject":"translator","number":"singular","verb":"interpret","object":"message"}}
+{"id":"employees-maintain-accounts","input":"Employees maintain secure accounts.","expected":{"subject":"employees","number":"plural","verb":"maintain","object":"accounts"}}
+{"id":"assistant-organizes-schedule","input":"An assistant organizes the schedule.","expected":{"subject":"assistant","number":"singular","verb":"organize","object":"schedule"}}
+{"id":"analyst-recommends-solution","input":"The analyst recommends a solution.","expected":{"subject":"analyst","number":"singular","verb":"recommend","object":"solution"}}
+{"id":"equipment-supports-process","input":"The equipment supports a reliable process.","expected":{"subject":"equipment","number":"singular","verb":"support","object":"process"}}
+{"id":"audience-discusses-issue","input":"The audience discusses the issue.","expected":{"subject":"audience","number":"singular","verb":"discuss","object":"issue"}}
+{"id":"observer-identifies-problem","input":"An observer identifies a problem.","expected":{"subject":"observer","number":"singular","verb":"identify","object":"problem"}}
+{"id":"research-confirms-conclusion","input":"New research confirms the conclusion.","expected":{"subject":"research","number":"singular","verb":"confirm","object":"conclusion"}}
+{"id":"consultant-summarizes-report","input":"The consultant summarizes a report.","expected":{"subject":"consultant","number":"singular","verb":"summarize","object":"report"}}
+{"id":"candidate-accepts-offer","input":"The candidate accepts an offer.","expected":{"subject":"candidate","number":"singular","verb":"accept","object":"offer"}}
+{"id":"participant-follows-instruction","input":"Every participant follows an instruction.","expected":{"subject":"participant","number":"singular","verb":"follow","object":"instruction"}}
+{"id":"translators-review-document","input":"Do the translators review the document?","expected":{"subject":"translators","number":"plural","verb":"review","object":"document","kind":"question"}}
+{"id":"organization-negotiates-contract","input":"An organization negotiates a contract.","expected":{"subject":"organization","number":"singular","verb":"negotiate","object":"contract"}}
+{"id":"assistant-requests-information","input":"The assistant requests additional information.","expected":{"subject":"assistant","number":"singular","verb":"request","object":"information"}}
+{"id":"specialist-interprets-diagram","input":"A specialist interprets a diagram.","expected":{"subject":"specialist","number":"singular","verb":"interpret","object":"diagram"}}
+{"id":"publication-clarifies-definition","input":"The publication clarifies a definition.","expected":{"subject":"publication","number":"singular","verb":"clarify","object":"definition"}}
+{"id":"candidate-demonstrates-ability","input":"The candidate demonstrates an ability.","expected":{"subject":"candidate","number":"singular","verb":"demonstrate","object":"ability"}}
+{"id":"photographers-document-event","input":"The photographers document the event.","expected":{"subject":"photographers","number":"plural","verb":"document","object":"event"}}
+{"id":"consultant-estimates-cost","input":"A consultant estimates the cost.","expected":{"subject":"consultant","number":"singular","verb":"estimate","object":"cost"}}

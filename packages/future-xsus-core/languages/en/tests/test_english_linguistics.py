@@ -1,5 +1,7 @@
 import unittest
+from pathlib import Path
 
+from languages.en.evaluation.general_english import evaluate
 from languages.en.text.grammar import IssueCode, check_grammar
 from languages.en.text.linguistics import analyze_english
 from languages.en.text.morphology import VerbForm, inflect_verb, pluralize_noun
@@ -41,6 +43,12 @@ class EnglishMorphologyTests(unittest.TestCase):
 
 
 class EnglishClauseTests(unittest.TestCase):
+    def test_general_vocabulary_v3_structural_cases(self):
+        cases = Path(__file__).resolve().parents[1] / "evaluation" / "general-vocabulary-v3.jsonl"
+        report = evaluate(cases)
+        self.assertEqual(report["cases"], 31)
+        self.assertEqual(report["failures"], [])
+
     def test_combined_analysis_distinguishes_unknown_clauses_from_correct_clauses(self):
         self.assertIsNone(analyze_english("Where did Alex say Sam went?"))
         result = analyze_english("Alex called Sam.")

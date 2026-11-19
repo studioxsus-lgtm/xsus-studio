@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .morphology import inflect_verb, pluralize_noun
 
-_LEXICON_PATH = Path(__file__).resolve().parents[1] / "data" / "lexicon" / "general-v3.json"
+_LEXICON_PATH = Path(__file__).resolve().parents[1] / "data" / "lexicon" / "general-v4.json"
 _WORD = re.compile(r"[a-z]+(?:-[a-z]+)*", re.ASCII)
 
 
@@ -49,7 +49,7 @@ def _load_lexicon() -> EnglishLexicon:
         "version", "nouns", "mass_nouns", "adjectives", "verbs", "transitive_verbs", "agent_nouns",
         "determiners", "singular_pronouns", "adverbs",
     }
-    if not isinstance(raw, dict) or set(raw) != expected or raw["version"] != 3:
+    if not isinstance(raw, dict) or set(raw) != expected or raw["version"] != 4:
         raise ValueError("Unsupported English lexicon schema")
     nouns = _word_set(raw["nouns"], "nouns")
     mass_nouns = _word_set(raw["mass_nouns"], "mass nouns")
