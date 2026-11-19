@@ -1,6 +1,6 @@
-import sq from './sq.js';
-import fr from './fr.js';
-import en from './en.js';
+import sq from './sq.js?v=20261119-r2';
+import fr from './fr.js?v=20261119-r2';
+import en from './en.js?v=20261119-r2';
 const translations = {en,sq,fr};
 const supported = ['en','sq','fr'];
 const original = new WeakMap();

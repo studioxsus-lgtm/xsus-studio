@@ -1,4 +1,4 @@
-import { t, formatUi } from './i18n/language-manager.js';
+import { t, formatUi } from './i18n/language-manager.js?v=20261119-r2';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
 

@@ -1,4 +1,4 @@
-import { t } from './i18n/language-manager.js';
+import { t } from './i18n/language-manager.js?v=20261119-r2';
 import { renderVisualDesign, handleVisualDesignClick, handleVisualDesignInput } from './visual-editor.js';
 import { $, $$, state, refreshIcons } from './state.js';
 

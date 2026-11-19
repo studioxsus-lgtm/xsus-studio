@@ -1,4 +1,4 @@
-import { t } from './i18n/language-manager.js';
+import { t } from './i18n/language-manager.js?v=20261119-r2';
 let timer;
 let activeToastKey = null;
 document.addEventListener('xsus:language-changed', () => {

@@ -1,4 +1,4 @@
-import { t } from './i18n/language-manager.js';
+import { t } from './i18n/language-manager.js?v=20261119-r2';
 // XSUS App V2.3 — sample dashboard only. No project persistence.
 import { $, $$, refreshIcons } from './state.js';
 import { toast } from './notifications.js';
