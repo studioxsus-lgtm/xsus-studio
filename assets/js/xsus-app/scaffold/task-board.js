@@ -51,6 +51,21 @@ function runTaskBoard() {
     overviewHeading.after(overview);
   }
 
+  function localDay(now) {
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return now.getFullYear() + '-' + month + '-' + day;
+  }
+  let today = localDay(new Date());
+  function deadlineStatus(task) {
+    if (task.done || !task.date) return '';
+    if (task.date === today) return ' — Due today';
+    return task.date < today ? ' — Overdue' : '';
+  }
+  function showDueDate(node, task) {
+    node.textContent = task.date ? 'Due ' + task.date + deadlineStatus(task) : '';
+  }
+
   function updateOverview() {
     if (!overviewHeading) return;
     let completed = 0;
@@ -96,7 +111,7 @@ function runTaskBoard() {
         lastDate = task.date;
       }
       const entry = document.createElement('li');
-      entry.textContent = task.name + (task.done ? ' — Completed' : '');
+      entry.textContent = task.name + (task.done ? ' — Completed' : deadlineStatus(task));
       list.append(entry);
     }
   }
@@ -153,6 +168,7 @@ function runTaskBoard() {
     checkbox.checked = task.done;
     checkbox.addEventListener('change', () => {
       task.done = checkbox.checked;
+      showDueDate(due, task);
       storeTask(task);
     });
     label.append(checkbox, title);
@@ -168,7 +184,7 @@ function runTaskBoard() {
       edit.setAttribute('aria-label', 'Edit task: ' + task.name);
       due.hidden = !task.date;
       due.dateTime = task.date;
-      due.textContent = task.date ? 'Due ' + task.date : '';
+      showDueDate(due, task);
     }
     const remove = document.createElement('button');
     remove.type = 'button';
@@ -291,6 +307,23 @@ function runTaskBoard() {
   } else {
     status.textContent = 'Use Save HTML with tasks to reopen this board later.';
   }
+  let dayTimer;
+  function syncDay() {
+    clearTimeout(dayTimer);
+    const now = new Date();
+    const day = localDay(now);
+    if (today !== day) {
+      today = day;
+      for (const row of tasks.children) showDueDate(row.querySelector('time'), records.get(row.dataset.taskId));
+      updateCalendar();
+    }
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    dayTimer = setTimeout(syncDay, midnight.getTime() - now.getTime());
+  }
+  syncDay();
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) syncDay();
+  });
   restored.forEach(renderTask);
   updateOverview();
   updateFilterOptions();
