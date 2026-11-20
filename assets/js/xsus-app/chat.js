@@ -1,6 +1,6 @@
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261120-account1';
 import { showGeneratedHtml } from './editor.js?v=20261120-account1';
-import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments } from './scaffold/index.js?v=20261120-assignment1';
+import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261120-memberfilter1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
@@ -294,10 +294,20 @@ const assignmentRequests = new Set([
   'assigner chaque tache a un membre de l equipe'
 ]);
 
-function requestsAssignment(goal) {
+const filterRequests = new Set([
+  'me lejo t i filtroj detyrat sipas anetarit te ekipit',
+  'filtro detyrat sipas anetarit te ekipit',
+  'filter tasks by team member',
+  'let me filter tasks by team member',
+  'filtrer les taches par membre de l equipe'
+]);
+
+function requestedBoardEdit(goal) {
   const words = goal.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
     .replace(/['’]/g, ' ').replace(/[.!?]+$/, '').replace(/\s+/g, ' ').trim();
-  return assignmentRequests.has(words);
+  if (filterRequests.has(words)) return 'filter';
+  if (assignmentRequests.has(words)) return 'assign';
+  return null;
 }
 
 async function send() {
@@ -306,24 +316,35 @@ async function send() {
   if (!goal) { toast(t('Enter an English goal and at least one plan step.')); input.focus(); return; }
   const session = current();
   const original = session.generatedHtml;
-  const assignment = requestsAssignment(goal) && original?.includes('id="save-board"') && !$('#planSteps').value.trim();
-  const edited = assignment ? enableTaskAssignments(original) : null;
+  const edit = original?.includes('id="save-board"') && !$('#planSteps').value.trim() && requestedBoardEdit(goal);
+  const filtering = edit === 'filter';
+  const edited = edit && (filtering ? enableMemberFilter(original) : enableTaskAssignments(original));
+  const editGoal = filtering ? 'Filter tasks by team member.' : 'Assign each task to a team member.';
+  const editStep = filtering ? 'Add a team member filter to the task board.' : 'Add a team member field to tasks.';
   const labels = {
     sq: ['Caktimi i detyrave është aktiv.', 'U shtua fusha për anëtarin e ekipit.', 'Ky version i tabelës nuk e mbështet këtë ndryshim.'],
     en: ['Task assignment is already enabled.', 'Added the team member field.', 'This board version does not support this change.'],
     fr: ['L’affectation des tâches est déjà activée.', 'Le champ du membre de l’équipe a été ajouté.', 'Cette version du tableau ne prend pas en charge cette modification.']
   };
-  const feedback = labels[document.documentElement.lang] || labels.en;
-  if (assignment && edited === original) {
-    toast(feedback[original.includes('id="task-assignee"') ? 0 : 2]);
+  const filterLabels = {
+    sq: ['Filtri sipas anëtarit të ekipit është aktiv.', 'U shtua filtri sipas anëtarit të ekipit.'],
+    en: ['The team member filter is already enabled.', 'Added the team member filter.'],
+    fr: ['Le filtre par membre est déjà activé.', 'Le filtre par membre a été ajouté.']
+  };
+  const lang = document.documentElement.lang;
+  const feedback = labels[lang] || labels.en;
+  const messages = filtering ? (filterLabels[lang] || filterLabels.en) : feedback;
+  if (edit && edited === original) {
+    const field = filtering ? 'member-filter' : 'task-assignee';
+    toast(original.includes('id="' + field + '"') ? messages[0] : feedback[2]);
     return;
   }
   const rawSteps = $('#planSteps').value;
   let steps;
-  try { steps = parsePlanSteps(assignment ? 'Add a team member field to tasks.' : rawSteps); }
+  try { steps = parsePlanSteps(edit ? editStep : rawSteps); }
   catch (error) { toast(t(error instanceof BridgeRequestError ? error.code === 'invalid_steps' ? 'Add 1–100 non-empty plan steps, each no longer than 4096 characters.' : 'Enter an English goal and at least one plan step.' : 'Enter an English goal and at least one plan step.')); $('#planSteps').focus(); return; }
   if (!session.messages.length) session.name = goal.slice(0, 35) + (goal.length > 35 ? '…' : '');
-  session.messages.push({ role: 'user', text: assignment ? goal : `${goal}\n\n${t('Plan steps')}:\n${steps.map(step => `• ${step.task}`).join('\n')}` });
+  session.messages.push({ role: 'user', text: edit ? goal : `${goal}\n\n${t('Plan steps')}:\n${steps.map(step => `• ${step.task}`).join('\n')}` });
   input.value = ''; $('#planSteps').value = ''; updateCount(); renderMessages();
   busy = true;
   const controller = new AbortController();
@@ -331,20 +352,20 @@ async function send() {
   $('#chatProgress').classList.remove('hidden'); $('#sendBtn').disabled = true;
   const sessionId = activeId;
   try {
-    const result = await createDraftPlan({ goal: assignment ? 'Assign each task to a team member.' : goal, steps, signal: controller.signal });
+    const result = await createDraftPlan({ goal: edit ? editGoal : goal, steps, signal: controller.signal });
     if (requestController === controller && sessionId === activeId) {
-      if (assignment && result.status === 'completed' && !result.language?.review_required && session.generatedHtml === original) {
+      if (edit && result.status === 'completed' && !result.language?.review_required && session.generatedHtml === original) {
         session.generatedHtml = edited;
         for (const message of session.messages) {
           const draft = specificationReviews.get(message.reviewKey ?? message.result?.requestId);
           if (draft?.builtHtml === original) draft.builtHtml = edited;
         }
-        session.messages.push({role:'assistant', text:feedback[1]});
+        session.messages.push({role:'assistant', text:messages[1]});
         renderMessages();
         showGeneratedHtml(edited, true);
         return;
       }
-      if (assignment) {
+      if (edit) {
         session.messages.push({role:'assistant', text:showError('review_required')});
         input.value = goal;
         updateCount();

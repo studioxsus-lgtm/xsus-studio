@@ -22,7 +22,15 @@ function runTaskBoard() {
   const tasks = document.getElementById('tasks');
   const count = document.getElementById('task-count');
 
+  const filter = document.getElementById('member-filter');
+
   function updateCount() {
+    if (filter && filter.value) {
+      const visible = Array.from(tasks.children).filter(row => !row.hidden);
+      const done = visible.filter(row => row.querySelector('input').checked).length;
+      count.textContent = visible.length ? done + ' / ' + visible.length + ' completed' : 'No matching tasks.';
+      return;
+    }
     const total = tasks.children.length;
     const done = tasks.querySelectorAll('input:checked').length;
     count.textContent = done + ' / ' + total + ' completed';
@@ -71,7 +79,30 @@ function runTaskBoard() {
     }
   }
 
+  function updateFilterOptions() {
+    if (!filter) return;
+    const selected = filter.value;
+    const names = new Set(snapshot().map(task => task.assignee).filter(Boolean));
+    filter.replaceChildren(new Option('All tasks', ''), new Option('Unassigned', '-'));
+    for (const member of Array.from(names).sort((a, b) => a.localeCompare(b))) {
+      filter.add(new Option(member, '+' + member));
+    }
+    if (selected === '-' || names.has(selected.slice(1))) filter.value = selected;
+    applyFilter();
+  }
+
+  function applyFilter() {
+    for (const row of tasks.children) {
+      const member = records.get(row.dataset.taskId)?.assignee;
+      row.hidden = Boolean(filter.value && filter.value !== (member ? '+' + member : '-'));
+    }
+    updateCount();
+  }
+
+  filter?.addEventListener('change', applyFilter);
+
   function storeTask(task) {
+    updateFilterOptions();
     updateCalendar();
     if (embedded) {
       window.parent.postMessage({type:'xsus-board-state', board:board.dataset.board, tasks:snapshot()}, '*');
@@ -90,6 +121,7 @@ function runTaskBoard() {
         typeof task.date !== 'string' || typeof task.done !== 'boolean') return;
     records.set(task.id, task);
     const item = document.createElement('li');
+    item.dataset.taskId = task.id;
     const label = document.createElement('label');
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -237,6 +269,7 @@ function runTaskBoard() {
     status.textContent = 'Use Save HTML with tasks to reopen this board later.';
   }
   restored.forEach(renderTask);
+  updateFilterOptions();
   updateCalendar();
   updateCount();
 
