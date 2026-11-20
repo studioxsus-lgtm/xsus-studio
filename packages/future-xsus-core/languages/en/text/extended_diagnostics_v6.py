@@ -5,6 +5,7 @@ from .discourse_v6 import analyze_discourse_v6
 from .argument_signals_v6 import analyze_argument_signals_v6
 from .reference_signals_v6 import analyze_reference_signals_v6
 from .ambiguity_signals_v6 import analyze_ambiguity_signals_v6
+from .continuity_v6 import analyze_continuity_v6
 
 
 def analyze_extended_v6(text: str, history: list[str] | tuple[str, ...] = ()) -> dict:
@@ -22,6 +23,7 @@ def analyze_extended_v6(text: str, history: list[str] | tuple[str, ...] = ()) ->
         "argument_signals": asdict(analyze_argument_signals_v6(text)),
         "reference_signals": asdict(analyze_reference_signals_v6(text)),
         "ambiguity_signals": asdict(analyze_ambiguity_signals_v6(text)),
+        "continuity": asdict(analyze_continuity_v6(text)),
         "capabilities": {
             "resolves_references": False,
             "verifies_arguments": False,
