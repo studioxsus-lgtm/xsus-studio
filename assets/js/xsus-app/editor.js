@@ -1,3 +1,4 @@
+import { registerRefreshState, saveRefreshState } from './refresh-state.js';
 import { t } from './i18n/language-manager.js?v=20261119-r2';
 import { renderVisualDesign, handleVisualDesignClick, handleVisualDesignInput } from './visual-editor.js';
 import { $, $$, state, refreshIcons } from './state.js';
@@ -17,6 +18,7 @@ window.addEventListener('message', event => {
   const message = event.data;
   if (message?.type === 'xsus-board-state' && frame.dataset.board === message.board && Array.isArray(message.tasks)) {
     previewTasks.set(message.board, message.tasks);
+    saveRefreshState('boards');
   }
 });
 
@@ -107,6 +109,11 @@ function onEditorClick(event) {
   renderEditor();
 }
 export function initEditor() {
+  registerRefreshState('boards', () => [...previewTasks], saved => {
+    previewTasks.clear();
+    for (const [id, tasks] of saved || []) previewTasks.set(id, tasks);
+    renderEditor();
+  });
   $$('[data-mode]').forEach(button=>button.addEventListener('click',()=>updateMode(button.dataset.mode)));
   $$('[data-device]').forEach(button=>button.addEventListener('click',()=>updateDevice(button.dataset.device)));
   const target=$('#editorBody');

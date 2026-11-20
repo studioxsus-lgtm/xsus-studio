@@ -1,5 +1,6 @@
-import { showGeneratedHtml } from './editor.js?v=20261120-save1';
-import { appendScaffoldControls } from './scaffold/index.js?v=20261120-save1';
+import { registerRefreshState, saveRefreshState } from './refresh-state.js';
+import { showGeneratedHtml } from './editor.js?v=20261120-refresh1';
+import { appendScaffoldControls } from './scaffold/index.js?v=20261120-refresh1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
@@ -80,18 +81,22 @@ function renderSpecificationCard(specification, draft) {
         return;
       }
       specificationReviews.set(specification.requestId, result.specification);
+      saveRefreshState('builder');
       specCard.replaceWith(renderSpecificationCard(specification, result.specification));
     });
     const discard = document.createElement('button'); discard.type = 'button'; discard.className = 'app-specification-discard'; discard.textContent = t('Discard draft');
     discard.addEventListener('click', () => {
       specificationReviews.set(specification.requestId, { state: 'discarded' });
+      saveRefreshState('builder');
       specCard.remove();
     });
     actions.append(approve, discard);
   }
   if (actions.childElementCount) specCard.append(actions);
   if (draft.state === 'approved_for_next_phase') appendScaffoldControls(specCard, draft, t, html => {
+    draft.builtHtml = html;
     current().generatedHtml = html;
+    saveRefreshState('builder');
     showGeneratedHtml(html, true);
   });
   return specCard;
@@ -185,6 +190,7 @@ function renderMessages() {
   });
   const tip = document.createElement('div'); tip.className = 'chat-tip'; tip.textContent = t('Authenticated request to the XSUS Hyper–Future bridge. Drafts are temporary and never execute.'); target.append(tip);
   renderHistory(); iconRefresh();
+  saveRefreshState('builder');
 }
 
 const appTemplates = {
@@ -210,6 +216,7 @@ function fillTemplate(template) {
   $('#planSteps').value = template.steps.join('\n');
   updateCount();
   $('#prompt').focus();
+  saveRefreshState('builder');
 }
 
 function updateCount() { $('#promptCount').textContent = `${$('#prompt').value.length} / 2000`; }
@@ -252,12 +259,12 @@ async function send() {
   const sessionId = activeId;
   try {
     const result = await createDraftPlan({ goal, steps, signal: controller.signal });
-    if (sessionId === activeId) {
+    if (requestController === controller && sessionId === activeId) {
       session.messages.push(result.plan ? { role: 'plan', result } : { role: 'review', result });
       renderMessages();
     }
   } catch (error) {
-    if (error?.name !== 'AbortError' && sessionId === activeId) {
+    if (error?.name !== 'AbortError' && requestController === controller && sessionId === activeId) {
       session.messages.push({ role: 'assistant', text: showError(error instanceof BridgeRequestError ? error.code : 'service_unavailable') });
       $('#prompt').value = goal;
       $('#planSteps').value = steps.map(step => step.task).join('\n');
@@ -272,6 +279,26 @@ async function send() {
 }
 
 export function initChat() {
+  registerRefreshState('builder', () => ({
+    sessions, reviews: [...specificationReviews], activeId, nextId,
+    goal: $('#prompt').value, steps: $('#planSteps').value
+  }), saved => {
+    cancelPending();
+    sessions.splice(0, sessions.length, ...(saved?.sessions || [{id:1, name:'New conversation', messages:[]}]));
+    activeId = saved?.activeId || 1;
+    nextId = saved?.nextId || 2;
+    specificationReviews.clear();
+    for (const [id, draft] of saved?.reviews || []) specificationReviews.set(id, draft);
+    $('#prompt').value = saved?.goal || '';
+    $('#planSteps').value = saved?.steps || '';
+    updateCount();
+    renderMessages();
+  });
+  for (const type of ['input', 'click']) {
+    document.addEventListener(type, event => {
+      if (event.target.closest('#chatPanel, [data-app-template], #chatHistory, #newConversationBtn')) saveRefreshState('builder');
+    });
+  }
   $('#sendBtn').addEventListener('click', send);
   $('#prompt').addEventListener('input', updateCount);
   for (const id of ['prompt', 'planSteps']) $( `#${id}`).addEventListener('keydown', event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); send(); } });

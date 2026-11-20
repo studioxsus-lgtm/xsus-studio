@@ -49,7 +49,7 @@ export function appendScaffoldControls(card, spec, t, onBuild) {
     preview.addEventListener('click', () => onBuild(html));
     controls.replaceChildren(preview, download);
   }
-  if (builtScaffolds.has(spec)) showDownload(builtScaffolds.get(spec));
+  if (spec.builtHtml || builtScaffolds.has(spec)) showDownload(spec.builtHtml || builtScaffolds.get(spec));
   build.addEventListener('click', () => {
     const html = buildScaffold(spec);
     builtScaffolds.set(spec, html);

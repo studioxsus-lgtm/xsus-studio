@@ -1,3 +1,4 @@
+import { registerRefreshState, saveRefreshState } from './refresh-state.js';
 import { t } from './i18n/language-manager.js';
 // XSUS App V2.7 — in-memory UI demo, no backend or persistence.
 import { $, refreshIcons } from './state.js';
@@ -26,6 +27,11 @@ document.addEventListener('xsus:language-changed',()=>{if(document.getElementByI
 function close(){ $('#pmOverlay').classList.add('hidden');document.body.style.overflow='';lastFocus?.focus(); }
 function open(){lastFocus=document.activeElement;$('#pmOverlay').classList.remove('hidden');document.body.style.overflow='hidden';$('#pmClose').focus();render();}
 export function initProjectManager(){
+  registerRefreshState('projects', () => ({items:projects.filter(x=>x.kind==='local'), nextId}), saved => {
+    projects.splice(0, projects.length, ...(saved?.items || []), ...templates.slice(0,3).map((x,i)=>({...x,id:'sample-'+i,kind:'sample'})));
+    nextId = saved?.nextId || 1;
+    $('#pmName').value=''; $('#pmDescription').value=''; render();
+  });
   $('#openProjectManager').addEventListener('click',open);
   $('#pmClose').addEventListener('click',close);
   $('#pmOverlay').addEventListener('mousedown',e=>{if(e.target===$('#pmOverlay'))close();});
@@ -35,6 +41,6 @@ export function initProjectManager(){
   ['pmSearch','pmCategory','pmSort'].forEach(id=>$('#'+id).addEventListener(id==='pmSearch'?'input':'change',render));
   $('#pmNew').addEventListener('click',()=>{$('#pmForm').classList.remove('hidden');$('#pmName').focus();});
   $('#pmCancel').addEventListener('click',()=>$('#pmForm').classList.add('hidden'));
-  $('#pmSubmit').addEventListener('click',()=>{const name=$('#pmName').value.trim(),description=$('#pmDescription').value.trim();if(!name){$('#pmName').focus();toast(t('Enter a project name.'));return;}projects.unshift({id:'local-'+nextId++,name,type:$('#pmType').value,description:description||t('New local concept.'),prompt:description||`Create ${name}`,kind:'local'});$('#pmName').value='';$('#pmDescription').value='';$('#pmForm').classList.add('hidden');view='projects';document.querySelector('[data-pm-tab="projects"]').click();$('#pmSearch').value='';$('#pmCategory').value='all';render();toast(t('Local concept added for this page session only.'));});
-  $('#pmGrid').addEventListener('click',e=>{const del=e.target.closest('[data-pm-delete]');if(del){const i=projects.findIndex(x=>x.id===del.dataset.pmDelete);if(i>=0)projects.splice(i,1);render();toast(t('Local concept removed.'));return;}const btn=e.target.closest('[data-pm-open]');if(!btn)return;const x=[...projects,...templates].find(x=>x.id===btn.dataset.pmOpen);if(!x)return;$('#prompt').value=x.prompt;$('#prompt').dispatchEvent(new Event('input',{bubbles:true}));close();document.querySelector('[data-section="AI Builder"]').click();$('#prompt').focus();toast(t('Concept loaded in AI Builder — demo only.'));});
+  $('#pmSubmit').addEventListener('click',()=>{const name=$('#pmName').value.trim(),description=$('#pmDescription').value.trim();if(!name){$('#pmName').focus();toast(t('Enter a project name.'));return;}projects.unshift({id:'local-'+nextId++,name,type:$('#pmType').value,description:description||t('New local concept.'),prompt:description||`Create ${name}`,kind:'local'});saveRefreshState('projects');$('#pmName').value='';$('#pmDescription').value='';$('#pmForm').classList.add('hidden');view='projects';document.querySelector('[data-pm-tab="projects"]').click();$('#pmSearch').value='';$('#pmCategory').value='all';render();toast(t('Local concept added for this page session only.'));});
+  $('#pmGrid').addEventListener('click',e=>{const del=e.target.closest('[data-pm-delete]');if(del){const i=projects.findIndex(x=>x.id===del.dataset.pmDelete);if(i>=0)projects.splice(i,1);saveRefreshState('projects');render();toast(t('Local concept removed.'));return;}const btn=e.target.closest('[data-pm-open]');if(!btn)return;const x=[...projects,...templates].find(x=>x.id===btn.dataset.pmOpen);if(!x)return;$('#prompt').value=x.prompt;$('#prompt').dispatchEvent(new Event('input',{bubbles:true}));close();document.querySelector('[data-section="AI Builder"]').click();$('#prompt').focus();toast(t('Concept loaded in AI Builder — demo only.'));});
 }
