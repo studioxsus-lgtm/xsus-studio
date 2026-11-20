@@ -1,11 +1,13 @@
-import { t } from './i18n/language-manager.js?v=20261120-app-spec1';
+import { t } from './i18n/language-manager.js?v=20261120-app-spec-review1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
 import { createDraftPlan, parsePlanSteps, BridgeRequestError } from './hyper-future-bridge-client.js?v=20261119-bridge2';
-import { createAppSpecification } from './app-specification/index.js?v=20261120-app-spec1';
+import { createAppSpecification } from './app-specification/index.js?v=20261120-app-spec-review1';
+import { approveSpecificationReviewDraft, createSpecificationReviewDraft, parseSpecificationList } from './app-specification/review.js?v=20261120-app-spec-review1';
 
 // Conversation drafts stay in memory on this page. Credentials and prompts are never persisted here.
 const sessions = [{ id: 1, name: 'New conversation', messages: [] }];
+const specificationReviews = new Map();
 let activeId = 1;
 let nextId = 2;
 let busy = false;
@@ -25,6 +27,71 @@ function addBubble(text, role) {
   bubble.append(meta, content);
   $('#chatMessages').append(bubble);
   scrollChat();
+}
+
+function renderSpecificationCard(specification, draft) {
+  const specCard = document.createElement('article'); specCard.className = 'concept-card app-specification-card';
+  specCard.dataset.requestId = specification.requestId;
+  const specHeading = document.createElement('h3');
+  specHeading.textContent = t(draft.state === 'approved_for_next_phase' ? 'App specification approved' : 'App specification draft');
+  const specStatus = document.createElement('p');
+  specStatus.textContent = t(draft.state === 'approved_for_next_phase' ? 'Approved for the next phase only' : 'Edit each list using one item per line, then approve the specification');
+  specCard.append(specHeading, specStatus);
+
+  const makeEditor = (label, key, values, target) => {
+    const section = document.createElement('section'); section.className = 'app-specification-section';
+    const title = document.createElement('label'); title.className = 'app-specification-label'; title.textContent = t(label);
+    const input = document.createElement('textarea'); input.className = 'app-specification-input'; input.rows = Math.min(5, Math.max(2, values.length));
+    input.value = values.join('\n'); input.setAttribute('aria-label', t(label));
+    input.placeholder = t('One item per line');
+    input.disabled = draft.state !== 'draft';
+    title.append(input); section.append(title); target.append(section);
+    input.addEventListener('input', () => {
+      const parsed = parseSpecificationList(input.value);
+      if (key === 'requirements') draft.requirements = parsed;
+      else draft.proposedStructure[key] = parsed;
+    });
+  };
+  makeEditor('Pages / screens', 'pages', draft.proposedStructure.pages, specCard);
+  makeEditor('UI components', 'components', draft.proposedStructure.components, specCard);
+  makeEditor('Data models', 'dataModels', draft.proposedStructure.dataModels, specCard);
+  makeEditor('Interactions', 'interactions', draft.proposedStructure.interactions, specCard);
+  makeEditor('User requirements', 'requirements', draft.requirements, specCard);
+
+  const questions = document.createElement('section'); questions.className = 'app-specification-section';
+  const questionTitle = document.createElement('h4'); questionTitle.textContent = t('Open questions'); questions.append(questionTitle);
+  const questionList = document.createElement('ul');
+  (draft.openQuestions.length ? draft.openQuestions : [t('No open questions')]).forEach(question => {
+    const item = document.createElement('li'); item.textContent = t(question); questionList.append(item);
+  });
+  questions.append(questionList); specCard.append(questions);
+  const status = document.createElement('p'); status.className = 'app-specification-feedback'; status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
+  if (draft.state === 'approved_for_next_phase') status.textContent = t('Approved in this temporary session. No code was generated or saved.');
+  specCard.append(status);
+  const actions = document.createElement('div'); actions.className = 'app-specification-actions';
+  if (draft.state === 'draft') {
+    const approve = document.createElement('button'); approve.type = 'button'; approve.className = 'app-specification-approve'; approve.textContent = t('Approve specification');
+    approve.addEventListener('click', () => {
+      const result = approveSpecificationReviewDraft(draft);
+      if (!result.ok) {
+        status.textContent = t(result.errors[0] === 'pages_required' ? 'Add at least one page or screen before approval.' : result.errors[0] === 'requirements_required' ? 'Add at least one user requirement before approval.' : 'Review the specification fields and try again.');
+        return;
+      }
+      specificationReviews.set(specification.requestId, result.specification);
+      specCard.replaceWith(renderSpecificationCard(specification, result.specification));
+    });
+    const discard = document.createElement('button'); discard.type = 'button'; discard.className = 'app-specification-discard'; discard.textContent = t('Discard draft');
+    discard.addEventListener('click', () => {
+      specificationReviews.set(specification.requestId, { state: 'discarded' });
+      specCard.remove();
+    });
+    actions.append(approve, discard);
+  }
+  if (actions.childElementCount) specCard.append(actions);
+  const specNote = document.createElement('p'); specNote.className = 'bridge-plan-note';
+  specNote.textContent = t('Approval only prepares a reviewed specification for a future phase. No app code is generated, run or saved.');
+  specCard.append(specNote);
+  return specCard;
 }
 
 function addPlan(result) {
@@ -58,30 +125,14 @@ function addPlan(result) {
   if (result.status === 'completed') {
     try {
       const specification = createAppSpecification(result);
-      const specCard = document.createElement('article'); specCard.className = 'concept-card app-specification-card';
-      const specHeading = document.createElement('h3'); specHeading.textContent = t('App specification draft');
-      const specStatus = document.createElement('p'); specStatus.textContent = t('Suggested structure — review before implementation');
-      specCard.append(specHeading, specStatus);
-      const addSection = (label, items) => {
-        const section = document.createElement('section'); section.className = 'app-specification-section';
-        const title = document.createElement('h4'); title.textContent = t(label); section.append(title);
-        const list = document.createElement('ul');
-        if (items.length) {
-          items.forEach(value => { const item = document.createElement('li'); item.textContent = t(value); list.append(item); });
-        } else {
-          const item = document.createElement('li'); item.textContent = t('Not defined yet'); list.append(item);
+      let reviewDraft = specificationReviews.get(specification.requestId);
+      if (reviewDraft?.state !== 'discarded') {
+        if (!reviewDraft) {
+        reviewDraft = createSpecificationReviewDraft(specification);
+        specificationReviews.set(specification.requestId, reviewDraft);
         }
-        section.append(list); specCard.append(section);
-      };
-      addSection('Pages / screens', specification.proposedStructure.pages);
-      addSection('UI components', specification.proposedStructure.components);
-      addSection('Data models', specification.proposedStructure.dataModels);
-      addSection('Interactions', specification.proposedStructure.interactions);
-      addSection('User requirements', specification.requirements.map(item => item.text));
-      addSection('Open questions', specification.openQuestions);
-      const specNote = document.createElement('p'); specNote.className = 'bridge-plan-note';
-      specNote.textContent = t('No application code is generated, run or saved. Review these suggestions before implementation.');
-      specCard.append(specNote); bubble.append(specCard);
+        bubble.append(renderSpecificationCard(specification, reviewDraft));
+      }
     } catch {
       // Keep the verified planning draft visible if a future spec contract rejects its input.
     }
