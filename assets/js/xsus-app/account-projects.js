@@ -6,6 +6,11 @@ const labels = {
   sq:['Projektet e mia','Emri i projektit','Ruaj një kopje','Hyr në llogari për të hapur projektet.','Projekti u ruajt në llogari.','Nuk ke ende projekte të ruajtura.','Ruajtja në llogari nuk është e disponueshme.','Shfaq më shumë','Mbyll','Po ruhet…','Hap','Shkruaj një ide ose ndërto një projekt fillimisht.'],
   fr:['Mes projets','Nom du projet','Enregistrer une copie','Connectez-vous pour accéder à vos projets.','Projet enregistré dans votre compte.','Aucun projet enregistré.','Le stockage du compte est indisponible.','Afficher plus','Fermer','Enregistrement…','Ouvrir','Saisissez une idée ou créez un projet.']
 };
+const deletionLabels = {
+  en: {button:'Delete', confirm:'Permanently delete this saved copy?', success:'Project deleted.', failed:'Could not confirm deletion. Reopen My projects to check.'},
+  sq: {button:'Fshi', confirm:'Ta fshish përgjithmonë këtë kopje të ruajtur?', success:'Projekti u fshi.', failed:'Fshirja nuk u konfirmua. Rihap Projektet e mia për ta kontrolluar.'},
+  fr: {button:'Supprimer', confirm:'Supprimer définitivement cette copie enregistrée ?', success:'Projet supprimé.', failed:'Suppression non confirmée. Rouvrez Mes projets pour vérifier.'}
+};
 const table = 'xsus_builder_projects';
 const boardId = html => html?.match(/<html lang="en" data-board="([a-f0-9-]+)"/)?.[1];
 
@@ -88,7 +93,36 @@ export function initAccountProjects() {
           } catch { if (current(token,owner)) status.textContent=words()[6]; }
           finally { b.disabled=false; }
         };
-        list.append(b);
+        const text = deletionLabels[document.documentElement.lang] || deletionLabels.en;
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'pm-launch';
+        remove.textContent = text.button;
+        remove.setAttribute('aria-label', text.button + ' · ' + row.name);
+        remove.onclick = async () => {
+          if (remove.disabled || !current(token, owner)) return;
+          const timestamp = new Date(row.created_at).toLocaleString(document.documentElement.lang);
+          if (!window.confirm(text.confirm + '\n\n' + row.name + '\n' + timestamp)) return;
+          remove.disabled = true;
+          b.disabled = true;
+          try {
+            const {data, error} = await client.from(table).delete()
+              .eq('owner_id', owner).eq('id', row.id).select('id').maybeSingle();
+            if (!current(token, owner)) return;
+            if (error || data?.id !== row.id) throw Error('Deletion unconfirmed');
+            generation++;
+            await fetchPage(true);
+            if (dialog.open && owner === currentWorkspaceOwner()) status.textContent = text.success;
+          } catch {
+            if (current(token, owner)) status.textContent = text.failed;
+          } finally {
+            remove.disabled = false;
+            b.disabled = false;
+          }
+        };
+        const entry = document.createElement('div');
+        entry.append(b, remove);
+        list.append(entry);
       }
     } catch { if (current(token,owner)) status.textContent=words()[6]; }
     finally { if(current(token,owner)) more.disabled=false; }
