@@ -9,6 +9,8 @@ class Clarification:
     reasons: tuple[str, ...]
 
 def assess_clarification(text: str, history: list[str] | tuple[str, ...] = ()) -> Clarification:
+    if not isinstance(history, (list, tuple)):
+        raise ValueError("history must be a list or tuple")
     intent = classify_intent(text)
     context = analyze_context((*history, text))
     reasons = []
