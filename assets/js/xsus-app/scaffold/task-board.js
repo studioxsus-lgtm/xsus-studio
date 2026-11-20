@@ -75,7 +75,38 @@ function runTaskBoard() {
       due.dateTime = task.date;
       due.textContent = task.date ? 'Due ' + task.date : '';
     }
-    item.append(due, edit);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = 'Delete task';
+    remove.addEventListener('click', () => {
+      remove.disabled = true;
+      const prompt = document.createElement('div');
+      const question = document.createElement('p');
+      question.textContent = 'Delete “' + task.name + '”?';
+      const cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.textContent = 'Cancel';
+      cancel.addEventListener('click', () => {
+        prompt.remove();
+        remove.disabled = false;
+        remove.focus();
+      });
+      const confirm = document.createElement('button');
+      confirm.type = 'button';
+      confirm.textContent = 'Delete';
+      confirm.addEventListener('click', () => {
+        records.delete(task.id);
+        // An exported file can contain this task in its initial snapshot.
+        storeTask({id:task.id, deleted:true});
+        item.remove();
+        updateCount();
+        name.focus();
+      });
+      prompt.append(question, cancel, confirm);
+      item.append(prompt);
+      cancel.focus();
+    });
+    item.append(due, edit, remove);
     display();
     edit.addEventListener('click', () => {
       edit.hidden = true;
@@ -148,7 +179,8 @@ function runTaskBoard() {
         if (key?.startsWith(prefix)) {
           try {
             const task = JSON.parse(localStorage.getItem(key));
-            restored.set(task.id, task);
+            if (task.deleted === true) restored.delete(task.id);
+            else restored.set(task.id, task);
           } catch {}
         }
       }
@@ -159,7 +191,7 @@ function runTaskBoard() {
     status.textContent = 'Use Save HTML with tasks to reopen this board later.';
   }
   restored.forEach(renderTask);
-  if (records.size) updateCount();
+  updateCount();
 
   document.getElementById('save-board').addEventListener('click', () => {
     const copy = board.cloneNode(true);
