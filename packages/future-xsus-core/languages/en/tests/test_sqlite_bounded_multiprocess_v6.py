@@ -12,7 +12,7 @@ CHILD = """
 import json, sys
 from datetime import datetime, timedelta, timezone
 from languages.en.integration.sqlite_bounded_lease_store_v6 import SQLiteBoundedLeaseStoreV6
-path, action, key, limit = sys.argv[1:]
+path, action, key, limit = sys.argv[1:5]
 store = SQLiteBoundedLeaseStoreV6(path, max_entries=int(limit))
 now = datetime(2026, 11, 20, 12, tzinfo=timezone.utc)
 expiry = now + timedelta(seconds=10)
