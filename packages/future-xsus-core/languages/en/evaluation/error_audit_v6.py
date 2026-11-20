@@ -51,7 +51,7 @@ def audit_document_errors_v6(cases) -> dict:
 
 
 ADVERSARIAL_CASES_V6 = (
-    DocumentCaseV6("contrast_literal", "The word however appears in this sentence.", 1, 1, False, False),
+    DocumentCaseV6("contrast_literal", "The word however appears in a sentence.", 1, 1, False, False),
     DocumentCaseV6("reference_literal", "The word she appears in this sentence.", 1, 1, False, False),
     DocumentCaseV6("contrast_real", "Costs rose. However, the plan continued.", 1, 2, True, False),
     DocumentCaseV6("reference_real", "Alex arrived. She waved.", 1, 2, False, True),
