@@ -38,7 +38,14 @@ function runTaskBoard() {
   search.type = 'search';
   search.id = 'task-search';
   searchLabel.append(search);
-  count.before(deadlineLabel, searchLabel);
+  const orderLabel = document.createElement('label');
+  orderLabel.id = 'task-order-label';
+  orderLabel.textContent = 'Sort tasks';
+  const order = document.createElement('select');
+  order.id = 'task-order';
+  order.append(new Option('Original order', ''), new Option('Earliest deadline first', 'earliest'));
+  orderLabel.append(order);
+  count.before(deadlineLabel, searchLabel, orderLabel);
 
   function searchText(value) {
     return value.trim().toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
@@ -151,6 +158,22 @@ function runTaskBoard() {
     if (selected === '-' || names.has(selected.slice(1))) filter.value = selected;
   }
 
+  function sortTasks() {
+    const rows = new Map(Array.from(tasks.children, row => [row.dataset.taskId, row]));
+    const sorted = snapshot();
+    if (order.value === 'earliest') {
+      sorted.sort((a, b) => {
+        if (!a.date || !b.date) return Number(Boolean(b.date)) - Number(Boolean(a.date));
+        return a.date.localeCompare(b.date);
+      });
+    }
+    sorted.forEach((task, index) => {
+      const row = rows.get(task.id);
+      if (row !== tasks.children[index]) tasks.insertBefore(row, tasks.children[index] || null);
+    });
+  }
+  order.addEventListener('change', sortTasks);
+
   function applyFilter() {
     const query = searchText(search.value);
     for (const row of tasks.children) {
@@ -169,6 +192,7 @@ function runTaskBoard() {
   search.addEventListener('input', applyFilter);
 
   function storeTask(task) {
+    if (order.value && !task.deleted) sortTasks();
     updateFilterOptions();
     applyFilter();
     updateOverview();
@@ -368,6 +392,7 @@ function runTaskBoard() {
     copy.dataset.board = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random();
     copy.querySelector('#deadline-filter-label').remove();
     copy.querySelector('#task-search-label').remove();
+    copy.querySelector('#task-order-label').remove();
     copy.querySelector('#project-summary')?.remove();
     copy.querySelector('#deadline-agenda')?.remove();
     copy.querySelector('#tasks').replaceChildren();
