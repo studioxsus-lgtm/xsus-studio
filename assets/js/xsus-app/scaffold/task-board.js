@@ -45,7 +45,18 @@ function runTaskBoard() {
   order.id = 'task-order';
   order.append(new Option('Original order', ''), new Option('Earliest deadline first', 'earliest'));
   orderLabel.append(order);
-  count.before(deadlineLabel, searchLabel, orderLabel);
+  const clear = document.createElement('button');
+  clear.type = 'button';
+  clear.id = 'clear-task-filters';
+  clear.textContent = 'Clear filters';
+  clear.addEventListener('click', () => {
+    if (filter) filter.value = '';
+    deadlineFilter.value = '';
+    search.value = '';
+    applyFilter();
+    search.focus();
+  });
+  count.before(deadlineLabel, searchLabel, orderLabel, clear);
 
   function searchText(value) {
     return value.trim().toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
@@ -176,6 +187,7 @@ function runTaskBoard() {
 
   function applyFilter() {
     const query = searchText(search.value);
+    clear.hidden = !(filter?.value || deadlineFilter.value || search.value);
     for (const row of tasks.children) {
       const task = records.get(row.dataset.taskId);
       if (!task) continue;
@@ -393,6 +405,7 @@ function runTaskBoard() {
     copy.querySelector('#deadline-filter-label').remove();
     copy.querySelector('#task-search-label').remove();
     copy.querySelector('#task-order-label').remove();
+    copy.querySelector('#clear-task-filters').remove();
     copy.querySelector('#project-summary')?.remove();
     copy.querySelector('#deadline-agenda')?.remove();
     copy.querySelector('#tasks').replaceChildren();
