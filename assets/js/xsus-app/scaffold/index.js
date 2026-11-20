@@ -15,7 +15,9 @@ export function buildScaffold(spec) {
 ${section('Components', components)}${section('Data models', dataModels)}${section('Planned interactions', interactions)}${section('Requirements', spec.requirements)}</main></body></html>`;
 }
 
-export function appendScaffoldControls(card, spec, t) {
+const builtScaffolds = new WeakMap();
+
+export function appendScaffoldControls(card, spec, t, onBuild) {
   const controls = document.createElement('div');
   controls.className = 'app-specification-actions';
   const build = document.createElement('button');
@@ -23,13 +25,7 @@ export function appendScaffoldControls(card, spec, t) {
   build.textContent = t('Build starter app');
   controls.append(build);
   card.append(controls);
-  build.addEventListener('click', () => {
-    const html = buildScaffold(spec);
-    const preview = document.createElement('iframe');
-    preview.setAttribute('sandbox', '');
-    preview.title = t('Starter app preview');
-    preview.style.cssText = 'width:100%;height:24rem;border:0;margin-top:1rem';
-    preview.srcdoc = html;
+  function showDownload(html) {
     const download = document.createElement('button');
     download.type = 'button';
     download.textContent = t('Download HTML');
@@ -41,8 +37,17 @@ export function appendScaffoldControls(card, spec, t) {
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 30000);
     });
-    controls.replaceChildren(download);
-    card.append(preview);
-    download.focus();
+    const preview = document.createElement('button');
+    preview.type = 'button';
+    preview.textContent = t('Preview');
+    preview.addEventListener('click', () => onBuild(html));
+    controls.replaceChildren(preview, download);
+  }
+  if (builtScaffolds.has(spec)) showDownload(builtScaffolds.get(spec));
+  build.addEventListener('click', () => {
+    const html = buildScaffold(spec);
+    builtScaffolds.set(spec, html);
+    showDownload(html);
+    onBuild(html);
   });
 }

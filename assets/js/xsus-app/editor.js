@@ -9,6 +9,23 @@ const samples = {
   'components/Header.jsx': `export function Header() {\n  return (\n    <header>\n      <strong>My App</strong>\n      <nav>Home · Explore</nav>\n    </header>\n  );\n}`,
   'package.json': `{\n  "name": "xsus-design-sample",\n  "private": true,\n  "version": "0.0.0-demo"\n}`
 };
+let generatedHtml = null;
+
+export function showGeneratedHtml(html, openPreview = false) {
+  if (html !== generatedHtml) {
+    generatedHtml = html;
+    currentFile = html === null ? 'App.jsx' : 'index.html';
+    renderEditor();
+  }
+  if (openPreview) {
+    updateMode('preview');
+    $('[data-mobile="editor"]')?.click();
+    $('[data-mode="preview"]')?.focus();
+  }
+}
+
+const fileContent = () => generatedHtml ?? samples[currentFile];
+
 let currentFile = 'App.jsx';
 let explorerOpen = true;
 let splitRatio = 50;
@@ -19,18 +36,19 @@ const escapeHtml = value => value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
 const ui = value => escapeHtml(t(value));
 const icon = name => `<i data-lucide="${name}"></i>`;
 function fileTree() {
-  return `<aside class="file-explorer ${explorerOpen ? '' : 'is-collapsed'}" aria-label="${ui('Demo file explorer')}"><div class="explorer-title">${icon('folder-tree')} <span>${ui('EXPLORER')}</span><button type="button" class="editor-mini" data-editor-action="toggle-explorer" aria-label="${ui('Toggle file explorer')}">${icon(explorerOpen?'panel-left-close':'panel-left-open')}</button></div>${explorerOpen ? `<div class="explorer-group">${icon('folder-open')} <span>${ui('MY APP / DEMO')}</span></div>${Object.keys(samples).map(name=>`<button type="button" class="explorer-file ${currentFile===name?'selected':''}" data-file="${escapeHtml(name)}">${icon(name.endsWith('.css')?'file-type':'file-code-2')}<span>${escapeHtml(name)}</span></button>`).join('')}<div class="explorer-foot">${ui('Local samples · Read only')}</div>` : ''}</aside>`;
+  return `<aside class="file-explorer ${explorerOpen ? '' : 'is-collapsed'}" aria-label="${ui(generatedHtml ? 'EXPLORER' : 'Demo file explorer')}"><div class="explorer-title">${icon('folder-tree')} <span>${ui('EXPLORER')}</span><button type="button" class="editor-mini" data-editor-action="toggle-explorer" aria-label="${ui('Toggle file explorer')}">${icon(explorerOpen?'panel-left-close':'panel-left-open')}</button></div>${explorerOpen ? `<div class="explorer-group">${icon('folder-open')} <span>${generatedHtml ? 'HTML' : ui('MY APP / DEMO')}</span></div>${(generatedHtml ? ['index.html'] : Object.keys(samples)).map(name=>`<button type="button" class="explorer-file ${currentFile===name?'selected':''}" data-file="${escapeHtml(name)}">${icon(name.endsWith('.css')?'file-type':'file-code-2')}<span>${escapeHtml(name)}</span></button>`).join('')}<div class="explorer-foot">${ui(generatedHtml ? 'READ ONLY' : 'Local samples · Read only')}</div>` : ''}</aside>`;
 }
 function codePane() {
-  const content = escapeHtml(samples[currentFile]);
+  const content = escapeHtml(fileContent());
   const numbered = content.split('\n').map((line,index)=>`<div class="code-line"><span class="line-number">${index+1}</span><span>${line || ' '}</span></div>`).join('');
-  return `<section class="advanced-code-pane" aria-label="${ui('Code editor sample')}">${fileTree()}<div class="code-main"><div class="file-tabs"><span class="file-tab active">${icon('file-code-2')} ${escapeHtml(currentFile)} <span class="file-readonly">${ui('READ ONLY')}</span></span><button type="button" class="editor-mini" data-editor-action="copy-code" title="Copy demo code" aria-label="${ui('Copy demo code')}">${icon('copy')}</button></div><div class="code-sample" role="region" tabindex="0" aria-label="${ui('Read-only sample code')}">${numbered}</div><div class="code-footer">${icon('shield-check')} ${ui('Design sample · No code execution')}</div></div></section>`;
+  return `<section class="advanced-code-pane" aria-label="${generatedHtml ? 'index.html' : ui('Code editor sample')}">${fileTree()}<div class="code-main"><div class="file-tabs"><span class="file-tab active">${icon('file-code-2')} ${escapeHtml(currentFile)} <span class="file-readonly">${ui('READ ONLY')}</span></span><button type="button" class="editor-mini" data-editor-action="copy-code" title="${ui(generatedHtml ? 'Copy' : 'Copy demo code')}" aria-label="${ui(generatedHtml ? 'Copy' : 'Copy demo code')}">${icon('copy')}</button></div><div class="code-sample" role="region" tabindex="0" aria-label="${ui(generatedHtml ? 'READ ONLY' : 'Read-only sample code')}">${numbered}</div><div class="code-footer">${icon('shield-check')} ${generatedHtml ? 'index.html' : ui('Design sample · No code execution')}</div></div></section>`;
 }
 function canvas() {
+  if (generatedHtml) return `<iframe sandbox="" data-generated-preview title="${ui('Starter app preview')}" class="app-canvas ${state.device}" style="--preview-scale:${previewScale/100};height:100%;min-height:16rem;border:0"></iframe>`;
   return `<div class="app-canvas ${state.device === 'desktop' ? '' : state.device}" style="--preview-scale:${previewScale/100}"><div class="canvas-header">My App <span style="font-weight:400;font-size:10px">Home · Explore</span></div><div class="canvas-hero"><h3>Welcome to My App</h3><p>A beautiful starting point for your next application.</p><span>Explore Now</span></div><div class="canvas-cards"><div></div><div></div><div></div><div></div></div></div>`;
 }
 function previewPane() {
-  return `<section class="advanced-preview-pane" aria-label="${ui('Static application preview')}"><div class="preview-toolbar"><span>${icon('eye')} ${ui('Preview')} · ${ui(state.device)}</span><div class="preview-controls"><button class="editor-mini" type="button" data-editor-action="zoom-out" aria-label="${ui('Zoom out')}">${icon('minus')}</button><span>${previewScale}%</span><button class="editor-mini" type="button" data-editor-action="zoom-in" aria-label="${ui('Zoom in')}">${icon('plus')}</button><button class="editor-mini ${showGrid?'active':''}" type="button" data-editor-action="grid" aria-label="${ui('Toggle preview grid')}" aria-pressed="${showGrid}">${icon('grid-2x2')}</button></div></div><div class="advanced-preview-surface ${showGrid?'with-grid':''}">${canvas()}</div><div class="preview-note">${ui('Static mockup · Device width simulation only')}</div></section>`;
+  return `<section class="advanced-preview-pane" aria-label="${ui('Static application preview')}"><div class="preview-toolbar"><span>${icon('eye')} ${ui('Preview')} · ${ui(state.device)}</span><div class="preview-controls"><button class="editor-mini" type="button" data-editor-action="zoom-out" aria-label="${ui('Zoom out')}">${icon('minus')}</button><span>${previewScale}%</span><button class="editor-mini" type="button" data-editor-action="zoom-in" aria-label="${ui('Zoom in')}">${icon('plus')}</button><button class="editor-mini ${showGrid?'active':''}" type="button" data-editor-action="grid" aria-label="${ui('Toggle preview grid')}" aria-pressed="${showGrid}">${icon('grid-2x2')}</button></div></div><div class="advanced-preview-surface ${showGrid?'with-grid':''}">${canvas()}</div><div class="preview-note">${ui(generatedHtml ? 'Starter app preview' : 'Static mockup · Device width simulation only')}</div></section>`;
 }
 function modeContent() {
   if(state.mode==='split') return `<div class="advanced-split" style="--split-ratio:${splitRatio}%"><div class="split-cell">${codePane()}</div><div class="split-divider" role="separator" tabindex="0" aria-label="${ui('Resize code and preview panels')}" aria-orientation="vertical" aria-valuenow="${splitRatio}" aria-valuemin="30" aria-valuemax="70" title="${ui('Drag to resize · Arrow keys to adjust')}"></div><div class="split-cell">${previewPane()}</div></div>`;
@@ -42,6 +60,8 @@ export function renderEditor() {
   const target = $('#editorBody');
   if(!target) return;
   target.innerHTML = modeContent();
+  const preview = target.querySelector('[data-generated-preview]');
+  if (preview) preview.srcdoc = generatedHtml;
   refreshIcons();
 }
 function updateMode(mode) {
@@ -65,7 +85,7 @@ function onEditorClick(event) {
   if(action==='zoom-in') previewScale=Math.min(150,previewScale+10);
   if(action==='zoom-out') previewScale=Math.max(60,previewScale-10);
   if(action==='grid') showGrid=!showGrid;
-  if(action==='copy-code') { if (!navigator.clipboard?.writeText) { toast(t('Copy unavailable in this browser')); return; } navigator.clipboard.writeText(samples[currentFile]).then(()=>toast(t('Demo code copied'))).catch(()=>toast(t('Copy unavailable in this browser')));return; }
+  if(action==='copy-code') { if (!navigator.clipboard?.writeText) { toast(t('Copy unavailable in this browser')); return; } navigator.clipboard.writeText(fileContent()).then(()=>toast(t(generatedHtml ? 'Copied' : 'Demo code copied'))).catch(()=>toast(t('Copy unavailable in this browser')));return; }
   renderEditor();
 }
 export function initEditor() {

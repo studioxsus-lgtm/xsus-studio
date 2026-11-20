@@ -1,4 +1,5 @@
-import { appendScaffoldControls } from './scaffold/index.js';
+import { showGeneratedHtml } from './editor.js?v=20261120-editor1';
+import { appendScaffoldControls } from './scaffold/index.js?v=20261120-editor1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
@@ -89,7 +90,10 @@ function renderSpecificationCard(specification, draft) {
     actions.append(approve, discard);
   }
   if (actions.childElementCount) specCard.append(actions);
-  if (draft.state === 'approved_for_next_phase') appendScaffoldControls(specCard, draft, t);
+  if (draft.state === 'approved_for_next_phase') appendScaffoldControls(specCard, draft, t, html => {
+    current().generatedHtml = html;
+    showGeneratedHtml(html, true);
+  });
   return specCard;
 }
 
@@ -158,6 +162,7 @@ function renderHistory() {
 function renderMessages() {
   const target = $('#chatMessages'); target.replaceChildren();
   const session = current();
+  showGeneratedHtml(session.generatedHtml ?? null);
   if (!session.messages.length) {
     const welcome = document.createElement('div'); welcome.className = 'chat-welcome';
     const welcomeTitle = document.createElement('h2'); welcomeTitle.textContent = t('What will you build today?');
