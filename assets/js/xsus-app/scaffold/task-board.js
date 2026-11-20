@@ -231,6 +231,28 @@ function runTaskBoard() {
     }
   }
 
+  let lastDeletion;
+  const undo = document.createElement('button');
+  undo.type = 'button';
+  undo.id = 'undo-task-deletion';
+  undo.hidden = true;
+  tasks.before(undo);
+  undo.addEventListener('click', () => {
+    if (!lastDeletion) return;
+    const {task, index} = lastDeletion;
+    lastDeletion = null;
+    undo.hidden = true;
+    undo.textContent = '';
+    const ordered = snapshot();
+    ordered.splice(index, 0, task);
+    records.clear();
+    for (const entry of ordered) records.set(entry.id, entry);
+    renderTask(task);
+    if (!order.value) sortTasks();
+    storeTask(task);
+    name.focus();
+  });
+
   function renderTask(task) {
     if (!task || typeof task.id !== 'string' || typeof task.name !== 'string' ||
         typeof task.date !== 'string' || typeof task.done !== 'boolean') return;
@@ -283,12 +305,14 @@ function runTaskBoard() {
       confirm.type = 'button';
       confirm.textContent = 'Delete';
       confirm.addEventListener('click', () => {
+        lastDeletion = {task, index:Array.from(records.keys()).indexOf(task.id)};
         records.delete(task.id);
+        item.remove();
+        undo.textContent = 'Undo delete: ' + task.name;
+        undo.hidden = false;
         // An exported file can contain this task in its initial snapshot.
         storeTask({id:task.id, deleted:true});
-        item.remove();
-        updateCount();
-        name.focus();
+        undo.focus();
       });
       prompt.append(question, cancel, confirm);
       item.append(prompt);
@@ -415,6 +439,7 @@ function runTaskBoard() {
     copy.querySelector('#deadline-filter-label').remove();
     copy.querySelector('#task-search-label').remove();
     copy.querySelector('#task-order-label').remove();
+    copy.querySelector('#undo-task-deletion').remove();
     copy.querySelector('#status-filter-label').remove();
     copy.querySelector('#clear-task-filters').remove();
     copy.querySelector('#project-summary')?.remove();
