@@ -17,7 +17,7 @@ CHALLENGE_GROUPS_V6 = (
     )),
     ChallengeGroupV6("contrast_cues", (
         DocumentCaseV6("however", "The plan changed. However, costs rose.", 1, 2, True, False),
-        DocumentCaseV6("nevertheless", "Costs rose. Nevertheless, we continued.", 1, 2, True, True),
+        DocumentCaseV6("nevertheless", "Costs rose. Nevertheless, we continued.", 1, 2, True, False),
         DocumentCaseV6("plain_sentence", "Costs rose. The plan changed.", 1, 2, False, False),
     )),
     ChallengeGroupV6("reference_cues", (
