@@ -24,8 +24,17 @@ function runTaskBoard() {
 
   const filter = document.getElementById('member-filter');
 
+  const deadlineLabel = document.createElement('label');
+  deadlineLabel.id = 'deadline-filter-label';
+  deadlineLabel.textContent = 'Filter by deadline';
+  const deadlineFilter = document.createElement('select');
+  deadlineFilter.id = 'deadline-filter';
+  deadlineFilter.append(new Option('All deadlines', ''), new Option('Due today', 'Due today'), new Option('Overdue', 'Overdue'));
+  deadlineLabel.append(deadlineFilter);
+  count.before(deadlineLabel);
+
   function updateCount() {
-    if (filter && filter.value) {
+    if (filter?.value || deadlineFilter.value) {
       const visible = Array.from(tasks.children).filter(row => !row.hidden);
       const done = visible.filter(row => row.querySelector('input').checked).length;
       count.textContent = visible.length ? done + ' / ' + visible.length + ' completed' : 'No matching tasks.';
@@ -59,11 +68,15 @@ function runTaskBoard() {
   let today = localDay(new Date());
   function deadlineStatus(task) {
     if (task.done || !task.date) return '';
-    if (task.date === today) return ' — Due today';
-    return task.date < today ? ' — Overdue' : '';
+    if (task.date === today) return 'Due today';
+    return task.date < today ? 'Overdue' : '';
+  }
+  function deadlineSuffix(task) {
+    const status = deadlineStatus(task);
+    return status ? ' — ' + status : '';
   }
   function showDueDate(node, task) {
-    node.textContent = task.date ? 'Due ' + task.date + deadlineStatus(task) : '';
+    node.textContent = task.date ? 'Due ' + task.date + deadlineSuffix(task) : '';
   }
 
   function updateOverview() {
@@ -111,7 +124,7 @@ function runTaskBoard() {
         lastDate = task.date;
       }
       const entry = document.createElement('li');
-      entry.textContent = task.name + (task.done ? ' — Completed' : deadlineStatus(task));
+      entry.textContent = task.name + (task.done ? ' — Completed' : deadlineSuffix(task));
       list.append(entry);
     }
   }
@@ -125,21 +138,25 @@ function runTaskBoard() {
       filter.add(new Option(member, '+' + member));
     }
     if (selected === '-' || names.has(selected.slice(1))) filter.value = selected;
-    applyFilter();
   }
 
   function applyFilter() {
     for (const row of tasks.children) {
-      const member = records.get(row.dataset.taskId)?.assignee;
-      row.hidden = Boolean(filter.value && filter.value !== (member ? '+' + member : '-'));
+      const task = records.get(row.dataset.taskId);
+      if (!task) continue;
+      const member = task.assignee ? '+' + task.assignee : '-';
+      row.hidden = Boolean((filter?.value && filter.value !== member) ||
+        (deadlineFilter.value && deadlineFilter.value !== deadlineStatus(task)));
     }
     updateCount();
   }
 
   filter?.addEventListener('change', applyFilter);
+  deadlineFilter.addEventListener('change', applyFilter);
 
   function storeTask(task) {
     updateFilterOptions();
+    applyFilter();
     updateOverview();
     updateCalendar();
     if (embedded) {
@@ -316,6 +333,7 @@ function runTaskBoard() {
       today = day;
       for (const row of tasks.children) showDueDate(row.querySelector('time'), records.get(row.dataset.taskId));
       updateCalendar();
+      applyFilter();
     }
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     dayTimer = setTimeout(syncDay, midnight.getTime() - now.getTime());
@@ -328,12 +346,13 @@ function runTaskBoard() {
   updateOverview();
   updateFilterOptions();
   updateCalendar();
-  updateCount();
+  applyFilter();
 
   document.getElementById('save-board').addEventListener('click', () => {
     const copy = board.cloneNode(true);
     copy.dataset.tasks = encodeURIComponent(JSON.stringify(snapshot()));
     copy.dataset.board = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random();
+    copy.querySelector('#deadline-filter-label').remove();
     copy.querySelector('#project-summary')?.remove();
     copy.querySelector('#deadline-agenda')?.remove();
     copy.querySelector('#tasks').replaceChildren();
