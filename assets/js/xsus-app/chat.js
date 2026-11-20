@@ -97,6 +97,7 @@ function renderSpecificationCard(specification, draft, reviewKey) {
     draft.builtHtml = html;
     current().generatedHtml = html;
     saveRefreshState('builder');
+    renderBoardActions(html);
     showGeneratedHtml(html, true);
   });
   return specCard;
@@ -209,6 +210,52 @@ function renderHistory() {
   });
 }
 
+const boardActionsCopy = {
+  sq: {
+    title:'Ndrysho tabelën', assign:'Cakto anëtarët', filter:'Shto filtrin sipas anëtarit', open:'Hap parapamjen',
+    assignmentRequest:'Çdo detyrë t’i caktohet një anëtari të ekipit.',
+    filterRequest:'Shto një filtër sipas anëtarit të ekipit.'
+  },
+  en: {
+    title:'Edit task board', assign:'Assign team members', filter:'Add member filter', open:'Open preview',
+    assignmentRequest:'Assign each task to a team member.', filterRequest:'Filter tasks by team member.'
+  },
+  fr: {
+    title:'Modifier le tableau', assign:'Affecter les membres', filter:'Ajouter le filtre par membre', open:'Ouvrir l’aperçu',
+    assignmentRequest:'Assigner chaque tâche à un membre de l’équipe.', filterRequest:'Filtrer les tâches par membre de l’équipe.'
+  }
+};
+
+function renderBoardActions(html) {
+  $('#boardActions')?.remove();
+  if (!html?.includes('id="save-board"')) return;
+  const copy = boardActionsCopy[document.documentElement.lang] || boardActionsCopy.en;
+  const group = document.createElement('fieldset');
+  group.id = 'boardActions';
+  group.className = 'chat-suggestions';
+  const legend = document.createElement('legend');
+  legend.textContent = copy.title;
+  group.append(legend);
+  function addButton(label, action) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    button.addEventListener('click', action);
+    group.append(button);
+  }
+  function suggest(request) {
+    $('#prompt').value = request;
+    $('#planSteps').value = '';
+    updateCount();
+    saveRefreshState('builder');
+    $('#prompt').focus();
+  }
+  if (!html.includes('id="task-assignee"')) addButton(copy.assign, () => suggest(copy.assignmentRequest));
+  if (!html.includes('id="member-filter"')) addButton(copy.filter, () => suggest(copy.filterRequest));
+  addButton(copy.open, () => showGeneratedHtml(html, true));
+  $('#chatMessages').append(group);
+}
+
 function renderMessages() {
   const target = $('#chatMessages'); target.replaceChildren();
   const session = current();
@@ -234,6 +281,7 @@ function renderMessages() {
     else addBubble(message.text, message.role);
   });
   const tip = document.createElement('div'); tip.className = 'chat-tip'; tip.textContent = t('Authenticated request to the XSUS Hyper–Future bridge. Drafts are temporary and never execute.'); target.append(tip);
+  renderBoardActions(session.generatedHtml);
   renderHistory(); iconRefresh();
   saveRefreshState('builder');
 }
