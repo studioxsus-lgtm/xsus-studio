@@ -359,7 +359,26 @@ async function send() {
   try {
     const result = await createDraftPlan({ goal: edit ? editGoal : goal, steps, signal: controller.signal });
     if (requestController === controller && sessionId === activeId) {
-      if (edit && result.status === 'completed' && !result.language?.review_required && session.generatedHtml === original) {
+      let approved = result.status === 'completed' && !result.language?.review_required;
+      if (edit && session.generatedHtml === original && result.status === 'review_required' &&
+          result.language?.review_required === true && result.plan?.dependencyGraphValid === true) {
+        const questions = {
+          sq: ['Të shtohet fusha për anëtarin e ekipit te detyrat?', 'Të shtohen caktimi dhe filtrimi i detyrave sipas anëtarit të ekipit?'],
+          en: ['Add the team member field to tasks?', 'Enable assigning and filtering tasks by team member?'],
+          fr: ['Ajouter le champ du membre de l’équipe aux tâches ?', 'Activer l’affectation et le filtrage des tâches par membre ?']
+        };
+        approved = window.confirm((questions[lang] || questions.en)[filtering ? 1 : 0]);
+        if (!approved) {
+          const cancelled = {sq:'Ndryshimi u anulua.', en:'Change cancelled.', fr:'Modification annulée.'};
+          session.messages.push({role:'assistant', text:cancelled[lang] || cancelled.en});
+          input.value = goal;
+          $('#planSteps').value = rawSteps;
+          updateCount();
+          renderMessages();
+          return;
+        }
+      }
+      if (edit && approved && session.generatedHtml === original) {
         session.generatedHtml = edited;
         for (const message of session.messages) {
           const draft = specificationReviews.get(message.reviewKey ?? message.result?.requestId);
