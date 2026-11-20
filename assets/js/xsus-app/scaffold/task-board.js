@@ -34,7 +34,44 @@ function runTaskBoard() {
   const snapshot = () => Array.from(records.values());
   const embedded = window.parent !== window;
 
+  const calendarHeading = Array.from(document.querySelectorAll('section[id^="screen-"] > h2'))
+    .find(heading => heading.textContent.trim().toLowerCase() === 'deadline calendar');
+  const agenda = document.createElement('div');
+  if (calendarHeading) {
+    agenda.id = 'deadline-agenda';
+    calendarHeading.after(agenda);
+  }
+
+  function updateCalendar() {
+    if (!calendarHeading) return;
+    const scheduled = snapshot().filter(task => task.date)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
+    agenda.replaceChildren();
+    if (!scheduled.length) {
+      agenda.textContent = 'No tasks with a due date.';
+      return;
+    }
+    let lastDate;
+    let list;
+    for (const task of scheduled) {
+      if (task.date !== lastDate) {
+        const heading = document.createElement('h3');
+        const day = document.createElement('time');
+        day.dateTime = task.date;
+        day.textContent = task.date;
+        heading.append(day);
+        list = document.createElement('ul');
+        agenda.append(heading, list);
+        lastDate = task.date;
+      }
+      const entry = document.createElement('li');
+      entry.textContent = task.name + (task.done ? ' — Completed' : '');
+      list.append(entry);
+    }
+  }
+
   function storeTask(task) {
+    updateCalendar();
     if (embedded) {
       window.parent.postMessage({type:'xsus-board-state', board:board.dataset.board, tasks:snapshot()}, '*');
       return;
@@ -191,12 +228,14 @@ function runTaskBoard() {
     status.textContent = 'Use Save HTML with tasks to reopen this board later.';
   }
   restored.forEach(renderTask);
+  updateCalendar();
   updateCount();
 
   document.getElementById('save-board').addEventListener('click', () => {
     const copy = board.cloneNode(true);
     copy.dataset.tasks = encodeURIComponent(JSON.stringify(snapshot()));
     copy.dataset.board = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random();
+    copy.querySelector('#deadline-agenda')?.remove();
     copy.querySelector('#tasks').replaceChildren();
     copy.querySelector('#save-status').textContent = '';
     const file = new Blob(['<!doctype html>\n', copy.outerHTML], {type:'text/html;charset=utf-8'});
