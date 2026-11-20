@@ -302,11 +302,19 @@ const filterRequests = new Set([
   'filtrer les taches par membre de l equipe'
 ]);
 
+// Match the whole request so negations and additional actions remain distinct.
+const albanianFilterRequests = [
+  /^(?:shto|shtoni|vendos) (?:nje filter|filtrin) (?:te detyrave |per detyrat )?sipas (?:anetarit(?: te ekipit)?|personit pergjegjes)$/,
+  /^(?:filtro|filtroji|dua t i filtroj|a mund t i filtroj|me lejo t i filtroj) detyrat sipas (?:anetarit(?: te ekipit)?|personit pergjegjes)$/,
+  /^(?:me shfaq|me trego|shfaq) detyrat sipas (?:anetarit(?: te ekipit)?|personit pergjegjes)$/
+];
+
 function requestedBoardEdit(goal) {
   const words = goal.trim().replace(/^[“”"]+|[“”"]+$/g, '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
     .replace(/['’]/g, ' ').replace(/[.!?]+$/, '').replace(/\s+/g, ' ').trim();
-  if (filterRequests.has(words)) return 'filter';
-  if (assignmentRequests.has(words)) return 'assign';
+  const request = words.replace(/^te lutem,? /, '').replace(/,? te lutem$/, '');
+  if (filterRequests.has(request) || albanianFilterRequests.some(pattern => pattern.test(request))) return 'filter';
+  if (assignmentRequests.has(request)) return 'assign';
   return null;
 }
 
