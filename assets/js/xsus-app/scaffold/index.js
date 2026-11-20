@@ -1,4 +1,4 @@
-import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-calendar1';
+import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-assignment1';
 
 const escapeText = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const section = (name, items) => items.length ? `<section><h2>${name}</h2><ul>${items.map(item => `<li>${escapeText(item)}</li>`).join('')}</ul></section>` : '';
@@ -6,11 +6,17 @@ const section = (name, items) => items.length ? `<section><h2>${name}</h2><ul>${
 // Upgrade the previous persistent board without replacing its project, board ID or task data.
 export function upgradeTaskBoard(html) {
   if (typeof html !== 'string' || !html.includes('id="save-board"')) return html;
-  const oldPolicy = ["v9Tcw4hUWT+ml4tTEoLvZNoq4ridJFq+cyuWGkjOyik=", "/1PLKjPUEDaFTGMXZCuW/01giKA5qPemVRTZjDyH86U=", "tcU2M3qXwEovdfGhE6ZBEnb9i/ZS4k7z2iAjgkoZVcU="]
+  const oldPolicy = ["G4RBTgNQmo0nKSOkE9tpMWN5ePmFQ4YaiBYt4iRk8hA=", "v9Tcw4hUWT+ml4tTEoLvZNoq4ridJFq+cyuWGkjOyik=", "/1PLKjPUEDaFTGMXZCuW/01giKA5qPemVRTZjDyH86U=", "tcU2M3qXwEovdfGhE6ZBEnb9i/ZS4k7z2iAjgkoZVcU="]
     .map(hash => "script-src 'sha256-" + hash + "'").find(policy => html.includes(policy));
   if (!oldPolicy) return html;
-  return html.replace(oldPolicy, "script-src 'sha256-G4RBTgNQmo0nKSOkE9tpMWN5ePmFQ4YaiBYt4iRk8hA='")
+  return html.replace(oldPolicy, "script-src 'sha256-m4DXEetZsCj+xVfViKbjGPpe82x4OgHKYYqW/NRZKSg='")
     .replace(/<script>\(function runTaskBoard\(\)[\s\S]*?<\/script>/, () => '<script>' + boardScript + '</script>');
+}
+
+export function enableTaskAssignments(html) {
+  if (!html || !html.includes(boardMarkup) || !html.includes(boardScript)) return html;
+  const field = '<label>Team member <input id="task-assignee" maxlength="120" autocomplete="off"></label>';
+  return html.replace(boardMarkup, () => boardMarkup.replace('  <button id="add-task"', field + '\n  <button id="add-task"'));
 }
 
 export function buildScaffold(spec) {
@@ -22,7 +28,7 @@ export function buildScaffold(spec) {
   const interactive = spec.product.profileId === 'task-manager';
   const namedBoard = pages.findIndex(page => page.trim().toLowerCase() === 'team board');
   const boardIndex = namedBoard >= 0 ? namedBoard : Math.min(1, pages.length - 1);
-  const policy = interactive ? `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-G4RBTgNQmo0nKSOkE9tpMWN5ePmFQ4YaiBYt4iRk8hA='; base-uri 'none'; form-action 'none'">` : '';
+  const policy = interactive ? `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-m4DXEetZsCj+xVfViKbjGPpe82x4OgHKYYqW/NRZKSg='; base-uri 'none'; form-action 'none'">` : '';
   const screens = pages.map((page, i) => `<section id="screen-${i + 1}"><h2>${escapeText(page)}</h2>${interactive && i === boardIndex ? boardMarkup : ''}</section>`).join('\n');
   return `<!doctype html>
 <html lang="en"${interactive ? ` data-board="${crypto.randomUUID()}"` : ''}><head><meta charset="utf-8">${policy}<meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeText(spec.product.label)}</title>

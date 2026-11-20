@@ -18,6 +18,7 @@ export const boardStyles = `.task-board{display:grid;gap:.7rem;margin-top:1rem}
 function runTaskBoard() {
   const name = document.getElementById('task-name');
   const date = document.getElementById('task-date');
+  const assignee = document.getElementById('task-assignee');
   const tasks = document.getElementById('tasks');
   const count = document.getElementById('task-count');
 
@@ -105,7 +106,9 @@ function runTaskBoard() {
     edit.type = 'button';
     edit.textContent = 'Edit task';
     const due = document.createElement('time');
+    const owner = document.createElement('small');
     function display() {
+      owner.textContent = task.assignee ? 'Assigned to ' + task.assignee : 'Unassigned';
       title.textContent = task.name;
       edit.setAttribute('aria-label', 'Edit task: ' + task.name);
       due.hidden = !task.date;
@@ -143,6 +146,7 @@ function runTaskBoard() {
       item.append(prompt);
       cancel.focus();
     });
+    if (assignee) item.append(owner);
     item.append(due, edit, remove);
     display();
     edit.addEventListener('click', () => {
@@ -162,6 +166,8 @@ function runTaskBoard() {
       editedName.required = true;
       editedName.maxLength = 200;
       const editedDate = field('Due date', 'date', task.date);
+      const editedOwner = assignee ? field('Team member', 'text', task.assignee || '') : null;
+      if (editedOwner) editedOwner.maxLength = 120;
       function close() {
         panel.remove();
         edit.hidden = false;
@@ -172,6 +178,7 @@ function runTaskBoard() {
         if (!editedName.reportValidity() || !editedDate.reportValidity()) return;
         task.name = editedName.value;
         task.date = editedDate.value;
+        if (editedOwner) task.assignee = editedOwner.value.trim();
         display();
         storeTask(task);
         close();
@@ -197,11 +204,13 @@ function runTaskBoard() {
     name.value = name.value.trim();
     if (!name.reportValidity() || !date.reportValidity()) return;
     const task = {id:crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random(), name:name.value, date:date.value, done:false};
+    if (assignee) task.assignee = assignee.value.trim();
     renderTask(task);
     storeTask(task);
     updateCount();
     name.value = '';
     date.value = '';
+    if (assignee) assignee.value = '';
     name.focus();
   }
 

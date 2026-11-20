@@ -1,6 +1,6 @@
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261120-account1';
 import { showGeneratedHtml } from './editor.js?v=20261120-account1';
-import { appendScaffoldControls, upgradeTaskBoard } from './scaffold/index.js?v=20261120-calendar1';
+import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments } from './scaffold/index.js?v=20261120-assignment1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
@@ -286,16 +286,44 @@ function cancelPending() {
   $('#chatProgress').classList.add('hidden'); $('#sendBtn').disabled = false;
 }
 
+const assignmentRequests = new Set([
+  'cdo detyre t i caktohet nje anetari te ekipit',
+  'cakto cdo detyre nje anetari te ekipit',
+  'assign each task to a team member',
+  'assign tasks to team members',
+  'assigner chaque tache a un membre de l equipe'
+]);
+
+function requestsAssignment(goal) {
+  const words = goal.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+    .replace(/['’]/g, ' ').replace(/[.!?]+$/, '').replace(/\s+/g, ' ').trim();
+  return assignmentRequests.has(words);
+}
+
 async function send() {
   if (busy) return;
   const input = $('#prompt'); const goal = input.value.trim();
   if (!goal) { toast(t('Enter an English goal and at least one plan step.')); input.focus(); return; }
-  let steps;
-  try { steps = parsePlanSteps($('#planSteps').value); }
-  catch (error) { toast(t(error instanceof BridgeRequestError ? error.code === 'invalid_steps' ? 'Add 1–100 non-empty plan steps, each no longer than 4096 characters.' : 'Enter an English goal and at least one plan step.' : 'Enter an English goal and at least one plan step.')); $('#planSteps').focus(); return; }
   const session = current();
+  const original = session.generatedHtml;
+  const assignment = requestsAssignment(goal) && original?.includes('id="save-board"') && !$('#planSteps').value.trim();
+  const edited = assignment ? enableTaskAssignments(original) : null;
+  const labels = {
+    sq: ['Caktimi i detyrave është aktiv.', 'U shtua fusha për anëtarin e ekipit.', 'Ky version i tabelës nuk e mbështet këtë ndryshim.'],
+    en: ['Task assignment is already enabled.', 'Added the team member field.', 'This board version does not support this change.'],
+    fr: ['L’affectation des tâches est déjà activée.', 'Le champ du membre de l’équipe a été ajouté.', 'Cette version du tableau ne prend pas en charge cette modification.']
+  };
+  const feedback = labels[document.documentElement.lang] || labels.en;
+  if (assignment && edited === original) {
+    toast(feedback[original.includes('id="task-assignee"') ? 0 : 2]);
+    return;
+  }
+  const rawSteps = $('#planSteps').value;
+  let steps;
+  try { steps = parsePlanSteps(assignment ? 'Add a team member field to tasks.' : rawSteps); }
+  catch (error) { toast(t(error instanceof BridgeRequestError ? error.code === 'invalid_steps' ? 'Add 1–100 non-empty plan steps, each no longer than 4096 characters.' : 'Enter an English goal and at least one plan step.' : 'Enter an English goal and at least one plan step.')); $('#planSteps').focus(); return; }
   if (!session.messages.length) session.name = goal.slice(0, 35) + (goal.length > 35 ? '…' : '');
-  session.messages.push({ role: 'user', text: `${goal}\n\n${t('Plan steps')}:\n${steps.map(step => `• ${step.task}`).join('\n')}` });
+  session.messages.push({ role: 'user', text: assignment ? goal : `${goal}\n\n${t('Plan steps')}:\n${steps.map(step => `• ${step.task}`).join('\n')}` });
   input.value = ''; $('#planSteps').value = ''; updateCount(); renderMessages();
   busy = true;
   const controller = new AbortController();
@@ -303,16 +331,31 @@ async function send() {
   $('#chatProgress').classList.remove('hidden'); $('#sendBtn').disabled = true;
   const sessionId = activeId;
   try {
-    const result = await createDraftPlan({ goal, steps, signal: controller.signal });
+    const result = await createDraftPlan({ goal: assignment ? 'Assign each task to a team member.' : goal, steps, signal: controller.signal });
     if (requestController === controller && sessionId === activeId) {
-      session.messages.push(result.plan ? { role: 'plan', result } : { role: 'review', result });
+      if (assignment && result.status === 'completed' && !result.language?.review_required && session.generatedHtml === original) {
+        session.generatedHtml = edited;
+        for (const message of session.messages) {
+          const draft = specificationReviews.get(message.reviewKey ?? message.result?.requestId);
+          if (draft?.builtHtml === original) draft.builtHtml = edited;
+        }
+        session.messages.push({role:'assistant', text:feedback[1]});
+        renderMessages();
+        showGeneratedHtml(edited, true);
+        return;
+      }
+      if (assignment) {
+        session.messages.push({role:'assistant', text:showError('review_required')});
+        input.value = goal;
+        updateCount();
+      } else session.messages.push(result.plan ? { role: 'plan', result } : { role: 'review', result });
       renderMessages();
     }
   } catch (error) {
     if (error?.name !== 'AbortError' && requestController === controller && sessionId === activeId) {
       session.messages.push({ role: 'assistant', text: showError(error instanceof BridgeRequestError ? error.code : 'service_unavailable') });
       $('#prompt').value = goal;
-      $('#planSteps').value = steps.map(step => step.task).join('\n');
+      $('#planSteps').value = rawSteps;
       updateCount();
       renderMessages();
     }
