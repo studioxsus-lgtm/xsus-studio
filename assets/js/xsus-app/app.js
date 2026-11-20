@@ -2,8 +2,8 @@ import { initModalCoordinator } from './modal-coordinator.js';
 initModalCoordinator();
 // XSUS App — design-only entry point. Independent from Studio demo scripts.
 import { initEditor } from './editor.js';
-import { initChat } from './chat.js?v=20261120-scaffold1';
-import { initNavigation } from './navigation.js';
+import { initChat } from './chat.js?v=20261120-templates1';
+import { initNavigation } from './navigation.js?v=20261120-templates1';
 import { initDashboard } from './dashboard.js';
 initEditor();
 initChat();

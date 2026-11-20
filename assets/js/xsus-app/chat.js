@@ -164,21 +164,13 @@ function renderMessages() {
     const welcomeText = document.createElement('p'); welcomeText.textContent = t('Describe an app goal and list explicit plan steps. The connected bridge reviews the English goal and validates a safe draft.');
     welcome.append(welcomeTitle, welcomeText);
     const suggestions = document.createElement('div'); suggestions.className = 'chat-suggestions';
-    ['Booking platform', 'Task manager', 'Online store'].forEach((name, index) => {
-      const goals = [
-        'Plan a booking app with a calendar and customer dashboard.',
-        'Plan a task manager with projects, deadlines and team boards.',
-        'Plan an online store with products, a cart and checkout.'
-      ];
-      const steps = [
-        'List booking requirements\nDefine calendar and customer dashboard',
-        'List project requirements\nDefine task and deadline workflows',
-        'List product and checkout requirements\nDefine cart and order workflow'
-      ];
-      const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = `${t(name)} ↗`;
-      btn.addEventListener('click', () => { $('#prompt').value = goals[index]; $('#planSteps').value = steps[index]; updateCount(); $('#prompt').focus(); });
+    for (const template of Object.values(appTemplates)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = `${t(template.label)} ↗`;
+      btn.addEventListener('click', () => fillTemplate(template));
       suggestions.append(btn);
-    });
+    }
     welcome.append(suggestions); target.append(welcome);
   }
   session.messages.forEach(message => {
@@ -188,6 +180,31 @@ function renderMessages() {
   });
   const tip = document.createElement('div'); tip.className = 'chat-tip'; tip.textContent = t('Authenticated request to the XSUS Hyper–Future bridge. Drafts are temporary and never execute.'); target.append(tip);
   renderHistory(); iconRefresh();
+}
+
+const appTemplates = {
+  booking: {
+    label: 'Booking platform',
+    goal: 'Plan a booking app with a calendar and customer dashboard.',
+    steps: ['List booking requirements', 'Define calendar and customer dashboard']
+  },
+  tasks: {
+    label: 'Task manager',
+    goal: 'Plan a task manager with projects, deadlines, and team boards.',
+    steps: ['List project requirements', 'Define task and deadline workflows']
+  },
+  store: {
+    label: 'Online store',
+    goal: 'Plan an online store with products, a cart and checkout.',
+    steps: ['List product and checkout requirements', 'Define cart and order workflow']
+  }
+};
+
+function fillTemplate(template) {
+  $('#prompt').value = template.goal;
+  $('#planSteps').value = template.steps.join('\n');
+  updateCount();
+  $('#prompt').focus();
 }
 
 function updateCount() { $('#promptCount').textContent = `${$('#prompt').value.length} / 2000`; }
@@ -256,7 +273,9 @@ export function initChat() {
   $('#cancelConceptBtn').addEventListener('click', () => { cancelPending(); toast(t('Request cancelled.')); });
   $('#newConversationBtn').addEventListener('click', () => { cancelPending(); sessions.unshift({ id: nextId++, name: 'New conversation', messages: [] }); activeId = sessions[0].id; renderMessages(); $('#prompt').value = ''; $('#planSteps').value = ''; updateCount(); });
   $('#historyBtn').addEventListener('click', () => { const isOpen = $('#chatHistory').classList.toggle('hidden') === false; $('#historyBtn').setAttribute('aria-expanded', String(isOpen)); renderHistory(); });
-  $$('[data-chat-suggestion]').forEach(button => button.addEventListener('click', () => { $('#prompt').value = button.dataset.chatSuggestion; updateCount(); $('#prompt').focus(); }));
+  $$('[data-app-template]').forEach(button => button.addEventListener('click', () => {
+    fillTemplate(appTemplates[button.dataset.appTemplate]);
+  }));
   $$('[data-toast]').forEach(button => button.addEventListener('click', () => toast(button.dataset.toast)));
   document.addEventListener('xsus:language-changed', renderMessages);
   renderMessages(); updateCount(); iconRefresh();

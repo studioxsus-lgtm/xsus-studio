@@ -51,11 +51,9 @@ export function initNavigation() {
     }
   });
   $('[data-section-shortcut="Settings"]')?.addEventListener('click', () => $('[data-section="Settings"]')?.click());
-  $$('[data-open-builder]').forEach(button => button.addEventListener('click', showBuilder));
-  $$('[data-template-prompt]').forEach(button => button.addEventListener('click', () => {
-    $('#prompt').value = button.dataset.templatePrompt;
+  $$('[data-open-builder]').forEach(button => button.addEventListener('click', () => {
     showBuilder();
-    $('#prompt').focus();
+    if (button.dataset.appTemplate) $('#prompt').focus();
   }));
   $('#exitBtn').addEventListener('click', showLanding);
   const railToggle = $('#menuBtn');
