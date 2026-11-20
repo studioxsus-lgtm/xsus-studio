@@ -12,7 +12,7 @@ class ContextGuardFilterV6Tests(unittest.TestCase):
         self.assertFalse(analyze("They discussed however in class.").contrast)
 
     def test_discussed_in_class_reference(self):
-        self.assertFalse(analyze("They discussed she in class.").reference)
+        self.assertFalse(analyze("A teacher discussed she in class.").reference)
 
     def test_mentioned_clause_contrast_retained(self):
         self.assertTrue(analyze("The speaker mentioned however, costs rose.").contrast)
@@ -55,8 +55,8 @@ class ContextGuardFilterV6Tests(unittest.TestCase):
         json.dumps(asdict(analyze("However, costs rose.")))
 
     def test_deterministic(self):
-        self.assertEqual(analyze("They discussed she in class."),
-                         analyze("They discussed she in class."))
+        self.assertEqual(analyze("A teacher discussed she in class."),
+                         analyze("A teacher discussed she in class."))
 
     def test_empty_rejected(self):
         with self.assertRaises(ValueError):
