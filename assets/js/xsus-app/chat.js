@@ -1,9 +1,10 @@
-import { t } from './i18n/language-manager.js?v=20261120-app-spec-review1';
+import { appendScaffoldControls } from './scaffold/index.js';
+import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
 import { createDraftPlan, parsePlanSteps, BridgeRequestError } from './hyper-future-bridge-client.js?v=20261119-bridge2';
-import { createAppSpecification } from './app-specification/index.js?v=20261120-app-spec-review1';
-import { approveSpecificationReviewDraft, createSpecificationReviewDraft, parseSpecificationList } from './app-specification/review.js?v=20261120-app-spec-review1';
+import { createAppSpecification } from './app-specification/index.js?v=20261120-scaffold1';
+import { approveSpecificationReviewDraft, createSpecificationReviewDraft, parseSpecificationList } from './app-specification/review.js?v=20261120-scaffold1';
 
 // Conversation drafts stay in memory on this page. Credentials and prompts are never persisted here.
 const sessions = [{ id: 1, name: 'New conversation', messages: [] }];
@@ -88,9 +89,7 @@ function renderSpecificationCard(specification, draft) {
     actions.append(approve, discard);
   }
   if (actions.childElementCount) specCard.append(actions);
-  const specNote = document.createElement('p'); specNote.className = 'bridge-plan-note';
-  specNote.textContent = t('Approval only prepares a reviewed specification for a future phase. No app code is generated, run or saved.');
-  specCard.append(specNote);
+  if (draft.state === 'approved_for_next_phase') appendScaffoldControls(specCard, draft, t);
   return specCard;
 }
 
