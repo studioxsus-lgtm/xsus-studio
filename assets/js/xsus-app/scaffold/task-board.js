@@ -24,6 +24,13 @@ function runTaskBoard() {
 
   const filter = document.getElementById('member-filter');
 
+  const statusLabel = document.createElement('label');
+  statusLabel.id = 'status-filter-label';
+  statusLabel.textContent = 'Filter by status';
+  const statusFilter = document.createElement('select');
+  statusFilter.id = 'status-filter';
+  statusFilter.append(new Option('All tasks', ''), new Option('Open', 'open'), new Option('Completed', 'completed'));
+  statusLabel.append(statusFilter);
   const deadlineLabel = document.createElement('label');
   deadlineLabel.id = 'deadline-filter-label';
   deadlineLabel.textContent = 'Filter by deadline';
@@ -52,18 +59,19 @@ function runTaskBoard() {
   clear.addEventListener('click', () => {
     if (filter) filter.value = '';
     deadlineFilter.value = '';
+    statusFilter.value = '';
     search.value = '';
     applyFilter();
     search.focus();
   });
-  count.before(deadlineLabel, searchLabel, orderLabel, clear);
+  count.before(statusLabel, deadlineLabel, searchLabel, orderLabel, clear);
 
   function searchText(value) {
     return value.trim().toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
   }
 
   function updateCount() {
-    if (filter?.value || deadlineFilter.value || searchText(search.value)) {
+    if (filter?.value || statusFilter.value || deadlineFilter.value || searchText(search.value)) {
       const visible = Array.from(tasks.children).filter(row => !row.hidden);
       const done = visible.filter(row => row.querySelector('input').checked).length;
       count.textContent = visible.length ? done + ' / ' + visible.length + ' completed' : 'No matching tasks.';
@@ -187,12 +195,13 @@ function runTaskBoard() {
 
   function applyFilter() {
     const query = searchText(search.value);
-    clear.hidden = !(filter?.value || deadlineFilter.value || search.value);
+    clear.hidden = !(filter?.value || statusFilter.value || deadlineFilter.value || search.value);
     for (const row of tasks.children) {
       const task = records.get(row.dataset.taskId);
       if (!task) continue;
       const member = task.assignee ? '+' + task.assignee : '-';
       row.hidden = Boolean((filter?.value && filter.value !== member) ||
+        (statusFilter.value && statusFilter.value !== (task.done ? 'completed' : 'open')) ||
         (deadlineFilter.value && deadlineFilter.value !== deadlineStatus(task)) ||
         (query && !searchText(task.name).includes(query)));
     }
@@ -200,6 +209,7 @@ function runTaskBoard() {
   }
 
   filter?.addEventListener('change', applyFilter);
+  statusFilter.addEventListener('change', applyFilter);
   deadlineFilter.addEventListener('change', applyFilter);
   search.addEventListener('input', applyFilter);
 
@@ -405,6 +415,7 @@ function runTaskBoard() {
     copy.querySelector('#deadline-filter-label').remove();
     copy.querySelector('#task-search-label').remove();
     copy.querySelector('#task-order-label').remove();
+    copy.querySelector('#status-filter-label').remove();
     copy.querySelector('#clear-task-filters').remove();
     copy.querySelector('#project-summary')?.remove();
     copy.querySelector('#deadline-agenda')?.remove();
