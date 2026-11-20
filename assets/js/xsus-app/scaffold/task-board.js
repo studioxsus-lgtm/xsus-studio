@@ -31,10 +31,21 @@ function runTaskBoard() {
   deadlineFilter.id = 'deadline-filter';
   deadlineFilter.append(new Option('All deadlines', ''), new Option('Due today', 'Due today'), new Option('Overdue', 'Overdue'));
   deadlineLabel.append(deadlineFilter);
-  count.before(deadlineLabel);
+  const searchLabel = document.createElement('label');
+  searchLabel.id = 'task-search-label';
+  searchLabel.textContent = 'Search tasks';
+  const search = document.createElement('input');
+  search.type = 'search';
+  search.id = 'task-search';
+  searchLabel.append(search);
+  count.before(deadlineLabel, searchLabel);
+
+  function searchText(value) {
+    return value.trim().toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+  }
 
   function updateCount() {
-    if (filter?.value || deadlineFilter.value) {
+    if (filter?.value || deadlineFilter.value || searchText(search.value)) {
       const visible = Array.from(tasks.children).filter(row => !row.hidden);
       const done = visible.filter(row => row.querySelector('input').checked).length;
       count.textContent = visible.length ? done + ' / ' + visible.length + ' completed' : 'No matching tasks.';
@@ -141,18 +152,21 @@ function runTaskBoard() {
   }
 
   function applyFilter() {
+    const query = searchText(search.value);
     for (const row of tasks.children) {
       const task = records.get(row.dataset.taskId);
       if (!task) continue;
       const member = task.assignee ? '+' + task.assignee : '-';
       row.hidden = Boolean((filter?.value && filter.value !== member) ||
-        (deadlineFilter.value && deadlineFilter.value !== deadlineStatus(task)));
+        (deadlineFilter.value && deadlineFilter.value !== deadlineStatus(task)) ||
+        (query && !searchText(task.name).includes(query)));
     }
     updateCount();
   }
 
   filter?.addEventListener('change', applyFilter);
   deadlineFilter.addEventListener('change', applyFilter);
+  search.addEventListener('input', applyFilter);
 
   function storeTask(task) {
     updateFilterOptions();
@@ -353,6 +367,7 @@ function runTaskBoard() {
     copy.dataset.tasks = encodeURIComponent(JSON.stringify(snapshot()));
     copy.dataset.board = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random();
     copy.querySelector('#deadline-filter-label').remove();
+    copy.querySelector('#task-search-label').remove();
     copy.querySelector('#project-summary')?.remove();
     copy.querySelector('#deadline-agenda')?.remove();
     copy.querySelector('#tasks').replaceChildren();
