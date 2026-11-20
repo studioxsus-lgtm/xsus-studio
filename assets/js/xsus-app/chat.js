@@ -1,6 +1,6 @@
-import { registerRefreshState, saveRefreshState } from './refresh-state.js';
-import { showGeneratedHtml } from './editor.js?v=20261120-refresh1';
-import { appendScaffoldControls } from './scaffold/index.js?v=20261120-refresh1';
+import { registerRefreshState, saveRefreshState } from './refresh-state.js?v=20261120-account1';
+import { showGeneratedHtml } from './editor.js?v=20261120-account1';
+import { appendScaffoldControls } from './scaffold/index.js?v=20261120-account1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
@@ -32,7 +32,7 @@ function addBubble(text, role) {
   scrollChat();
 }
 
-function renderSpecificationCard(specification, draft) {
+function renderSpecificationCard(specification, draft, reviewKey) {
   const specCard = document.createElement('article'); specCard.className = 'concept-card app-specification-card';
   specCard.dataset.requestId = specification.requestId;
   const specHeading = document.createElement('h3');
@@ -80,13 +80,13 @@ function renderSpecificationCard(specification, draft) {
         status.textContent = t(result.errors[0] === 'pages_required' ? 'Add at least one page or screen before approval.' : result.errors[0] === 'requirements_required' ? 'Add at least one user requirement before approval.' : 'Review the specification fields and try again.');
         return;
       }
-      specificationReviews.set(specification.requestId, result.specification);
+      specificationReviews.set(reviewKey, result.specification);
       saveRefreshState('builder');
-      specCard.replaceWith(renderSpecificationCard(specification, result.specification));
+      specCard.replaceWith(renderSpecificationCard(specification, result.specification, reviewKey));
     });
     const discard = document.createElement('button'); discard.type = 'button'; discard.className = 'app-specification-discard'; discard.textContent = t('Discard draft');
     discard.addEventListener('click', () => {
-      specificationReviews.set(specification.requestId, { state: 'discarded' });
+      specificationReviews.set(reviewKey, { state: 'discarded' });
       saveRefreshState('builder');
       specCard.remove();
     });
@@ -102,7 +102,7 @@ function renderSpecificationCard(specification, draft) {
   return specCard;
 }
 
-function addPlan(result) {
+function addPlan(result, reviewKey = result.requestId) {
   const bubble = document.createElement('div');
   bubble.className = 'chat-bubble assistant';
   const card = document.createElement('article'); card.className = 'concept-card bridge-plan-card';
@@ -133,13 +133,13 @@ function addPlan(result) {
   if (result.status === 'completed') {
     try {
       const specification = createAppSpecification(result);
-      let reviewDraft = specificationReviews.get(specification.requestId);
+      let reviewDraft = specificationReviews.get(reviewKey);
       if (reviewDraft?.state !== 'discarded') {
         if (!reviewDraft) {
         reviewDraft = createSpecificationReviewDraft(specification);
-        specificationReviews.set(specification.requestId, reviewDraft);
+        specificationReviews.set(reviewKey, reviewDraft);
         }
-        bubble.append(renderSpecificationCard(specification, reviewDraft));
+        bubble.append(renderSpecificationCard(specification, reviewDraft, reviewKey));
       }
     } catch {
       // Keep the verified planning draft visible if a future spec contract rejects its input.
@@ -184,7 +184,7 @@ function renderMessages() {
     welcome.append(suggestions); target.append(welcome);
   }
   session.messages.forEach(message => {
-    if (message.role === 'plan') addPlan(message.result);
+    if (message.role === 'plan') addPlan(message.result, message.reviewKey);
     else if (message.role === 'review') addReviewNotice(message.result);
     else addBubble(message.text, message.role);
   });

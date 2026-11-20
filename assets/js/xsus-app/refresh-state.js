@@ -28,11 +28,19 @@ export function saveRefreshState(section) {
   }
 }
 
+export function currentWorkspaceOwner() { return owner; }
+export function readWorkspacePart(section) { return sections.get(section).read(); }
+export function restoreWorkspacePart(section, value) {
+  sections.get(section).restore(value);
+  saveRefreshState(section);
+}
+
 function selectOwner(id) {
   if (id === owner) return;
   const first = owner === undefined;
   owner = id;
   warned = false;
+  document.dispatchEvent(new Event('xsus:workspace-owner'));
   for (const [section, adapter] of sections) {
     let saved;
     try { saved = id && JSON.parse(sessionStorage.getItem(key(section))); } catch {}
