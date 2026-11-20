@@ -1,7 +1,15 @@
-import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-save1';
+import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-taskedit1';
 
 const escapeText = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const section = (name, items) => items.length ? `<section><h2>${name}</h2><ul>${items.map(item => `<li>${escapeText(item)}</li>`).join('')}</ul></section>` : '';
+
+// Upgrade the previous persistent board without replacing its project, board ID or task data.
+export function upgradeTaskBoard(html) {
+  const oldPolicy = "script-src 'sha256-/1PLKjPUEDaFTGMXZCuW/01giKA5qPemVRTZjDyH86U='";
+  if (typeof html !== 'string' || !html.includes(oldPolicy) || !html.includes('id="save-board"')) return html;
+  return html.replace(oldPolicy, "script-src 'sha256-tcU2M3qXwEovdfGhE6ZBEnb9i/ZS4k7z2iAjgkoZVcU='")
+    .replace(/<script>\(function runTaskBoard\(\)[\s\S]*?<\/script>/, () => '<script>' + boardScript + '</script>');
+}
 
 export function buildScaffold(spec) {
   if (spec?.state !== 'approved_for_next_phase' || spec.review?.acceptedByUser !== true) {
@@ -12,7 +20,7 @@ export function buildScaffold(spec) {
   const interactive = spec.product.profileId === 'task-manager';
   const namedBoard = pages.findIndex(page => page.trim().toLowerCase() === 'team board');
   const boardIndex = namedBoard >= 0 ? namedBoard : Math.min(1, pages.length - 1);
-  const policy = interactive ? `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-/1PLKjPUEDaFTGMXZCuW/01giKA5qPemVRTZjDyH86U='; base-uri 'none'; form-action 'none'">` : '';
+  const policy = interactive ? `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-tcU2M3qXwEovdfGhE6ZBEnb9i/ZS4k7z2iAjgkoZVcU='; base-uri 'none'; form-action 'none'">` : '';
   const screens = pages.map((page, i) => `<section id="screen-${i + 1}"><h2>${escapeText(page)}</h2>${interactive && i === boardIndex ? boardMarkup : ''}</section>`).join('\n');
   return `<!doctype html>
 <html lang="en"${interactive ? ` data-board="${crypto.randomUUID()}"` : ''}><head><meta charset="utf-8">${policy}<meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeText(spec.product.label)}</title>

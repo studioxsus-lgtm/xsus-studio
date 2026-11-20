@@ -1,6 +1,6 @@
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261120-account1';
 import { showGeneratedHtml } from './editor.js?v=20261120-account1';
-import { appendScaffoldControls } from './scaffold/index.js?v=20261120-account1';
+import { appendScaffoldControls, upgradeTaskBoard } from './scaffold/index.js?v=20261120-taskedit1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
@@ -332,8 +332,12 @@ export function initChat() {
     sessions.splice(0, sessions.length, ...(saved?.sessions || [{id:1, name:'New conversation', messages:[]}]));
     activeId = saved?.activeId || 1;
     nextId = saved?.nextId || 2;
+    for (const session of sessions) if (session.generatedHtml) session.generatedHtml = upgradeTaskBoard(session.generatedHtml);
     specificationReviews.clear();
-    for (const [id, draft] of saved?.reviews || []) specificationReviews.set(id, draft);
+    for (const [id, draft] of saved?.reviews || []) {
+      if (draft.builtHtml) draft.builtHtml = upgradeTaskBoard(draft.builtHtml);
+      specificationReviews.set(id, draft);
+    }
     $('#prompt').value = saved?.goal || '';
     $('#planSteps').value = saved?.steps || '';
     updateCount();

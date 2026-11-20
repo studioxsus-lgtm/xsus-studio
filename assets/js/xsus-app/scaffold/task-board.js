@@ -64,12 +64,64 @@ function runTaskBoard() {
     });
     label.append(checkbox, title);
     item.append(label);
-    if (task.date) {
-      const due = document.createElement('time');
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.textContent = 'Edit task';
+    const due = document.createElement('time');
+    function display() {
+      title.textContent = task.name;
+      edit.setAttribute('aria-label', 'Edit task: ' + task.name);
+      due.hidden = !task.date;
       due.dateTime = task.date;
-      due.textContent = 'Due ' + task.date;
-      item.append(due);
+      due.textContent = task.date ? 'Due ' + task.date : '';
     }
+    item.append(due, edit);
+    display();
+    edit.addEventListener('click', () => {
+      edit.hidden = true;
+      const panel = document.createElement('div');
+      function field(caption, type, value) {
+        const label = document.createElement('label');
+        label.textContent = caption;
+        const input = document.createElement('input');
+        input.type = type;
+        input.value = value;
+        label.append(input);
+        panel.append(label);
+        return input;
+      }
+      const editedName = field('Task name', 'text', task.name);
+      editedName.required = true;
+      editedName.maxLength = 200;
+      const editedDate = field('Due date', 'date', task.date);
+      function close() {
+        panel.remove();
+        edit.hidden = false;
+        edit.focus();
+      }
+      function save() {
+        editedName.value = editedName.value.trim();
+        if (!editedName.reportValidity() || !editedDate.reportValidity()) return;
+        task.name = editedName.value;
+        task.date = editedDate.value;
+        display();
+        storeTask(task);
+        close();
+      }
+      for (const [caption, action] of [['Save changes', save], ['Cancel', close]]) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = caption;
+        button.addEventListener('click', action);
+        panel.append(button);
+      }
+      panel.addEventListener('keydown', event => {
+        if (event.key === 'Escape') close();
+        if (event.key === 'Enter' && event.target === editedName && !event.isComposing) save();
+      });
+      item.append(panel);
+      editedName.focus();
+    });
     tasks.append(item);
   }
 
