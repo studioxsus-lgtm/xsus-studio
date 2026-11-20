@@ -303,7 +303,7 @@ const filterRequests = new Set([
 ]);
 
 function requestedBoardEdit(goal) {
-  const words = goal.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+  const words = goal.trim().replace(/^[“”"]+|[“”"]+$/g, '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
     .replace(/['’]/g, ' ').replace(/[.!?]+$/, '').replace(/\s+/g, ' ').trim();
   if (filterRequests.has(words)) return 'filter';
   if (assignmentRequests.has(words)) return 'assign';
@@ -316,7 +316,13 @@ async function send() {
   if (!goal) { toast(t('Enter an English goal and at least one plan step.')); input.focus(); return; }
   const session = current();
   const original = session.generatedHtml;
-  const edit = original?.includes('id="save-board"') && !$('#planSteps').value.trim() && requestedBoardEdit(goal);
+  const rawSteps = $('#planSteps').value;
+  const intent = requestedBoardEdit(goal);
+  const compatible = rawSteps.split(/\r?\n/).filter(line => line.trim()).every(line => {
+    const step = requestedBoardEdit(line.replace(/^\s*[-•]\s*/, ''));
+    return step === intent || (intent === 'filter' && step === 'assign');
+  });
+  const edit = original?.includes('id="save-board"') && compatible && intent;
   const filtering = edit === 'filter';
   const edited = edit && (filtering ? enableMemberFilter(original) : enableTaskAssignments(original));
   const editGoal = filtering ? 'Filter tasks by team member.' : 'Assign each task to a team member.';
@@ -339,7 +345,6 @@ async function send() {
     toast(original.includes('id="' + field + '"') ? messages[0] : feedback[2]);
     return;
   }
-  const rawSteps = $('#planSteps').value;
   let steps;
   try { steps = parsePlanSteps(edit ? editStep : rawSteps); }
   catch (error) { toast(t(error instanceof BridgeRequestError ? error.code === 'invalid_steps' ? 'Add 1–100 non-empty plan steps, each no longer than 4096 characters.' : 'Enter an English goal and at least one plan step.' : 'Enter an English goal and at least one plan step.')); $('#planSteps').focus(); return; }
