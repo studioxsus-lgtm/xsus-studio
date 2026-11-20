@@ -61,7 +61,12 @@ export function renderEditor() {
   if(!target) return;
   target.innerHTML = modeContent();
   const preview = target.querySelector('[data-generated-preview]');
-  if (preview) preview.srcdoc = generatedHtml;
+  if (preview) {
+    if (generatedHtml.includes('<meta http-equiv="Content-Security-Policy"')) {
+      preview.setAttribute('sandbox', 'allow-scripts');
+    }
+    preview.srcdoc = generatedHtml;
+  }
   refreshIcons();
 }
 function updateMode(mode) {
