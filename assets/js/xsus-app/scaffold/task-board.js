@@ -43,8 +43,30 @@ function runTaskBoard() {
   const snapshot = () => Array.from(records.values());
   const embedded = window.parent !== window;
 
-  const calendarHeading = Array.from(document.querySelectorAll('section[id^="screen-"] > h2'))
-    .find(heading => heading.textContent.trim().toLowerCase() === 'deadline calendar');
+  const headings = Array.from(document.querySelectorAll('section[id^="screen-"] > h2'));
+  const overviewHeading = headings.find(heading => heading.textContent.trim().toLowerCase() === 'projects overview');
+  const overview = document.createElement('div');
+  if (overviewHeading) {
+    overview.id = 'project-summary';
+    overviewHeading.after(overview);
+  }
+
+  function updateOverview() {
+    if (!overviewHeading) return;
+    let completed = 0;
+    let earliest = '';
+    for (const task of records.values()) {
+      if (task.done) completed++;
+      else if (task.date && (!earliest || task.date < earliest)) earliest = task.date;
+    }
+    const totals = document.createElement('p');
+    totals.textContent = 'Open: ' + (records.size - completed) + ' · Completed: ' + completed;
+    const deadline = document.createElement('p');
+    deadline.textContent = 'Earliest open deadline: ' + (earliest || 'None');
+    overview.replaceChildren(totals, deadline);
+  }
+
+  const calendarHeading = headings.find(heading => heading.textContent.trim().toLowerCase() === 'deadline calendar');
   const agenda = document.createElement('div');
   if (calendarHeading) {
     agenda.id = 'deadline-agenda';
@@ -103,6 +125,7 @@ function runTaskBoard() {
 
   function storeTask(task) {
     updateFilterOptions();
+    updateOverview();
     updateCalendar();
     if (embedded) {
       window.parent.postMessage({type:'xsus-board-state', board:board.dataset.board, tasks:snapshot()}, '*');
@@ -269,6 +292,7 @@ function runTaskBoard() {
     status.textContent = 'Use Save HTML with tasks to reopen this board later.';
   }
   restored.forEach(renderTask);
+  updateOverview();
   updateFilterOptions();
   updateCalendar();
   updateCount();
@@ -277,6 +301,7 @@ function runTaskBoard() {
     const copy = board.cloneNode(true);
     copy.dataset.tasks = encodeURIComponent(JSON.stringify(snapshot()));
     copy.dataset.board = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random();
+    copy.querySelector('#project-summary')?.remove();
     copy.querySelector('#deadline-agenda')?.remove();
     copy.querySelector('#tasks').replaceChildren();
     copy.querySelector('#save-status').textContent = '';
