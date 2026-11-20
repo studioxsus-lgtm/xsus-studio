@@ -10,7 +10,7 @@ ADVERSARIAL_MATRIX_V6 = (
     StressCaseV6("quoted_sentence_contrast", '"However, costs rose."', True, False, "quoted_speech"),
     StressCaseV6("quoted_sentence_reference", '"She returned."', False, True, "quoted_speech"),
     StressCaseV6("metalinguistic_paraphrase", "They discussed however in class.", False, False, "unhandled_mention"),
-    StressCaseV6("metalinguistic_reference", "They discussed she in class.", False, False, "unhandled_mention"),
+    StressCaseV6("metalinguistic_reference", "A teacher discussed she in class.", False, False, "unhandled_mention"),
     StressCaseV6("ordinary_contrast", "However, the report arrived.", True, False, "control"),
     StressCaseV6("ordinary_reference", "Alex called. She answered.", False, True, "control"),
 )
