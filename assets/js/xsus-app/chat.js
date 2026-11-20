@@ -1,4 +1,4 @@
-import { registerRefreshState, saveRefreshState } from './refresh-state.js?v=20261120-account1';
+import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261120-account1';
 import { showGeneratedHtml } from './editor.js?v=20261120-account1';
 import { appendScaffoldControls } from './scaffold/index.js?v=20261120-account1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
@@ -153,6 +153,42 @@ function addReviewNotice(result) {
   addBubble(note, 'assistant');
 }
 
+const historyActions = {
+  en: ['Delete', 'Delete this conversation from history?'],
+  sq: ['Fshi', 'Ta fshish këtë bisedë nga historiku?'],
+  fr: ['Supprimer', 'Supprimer cette conversation de l’historique ?']
+};
+
+function deleteConversation(session, title) {
+  const index = sessions.indexOf(session);
+  const labels = historyActions[document.documentElement.lang] || historyActions.en;
+  if (index < 0 || !window.confirm(labels[1] + '\n\n' + title)) return;
+  sessions.splice(index, 1);
+  const reviewKey = message => message.reviewKey ?? message.result?.requestId;
+  const remaining = new Set(sessions.flatMap(item => item.messages.map(reviewKey)));
+  const removedHtml = [session.generatedHtml];
+  for (const message of session.messages) {
+    const key = reviewKey(message);
+    if (key && !remaining.has(key)) {
+      removedHtml.push(specificationReviews.get(key)?.builtHtml);
+      specificationReviews.delete(key);
+    }
+  }
+  if (session.id === activeId) {
+    cancelPending();
+    if (!sessions.length) sessions.push({id:nextId++, name:'New conversation', messages:[]});
+    activeId = sessions[0].id;
+    $('#prompt').value = '';
+    $('#planSteps').value = '';
+    updateCount();
+  }
+  const boardId = html => html?.match(/<html lang="en" data-board="([a-f0-9-]+)"/)?.[1];
+  const liveBoards = new Set([...sessions.map(item => item.generatedHtml), ...Array.from(specificationReviews.values(), draft => draft.builtHtml)].map(boardId));
+  const obsolete = new Set(removedHtml.map(boardId).filter(id => id && !liveBoards.has(id)));
+  if (obsolete.size) restoreWorkspacePart('boards', readWorkspacePart('boards').filter(([id]) => !obsolete.has(id)));
+  renderMessages();
+}
+
 function renderHistory() {
   const list = $('#historyList'); list.replaceChildren();
   sessions.forEach(session => {
@@ -160,7 +196,16 @@ function renderHistory() {
     btn.textContent = session.name === 'New conversation' ? t('New conversation') : session.name;
     btn.classList.toggle('active', session.id === activeId);
     btn.addEventListener('click', () => { cancelPending(); activeId = session.id; renderMessages(); $('#chatHistory').classList.add('hidden'); $('#historyBtn').setAttribute('aria-expanded', 'false'); });
-    list.append(btn);
+    const labels = historyActions[document.documentElement.lang] || historyActions.en;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = labels[0];
+    remove.setAttribute('aria-label', labels[0] + ' · ' + btn.textContent);
+    remove.addEventListener('click', () => deleteConversation(session, btn.textContent));
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px';
+    row.append(btn, remove);
+    list.append(row);
   });
 }
 
