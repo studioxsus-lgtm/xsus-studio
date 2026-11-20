@@ -29,5 +29,5 @@ initSettings();
 import { initRefreshState } from './refresh-state.js?v=20261120-account1';
 initRefreshState();
 
-import { initAccountProjects } from './account-projects.js?v=20261120-delete1';
+import { initAccountProjects } from './account-projects.js?v=20261120-update1';
 initAccountProjects();

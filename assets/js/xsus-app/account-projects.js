@@ -1,5 +1,5 @@
 import { getSupabaseClient } from './auth-session.js';
-import { currentWorkspaceOwner, readWorkspacePart, restoreWorkspacePart } from './refresh-state.js?v=20261120-account1';
+import { currentWorkspaceOwner, readWorkspacePart, restoreWorkspacePart, saveRefreshState } from './refresh-state.js?v=20261120-account1';
 
 const labels = {
   en:['My projects','Project name','Save a copy','Sign in to access your projects.','Saved to your account.','No saved projects.','Account storage is unavailable.','Show more','Close','Saving…','Open','Enter an app idea or build a project first.'],
@@ -11,6 +11,16 @@ const deletionLabels = {
   sq: {button:'Fshi', confirm:'Ta fshish përgjithmonë këtë kopje të ruajtur?', success:'Projekti u fshi.', failed:'Fshirja nuk u konfirmua. Rihap Projektet e mia për ta kontrolluar.'},
   fr: {button:'Supprimer', confirm:'Supprimer définitivement cette copie enregistrée ?', success:'Projet supprimé.', failed:'Suppression non confirmée. Rouvrez Mes projets pour vérifier.'}
 };
+const saveLabels = {
+  en: ['Save project','Save changes','This project changed or was deleted. Reopen it or save a copy.'],
+  sq: ['Ruaj projektin','Ruaj ndryshimet','Projekti ka ndryshuar ose është fshirë. Rihape ose ruaj një kopje.'],
+  fr: ['Enregistrer le projet','Enregistrer les modifications','Le projet a changé ou a été supprimé. Rouvrez-le ou enregistrez une copie.']
+};
+function activeSession() {
+  const builder = readWorkspacePart('builder');
+  return builder.sessions.find(item => item.id === builder.activeId);
+}
+
 const table = 'xsus_builder_projects';
 const boardId = html => html?.match(/<html lang="en" data-board="([a-f0-9-]+)"/)?.[1];
 
@@ -21,10 +31,11 @@ export function captureProject() {
   const ids = new Set(session.messages.map(m => m.reviewKey ?? m.result?.requestId).filter(Boolean));
   const reviews = builder.reviews.filter(([id]) => ids.has(id));
   const boards = new Set([session.generatedHtml, ...reviews.map(([,r]) => r.builtHtml)].map(boardId).filter(Boolean));
-  return {version:1, session, goal:builder.goal, steps:builder.steps, reviews, boards:readWorkspacePart('boards').filter(([id]) => boards.has(id))};
+  const {accountProject, ...content} = session;
+  return {version:1, session:content, goal:builder.goal, steps:builder.steps, reviews, boards:readWorkspacePart('boards').filter(([id]) => boards.has(id))};
 }
 
-export function openProject(project) {
+export function openProject(project, accountProject = null) {
   if (project?.version !== 1 || !Array.isArray(project.session?.messages) || !Array.isArray(project.reviews) || !Array.isArray(project.boards)) throw Error('Unsupported project');
   const builder = readWorkspacePart('builder');
   const id = builder.nextId;
@@ -46,7 +57,7 @@ export function openProject(project) {
   }
   const reviews = copy.reviews.map(([key,r]) => [ids.get(key),{...r,builtHtml:remap(r.builtHtml)}]);
   restoreWorkspacePart('boards',[...readWorkspacePart('boards'),...copy.boards.map(([key,rows]) => [boards.get(key),rows])]);
-  restoreWorkspacePart('builder',{...builder,sessions:[{...copy.session,id},...builder.sessions],activeId:id,nextId:id+1,reviews:[...builder.reviews,...reviews],goal:copy.goal,steps:copy.steps});
+  restoreWorkspacePart('builder',{...builder,sessions:[{...copy.session,id,accountProject},...builder.sessions],activeId:id,nextId:id+1,reviews:[...builder.reviews,...reviews],goal:copy.goal,steps:copy.steps});
 }
 
 export function initAccountProjects() {
@@ -55,6 +66,8 @@ export function initAccountProjects() {
   const form = dialog.querySelector('form');
   const input = form.querySelector('input');
   const submit = form.querySelector('button');
+  const copyButton = form.querySelector('[data-save-copy]');
+  let saving = false;
   const status = dialog.querySelector('[role=status]');
   const more = dialog.querySelector('[data-more]');
   const words = () => labels[document.documentElement.lang] || labels.en;
@@ -64,13 +77,15 @@ export function initAccountProjects() {
     const w=words();
     for (const b of buttons) if (b.classList.contains('pm-launch')) b.textContent=w[0];
     dialog.querySelector('h2').textContent=w[0]; form.querySelector('span').textContent=w[1];
-    submit.textContent=w[2]; more.textContent=w[7]; dialog.querySelector('[data-close]').ariaLabel=w[8];
+    const linked = activeSession()?.accountProject;
+    const actions = saveLabels[document.documentElement.lang] || saveLabels.en;
+    submit.textContent=actions[linked ? 1 : 0]; copyButton.textContent=w[2]; copyButton.hidden=!linked; more.textContent=w[7]; dialog.querySelector('[data-close]').ariaLabel=w[8];
   }
   const current = (token,owner) => token===generation && dialog.open && owner===currentWorkspaceOwner();
   async function fetchPage(reset) {
     const token=generation, owner=currentWorkspaceOwner();
     if (reset) { offset=0; list.replaceChildren(); more.hidden=true; }
-    submit.disabled=!owner;
+    submit.disabled=!owner || saving; copyButton.disabled=submit.disabled;
     if (!owner) { status.textContent=words()[3]; return; }
     more.disabled=true;
     try {
@@ -86,10 +101,10 @@ export function initAccountProjects() {
         b.onclick=async () => {
           b.disabled=true;
           try {
-            const {data,error}=await client.from(table).select('snapshot').eq('owner_id',owner).eq('id',row.id).single();
+            const {data,error}=await client.from(table).select('name,snapshot').eq('owner_id',owner).eq('id',row.id).single();
             if (!current(token,owner)) return;
             if (error) throw error;
-            openProject(data.snapshot); dialog.close(); document.querySelector('[data-section="AI Builder"]')?.click();
+            openProject(data.snapshot,{id:row.id,name:data.name,token:data.snapshot.saveToken ?? null}); dialog.close(); document.querySelector('[data-section="AI Builder"]')?.click();
           } catch { if (current(token,owner)) status.textContent=words()[6]; }
           finally { b.disabled=false; }
         };
@@ -110,7 +125,10 @@ export function initAccountProjects() {
               .eq('owner_id', owner).eq('id', row.id).select('id').maybeSingle();
             if (!current(token, owner)) return;
             if (error || data?.id !== row.id) throw Error('Deletion unconfirmed');
-            generation++;
+            for (const session of readWorkspacePart('builder').sessions) {
+              if (session.accountProject?.id === row.id) delete session.accountProject;
+            }
+            saveRefreshState('builder'); translate(); generation++;
             await fetchPage(true);
             if (dialog.open && owner === currentWorkspaceOwner()) status.textContent = text.success;
           } catch {
@@ -134,21 +152,40 @@ export function initAccountProjects() {
     const snapshot=captureProject(), name=input.value.trim();
     if (!snapshot) { status.textContent=words()[11]; return; }
     if (!name) {input.focus();return;}
-    submit.disabled=true; status.textContent=words()[9];
+    const session = activeSession();
+    const link = event.submitter === copyButton ? null : session.accountProject;
+    const id = link?.id ?? crypto.randomUUID();
+    snapshot.saveToken = crypto.randomUUID();
+    saving=true; submit.disabled=true; copyButton.disabled=true; status.textContent=words()[9];
     try {
       const client=await getSupabaseClient();
       if (!current(token,owner)) return;
-      const {error}=await client.from(table).insert({id:crypto.randomUUID(),owner_id:owner,name,snapshot});
+      if (link) {
+        let query = client.from(table).update({name,snapshot}).eq('owner_id',owner).eq('id',id);
+        query = link.token == null ? query.is('snapshot->>saveToken',null) : query.eq('snapshot->>saveToken',link.token);
+        const {data,error} = await query.select('id').maybeSingle();
+        if (error) throw error;
+        if (data?.id !== id) {
+          if (current(token,owner)) status.textContent=(saveLabels[document.documentElement.lang] || saveLabels.en)[2];
+          return;
+        }
+      } else {
+        const {error} = await client.from(table).insert({id,owner_id:owner,name,snapshot});
+        if (error) throw error;
+      }
+      if (currentWorkspaceOwner() === owner && readWorkspacePart('builder').sessions.includes(session)) {
+        session.accountProject={id,name,token:snapshot.saveToken};
+        saveRefreshState('builder');
+      }
       if (!current(token,owner)) return;
-      if (error) throw error;
-      status.textContent=words()[4]; generation++; await fetchPage(true);
+      translate(); status.textContent=words()[4]; generation++; await fetchPage(true);
     } catch { if(current(token,owner)) status.textContent=words()[6]; }
-    finally { if(current(token,owner)) submit.disabled=false; }
+    finally { saving=false; submit.disabled=!currentWorkspaceOwner(); copyButton.disabled=submit.disabled; }
   };
   translate(); document.addEventListener('xsus:language-changed',translate);
   for(const button of buttons) button.onclick=()=>{
     translate();generation++;status.textContent='';
-    const project=captureProject(); input.value=project?.session?.messages.length ? project.session.name : (project?.goal || '').slice(0,120);
+    const project=captureProject(); input.value=activeSession()?.accountProject?.name ?? (project?.session?.messages.length ? project.session.name : (project?.goal || '').slice(0,120));
     dialog.showModal(); fetchPage(true);
   };
   more.onclick=()=>fetchPage(false);
