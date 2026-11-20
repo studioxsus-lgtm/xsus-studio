@@ -1,5 +1,5 @@
-import { showGeneratedHtml } from './editor.js?v=20261120-board1';
-import { appendScaffoldControls } from './scaffold/index.js?v=20261120-board1';
+import { showGeneratedHtml } from './editor.js?v=20261120-save1';
+import { appendScaffoldControls } from './scaffold/index.js?v=20261120-save1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';

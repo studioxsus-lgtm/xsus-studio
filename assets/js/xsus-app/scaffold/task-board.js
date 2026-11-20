@@ -4,6 +4,8 @@ export const boardMarkup = `<div class="task-board">
   <button id="add-task" type="button">Add task</button>
   <p id="task-count" role="status">0 tasks</p>
   <ul id="tasks"></ul>
+  <button id="save-board" type="button">Save HTML with tasks</button>
+  <small id="save-status" role="status"></small>
 </div>`;
 
 export const boardStyles = `.task-board{display:grid;gap:.7rem;margin-top:1rem}
@@ -25,29 +27,102 @@ function runTaskBoard() {
     count.textContent = done + ' / ' + total + ' completed';
   }
 
-  function addTask() {
-    name.value = name.value.trim();
-    if (!name.reportValidity() || !date.reportValidity()) return;
+  const board = document.documentElement;
+  const prefix = 'xsus:task-board:v1:' + board.dataset.board + ':';
+  const status = document.getElementById('save-status');
+  const records = new Map();
+  const snapshot = () => Array.from(records.values());
+  const embedded = window.parent !== window;
+
+  function storeTask(task) {
+    if (embedded) {
+      window.parent.postMessage({type:'xsus-board-state', board:board.dataset.board, tasks:snapshot()}, '*');
+      return;
+    }
+    try {
+      localStorage.setItem(prefix + task.id, JSON.stringify(task));
+      status.textContent = 'Saved in this browser.';
+    } catch {
+      status.textContent = 'Use Save HTML with tasks to keep a copy on this device.';
+    }
+  }
+
+  function renderTask(task) {
+    if (!task || typeof task.id !== 'string' || typeof task.name !== 'string' ||
+        typeof task.date !== 'string' || typeof task.done !== 'boolean') return;
+    records.set(task.id, task);
     const item = document.createElement('li');
     const label = document.createElement('label');
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     const title = document.createElement('span');
-    title.textContent = name.value;
+    title.textContent = task.name;
+    checkbox.checked = task.done;
+    checkbox.addEventListener('change', () => {
+      task.done = checkbox.checked;
+      storeTask(task);
+    });
     label.append(checkbox, title);
     item.append(label);
-    if (date.value) {
+    if (task.date) {
       const due = document.createElement('time');
-      due.dateTime = date.value;
-      due.textContent = 'Due ' + date.value;
+      due.dateTime = task.date;
+      due.textContent = 'Due ' + task.date;
       item.append(due);
     }
     tasks.append(item);
+  }
+
+  function addTask() {
+    name.value = name.value.trim();
+    if (!name.reportValidity() || !date.reportValidity()) return;
+    const task = {id:crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random(), name:name.value, date:date.value, done:false};
+    renderTask(task);
+    storeTask(task);
     updateCount();
     name.value = '';
     date.value = '';
     name.focus();
   }
+
+  const restored = new Map();
+  try {
+    for (const task of JSON.parse(decodeURIComponent(board.dataset.tasks || '%5B%5D'))) restored.set(task.id, task);
+  } catch {}
+  if (!embedded) {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(prefix)) {
+          try {
+            const task = JSON.parse(localStorage.getItem(key));
+            restored.set(task.id, task);
+          } catch {}
+        }
+      }
+    } catch {
+      status.textContent = 'Use Save HTML with tasks to keep a copy on this device.';
+    }
+  } else {
+    status.textContent = 'Use Save HTML with tasks to reopen this board later.';
+  }
+  restored.forEach(renderTask);
+  if (records.size) updateCount();
+
+  document.getElementById('save-board').addEventListener('click', () => {
+    const copy = board.cloneNode(true);
+    copy.dataset.tasks = encodeURIComponent(JSON.stringify(snapshot()));
+    copy.dataset.board = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random();
+    copy.querySelector('#tasks').replaceChildren();
+    copy.querySelector('#save-status').textContent = '';
+    const file = new Blob(['<!doctype html>\n', copy.outerHTML], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'xsus-task-board.html';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  });
 
   document.getElementById('add-task').addEventListener('click', addTask);
   name.addEventListener('keydown', event => {

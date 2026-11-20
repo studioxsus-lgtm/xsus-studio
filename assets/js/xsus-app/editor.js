@@ -10,6 +10,15 @@ const samples = {
   'package.json': `{\n  "name": "xsus-design-sample",\n  "private": true,\n  "version": "0.0.0-demo"\n}`
 };
 let generatedHtml = null;
+const previewTasks = new Map();
+window.addEventListener('message', event => {
+  const frame = document.querySelector('[data-generated-preview]');
+  if (!frame || event.source !== frame.contentWindow || event.origin !== 'null') return;
+  const message = event.data;
+  if (message?.type === 'xsus-board-state' && frame.dataset.board === message.board && Array.isArray(message.tasks)) {
+    previewTasks.set(message.board, message.tasks);
+  }
+});
 
 export function showGeneratedHtml(html, openPreview = false) {
   if (html !== generatedHtml) {
@@ -63,9 +72,13 @@ export function renderEditor() {
   const preview = target.querySelector('[data-generated-preview]');
   if (preview) {
     if (generatedHtml.includes('<meta http-equiv="Content-Security-Policy"')) {
-      preview.setAttribute('sandbox', 'allow-scripts');
+      preview.setAttribute('sandbox', 'allow-scripts allow-downloads');
     }
-    preview.srcdoc = generatedHtml;
+    const id = generatedHtml.match(/<html lang="en" data-board="([a-f0-9-]+)"/)?.[1];
+    if (id) preview.dataset.board = id;
+    const saved = previewTasks.get(id);
+    preview.srcdoc = saved ? generatedHtml.replace('<html lang="en"', () =>
+      '<html lang="en" data-tasks="' + encodeURIComponent(JSON.stringify(saved)) + '"') : generatedHtml;
   }
   refreshIcons();
 }
