@@ -66,6 +66,14 @@ def run_synthetic_feedback_experiment_v1():
                   for i in range(10)]
             path.write_text("".join(json.dumps(row)+"\n" for row in rows),encoding="utf-8")
             evaluations[version]=path
+        diverse_path=root/"diverse-target-v1.jsonl"
+        diverse_starts=("Amber","Birch","Cobalt","Delta","Elm","Flint","Grove","Harbor","Iris","Juniper")
+        diverse_rows=[{"id":f"diverse-unseen-{i:02d}",
+                       "prompt":f"Identify synthetic marker {i} without repeating the prompt.",
+                       "response":f"{start} is synthetic marker {i}.",
+                       "facts":[],"patterns":[f"{start.lower()} is synthetic marker {i}\\."]}
+                      for i,start in enumerate(diverse_starts)]
+        diverse_path.write_text("".join(json.dumps(row)+"\\n" for row in diverse_rows),encoding="utf-8")
         request=CandidateCycleRequestV1(
             "synthetic-test-owner","grammar",baseline,training,evaluations,
             root/"candidate.json.gz",root/"report.json",epochs=2,replay_examples=8)
@@ -81,10 +89,12 @@ def run_synthetic_feedback_experiment_v1():
             candidate_tokenizer,_encode(candidate_tokenizer,target_examples))
         ablation_training=_encode(baseline_tokenizer,target_examples)
         ablation_cases={name:load_cases(path) for name,path in evaluations.items()}
+        diverse_cases=load_cases(diverse_path)
         first_target_weight_ablation=run_first_target_weight_ablation_v1(
             baseline_tokenizer,baseline_model,ablation_training,ablation_cases)
         position_balanced_ablation=run_position_balanced_ablation_v1(
-            baseline_tokenizer,baseline_model,ablation_training,ablation_cases)
+            baseline_tokenizer,baseline_model,ablation_training,
+            {**ablation_cases,"diverse-target-v1":diverse_cases})
         benchmarks={}
         for name,scores in sorted(report["benchmarks"].items()):
             cases=load_cases(evaluations[name])
