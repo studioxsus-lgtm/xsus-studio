@@ -349,3 +349,19 @@ python -m unittest tests.integration.test_real_crash_v1 -v
 Requires POSIX SIGKILL. This validates process termination after durable
 handshake points, not arbitrary instruction-level crashes, power loss, storage
 reordering, network filesystems, or hostile concurrent writers.
+
+## Phase 6.0 — Consolidated reliability gate
+
+`consolidated_reliability_v1.py` combines the existing bounded intelligence
+readiness checks (authored reasoning, solving, planning, decision, abstention,
+sequential stability) with deterministic four-boundary recovery checks.
+It returns named checks and explicit failures and fails closed if any check
+fails. Real SIGKILL tests remain separate integration tests in CI.
+
+```bash
+python -m unittest tests.integration.test_consolidated_reliability_v1 -v
+python -m unittest tests.integration.test_real_crash_v1 -v
+```
+
+This is an integration reliability checkpoint, not a proof of production
+readiness, open-world learning, autonomous operation, or general intelligence.
