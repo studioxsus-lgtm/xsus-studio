@@ -377,3 +377,26 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
         guard=self.report["first_target_position_regression_guard"]
         self.assertFalse(guard["raw_text_exposed"])
         self.assertFalse(guard["raw_token_ids_exposed"])
+
+    def test_balanced_ablation_four_arms(self):
+        audit=self.report["position_balanced_ablation"]
+        self.assertEqual(set(audit["arms"]),{"uniform","first2","balanced2","balanced3"})
+        self.assertEqual(set(audit["decisions"]),set(audit["arms"]))
+
+    def test_balanced_ablation_holdout_coverage(self):
+        audit=self.report["position_balanced_ablation"]
+        for arm in audit["arms"].values():
+            self.assertEqual(set(arm["benchmarks"]),{"written-v4","written-v5"})
+            for row in arm["benchmarks"].values():
+                self.assertEqual(row["generation"]["cases"],10)
+                self.assertEqual(row["teacher_forced_positions"]["examples"],10)
+
+    def test_balanced_ablation_manual_release(self):
+        audit=self.report["position_balanced_ablation"]
+        self.assertFalse(audit["release_authorized"])
+        self.assertTrue(audit["human_release_required"])
+
+    def test_balanced_ablation_privacy(self):
+        audit=self.report["position_balanced_ablation"]
+        self.assertFalse(audit["raw_text_exposed"])
+        self.assertFalse(audit["raw_token_ids_exposed"])
