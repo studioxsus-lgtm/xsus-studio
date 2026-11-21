@@ -195,3 +195,19 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
 
     def test_visible_first_does_not_automatically_release(self):
         self.assertFalse(self.report["release_evidence_sufficient"])
+
+    def test_training_target_distribution_present(self):
+        distribution=self.report["training_target_distribution"]
+        self.assertEqual(distribution["examples"],24)
+        self.assertGreater(distribution["target_tokens"],0)
+
+    def test_training_target_distribution_is_private(self):
+        distribution=self.report["training_target_distribution"]
+        self.assertFalse(distribution["raw_text_exposed"])
+        self.assertFalse(distribution["raw_token_ids_exposed"])
+
+    def test_training_target_distribution_accounting(self):
+        distribution=self.report["training_target_distribution"]
+        self.assertEqual(distribution["target_tokens"],sum(distribution[key] for key in (
+            "eos_tokens","whitespace_tokens","printable_tokens",
+            "non_rendering_tokens","control_or_replacement_tokens")))
