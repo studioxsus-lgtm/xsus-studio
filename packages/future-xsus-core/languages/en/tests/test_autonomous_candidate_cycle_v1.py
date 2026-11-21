@@ -9,7 +9,7 @@ from languages.en.learning.autonomous_candidate_cycle_v1 import (
     execute_autonomous_candidate_cycle_v1 as execute,
 )
 from languages.en.learning.feedback_store import SQLiteFeedbackStore
-from languages.en.data.preparation.corpus import Example
+from languages.en.data.preparation.corpus import parse_example
 
 
 class AutonomousCandidateCycleV1Tests(unittest.TestCase):
@@ -24,7 +24,7 @@ class AutonomousCandidateCycleV1Tests(unittest.TestCase):
             {"written-v4":self.root/"v4.jsonl","written-v5":self.root/"v5.jsonl"},
             self.root/"candidate.json",self.root/"report.json")
         for i in range(5):
-            record=self.store.submit("owner",Example(f"Example {i}?",f"Answer {i}."),consent=True)
+            record=self.store.submit("owner",parse_example({"prompt":f"Example {i}?","response":f"Answer {i}."}),consent=True)
             self.store.review("owner",record.example_id,approved=True)
 
     def test_plan(self):
