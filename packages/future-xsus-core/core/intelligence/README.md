@@ -103,3 +103,19 @@ autonomous problem solver.
 ```bash
 python -m unittest tests.integration.test_problem_solver_v1 tests.integration.test_intelligence_kernel_v1 -v
 ```
+
+## Phase 4.5 — Dependency-aware task planning
+
+`task_planner_v1.py` accepts up to 128 bounded tasks, each with explicit
+dependencies. It rejects missing dependencies and duplicate IDs, detects
+cycles, produces deterministic topological ordering, validates completed tasks
+against prerequisites, and independently verifies an unchanged plan.
+`IntelligenceKernel.plan_tasks` returns a proposed plan, never an executed one.
+
+```bash
+python -m unittest tests.integration.test_task_planner_v1 tests.integration.test_intelligence_kernel_v1 -v
+```
+
+The engine does not discover goals automatically, operate external tools, or
+assert that tasks were completed in the real world. Caller-provided completion
+claims require separate trusted evidence and authorization.
