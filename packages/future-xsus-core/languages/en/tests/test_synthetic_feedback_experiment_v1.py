@@ -278,3 +278,16 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
             self.assertFalse(audit["raw_text_exposed"])
             self.assertFalse(audit["raw_token_ids_exposed"])
             self.assertFalse(audit["raw_logits_exposed"])
+
+    def test_decision_margin_covers_holdouts(self):
+        for row in self.report["benchmarks"].values():
+            audit=row["candidate_decision_margin"]
+            self.assertEqual(audit["cases"],10)
+            self.assertGreaterEqual(audit["min_top_two_margin"],0)
+
+    def test_decision_margin_preserves_privacy(self):
+        for row in self.report["benchmarks"].values():
+            audit=row["candidate_decision_margin"]
+            self.assertFalse(audit["raw_text_exposed"])
+            self.assertFalse(audit["raw_token_ids_exposed"])
+            self.assertFalse(audit["raw_logits_exposed"])
