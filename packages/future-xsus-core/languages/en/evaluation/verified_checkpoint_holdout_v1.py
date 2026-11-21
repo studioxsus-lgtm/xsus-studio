@@ -21,6 +21,8 @@ def _digest(path):
 def inspect_verified_checkpoint_holdout_v1(
     checkpoint_path, training_paths, evaluation_path, *, max_new_tokens=32,
 ):
+    if type(max_new_tokens) is not int or not 1 <= max_new_tokens <= 256:
+        raise ValueError("invalid generation length")
     checkpoint_path = Path(checkpoint_path)
     evaluation_path = Path(evaluation_path)
     if not isinstance(training_paths, (list, tuple)) or not training_paths:
