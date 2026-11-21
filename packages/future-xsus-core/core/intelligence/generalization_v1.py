@@ -54,8 +54,7 @@ class GeneralizationEvaluator:
                 rng.shuffle(labels)
                 rules = [Rule((labels[j],), labels[j + 1]) for j in range(depth)]
                 # Distractor cycle cannot create support without a seed.
-                rules.extend((Rule((labels[-1],), labels[-2]),
-                              Rule((labels[-2],), labels[-1])))
+                rules.append(Rule((labels[-1],), labels[-1]))
                 rng.shuffle(rules)
                 supported = index % 2 == 0
                 facts = (labels[0],) if supported else (labels[-1],)
