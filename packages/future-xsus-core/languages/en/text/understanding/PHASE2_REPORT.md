@@ -67,3 +67,18 @@ external evaluation or authorization for deployment.
 ```bash
 python -m languages.en.evaluation.sentence_meaning_quality_gate_v1
 ```
+
+## Bounded batch processing (opt-in)
+
+`sentence_batch_v1.py` accepts 1–32 explicitly separated sentences with a
+maximum of 8192 combined characters, reports individual structured frames and
+aggregate counts, and can compare up to 64 explicitly indexed sentence pairs.
+Invalid batch shapes, empty sentences, out-of-range indices, booleans used as
+indices, and oversized requests raise `ValueError` before any comparison.
+No raw source text is returned; fixed vocabulary values can appear in frames.
+This does not perform arbitrary paragraph segmentation, document understanding,
+logical entailment, or any external action.
+
+```bash
+python -m unittest languages.en.tests.test_sentence_batch_v1 -v
+```
