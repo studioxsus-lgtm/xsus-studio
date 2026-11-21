@@ -430,3 +430,18 @@ python -m unittest tests.integration.test_knowledge_learning_v1 -v
 
 This does not resolve which conflicting claim is externally true, update
 model weights, persist proposals across process restarts, or deploy changes.
+
+## Phase 6.5 — Bounded conversational intelligence routing
+
+`conversation_router_v1.py` exposes an owner-scoped, revision-checked
+session interface for explicit `prove <atom>` and `history` commands. Proofs
+use the existing formal kernel and require caller-supplied facts and rules.
+Unknown intents abstain instead of inventing answers. Sessions are volatile;
+only a minimal assistant status is stored, and no tools execute.
+
+```bash
+python -m unittest tests.integration.test_conversation_router_v1 -v
+```
+
+This is a controlled conversational contract, **not** free-form natural
+language comprehension, generative dialogue, persistent user memory, or AGI.
