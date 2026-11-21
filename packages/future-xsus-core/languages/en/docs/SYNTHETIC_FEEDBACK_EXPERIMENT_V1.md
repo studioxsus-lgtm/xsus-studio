@@ -99,3 +99,18 @@ The synthetic experiment measures an additional candidate arm with
 arms are scored on the same 20 synthetic held-out cases and include
 only aggregate diagnostics. The experimental arm cannot authorize
 candidate promotion or deployment.
+
+## Visible-character ablation
+
+GitHub Actions run 44877376471 showed the eight-token minimum
+still produced 20/20 empty responses and 0/20 accepted responses.
+Token count alone does not guarantee visible output.
+
+The generator now has a separate **opt-in** `min_visible_chars`
+argument, defaulting to zero. It suppresses EOS until the decoded,
+stripped text reaches the requested visible-character count, subject
+to the existing maximum token limit and stop signal. The synthetic
+experiment compares this additional arm on the same 20 held-out cases.
+It does not change default generation, and cannot authorize release.
+If the model generates only whitespace, the maximum-token cap may
+still produce an empty answer; this experiment measures that possibility.
