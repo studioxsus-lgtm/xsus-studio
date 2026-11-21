@@ -73,7 +73,7 @@ def run_synthetic_feedback_experiment_v1():
                        "response":f"{start} is synthetic marker {i}.",
                        "facts":[],"patterns":[f"{start.lower()} is synthetic marker {i}\\."]}
                       for i,start in enumerate(diverse_starts)]
-        diverse_path.write_text("".join(json.dumps(row)+"\\n" for row in diverse_rows),encoding="utf-8")
+        diverse_path.write_text("".join(json.dumps(row)+"\n" for row in diverse_rows),encoding="utf-8")
         request=CandidateCycleRequestV1(
             "synthetic-test-owner","grammar",baseline,training,evaluations,
             root/"candidate.json.gz",root/"report.json",epochs=2,replay_examples=8)
