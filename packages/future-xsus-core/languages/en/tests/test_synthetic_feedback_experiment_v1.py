@@ -89,6 +89,7 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
 
     def test_quality_gate_requires_measured_gain(self):
         self.assertEqual(self.report["candidate_quality_gate_passed"],
+                         not self.report["generation_collapse_detected"] and
                          self.report["observed_generalization_gain"] and
                          all(row["candidate_accepted"]>=row["baseline_accepted"]
                              for row in self.report["benchmarks"].values()))
@@ -118,3 +119,31 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
         for row in self.report["benchmarks"].values():
             self.assertEqual(row["baseline_generation_diagnostics"]["accepted"],row["baseline_accepted"])
             self.assertEqual(row["candidate_generation_diagnostics"]["accepted"],row["candidate_accepted"])
+
+    def test_collapse_flag_is_boolean(self):
+        self.assertIs(type(self.report["generation_collapse_detected"]),bool)
+
+    def test_empty_response_regression_is_detected(self):
+        has_empty_regression=any(
+            row["candidate_generation_diagnostics"]["empty_responses"] >
+            row["baseline_generation_diagnostics"]["empty_responses"]
+            for row in self.report["benchmarks"].values())
+        if has_empty_regression:
+            self.assertTrue(self.report["generation_collapse_detected"])
+
+    def test_collapsed_candidate_never_passes_quality_gate(self):
+        if self.report["generation_collapse_detected"]:
+            self.assertFalse(self.report["candidate_quality_gate_passed"])
+
+    def test_collapsed_candidate_not_safe_for_review(self):
+        if self.report["generation_collapse_detected"]:
+            self.assertFalse(self.report["candidate_safe_for_review"])
+
+    def test_collapse_reason_exposed(self):
+        if self.report["generation_collapse_detected"]:
+            self.assertIn("generation_collapse_detected",self.report["quality_gate_reasons"])
+
+    def test_review_safety_requires_gain(self):
+        self.assertEqual(self.report["candidate_safe_for_review"],
+                         not self.report["generation_collapse_detected"] and
+                         self.report["observed_generalization_gain"])
