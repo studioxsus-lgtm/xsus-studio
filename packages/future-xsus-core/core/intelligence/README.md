@@ -298,3 +298,21 @@ Requires POSIX `fcntl` and a filesystem with reliable advisory locks. All
 writers must use `LockedAuditJournal`; direct `AuditJournal` writers bypass
 the lock. This does not provide distributed consensus, hostile-writer defense,
 or crash-atomic multi-file transactions.
+
+## Phase 5.7 — Transactional candidate reviews and recovery
+
+`transactional_governance_v1.py` uses the existing POSIX audit lock to
+serialize review operations, recording `prepare` before saving the governance
+snapshot and `commit` after saving. On restart, `recover()` inspects
+unresolved prepares: if the snapshot reflects the intended review it records
+`commit`; if the original pending revision remains it records `abort`.
+Ambiguous states fail closed for manual investigation.
+
+```bash
+python -m unittest tests.integration.test_transactional_governance_v1 -v
+```
+
+This is cooperative single-host crash reconciliation, **not** a general
+ACID database. All writes must use the same lock protocol, both files must
+share a directory, and neither hostile writers nor multi-host filesystems
+are covered. Recovery records do not deploy or promote any candidate.
