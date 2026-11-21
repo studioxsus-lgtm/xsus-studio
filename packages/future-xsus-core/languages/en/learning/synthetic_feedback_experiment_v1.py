@@ -14,6 +14,7 @@ from languages.en.learning.feedback_store import SQLiteFeedbackStore
 from languages.en.learning.autonomous_candidate_cycle_v1 import (
     CandidateCycleRequestV1,execute_autonomous_candidate_cycle_v1,
 )
+from languages.en.evaluation.generation_diagnostics_v1 import summarize_generation_diagnostics_v1
 from languages.en.models.checkpoint import save_checkpoint
 from languages.en.models.neural_model import NeuralLanguageModel
 from languages.en.text.tokenizer import BytePairTokenizer
@@ -60,6 +61,8 @@ def run_synthetic_feedback_experiment_v1():
                 "candidate_accepted":scores["candidate"]["accepted"],
                 "baseline_exact_matches":scores["baseline"]["exact_matches"],
                 "candidate_exact_matches":scores["candidate"]["exact_matches"],
+                "baseline_generation_diagnostics":summarize_generation_diagnostics_v1(scores["baseline"]["details"]),
+                "candidate_generation_diagnostics":summarize_generation_diagnostics_v1(scores["candidate"]["details"]),
             }
         baseline_accepted=sum(row["baseline_accepted"] for row in benchmarks.values())
         candidate_accepted=sum(row["candidate_accepted"] for row in benchmarks.values())
