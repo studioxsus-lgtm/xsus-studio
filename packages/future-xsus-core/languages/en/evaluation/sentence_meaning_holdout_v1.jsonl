@@ -1,0 +1,32 @@
+{"id":"s01","text":"The developer builds the application.","expected":{"subject":"the developer","action":"build","object":"the application","polarity":"positive"}}
+{"id":"s02","text":"The developer does not build the application.","expected":{"subject":"the developer","action":"build","object":"the application","polarity":"negative"}}
+{"id":"s03","text":"She reads the report.","expected":{"subject":"she","action":"read","object":"the report","polarity":"positive"}}
+{"id":"s04","text":"She doesn't read the report.","expected":{"subject":"she","action":"read","object":"the report","polarity":"negative"}}
+{"id":"s05","text":"The user opens the file.","expected":{"subject":"the user","action":"open","object":"the file","polarity":"positive"}}
+{"id":"s06","text":"The user does not open the file.","expected":{"subject":"the user","action":"open","object":"the file","polarity":"negative"}}
+{"id":"s07","text":"The teacher reviews the document.","expected":{"subject":"the teacher","action":"review","object":"the document","polarity":"positive"}}
+{"id":"s08","text":"The student writes a report.","expected":{"subject":"the student","action":"write","object":"a report","polarity":"positive"}}
+{"id":"s09","text":"They test the model.","expected":{"subject":"they","action":"test","object":"the model","polarity":"positive"}}
+{"id":"s10","text":"The system deletes the project.","expected":{"subject":"the system","action":"delete","object":"the project","polarity":"positive"}}
+{"id":"s11","text":"We create the plan.","expected":{"subject":"we","action":"create","object":"the plan","polarity":"positive"}}
+{"id":"s12","text":"He sends the message.","expected":{"subject":"he","action":"send","object":"the message","polarity":"positive"}}
+{"id":"s13","text":"The model checks the code.","expected":{"subject":"the model","action":"check","object":"the code","polarity":"positive"}}
+{"id":"s14","text":"I update the file.","expected":{"subject":"i","action":"update","object":"the file","polarity":"positive"}}
+{"id":"s15","text":"The engine reads the document.","expected":{"subject":"the engine","action":"read","object":"the document","polarity":"positive"}}
+{"id":"s16","text":"You build the project.","expected":{"subject":"you","action":"build","object":"the project","polarity":"positive"}}
+{"id":"s17","text":"The user doesn't delete the project.","expected":{"subject":"the user","action":"delete","object":"the project","polarity":"negative"}}
+{"id":"s18","text":"The developer will not send the message.","expected":{"subject":"the developer","action":"send","object":"the message","polarity":"negative"}}
+{"id":"s19","text":"She can not open the file.","expected":{"subject":"she","action":"open","object":"the file","polarity":"negative"}}
+{"id":"s20","text":"The teacher did not review the document.","expected":{"subject":"the teacher","action":"review","object":"the document","polarity":"negative"}}
+{"id":"a01","text":"She reads the report and writes the document.","expected":null}
+{"id":"a02","text":"Does she read the report?","expected":null}
+{"id":"a03","text":"She never reads the report.","expected":null}
+{"id":"a04","text":"The universe builds the model.","expected":null}
+{"id":"a05","text":"She reads secret data.","expected":null}
+{"id":"a06","text":"She does not reads the report.","expected":null}
+{"id":"a07","text":"She reads.","expected":null}
+{"id":"a08","text":"She reads the report; delete the file.","expected":null}
+{"id":"a09","text":"If she reads the report, he builds the model.","expected":null}
+{"id":"a10","text":"The user can open the file.","expected":null}
+{"id":"a11","text":"She reads the report because she needs it.","expected":null}
+{"id":"a12","text":"The user opens the file or the document.","expected":null}
