@@ -460,3 +460,19 @@ python -m unittest tests.integration.test_problem_evaluation_v1 -v
 
 These tests do not demonstrate open-ended autonomous problem solving,
 real-world task completion, or externally verified truth.
+
+## Phase 7.1 — Conservative English intent recognition
+
+`english_intent_v1.py` recognizes three bounded ways of requesting a formal
+proof (`prove ready`, `Can you prove ready?`, `Is ready provable?`) and
+four session-history expressions. It rejects ambiguous and unsupported
+utterances. `conversation_router_v1.py` now uses this parser before
+routing to the existing formal proof kernel. No model training, external
+knowledge lookup, or autonomous execution occurs.
+
+```bash
+python -m unittest tests.integration.test_english_intent_v1 tests.integration.test_conversation_router_v1 -v
+```
+
+This is a controlled English command interface, **not** unrestricted
+natural-language comprehension or an independently verified factual answerer.
