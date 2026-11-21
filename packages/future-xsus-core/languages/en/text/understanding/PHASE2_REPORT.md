@@ -82,3 +82,17 @@ logical entailment, or any external action.
 ```bash
 python -m unittest languages.en.tests.test_sentence_batch_v1 -v
 ```
+
+## Batch hardening and repeatability
+
+The batch API additionally enforces a maximum of 1000 characters per sentence
+and rejects duplicate index pairs, avoiding redundant work. A deterministic
+100-iteration CI diagnostic repeats a mixed 32-sentence batch and three
+comparisons, checking counts and stable results. This is a **functional
+repeatability check**, not a timing, concurrency, memory, or production-load
+benchmark. The aggregate report contains no raw input sentences.
+
+```bash
+python -m unittest languages.en.tests.test_sentence_batch_stress_v1 -v
+python -m languages.en.evaluation.sentence_batch_stress_v1
+```
