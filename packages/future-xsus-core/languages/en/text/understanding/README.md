@@ -77,3 +77,20 @@ The challenge is not externally blind and does not establish real-world
 accuracy. In particular, the cue-based model does not understand negation,
 so adversarial errors are expected and should guide a future opt-in
 context-guard design with regression tests before integration.
+
+## Opt-in context guard v1
+
+`context_guard_v1.py` adds a conservative wrapper that **abstains** when
+explicit lexical evidence appears near negation, or a negated contrast occurs.
+It cannot infer the correct sense from logical negation and may unnecessarily
+abstain on valid examples. It never replaces a sense with a new guessed sense.
+The existing `analyze_word_sense` API remains unchanged.
+
+`word_sense_guard_comparison_v1.py` compares the baseline and guarded
+versions on the 63-case diagnostic and 48-case challenge. It reports both
+prevented errors and correct answers lost to abstention. This is a
+non-gating experiment, **not** an authorization to deploy the guard.
+
+```sh
+python3 -m languages.en.evaluation.word_sense_guard_comparison_v1
+```
