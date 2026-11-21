@@ -84,3 +84,18 @@ a new all-identical-response collapse blocks the experimental quality
 gate even when loss improves. This is a report-level gate; it does
 not change the neural optimizer or claim to cure collapse. The
 existing learning-cycle eligibility flag is reported separately.
+
+## Experimental EOS ablation
+
+The generator now supports an **opt-in** `min_new_tokens` argument,
+defaulting to zero for full backward compatibility. During the first
+N generated tokens, EOS cannot terminate generation; the external
+stop signal and maximum token limit still take precedence. This is
+an ablation, **not** a model fix: forcing non-empty output may create
+meaningless repetitions.
+
+The synthetic experiment measures an additional candidate arm with
+`min_new_tokens=8`, alongside unchanged default generation. Both
+arms are scored on the same 20 synthetic held-out cases and include
+only aggregate diagnostics. The experimental arm cannot authorize
+candidate promotion or deployment.
