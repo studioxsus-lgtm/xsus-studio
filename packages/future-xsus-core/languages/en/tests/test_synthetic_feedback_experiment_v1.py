@@ -291,3 +291,16 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
             self.assertFalse(audit["raw_text_exposed"])
             self.assertFalse(audit["raw_token_ids_exposed"])
             self.assertFalse(audit["raw_logits_exposed"])
+
+    def test_first_target_rank_covers_holdouts(self):
+        for row in self.report["benchmarks"].values():
+            audit=row["candidate_first_target_rank"]
+            self.assertEqual(audit["cases"],10)
+            self.assertGreaterEqual(audit["mean_target_rank"],1)
+
+    def test_first_target_rank_preserves_privacy(self):
+        for row in self.report["benchmarks"].values():
+            audit=row["candidate_first_target_rank"]
+            self.assertFalse(audit["raw_text_exposed"])
+            self.assertFalse(audit["raw_token_ids_exposed"])
+            self.assertFalse(audit["raw_logits_exposed"])
