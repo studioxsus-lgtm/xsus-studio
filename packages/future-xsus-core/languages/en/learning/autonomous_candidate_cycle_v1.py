@@ -5,6 +5,7 @@ from .feedback_store import SQLiteFeedbackStore
 from .verified_feedback_v1 import VerifiedFeedbackRequestV1, verify_approved_language_feedback_v1
 from .continual import build_candidate, feedback_set_revision
 from .candidate_cycle_lock_v1 import exclusive_candidate_cycle_lock_v1
+from .candidate_cycle_journal_v1 import inspect_candidate_cycle_journal_v1, record_candidate_cycle_state_v1
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,18 +80,28 @@ def execute_autonomous_candidate_cycle_v1(store,request,*,approved_execution=Fal
     if approved_execution is not True:
         raise PermissionError("Explicit candidate-training approval required")
     with exclusive_candidate_cycle_lock_v1(request.report_path):
+        recovery=inspect_candidate_cycle_journal_v1(request.report_path)
+        if recovery.state=="running":
+            raise RuntimeError("Interrupted candidate run requires manual recovery")
         plan=plan_autonomous_candidate_cycle_v1(store,request)
-        report=build_candidate(
-            store,request.owner_id,baseline_path=request.baseline_path,
-            training_path=request.training_path,evaluation_paths=request.evaluation_paths,
-            candidate_path=request.candidate_path,report_path=request.report_path,
-            seed=request.seed,epochs=request.epochs,learning_rate=request.learning_rate,
-            replay_examples=request.replay_examples,
-        )
-        if type(report) is not dict or report.get("format")!="xsus-en-learning-report-v1":
-            raise ValueError("Unexpected candidate training report")
-        if report.get("input_sha256",{}).get("approved_feedback_set")!=plan["feedback_revision"]:
-            raise ValueError("Approved feedback changed during training")
+        revision=plan["feedback_revision"]
+        record_candidate_cycle_state_v1(request.report_path,revision,"running")
+        try:
+            report=build_candidate(
+                store,request.owner_id,baseline_path=request.baseline_path,
+                training_path=request.training_path,evaluation_paths=request.evaluation_paths,
+                candidate_path=request.candidate_path,report_path=request.report_path,
+                seed=request.seed,epochs=request.epochs,learning_rate=request.learning_rate,
+                replay_examples=request.replay_examples,
+            )
+            if type(report) is not dict or report.get("format")!="xsus-en-learning-report-v1":
+                raise ValueError("Unexpected candidate training report")
+            if report.get("input_sha256",{}).get("approved_feedback_set")!=revision:
+                raise ValueError("Approved feedback changed during training")
+        except Exception:
+            record_candidate_cycle_state_v1(request.report_path,revision,"failed")
+            raise
+        record_candidate_cycle_state_v1(request.report_path,revision,"completed")
     return {
         "contract":"future-xsus-core.autonomous-candidate-cycle.v1",
         "plan":plan,
