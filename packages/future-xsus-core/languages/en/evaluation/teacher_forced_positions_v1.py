@@ -3,7 +3,7 @@
 This diagnostic does not expose reference strings, token IDs or logits.
 """
 from math import isfinite
-from languages.en.text.tokenizer import BYTE_OFFSET
+from languages.en.text.tokenizer import BYTE_OFFSET, EOS
 
 
 def inspect_teacher_forced_positions_v1(model, encoded_examples, *, early_window=4):
@@ -21,7 +21,7 @@ def inspect_teacher_forced_positions_v1(model, encoded_examples, *, early_window
         for position,target in enumerate(targets):
             if type(target) is not int or not BYTE_OFFSET<=target<model.vocab_size:
                 # EOS is not a generatable token; exclude it from this analysis.
-                if type(target) is int and target==1:
+                if type(target) is int and target==EOS:
                     context.append(target)
                     continue
                 raise ValueError("invalid target")
