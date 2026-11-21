@@ -62,6 +62,21 @@ class IntelligenceKernelTests(unittest.TestCase):
         self.assertEqual(result.evidence, ("report", "review"))
         self.assertIn("sources_not_independently_verified", result.limitations)
 
+    def test_verified_problem_solver_integration(self):
+        from core.intelligence.reasoning_v1 import Rule
+        result = IntelligenceKernel().solve_problem(
+            "ready", ("tested", "approved"),
+            (Rule(("tested", "approved"), "ready"),))
+        self.assertEqual((result.status, result.answer, result.verified),
+                         ("resolved", "ready", True))
+        self.assertIn("no_tool_execution", result.limitations)
+
+    def test_unsolved_problem_abstains(self):
+        from core.intelligence.reasoning_v1 import Rule
+        result = IntelligenceKernel().solve_problem(
+            "ready", ("tested",), (Rule(("tested", "approved"), "ready"),))
+        self.assertEqual(result.status, "abstained")
+
     def test_planning_is_not_execution(self):
         kernel = IntelligenceKernel()
         plan = kernel.plan("build a system", ("design", "test", "review"))
