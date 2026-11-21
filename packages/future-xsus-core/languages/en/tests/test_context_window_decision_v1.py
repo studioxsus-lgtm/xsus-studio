@@ -8,11 +8,11 @@ def fixture():
         "cases":10,"weights_retrained":False,"release_authorized":False,"production_context_changed":False,
         "windows":{
             "16":{"mean_first_target_rank":100.0,"mean_best_to_target_logit_gap":2.0,
-                  "first_target_top_one_correct":0,"matched_target_preferred_cases":0,"first_target_cases":10},
+                  "first_target_top_one_correct":0,"matched_target_preferred_cases":0,"first_target_cases":10,"distinct_context_windows":10,"colliding_cases":0,"greedy_winner_changed_cases":0},
             "32":{"mean_first_target_rank":80.0,"mean_best_to_target_logit_gap":1.5,
-                  "first_target_top_one_correct":0,"matched_target_preferred_cases":8,"first_target_cases":10},
+                  "first_target_top_one_correct":0,"matched_target_preferred_cases":8,"first_target_cases":10,"distinct_context_windows":10,"colliding_cases":0,"greedy_winner_changed_cases":0},
             "64":{"mean_first_target_rank":90.0,"mean_best_to_target_logit_gap":1.8,
-                  "first_target_top_one_correct":0,"matched_target_preferred_cases":8,"first_target_cases":10},
+                  "first_target_top_one_correct":0,"matched_target_preferred_cases":8,"first_target_cases":10,"distinct_context_windows":10,"colliding_cases":0,"greedy_winner_changed_cases":0},
         },
     }
 
