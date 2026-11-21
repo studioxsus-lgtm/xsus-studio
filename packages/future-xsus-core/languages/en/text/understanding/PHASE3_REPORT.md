@@ -132,3 +132,23 @@ existing Phase 2 parser or claim open-domain English comprehension.
 python -m unittest languages.en.tests.test_expanded_english_v1 languages.en.tests.test_expanded_english_benchmark_v1 -v
 python -m languages.en.evaluation.expanded_english_benchmark_v1
 ```
+
+## Phase 3.7 — Modifiers and bounded tense
+
+`expanded_structures_v1.py` adds 24 explicit adjectives, 16 manner
+adverbs (before or after the finite verb), regular past-simple forms and
+present-simple agreement to the 40-verb / 50-noun / 15-subject controlled
+lexicon. The parser abstains on unknown words, complex clauses, unsupported
+negation and unsupported punctuation. It is independent of the stable
+Phase 2 and Phase 3.4 APIs.
+
+The generated diagnostic tests 2000 distinct subject/verb/noun/adjective/
+adverb tuples, rather than repeated copies of one sentence. The expanded
+lexicon creates a large combinatorial grammar space, **not proof of
+open-domain understanding**. Irregular past forms, full tense/aspect,
+multiple clauses, discourse and coreference remain out of scope.
+
+```bash
+python -m unittest languages.en.tests.test_expanded_structures_v1 languages.en.tests.test_expanded_structures_benchmark_v1 -v
+python -m languages.en.evaluation.expanded_structures_benchmark_v1
+```
