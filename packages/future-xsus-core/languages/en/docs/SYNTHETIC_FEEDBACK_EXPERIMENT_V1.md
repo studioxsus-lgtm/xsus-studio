@@ -233,3 +233,15 @@ holdout prompt. These aggregate measures help determine whether
 small input-driven changes can plausibly overcome the leading
 token. No logits, tokens or prompt text are emitted. This is
 diagnostic only; no change to model training or release policy.
+
+## Held-out first-target ranking
+
+Run 44904407427 confirmed that whitespace won the first-token
+decision in all 20 held-out prompts, with average top-two logit
+margins 0.179349 and 0.173900. The new diagnostic evaluates the
+rank of each held-out reference answer's first encoded token under
+the actual candidate model. It aggregates top-one accuracy,
+mean rank and best-versus-reference logit gap, with no reference
+text, token IDs or raw logits in the report. This is diagnostic
+evidence for a potential training-objective mismatch, not
+evidence of model correctness or production readiness.
