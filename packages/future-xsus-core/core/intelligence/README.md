@@ -197,3 +197,19 @@ python -m unittest tests.integration.test_readiness_v1 -v
 A passing gate means only that the bounded fixtures and sequential repeatability
 checks passed. It does **not** certify production readiness, general intelligence,
 independent fact verification, autonomous learning, or crash recovery.
+
+## Phase 5.1 — Adaptive feedback (review-gated)
+
+`feedback_v1.py` converts explicitly corrected failed evaluation cases into
+owner-scoped, idempotent pending learning proposals in the existing ledger.
+Only failed cases may receive corrections; mismatched reports are rejected.
+Review requires a revision check and produces `approved_for_evaluation`,
+never automatic deployment, training, or trusted knowledge updates.
+
+```bash
+python -m unittest tests.integration.test_feedback_v1 -v
+```
+
+Corrections come from a caller and require independent review. The ledger is
+in-memory, not authenticated or durable; do not treat this as autonomous
+learning or production-grade governance.
