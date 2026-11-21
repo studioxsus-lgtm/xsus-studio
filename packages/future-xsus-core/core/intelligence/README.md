@@ -181,3 +181,19 @@ python -m unittest tests.integration.test_resilience_v1 -v
 This is a sequential in-process regression stress harness. It is not a
 concurrent load benchmark, fault-injection suite, service availability
 measurement, or crash-recovery guarantee.
+
+## Phase 5.0 — Consolidated readiness gate
+
+`readiness_v1.py` runs cross-engine authored fixtures through the evaluator,
+then repeats those requests through the resilience harness. It checks full
+fixture pass, repeatability, execution counts, no failures and no detected
+nondeterminism. An unmet check fails the gate. Integration tests inject
+failures into evaluator and resilience paths to verify fail-closed behavior.
+
+```bash
+python -m unittest tests.integration.test_readiness_v1 -v
+```
+
+A passing gate means only that the bounded fixtures and sequential repeatability
+checks passed. It does **not** certify production readiness, general intelligence,
+independent fact verification, autonomous learning, or crash recovery.
