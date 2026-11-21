@@ -67,3 +67,16 @@ class InferenceContextCounterfactualTests(unittest.TestCase):
     def test_contract(self):
         self.assertEqual(inspect(self.tokenizer,self.model,self.cases)["contract"],
                          "future-xsus-core.inference-context-counterfactual.v1")
+
+    def test_rank_metrics_present_for_every_window(self):
+        report=inspect(self.tokenizer,self.model,self.cases)
+        for window in report["windows"].values():
+            self.assertGreaterEqual(window["mean_first_target_rank"],1)
+            self.assertGreaterEqual(window["mean_best_to_target_logit_gap"],0)
+
+    def test_rank_metrics_are_aggregate_only(self):
+        report=inspect(self.tokenizer,self.model,self.cases)
+        for window in report["windows"].values():
+            self.assertNotIn("raw_logits",window)
+            self.assertNotIn("token_ids",window)
+            self.assertNotIn("responses",window)
