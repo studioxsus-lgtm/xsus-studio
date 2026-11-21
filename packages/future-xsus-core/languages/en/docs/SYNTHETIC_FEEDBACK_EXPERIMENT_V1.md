@@ -364,3 +364,16 @@ flag their shared first target as non-identifiable while
 recognizing the diverse group as identifiable. The contrast
 still cannot establish semantic understanding or generalization
 without independent, realistic evaluation data.
+
+## Context-window collision audit
+
+Run 44907400983 passed. On the new ten-case diverse-target
+holdout, all four balanced-training arms produced zero accepted
+responses and zero correct matched-prompt first-target preferences.
+The new **prompt-context-collisions.v1** diagnostic counts
+distinct full prompts versus distinct final context windows
+at the model's actual 16-token context limit. It is designed
+to distinguish weak learned prompt conditioning from a more
+basic issue: different questions may be truncated to identical
+model-visible suffixes. The audit exposes aggregate counts
+only and does not authorize a release.
