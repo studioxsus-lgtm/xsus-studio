@@ -7,7 +7,7 @@ from languages.en.text.understanding.word_sense_v1 import (
 
 class WordSenseTests(unittest.TestCase):
     def test_supported_vocabulary(self):
-        self.assertEqual(set(supported_words()), {"bank", "bat", "crane", "seal", "spring", "python"})
+        self.assertEqual(set(supported_words()), {"bank", "bat", "crane", "seal", "spring", "python", "mouse", "java", "port", "pitch", "draft", "scale", "jam", "file"})
 
     def test_financial_bank(self):
         result = analyze("I opened a savings account at the bank.", "bank")
@@ -49,6 +49,32 @@ class WordSenseTests(unittest.TestCase):
 
     def test_python_snake(self):
         self.assertEqual(analyze("The python is a constrictor snake.", "python").sense, "snake")
+
+    def test_extended_word_senses(self):
+        cases = [
+            ("The mouse ate cheese.", "mouse", "animal"),
+            ("Move the mouse cursor.", "mouse", "computer_device"),
+            ("The Java compiler processed code.", "java", "programming_language"),
+            ("She brewed a cup of java coffee.", "java", "coffee"),
+            ("The ship entered the port.", "port", "harbor"),
+            ("The TCP port accepts network connections.", "port", "network_endpoint"),
+            ("The soccer pitch has grass.", "pitch", "sports_field"),
+            ("The musical pitch is a high frequency.", "pitch", "sound_frequency"),
+            ("The startup pitch impressed an investor.", "pitch", "sales_presentation"),
+            ("Edit the draft document.", "draft", "preliminary_document"),
+            ("A cold draft entered through the window.", "draft", "air_current"),
+            ("The scale measured the weight.", "scale", "measurement_device"),
+            ("The map scale shows a ratio.", "scale", "relative_size"),
+            ("Practice the piano scale and notes.", "scale", "musical_sequence"),
+            ("Spread strawberry jam on toast.", "jam", "fruit_preserve"),
+            ("The traffic jam blocked the highway.", "jam", "traffic_congestion"),
+            ("The guitar jam included musicians.", "jam", "music_session"),
+            ("Upload the computer file.", "file", "digital_document"),
+            ("The metal file is a tool.", "file", "hand_tool"),
+        ]
+        for text, target, expected in cases:
+            with self.subTest(text=text):
+                self.assertEqual(analyze(text, target).sense, expected)
 
     def test_no_evidence_abstains(self):
         result = analyze("I visited the bank.", "bank")
