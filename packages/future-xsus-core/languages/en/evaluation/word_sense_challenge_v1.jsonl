@@ -1,0 +1,48 @@
+{"id":"challenge-001","text":"The bank was neither a river edge nor a place for savings.","target":"bank","expected_sense":null}
+{"id":"challenge-002","text":"She visited the bank, but did not mention money or water.","target":"bank","expected_sense":null}
+{"id":"challenge-003","text":"The bank beside the river flooded.","target":"bank","expected_sense":"river_edge"}
+{"id":"challenge-004","text":"The bank approved the loan after a long delay.","target":"bank","expected_sense":"financial_institution"}
+{"id":"challenge-005","text":"The river bank was calm. Later the bank approved my loan.","target":"bank","expected_sense":null}
+{"id":"challenge-006","text":"The bat was not a mammal, but the baseball bat was wooden.","target":"bat","expected_sense":null}
+{"id":"challenge-007","text":"He held a bat without explaining why.","target":"bat","expected_sense":null}
+{"id":"challenge-008","text":"The bat used for cricket broke.","target":"bat","expected_sense":"sports_equipment"}
+{"id":"challenge-009","text":"The nocturnal bat flew silently.","target":"bat","expected_sense":"animal"}
+{"id":"challenge-010","text":"A crane was visible behind the window.","target":"crane","expected_sense":null}
+{"id":"challenge-011","text":"The crane lifted steel near the construction site.","target":"crane","expected_sense":"lifting_machine"}
+{"id":"challenge-012","text":"The crane bird nested in the wetland.","target":"crane","expected_sense":"bird"}
+{"id":"challenge-013","text":"The seal was not swimming in the ocean; it was on the envelope.","target":"seal","expected_sense":"closure"}
+{"id":"challenge-014","text":"An airtight seal kept the container closed.","target":"seal","expected_sense":"closure"}
+{"id":"challenge-015","text":"The seal swam through the ocean.","target":"seal","expected_sense":"animal"}
+{"id":"challenge-016","text":"The seal was visible.","target":"seal","expected_sense":null}
+{"id":"challenge-017","text":"Spring followed winter with flowers.","target":"spring","expected_sense":"season"}
+{"id":"challenge-018","text":"The spring in the mattress compressed.","target":"spring","expected_sense":"mechanical_coil"}
+{"id":"challenge-019","text":"A natural spring supplied water.","target":"spring","expected_sense":"water_source"}
+{"id":"challenge-020","text":"I like spring.","target":"spring","expected_sense":null}
+{"id":"challenge-021","text":"The python is a snake, not a programming language.","target":"python","expected_sense":"snake"}
+{"id":"challenge-022","text":"Python code was executed by the developer.","target":"python","expected_sense":"programming_language"}
+{"id":"challenge-023","text":"They discussed python.","target":"python","expected_sense":null}
+{"id":"challenge-024","text":"The mouse was not a rodent; it controlled the computer cursor.","target":"mouse","expected_sense":"computer_device"}
+{"id":"challenge-025","text":"A mouse with whiskers hid in the burrow.","target":"mouse","expected_sense":"animal"}
+{"id":"challenge-026","text":"She bought a mouse.","target":"mouse","expected_sense":null}
+{"id":"challenge-027","text":"The Java compiler processed the class.","target":"java","expected_sense":"programming_language"}
+{"id":"challenge-028","text":"He drank a cup of java coffee.","target":"java","expected_sense":"coffee"}
+{"id":"challenge-029","text":"Java is not coffee; this is a programming class.","target":"java","expected_sense":"programming_language"}
+{"id":"challenge-030","text":"The ship arrived at the harbor port.","target":"port","expected_sense":"harbor"}
+{"id":"challenge-031","text":"The network port was blocked by the firewall.","target":"port","expected_sense":"network_endpoint"}
+{"id":"challenge-032","text":"They opened the port.","target":"port","expected_sense":null}
+{"id":"challenge-033","text":"The pitch was not a soccer field but a musical tone.","target":"pitch","expected_sense":"sound_frequency"}
+{"id":"challenge-034","text":"The startup pitch convinced the investor.","target":"pitch","expected_sense":"sales_presentation"}
+{"id":"challenge-035","text":"The football match took place on the pitch.","target":"pitch","expected_sense":"sports_field"}
+{"id":"challenge-036","text":"The draft was not a document; cold air entered through the window.","target":"draft","expected_sense":"air_current"}
+{"id":"challenge-037","text":"She edited the draft manuscript.","target":"draft","expected_sense":"preliminary_document"}
+{"id":"challenge-038","text":"He reviewed the draft.","target":"draft","expected_sense":null}
+{"id":"challenge-039","text":"The scale measured the weight.","target":"scale","expected_sense":"measurement_device"}
+{"id":"challenge-040","text":"The map scale showed the ratio.","target":"scale","expected_sense":"relative_size"}
+{"id":"challenge-041","text":"The piano scale had eight notes.","target":"scale","expected_sense":"musical_sequence"}
+{"id":"challenge-042","text":"The traffic jam delayed the cars.","target":"jam","expected_sense":"traffic_congestion"}
+{"id":"challenge-043","text":"They spread fruit jam on toast.","target":"jam","expected_sense":"fruit_preserve"}
+{"id":"challenge-044","text":"The band started a guitar jam.","target":"jam","expected_sense":"music_session"}
+{"id":"challenge-045","text":"The jam was unexpected.","target":"jam","expected_sense":null}
+{"id":"challenge-046","text":"Upload the file from the computer.","target":"file","expected_sense":"digital_document"}
+{"id":"challenge-047","text":"The metal file smoothed the surface.","target":"file","expected_sense":"hand_tool"}
+{"id":"challenge-048","text":"She lost the file.","target":"file","expected_sense":null}
