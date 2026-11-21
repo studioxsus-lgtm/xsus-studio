@@ -5,7 +5,7 @@ from languages.en.evaluation.prompt_target_contrast_v1 import inspect_prompt_tar
 class Model:
     vocab_size=4
     def logits(self,prefix):
-        return [0.,float(prefix[0]),float(3-prefix[0]),0.]
+        return [0.,float(3-prefix[0]),float(prefix[0]),0.]
 
 
 class PromptTargetContrastTests(unittest.TestCase):
