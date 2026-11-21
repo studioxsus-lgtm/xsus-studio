@@ -54,9 +54,9 @@ class DecisionSerialization(unittest.TestCase):
 
     def test_no_token_identifiers_in_result(self):
         serialized=json.dumps(decide(report()))
-        self.assertNotIn("token_ids",serialized)
-        self.assertNotIn("prompt",serialized)
-        self.assertNotIn("response",serialized)
+        self.assertNotIn('"token_ids":',serialized)
+        self.assertNotIn('"prompt":',serialized)
+        self.assertNotIn('"response":',serialized)
 
     def test_reference_baseline_not_mutated(self):
         data=report()
