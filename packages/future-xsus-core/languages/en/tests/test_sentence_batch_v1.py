@@ -31,7 +31,7 @@ class SentenceBatchTests(unittest.TestCase):
     def test_invalid_batch_inputs(self):
         for value in (None, "She reads the report.", [], [""], [None],
                       ["She reads the report."] * (MAX_SENTENCES + 1),
-                      ["x" * 8193]):
+                      ["x" * 8193], ["x" * 1001]):
             with self.subTest(value=str(value)[:30]):
                 with self.assertRaises(ValueError):
                     analyze_sentence_batch(value)
@@ -50,10 +50,21 @@ class SentenceBatchTests(unittest.TestCase):
     def test_rejects_invalid_pair_indices(self):
         sentences = ["She reads the report."]
         for pairs in ([], [(0, 1)], [(True, 0)], [(0, -1)], [(0,)],
-                      [(0, 0)] * 65, ["0,0"], [(0, 0, 0)]):
+                      [(0, 0)] * 65, ["0,0"], [(0, 0, 0)], [(0, 0), (0, 0)]):
             with self.subTest(pairs=str(pairs)[:30]):
                 with self.assertRaises(ValueError):
                     compare_sentence_batch_pairs(sentences, pairs)
+
+    def test_max_pair_count_unique(self):
+        sentences = ["She reads the report."] * 8
+        pairs = [(i, j) for i in range(8) for j in range(8)]
+        result = compare_sentence_batch_pairs(sentences, pairs)
+        self.assertEqual(result["total_pairs"], 64)
+        self.assertEqual(result["resolved"], 64)
+
+    def test_tuple_inputs(self):
+        result = analyze_sentence_batch(("She reads the report.",))
+        self.assertEqual(result["summary"]["total"], 1)
 
     def test_pair_comparison_does_not_echo_source(self):
         report = compare_sentence_batch_pairs(
