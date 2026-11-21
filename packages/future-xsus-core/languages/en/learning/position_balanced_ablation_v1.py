@@ -2,7 +2,7 @@
 from copy import deepcopy
 from languages.en.learning.position_balanced_training_v1 import train_position_balanced_v1
 from languages.en.evaluation.teacher_forced_positions_v1 import inspect_teacher_forced_positions_v1
-from languages.en.evaluation.prompt_target_contrast_v1 import inspect_prompt_target_contrast_v1
+from languages.en.evaluation.prompt_target_identifiability_v1 import inspect_prompt_target_identifiability_v1
 from languages.en.evaluation.generation_diagnostics_v1 import summarize_generation_diagnostics_v1
 from languages.en.data.preparation.corpus import Example
 from languages.en.training.train import _encode
@@ -28,11 +28,11 @@ def run_position_balanced_ablation_v1(tokenizer,baseline_model,encoded_training,
                                    case.example.response) for case in cases)
             encoded=_encode(tokenizer,prepared)
             positions=inspect_teacher_forced_positions_v1(model,encoded)
-            contrast=inspect_prompt_target_contrast_v1(model,encoded)
+            contrast=inspect_prompt_target_identifiability_v1(model,encoded)
             details=[case.score(generate(tokenizer,model,case.example.conversation)) for case in cases]
             groups[benchmark]={
                 "teacher_forced_positions":positions,
-                "prompt_target_contrast":contrast,
+                "prompt_target_identifiability":contrast,
                 "generation":summarize_generation_diagnostics_v1(details),
             }
         arms[name]={"training":training,"benchmarks":groups}
