@@ -103,3 +103,18 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
     def test_review_eligibility_does_not_override_quality_gate(self):
         if not self.report["candidate_quality_gate_passed"]:
             self.assertFalse(self.report["release_evidence_sufficient"])
+
+    def test_generation_diagnostics_for_each_checkpoint(self):
+        for row in self.report["benchmarks"].values():
+            self.assertEqual(row["baseline_generation_diagnostics"]["cases"],10)
+            self.assertEqual(row["candidate_generation_diagnostics"]["cases"],10)
+
+    def test_generation_diagnostics_have_no_raw_text(self):
+        for row in self.report["benchmarks"].values():
+            self.assertFalse(row["baseline_generation_diagnostics"]["contains_generated_text"])
+            self.assertFalse(row["candidate_generation_diagnostics"]["contains_generated_text"])
+
+    def test_generation_diagnostics_scores_agree(self):
+        for row in self.report["benchmarks"].values():
+            self.assertEqual(row["baseline_generation_diagnostics"]["accepted"],row["baseline_accepted"])
+            self.assertEqual(row["candidate_generation_diagnostics"]["accepted"],row["candidate_accepted"])
