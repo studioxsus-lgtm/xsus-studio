@@ -108,6 +108,20 @@ class IntelligenceKernel:
                        ("retrieve", "check_source_presence"), False,
                        ("source_presence_is_not_truth_verification",))
 
+    def plan_tasks(self, tasks: tuple) -> IntelligenceResult:
+        """Produce and verify an ordered dependency plan without execution."""
+        from .task_planner_v1 import TaskPlanner
+        planner = TaskPlanner()
+        plan = planner.build(tasks)
+        if plan.status != "planned":
+            return _result("abstained", "task_planning",
+                           limitations=plan.limitations)
+        if not planner.verify(plan):
+            return _result("error", "task_planning",
+                           limitations=("plan_verification_failed",))
+        return _result("proposed", "task_planning", None, (),
+                       plan.ordered_ids, True, plan.limitations)
+
     def solve_problem(self, goal: str, facts: tuple[str, ...], rules: tuple,
                       *, max_steps: int = 128) -> IntelligenceResult:
         """Find a formal multi-step solution with independently checked proof."""
