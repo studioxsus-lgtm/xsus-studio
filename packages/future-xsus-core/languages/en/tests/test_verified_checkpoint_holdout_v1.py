@@ -140,6 +140,30 @@ class VerifiedCheckpointHoldoutTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.evaluate()
 
+    def test_repeated_conversations_across_versioned_corpora_allowed(self):
+        older = Path(self.tmp.name) / "training-older.jsonl"
+        self.write(older, [
+            {"prompt": "Training one", "response": "Earlier wording"},
+            {"prompt": "Older unique", "response": "Earlier response"},
+        ])
+        result = inspect(
+            self.checkpoint, [older, self.training], self.evaluation,
+            max_new_tokens=1,
+        )
+        self.assertEqual(result["training_corpora_checked"], 2)
+        self.assertEqual(result["unique_training_conversations_checked"], 3)
+        self.assertTrue(result["checked_training_conversation_overlap"])
+
+    def test_overlap_from_older_version_still_rejected(self):
+        older = Path(self.tmp.name) / "training-older.jsonl"
+        self.write(older, [
+            {"prompt": "Evaluation one", "response": "Old leaked response"},
+            {"prompt": "Older unique", "response": "Earlier response"},
+        ])
+        with self.assertRaises(ValueError):
+            inspect(self.checkpoint, [older, self.training],
+                    self.evaluation, max_new_tokens=1)
+
     def test_duplicate_file_paths_rejected(self):
         with self.assertRaises(ValueError):
             inspect(self.checkpoint, [self.training, self.training],
