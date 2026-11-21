@@ -46,3 +46,29 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
 
     def test_no_deployment(self):
         self.assertFalse(self.report["production_deployed"])
+
+    def test_holdout_case_count(self):
+        self.assertEqual(self.report["holdout_cases"],2)
+
+    def test_holdout_counts_consistent(self):
+        rows=self.report["benchmarks"].values()
+        self.assertEqual(self.report["holdout_baseline_accepted"],
+                         sum(row["baseline_accepted"] for row in rows))
+        self.assertEqual(self.report["holdout_candidate_accepted"],
+                         sum(row["candidate_accepted"] for row in rows))
+
+    def test_holdout_delta_consistent(self):
+        self.assertEqual(self.report["holdout_acceptance_delta"],
+                         self.report["holdout_candidate_accepted"]-
+                         self.report["holdout_baseline_accepted"])
+
+    def test_generalization_gain_is_observed_not_assumed(self):
+        self.assertEqual(self.report["observed_generalization_gain"],
+                         self.report["holdout_acceptance_delta"]>0)
+
+    def test_feedback_loss_improvement_is_measured(self):
+        self.assertEqual(self.report["feedback_loss_improved"],
+                         self.report["feedback_loss_after"]<self.report["feedback_loss_before"])
+
+    def test_loss_alone_never_proves_release_readiness(self):
+        self.assertFalse(self.report["release_evidence_sufficient"])
