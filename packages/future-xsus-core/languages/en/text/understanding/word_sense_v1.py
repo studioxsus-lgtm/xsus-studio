@@ -32,6 +32,41 @@ _SENSES = {
         "mechanical_coil": ("coil", "compress", "metal", "mattress", "mechanism"),
         "water_source": ("water", "natural", "stream", "source", "mountain"),
     },
+    "mouse": {
+        "animal": ("rodent", "cheese", "burrow", "whiskers", "tail"),
+        "computer_device": ("computer", "cursor", "click", "keyboard", "usb", "screen"),
+    },
+    "java": {
+        "programming_language": ("programming", "code", "compiler", "class", "developer", "software"),
+        "coffee": ("coffee", "caffeine", "espresso", "brew", "cup", "roast"),
+    },
+    "port": {
+        "harbor": ("ship", "harbor", "dock", "cargo", "vessel", "sail"),
+        "network_endpoint": ("network", "tcp", "server", "socket", "firewall", "connection"),
+    },
+    "pitch": {
+        "sports_field": ("soccer", "football", "grass", "stadium", "match"),
+        "sound_frequency": ("sound", "frequency", "tone", "music", "note", "high"),
+        "sales_presentation": ("investor", "startup", "presentation", "proposal", "client"),
+    },
+    "draft": {
+        "preliminary_document": ("document", "edit", "revision", "manuscript", "proposal"),
+        "air_current": ("window", "cold", "breeze", "wind", "door"),
+    },
+    "scale": {
+        "measurement_device": ("weigh", "weight", "kilogram", "measurement", "balance"),
+        "relative_size": ("size", "ratio", "map", "proportion", "dimension"),
+        "musical_sequence": ("music", "notes", "piano", "melody", "octave"),
+    },
+    "jam": {
+        "fruit_preserve": ("fruit", "toast", "strawberry", "jar", "spread"),
+        "traffic_congestion": ("traffic", "cars", "highway", "road", "commute"),
+        "music_session": ("guitar", "band", "musicians", "improvise", "drums"),
+    },
+    "file": {
+        "digital_document": ("computer", "folder", "upload", "download", "document", "format"),
+        "hand_tool": ("metal", "nails", "smooth", "tool", "surface", "wood"),
+    },
     "python": {
         "programming_language": ("code", "script", "programming", "developer", "package", "function"),
         "snake": ("snake", "reptile", "jungle", "constrictor", "scales"),
