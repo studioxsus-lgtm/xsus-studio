@@ -45,7 +45,8 @@ def analyze_role_bulk(sentences: list[str] | tuple[str, ...]) -> RoleBulkReport:
                 batch = analyze_role_batch(current)
                 chunks += 1
                 resolved += batch.resolved
-                results.extend({**entry, "index": offset + len(results) - offset + i}
+                base_index = len(results)
+                results.extend({**entry, "index": base_index + i}
                                for i, entry in enumerate(batch.roles))
                 current = []
                 current_size = 0
@@ -55,7 +56,8 @@ def analyze_role_bulk(sentences: list[str] | tuple[str, ...]) -> RoleBulkReport:
             batch = analyze_role_batch(current)
             chunks += 1
             resolved += batch.resolved
-            results.extend({**entry, "index": len(results) + i}
+            base_index = len(results)
+            results.extend({**entry, "index": base_index + i}
                            for i, entry in enumerate(batch.roles))
     return RoleBulkReport("completed", len(sentences), resolved,
                           len(sentences) - resolved, chunks, tuple(results))
