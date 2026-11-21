@@ -1,0 +1,32 @@
+{"id":"a01","sentence":"She reads the report.","expected_category":"information_access"}
+{"id":"a02","sentence":"He reviews the document.","expected_category":"information_access"}
+{"id":"a03","sentence":"They check the file.","expected_category":"verification"}
+{"id":"a04","sentence":"We test the model.","expected_category":"verification"}
+{"id":"a05","sentence":"She writes a report.","expected_category":"content_creation"}
+{"id":"a06","sentence":"They create the project.","expected_category":"content_creation"}
+{"id":"a07","sentence":"The developer builds the application.","expected_category":"construction"}
+{"id":"a08","sentence":"The user opens the file.","expected_category":"access"}
+{"id":"a09","sentence":"She sends the message.","expected_category":"transfer"}
+{"id":"a10","sentence":"The system updates the project.","expected_category":"modification"}
+{"id":"a11","sentence":"The system deletes the project.","expected_category":"removal"}
+{"id":"a12","sentence":"She does not read the report.","expected_category":"information_access"}
+{"id":"a13","sentence":"He does not review the document.","expected_category":"information_access"}
+{"id":"a14","sentence":"They do not check the file.","expected_category":"verification"}
+{"id":"a15","sentence":"We do not test the model.","expected_category":"verification"}
+{"id":"a16","sentence":"She does not write a report.","expected_category":"content_creation"}
+{"id":"a17","sentence":"They do not create the project.","expected_category":"content_creation"}
+{"id":"a18","sentence":"The developer does not build the application.","expected_category":"construction"}
+{"id":"a19","sentence":"The user does not open the file.","expected_category":"access"}
+{"id":"a20","sentence":"She does not send the message.","expected_category":"transfer"}
+{"id":"a21","sentence":"The system does not update the project.","expected_category":"modification"}
+{"id":"a22","sentence":"The system does not delete the project.","expected_category":"removal"}
+{"id":"a23","sentence":"She invents the universe.","expected_category":null}
+{"id":"a24","sentence":"She reads private records.","expected_category":null}
+{"id":"a25","sentence":"Does she read the report?","expected_category":null}
+{"id":"a26","sentence":"She reads the report and writes the file.","expected_category":null}
+{"id":"a27","sentence":"They reads the report.","expected_category":null}
+{"id":"a28","sentence":"She does not reads the report.","expected_category":null}
+{"id":"a29","sentence":"The system do not delete the project.","expected_category":null}
+{"id":"a30","sentence":"The system deletes.","expected_category":null}
+{"id":"a31","sentence":"She never reads the report.","expected_category":null}
+{"id":"a32","sentence":"She reads the report; he deletes the file.","expected_category":null}
