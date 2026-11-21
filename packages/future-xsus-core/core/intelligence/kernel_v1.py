@@ -63,6 +63,20 @@ class IntelligenceKernel:
                        ("normalize", "parse", "validate"), True,
                        ("bounded_grammar_only",))
 
+    def reason(self, query: str, facts: tuple[str, ...], rules: tuple) -> IntelligenceResult:
+        """Prove a bounded logical claim and independently replay its proof."""
+        from .reasoning_v1 import ReasoningEngine, verify_proof
+        engine = ReasoningEngine(facts, rules)
+        proof = engine.prove(query)
+        if not proof.entailed:
+            return _result("abstained", "reasoning", limitations=proof.limitations)
+        if not verify_proof(proof, engine.facts, engine.rules):
+            return _result("error", "reasoning", limitations=("proof_verification_failed",))
+        return _result("resolved", "reasoning", proof.query,
+                       tuple(step.conclusion for step in proof.proof),
+                       ("derive", "replay_proof"), True,
+                       ("formal_inference_only", "facts_not_independently_verified"))
+
     def retrieve(self, question: str) -> IntelligenceResult:
         question = _safe_text(question)
         if self._knowledge is None:
