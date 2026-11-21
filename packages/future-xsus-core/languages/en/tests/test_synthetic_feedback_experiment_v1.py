@@ -184,3 +184,14 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
             diagnostic=row["candidate_token_choice_diagnostics"]
             self.assertFalse(diagnostic["raw_text_exposed"])
             self.assertFalse(diagnostic["raw_token_ids_exposed"])
+
+    def test_visible_first_diagnostics_present(self):
+        for row in self.report["benchmarks"].values():
+            self.assertEqual(row["candidate_visible_first_diagnostics"]["cases"],10)
+
+    def test_visible_first_diagnostics_privacy(self):
+        for row in self.report["benchmarks"].values():
+            self.assertFalse(row["candidate_visible_first_diagnostics"]["contains_generated_text"])
+
+    def test_visible_first_does_not_automatically_release(self):
+        self.assertFalse(self.report["release_evidence_sufficient"])
