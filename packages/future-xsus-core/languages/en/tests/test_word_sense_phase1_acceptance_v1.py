@@ -25,7 +25,7 @@ class Phase1AcceptanceTests(unittest.TestCase):
 
     def test_diagnostic_quality_failure_prevents_acceptance(self):
         with patch("languages.en.evaluation.word_sense_phase1_acceptance_v1.check_word_sense_quality",
-                   return_value={"passed": False}):
+                   return_value={"passed": False, "production_authorized": False}):
             report = phase1_acceptance()
         self.assertFalse(report["passed"])
         self.assertEqual(report["status"], "incomplete")
