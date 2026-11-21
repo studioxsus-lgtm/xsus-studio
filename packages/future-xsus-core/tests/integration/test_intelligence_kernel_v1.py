@@ -77,6 +77,17 @@ class IntelligenceKernelTests(unittest.TestCase):
             "ready", ("tested",), (Rule(("tested", "approved"), "ready"),))
         self.assertEqual(result.status, "abstained")
 
+    def test_dependency_planning_integration(self):
+        from core.intelligence.task_planner_v1 import Task
+        result = IntelligenceKernel().plan_tasks((
+            Task("build", "Build"),
+            Task("test", "Test", ("build",)),
+        ))
+        self.assertEqual(result.status, "proposed")
+        self.assertEqual(result.steps, ("build", "test"))
+        self.assertTrue(result.verified)
+        self.assertIn("plan_not_executed", result.limitations)
+
     def test_planning_is_not_execution(self):
         kernel = IntelligenceKernel()
         plan = kernel.plan("build a system", ("design", "test", "review"))
