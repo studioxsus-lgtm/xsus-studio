@@ -77,9 +77,6 @@ def analyze_structured_clause(text: str) -> StructuredClause:
         adverb = remaining.pop(0)
     if not remaining or remaining.pop(0) not in {"the", "a"}:
         return _abstain("missing_determiner")
-    determiner = tokens[-len(remaining)-1] if False else None
-    # Reconstruct determiner from the token immediately before the
-    # optional adjective/noun in the remaining object phrase.
     object_tokens = remaining
     adjective = None
     if object_tokens and object_tokens[0] in ADJECTIVES:
