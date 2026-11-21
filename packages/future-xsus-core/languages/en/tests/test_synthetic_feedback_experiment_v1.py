@@ -330,3 +330,18 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
         self.assertFalse(audit["baseline_checkpoint_mutated"])
         self.assertFalse(audit["production_deployed"])
         self.assertTrue(audit["human_release_required"])
+
+    def test_weight_ablation_decision_covers_all_arms(self):
+        decision=self.report["first_target_weight_ablation_decision"]
+        self.assertEqual(set(decision["arms"]),{"1","2","4","8"})
+        self.assertTrue(all(arm["cases"]==20 for arm in decision["arms"].values()))
+
+    def test_weight_ablation_does_not_release_on_rank_gain(self):
+        decision=self.report["first_target_weight_ablation_decision"]
+        self.assertIsNone(decision["recommended_for_release"])
+        self.assertTrue(decision["human_release_required"])
+
+    def test_weight_ablation_decision_has_no_private_data(self):
+        decision=self.report["first_target_weight_ablation_decision"]
+        self.assertFalse(decision["raw_text_exposed"])
+        self.assertFalse(decision["raw_token_ids_exposed"])
