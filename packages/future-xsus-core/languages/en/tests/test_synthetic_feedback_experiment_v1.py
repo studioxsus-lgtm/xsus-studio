@@ -265,3 +265,16 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
 
     def test_hidden_scale_arms_do_not_override_release_gate(self):
         self.assertFalse(self.report["release_evidence_sufficient"])
+
+    def test_prompt_sensitivity_covers_holdouts(self):
+        for row in self.report["benchmarks"].values():
+            audit=row["candidate_prompt_sensitivity"]
+            self.assertEqual(audit["cases"],10)
+            self.assertGreaterEqual(audit["distinct_greedy_winners"],1)
+
+    def test_prompt_sensitivity_preserves_privacy(self):
+        for row in self.report["benchmarks"].values():
+            audit=row["candidate_prompt_sensitivity"]
+            self.assertFalse(audit["raw_text_exposed"])
+            self.assertFalse(audit["raw_token_ids_exposed"])
+            self.assertFalse(audit["raw_logits_exposed"])
