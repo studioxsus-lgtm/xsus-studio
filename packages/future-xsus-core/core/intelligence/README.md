@@ -42,3 +42,16 @@ reasoning, autonomous learning or production readiness.
 reasoning over formal test cases, persistent owner-scoped conversation
 integration, permissioned tool execution, independent holdout evaluation
 and controlled learning promotion. No production authorization is implied.
+
+## Phase 4.1 — Formal reasoning and proof verification
+
+`reasoning_v1.py` implements bounded propositional Horn-rule forward chaining
+with deterministic proof provenance and independent proof replay. The central
+kernel now exposes `reason(query, facts, rules)` and returns a verified result
+only when the formal derivation can be replayed against the original facts and
+rules. Missing premises abstain. This is **not** unrestricted reasoning,
+independent factual verification, contradiction handling, or AGI.
+
+```bash
+python -m unittest tests.integration.test_reasoning_v1 tests.integration.test_intelligence_kernel_v1 -v
+```
