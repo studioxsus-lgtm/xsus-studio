@@ -88,6 +88,17 @@ class IntelligenceKernelTests(unittest.TestCase):
         self.assertTrue(result.verified)
         self.assertIn("plan_not_executed", result.limitations)
 
+    def test_decision_engine_integration(self):
+        from core.intelligence.decision_v1 import Criterion, Option
+        result = IntelligenceKernel().decide(
+            (Criterion("quality", 1, minimum=70),),
+            (Option("safe", "Safe", (("quality", 90),)),
+             Option("weak", "Weak", (("quality", 50),))))
+        self.assertEqual(result.status, "proposed")
+        self.assertEqual(result.answer, "safe")
+        self.assertTrue(result.verified)
+        self.assertIn("no_execution", result.limitations)
+
     def test_planning_is_not_execution(self):
         kernel = IntelligenceKernel()
         plan = kernel.plan("build a system", ("design", "test", "review"))
