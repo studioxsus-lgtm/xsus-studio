@@ -9,7 +9,10 @@ def fixture():
                 "mean_best_to_target_logit_gap":gap,
                 "first_target_top_one_correct":top,
                 "matched_target_preferred_cases":preferred,
-                "first_target_cases":10}
+                "first_target_cases":10,
+                "distinct_context_windows":10,
+                "colliding_cases":0,
+                "greedy_winner_changed_cases":0}
     return {"cases":10,"weights_retrained":False,
             "release_authorized":False,"production_context_changed":False,
             "windows":{"16":row(90,2,1,2),
