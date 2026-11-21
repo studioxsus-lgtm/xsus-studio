@@ -23,3 +23,16 @@ GitHub Actions runs the experiment and uploads its JSON artifact.
 not demonstrate general language-learning capability or transfer to
 real-world feedback. A negative or unchanged change must be reported,
 not hidden. The model is never deployed and release remains manual.
+
+## First measured CI result
+
+GitHub Actions run 44875094920 recorded feedback loss 5.58624479 before
+training and 5.44985503 after training (delta -0.13638976).
+**Neither of the two single-case synthetic holdouts improved:**
+baseline accepted 0/2, candidate accepted 0/2. This is evidence of
+loss reduction, **not** evidence of better generated answers or
+generalization. The report now exposes these facts separately via
+`feedback_loss_improved`, `observed_generalization_gain`, and
+`release_evidence_sufficient=false`. The training pipeline's
+`candidate_eligible_for_review` must not be interpreted as
+independent proof of response quality.
