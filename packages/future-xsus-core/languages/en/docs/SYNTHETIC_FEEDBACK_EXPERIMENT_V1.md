@@ -114,3 +114,16 @@ experiment compares this additional arm on the same 20 held-out cases.
 It does not change default generation, and cannot authorize release.
 If the model generates only whitespace, the maximum-token cap may
 still produce an empty answer; this experiment measures that possibility.
+
+## Token-choice diagnostics
+
+The 8-visible-character experiment in CI run 44877610361 also
+returned 20/20 empty responses. To distinguish EOS preference,
+whitespace generation and other non-visible tokens, the experiment
+now inspects the candidate's first 32 greedy token selections on
+each held-out case, **without** returning raw token IDs, prompts
+or generated text. Aggregate categories include whitespace,
+printable, non-rendering and control/replacement tokens. This
+diagnostic deliberately continues greedy choices without stopping
+on EOS; it measures model preference, not the deployed response.
+No training, production defaults or promotion rules are changed.
