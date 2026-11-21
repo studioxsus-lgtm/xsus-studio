@@ -7,6 +7,9 @@ No raw examples, prompts, or generations are returned.
 from pathlib import Path
 
 from languages.en.models.checkpoint import load_checkpoint
+from core.contracts.request import Conversation
+from languages.en.text.normalization.model_input import prepare_model_input
+from languages.en.text.generation.conversation_format import prompt_tokens
 from languages.en.evaluation.frozen_generation_holdout_v1 import (
     inspect_frozen_generation_holdout_v1,
 )
@@ -27,7 +30,10 @@ def inspect_checkpoint_generation_holdout_v1(
     if any(not isinstance(reference, str) or not reference.strip() for reference in references):
         raise ValueError("nonempty reference strings required")
     tokenizer, model, revision = load_checkpoint(Path(checkpoint_path))
-    prefixes = [tokenizer.encode(prompt) for prompt in prompts]
+    prefixes = [
+        prompt_tokens(tokenizer, prepare_model_input(Conversation(prompt), model.prompt_format)[0])
+        for prompt in prompts
+    ]
     report = inspect_frozen_generation_holdout_v1(
         tokenizer, model, prefixes, references,
         independent_holdout=True, max_new_tokens=max_new_tokens,
