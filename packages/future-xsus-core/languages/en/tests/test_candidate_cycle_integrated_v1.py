@@ -44,7 +44,9 @@ class CandidateCycleIntegratedV1Tests(unittest.TestCase):
             self.request.report_path,self.request.candidate_path,
             self.request.training_path,self.revision)
 
-    def _mock_training(self,**kwargs):
+    def _mock_training(self,store,owner_id,**kwargs):
+        self.assertIs(store,self.store)
+        self.assertEqual(owner_id,self.request.owner_id)
         self.request.candidate_path.write_bytes(b"candidate-model")
         self.request.training_path.write_bytes(b"training-corpus")
         self.request.report_path.write_bytes(b"training-report")
