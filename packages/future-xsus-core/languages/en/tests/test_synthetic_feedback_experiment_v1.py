@@ -158,3 +158,14 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
 
     def test_minimum_length_not_automatically_approved(self):
         self.assertFalse(self.report["release_evidence_sufficient"])
+
+    def test_minimum_visible_diagnostics_present(self):
+        for row in self.report["benchmarks"].values():
+            self.assertEqual(row["candidate_min_visible_8_diagnostics"]["cases"],10)
+
+    def test_minimum_visible_diagnostics_privacy(self):
+        for row in self.report["benchmarks"].values():
+            self.assertFalse(row["candidate_min_visible_8_diagnostics"]["contains_generated_text"])
+
+    def test_visible_arm_does_not_authorize_release(self):
+        self.assertFalse(self.report["release_evidence_sufficient"])
