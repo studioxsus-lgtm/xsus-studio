@@ -8,8 +8,8 @@ neural checkpoint, router, API, production behavior, or other XSUS cores.
 
 `analyze_word_sense(text, target, window=6)` returns a frozen
 `WordSenseResult` with `target`, `sense`, `status`, `confidence`,
-`evidence`, and `candidates`. Supported targets are `bank`, `bat`,
-`crane`, `seal`, `spring`, and `python`. Evidence is a bounded set of
+`evidence`, and `candidates`. Supported targets are `bank`, `bat`, `crane`, `seal`, `spring`, `python`,
+`mouse`, `java`, `port`, `pitch`, `draft`, `scale`, `jam`, and `file`. Evidence is a bounded set of
 explicit cue words within the requested token window around each target
 occurrence. No raw input or context is returned.
 
@@ -50,3 +50,16 @@ python3 -m unittest discover -s languages/en/tests -v
 abstention-rate metrics, then expand to inflected forms and sentence-level
 context only after evidence of accuracy. This version does not train weights
 or claim open-domain comprehension.
+
+## Extended lexical evaluation
+
+The authored diagnostic dataset now contains **63 cases** across 14 words
+and 32 defined senses. It is not an external blind holdout. The lexical
+benchmark reports per-word counts and the conservative quality gate checks
+aggregate thresholds and rejects any incorrect resolved sense. Results
+must be interpreted only within this limited dataset.
+
+```sh
+python3 -m languages.en.evaluation.word_sense_benchmark_v1
+python3 -m languages.en.evaluation.word_sense_quality_gate_v1
+```
