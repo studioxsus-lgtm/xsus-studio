@@ -181,3 +181,15 @@ prompt. It reports category switches, whitespace winners, and
 winner-versus-bias logit margins without exposing text, token IDs
 or hidden vectors. This is attribution evidence, not a proof of
 causality or a training fix. Default model behavior is unchanged.
+
+## Hidden-state contribution decomposition
+
+Run 44902369472 measured a category switch from the candidate's
+printable output-bias winner to whitespace for all 20 held-out prompts.
+The new audit computes the output-weight × hidden-state contribution
+to the winning token versus the output-bias winner. It records how
+often this hidden contribution is positive and the mean contribution
+margin. No raw prompts, token identifiers or hidden vectors are
+included. This diagnostic separates learned output bias from
+context-conditioned hidden activation; it does not change model
+training or imply independent language proficiency.
