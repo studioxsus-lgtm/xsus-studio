@@ -245,3 +245,21 @@ python -m unittest tests.integration.test_governance_v1 -v
 The in-memory registry is not an authenticated durable audit log. Approval
 only allows further release review; it never deploys, trains or promotes
 candidate code automatically.
+
+## Phase 5.4 — Persistent governance snapshots
+
+`persistent_governance_v1.py` stores bounded candidate governance records
+in a versioned, SHA-256-checksummed JSON snapshot. It writes to a temporary
+file, fsyncs, atomically replaces the destination and syncs the containing
+directory where supported. Reload validates checksum, record shape, revision
+and status, rejecting corrupt or truncated snapshots without replacing the
+current in-memory registry.
+
+```bash
+python -m unittest tests.integration.test_persistent_governance_v1 -v
+```
+
+Use with a single process and exclusive ownership of the snapshot path.
+Checksums detect accidental changes but are not authentication or protection
+against malicious rewriting. This does not provide multi-process locking,
+transactional audit history, encrypted storage or disaster recovery.
