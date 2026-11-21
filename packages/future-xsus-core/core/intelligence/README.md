@@ -72,3 +72,21 @@ in-memory, not a durable database, and there is no autonomous retrieval.
 ```bash
 python -m unittest tests.integration.test_knowledge_reasoning_v1 tests.integration.test_intelligence_kernel_v1 -v
 ```
+
+## Phase 4.3 — Session memory and review-gated learning
+
+`memory_learning_v1.py` reads the **existing** owner-scoped session store
+(in-memory or compatible SQLite implementation) and produces bounded context
+without changing conversation history. A correction to the latest assistant
+answer becomes a proposal in `learning_v1.py`, using an expected session
+revision. Proposals are deduplicated and owner-scoped. Reviewers may reject
+or approve **for evaluation only** with revision checks.
+
+This implementation does not train a model, promote checkpoints, persist the
+proposal ledger across process restarts, authenticate reviewers, or verify that
+a proposed correction is true. A trusted application must authenticate owners
+and reviewers. No automatic learning is enabled.
+
+```bash
+python -m unittest tests.integration.test_memory_learning_v1 -v
+```
