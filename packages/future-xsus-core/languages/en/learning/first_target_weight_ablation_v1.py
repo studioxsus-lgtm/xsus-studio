@@ -2,10 +2,12 @@
 from copy import deepcopy
 from languages.en.learning.first_target_weighted_training_v1 import train_first_target_weighted_v1
 from languages.en.evaluation.first_target_rank_v1 import inspect_first_target_rank_v1
+from languages.en.evaluation.teacher_forced_positions_v1 import inspect_teacher_forced_positions_v1
 from languages.en.evaluation.generation_diagnostics_v1 import summarize_generation_diagnostics_v1
 from languages.en.text.generation.generate import generate
 from languages.en.text.generation.conversation_format import prompt_tokens
 from languages.en.text.normalization.model_input import prepare_model_input
+from languages.en.training.train import _encode
 
 
 def run_first_target_weight_ablation_v1(tokenizer,baseline_model,encoded_training,benchmarks,*,learning_rate=0.008):
@@ -26,9 +28,14 @@ def run_first_target_weight_ablation_v1(tokenizer,baseline_model,encoded_trainin
                 case.example.conversation,model.prompt_format)[0]) for case in cases]
             targets=[tokenizer.encode(case.example.response)[0] for case in cases]
             ranks=inspect_first_target_rank_v1(model,prefixes,targets)
+            prepared=[prepare_model_input(case.example.conversation,model.prompt_format)[0] for case in cases]
+            from languages.en.data.preparation.corpus import Example
+            encoded_holdout=_encode(tokenizer,tuple(Example(prompt,case.example.response) for prompt,case in zip(prepared,cases)))
+            positions=inspect_teacher_forced_positions_v1(model,encoded_holdout)
             details=[case.score(generate(tokenizer,model,case.example.conversation)) for case in cases]
             results[name]={
                 "first_target_rank":ranks,
+                "teacher_forced_positions":positions,
                 "generation":summarize_generation_diagnostics_v1(details),
             }
         arms[str(weight)]={"training":training,"benchmarks":results}
