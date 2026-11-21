@@ -224,3 +224,16 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
             audit=self.report[f"{stage}_output_bias_audit"]
             self.assertFalse(audit["raw_text_exposed"])
             self.assertFalse(audit["raw_token_ids_exposed"])
+
+    def test_context_attribution_covers_holdouts(self):
+        for row in self.report["benchmarks"].values():
+            audit=row["candidate_context_attribution"]
+            self.assertEqual(audit["cases"],10)
+            self.assertLessEqual(audit["context_category_differs_from_bias"],10)
+
+    def test_context_attribution_preserves_privacy(self):
+        for row in self.report["benchmarks"].values():
+            audit=row["candidate_context_attribution"]
+            self.assertFalse(audit["raw_text_exposed"])
+            self.assertFalse(audit["raw_token_ids_exposed"])
+            self.assertFalse(audit["hidden_vectors_exposed"])
