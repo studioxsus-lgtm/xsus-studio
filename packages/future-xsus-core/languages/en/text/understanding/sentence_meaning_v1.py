@@ -82,6 +82,8 @@ def analyze_sentence_meaning(text: str) -> SentenceFrame:
         return _abstain("invalid_auxiliary_agreement")
     if negated and auxiliary == "do" and subject in {"he", "she", "the user", "the teacher", "the student", "the developer", "the engine", "the model", "the system"}:
         return _abstain("invalid_auxiliary_agreement")
+    if negated and auxiliary in {"will", "can"} and verb != _LEMMAS[verb]:
+        return _abstain("invalid_modal_verb")
     if not negated:
         singular_third = subject in {"he", "she", "the user", "the teacher", "the student", "the developer", "the engine", "the model", "the system"}
         inflected = verb != _LEMMAS[verb]
