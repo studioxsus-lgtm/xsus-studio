@@ -90,3 +90,16 @@ and reviewers. No automatic learning is enabled.
 ```bash
 python -m unittest tests.integration.test_memory_learning_v1 -v
 ```
+
+## Phase 4.4 — Bounded intelligent problem solver
+
+`problem_solver_v1.py` composes formal multi-step inference into an auditable
+solution. Each step has explicit premises and rule provenance, with independent
+replay verification and configurable step budgets. `IntelligenceKernel.solve_problem`
+exposes this capability. Missing evidence abstains, altered proofs fail, and
+no plan can execute external tools. This is **not** an open-domain planner or
+autonomous problem solver.
+
+```bash
+python -m unittest tests.integration.test_problem_solver_v1 tests.integration.test_intelligence_kernel_v1 -v
+```
