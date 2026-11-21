@@ -47,6 +47,7 @@ class ProofreadingQualityGateV1Tests(unittest.TestCase):
         self.write_cases(["He writes."] * 10)
         lines = self.path.read_text().splitlines()
         row = json.loads(lines[0])
+        row["status"] = "corrected"
         row["output"] = "A completely different sentence."
         lines[0] = json.dumps(row)
         self.path.write_text("\n".join(lines) + "\n")
@@ -56,6 +57,7 @@ class ProofreadingQualityGateV1Tests(unittest.TestCase):
         self.write_cases(["He writes."] * 10)
         lines = self.path.read_text().splitlines()
         row = json.loads(lines[0])
+        row["status"] = "corrected"
         row["output"] = "A completely different sentence."
         lines[0] = json.dumps(row)
         self.path.write_text("\n".join(lines) + "\n")
@@ -65,6 +67,7 @@ class ProofreadingQualityGateV1Tests(unittest.TestCase):
         self.write_cases(["He writes."] * 10)
         lines = self.path.read_text().splitlines()
         row = json.loads(lines[0])
+        row["status"] = "corrected"
         row["output"] = "A completely different sentence."
         lines[0] = json.dumps(row)
         self.path.write_text("\n".join(lines) + "\n")
