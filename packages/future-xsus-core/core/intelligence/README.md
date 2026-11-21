@@ -382,3 +382,19 @@ cases can be supplied separately. A passing score is **not** evidence of
 open-world generalization or external factual correctness. Comparing scores
 alone does not establish case-set identity; retain the underlying case IDs and
 use `IntelligenceEvaluator.regression` for case-level comparisons.
+
+## Phase 6.2 — Adversarial reasoning and metamorphic invariants
+
+`adversarial_reasoning_v1.py` checks expected entailment, proof replay,
+permutation invariance for supplied facts and rules, and fail-closed behavior
+for unsupported conclusions. Integration fixtures cover chains, missing
+premises, cycles with and without a seed, irrelevant facts, and multi-premise
+rules. The harness reports named per-case checks and rejects duplicate IDs.
+
+```bash
+python -m unittest tests.integration.test_adversarial_reasoning_v1 -v
+```
+
+These are deterministic Horn-logic metamorphic tests, **not** adversarial
+natural-language evaluation, contradiction handling, external truth checking,
+or proof of generalization to open-ended problems.
