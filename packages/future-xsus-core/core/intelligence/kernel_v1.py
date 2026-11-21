@@ -108,6 +108,20 @@ class IntelligenceKernel:
                        ("retrieve", "check_source_presence"), False,
                        ("source_presence_is_not_truth_verification",))
 
+    def decide(self, criteria: tuple, options: tuple) -> IntelligenceResult:
+        """Compare bounded alternatives and replay the deterministic decision."""
+        from .decision_v1 import DecisionEngine
+        engine = DecisionEngine()
+        decision = engine.decide(criteria, options)
+        if not engine.verify(decision, criteria, options):
+            return _result("error", "decision", limitations=("decision_replay_failed",))
+        if decision.winner_id is None:
+            return _result("abstained", "decision", limitations=decision.limitations)
+        return _result("proposed", "decision", decision.winner_id,
+                       tuple(row.option_id for row in decision.ranking if row.eligible),
+                       ("check_constraints", "rank", "replay_decision"), True,
+                       decision.limitations)
+
     def plan_tasks(self, tasks: tuple) -> IntelligenceResult:
         """Produce and verify an ordered dependency plan without execution."""
         from .task_planner_v1 import TaskPlanner
