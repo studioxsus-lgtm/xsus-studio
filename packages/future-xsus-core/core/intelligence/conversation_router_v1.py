@@ -3,7 +3,8 @@
 This is not a natural-language understanding or text generation model.
 """
 from dataclasses import dataclass
-from .reasoning_v1 import Rule, _atom
+from .reasoning_v1 import Rule
+from .english_intent_v1 import parse_english_intent
 from .kernel_v1 import IntelligenceKernel
 from ..sessions.session_store import InMemorySessionStore
 
@@ -35,32 +36,25 @@ class ConversationRouter:
             raise ValueError("invalid conversation input")
         if not isinstance(facts, tuple) or not isinstance(rules, tuple):
             raise ValueError("invalid symbolic context")
-        # Deliberately explicit grammar. No guessing at a user's intent.
         normalized = text.strip()
-        if normalized.startswith("prove ") and len(normalized.split()) == 2:
-            query = normalized.split()[1]
-            try:
-                _atom(query)
-            except ValueError:
-                status, answer = "abstained", None
-                limitations = ("invalid_symbolic_query",)
-            else:
-                result = self.kernel.reason(query, facts, rules)
-                status = result.status
-                answer = result.answer if result.status == "resolved" else None
-                limitations = result.limitations
-        elif normalized == "history":
+        intent = parse_english_intent(normalized)
+        if intent.kind == "prove":
+            result = self.kernel.reason(intent.atom, facts, rules)
+            status = result.status
+            answer = result.answer if result.status == "resolved" else None
+            limitations = result.limitations + intent.limitations
+        elif intent.kind == "history":
             status = "resolved"
             answer = "exchanges:" + str(len(snapshot.history) // 2)
             limitations = ("metadata_only",)
         else:
             status, answer = "abstained", None
-            limitations = ("unsupported_conversation_intent",)
+            limitations = intent.limitations
         # Store a minimal status rather than echoing potentially sensitive
         # evidence or fabricated conversational explanations.
         updated = self.store.append_exchange(
             owner_id, session_id, expected_revision=expected_revision,
             user_text=normalized, assistant_text=status + ":" + (answer or "none"))
         return ConversationReply(status, answer, session_id, updated.revision,
-                                 limitations + ("bounded_explicit_command_grammar",
+                                 limitations + ("bounded_english_intent_grammar",
                                                 "no_autonomous_learning"))
