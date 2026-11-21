@@ -245,3 +245,18 @@ mean rank and best-versus-reference logit gap, with no reference
 text, token IDs or raw logits in the report. This is diagnostic
 evidence for a potential training-objective mismatch, not
 evidence of model correctness or production readiness.
+
+## First-target weighted teacher forcing (isolated prototype)
+
+Run 44904657705 showed that the reference first token was never
+the model's top choice across 20 holdout cases. Its mean rank was
+205.5 (written-v4) and 205.3 (written-v5). The isolated
+`first_target_weighted_training_v1` function adds opt-in extra
+teacher-forced SGD updates on the first answer token (integer
+weight 1–8), preserving the original prefix until all repeated
+updates complete. This is an experimental training primitive,
+not a demonstrated fix: it is not wired into candidate promotion,
+does not modify the standard trainer or production defaults,
+and has no holdout improvement claim until a controlled ablation
+is run. It must be compared against weight 1 on identical data,
+seed, and held-out cases before consideration.
