@@ -13,6 +13,7 @@ on:
       - packages/future-xsus-core/languages/en/tests/test_sentence_batch_*
       - packages/future-xsus-core/languages/en/tests/test_sentence_evidence_*
       - packages/future-xsus-core/languages/en/tests/test_sentence_phase2_*
+      - packages/future-xsus-core/languages/en/tests/test_action_semantics_*
       - packages/future-xsus-core/languages/en/evaluation/sentence_meaning_*
   workflow_dispatch:
 
@@ -33,7 +34,7 @@ jobs:
           python-version: "3.12"
       - name: Run contextual sense and benchmark regression tests
         run: |
-          python -m unittest languages.en.tests.test_word_sense_v1 languages.en.tests.test_word_sense_benchmark_v1 languages.en.tests.test_word_sense_quality_gate_v1 languages.en.tests.test_word_sense_challenge_v1 languages.en.tests.test_word_sense_context_guard_v1 languages.en.tests.test_word_sense_phase1_acceptance_v1 languages.en.tests.test_sentence_meaning_v1 languages.en.tests.test_sentence_relations_v1 languages.en.tests.test_sentence_meaning_benchmark_v1 languages.en.tests.test_sentence_meaning_quality_gate_v1 languages.en.tests.test_sentence_relations_benchmark_v1 languages.en.tests.test_sentence_batch_v1 languages.en.tests.test_sentence_batch_stress_v1 languages.en.tests.test_sentence_evidence_v1 languages.en.tests.test_sentence_evidence_benchmark_v1 languages.en.tests.test_sentence_phase2_acceptance_v1 -v
+          python -m unittest languages.en.tests.test_word_sense_v1 languages.en.tests.test_word_sense_benchmark_v1 languages.en.tests.test_word_sense_quality_gate_v1 languages.en.tests.test_word_sense_challenge_v1 languages.en.tests.test_word_sense_context_guard_v1 languages.en.tests.test_word_sense_phase1_acceptance_v1 languages.en.tests.test_sentence_meaning_v1 languages.en.tests.test_sentence_relations_v1 languages.en.tests.test_sentence_meaning_benchmark_v1 languages.en.tests.test_sentence_meaning_quality_gate_v1 languages.en.tests.test_sentence_relations_benchmark_v1 languages.en.tests.test_sentence_batch_v1 languages.en.tests.test_sentence_batch_stress_v1 languages.en.tests.test_sentence_evidence_v1 languages.en.tests.test_sentence_evidence_benchmark_v1 languages.en.tests.test_sentence_phase2_acceptance_v1 languages.en.tests.test_action_semantics_v1 -v
       - name: Run read-only aggregate benchmark
         run: |
           python -m languages.en.evaluation.word_sense_benchmark_v1 > word-sense-benchmark-v1.json
