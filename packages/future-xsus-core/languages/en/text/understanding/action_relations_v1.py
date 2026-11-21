@@ -18,7 +18,7 @@ def compare_action_semantics(first: str, second: str) -> ActionRelation:
     left = classify_action_semantics(first)
     right = classify_action_semantics(second)
     if left.status != "resolved" or right.status != "resolved":
-        return ActionRelation("abstained", None, None, None,
+        return ActionRelation("abstained", None, None, None, None,
                               ("unsupported_action_frame",))
     same_action = left.action == right.action
     same_category = left.category == right.category
