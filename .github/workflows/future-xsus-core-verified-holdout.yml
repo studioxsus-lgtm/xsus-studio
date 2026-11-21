@@ -1,0 +1,55 @@
+name: Future XSUS Core Verified Holdout
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verified-written-v5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: packages/future-xsus-core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run read-only verified checkpoint holdout on all 72 quality-v5 cases
+        timeout-minutes: 25
+        run: |
+          python -m languages.en.evaluation.verified_checkpoint_holdout_cli_v1 \
+            --checkpoint languages/en/models/checkpoints/xsus-en-written-v5.json.gz \
+            --evaluation languages/en/evaluation/quality-v5.jsonl \
+            --training languages/en/data/training-v2.jsonl \
+            --training languages/en/data/training-v3.jsonl \
+            --training languages/en/data/training-v4.jsonl \
+            --training languages/en/data/training-v5.jsonl \
+            --max-new-tokens 8 > verified-written-v5-holdout.json
+      - name: Print aggregate diagnostics and limitations
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("verified-written-v5-holdout.json").read_text())
+          scoring = report["result"]["generation"]["scoring"]
+          print(json.dumps({
+              "cases": report["cases"],
+              "training_corpora_checked": report["training_corpora_checked"],
+              "unique_training_conversations_checked": report["unique_training_conversations_checked"],
+              "metric": scoring["metric"],
+              "windows": scoring["windows"],
+              "checkpoint_training_provenance_verified": report["checkpoint_training_provenance_verified"],
+              "semantic_correctness_proven": scoring["semantic_correctness_proven"],
+              "release_authorized": report["release_authorized"],
+          }, indent=2))
+          PY
+      - name: Upload aggregate holdout report
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-xsus-core-verified-written-v5-holdout
+          path: packages/future-xsus-core/verified-written-v5-holdout.json
+          if-no-files-found: error
