@@ -34,9 +34,9 @@ class CounterfactualValidation(unittest.TestCase):
         b=inspect(self.tokenizer,self.model,self.cases,windows=(16,32))
         self.assertEqual(a,b)
     def test_weights_unchanged(self):
-        before=[list(row) for row in self.model.embedding]
+        before=[list(row) for row in self.model.embeddings]
         inspect(self.tokenizer,self.model,self.cases,windows=(16,32))
-        self.assertEqual(self.model.embedding,before)
+        self.assertEqual(self.model.embeddings,before)
     def test_aggregate_contract(self):
         report=inspect(self.tokenizer,self.model,self.cases,windows=(16,32))
         self.assertEqual(report["cases"],2)
