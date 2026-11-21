@@ -20,6 +20,7 @@ def evaluate_word_sense(path: Path = _DEFAULT) -> dict:
     supported = set(supported_words())
     seen_ids = set()
     cases = []
+    by_target = {}
     with path.open(encoding="utf-8") as source:
         for number, line in enumerate(source, 1):
             try:
@@ -38,6 +39,7 @@ def evaluate_word_sense(path: Path = _DEFAULT) -> dict:
                     raise ValueError("expected sense is not supported")
                 seen_ids.add(identifier)
                 cases.append((expected, result))
+                by_target.setdefault(target, []).append((expected, result))
             except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
                 raise ValueError(f"invalid benchmark case on line {number}") from exc
     if not cases:
@@ -52,6 +54,16 @@ def evaluate_word_sense(path: Path = _DEFAULT) -> dict:
     true_abstentions = sum(expected is None and result.sense is None for expected, result in cases)
     resolved = len(cases) - abstained
     # Never conflate accuracy among resolved cases with accuracy over all cases.
+    per_target = {}
+    for target, subset in sorted(by_target.items()):
+        per_target[target] = {
+            "cases": len(subset),
+            "correct": sum(expected is not None and result.sense == expected for expected, result in subset),
+            "wrong": sum(expected is not None and result.sense is not None and result.sense != expected for expected, result in subset),
+            "missed": sum(expected is not None and result.sense is None for expected, result in subset),
+            "true_abstentions": sum(expected is None and result.sense is None for expected, result in subset),
+            "false_resolutions": sum(expected is None and result.sense is not None for expected, result in subset),
+        }
     return {
         "contract": "future-xsus-core.word-sense-benchmark.v1",
         "cases": len(cases),
@@ -63,6 +75,7 @@ def evaluate_word_sense(path: Path = _DEFAULT) -> dict:
         "true_abstentions": true_abstentions,
         "false_resolutions": false_resolutions,
         "resolved_cases": resolved,
+        "per_target": per_target,
         "coverage": round(resolved / len(cases), 6),
         "labeled_accuracy": round(correct / labeled, 6) if labeled else None,
         "resolved_precision": round(correct / resolved, 6) if resolved else None,
