@@ -63,6 +63,9 @@ def run_synthetic_feedback_experiment_v1():
             min_length_details=[case.score(generate(
                 candidate_tokenizer,candidate_model,case.example.conversation,
                 min_new_tokens=8)) for case in cases]
+            visible_details=[case.score(generate(
+                candidate_tokenizer,candidate_model,case.example.conversation,
+                min_visible_chars=8)) for case in cases]
             benchmarks[name]={
                 "cases":scores["baseline"]["cases"],
                 "baseline_accepted":scores["baseline"]["accepted"],
@@ -72,6 +75,7 @@ def run_synthetic_feedback_experiment_v1():
                 "baseline_generation_diagnostics":summarize_generation_diagnostics_v1(scores["baseline"]["details"]),
                 "candidate_generation_diagnostics":summarize_generation_diagnostics_v1(scores["candidate"]["details"]),
                 "candidate_min_length_8_diagnostics":summarize_generation_diagnostics_v1(min_length_details),
+                "candidate_min_visible_8_diagnostics":summarize_generation_diagnostics_v1(visible_details),
             }
         baseline_accepted=sum(row["baseline_accepted"] for row in benchmarks.values())
         candidate_accepted=sum(row["candidate_accepted"] for row in benchmarks.values())
