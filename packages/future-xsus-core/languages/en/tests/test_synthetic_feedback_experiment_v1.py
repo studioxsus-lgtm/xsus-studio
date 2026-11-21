@@ -345,3 +345,20 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
         decision=self.report["first_target_weight_ablation_decision"]
         self.assertFalse(decision["raw_text_exposed"])
         self.assertFalse(decision["raw_token_ids_exposed"])
+
+    def test_teacher_forced_positions_cover_ablation(self):
+        for arm in self.report["first_target_weight_ablation"]["arms"].values():
+            for result in arm["benchmarks"].values():
+                positions=result["teacher_forced_positions"]
+                self.assertEqual(positions["examples"],10)
+                self.assertEqual(positions["segments"]["first"]["tokens"],10)
+                self.assertGreater(positions["segments"]["early"]["tokens"],0)
+                self.assertGreater(positions["segments"]["later"]["tokens"],0)
+
+    def test_teacher_forced_positions_private(self):
+        for arm in self.report["first_target_weight_ablation"]["arms"].values():
+            for result in arm["benchmarks"].values():
+                positions=result["teacher_forced_positions"]
+                self.assertFalse(positions["raw_text_exposed"])
+                self.assertFalse(positions["raw_token_ids_exposed"])
+                self.assertFalse(positions["raw_logits_exposed"])
