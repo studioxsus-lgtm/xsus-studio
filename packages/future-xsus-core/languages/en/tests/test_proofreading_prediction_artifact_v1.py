@@ -88,7 +88,7 @@ class PredictionArtifactV1Tests(unittest.TestCase):
 
     def test_short_key(self):
         with self.assertRaises(ValueError):
-            self.artifact()
+            create("v1", self.dataset, self.ref, b"short")
 
     def test_invalid_version(self):
         with self.assertRaises(ValueError):
