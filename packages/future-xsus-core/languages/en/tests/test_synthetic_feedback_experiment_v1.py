@@ -313,7 +313,7 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
     def test_first_target_weight_ablation_same_holdouts(self):
         audit=self.report["first_target_weight_ablation"]
         for arm in audit["arms"].values():
-            self.assertEqual(set(arm["benchmarks"]),{"written-v4","written-v5"})
+            self.assertEqual(set(arm["benchmarks"]),{"written-v4","written-v5","diverse-target-v1"})
             for result in arm["benchmarks"].values():
                 self.assertEqual(result["first_target_rank"]["cases"],10)
                 self.assertEqual(result["generation"]["cases"],10)
@@ -419,7 +419,20 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
         for arm in self.report["position_balanced_ablation"]["arms"].values():
             for row in arm["benchmarks"].values():
                 audit=row["prompt_target_identifiability"]
-                self.assertEqual(audit["distinct_first_target_tokens"],1)
-                self.assertFalse(audit["first_target_contrast_identifiable"])
-                self.assertTrue(audit["rotation_mean_structurally_zero"])
                 self.assertFalse(audit["prompt_target_association_proven"])
+                if row is arm["benchmarks"]["diverse-target-v1"]:
+                    self.assertEqual(audit["distinct_first_target_tokens"],10)
+                    self.assertTrue(audit["first_target_contrast_identifiable"])
+                    self.assertFalse(audit["rotation_mean_structurally_zero"])
+                else:
+                    self.assertEqual(audit["distinct_first_target_tokens"],1)
+                    self.assertFalse(audit["first_target_contrast_identifiable"])
+                    self.assertTrue(audit["rotation_mean_structurally_zero"])
+
+    def test_diverse_holdout_is_diagnostic_not_release_evidence(self):
+        ablation=self.report["position_balanced_ablation"]
+        for arm in ablation["arms"].values():
+            row=arm["benchmarks"]["diverse-target-v1"]
+            self.assertEqual(row["generation"]["cases"],10)
+            self.assertEqual(row["prompt_target_identifiability"]["distinct_first_target_tokens"],10)
+        self.assertFalse(ablation["release_authorized"])
