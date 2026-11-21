@@ -398,3 +398,19 @@ python -m unittest tests.integration.test_adversarial_reasoning_v1 -v
 These are deterministic Horn-logic metamorphic tests, **not** adversarial
 natural-language evaluation, contradiction handling, external truth checking,
 or proof of generalization to open-ended problems.
+
+## Phase 6.3 — Seeded symbolic generalization evaluation
+
+`generalization_v1.py` generates reproducible held-out Horn-rule chains at
+three depths (2, 5 and 10), with randomized atom naming and rule ordering,
+supported and unsupported queries, and distractor self-cycles. A separate
+fixed-point closure oracle computes expected entailment; the engine's proof
+is independently replayed. The default run covers 72 generated cases, with
+1–64 cases per difficulty supported.
+
+```bash
+python -m unittest tests.integration.test_generalization_v1 -v
+```
+
+This tests generated **in-domain symbolic** problems, not natural-language
+understanding, open-world truth, autonomous learning, or broad generalization.
