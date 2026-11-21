@@ -119,3 +119,18 @@ python -m unittest tests.integration.test_task_planner_v1 tests.integration.test
 The engine does not discover goals automatically, operate external tools, or
 assert that tasks were completed in the real world. Caller-provided completion
 claims require separate trusted evidence and authorization.
+
+## Phase 4.6 — Auditable multi-criteria decision support
+
+`decision_v1.py` ranks bounded alternatives against weighted criteria and
+mandatory minimums. Invalid or incomplete scores fail closed, ineligible
+options are excluded before ranking, ties resolve deterministically, and
+`verify` independently recomputes the entire decision. The central kernel
+exposes `decide(criteria, options)` and returns only a **proposed** choice.
+
+The caller supplies all scores and constraints; they are not independently
+verified facts. No option is executed and no external systems are modified.
+
+```bash
+python -m unittest tests.integration.test_decision_v1 tests.integration.test_intelligence_kernel_v1 -v
+```
