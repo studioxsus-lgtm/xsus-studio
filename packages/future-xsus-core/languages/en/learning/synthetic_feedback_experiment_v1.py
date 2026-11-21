@@ -67,8 +67,21 @@ def run_synthetic_feedback_experiment_v1():
         baseline_accepted=sum(row["baseline_accepted"] for row in benchmarks.values())
         candidate_accepted=sum(row["candidate_accepted"] for row in benchmarks.values())
         benchmark_cases=sum(row["cases"] for row in benchmarks.values())
+        generation_collapse_detected=any(
+            row["candidate_generation_diagnostics"]["empty_responses"] >
+            row["baseline_generation_diagnostics"]["empty_responses"]
+            or (
+                row["candidate_generation_diagnostics"]["distinct_normalized_responses"] <
+                row["baseline_generation_diagnostics"]["distinct_normalized_responses"]
+                and row["candidate_generation_diagnostics"]["all_responses_identical"]
+                and not row["baseline_generation_diagnostics"]["all_responses_identical"]
+            )
+            for row in benchmarks.values()
+        )
         observed_generalization_gain=candidate_accepted>baseline_accepted
         return {
+            "generation_collapse_detected":generation_collapse_detected,
+            "candidate_safe_for_review":not generation_collapse_detected and observed_generalization_gain,
             "holdout_cases":benchmark_cases,
             "holdout_baseline_accepted":baseline_accepted,
             "holdout_candidate_accepted":candidate_accepted,
@@ -76,10 +89,11 @@ def run_synthetic_feedback_experiment_v1():
             "observed_generalization_gain":observed_generalization_gain,
             "feedback_loss_improved":report["feedback_loss_after"]<report["feedback_loss_before"],
             "release_evidence_sufficient":False,
-            "candidate_quality_gate_passed":observed_generalization_gain and all(
+            "candidate_quality_gate_passed":not generation_collapse_detected and observed_generalization_gain and all(
                 row["candidate_accepted"]>=row["baseline_accepted"]
                 for row in benchmarks.values()),
-            "quality_gate_reasons":([] if observed_generalization_gain else ["no_holdout_acceptance_gain"])
+            "quality_gate_reasons":(["generation_collapse_detected"] if generation_collapse_detected else [])
+                + ([] if observed_generalization_gain else ["no_holdout_acceptance_gain"])
                 + (["holdout_regression"] if any(
                     row["candidate_accepted"]<row["baseline_accepted"]
                     for row in benchmarks.values()) else []),
