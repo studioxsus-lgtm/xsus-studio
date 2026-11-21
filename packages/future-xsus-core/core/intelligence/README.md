@@ -166,3 +166,18 @@ python -m unittest tests.integration.test_evaluation_v1 tests.integration.test_u
 The evaluator is an offline correctness gate only: it does not measure
 production load, prove real-world factual accuracy, or assess general
 intelligence. Benchmarks must be independently reviewed to avoid overfitting.
+
+## Phase 4.9 — Bounded resilience and repeatability
+
+`resilience_v1.py` executes up to 64 requests over up to 100 sequential
+rounds, fingerprints response contracts, detects nondeterministic results,
+and isolates request failures so later requests still run. Exceptions are
+reported by class only; message contents are not included in reports.
+
+```bash
+python -m unittest tests.integration.test_resilience_v1 -v
+```
+
+This is a sequential in-process regression stress harness. It is not a
+concurrent load benchmark, fault-injection suite, service availability
+measurement, or crash-recovery guarantee.
