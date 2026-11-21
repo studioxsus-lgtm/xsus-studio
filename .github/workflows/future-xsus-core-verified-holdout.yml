@@ -1,6 +1,10 @@
 name: Future XSUS Core Verified Holdout
 
 on:
+  push:
+    branches: [future-xsus-core]
+    paths:
+      - .github/workflows/future-xsus-core-verified-holdout.yml
   workflow_dispatch:
 
 permissions:
