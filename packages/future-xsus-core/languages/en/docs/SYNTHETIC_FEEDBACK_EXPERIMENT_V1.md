@@ -207,3 +207,18 @@ without modifying checkpoint weights or training. The synthetic
 experiment scores scales 0, 0.25, 0.5 and 0.75 on both held-out
 groups. This ablation may increase visible output without
 improving correctness and does not authorize deployment.
+
+## Prompt sensitivity diagnostic
+
+Run 44903949174 confirmed that setting hidden contribution to zero
+produced 20 nonempty but repetitive 64-character responses, with
+zero accepted answers; scales 0.25, 0.5 and 0.75 all returned empty
+responses. No scaling arm improves correctness.
+
+The next diagnostic compares the candidate's full output-logit
+vectors across the ten different held-out prompts in each benchmark.
+It reports the number of distinct greedy winners and aggregate
+maximum logit changes relative to the first prompt, without
+exposing prompt text, token identifiers or raw logit vectors.
+This distinguishes weak input sensitivity from failures of
+autoregressive decoding; it does not change training or production.
