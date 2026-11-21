@@ -400,3 +400,17 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
         audit=self.report["position_balanced_ablation"]
         self.assertFalse(audit["raw_text_exposed"])
         self.assertFalse(audit["raw_token_ids_exposed"])
+
+    def test_balanced_prompt_target_contrast_coverage(self):
+        for arm in self.report["position_balanced_ablation"]["arms"].values():
+            for row in arm["benchmarks"].values():
+                self.assertEqual(row["prompt_target_contrast"]["cases"],10)
+
+    def test_balanced_prompt_target_contrast_privacy(self):
+        for arm in self.report["position_balanced_ablation"]["arms"].values():
+            for row in arm["benchmarks"].values():
+                contrast=row["prompt_target_contrast"]
+                self.assertFalse(contrast["raw_text_exposed"])
+                self.assertFalse(contrast["raw_token_ids_exposed"])
+                self.assertFalse(contrast["raw_logits_exposed"])
+                self.assertFalse(contrast["release_authorized"])
