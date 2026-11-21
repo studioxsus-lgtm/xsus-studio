@@ -108,6 +108,23 @@ class IntelligenceKernel:
                        ("retrieve", "check_source_presence"), False,
                        ("source_presence_is_not_truth_verification",))
 
+    def solve_problem(self, goal: str, facts: tuple[str, ...], rules: tuple,
+                      *, max_steps: int = 128) -> IntelligenceResult:
+        """Find a formal multi-step solution with independently checked proof."""
+        from .problem_solver_v1 import ProblemSolver
+        solver = ProblemSolver(max_steps=max_steps)
+        solution = solver.solve(goal, facts, rules)
+        if solution.status != "solved":
+            return _result("abstained", "problem_solving",
+                           limitations=solution.limitations)
+        if not solver.evaluate(solution, facts, rules):
+            return _result("error", "problem_solving",
+                           limitations=("solution_verification_failed",))
+        return _result("resolved", "problem_solving", solution.goal,
+                       tuple(step.conclusion for step in solution.steps),
+                       ("decompose", "derive", "verify"), True,
+                       solution.limitations)
+
     def plan(self, goal: str, steps: tuple[str, ...]) -> IntelligenceResult:
         goal = _safe_text(goal)
         if not isinstance(steps, tuple) or not 1 <= len(steps) <= MAX_STEPS:
