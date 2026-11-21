@@ -45,3 +45,15 @@ The expanded version uses 12 approved synthetic feedback records,
 the full aggregate holdout counts. The 20 examples are templated synthetic
 cases, not independently curated real-world writing tasks. Results
 must be reviewed before claiming generalization.
+
+## Expanded CI observation and quality gate
+
+GitHub Actions run 44876518846 measured feedback loss
+5.57560648 → 4.67939741, but **0/20 accepted holdout responses**
+both before and after training. The experimental
+`candidate_quality_gate_passed` therefore requires at least one
+additional accepted holdout response and no benchmark-specific
+acceptance regression. This gate is distinct from the existing
+`candidate_eligible_for_review` loss-based flag, and neither flag
+authorizes deployment. Future work should improve the training
+objective, generation and independently curated holdout coverage.
