@@ -115,3 +115,20 @@ All supported examples remain constrained by the existing grammar.
 python -m unittest languages.en.tests.test_role_bulk_v1 languages.en.tests.test_role_bulk_benchmark_v1 -v
 python -m languages.en.evaluation.role_bulk_benchmark_v1
 ```
+
+## Phase 3.6 — Expanded controlled English lexicon
+
+An opt-in, independent grammar module `expanded_english_v1.py` adds
+40 verb lemmas, 50 explicit noun heads and 15 explicit subjects. These
+support 30,000 positive subject–verb–object lexical combinations before
+considering negation, subject agreement and determiners. The diagnostic
+`expanded_english_benchmark_v1.py` checks **1000 distinct generated
+subject–verb–object combinations**, rather than repeating a small set of
+sentences. All cases are authored/generated in-project; this is not an
+independent external blind evaluation. This grammar does not replace the
+existing Phase 2 parser or claim open-domain English comprehension.
+
+```bash
+python -m unittest languages.en.tests.test_expanded_english_v1 languages.en.tests.test_expanded_english_benchmark_v1 -v
+python -m languages.en.evaluation.expanded_english_benchmark_v1
+```
