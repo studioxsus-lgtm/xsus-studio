@@ -85,7 +85,7 @@ class ExecutionComparisonV1Tests(unittest.TestCase):
 
     def test_invalid_engine(self):
         with self.assertRaises(ValueError):
-            self.compare(candidate_engine=123)
+            compare_proofreading_executions_v1(self.path, self.key, candidate_engine=123)
 
     def test_missing_file(self):
         with self.assertRaises(FileNotFoundError):
