@@ -1,0 +1,36 @@
+{"id":"ws-001","text":"The bank approved our mortgage application.","target":"bank","expected_sense":"financial_institution"}
+{"id":"ws-002","text":"Her salary arrived in the bank account.","target":"bank","expected_sense":"financial_institution"}
+{"id":"ws-003","text":"The bank charged interest on the loan.","target":"bank","expected_sense":"financial_institution"}
+{"id":"ws-004","text":"A fisherman stood on the river bank.","target":"bank","expected_sense":"river_edge"}
+{"id":"ws-005","text":"Flood water covered the bank.","target":"bank","expected_sense":"river_edge"}
+{"id":"ws-006","text":"They rested along the creek bank.","target":"bank","expected_sense":"river_edge"}
+{"id":"ws-007","text":"The bank was closed yesterday.","target":"bank","expected_sense":null}
+{"id":"ws-008","text":"He gripped the cricket bat firmly.","target":"bat","expected_sense":"sports_equipment"}
+{"id":"ws-009","text":"The hitter dropped his bat after the pitch.","target":"bat","expected_sense":"sports_equipment"}
+{"id":"ws-010","text":"The bat flew out of the cave at dusk.","target":"bat","expected_sense":"animal"}
+{"id":"ws-011","text":"A nocturnal bat rested overhead.","target":"bat","expected_sense":"animal"}
+{"id":"ws-012","text":"I found a bat.","target":"bat","expected_sense":null}
+{"id":"ws-013","text":"The crane operator lifted a steel beam.","target":"crane","expected_sense":"lifting_machine"}
+{"id":"ws-014","text":"A construction crane towered above us.","target":"crane","expected_sense":"lifting_machine"}
+{"id":"ws-015","text":"The crane nested in the wetland.","target":"crane","expected_sense":"bird"}
+{"id":"ws-016","text":"A bird called a crane stood nearby.","target":"crane","expected_sense":"bird"}
+{"id":"ws-017","text":"I saw the crane.","target":"crane","expected_sense":null}
+{"id":"ws-018","text":"The envelope needs a wax seal.","target":"seal","expected_sense":"closure"}
+{"id":"ws-019","text":"An airtight seal protects the container.","target":"seal","expected_sense":"closure"}
+{"id":"ws-020","text":"The marine seal swam toward shore.","target":"seal","expected_sense":"animal"}
+{"id":"ws-021","text":"The seal caught a fish in the ocean.","target":"seal","expected_sense":"animal"}
+{"id":"ws-022","text":"We inspected the seal.","target":"seal","expected_sense":null}
+{"id":"ws-023","text":"Spring flowers appeared after winter.","target":"spring","expected_sense":"season"}
+{"id":"ws-024","text":"The spring season brings blossoms.","target":"spring","expected_sense":"season"}
+{"id":"ws-025","text":"A metal spring compresses under pressure.","target":"spring","expected_sense":"mechanical_coil"}
+{"id":"ws-026","text":"The mattress spring is made of metal.","target":"spring","expected_sense":"mechanical_coil"}
+{"id":"ws-027","text":"Fresh water flows from the mountain spring.","target":"spring","expected_sense":"water_source"}
+{"id":"ws-028","text":"The natural spring feeds a stream.","target":"spring","expected_sense":"water_source"}
+{"id":"ws-029","text":"I remember last spring.","target":"spring","expected_sense":null}
+{"id":"ws-030","text":"The Python developer reviewed the code.","target":"python","expected_sense":"programming_language"}
+{"id":"ws-031","text":"Python programming uses functions.","target":"python","expected_sense":"programming_language"}
+{"id":"ws-032","text":"A python snake curled around a branch.","target":"python","expected_sense":"snake"}
+{"id":"ws-033","text":"The python constrictor moved slowly.","target":"python","expected_sense":"snake"}
+{"id":"ws-034","text":"The python was nearby.","target":"python","expected_sense":null}
+{"id":"ws-035","text":"The river bank approved the loan.","target":"bank","expected_sense":null}
+{"id":"ws-036","text":"The baseball bat flew into a cave.","target":"bat","expected_sense":null}
