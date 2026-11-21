@@ -250,3 +250,18 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
             self.assertFalse(audit["raw_text_exposed"])
             self.assertFalse(audit["raw_token_ids_exposed"])
             self.assertFalse(audit["hidden_vectors_exposed"])
+
+    def test_hidden_scale_arms_cover_all_holdouts(self):
+        for row in self.report["benchmarks"].values():
+            arms=row["candidate_hidden_scale_arms"]
+            self.assertEqual(set(arms),{"0.0","0.25","0.5","0.75"})
+            for result in arms.values():
+                self.assertEqual(result["cases"],10)
+
+    def test_hidden_scale_arms_do_not_leak_generated_text(self):
+        for row in self.report["benchmarks"].values():
+            for result in row["candidate_hidden_scale_arms"].values():
+                self.assertFalse(result["contains_generated_text"])
+
+    def test_hidden_scale_arms_do_not_override_release_gate(self):
+        self.assertFalse(self.report["release_evidence_sufficient"])
