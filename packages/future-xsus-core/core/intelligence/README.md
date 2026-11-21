@@ -230,3 +230,18 @@ No candidate is deployed or promoted by this module. Review approval is
 not deployment authorization. Benchmarks are bounded, authored fixtures;
 additional security, independent validation and operational testing are
 required before any production use.
+
+## Phase 5.3 — Candidate governance and version review
+
+`governance_v1.py` records owner-scoped candidate IDs tied to eligible
+improvement verdicts. Manual review requires expected revision and transitions
+pending candidates to `approved_for_release_review` or `rejected`.
+Candidate IDs cannot be rebound to different proposals; repeat reviews fail.
+
+```bash
+python -m unittest tests.integration.test_governance_v1 -v
+```
+
+The in-memory registry is not an authenticated durable audit log. Approval
+only allows further release review; it never deploys, trains or promotes
+candidate code automatically.
