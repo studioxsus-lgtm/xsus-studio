@@ -1,0 +1,24 @@
+{"id":"c01","text":"She read the report.","expected":null}
+{"id":"c02","text":"They reads the report.","expected":null}
+{"id":"c03","text":"The developer build the application.","expected":null}
+{"id":"c04","text":"I writes a report.","expected":null}
+{"id":"c05","text":"She do not read the report.","expected":null}
+{"id":"c06","text":"They does not read the report.","expected":null}
+{"id":"c07","text":"She does not reads the report.","expected":null}
+{"id":"c08","text":"She can reads the report.","expected":null}
+{"id":"c09","text":"The developer never builds the application.","expected":null}
+{"id":"c10","text":"She reads the report and writes the document.","expected":null}
+{"id":"c11","text":"The developer builds the application because she can.","expected":null}
+{"id":"c12","text":"Does she read the report?","expected":null}
+{"id":"c13","text":"She reads the report; he deletes the file.","expected":null}
+{"id":"c14","text":"The user opens secret files.","expected":null}
+{"id":"c15","text":"The developer doesn't builds the application.","expected":null}
+{"id":"c16","text":"She reads the report but not the document.","expected":null}
+{"id":"c17","text":"She reads the report.","expected":{"subject":"she","action":"read","object":"the report","polarity":"positive"}}
+{"id":"c18","text":"They read the report.","expected":{"subject":"they","action":"read","object":"the report","polarity":"positive"}}
+{"id":"c19","text":"The developer builds the application.","expected":{"subject":"the developer","action":"build","object":"the application","polarity":"positive"}}
+{"id":"c20","text":"I write a report.","expected":{"subject":"i","action":"write","object":"a report","polarity":"positive"}}
+{"id":"c21","text":"She does not read the report.","expected":{"subject":"she","action":"read","object":"the report","polarity":"negative"}}
+{"id":"c22","text":"They do not read the report.","expected":{"subject":"they","action":"read","object":"the report","polarity":"negative"}}
+{"id":"c23","text":"The user doesn't open the file.","expected":{"subject":"the user","action":"open","object":"the file","polarity":"negative"}}
+{"id":"c24","text":"The student writes a report.","expected":{"subject":"the student","action":"write","object":"a report","polarity":"positive"}}
