@@ -40,6 +40,14 @@ class AdvancedGrammarTests(unittest.TestCase):
         result = analyze_advanced_grammar("The report was reviewed by the developer.")
         self.assertEqual((result.status, result.kind), ("resolved", "passive"))
 
+    def test_passive_rejects_unknown_agent(self):
+        result = analyze_advanced_grammar("The report was reviewed by the stranger.")
+        self.assertEqual(result.status, "abstained")
+
+    def test_passive_recognizes_explicit_agent(self):
+        result = analyze_advanced_grammar("The report was reviewed by the teacher.")
+        self.assertEqual((result.status, result.kind), ("resolved", "passive"))
+
     def test_bad_agreement(self):
         self.assertEqual(analyze_advanced_grammar(
             "They has reviewed the report.").status, "abstained")
