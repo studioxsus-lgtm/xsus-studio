@@ -5,6 +5,7 @@ from languages.en.evaluation.sentence_meaning_benchmark_v1 import (
     DEFAULT, evaluate_sentence_frames,
 )
 from pathlib import Path
+from languages.en.evaluation.sentence_relations_benchmark_v1 import evaluate_sentence_relations
 
 CHALLENGE = Path(__file__).with_name("sentence_meaning_challenge_v1.jsonl")
 
@@ -12,6 +13,7 @@ CHALLENGE = Path(__file__).with_name("sentence_meaning_challenge_v1.jsonl")
 def phase2_quality_report() -> dict:
     base = evaluate_sentence_frames(DEFAULT)
     challenge = evaluate_sentence_frames(CHALLENGE)
+    relations = evaluate_sentence_relations()
     checks = {
         "baseline_case_count": base["cases"] >= 32,
         "baseline_exact_frames": base["correct_frames"] == base["labeled_cases"],
@@ -29,7 +31,18 @@ def phase2_quality_report() -> dict:
             and report["expected_abstentions"] == report["true_abstentions"] + report["false_resolutions"]
             for report in (base, challenge)
         ),
-        "privacy": not base["raw_text_exposed"] and not challenge["raw_text_exposed"],
+        "relation_cases": relations["cases"] >= 24,
+        "relation_exact": relations["correct"] == relations["labeled_cases"],
+        "relation_zero_wrong": relations["wrong"] == 0,
+        "relation_zero_missed": relations["missed"] == 0,
+        "relation_zero_false_resolutions": relations["false_resolutions"] == 0,
+        "relation_abstentions": relations["true_abstentions"] == relations["expected_abstentions"],
+        "relation_count_integrity": (
+            relations["cases"] == relations["labeled_cases"] + relations["expected_abstentions"]
+            and relations["labeled_cases"] == relations["correct"] + relations["wrong"] + relations["missed"]
+            and relations["expected_abstentions"] == relations["true_abstentions"] + relations["false_resolutions"]
+        ),
+        "privacy": not base["raw_text_exposed"] and not challenge["raw_text_exposed"] and not relations["raw_text_exposed"],
     }
     return {
         "contract": "future-xsus-core.sentence-phase2-quality.v1",
@@ -37,6 +50,7 @@ def phase2_quality_report() -> dict:
         "checks": checks,
         "baseline": {k: v for k, v in base.items() if k not in {"contract"}},
         "challenge": {k: v for k, v in challenge.items() if k not in {"contract"}},
+        "relations": {k: v for k, v in relations.items() if k not in {"contract"}},
         "production_authorized": False,
         "independent_external_holdout_proven": False,
         "open_domain_understanding_proven": False,
