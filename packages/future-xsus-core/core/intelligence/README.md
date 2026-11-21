@@ -151,3 +151,18 @@ integration API, not a general autonomous agent.
 ```bash
 python -m unittest tests.integration.test_unified_pipeline_v1 -v
 ```
+
+## Phase 4.8 — Reliability evaluation and regression gates
+
+`evaluation_v1.py` runs bounded authored cases through the unified pipeline,
+checks expected status, answer, and verification state, and reports per-case
+mismatches. Regression comparison flags previously passing cases that fail
+under the same case IDs and rejects changed case sets.
+
+```bash
+python -m unittest tests.integration.test_evaluation_v1 tests.integration.test_unified_pipeline_v1 -v
+```
+
+The evaluator is an offline correctness gate only: it does not measure
+production load, prove real-world factual accuracy, or assess general
+intelligence. Benchmarks must be independently reviewed to avoid overfitting.
