@@ -52,6 +52,14 @@ class RealCheckpointGenerationSmokeTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(_CHECKPOINT.read_bytes()).hexdigest(),
                          self.checkpoint_hash)
 
+    def test_generation_counts_within_valid_bounds(self):
+        rows = self.report["generation"]["scoring"]["windows"]
+        for row in rows.values():
+            self.assertGreaterEqual(row["accepted_responses"], 0)
+            self.assertLessEqual(row["accepted_responses"], row["evaluated_cases"])
+            self.assertGreaterEqual(row["empty_responses"], 0)
+            self.assertLessEqual(row["empty_responses"], row["evaluated_cases"])
+
     def test_no_training_or_release(self):
         self.assertFalse(self.report["weights_retrained"])
         self.assertFalse(self.report["release_authorized"])
