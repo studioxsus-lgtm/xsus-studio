@@ -73,6 +73,13 @@ def run_synthetic_feedback_experiment_v1():
             "observed_generalization_gain":observed_generalization_gain,
             "feedback_loss_improved":report["feedback_loss_after"]<report["feedback_loss_before"],
             "release_evidence_sufficient":False,
+            "candidate_quality_gate_passed":observed_generalization_gain and all(
+                row["candidate_accepted"]>=row["baseline_accepted"]
+                for row in benchmarks.values()),
+            "quality_gate_reasons":([] if observed_generalization_gain else ["no_holdout_acceptance_gain"])
+                + (["holdout_regression"] if any(
+                    row["candidate_accepted"]<row["baseline_accepted"]
+                    for row in benchmarks.values()) else []),
             "contract":"future-xsus-core.synthetic-feedback-experiment.v1",
             "synthetic_feedback_only":True,
             "real_neural_training":True,
