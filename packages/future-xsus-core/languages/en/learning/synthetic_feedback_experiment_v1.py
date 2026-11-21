@@ -70,6 +70,9 @@ def run_synthetic_feedback_experiment_v1():
             token_choice_diagnostics=[inspect_token_choices_v1(
                 candidate_tokenizer,candidate_model,case.example.conversation,
                 steps=32) for case in cases]
+            visible_first_details=[case.score(generate(
+                candidate_tokenizer,candidate_model,case.example.conversation,
+                min_visible_chars=1,avoid_leading_whitespace=True)) for case in cases]
             benchmarks[name]={
                 "cases":scores["baseline"]["cases"],
                 "baseline_accepted":scores["baseline"]["accepted"],
@@ -80,6 +83,7 @@ def run_synthetic_feedback_experiment_v1():
                 "candidate_generation_diagnostics":summarize_generation_diagnostics_v1(scores["candidate"]["details"]),
                 "candidate_min_length_8_diagnostics":summarize_generation_diagnostics_v1(min_length_details),
                 "candidate_min_visible_8_diagnostics":summarize_generation_diagnostics_v1(visible_details),
+                "candidate_visible_first_diagnostics":summarize_generation_diagnostics_v1(visible_first_details),
                 "candidate_token_choice_diagnostics":{
                     "cases":len(token_choice_diagnostics),
                     "steps_per_case":32,
