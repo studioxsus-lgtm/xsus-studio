@@ -34,3 +34,30 @@
 {"id":"ws-034","text":"The python was nearby.","target":"python","expected_sense":null}
 {"id":"ws-035","text":"The river bank approved the loan.","target":"bank","expected_sense":null}
 {"id":"ws-036","text":"The baseball bat flew into a cave.","target":"bat","expected_sense":null}
+{"id":"ws-037","text":"The rodent mouse hid in a burrow.","target":"mouse","expected_sense":"animal"}
+{"id":"ws-038","text":"A computer mouse controls the cursor.","target":"mouse","expected_sense":"computer_device"}
+{"id":"ws-039","text":"The mouse disappeared.","target":"mouse","expected_sense":null}
+{"id":"ws-040","text":"Java code uses a compiler.","target":"java","expected_sense":"programming_language"}
+{"id":"ws-041","text":"She ordered a cup of java coffee.","target":"java","expected_sense":"coffee"}
+{"id":"ws-042","text":"I like java.","target":"java","expected_sense":null}
+{"id":"ws-043","text":"Cargo ships entered the harbor port.","target":"port","expected_sense":"harbor"}
+{"id":"ws-044","text":"The server listens on a TCP port.","target":"port","expected_sense":"network_endpoint"}
+{"id":"ws-045","text":"The port is busy.","target":"port","expected_sense":null}
+{"id":"ws-046","text":"The football pitch has green grass.","target":"pitch","expected_sense":"sports_field"}
+{"id":"ws-047","text":"A high musical pitch is a tone.","target":"pitch","expected_sense":"sound_frequency"}
+{"id":"ws-048","text":"The investor liked the startup pitch.","target":"pitch","expected_sense":"sales_presentation"}
+{"id":"ws-049","text":"We discussed the pitch.","target":"pitch","expected_sense":null}
+{"id":"ws-050","text":"Please edit the draft manuscript.","target":"draft","expected_sense":"preliminary_document"}
+{"id":"ws-051","text":"A cold breeze created a draft by the window.","target":"draft","expected_sense":"air_current"}
+{"id":"ws-052","text":"The draft surprised us.","target":"draft","expected_sense":null}
+{"id":"ws-053","text":"The scale displayed a weight in kilograms.","target":"scale","expected_sense":"measurement_device"}
+{"id":"ws-054","text":"The map scale shows the ratio.","target":"scale","expected_sense":"relative_size"}
+{"id":"ws-055","text":"The piano scale has notes.","target":"scale","expected_sense":"musical_sequence"}
+{"id":"ws-056","text":"The scale changed.","target":"scale","expected_sense":null}
+{"id":"ws-057","text":"She spread fruit jam on toast.","target":"jam","expected_sense":"fruit_preserve"}
+{"id":"ws-058","text":"A traffic jam blocked the highway.","target":"jam","expected_sense":"traffic_congestion"}
+{"id":"ws-059","text":"The band held a guitar jam.","target":"jam","expected_sense":"music_session"}
+{"id":"ws-060","text":"There was a jam.","target":"jam","expected_sense":null}
+{"id":"ws-061","text":"Download the file from the computer.","target":"file","expected_sense":"digital_document"}
+{"id":"ws-062","text":"A metal file smooths a rough surface.","target":"file","expected_sense":"hand_tool"}
+{"id":"ws-063","text":"Where is the file?","target":"file","expected_sense":null}
