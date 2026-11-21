@@ -17,6 +17,7 @@ from languages.en.learning.autonomous_candidate_cycle_v1 import (
 from languages.en.evaluation.generation_diagnostics_v1 import summarize_generation_diagnostics_v1
 from languages.en.evaluation.token_choice_diagnostics_v1 import inspect_token_choices_v1
 from languages.en.evaluation.target_token_distribution_v1 import summarize_target_tokens_v1
+from languages.en.evaluation.output_bias_audit_v1 import inspect_output_bias_v1
 from languages.en.training.train import _encode
 from languages.en.evaluation.compare import load_cases
 from languages.en.models.checkpoint import load_checkpoint
@@ -59,7 +60,10 @@ def run_synthetic_feedback_experiment_v1():
             root/"candidate.json.gz",root/"report.json",epochs=2,replay_examples=8)
         result=execute_autonomous_candidate_cycle_v1(store,request,approved_execution=True)
         report=result["candidate_report"]
+        baseline_tokenizer,baseline_model,_=load_checkpoint(baseline)
         candidate_tokenizer,candidate_model,_=load_checkpoint(root/"candidate.json.gz")
+        baseline_output_bias_audit=inspect_output_bias_v1(baseline_tokenizer,baseline_model)
+        candidate_output_bias_audit=inspect_output_bias_v1(candidate_tokenizer,candidate_model)
         target_rows=[json.loads(line) for line in training.read_text(encoding="utf-8").splitlines()]
         target_examples=tuple(Example(Conversation(row["prompt"]),row["response"]) for row in target_rows)
         training_target_distribution=summarize_target_tokens_v1(
@@ -119,6 +123,8 @@ def run_synthetic_feedback_experiment_v1():
         observed_generalization_gain=candidate_accepted>baseline_accepted
         return {
             "training_target_distribution":training_target_distribution,
+            "baseline_output_bias_audit":baseline_output_bias_audit,
+            "candidate_output_bias_audit":candidate_output_bias_audit,
             "generation_collapse_detected":generation_collapse_detected,
             "candidate_safe_for_review":not generation_collapse_detected and observed_generalization_gain,
             "holdout_cases":benchmark_cases,
