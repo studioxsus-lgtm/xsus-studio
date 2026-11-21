@@ -134,3 +134,20 @@ verified facts. No option is executed and no external systems are modified.
 ```bash
 python -m unittest tests.integration.test_decision_v1 tests.integration.test_intelligence_kernel_v1 -v
 ```
+
+## Phase 4.7 — Unified intelligence pipeline
+
+`unified_pipeline_v1.py` dispatches an explicit allowlist of five supported
+operations: formal reasoning, bounded problem solving, dependency planning,
+decision support, and source-scoped formal inference. Requests and batches
+are bounded, request IDs must be unique, and unknown operations or unexpected
+payload keys are rejected. Responses share a consistent contract containing
+status, evidence, steps, verification state and limitations.
+
+The pipeline does not execute tools, train models, retrieve from the web,
+authenticate users, or independently verify source truth. This is a bounded
+integration API, not a general autonomous agent.
+
+```bash
+python -m unittest tests.integration.test_unified_pipeline_v1 -v
+```
