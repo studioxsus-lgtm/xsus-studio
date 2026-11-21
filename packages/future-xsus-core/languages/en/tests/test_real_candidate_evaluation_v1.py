@@ -26,7 +26,7 @@ class RealCandidateEvaluationV1Tests(unittest.TestCase):
         train=root/"training.jsonl"
         train.write_text("".join(json.dumps({
             "prompt":f"Curated training request {i}",
-            "response":f"Curated answer {i}."})+"\\n" for i in range(6)),encoding="utf-8")
+            "response":f"Curated answer {i}."})+"\n" for i in range(6)),encoding="utf-8")
         for i in range(5):
             record=cls.store.submit("owner-a",Example(
                 Conversation(f"Reviewed private question {i}"),
@@ -43,7 +43,7 @@ class RealCandidateEvaluationV1Tests(unittest.TestCase):
             row={"id":version+"-isolated","prompt":"Explain a neutral writing topic for "+version+".",
                  "response":"This is an independent reference.",
                  "facts":[],"patterns":["this is an independent reference\\."]}
-            path.write_text(json.dumps(row)+"\\n",encoding="utf-8")
+            path.write_text(json.dumps(row)+"\n",encoding="utf-8")
             paths[version]=path
         cls.request=CandidateCycleRequestV1(
             "owner-a","grammar",baseline,train,paths,
