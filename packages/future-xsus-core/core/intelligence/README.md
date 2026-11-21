@@ -280,3 +280,21 @@ python -m unittest tests.integration.test_audit_v1 -v
 The audit chain is not authenticated, encrypted or tamper-proof against
 malicious writers. This phase adds integrity detection but **does not yet
 certify multi-process concurrency safety**.
+
+## Phase 5.6 — Cooperative multi-process audit safety
+
+`locked_audit_v1.py` wraps audit replay and append in a POSIX `flock`
+exclusive lock on a stable adjacent lock file. It verifies the complete chain
+while holding the lock and serializes writes from cooperating processes.
+The lock path uses `O_NOFOLLOW` when supported and rejects non-regular lock
+files. A spawn-based integration test starts four processes with eight writes
+each and verifies the 32-entry contiguous hash chain.
+
+```bash
+python -m unittest tests.integration.test_locked_audit_v1 -v
+```
+
+Requires POSIX `fcntl` and a filesystem with reliable advisory locks. All
+writers must use `LockedAuditJournal`; direct `AuditJournal` writers bypass
+the lock. This does not provide distributed consensus, hostile-writer defense,
+or crash-atomic multi-file transactions.
