@@ -333,3 +333,19 @@ python -m unittest tests.integration.test_recovery_stress_v1 -v
 These are deterministic state-injection tests, not actual SIGKILL, power-loss,
 filesystem fault, or multi-host tests. Such testing remains necessary before
 making stronger production crash-safety claims.
+
+## Phase 5.9 — Real subprocess crash recovery
+
+`crash_worker_v1.py` is an isolated test worker that persists each of four
+transaction boundaries, writes a durable ready marker, and waits for a real
+SIGKILL from the parent integration test. After the worker is killed, the
+parent reopens snapshot and audit files, verifies the hash chain, reconciles
+any pending prepare, and checks idempotent second recovery.
+
+```bash
+python -m unittest tests.integration.test_real_crash_v1 -v
+```
+
+Requires POSIX SIGKILL. This validates process termination after durable
+handshake points, not arbitrary instruction-level crashes, power loss, storage
+reordering, network filesystems, or hostile concurrent writers.
