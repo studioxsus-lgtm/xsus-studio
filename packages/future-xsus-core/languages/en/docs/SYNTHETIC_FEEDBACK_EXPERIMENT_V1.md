@@ -297,3 +297,15 @@ raw logits. This separates first-token failures from failures
 later in an otherwise correctly supplied reference prefix.
 Teacher-forced accuracy is not free-running generation quality.
 The standard training and release gates remain unchanged.
+
+## Position regression safeguard
+
+Run 44905709250 passed. Across both ten-case heldout groups,
+weights 1 and 2 correctly predicted 40 of 580 later reference
+tokens; weights 4 and 8 correctly predicted zero of 580. All
+arms scored zero correct among the first 20 tokens and zero
+among 60 early tokens. The new guard compares per-segment
+correct-token counts against weight 1 on the exact same
+holdout groups and explicitly flags position regressions for
+weights 4 and 8. This is an additional diagnostic safeguard,
+not an automatic release or an improvement claim.
