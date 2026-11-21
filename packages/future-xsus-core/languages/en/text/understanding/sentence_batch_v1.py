@@ -11,6 +11,7 @@ from .sentence_relations_v1 import compare_sentence_frames
 MAX_SENTENCES = 32
 MAX_TOTAL_CHARS = 8192
 MAX_PAIRS = 64
+MAX_SENTENCE_CHARS = 1000
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +30,8 @@ def _validated_sentences(sentences: object) -> tuple[str, ...]:
         raise ValueError("sentence count outside allowed bounds")
     if any(not isinstance(item, str) or not item.strip() for item in sentences):
         raise ValueError("all sentences must be nonempty strings")
+    if any(len(item) > MAX_SENTENCE_CHARS for item in sentences):
+        raise ValueError("individual sentence characters exceed limit")
     if sum(len(item) for item in sentences) > MAX_TOTAL_CHARS:
         raise ValueError("total sentence characters exceed limit")
     return tuple(sentences)
@@ -75,11 +78,16 @@ def compare_sentence_batch_pairs(sentences: object, pairs: object) -> dict:
     if not isinstance(pairs, (list, tuple)) or not 1 <= len(pairs) <= MAX_PAIRS:
         raise ValueError("pairs must contain 1 to 64 index pairs")
     normalized = []
+    seen_pairs = set()
     for pair in pairs:
         if (not isinstance(pair, (list, tuple)) or len(pair) != 2
                 or any(type(i) is not int or i < 0 or i >= len(items) for i in pair)):
             raise ValueError("invalid sentence pair indices")
-        normalized.append(tuple(pair))
+        key = tuple(pair)
+        if key in seen_pairs:
+            raise ValueError("duplicate sentence pair")
+        seen_pairs.add(key)
+        normalized.append(key)
     results = [compare_sentence_frames(items[left], items[right]) for left, right in normalized]
     return {
         "contract": "future-xsus-core.sentence-batch-relations.v1",
