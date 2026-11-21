@@ -222,3 +222,14 @@ maximum logit changes relative to the first prompt, without
 exposing prompt text, token identifiers or raw logit vectors.
 This distinguishes weak input sensitivity from failures of
 autoregressive decoding; it does not change training or production.
+
+## First-token decision margin
+
+Run 44904182052 found one greedy winner across all ten prompts
+in each holdout group, even though logit vectors changed by up to
+0.193031 and 0.191710. The new decision-margin audit records the
+top-two generatable logit gap and whitespace-winner count on each
+holdout prompt. These aggregate measures help determine whether
+small input-driven changes can plausibly overcome the leading
+token. No logits, tokens or prompt text are emitted. This is
+diagnostic only; no change to model training or release policy.
