@@ -18,6 +18,9 @@ from languages.en.evaluation.generation_diagnostics_v1 import summarize_generati
 from languages.en.evaluation.token_choice_diagnostics_v1 import inspect_token_choices_v1
 from languages.en.evaluation.target_token_distribution_v1 import summarize_target_tokens_v1
 from languages.en.evaluation.output_bias_audit_v1 import inspect_output_bias_v1
+from languages.en.evaluation.context_attribution_v1 import inspect_context_attribution_v1
+from languages.en.text.generation.conversation_format import prompt_tokens
+from languages.en.text.normalization.model_input import prepare_model_input
 from languages.en.training.train import _encode
 from languages.en.evaluation.compare import load_cases
 from languages.en.models.checkpoint import load_checkpoint
@@ -77,6 +80,11 @@ def run_synthetic_feedback_experiment_v1():
             visible_details=[case.score(generate(
                 candidate_tokenizer,candidate_model,case.example.conversation,
                 min_visible_chars=8)) for case in cases]
+            encoded_prompts=[prompt_tokens(candidate_tokenizer,
+                prepare_model_input(case.example.conversation,candidate_model.prompt_format)[0])
+                for case in cases]
+            context_attribution=inspect_context_attribution_v1(
+                candidate_tokenizer,candidate_model,encoded_prompts)
             token_choice_diagnostics=[inspect_token_choices_v1(
                 candidate_tokenizer,candidate_model,case.example.conversation,
                 steps=32) for case in cases]
@@ -94,6 +102,7 @@ def run_synthetic_feedback_experiment_v1():
                 "candidate_min_length_8_diagnostics":summarize_generation_diagnostics_v1(min_length_details),
                 "candidate_min_visible_8_diagnostics":summarize_generation_diagnostics_v1(visible_details),
                 "candidate_visible_first_diagnostics":summarize_generation_diagnostics_v1(visible_first_details),
+                "candidate_context_attribution":context_attribution,
                 "candidate_token_choice_diagnostics":{
                     "cases":len(token_choice_diagnostics),
                     "steps_per_case":32,
