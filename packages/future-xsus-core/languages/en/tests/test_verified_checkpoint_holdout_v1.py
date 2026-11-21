@@ -115,6 +115,31 @@ class VerifiedCheckpointHoldoutTests(unittest.TestCase):
         self.assertEqual(report["cases"], 2)
         self.assertTrue(report["checked_training_conversation_overlap"])
 
+    def test_identical_prompt_with_different_history_is_distinct(self):
+        self.write(self.training, [
+            {"prompt": "Evaluation one", "response": "A",
+             "history": [{"role": "user", "text": "Different earlier question"}]},
+            {"prompt": "Training two", "response": "B"},
+        ])
+        result = self.evaluate()
+        self.assertEqual(result["cases"], 2)
+
+    def test_matching_prompt_and_history_is_rejected(self):
+        self.write(self.training, [
+            {"prompt": "Evaluation one", "response": "A",
+             "history": [{"role": "user", "text": "Previous"}]},
+            {"prompt": "Training two", "response": "B"},
+        ])
+        self.write(self.evaluation, [
+            {"id": "case-a", "prompt": "Evaluation one", "response": "A",
+             "history": [{"role": "user", "text": "Previous"}],
+             "facts": [], "patterns": ["a"]},
+            {"id": "case-b", "prompt": "Evaluation two", "response": "B",
+             "facts": [], "patterns": ["b"]},
+        ])
+        with self.assertRaises(ValueError):
+            self.evaluate()
+
     def test_duplicate_file_paths_rejected(self):
         with self.assertRaises(ValueError):
             inspect(self.checkpoint, [self.training, self.training],
