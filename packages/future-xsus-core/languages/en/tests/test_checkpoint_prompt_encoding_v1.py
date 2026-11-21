@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from core.contracts.request import Conversation
+from core.contracts.request import Conversation, ConversationRole, ConversationTurn
 from languages.en.models.checkpoint import save_checkpoint
 from languages.en.models.neural_model import NeuralLanguageModel
 from languages.en.text.tokenizer import BytePairTokenizer, BOS, USER, ASSISTANT
@@ -65,6 +65,20 @@ class CheckpointPromptEncodingTests(unittest.TestCase):
             )[0]) for prompt in prompts
         ]
         self.assertEqual(prefixes, expected)
+
+    def test_conversation_history_preserves_role_markers(self):
+        conversation = Conversation(
+            "Follow-up", (
+                ConversationTurn(ConversationRole.USER, "Earlier question"),
+                ConversationTurn(ConversationRole.ASSISTANT, "Earlier answer"),
+            ),
+        )
+        prefixes = self.inspect_prefixes("plain", [conversation, "Beta"])
+        self.assertEqual(
+            prefixes[0], prompt_tokens(self.tokenizer, conversation)
+        )
+        self.assertGreater(prefixes[0].count(USER), 1)
+        self.assertGreater(prefixes[0].count(ASSISTANT), 1)
 
     def test_no_raw_prompt_in_returned_report(self):
         self.model.prompt_format = "plain"
