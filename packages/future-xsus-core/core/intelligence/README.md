@@ -213,3 +213,20 @@ python -m unittest tests.integration.test_feedback_v1 -v
 Corrections come from a caller and require independent review. The ledger is
 in-memory, not authenticated or durable; do not treat this as autonomous
 learning or production-grade governance.
+
+## Phase 5.2 — Controlled improvement validation
+
+`improvement_v1.py` compares a trusted caller-supplied candidate pipeline
+against a baseline using the same authored cases. Validation requires an
+owner-scoped proposal with `approved_for_evaluation` status. Previously
+passing cases that fail block the candidate, while at least one newly passing
+case and zero regressions yield `eligible_for_manual_review`.
+
+```bash
+python -m unittest tests.integration.test_improvement_v1 -v
+```
+
+No candidate is deployed or promoted by this module. Review approval is
+not deployment authorization. Benchmarks are bounded, authored fixtures;
+additional security, independent validation and operational testing are
+required before any production use.
