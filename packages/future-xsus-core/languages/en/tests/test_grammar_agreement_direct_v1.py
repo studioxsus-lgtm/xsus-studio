@@ -20,7 +20,7 @@ class GrammarAgreementDirectV1Tests(unittest.TestCase):
         self.assertEqual(evaluate()["accuracy"],1.0)
 
     def test_singular(self):
-        self.assertEqual(evaluate()["results"][1]["observed_suggestion"],"reads")
+        self.assertEqual(evaluate()["results"][1]["observed_suggestion"],"writes")
 
     def test_plural(self):
         self.assertEqual(evaluate()["results"][3]["observed_suggestion"],"read")
