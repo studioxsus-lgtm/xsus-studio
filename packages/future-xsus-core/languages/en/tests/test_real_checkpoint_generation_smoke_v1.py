@@ -1,6 +1,6 @@
 """Real stored checkpoint smoke test: execution, not proof of answer quality.
 
-Runs a small read-only, single-token diagnostic against the repository's
+Runs a small read-only, multi-token diagnostic against the repository's
 written-v5 checkpoint. Reference cases are not claimed to be independent.
 """
 import hashlib
@@ -28,8 +28,11 @@ class RealCheckpointGenerationSmokeTests(unittest.TestCase):
             ["Synthetic diagnostic alpha", "Synthetic diagnostic beta"],
             ["unrelated reference alpha", "unrelated reference beta"],
             independent_holdout=True,
-            max_new_tokens=1,
+            max_new_tokens=8,
         )
+
+    def test_generation_budget_eight_tokens(self):
+        self.assertEqual(self.report["generation"]["max_new_tokens"], 8)
 
     def test_real_checkpoint_revision_matches_bytes(self):
         self.assertEqual(self.revision, "sha256-" + self.checkpoint_hash)
