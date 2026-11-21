@@ -1,0 +1,24 @@
+{"id":"r01","first":"She reads the report.","second":"She reads the report.","expected_relation":"same_explicit_frame"}
+{"id":"r02","first":"She reads the report.","second":"She doesn't read the report.","expected_relation":"opposite_explicit_polarity"}
+{"id":"r03","first":"She reads the report.","second":"He reads the report.","expected_relation":"different_explicit_subject"}
+{"id":"r04","first":"She reads the report.","second":"She writes the report.","expected_relation":"different_explicit_action"}
+{"id":"r05","first":"She reads the report.","second":"She reads the document.","expected_relation":"different_explicit_object"}
+{"id":"r06","first":"She reads the report.","second":"He writes the document.","expected_relation":"different_explicit_frames"}
+{"id":"r07","first":"The developer builds the application.","second":"The developer does not build the application.","expected_relation":"opposite_explicit_polarity"}
+{"id":"r08","first":"The user opens the file.","second":"The user doesn't open the file.","expected_relation":"opposite_explicit_polarity"}
+{"id":"r09","first":"The teacher reviews the document.","second":"The student reviews the document.","expected_relation":"different_explicit_subject"}
+{"id":"r10","first":"The system deletes the project.","second":"The system updates the project.","expected_relation":"different_explicit_action"}
+{"id":"r11","first":"They test the model.","second":"They test the project.","expected_relation":"different_explicit_object"}
+{"id":"r12","first":"We create the plan.","second":"We create the plan.","expected_relation":"same_explicit_frame"}
+{"id":"r13","first":"The student writes a report.","second":"The student writes a report.","expected_relation":"same_explicit_frame"}
+{"id":"r14","first":"The user opens the file.","second":"The model opens the file.","expected_relation":"different_explicit_subject"}
+{"id":"r15","first":"I update the file.","second":"I delete the file.","expected_relation":"different_explicit_action"}
+{"id":"r16","first":"The engine reads the document.","second":"The engine reads the report.","expected_relation":"different_explicit_object"}
+{"id":"r17","first":"She reads the report.","second":"Does she read the report?","expected_relation":null}
+{"id":"r18","first":"She reads the report.","second":"She reads the report and writes a file.","expected_relation":null}
+{"id":"r19","first":"She reads the report.","second":"They reads the report.","expected_relation":null}
+{"id":"r20","first":"She reads the report.","second":"She never reads the report.","expected_relation":null}
+{"id":"r21","first":"She reads the report.","second":"The universe reads the report.","expected_relation":null}
+{"id":"r22","first":"She reads the report.","second":"She reads secret data.","expected_relation":null}
+{"id":"r23","first":"She reads the report.","second":"She reads.","expected_relation":null}
+{"id":"r24","first":"She reads the report.","second":"She reads the report; he deletes the file.","expected_relation":null}
