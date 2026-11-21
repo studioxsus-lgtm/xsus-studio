@@ -55,6 +55,8 @@ def inspect_verified_checkpoint_holdout_v1(
     )
     if tuple(_digest(path) for path in all_paths) != before:
         raise RuntimeError("benchmark input changed during evaluation")
+    if report["checkpoint_revision"] != "sha256-" + before[0]:
+        raise RuntimeError("loaded checkpoint revision differs from benchmark input")
     return {
         "contract": "future-xsus-core.verified-checkpoint-holdout.v1",
         "cases": len(cases),
@@ -62,6 +64,9 @@ def inspect_verified_checkpoint_holdout_v1(
         "unique_training_conversations_checked": len(training_by_key),
         "checked_training_conversation_overlap": True,
         "checkpoint_training_provenance_verified": False,
+        "holdout_isolation_scope": "exact normalized conversation keys in supplied corpora only",
+        "semantic_contamination_excluded": False,
+        "metric_is_full_response_exact_match": True,
         "evaluation_sha256": before[1],
         "checkpoint_sha256": before[0],
         "training_sha256": list(before[2:]),
