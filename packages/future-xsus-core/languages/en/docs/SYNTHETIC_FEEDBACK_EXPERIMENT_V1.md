@@ -1,9 +1,9 @@
 # Synthetic Feedback Experiment V1
 
 A reproducible and deliberately small **real neural training** experiment.
-It uses five synthetic approved feedback records, a six-example synthetic
-replay corpus, a tiny seeded neural baseline, one epoch and two one-case
-synthetic held-out benchmarks. No trainer, generator, or scorer is mocked.
+It uses twelve synthetic approved feedback records, a 24-example synthetic
+replay corpus, a tiny seeded neural baseline, two epochs and two ten-case
+synthetic held-out benchmarks (20 cases total). No trainer, generator, or scorer is mocked.
 
 The experiment measures held-out feedback loss before and after training,
 and the accepted/exact-match scores on both synthetic holdouts. It writes
@@ -36,3 +36,12 @@ generalization. The report now exposes these facts separately via
 `release_evidence_sufficient=false`. The training pipeline's
 `candidate_eligible_for_review` must not be interpreted as
 independent proof of response quality.
+
+## Expanded experiment
+
+The expanded version uses 12 approved synthetic feedback records,
+24 replay examples, two training epochs, and 20 held-out prompts
+(10 per benchmark). It retains the same deterministic seed and reports
+the full aggregate holdout counts. The 20 examples are templated synthetic
+cases, not independently curated real-world writing tasks. Results
+must be reviewed before claiming generalization.
