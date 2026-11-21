@@ -57,3 +57,14 @@ acceptance regression. This gate is distinct from the existing
 `candidate_eligible_for_review` loss-based flag, and neither flag
 authorizes deployment. Future work should improve the training
 objective, generation and independently curated holdout coverage.
+
+## Generation diagnostics
+
+The experiment now records privacy-safe aggregate generation diagnostics
+for both baseline and candidate, per benchmark: empty responses,
+normalized response diversity, most-common-response frequency,
+mean response length, and accepted/exact scores. It deliberately does
+not include raw generated strings, prompts or references in the public
+diagnostics. This helps identify output collapse or empty generation
+before changing neural architecture. These aggregate metrics do not
+prove semantic quality.
