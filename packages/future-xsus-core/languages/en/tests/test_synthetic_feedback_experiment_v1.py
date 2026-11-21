@@ -436,3 +436,19 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
             self.assertEqual(row["generation"]["cases"],10)
             self.assertEqual(row["prompt_target_identifiability"]["distinct_first_target_tokens"],10)
         self.assertFalse(ablation["release_authorized"])
+
+    def test_context_collision_audit_covers_holdouts(self):
+        for arm in self.report["position_balanced_ablation"]["arms"].values():
+            for row in arm["benchmarks"].values():
+                audit=row["prompt_context_collisions"]
+                self.assertEqual(audit["cases"],10)
+                self.assertEqual(audit["context_size"],16)
+
+    def test_context_collision_audit_is_private(self):
+        for arm in self.report["position_balanced_ablation"]["arms"].values():
+            for row in arm["benchmarks"].values():
+                audit=row["prompt_context_collisions"]
+                self.assertFalse(audit["raw_text_exposed"])
+                self.assertFalse(audit["raw_token_ids_exposed"])
+                self.assertFalse(audit["raw_context_exposed"])
+                self.assertFalse(audit["release_authorized"])
