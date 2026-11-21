@@ -28,7 +28,7 @@ class RealCrashTests(unittest.TestCase):
                 while not ready.exists() and process.poll() is None and time.monotonic() < deadline:
                     time.sleep(0.02)
                 if not ready.exists():
-                    stderr = process.stderr.read().decode(errors="replace") if process.poll() is not None else ""
+                    stderr = process.stderr.read().decode(errors="replace") if process.poll() is not None else "worker timed out"
                     self.fail("worker did not reach boundary: " + stderr[:500])
                 self.assertEqual(ready.read_text(), point)
                 process.kill()
