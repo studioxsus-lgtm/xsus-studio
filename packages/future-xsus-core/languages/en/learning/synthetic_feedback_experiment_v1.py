@@ -19,6 +19,7 @@ from languages.en.evaluation.token_choice_diagnostics_v1 import inspect_token_ch
 from languages.en.evaluation.target_token_distribution_v1 import summarize_target_tokens_v1
 from languages.en.evaluation.output_bias_audit_v1 import inspect_output_bias_v1
 from languages.en.evaluation.context_attribution_v1 import inspect_context_attribution_v1
+from languages.en.evaluation.hidden_contribution_v1 import inspect_hidden_contribution_v1
 from languages.en.text.generation.conversation_format import prompt_tokens
 from languages.en.text.normalization.model_input import prepare_model_input
 from languages.en.training.train import _encode
@@ -85,6 +86,8 @@ def run_synthetic_feedback_experiment_v1():
                 for case in cases]
             context_attribution=inspect_context_attribution_v1(
                 candidate_tokenizer,candidate_model,encoded_prompts)
+            hidden_contribution=inspect_hidden_contribution_v1(
+                candidate_tokenizer,candidate_model,encoded_prompts)
             token_choice_diagnostics=[inspect_token_choices_v1(
                 candidate_tokenizer,candidate_model,case.example.conversation,
                 steps=32) for case in cases]
@@ -103,6 +106,7 @@ def run_synthetic_feedback_experiment_v1():
                 "candidate_min_visible_8_diagnostics":summarize_generation_diagnostics_v1(visible_details),
                 "candidate_visible_first_diagnostics":summarize_generation_diagnostics_v1(visible_first_details),
                 "candidate_context_attribution":context_attribution,
+                "candidate_hidden_contribution":hidden_contribution,
                 "candidate_token_choice_diagnostics":{
                     "cases":len(token_choice_diagnostics),
                     "steps_per_case":32,
