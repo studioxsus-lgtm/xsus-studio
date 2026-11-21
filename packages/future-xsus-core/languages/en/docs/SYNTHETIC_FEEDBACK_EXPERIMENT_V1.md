@@ -156,3 +156,17 @@ distribution from a model that collapses onto whitespace despite
 other target classes being present. Only aggregate counts are
 reported. Training, release gates and default generation remain
 unchanged.
+
+## Output-bias attribution audit
+
+Run 44901892959 confirmed 374 printable target tokens, 48 whitespace
+target tokens and 24 EOS tokens across the 24 replay examples.
+Whitespace is only 10.7623% of these targets, despite the candidate
+choosing whitespace for all 640 diagnosed greedy steps.
+
+The new output-bias audit compares the top generatable token category
+in the model's output bias with the top token category for an empty
+context, separately before and after training. This helps test whether
+a learned global output bias may explain the collapse, versus a
+context-dependent effect. The audit exposes neither token IDs nor
+text, and does not alter training or deployment.
