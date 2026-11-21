@@ -25,13 +25,15 @@ def inspect_checkpoint_generation_holdout_v1(
         raise ValueError("prompts and references must be sequences")
     if len(prompts) < 2 or len(prompts) != len(references):
         raise ValueError("at least two aligned holdout examples required")
-    if any(not isinstance(prompt, str) or not prompt.strip() for prompt in prompts):
-        raise ValueError("nonempty prompt strings required")
+    if any(not (isinstance(prompt, str) and prompt.strip()) and
+           not (isinstance(prompt, Conversation) and prompt.text.strip())
+           for prompt in prompts):
+        raise ValueError("nonempty prompt strings or conversations required")
     if any(not isinstance(reference, str) or not reference.strip() for reference in references):
         raise ValueError("nonempty reference strings required")
     tokenizer, model, revision = load_checkpoint(Path(checkpoint_path))
     prefixes = [
-        prompt_tokens(tokenizer, prepare_model_input(Conversation(prompt), model.prompt_format)[0])
+        prompt_tokens(tokenizer, prepare_model_input(prompt if isinstance(prompt, Conversation) else Conversation(prompt), model.prompt_format)[0])
         for prompt in prompts
     ]
     report = inspect_frozen_generation_holdout_v1(
