@@ -5,12 +5,12 @@ from languages.en.evaluation.context_window_decision_v1 import inspect_context_w
 
 def fixture():
     return {
-        "cases":10,"weights_retrained":False,"release_authorized":False,
+        "cases":10,"weights_retrained":False,"release_authorized":False,"production_context_changed":False,
         "windows":{
             "16":{"mean_first_target_rank":100.0,"mean_best_to_target_logit_gap":2.0,
-                  "first_target_top_one_correct":0,"matched_target_preferred_cases":0},
+                  "first_target_top_one_correct":0,"matched_target_preferred_cases":0,"first_target_cases":10},
             "32":{"mean_first_target_rank":80.0,"mean_best_to_target_logit_gap":1.5,
-                  "first_target_top_one_correct":0,"matched_target_preferred_cases":8},
+                  "first_target_top_one_correct":0,"matched_target_preferred_cases":8,"first_target_cases":10},
             "64":{"mean_first_target_rank":90.0,"mean_best_to_target_logit_gap":1.8,
                   "first_target_top_one_correct":0,"matched_target_preferred_cases":8},
         },
@@ -58,6 +58,14 @@ class ContextWindowDecisionTests(unittest.TestCase):
     def test_invalid_count_rejected(self):
         report=fixture()
         report["windows"]["32"]["matched_target_preferred_cases"]=11
+        with self.assertRaises(ValueError): decide(report)
+    def test_changed_production_context_rejected(self):
+        report=fixture()
+        report["production_context_changed"]=True
+        with self.assertRaises(ValueError): decide(report)
+    def test_inconsistent_first_target_count_rejected(self):
+        report=fixture()
+        report["windows"]["32"]["first_target_cases"]=9
         with self.assertRaises(ValueError): decide(report)
     def test_preference_alone_not_sufficient(self):
         report=fixture()
