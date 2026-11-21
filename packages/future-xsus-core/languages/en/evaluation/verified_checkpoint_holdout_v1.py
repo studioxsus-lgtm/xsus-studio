@@ -34,9 +34,7 @@ def inspect_verified_checkpoint_holdout_v1(
         example for path in training_paths for example in load_corpus(path)
     )
     validate_splits(training, tuple(case.example for case in cases))
-    prompts = [case.example.conversation.text for case in cases]
-    if any(case.example.conversation.history for case in cases):
-        raise ValueError("history-bearing holdout cases require conversation-aware encoding")
+    prompts = [case.example.conversation for case in cases]
     references = [case.example.response for case in cases]
     report = inspect_checkpoint_generation_holdout_v1(
         checkpoint_path, prompts, references,
