@@ -274,3 +274,14 @@ continual-learning trainer, promotes a candidate or deploys.
 Weight 1 is the comparison control; improvement requires heldout
 acceptance gains without regression, not merely a better token
 rank or more visible text.
+
+## Four-arm result and quality decision
+
+GitHub Actions run 44905190014 passed. Weight 4 gave the best
+first-reference-token mean ranks (149.1 written-v4, 145.0
+written-v5), versus weight 1 (163.6, 160.1). Weight 8 regressed
+on rank and reduced generated-response diversity. Crucially all
+four arms scored **zero accepted answers out of 20**. The new
+decision report compares acceptance, regressions, diversity and
+first-token rank but explicitly does not recommend a release.
+Improved rank is not a proxy for accepted generations.
