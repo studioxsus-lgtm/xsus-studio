@@ -10,6 +10,7 @@ def valid():
         "first_target_top_one_correct":top,
         "matched_target_preferred_cases":matched,
         "first_target_cases":10,
+                "distinct_context_windows":10,"colliding_cases":0,"greedy_winner_changed_cases":0,
     }
     return {
         "cases":10,
