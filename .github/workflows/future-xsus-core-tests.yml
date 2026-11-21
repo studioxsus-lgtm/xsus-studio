@@ -36,6 +36,21 @@ jobs:
         run: python -m unittest discover -s tests/integration -v
       - name: Test English language engine
         run: python -m unittest discover -s languages/en/tests -v
+      - name: Measure official writing benchmarks with real v4 and v5 checkpoints
+        timeout-minutes: 12
+        run: |
+          python -m languages.en.evaluation.official_written_evidence_v1 \
+            --baseline languages/en/models/checkpoints/xsus-en-written-v4.json.gz \
+            --candidate languages/en/models/checkpoints/xsus-en-written-v5.json.gz \
+            > official-written-v4-v5-evidence.json
+          python -c 'import json; r=json.load(open("official-written-v4-v5-evidence.json")); print(json.dumps({"checkpoint_sha256":r["checkpoint_sha256"],"benchmarks":r["comparison"]["benchmarks"],"assessment":r["assessment"]},indent=2))'
+      - name: Upload measured writing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-xsus-core-official-written-v4-v5
+          path: packages/future-xsus-core/official-written-v4-v5-evidence.json
+          if-no-files-found: warn
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
