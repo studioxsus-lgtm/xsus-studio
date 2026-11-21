@@ -68,3 +68,19 @@ not include raw generated strings, prompts or references in the public
 diagnostics. This helps identify output collapse or empty generation
 before changing neural architecture. These aggregate metrics do not
 prove semantic quality.
+
+## Diagnosed output collapse
+
+GitHub Actions run 44877016090 showed 0 empty responses before
+training in each ten-case benchmark, but **10/10 empty candidate
+responses in each benchmark** after training. Baseline response
+diversity was 10 and 9 respectively, while the candidate diversity
+collapsed to 1 in each benchmark. The training loss improvement is
+therefore not a successful language-generation improvement.
+
+The experiment now emits `generation_collapse_detected` and
+`candidate_safe_for_review`. An increase in empty responses or
+a new all-identical-response collapse blocks the experimental quality
+gate even when loss improves. This is a report-level gate; it does
+not change the neural optimizer or claim to cure collapse. The
+existing learning-cycle eligibility flag is reported separately.
