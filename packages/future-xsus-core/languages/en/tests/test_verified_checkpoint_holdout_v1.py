@@ -72,6 +72,32 @@ class VerifiedCheckpointHoldoutTests(unittest.TestCase):
             "exact normalized conversation keys in supplied corpora only",
         )
 
+    def test_generation_budget_feasibility_is_reported(self):
+        result = self.evaluate()
+        self.assertEqual(result["generation_budget_tokens"], 1)
+        self.assertEqual(result["references_exceeding_generation_budget"], 0)
+        self.assertTrue(result["metric_is_full_response_exact_match"])
+
+    def test_long_references_are_counted_without_exposing_text(self):
+        self.write(self.evaluation, [
+            {"id": "case-a", "prompt": "Evaluation one",
+             "response": "A response too long for a single token",
+             "facts": [], "patterns": ["a"]},
+            {"id": "case-b", "prompt": "Evaluation two",
+             "response": "B", "facts": [], "patterns": ["b"]},
+        ])
+        result = self.evaluate()
+        self.assertEqual(result["references_exceeding_generation_budget"], 1)
+        self.assertNotIn("too long", json.dumps(result))
+
+    def test_invalid_generation_budget_rejected(self):
+        with self.assertRaises(ValueError):
+            inspect(self.checkpoint, [self.training], self.evaluation,
+                    max_new_tokens=0)
+        with self.assertRaises(ValueError):
+            inspect(self.checkpoint, [self.training], self.evaluation,
+                    max_new_tokens=True)
+
     def test_no_release_authorization(self):
         result = self.evaluate()
         self.assertFalse(result["release_authorized"])
