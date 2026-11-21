@@ -237,3 +237,16 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
             self.assertFalse(audit["raw_text_exposed"])
             self.assertFalse(audit["raw_token_ids_exposed"])
             self.assertFalse(audit["hidden_vectors_exposed"])
+
+    def test_hidden_contribution_covers_holdouts(self):
+        for row in self.report["benchmarks"].values():
+            audit=row["candidate_hidden_contribution"]
+            self.assertEqual(audit["cases"],10)
+            self.assertLessEqual(audit["positive_hidden_margin_cases"],10)
+
+    def test_hidden_contribution_preserves_privacy(self):
+        for row in self.report["benchmarks"].values():
+            audit=row["candidate_hidden_contribution"]
+            self.assertFalse(audit["raw_text_exposed"])
+            self.assertFalse(audit["raw_token_ids_exposed"])
+            self.assertFalse(audit["hidden_vectors_exposed"])
