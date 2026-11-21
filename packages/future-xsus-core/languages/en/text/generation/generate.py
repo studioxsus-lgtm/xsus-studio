@@ -16,6 +16,7 @@ def generate(
     conversation: Conversation,
     *,
     max_new_tokens: int | None = None,
+    min_new_tokens: int = 0,
     stop: Event | None = None,
 ) -> str:
     prompt, rewrite = prepare_model_input(conversation, model.prompt_format)
@@ -24,6 +25,8 @@ def generate(
         max_new_tokens = 96 if lesson else 64
     if type(max_new_tokens) is not int or max_new_tokens < 1:
         raise ValueError("max_new_tokens must be a positive integer")
+    if type(min_new_tokens) is not int or not 0 <= min_new_tokens <= max_new_tokens:
+        raise ValueError("min_new_tokens must be an integer between 0 and max_new_tokens")
     prefix = prompt_tokens(tokenizer, prompt)[-model.context_size:]
     produced: list[int] = []
     for _ in range(max_new_tokens):
@@ -31,7 +34,7 @@ def generate(
             break
         logits = model.logits(prefix)
         candidate = max(range(BYTE_OFFSET, model.vocab_size), key=logits.__getitem__)
-        if logits[EOS] >= logits[candidate]:
+        if len(produced) >= min_new_tokens and logits[EOS] >= logits[candidate]:
             break
         prefix.append(candidate)
         produced.append(candidate)
