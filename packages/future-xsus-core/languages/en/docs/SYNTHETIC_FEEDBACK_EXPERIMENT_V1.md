@@ -285,3 +285,15 @@ four arms scored **zero accepted answers out of 20**. The new
 decision report compares acceptance, regressions, diversity and
 first-token rank but explicitly does not recommend a release.
 Improved rank is not a proxy for accepted generations.
+
+## Teacher-forced answer-position audit
+
+A new audit measures next-token top-one accuracy and best-to-target
+logit gaps in three answer positions: first token, early tokens
+(positions 2–4), and later tokens (position 5 onward). EOS is
+excluded. It is computed for every weight arm and both synthetic
+holdout groups without exposing reference text, token IDs or
+raw logits. This separates first-token failures from failures
+later in an otherwise correctly supplied reference prefix.
+Teacher-forced accuracy is not free-running generation quality.
+The standard training and release gates remain unchanged.
