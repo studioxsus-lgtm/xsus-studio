@@ -404,3 +404,15 @@ are retrained, no production setting changes, and no
 release is authorized. A better result at 32 tokens would
 support context visibility as a bottleneck; it would not
 prove that training at 32 tokens is sufficient.
+
+## First-token ranking under wider inference context
+
+Run 44909557449 passed. On ten diverse-target cases, the
+16-token context gave 0/10 matched first-token preferences,
+while 32 and 64 tokens gave 8/10. All windows still achieved
+0/10 correct top-one first tokens and 0/10 greedy winner
+changes. To distinguish improved prompt sensitivity from
+improved generation readiness, the inference counterfactual
+now also reports the aggregate rank of the true first token
+and the mean best-to-target logit gap for each context size.
+These metrics are diagnostics, not proof of answer quality.
