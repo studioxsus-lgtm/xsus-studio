@@ -404,7 +404,7 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
     def test_balanced_prompt_target_contrast_coverage(self):
         for arm in self.report["position_balanced_ablation"]["arms"].values():
             for row in arm["benchmarks"].values():
-                self.assertEqual(row["prompt_target_contrast"]["cases"],10)
+                self.assertEqual(row["prompt_target_identifiability"]["cases"],10)
 
     def test_balanced_prompt_target_contrast_privacy(self):
         for arm in self.report["position_balanced_ablation"]["arms"].values():
@@ -414,3 +414,12 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
                 self.assertFalse(contrast["raw_token_ids_exposed"])
                 self.assertFalse(contrast["raw_logits_exposed"])
                 self.assertFalse(contrast["release_authorized"])
+
+    def test_first_target_contrast_not_identifiable_on_shared_prefix(self):
+        for arm in self.report["position_balanced_ablation"]["arms"].values():
+            for row in arm["benchmarks"].values():
+                audit=row["prompt_target_identifiability"]
+                self.assertEqual(audit["distinct_first_target_tokens"],1)
+                self.assertFalse(audit["first_target_contrast_identifiable"])
+                self.assertTrue(audit["rotation_mean_structurally_zero"])
+                self.assertFalse(audit["prompt_target_association_proven"])
