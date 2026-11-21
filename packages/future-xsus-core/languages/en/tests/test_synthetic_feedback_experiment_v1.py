@@ -313,7 +313,7 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
     def test_first_target_weight_ablation_same_holdouts(self):
         audit=self.report["first_target_weight_ablation"]
         for arm in audit["arms"].values():
-            self.assertEqual(set(arm["benchmarks"]),{"written-v4","written-v5","diverse-target-v1"})
+            self.assertEqual(set(arm["benchmarks"]),{"written-v4","written-v5"})
             for result in arm["benchmarks"].values():
                 self.assertEqual(result["first_target_rank"]["cases"],10)
                 self.assertEqual(result["generation"]["cases"],10)
@@ -386,7 +386,7 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
     def test_balanced_ablation_holdout_coverage(self):
         audit=self.report["position_balanced_ablation"]
         for arm in audit["arms"].values():
-            self.assertEqual(set(arm["benchmarks"]),{"written-v4","written-v5"})
+            self.assertEqual(set(arm["benchmarks"]),{"written-v4","written-v5","diverse-target-v1"})
             for row in arm["benchmarks"].values():
                 self.assertEqual(row["generation"]["cases"],10)
                 self.assertEqual(row["teacher_forced_positions"]["examples"],10)
