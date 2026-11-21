@@ -98,10 +98,12 @@ def analyze_advanced_grammar(text: str) -> AdvancedGrammarFrame:
                                     "past_simple" if aux == "did" else "present_simple",
                                     subject, action, obj, ())
     subject = _subject(tokens)
+    if subject is None and len(tokens) >= 2 and tokens[0] == "the" and tokens[1] in NOUNS:
+        subject = " ".join(tokens[:2])
     if subject is None:
         return _abstain("unsupported_subject")
     tokens = tokens[len(subject.split()):]
-    if len(tokens) < 4:
+    if len(tokens) < 3:
         return _abstain("unsupported_structure")
     aux = tokens.pop(0)
     if aux in _BE and _be_agrees(aux, subject):
