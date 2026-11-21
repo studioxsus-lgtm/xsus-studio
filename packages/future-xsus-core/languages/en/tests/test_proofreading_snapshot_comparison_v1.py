@@ -31,9 +31,11 @@ class SnapshotComparisonV1Tests(unittest.TestCase):
         self.digest = sha256(self.path.read_bytes()).hexdigest()
 
     def compare(self, **kwargs):
+        baseline = kwargs.pop("baseline_engine", engine(False))
+        candidate = kwargs.pop("candidate_engine", engine(True))
         return compare_proofreading_snapshot_v1(
             self.path, self.digest, self.key,
-            baseline_engine=engine(False), candidate_engine=engine(True), **kwargs
+            baseline_engine=baseline, candidate_engine=candidate, **kwargs
         )
 
     def test_improvement(self):
