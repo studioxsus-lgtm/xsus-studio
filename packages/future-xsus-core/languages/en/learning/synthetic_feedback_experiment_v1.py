@@ -21,6 +21,7 @@ from languages.en.evaluation.output_bias_audit_v1 import inspect_output_bias_v1
 from languages.en.evaluation.context_attribution_v1 import inspect_context_attribution_v1
 from languages.en.evaluation.hidden_contribution_v1 import inspect_hidden_contribution_v1
 from languages.en.evaluation.prompt_sensitivity_v1 import inspect_prompt_sensitivity_v1
+from languages.en.evaluation.decision_margin_v1 import inspect_decision_margin_v1
 from languages.en.text.generation.conversation_format import prompt_tokens
 from languages.en.text.normalization.model_input import prepare_model_input
 from languages.en.training.train import _encode
@@ -86,6 +87,7 @@ def run_synthetic_feedback_experiment_v1():
                 prepare_model_input(case.example.conversation,candidate_model.prompt_format)[0])
                 for case in cases]
             prompt_sensitivity=inspect_prompt_sensitivity_v1(candidate_model,encoded_prompts)
+            decision_margin=inspect_decision_margin_v1(candidate_tokenizer,candidate_model,encoded_prompts)
             context_attribution=inspect_context_attribution_v1(
                 candidate_tokenizer,candidate_model,encoded_prompts)
             hidden_contribution=inspect_hidden_contribution_v1(
@@ -115,6 +117,7 @@ def run_synthetic_feedback_experiment_v1():
                 "candidate_visible_first_diagnostics":summarize_generation_diagnostics_v1(visible_first_details),
                 "candidate_context_attribution":context_attribution,
                 "candidate_prompt_sensitivity":prompt_sensitivity,
+                "candidate_decision_margin":decision_margin,
                 "candidate_hidden_contribution":hidden_contribution,
                 "candidate_hidden_scale_arms":hidden_scale_arms,
                 "candidate_token_choice_diagnostics":{
