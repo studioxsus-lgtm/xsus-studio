@@ -95,3 +95,23 @@ and publishes only aggregate diagnostics.
 python -m unittest languages.en.tests.test_role_batch_v1 languages.en.tests.test_role_evidence_v1 languages.en.tests.test_role_batch_benchmark_v1 -v
 python -m languages.en.evaluation.role_batch_benchmark_v1
 ```
+
+## Phase 3.5 — 1000-sentence bounded throughput
+
+`role_bulk_v1.py` processes **up to 1000 controlled-English sentence
+inputs per invocation**, internally chunked to respect the existing
+32-sentence and 8192-character batch limits. It preserves absolute input
+indices, explicit abstentions and result ordering. The bulk input budget
+is 256000 characters. `role_bulk_benchmark_v1.py` validates 1000
+programmatically generated inputs (750 supported, 250 intentionally
+unsupported) with ten aggregate checks. Regression tests cover ordering,
+large input rejection and mixed supported/unsupported sentences.
+
+This measures **1000 sentence inputs**, not 1000 distinct grammatical
+constructions, new vocabulary entries, or open-domain language ability.
+All supported examples remain constrained by the existing grammar.
+
+```bash
+python -m unittest languages.en.tests.test_role_bulk_v1 languages.en.tests.test_role_bulk_benchmark_v1 -v
+python -m languages.en.evaluation.role_bulk_benchmark_v1
+```
