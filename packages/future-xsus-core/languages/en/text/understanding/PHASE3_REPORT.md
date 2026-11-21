@@ -152,3 +152,20 @@ multiple clauses, discourse and coreference remain out of scope.
 python -m unittest languages.en.tests.test_expanded_structures_v1 languages.en.tests.test_expanded_structures_benchmark_v1 -v
 python -m languages.en.evaluation.expanded_structures_benchmark_v1
 ```
+
+## Phase 3.8 — Controlled grammar patterns
+
+`grammar_patterns_v1.py` adds an opt-in bounded pattern recognizer for
+present-simple and regular past-simple declaratives, explicit auxiliary
+negation, modal verbs and yes/no questions. It abstains on unsupported
+coordination, subordination and unknown grammar. It does **not** claim
+complete English grammar, production readiness or general semantics.
+
+A generated diagnostic evaluates 3000 distinct controlled sentence
+patterns and is integrated into the GitHub benchmark workflow. The
+cases are generated internally rather than independently collected.
+
+```bash
+python -m unittest languages.en.tests.test_grammar_patterns_v1 languages.en.tests.test_grammar_patterns_benchmark_v1 -v
+python -m languages.en.evaluation.grammar_patterns_benchmark_v1
+```
