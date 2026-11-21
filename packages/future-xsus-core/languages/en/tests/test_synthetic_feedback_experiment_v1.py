@@ -475,3 +475,16 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
                 self.assertFalse(sweep["raw_text_exposed"])
                 self.assertFalse(sweep["raw_token_ids_exposed"])
                 self.assertFalse(sweep["release_authorized"])
+
+    def test_inference_counterfactual_only_uniform_diverse(self):
+        for name,arm in self.report["position_balanced_ablation"]["arms"].items():
+            for group,row in arm["benchmarks"].items():
+                audit=row["inference_context_counterfactual"]
+                if name=="uniform" and group=="diverse-target-v1":
+                    self.assertEqual(set(audit["windows"]),{"16","32","64"})
+                    self.assertEqual(audit["windows"]["16"]["distinct_context_windows"],1)
+                    self.assertEqual(audit["windows"]["32"]["distinct_context_windows"],10)
+                    self.assertFalse(audit["weights_retrained"])
+                    self.assertFalse(audit["release_authorized"])
+                else:
+                    self.assertIsNone(audit)
