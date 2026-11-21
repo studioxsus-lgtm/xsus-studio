@@ -55,3 +55,20 @@ independent factual verification, contradiction handling, or AGI.
 ```bash
 python -m unittest tests.integration.test_reasoning_v1 tests.integration.test_intelligence_kernel_v1 -v
 ```
+
+## Phase 4.2 — Evidence-aware knowledge and inference
+
+`knowledge_v1.py` stores bounded immutable owner-scoped records, SHA-256
+excerpt integrity and explicit source IDs. Conflicting values block answers;
+missing or cross-owner evidence abstains. `knowledge_reasoning_v1.py` uses
+explicit true propositions to construct replay-verified formal derivations.
+The central kernel exposes `infer_from_sources`.
+
+Integrity of a supplied excerpt does **not** establish source authenticity or
+truth. Owner IDs are logical partitions, not authentication. A trusted API must
+authenticate callers before selecting owner IDs. Knowledge is currently
+in-memory, not a durable database, and there is no autonomous retrieval.
+
+```bash
+python -m unittest tests.integration.test_knowledge_reasoning_v1 tests.integration.test_intelligence_kernel_v1 -v
+```
