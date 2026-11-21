@@ -25,6 +25,13 @@ class GenerationQualityComparisonTests(unittest.TestCase):
         data=fixture()
         data["windows"]["32"]["empty_responses"]=9
         data["windows"]["32"]["accepted_responses"]=1
+        result=compare(data)
+        self.assertFalse(result["comparisons"]["32"]["acceptance_increased_without_more_empty"])
+        self.assertEqual(result["comparisons"]["32"]["empty_delta_vs_16"],1)
+    def test_overlapping_accepted_and_empty_counts_rejected(self):
+        data=fixture()
+        data["windows"]["32"]["empty_responses"]=9
+        data["windows"]["32"]["accepted_responses"]=2
         with self.assertRaises(ValueError): compare(data)
     def test_worse_empty_rate_blocks_signal(self):
         data=fixture()
