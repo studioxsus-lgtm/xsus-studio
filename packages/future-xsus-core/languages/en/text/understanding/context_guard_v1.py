@@ -30,7 +30,7 @@ def analyze_guarded_word_sense(text: str, target: str, *, window: int = 6) -> Gu
     base = analyze_word_sense(text, target, window=window)
     tokens = tuple(word.casefold() for word in _WORD.findall(text))
     reasons = set()
-    if base.status == "resolved":
+    if base.status in {"resolved", "ambiguous", "insufficient_evidence"}:
         # Negation can reverse the apparent meaning of nearby cue words.
         # In v1, abstain rather than attempt a speculative logical rewrite.
         evidence = set(base.evidence)
@@ -41,7 +41,7 @@ def analyze_guarded_word_sense(text: str, target: str, *, window: int = 6) -> Gu
                     reasons.add("negated_evidence")
         # Contrasts with negation are particularly high-risk: e.g.
         # "not a river edge, but a bank for savings".
-        if _NEGATORS.intersection(tokens) and _DISCOURSE.intersection(tokens):
+        if (base.status == "resolved" or base.status == "ambiguous") and _NEGATORS.intersection(tokens) and _DISCOURSE.intersection(tokens):
             reasons.add("negated_contrast")
     if reasons:
         return GuardedSenseResult(base.target, None, "guarded_abstention", "none", (),
