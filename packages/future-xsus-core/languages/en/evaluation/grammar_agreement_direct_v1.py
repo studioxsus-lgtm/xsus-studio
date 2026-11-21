@@ -20,7 +20,7 @@ class GrammarAgreementProbeV1:
 
 ENGLISH_GRAMMAR_AGREEMENT_PROBES_V1 = (
     GrammarAgreementProbeV1("she-reads","she",3,Number.SINGULAR,"read","reads",None,None),
-    GrammarAgreementProbeV1("she-read","she",3,Number.SINGULAR,"read","read","subject_verb_agreement","reads"),
+    GrammarAgreementProbeV1("she-write","she",3,Number.SINGULAR,"write","write","subject_verb_agreement","writes"),
     GrammarAgreementProbeV1("they-read","they",3,Number.PLURAL,"read","read",None,None),
     GrammarAgreementProbeV1("they-reads","they",3,Number.PLURAL,"read","reads","subject_verb_agreement","read"),
     GrammarAgreementProbeV1("he-writes","he",3,Number.SINGULAR,"write","writes",None,None),
