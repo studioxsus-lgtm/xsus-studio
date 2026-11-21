@@ -169,3 +169,18 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
 
     def test_visible_arm_does_not_authorize_release(self):
         self.assertFalse(self.report["release_evidence_sufficient"])
+
+    def test_token_choice_diagnostics_cover_320_steps(self):
+        for row in self.report["benchmarks"].values():
+            diagnostic=row["candidate_token_choice_diagnostics"]
+            self.assertEqual(diagnostic["cases"],10)
+            self.assertEqual(diagnostic["steps_per_case"],32)
+            self.assertEqual(sum(diagnostic[key] for key in (
+                "whitespace_token_steps","printable_token_steps",
+                "non_rendering_token_steps","control_or_replacement_token_steps")),320)
+
+    def test_token_choice_diagnostics_do_not_expose_raw_text(self):
+        for row in self.report["benchmarks"].values():
+            diagnostic=row["candidate_token_choice_diagnostics"]
+            self.assertFalse(diagnostic["raw_text_exposed"])
+            self.assertFalse(diagnostic["raw_token_ids_exposed"])
