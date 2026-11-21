@@ -66,7 +66,7 @@ def analyze_sentence_meaning(text: str) -> SentenceFrame:
         remaining = remaining[2:]
     elif remaining and remaining[0] in _NEG_AUX:
         return _abstain("unsupported_auxiliary")
-    if any(token in _NEGATORS or token in _AUX_NEG or token in _AUX_NEG for token in remaining):
+    if any(token in _NEGATORS or token in _NEG_AUX or token in _AUX_NEG for token in remaining):
         return _abstain("unscoped_negation_or_auxiliary")
     if not remaining or remaining[0] not in _ACTIONS:
         return _abstain("unsupported_action")
