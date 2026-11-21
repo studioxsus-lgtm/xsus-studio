@@ -263,3 +263,20 @@ Use with a single process and exclusive ownership of the snapshot path.
 Checksums detect accidental changes but are not authentication or protection
 against malicious rewriting. This does not provide multi-process locking,
 transactional audit history, encrypted storage or disaster recovery.
+
+## Phase 5.5 — Audit integrity, initial safeguards
+
+`audit_v1.py` appends fsynced JSONL decision events with sequential SHA-256
+hash chaining. On startup and before each append it verifies the entire
+journal, rejecting corruption and stale writer instances. It does not provide
+an interprocess atomic lock; two truly concurrent processes may still race
+between verification and append. Accordingly, run with a single exclusive
+writer only until a dedicated lock protocol is implemented and tested.
+
+```bash
+python -m unittest tests.integration.test_audit_v1 -v
+```
+
+The audit chain is not authenticated, encrypted or tamper-proof against
+malicious writers. This phase adds integrity detection but **does not yet
+certify multi-process concurrency safety**.
