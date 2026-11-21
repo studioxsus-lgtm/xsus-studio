@@ -445,3 +445,18 @@ python -m unittest tests.integration.test_conversation_router_v1 -v
 
 This is a controlled conversational contract, **not** free-form natural
 language comprehension, generative dialogue, persistent user memory, or AGI.
+
+## Phase 6.6 — Autonomous problem-solving evaluation (offline only)
+
+`problem_evaluation_v1.py` runs authored formal problem-solving and
+acyclic task-planning cases without external actions. It checks expected
+solvability, independently replays successful proofs and plans, and tests
+missing premises, cyclic dependencies, and bounded proof budgets. The word
+'autonomous' refers only to unattended evaluation, not permission to act.
+
+```bash
+python -m unittest tests.integration.test_problem_evaluation_v1 -v
+```
+
+These tests do not demonstrate open-ended autonomous problem solving,
+real-world task completion, or externally verified truth.
