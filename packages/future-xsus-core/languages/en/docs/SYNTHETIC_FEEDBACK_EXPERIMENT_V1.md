@@ -170,3 +170,14 @@ context, separately before and after training. This helps test whether
 a learned global output bias may explain the collapse, versus a
 context-dependent effect. The audit exposes neither token IDs nor
 text, and does not alter training or deployment.
+
+## Context attribution audit
+
+CI run 44902091726 showed that the candidate's top output-bias
+token was printable, while its empty-context logits favored
+whitespace. The new diagnostic compares the top output-bias
+token with the context-conditioned greedy winner on each held-out
+prompt. It reports category switches, whitespace winners, and
+winner-versus-bias logit margins without exposing text, token IDs
+or hidden vectors. This is attribution evidence, not a proof of
+causality or a training fix. Default model behavior is unchanged.
