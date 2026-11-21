@@ -31,3 +31,21 @@ From `packages/future-xsus-core`:
 ```bash
 python -m unittest languages.en.tests.test_sentence_meaning_v1 -v
 ```
+
+## Expansion: structural comparison and evaluation
+
+`sentence_relations_v1.py` compares two supported sentence frames,
+identifying the same explicit frame, opposite explicit polarity, or changed
+subject/action/object. These labels **do not** assert logical contradiction,
+entailment, or verified world facts. Unsupported frames abstain.
+
+`sentence_meaning_holdout_v1.jsonl` contains 32 authored diagnostic cases:
+20 labeled simple statements and 12 expected abstentions. The read-only
+`sentence_meaning_benchmark_v1.py` reports aggregate exact-frame metrics,
+without input text. This is an authored development benchmark, not an
+independent external blind test or production gate.
+
+```bash
+python -m unittest languages.en.tests.test_sentence_meaning_v1 languages.en.tests.test_sentence_relations_v1 languages.en.tests.test_sentence_meaning_benchmark_v1 -v
+python -m languages.en.evaluation.sentence_meaning_benchmark_v1
+```
