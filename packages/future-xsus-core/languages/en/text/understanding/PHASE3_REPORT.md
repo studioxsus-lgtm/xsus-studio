@@ -76,3 +76,22 @@ blind benchmark or production authorization is claimed.
 python -m unittest languages.en.tests.test_role_semantics_v1 languages.en.tests.test_role_relations_v1 languages.en.tests.test_role_semantics_benchmark_v1 -v
 python -m languages.en.evaluation.role_semantics_benchmark_v1
 ```
+
+## Phase 3.4 — Bounded batch role analysis
+
+`role_batch_v1.py` processes up to 32 sentences and at most 64 explicitly
+requested sentence pairs, with a total input budget of 8192 characters
+and a 1000-character limit per sentence. It returns structured role
+results and abstentions, without echoing unsupported raw sentences.
+
+`role_evidence_v1.py` groups independently parsed sentences by exact
+normalized subject/action/object fields and records positive/negative
+indices. This grouping does not establish event identity, coreference,
+logical contradiction, or real-world truth. `role_batch_benchmark_v1.py`
+performs an authored 11-check aggregate diagnostic. CI runs new tests
+and publishes only aggregate diagnostics.
+
+```bash
+python -m unittest languages.en.tests.test_role_batch_v1 languages.en.tests.test_role_evidence_v1 languages.en.tests.test_role_batch_benchmark_v1 -v
+python -m languages.en.evaluation.role_batch_benchmark_v1
+```
