@@ -377,3 +377,17 @@ to distinguish weak learned prompt conditioning from a more
 basic issue: different questions may be truncated to identical
 model-visible suffixes. The audit exposes aggregate counts
 only and does not authorize a release.
+
+## Context window sweep: isolate truncation from learning
+
+Run 44908072310 passed and established that all ten diverse-target
+questions collapse to **one** model-visible context at 16 tokens,
+while written-v4 and written-v5 retain ten distinct contexts each.
+A new read-only sweep evaluates 16, 32, 64, and 128-token
+suffixes of the **same** formatted prompts. It reports distinct
+contexts, collision counts, largest collision group, and the
+smallest tested collision-free size. It does not alter model
+weights or context settings. Distinguishable prompts at larger
+windows would isolate truncation as one cause of the failed
+prompt-target contrast, but would not establish that a larger
+model actually learns or answers correctly.
