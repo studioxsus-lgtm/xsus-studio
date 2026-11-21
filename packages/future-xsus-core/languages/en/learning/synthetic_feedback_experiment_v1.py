@@ -23,6 +23,7 @@ from languages.en.evaluation.hidden_contribution_v1 import inspect_hidden_contri
 from languages.en.evaluation.prompt_sensitivity_v1 import inspect_prompt_sensitivity_v1
 from languages.en.evaluation.decision_margin_v1 import inspect_decision_margin_v1
 from languages.en.evaluation.first_target_rank_v1 import inspect_first_target_rank_v1
+from languages.en.learning.first_target_weight_ablation_v1 import run_first_target_weight_ablation_v1
 from languages.en.text.generation.conversation_format import prompt_tokens
 from languages.en.text.normalization.model_input import prepare_model_input
 from languages.en.training.train import _encode
@@ -75,6 +76,10 @@ def run_synthetic_feedback_experiment_v1():
         target_examples=tuple(Example(Conversation(row["prompt"]),row["response"]) for row in target_rows)
         training_target_distribution=summarize_target_tokens_v1(
             candidate_tokenizer,_encode(candidate_tokenizer,target_examples))
+        ablation_training=_encode(baseline_tokenizer,target_examples)
+        ablation_cases={name:load_cases(path) for name,path in evaluations.items()}
+        first_target_weight_ablation=run_first_target_weight_ablation_v1(
+            baseline_tokenizer,baseline_model,ablation_training,ablation_cases)
         benchmarks={}
         for name,scores in sorted(report["benchmarks"].items()):
             cases=load_cases(evaluations[name])
@@ -153,6 +158,7 @@ def run_synthetic_feedback_experiment_v1():
         observed_generalization_gain=candidate_accepted>baseline_accepted
         return {
             "training_target_distribution":training_target_distribution,
+            "first_target_weight_ablation":first_target_weight_ablation,
             "baseline_output_bias_audit":baseline_output_bias_audit,
             "candidate_output_bias_audit":candidate_output_bias_audit,
             "generation_collapse_detected":generation_collapse_detected,
