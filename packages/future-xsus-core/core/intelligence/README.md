@@ -316,3 +316,20 @@ This is cooperative single-host crash reconciliation, **not** a general
 ACID database. All writes must use the same lock protocol, both files must
 share a directory, and neither hostile writers nor multi-host filesystems
 are covered. Recovery records do not deploy or promote any candidate.
+
+## Phase 5.8 — Deterministic recovery fault injection
+
+`recovery_stress_v1.py` exercises four controlled interruption boundaries:
+before prepare, after prepare, after snapshot, and after commit. Each scenario
+starts with a fresh persisted candidate, simulates the state at that boundary,
+then invokes transactional recovery and checks the resulting status, audit
+length, and idempotent second recovery. After prepare without a saved review
+it records abort; after snapshot with saved review it records commit.
+
+```bash
+python -m unittest tests.integration.test_recovery_stress_v1 -v
+```
+
+These are deterministic state-injection tests, not actual SIGKILL, power-loss,
+filesystem fault, or multi-host tests. Such testing remains necessary before
+making stronger production crash-safety claims.
