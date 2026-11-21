@@ -76,6 +76,18 @@ jobs:
           name: future-xsus-core-official-written-v4-v5
           path: packages/future-xsus-core/official-written-v4-v5-evidence.json
           if-no-files-found: warn
+      - name: Run real synthetic feedback learning experiment
+        timeout-minutes: 8
+        run: |
+          python -m languages.en.learning.synthetic_feedback_experiment_v1 \
+            --output synthetic-feedback-experiment-v1.json
+      - name: Upload synthetic feedback learning measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-xsus-core-synthetic-feedback-learning
+          path: packages/future-xsus-core/synthetic-feedback-experiment-v1.json
+          if-no-files-found: warn
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
