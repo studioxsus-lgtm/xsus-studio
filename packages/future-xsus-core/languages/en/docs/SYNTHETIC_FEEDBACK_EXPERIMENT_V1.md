@@ -309,3 +309,16 @@ correct-token counts against weight 1 on the exact same
 holdout groups and explicitly flags position regressions for
 weights 4 and 8. This is an additional diagnostic safeguard,
 not an automatic release or an improvement claim.
+
+## Position-balanced training ablation
+
+An isolated four-arm experiment compares **uniform (1/1/1)**,
+**first2 (2/1/1)**, **balanced2 (2/1/2)**, and **balanced3
+(2/2/2)** first/early/later teacher-forcing weights. All arms
+start from the same baseline, use the same 24 synthetic training
+examples and 20 heldout cases, and report both generation
+acceptance and teacher-forced token accuracy by position.
+Any later-token regression or per-benchmark acceptance
+regression is recorded; an improvement in first-token ranking
+alone never proves quality. No experimental model is saved,
+promoted, or deployed. Manual release remains mandatory.
