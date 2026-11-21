@@ -103,7 +103,7 @@ class VerifiedCheckpointHoldoutTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.evaluate()
 
-    def test_history_bearing_cases_rejected(self):
+    def test_history_bearing_cases_supported(self):
         self.write(self.evaluation, [
             {"id": "case-a", "prompt": "Evaluation one", "response": "A",
              "history": [{"role": "user", "text": "Previous"}],
@@ -111,8 +111,9 @@ class VerifiedCheckpointHoldoutTests(unittest.TestCase):
             {"id": "case-b", "prompt": "Evaluation two", "response": "B",
              "facts": [], "patterns": ["b"]},
         ])
-        with self.assertRaises(ValueError):
-            self.evaluate()
+        report = self.evaluate()
+        self.assertEqual(report["cases"], 2)
+        self.assertTrue(report["checked_training_conversation_overlap"])
 
     def test_duplicate_file_paths_rejected(self):
         with self.assertRaises(ValueError):
