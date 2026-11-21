@@ -351,3 +351,16 @@ uninformative zero from being interpreted as evidence for
 or against semantic prompt conditioning. Future evaluations
 must use independently authored, varied reference starts
 before drawing conclusions about prompt-target association.
+
+## Diverse-start heldout diagnostic
+
+A separate, explicitly synthetic ten-case **diverse-target-v1**
+holdout has ten distinct first response tokens. It is used
+only for the four position-balanced experimental arms, not
+for candidate approval, official benchmark claims, or
+production release. The two existing written-v4/v5 groups
+remain unchanged, and the new identifiability audit must
+flag their shared first target as non-identifiable while
+recognizing the diverse group as identifiable. The contrast
+still cannot establish semantic understanding or generalization
+without independent, realistic evaluation data.
