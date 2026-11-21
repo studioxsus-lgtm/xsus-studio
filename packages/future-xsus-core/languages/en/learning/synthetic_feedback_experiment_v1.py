@@ -26,8 +26,8 @@ def run_synthetic_feedback_experiment_v1():
         training=root/"training.jsonl"
         training.write_text("".join(json.dumps({
             "prompt":f"Curated training request {i}",
-            "response":f"Curated answer {i}."})+"\n" for i in range(6)),encoding="utf-8")
-        for i in range(5):
+            "response":f"Curated answer {i}."})+"\n" for i in range(24)),encoding="utf-8")
+        for i in range(12):
             record=store.submit("synthetic-test-owner",Example(
                 Conversation(f"Reviewed synthetic question {i}"),
                 f"Approved synthetic answer {i}."),consent=True)
@@ -40,14 +40,16 @@ def run_synthetic_feedback_experiment_v1():
         evaluations={}
         for version in ("written-v4","written-v5"):
             path=root/(version+".jsonl")
-            row={"id":version+"-unseen","prompt":"Explain an independent synthetic topic "+version+".",
-                 "response":"An independent reference sentence.",
-                 "facts":[],"patterns":["an independent reference sentence\\."]}
-            path.write_text(json.dumps(row)+"\n",encoding="utf-8")
+            rows=[{"id":f"{version}-unseen-{i:02d}",
+                   "prompt":f"Explain an independent synthetic topic {version} case {i}.",
+                   "response":f"Independent reference sentence {i}.",
+                   "facts":[],"patterns":[f"independent reference sentence {i}\\."]}
+                  for i in range(10)]
+            path.write_text("".join(json.dumps(row)+"\n" for row in rows),encoding="utf-8")
             evaluations[version]=path
         request=CandidateCycleRequestV1(
             "synthetic-test-owner","grammar",baseline,training,evaluations,
-            root/"candidate.json.gz",root/"report.json",epochs=1,replay_examples=2)
+            root/"candidate.json.gz",root/"report.json",epochs=2,replay_examples=8)
         result=execute_autonomous_candidate_cycle_v1(store,request,approved_execution=True)
         report=result["candidate_report"]
         benchmarks={}
