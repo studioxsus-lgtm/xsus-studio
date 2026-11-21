@@ -54,6 +54,22 @@ class SentenceMeaningTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     analyze_sentence_meaning(value)
 
+    def test_subject_verb_agreement_rejects_invalid_forms(self):
+        for sentence in ("She read the report.", "They reads the report.",
+                         "The developer build the application.",
+                         "I writes a report.", "She do not read the report.",
+                         "They does not read the report."):
+            with self.subTest(sentence=sentence):
+                self.assertEqual(analyze_sentence_meaning(sentence).status, "abstained")
+
+    def test_subject_verb_agreement_accepts_valid_forms(self):
+        for sentence in ("She reads the report.", "They read the report.",
+                         "The developer builds the application.",
+                         "I write a report.", "She does not read the report.",
+                         "They do not read the report."):
+            with self.subTest(sentence=sentence):
+                self.assertEqual(analyze_sentence_meaning(sentence).status, "resolved")
+
     def test_privacy_and_no_production_claim(self):
         result = sentence_frame_dict("The user reads the file.")
         self.assertNotIn("The user reads the file.", repr(result))
