@@ -260,3 +260,17 @@ does not modify the standard trainer or production defaults,
 and has no holdout improvement claim until a controlled ablation
 is run. It must be compared against weight 1 on identical data,
 seed, and held-out cases before consideration.
+
+## Four-arm first-target training ablation
+
+The experiment now trains four **independent in-memory copies**
+of the same unmodified synthetic baseline, with first-target
+weights 1, 2, 4 and 8. Each arm uses the same 24 synthetic curated
+training examples, one pass, learning rate 0.008, and the same
+20 held-out cases. Each arm reports first-reference-token rank
+and full-generation acceptance/empty-output diagnostics.
+No ablation arm saves a checkpoint, changes the normal
+continual-learning trainer, promotes a candidate or deploys.
+Weight 1 is the comparison control; improvement requires heldout
+acceptance gains without regression, not merely a better token
+rank or more visible text.
