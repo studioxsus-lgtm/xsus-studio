@@ -94,6 +94,12 @@ def run_synthetic_feedback_experiment_v1():
             visible_first_details=[case.score(generate(
                 candidate_tokenizer,candidate_model,case.example.conversation,
                 min_visible_chars=1,avoid_leading_whitespace=True)) for case in cases]
+            hidden_scale_arms={}
+            for scale in (0.0,0.25,0.5,0.75):
+                arm_details=[case.score(generate(
+                    candidate_tokenizer,candidate_model,case.example.conversation,
+                    hidden_contribution_scale=scale)) for case in cases]
+                hidden_scale_arms[str(scale)]=summarize_generation_diagnostics_v1(arm_details)
             benchmarks[name]={
                 "cases":scores["baseline"]["cases"],
                 "baseline_accepted":scores["baseline"]["accepted"],
@@ -107,6 +113,7 @@ def run_synthetic_feedback_experiment_v1():
                 "candidate_visible_first_diagnostics":summarize_generation_diagnostics_v1(visible_first_details),
                 "candidate_context_attribution":context_attribution,
                 "candidate_hidden_contribution":hidden_contribution,
+                "candidate_hidden_scale_arms":hidden_scale_arms,
                 "candidate_token_choice_diagnostics":{
                     "cases":len(token_choice_diagnostics),
                     "steps_per_case":32,
