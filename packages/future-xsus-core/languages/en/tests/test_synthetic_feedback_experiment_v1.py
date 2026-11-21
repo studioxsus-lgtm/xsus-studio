@@ -86,3 +86,20 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
 
     def test_no_unverified_quality_claim_after_expansion(self):
         self.assertFalse(self.report["release_evidence_sufficient"])
+
+    def test_quality_gate_requires_measured_gain(self):
+        self.assertEqual(self.report["candidate_quality_gate_passed"],
+                         self.report["observed_generalization_gain"] and
+                         all(row["candidate_accepted"]>=row["baseline_accepted"]
+                             for row in self.report["benchmarks"].values()))
+
+    def test_quality_gate_reasons_are_explainable(self):
+        self.assertIsInstance(self.report["quality_gate_reasons"],list)
+
+    def test_no_gain_reason_is_explicit(self):
+        if self.report["holdout_acceptance_delta"]<=0:
+            self.assertIn("no_holdout_acceptance_gain",self.report["quality_gate_reasons"])
+
+    def test_review_eligibility_does_not_override_quality_gate(self):
+        if not self.report["candidate_quality_gate_passed"]:
+            self.assertFalse(self.report["release_evidence_sufficient"])
