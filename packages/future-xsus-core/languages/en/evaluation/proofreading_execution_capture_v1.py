@@ -48,10 +48,10 @@ def capture_proofreading_execution_v1(
             raise ValueError("Case limit exceeded")
         # Labels are deliberately not passed to the engine.
         observed = engine(record["input"])
-        if (type(observed.status) is not str or type(observed.text) is not str):
+        if (not isinstance(observed.status, str) or type(observed.text) is not str):
             raise ValueError("Engine result fields must be strings")
         predictions.append(ProofreadingPredictionV1(
-            record["id"], observed.status, observed.text
+            record["id"], str(observed.status), observed.text
         ))
     artifact = create_proofreading_prediction_artifact_v1(
         version, sha256(raw).hexdigest(), predictions, secret_key
