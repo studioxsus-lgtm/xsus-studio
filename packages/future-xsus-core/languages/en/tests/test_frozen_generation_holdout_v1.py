@@ -10,6 +10,11 @@ class FixedModel:
         self.vocab_size=vocab_size
         self.context_size=16
         self.token=token
+    def __eq__(self, other):
+        return (type(other) is type(self) and
+                self.vocab_size == other.vocab_size and
+                self.context_size == other.context_size and
+                self.token == other.token)
     def logits(self, prefix):
         values=[-1.0]*self.vocab_size
         values[self.token]=10.0
