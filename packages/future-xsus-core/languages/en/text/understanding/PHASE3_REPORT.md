@@ -169,3 +169,21 @@ cases are generated internally rather than independently collected.
 python -m unittest languages.en.tests.test_grammar_patterns_v1 languages.en.tests.test_grammar_patterns_benchmark_v1 -v
 python -m languages.en.evaluation.grammar_patterns_benchmark_v1
 ```
+
+## Phase 3.9 — Advanced bounded grammar
+
+`advanced_grammar_v1.py` adds opt-in, strictly controlled WH questions,
+present/past progressive, present/past perfect, and selected passive
+patterns with explicit subjects, verbs and objects. It abstains on
+unrecognized grammar and does not modify the existing stable parsers.
+
+A generated diagnostic exercises 1000 unique WH/progressive/perfect
+sentences. This is a project-authored corpus, not independent external
+coverage or proof of complete English grammar. Irregular inflection,
+free-form questions, passive-agent semantics, subordinate clauses and
+real-world interpretation require further work.
+
+```bash
+python -m unittest languages.en.tests.test_advanced_grammar_v1 languages.en.tests.test_advanced_grammar_benchmark_v1 -v
+python -m languages.en.evaluation.advanced_grammar_benchmark_v1
+```
