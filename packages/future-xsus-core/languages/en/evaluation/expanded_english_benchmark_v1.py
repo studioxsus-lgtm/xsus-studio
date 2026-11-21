@@ -11,7 +11,7 @@ def evaluate_expanded_english() -> dict:
     cases = [
         (SUBJECTS[(i // 40) % len(SUBJECTS)],
          VERBS[i % len(VERBS)],
-         NOUNS[(i // 600) * 20 + (i % 40) // 2] if False else NOUNS[(i * 7 + i // 40) % len(NOUNS)])
+         NOUNS[(i * 7 + i // 40) % len(NOUNS)])
         for i in range(1000)
     ]
     # Explicitly verify uniqueness; no repeated input counts as a new example.
