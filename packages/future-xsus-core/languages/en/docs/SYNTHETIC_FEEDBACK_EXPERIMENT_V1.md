@@ -322,3 +322,17 @@ Any later-token regression or per-benchmark acceptance
 regression is recorded; an improvement in first-token ranking
 alone never proves quality. No experimental model is saved,
 promoted, or deployed. Manual release remains mandatory.
+
+## Prompt-target association contrast
+
+GitHub Actions run 44906244190 passed. The position-balanced
+arms all accepted 0/20 heldout responses. Uniform, first2
+and balanced2 achieved 40/580 correct later reference tokens;
+balanced3 achieved 0/580. A new prompt-target contrast diagnostic
+now compares the logit of the correct first reference token
+under its matched prompt against the same token under a
+deterministically rotated alternative prompt. It reports
+only aggregate preference rates, mean logit advantages,
+and winner changes, across all four arms and both holdout
+groups. This is a limited association probe, not proof
+of reasoning, semantic understanding or production readiness.
