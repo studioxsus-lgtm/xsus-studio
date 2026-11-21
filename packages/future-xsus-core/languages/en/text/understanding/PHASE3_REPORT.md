@@ -54,3 +54,25 @@ python -m languages.en.evaluation.action_semantics_quality_gate_v1
 
 This authored holdout is **not independent or blind**. The Phase 3 milestone
 is in progress, not a production release.
+
+## Phase 3.3 — Explicit grammatical roles
+
+`role_semantics_v1.py` classifies a successfully parsed subject as
+first-person, second-person, third-person pronoun, or explicit nominal,
+and its object as definite or indefinite. This is a surface grammatical
+classification, not an inference about the identity or agency of a real
+person or system.
+
+`role_relations_v1.py` compares explicit subject/action/object/polarity
+fields and conservatively abstains when either frame is unsupported.
+Matching fields do not prove that two sentences describe the same event,
+and opposite polarity does not prove a real-world contradiction.
+
+An 18-case authored diagnostic (12 single frames, six sentence pairs) and
+unit tests are integrated into the GitHub benchmark workflow. No external
+blind benchmark or production authorization is claimed.
+
+```bash
+python -m unittest languages.en.tests.test_role_semantics_v1 languages.en.tests.test_role_relations_v1 languages.en.tests.test_role_semantics_benchmark_v1 -v
+python -m languages.en.evaluation.role_semantics_benchmark_v1
+```
