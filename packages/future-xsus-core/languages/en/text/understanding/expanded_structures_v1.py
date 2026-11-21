@@ -63,6 +63,9 @@ def analyze_structured_clause(text: str) -> StructuredClause:
     remaining = tokens[len(subject.split()):]
     if not remaining:
         return _abstain("missing_verb")
+    leading_adverb = remaining.pop(0) if remaining and remaining[0] in ADVERBS else None
+    if not remaining:
+        return _abstain("missing_verb")
     verb_form = remaining.pop(0)
     if verb_form in _PAST_FORMS:
         action, tense = _PAST_FORMS[verb_form], "past_simple"
@@ -72,8 +75,10 @@ def analyze_structured_clause(text: str) -> StructuredClause:
             return _abstain("invalid_present_agreement")
     else:
         return _abstain("unsupported_verb_form")
-    adverb = None
+    adverb = leading_adverb
     if remaining and remaining[0] in ADVERBS:
+        if adverb is not None:
+            return _abstain("duplicate_adverb")
         adverb = remaining.pop(0)
     if not remaining or remaining.pop(0) not in {"the", "a"}:
         return _abstain("missing_determiner")
