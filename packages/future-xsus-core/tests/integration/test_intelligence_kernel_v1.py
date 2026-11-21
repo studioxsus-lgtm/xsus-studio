@@ -48,6 +48,20 @@ class IntelligenceKernelTests(unittest.TestCase):
             (Rule(("tested", "approved"), "release_ready"),))
         self.assertEqual(result.status, "abstained")
 
+    def test_sourced_reasoning_integration(self):
+        from core.intelligence.reasoning_v1 import Rule
+        from core.intelligence.knowledge_v1 import Evidence, KnowledgeRecord, KnowledgeStore
+        store = KnowledgeStore((
+            KnowledgeRecord("tested", "true", Evidence.from_excerpt("report", "true"), "owner"),
+            KnowledgeRecord("approved", "true", Evidence.from_excerpt("review", "true"), "owner"),
+        ))
+        result = IntelligenceKernel().infer_from_sources(
+            store, "owner", ("tested", "approved"),
+            (Rule(("tested", "approved"), "ready"),), "ready")
+        self.assertEqual(result.status, "resolved")
+        self.assertEqual(result.evidence, ("report", "review"))
+        self.assertIn("sources_not_independently_verified", result.limitations)
+
     def test_planning_is_not_execution(self):
         kernel = IntelligenceKernel()
         plan = kernel.plan("build a system", ("design", "test", "review"))
