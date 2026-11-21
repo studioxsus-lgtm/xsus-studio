@@ -33,6 +33,21 @@ class IntelligenceKernelTests(unittest.TestCase):
         self.assertEqual(result.status, "resolved")
         self.assertFalse(result.verified)
 
+    def test_verified_reasoning_integration(self):
+        from core.intelligence.reasoning_v1 import Rule
+        result = IntelligenceKernel().reason(
+            "release_ready", ("tested", "approved"),
+            (Rule(("tested", "approved"), "release_ready"),))
+        self.assertEqual((result.status, result.answer, result.verified),
+                         ("resolved", "release_ready", True))
+
+    def test_missing_reasoning_evidence_abstains(self):
+        from core.intelligence.reasoning_v1 import Rule
+        result = IntelligenceKernel().reason(
+            "release_ready", ("tested",),
+            (Rule(("tested", "approved"), "release_ready"),))
+        self.assertEqual(result.status, "abstained")
+
     def test_planning_is_not_execution(self):
         kernel = IntelligenceKernel()
         plan = kernel.plan("build a system", ("design", "test", "review"))
