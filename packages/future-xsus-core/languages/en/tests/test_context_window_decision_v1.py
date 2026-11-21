@@ -12,7 +12,7 @@ def fixture():
             "32":{"mean_first_target_rank":80.0,"mean_best_to_target_logit_gap":1.5,
                   "first_target_top_one_correct":0,"matched_target_preferred_cases":8,"first_target_cases":10},
             "64":{"mean_first_target_rank":90.0,"mean_best_to_target_logit_gap":1.8,
-                  "first_target_top_one_correct":0,"matched_target_preferred_cases":8},
+                  "first_target_top_one_correct":0,"matched_target_preferred_cases":8,"first_target_cases":10},
         },
     }
 
