@@ -476,3 +476,17 @@ python -m unittest tests.integration.test_english_intent_v1 tests.integration.te
 
 This is a controlled English command interface, **not** unrestricted
 natural-language comprehension or an independently verified factual answerer.
+
+## Phase 7.2 — Durable local knowledge records
+
+`sqlite_knowledge_v1.py` adds an opt-in `SQLiteKnowledgeStore(path)` with
+owner-scoped records, bounded transactional inserts, SHA-256 excerpt integrity
+checks on read, and explicit conflicting-value answers. Existing in-memory
+`KnowledgeStore` remains unchanged. This store has no source authentication,
+no external truth verification, no encryption or reviewer authorization, and
+no automatic learning promotion. Application authentication and database-file
+permissions remain mandatory. It is not a distributed knowledge service.
+
+```bash
+python -m unittest tests.integration.test_sqlite_knowledge_v1 -v
+```
