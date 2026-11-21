@@ -414,3 +414,19 @@ python -m unittest tests.integration.test_generalization_v1 -v
 
 This tests generated **in-domain symbolic** problems, not natural-language
 understanding, open-world truth, autonomous learning, or broad generalization.
+
+## Phase 6.4 — Knowledge and learning conflict review
+
+`knowledge_learning_v1.py` connects the owner-scoped KnowledgeStore and
+review-gated LearningLedger without mutating trusted knowledge. Conflicting
+values can produce deduplicated pending proposals only when the referenced
+source belongs to the conflict. Human approval marks proposals eligible for
+evaluation, **not** for automatic insertion. Candidate evidence must match
+owner, key, value and source; it is returned for external review only.
+
+```bash
+python -m unittest tests.integration.test_knowledge_learning_v1 -v
+```
+
+This does not resolve which conflicting claim is externally true, update
+model weights, persist proposals across process restarts, or deploy changes.
