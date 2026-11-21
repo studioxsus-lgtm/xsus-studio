@@ -49,3 +49,21 @@ independent external blind test or production gate.
 python -m unittest languages.en.tests.test_sentence_meaning_v1 languages.en.tests.test_sentence_relations_v1 languages.en.tests.test_sentence_meaning_benchmark_v1 -v
 python -m languages.en.evaluation.sentence_meaning_benchmark_v1
 ```
+
+## Expansion: grammatical agreement and challenge gate
+
+The controlled sentence parser now rejects unsupported positive subject–verb
+agreement and incorrect auxiliary agreement in simple negation. It does **not**
+claim complete English grammar or general tense analysis.
+
+The 24-case authored challenge includes malformed agreement, unsupported
+clauses, negation, questions and supported contrasts. The Phase 2 gate
+compares the 32-case diagnostic holdout and this challenge, requiring exact
+frames on labeled cases, zero false resolutions on expected abstentions, and
+arithmetic integrity. These are **development-authored** tests and may overstate
+performance on new text. This is a bounded engineering checkpoint, not an
+external evaluation or authorization for deployment.
+
+```bash
+python -m languages.en.evaluation.sentence_meaning_quality_gate_v1
+```
