@@ -82,7 +82,7 @@ class VerifiedCheckpointHoldoutTests(unittest.TestCase):
         self.write(self.evaluation, [
             {"id": "case-a", "prompt": "Evaluation one",
              "response": "A response too long for a single token",
-             "facts": [], "patterns": ["a response too long"]},
+             "facts": [], "patterns": ["a response too long for a single token"]},
             {"id": "case-b", "prompt": "Evaluation two",
              "response": "B", "facts": [], "patterns": ["b"]},
         ])
