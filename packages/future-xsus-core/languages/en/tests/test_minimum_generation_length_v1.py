@@ -71,3 +71,30 @@ class MinimumGenerationLengthV1Tests(unittest.TestCase):
         stop=Event()
         stop.set()
         self.assertEqual(self._generate(max_new_tokens=8,min_new_tokens=4,stop=stop),"")
+
+    def test_minimum_visible_one(self):
+        self.assertEqual(self._generate(max_new_tokens=8,min_visible_chars=1),"a")
+
+    def test_minimum_visible_four(self):
+        self.assertEqual(self._generate(max_new_tokens=8,min_visible_chars=4),"aaaa")
+
+    def test_minimum_visible_default_unchanged(self):
+        self.assertEqual(self._generate(max_new_tokens=8,min_visible_chars=0),"")
+
+    def test_reject_negative_visible(self):
+        with self.assertRaises(ValueError):
+            self._generate(max_new_tokens=8,min_visible_chars=-1)
+
+    def test_reject_float_visible(self):
+        with self.assertRaises(ValueError):
+            self._generate(max_new_tokens=8,min_visible_chars=1.0)
+
+    def test_reject_visible_above_max(self):
+        with self.assertRaises(ValueError):
+            self._generate(max_new_tokens=8,min_visible_chars=9)
+
+    def test_stop_respected_with_visible_requirement(self):
+        from threading import Event
+        stop=Event()
+        stop.set()
+        self.assertEqual(self._generate(max_new_tokens=8,min_visible_chars=4,stop=stop),"")
