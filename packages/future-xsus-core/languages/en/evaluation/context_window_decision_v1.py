@@ -6,7 +6,7 @@ from math import isfinite
 
 
 def inspect_context_window_decision_v1(report):
-    if not isinstance(report, dict) or report.get("weights_retrained") is not False or report.get("release_authorized") is not False:
+    if not isinstance(report, dict) or report.get("weights_retrained") is not False or report.get("release_authorized") is not False or report.get("production_context_changed") is not False:
         raise ValueError("expected read-only counterfactual report")
     windows = report.get("windows")
     if not isinstance(windows, dict) or not all(str(size) in windows for size in (16, 32, 64)):
@@ -23,6 +23,9 @@ def inspect_context_window_decision_v1(report):
         gap = row.get("mean_best_to_target_logit_gap")
         top = row.get("first_target_top_one_correct")
         matched = row.get("matched_target_preferred_cases")
+        first_cases = row.get("first_target_cases")
+        if type(first_cases) is not int or first_cases != cases:
+            raise ValueError("inconsistent first-target case count")
         if any(type(value) not in (int, float) or not isfinite(value) for value in (rank, gap)) or rank < 1 or gap < 0:
             raise ValueError("invalid ranking metrics")
         if any(type(value) is not int or not 0 <= value <= cases for value in (top, matched)):
