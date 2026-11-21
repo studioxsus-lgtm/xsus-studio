@@ -31,6 +31,7 @@ class PromptContextCollisionsTests(unittest.TestCase):
         self.assertEqual(result["colliding_cases"],2)
 
     def test_distinct_suffix(self):
+        self.model.context_size=32
         result=inspect(self.tokenizer,self.model,[Conversation("Alpha ending X"),Conversation("Bravo ending Y")])
         self.assertEqual(result["distinct_context_windows"],2)
 
