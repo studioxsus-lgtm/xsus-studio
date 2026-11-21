@@ -391,3 +391,16 @@ weights or context settings. Distinguishable prompts at larger
 windows would isolate truncation as one cause of the failed
 prompt-target contrast, but would not establish that a larger
 model actually learns or answers correctly.
+
+## Wider-context inference counterfactual
+
+Run 44909272053 passed: the ten diverse-target questions
+are identical under 16-token truncation but all distinguishable
+under 32, 64, and 128-token suffixes. A new read-only
+counterfactual clones the **uniform** trained model and
+measures first-token accuracy and matched-prompt preference
+at 16, 32, and 64-token inference contexts. No weights
+are retrained, no production setting changes, and no
+release is authorized. A better result at 32 tokens would
+support context visibility as a bottleneck; it would not
+prove that training at 32 tokens is sufficient.
