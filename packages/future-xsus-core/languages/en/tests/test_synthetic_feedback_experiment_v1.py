@@ -147,3 +147,14 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
         self.assertEqual(self.report["candidate_safe_for_review"],
                          not self.report["generation_collapse_detected"] and
                          self.report["observed_generalization_gain"])
+
+    def test_minimum_length_diagnostics_present(self):
+        for row in self.report["benchmarks"].values():
+            self.assertEqual(row["candidate_min_length_8_diagnostics"]["cases"],10)
+
+    def test_minimum_length_diagnostics_privacy(self):
+        for row in self.report["benchmarks"].values():
+            self.assertFalse(row["candidate_min_length_8_diagnostics"]["contains_generated_text"])
+
+    def test_minimum_length_not_automatically_approved(self):
+        self.assertFalse(self.report["release_evidence_sufficient"])
