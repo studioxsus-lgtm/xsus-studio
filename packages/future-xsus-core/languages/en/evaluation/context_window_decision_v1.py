@@ -33,6 +33,12 @@ def inspect_context_window_decision_v1(report):
             raise ValueError("invalid collision count")
         if type(changed) is not int or not 0 <= changed <= cases:
             raise ValueError("invalid greedy winner change count")
+        if collisions < cases - distinct:
+            raise ValueError("collision count contradicts distinct contexts")
+        if distinct == cases and collisions != 0:
+            raise ValueError("unique contexts cannot collide")
+        if distinct < cases and collisions == 0:
+            raise ValueError("nonunique contexts require collisions")
         if type(first_cases) is not int or first_cases != cases:
             raise ValueError("inconsistent first-target case count")
         if any(type(value) not in (int, float) or not isfinite(value) for value in (rank, gap)) or rank < 1 or gap < 0:
