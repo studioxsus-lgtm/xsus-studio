@@ -3,7 +3,7 @@
 This is not a natural-language understanding or text generation model.
 """
 from dataclasses import dataclass
-from .reasoning_v1 import Rule
+from .reasoning_v1 import Rule, _atom
 from .kernel_v1 import IntelligenceKernel
 from ..sessions.session_store import InMemorySessionStore
 
@@ -39,10 +39,16 @@ class ConversationRouter:
         normalized = text.strip()
         if normalized.startswith("prove ") and len(normalized.split()) == 2:
             query = normalized.split()[1]
-            result = self.kernel.reason(query, facts, rules)
-            status = result.status
-            answer = result.answer if result.status == "resolved" else None
-            limitations = result.limitations
+            try:
+                _atom(query)
+            except ValueError:
+                status, answer = "abstained", None
+                limitations = ("invalid_symbolic_query",)
+            else:
+                result = self.kernel.reason(query, facts, rules)
+                status = result.status
+                answer = result.answer if result.status == "resolved" else None
+                limitations = result.limitations
         elif normalized == "history":
             status = "resolved"
             answer = "exchanges:" + str(len(snapshot.history) // 2)
