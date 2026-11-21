@@ -409,7 +409,7 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
     def test_balanced_prompt_target_contrast_privacy(self):
         for arm in self.report["position_balanced_ablation"]["arms"].values():
             for row in arm["benchmarks"].values():
-                contrast=row["prompt_target_contrast"]
+                contrast=row["prompt_target_identifiability"]["contrast"]
                 self.assertFalse(contrast["raw_text_exposed"])
                 self.assertFalse(contrast["raw_token_ids_exposed"])
                 self.assertFalse(contrast["raw_logits_exposed"])
