@@ -488,3 +488,9 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
                     self.assertFalse(audit["release_authorized"])
                 else:
                     self.assertIsNone(audit)
+
+    def test_inference_counterfactual_reports_rank_and_gap(self):
+        report=self.report["position_balanced_ablation"]["arms"]["uniform"]["benchmarks"]["diverse-target-v1"]["inference_context_counterfactual"]
+        for window in report["windows"].values():
+            self.assertGreaterEqual(window["mean_first_target_rank"],1)
+            self.assertGreaterEqual(window["mean_best_to_target_logit_gap"],0)
