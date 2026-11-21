@@ -211,3 +211,16 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
         self.assertEqual(distribution["target_tokens"],sum(distribution[key] for key in (
             "eos_tokens","whitespace_tokens","printable_tokens",
             "non_rendering_tokens","control_or_replacement_tokens")))
+
+    def test_output_bias_audits_are_present(self):
+        for stage in ("baseline","candidate"):
+            audit=self.report[f"{stage}_output_bias_audit"]
+            self.assertEqual(audit["contract"],"future-xsus-core.output-bias-audit.v1")
+            self.assertIn(audit["bias_top_category"],(
+                "whitespace","printable","non_rendering","control_or_replacement"))
+
+    def test_output_bias_audits_preserve_privacy(self):
+        for stage in ("baseline","candidate"):
+            audit=self.report[f"{stage}_output_bias_audit"]
+            self.assertFalse(audit["raw_text_exposed"])
+            self.assertFalse(audit["raw_token_ids_exposed"])
