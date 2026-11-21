@@ -304,3 +304,29 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
             self.assertFalse(audit["raw_text_exposed"])
             self.assertFalse(audit["raw_token_ids_exposed"])
             self.assertFalse(audit["raw_logits_exposed"])
+
+    def test_first_target_weight_ablation_four_arms(self):
+        audit=self.report["first_target_weight_ablation"]
+        self.assertEqual(set(audit["arms"]),{"1","2","4","8"})
+        self.assertEqual(audit["weights"],[1,2,4,8])
+
+    def test_first_target_weight_ablation_same_holdouts(self):
+        audit=self.report["first_target_weight_ablation"]
+        for arm in audit["arms"].values():
+            self.assertEqual(set(arm["benchmarks"]),{"written-v4","written-v5"})
+            for result in arm["benchmarks"].values():
+                self.assertEqual(result["first_target_rank"]["cases"],10)
+                self.assertEqual(result["generation"]["cases"],10)
+
+    def test_first_target_weight_ablation_more_first_steps(self):
+        arms=self.report["first_target_weight_ablation"]["arms"]
+        counts=[arms[str(weight)]["training"]["first_target_gradient_steps"] for weight in (1,2,4,8)]
+        self.assertEqual(counts,[24,48,96,192])
+
+    def test_first_target_weight_ablation_private_and_isolated(self):
+        audit=self.report["first_target_weight_ablation"]
+        self.assertFalse(audit["raw_text_exposed"])
+        self.assertFalse(audit["raw_token_ids_exposed"])
+        self.assertFalse(audit["baseline_checkpoint_mutated"])
+        self.assertFalse(audit["production_deployed"])
+        self.assertTrue(audit["human_release_required"])
