@@ -5,6 +5,7 @@ from languages.en.evaluation.teacher_forced_positions_v1 import inspect_teacher_
 from languages.en.evaluation.prompt_target_identifiability_v1 import inspect_prompt_target_identifiability_v1
 from languages.en.evaluation.prompt_context_collisions_v1 import inspect_prompt_context_collisions_v1
 from languages.en.evaluation.context_window_sweep_v1 import inspect_context_window_sweep_v1
+from languages.en.evaluation.inference_context_counterfactual_v1 import inspect_inference_context_counterfactual_v1
 from languages.en.evaluation.generation_diagnostics_v1 import summarize_generation_diagnostics_v1
 from languages.en.data.preparation.corpus import Example
 from languages.en.training.train import _encode
@@ -35,12 +36,15 @@ def run_position_balanced_ablation_v1(tokenizer,baseline_model,encoded_training,
                 [case.example.conversation for case in cases])
             window_sweep=inspect_context_window_sweep_v1(tokenizer,model.prompt_format,
                 [case.example.conversation for case in cases])
+            counterfactual=(inspect_inference_context_counterfactual_v1(tokenizer,model,cases)
+                if name=="uniform" and benchmark=="diverse-target-v1" else None)
             details=[case.score(generate(tokenizer,model,case.example.conversation)) for case in cases]
             groups[benchmark]={
                 "teacher_forced_positions":positions,
                 "prompt_target_identifiability":contrast,
                 "prompt_context_collisions":collisions,
                 "context_window_sweep":window_sweep,
+                "inference_context_counterfactual":counterfactual,
                 "generation":summarize_generation_diagnostics_v1(details),
             }
         arms[name]={"training":training,"benchmarks":groups}
