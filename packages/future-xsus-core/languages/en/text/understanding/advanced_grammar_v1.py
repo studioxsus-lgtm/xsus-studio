@@ -56,7 +56,7 @@ def _be_agrees(aux, subject):
     if aux == "am":
         return subject == "i"
     if aux in {"is", "was"}:
-        return subject in _SINGULAR or aux == "was" and subject == "i"
+        return subject in _SINGULAR or subject.startswith("the ") or aux == "was" and subject == "i"
     return subject not in _SINGULAR and not (subject == "i" and aux == "are")
 
 
