@@ -25,6 +25,7 @@ from languages.en.evaluation.decision_margin_v1 import inspect_decision_margin_v
 from languages.en.evaluation.first_target_rank_v1 import inspect_first_target_rank_v1
 from languages.en.learning.first_target_weight_ablation_v1 import run_first_target_weight_ablation_v1
 from languages.en.evaluation.first_target_ablation_decision_v1 import summarize_first_target_ablation_v1
+from languages.en.evaluation.position_regression_guard_v1 import inspect_position_regression_v1
 from languages.en.text.generation.conversation_format import prompt_tokens
 from languages.en.text.normalization.model_input import prepare_model_input
 from languages.en.training.train import _encode
@@ -161,6 +162,7 @@ def run_synthetic_feedback_experiment_v1():
             "training_target_distribution":training_target_distribution,
             "first_target_weight_ablation":first_target_weight_ablation,
             "first_target_weight_ablation_decision":summarize_first_target_ablation_v1(first_target_weight_ablation),
+            "first_target_position_regression_guard":inspect_position_regression_v1(first_target_weight_ablation),
             "baseline_output_bias_audit":baseline_output_bias_audit,
             "candidate_output_bias_audit":candidate_output_bias_audit,
             "generation_collapse_detected":generation_collapse_detected,
