@@ -77,6 +77,19 @@ class IntelligenceKernel:
                        ("derive", "replay_proof"), True,
                        ("formal_inference_only", "facts_not_independently_verified"))
 
+    def infer_from_sources(self, store, owner_id: str, keys: tuple[str, ...],
+                           rules: tuple, query: str) -> IntelligenceResult:
+        """Infer from owner-scoped evidence, distinguishing logic from truth."""
+        from .knowledge_reasoning_v1 import infer_from_knowledge
+        result = infer_from_knowledge(store, owner_id, keys, rules, query)
+        if result.status != "entailed":
+            return _result("abstained", "grounded_reasoning",
+                           evidence=result.sources, limitations=result.limitations)
+        return _result("resolved", "grounded_reasoning", result.query,
+                       result.sources, ("retrieve_evidence", "derive", "replay_proof"),
+                       result.verified_derivation,
+                       result.limitations)
+
     def retrieve(self, question: str) -> IntelligenceResult:
         question = _safe_text(question)
         if self._knowledge is None:
