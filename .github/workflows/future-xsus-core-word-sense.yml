@@ -27,14 +27,20 @@ jobs:
           python-version: "3.12"
       - name: Run contextual sense and benchmark regression tests
         run: |
-          python -m unittest languages.en.tests.test_word_sense_v1 languages.en.tests.test_word_sense_benchmark_v1 -v
+          python -m unittest languages.en.tests.test_word_sense_v1 languages.en.tests.test_word_sense_benchmark_v1 languages.en.tests.test_word_sense_quality_gate_v1 -v
       - name: Run read-only aggregate benchmark
         run: |
           python -m languages.en.evaluation.word_sense_benchmark_v1 > word-sense-benchmark-v1.json
           cat word-sense-benchmark-v1.json
+      - name: Enforce conservative lexical diagnostic gate
+        run: |
+          python -m languages.en.evaluation.word_sense_quality_gate_v1 > word-sense-quality-gate-v1.json
+          cat word-sense-quality-gate-v1.json
       - name: Publish aggregate report only
         uses: actions/upload-artifact@v4
         with:
           name: future-xsus-core-word-sense-v1-aggregate
-          path: packages/future-xsus-core/word-sense-benchmark-v1.json
+          path: |
+            packages/future-xsus-core/word-sense-benchmark-v1.json
+            packages/future-xsus-core/word-sense-quality-gate-v1.json
           if-no-files-found: error
