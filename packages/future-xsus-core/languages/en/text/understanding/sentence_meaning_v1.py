@@ -58,10 +58,13 @@ def analyze_sentence_meaning(text: str) -> SentenceFrame:
         return _abstain("unsupported_subject")
     remaining = tokens[len(subject.split()):]
     negated = False
+    auxiliary = None
     if remaining and remaining[0] in _AUX_NEG:
+        auxiliary = _AUX_NEG[remaining[0]]
         negated = True
         remaining = remaining[1:]
     elif len(remaining) >= 2 and remaining[0] in _NEG_AUX and remaining[1] == "not":
+        auxiliary = remaining[0]
         negated = True
         remaining = remaining[2:]
     elif remaining and remaining[0] in _NEG_AUX:
@@ -75,6 +78,15 @@ def analyze_sentence_meaning(text: str) -> SentenceFrame:
     # "does not reads" as a meaningful controlled-language sentence.
     if negated and verb != _LEMMAS[verb]:
         return _abstain("invalid_negated_verb")
+    if negated and auxiliary in {"does", "did"} and subject in {"i", "you", "we", "they"} and auxiliary == "does":
+        return _abstain("invalid_auxiliary_agreement")
+    if negated and auxiliary == "do" and subject in {"he", "she", "the user", "the teacher", "the student", "the developer", "the engine", "the model", "the system"}:
+        return _abstain("invalid_auxiliary_agreement")
+    if not negated:
+        singular_third = subject in {"he", "she", "the user", "the teacher", "the student", "the developer", "the engine", "the model", "the system"}
+        inflected = verb != _LEMMAS[verb]
+        if singular_third != inflected:
+            return _abstain("invalid_verb_agreement")
     obj = " ".join(remaining[1:])
     if obj not in _OBJECTS:
         return _abstain("unsupported_object")
