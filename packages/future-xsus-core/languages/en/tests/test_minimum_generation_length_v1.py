@@ -103,9 +103,11 @@ class MinimumGenerationLengthV1Tests(unittest.TestCase):
         self.assertEqual(self._generate(max_new_tokens=8,avoid_leading_whitespace=True),"")
 
     def test_visible_first_with_minimum_one(self):
+        self.tokenizer.decode=lambda tokens,errors="replace": " " if tokens == [BYTE_OFFSET] else "b"
         self.assertEqual(self._generate(max_new_tokens=8,min_new_tokens=1,avoid_leading_whitespace=True),"b")
 
     def test_visible_first_with_minimum_visible(self):
+        self.tokenizer.decode=lambda tokens,errors="replace": " " if tokens == [BYTE_OFFSET] else "b"
         self.assertEqual(self._generate(max_new_tokens=8,min_visible_chars=1,avoid_leading_whitespace=True),"b")
 
     def test_visible_first_rejects_non_boolean(self):
