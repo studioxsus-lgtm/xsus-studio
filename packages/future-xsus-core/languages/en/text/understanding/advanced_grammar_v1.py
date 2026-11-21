@@ -117,7 +117,7 @@ def analyze_advanced_grammar(text: str) -> AdvancedGrammarFrame:
                     subject, action, obj, ())
         elif verb_form in _PARTICIPLES:
             action = _PARTICIPLES[verb_form]
-            if len(tokens) == 3 and tokens[0] == "by" and tokens[1] == "the" and tokens[2] in NOUNS:
+            if len(tokens) == 3 and tokens[0] == "by" and tokens[1] == "the" and ("the " + tokens[2] in SUBJECTS or tokens[2] in NOUNS):
                 return AdvancedGrammarFrame("resolved", "passive",
                     "present_passive" if _BE[aux] == "present" else "past_passive",
                     subject, action, " ".join(tokens[1:]), ())
