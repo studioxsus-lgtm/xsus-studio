@@ -30,10 +30,23 @@ def inspect_verified_checkpoint_holdout_v1(
         raise ValueError("checkpoint, evaluation, and training paths must be distinct")
     before = tuple(_digest(path) for path in all_paths)
     cases = load_cases(evaluation_path)
-    training = tuple(
-        example for path in training_paths for example in load_corpus(path)
-    )
-    validate_splits(training, tuple(case.example for case in cases))
+    # Each individual corpus must remain internally unique. Across versioned
+    # corpora, repeated conversations are expected and are counted only once.
+    # This is a split check, not a guarantee of checkpoint training provenance.
+    training_by_key = {}
+    for path in training_paths:
+        corpus = load_corpus(path)
+        validate_splits(corpus, ())
+        for example in corpus:
+            conversation = example.conversation
+            key = (
+                " ".join(conversation.text.casefold().split()),
+                tuple((turn.role, " ".join(turn.text.casefold().split()))
+                      for turn in conversation.history),
+            )
+            training_by_key.setdefault(key, example)
+    validate_splits(tuple(training_by_key.values()),
+                    tuple(case.example for case in cases))
     prompts = [case.example.conversation for case in cases]
     references = [case.example.response for case in cases]
     report = inspect_checkpoint_generation_holdout_v1(
@@ -46,6 +59,7 @@ def inspect_verified_checkpoint_holdout_v1(
         "contract": "future-xsus-core.verified-checkpoint-holdout.v1",
         "cases": len(cases),
         "training_corpora_checked": len(training_paths),
+        "unique_training_conversations_checked": len(training_by_key),
         "checked_training_conversation_overlap": True,
         "checkpoint_training_provenance_verified": False,
         "evaluation_sha256": before[1],
