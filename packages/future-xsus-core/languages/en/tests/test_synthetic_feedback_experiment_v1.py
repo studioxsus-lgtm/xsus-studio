@@ -452,3 +452,26 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
                 self.assertFalse(audit["raw_token_ids_exposed"])
                 self.assertFalse(audit["raw_context_exposed"])
                 self.assertFalse(audit["release_authorized"])
+
+    def test_context_window_sweep_all_holdouts(self):
+        for arm in self.report["position_balanced_ablation"]["arms"].values():
+            for row in arm["benchmarks"].values():
+                sweep=row["context_window_sweep"]
+                self.assertEqual(sweep["cases"],10)
+                self.assertEqual(set(sweep["window_results"]),{"16","32","64","128"})
+                self.assertFalse(sweep["production_context_changed"])
+
+    def test_diverse_window_sweep_restores_distinguishability(self):
+        for arm in self.report["position_balanced_ablation"]["arms"].values():
+            sweep=arm["benchmarks"]["diverse-target-v1"]["context_window_sweep"]
+            self.assertEqual(sweep["window_results"]["16"]["distinct_context_windows"],1)
+            self.assertEqual(sweep["window_results"]["128"]["distinct_context_windows"],10)
+            self.assertIsNotNone(sweep["smallest_tested_collision_free_window"])
+
+    def test_context_window_sweep_privacy(self):
+        for arm in self.report["position_balanced_ablation"]["arms"].values():
+            for row in arm["benchmarks"].values():
+                sweep=row["context_window_sweep"]
+                self.assertFalse(sweep["raw_text_exposed"])
+                self.assertFalse(sweep["raw_token_ids_exposed"])
+                self.assertFalse(sweep["release_authorized"])
