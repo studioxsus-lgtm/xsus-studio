@@ -59,7 +59,18 @@ def run_synthetic_feedback_experiment_v1():
                 "baseline_exact_matches":scores["baseline"]["exact_matches"],
                 "candidate_exact_matches":scores["candidate"]["exact_matches"],
             }
+        baseline_accepted=sum(row["baseline_accepted"] for row in benchmarks.values())
+        candidate_accepted=sum(row["candidate_accepted"] for row in benchmarks.values())
+        benchmark_cases=sum(row["cases"] for row in benchmarks.values())
+        observed_generalization_gain=candidate_accepted>baseline_accepted
         return {
+            "holdout_cases":benchmark_cases,
+            "holdout_baseline_accepted":baseline_accepted,
+            "holdout_candidate_accepted":candidate_accepted,
+            "holdout_acceptance_delta":candidate_accepted-baseline_accepted,
+            "observed_generalization_gain":observed_generalization_gain,
+            "feedback_loss_improved":report["feedback_loss_after"]<report["feedback_loss_before"],
+            "release_evidence_sufficient":False,
             "contract":"future-xsus-core.synthetic-feedback-experiment.v1",
             "synthetic_feedback_only":True,
             "real_neural_training":True,
