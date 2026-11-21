@@ -15,6 +15,7 @@ from languages.en.learning.autonomous_candidate_cycle_v1 import (
     CandidateCycleRequestV1,execute_autonomous_candidate_cycle_v1,
 )
 from languages.en.evaluation.generation_diagnostics_v1 import summarize_generation_diagnostics_v1
+from languages.en.evaluation.token_choice_diagnostics_v1 import inspect_token_choices_v1
 from languages.en.evaluation.compare import load_cases
 from languages.en.models.checkpoint import load_checkpoint
 from languages.en.text.generation.generate import generate
@@ -66,6 +67,9 @@ def run_synthetic_feedback_experiment_v1():
             visible_details=[case.score(generate(
                 candidate_tokenizer,candidate_model,case.example.conversation,
                 min_visible_chars=8)) for case in cases]
+            token_choice_diagnostics=[inspect_token_choices_v1(
+                candidate_tokenizer,candidate_model,case.example.conversation,
+                steps=32) for case in cases]
             benchmarks[name]={
                 "cases":scores["baseline"]["cases"],
                 "baseline_accepted":scores["baseline"]["accepted"],
@@ -76,6 +80,17 @@ def run_synthetic_feedback_experiment_v1():
                 "candidate_generation_diagnostics":summarize_generation_diagnostics_v1(scores["candidate"]["details"]),
                 "candidate_min_length_8_diagnostics":summarize_generation_diagnostics_v1(min_length_details),
                 "candidate_min_visible_8_diagnostics":summarize_generation_diagnostics_v1(visible_details),
+                "candidate_token_choice_diagnostics":{
+                    "cases":len(token_choice_diagnostics),
+                    "steps_per_case":32,
+                    "eos_preferred_steps":sum(d["eos_preferred_steps"] for d in token_choice_diagnostics),
+                    "whitespace_token_steps":sum(d["whitespace_token_steps"] for d in token_choice_diagnostics),
+                    "printable_token_steps":sum(d["printable_token_steps"] for d in token_choice_diagnostics),
+                    "non_rendering_token_steps":sum(d["non_rendering_token_steps"] for d in token_choice_diagnostics),
+                    "control_or_replacement_token_steps":sum(d["control_or_replacement_token_steps"] for d in token_choice_diagnostics),
+                    "raw_text_exposed":False,
+                    "raw_token_ids_exposed":False,
+                },
             }
         baseline_accepted=sum(row["baseline_accepted"] for row in benchmarks.values())
         candidate_accepted=sum(row["candidate_accepted"] for row in benchmarks.values())
