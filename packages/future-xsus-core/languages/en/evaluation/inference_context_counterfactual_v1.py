@@ -8,6 +8,7 @@ from languages.en.evaluation.prompt_context_collisions_v1 import inspect_prompt_
 from languages.en.evaluation.prompt_target_identifiability_v1 import inspect_prompt_target_identifiability_v1
 from languages.en.evaluation.teacher_forced_positions_v1 import inspect_teacher_forced_positions_v1
 from languages.en.evaluation.first_target_rank_v1 import inspect_first_target_rank_v1
+from languages.en.evaluation.context_window_decision_v1 import inspect_context_window_decision_v1
 from languages.en.data.preparation.corpus import Example
 from languages.en.training.train import _encode
 from languages.en.text.normalization.model_input import prepare_model_input
@@ -43,7 +44,7 @@ def inspect_inference_context_counterfactual_v1(tokenizer, model, cases, *, wind
             "mean_first_target_rank":ranks["mean_target_rank"],
             "mean_best_to_target_logit_gap":ranks["mean_best_to_target_logit_gap"],
         }
-    return {
+    report={
         "contract":"future-xsus-core.inference-context-counterfactual.v1",
         "cases":len(cases),
         "trained_context_size":model.context_size,
@@ -54,3 +55,6 @@ def inspect_inference_context_counterfactual_v1(tokenizer, model, cases, *, wind
         "raw_text_exposed":False,
         "raw_token_ids_exposed":False,
     }
+    if all(str(size) in groups for size in (16,32,64)):
+        report["context_window_decision"]=inspect_context_window_decision_v1(report)
+    return report
