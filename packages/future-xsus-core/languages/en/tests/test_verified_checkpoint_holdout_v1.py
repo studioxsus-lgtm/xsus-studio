@@ -56,6 +56,22 @@ class VerifiedCheckpointHoldoutTests(unittest.TestCase):
         self.assertTrue(result["checked_training_conversation_overlap"])
         self.assertFalse(result["checkpoint_training_provenance_verified"])
 
+    def test_checkpoint_revision_matches_file_digest(self):
+        import hashlib
+        result = self.evaluate()
+        self.assertEqual(
+            result["result"]["checkpoint_revision"],
+            "sha256-" + hashlib.sha256(self.checkpoint.read_bytes()).hexdigest(),
+        )
+
+    def test_semantic_contamination_not_claimed_excluded(self):
+        result = self.evaluate()
+        self.assertFalse(result["semantic_contamination_excluded"])
+        self.assertEqual(
+            result["holdout_isolation_scope"],
+            "exact normalized conversation keys in supplied corpora only",
+        )
+
     def test_no_release_authorization(self):
         result = self.evaluate()
         self.assertFalse(result["release_authorized"])
