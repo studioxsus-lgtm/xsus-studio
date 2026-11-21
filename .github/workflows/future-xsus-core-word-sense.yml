@@ -27,7 +27,7 @@ jobs:
           python-version: "3.12"
       - name: Run contextual sense and benchmark regression tests
         run: |
-          python -m unittest languages.en.tests.test_word_sense_v1 languages.en.tests.test_word_sense_benchmark_v1 languages.en.tests.test_word_sense_quality_gate_v1 languages.en.tests.test_word_sense_challenge_v1 languages.en.tests.test_word_sense_context_guard_v1 -v
+          python -m unittest languages.en.tests.test_word_sense_v1 languages.en.tests.test_word_sense_benchmark_v1 languages.en.tests.test_word_sense_quality_gate_v1 languages.en.tests.test_word_sense_challenge_v1 languages.en.tests.test_word_sense_context_guard_v1 languages.en.tests.test_word_sense_phase1_acceptance_v1 -v
       - name: Run read-only aggregate benchmark
         run: |
           python -m languages.en.evaluation.word_sense_benchmark_v1 > word-sense-benchmark-v1.json
@@ -44,6 +44,10 @@ jobs:
         run: |
           python -m languages.en.evaluation.word_sense_guard_comparison_v1 > word-sense-guard-comparison-v1.json
           cat word-sense-guard-comparison-v1.json
+      - name: Enforce Phase 1 experimental milestone acceptance
+        run: |
+          python -m languages.en.evaluation.word_sense_phase1_acceptance_v1 > word-sense-phase1-acceptance-v1.json
+          cat word-sense-phase1-acceptance-v1.json
       - name: Publish aggregate report only
         uses: actions/upload-artifact@v4
         with:
@@ -53,4 +57,5 @@ jobs:
             packages/future-xsus-core/word-sense-quality-gate-v1.json
             packages/future-xsus-core/word-sense-challenge-v1.json
             packages/future-xsus-core/word-sense-guard-comparison-v1.json
+            packages/future-xsus-core/word-sense-phase1-acceptance-v1.json
           if-no-files-found: error
