@@ -365,3 +365,20 @@ python -m unittest tests.integration.test_real_crash_v1 -v
 
 This is an integration reliability checkpoint, not a proof of production
 readiness, open-world learning, autonomous operation, or general intelligence.
+
+## Phase 6.1 — Capability benchmarking
+
+`capability_benchmark_v1.py` groups authored offline evaluation cases by
+reasoning, problem solving, planning, decision, evidence, or abstention. It
+reports per-capability passed/total counts and failed case IDs, and compares
+scores with a baseline when the capability shape matches.
+
+```bash
+python -m unittest tests.integration.test_capability_benchmark_v1 -v
+```
+
+The included integration fixtures exercise five authored categories; evidence
+cases can be supplied separately. A passing score is **not** evidence of
+open-world generalization or external factual correctness. Comparing scores
+alone does not establish case-set identity; retain the underlying case IDs and
+use `IntelligenceEvaluator.regression` for case-level comparisons.
