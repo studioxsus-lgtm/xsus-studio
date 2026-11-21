@@ -8,6 +8,7 @@ from pathlib import Path
 
 from languages.en.data.preparation.corpus import load_corpus, validate_splits
 from languages.en.evaluation.compare import load_cases
+from languages.en.models.checkpoint import load_checkpoint
 from languages.en.evaluation.checkpoint_generation_holdout_v1 import (
     inspect_checkpoint_generation_holdout_v1,
 )
@@ -49,6 +50,13 @@ def inspect_verified_checkpoint_holdout_v1(
                     tuple(case.example for case in cases))
     prompts = [case.example.conversation for case in cases]
     references = [case.example.response for case in cases]
+    tokenizer, _, _ = load_checkpoint(checkpoint_path)
+    # A reference longer than the generation budget cannot match in full.
+    # Report this limitation without retaining or returning raw text.
+    references_exceeding_budget = sum(
+        len(tokenizer.encode(reference)) > max_new_tokens
+        for reference in references
+    )
     report = inspect_checkpoint_generation_holdout_v1(
         checkpoint_path, prompts, references,
         independent_holdout=True, max_new_tokens=max_new_tokens,
@@ -67,6 +75,8 @@ def inspect_verified_checkpoint_holdout_v1(
         "holdout_isolation_scope": "exact normalized conversation keys in supplied corpora only",
         "semantic_contamination_excluded": False,
         "metric_is_full_response_exact_match": True,
+        "references_exceeding_generation_budget": references_exceeding_budget,
+        "generation_budget_tokens": max_new_tokens,
         "evaluation_sha256": before[1],
         "checkpoint_sha256": before[0],
         "training_sha256": list(before[2:]),
