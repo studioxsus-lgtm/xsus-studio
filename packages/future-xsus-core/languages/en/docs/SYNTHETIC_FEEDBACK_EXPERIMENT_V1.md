@@ -127,3 +127,18 @@ printable, non-rendering and control/replacement tokens. This
 diagnostic deliberately continues greedy choices without stopping
 on EOS; it measures model preference, not the deployed response.
 No training, production defaults or promotion rules are changed.
+
+## Visible-first decoder ablation
+
+GitHub Actions run 44899163971 measured **640/640 whitespace
+token selections** in the candidate across the 20 held-out prompts
+(32 greedy steps each), with no EOS preference. This directly
+explains why the generated responses are empty after stripping.
+
+An **opt-in** `avoid_leading_whitespace=True` decoding mode now
+restricts the first visible token choice to tokens that decode to
+non-whitespace, when available. The default remains `False`.
+The experiment scores this mode with `min_visible_chars=1`
+alongside the existing baselines. This is an ablation and may
+produce poor text; it does not fix the underlying training
+distribution or authorize promotion.
