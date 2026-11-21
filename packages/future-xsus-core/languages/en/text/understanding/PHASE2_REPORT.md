@@ -96,3 +96,19 @@ benchmark. The aggregate report contains no raw input sentences.
 python -m unittest languages.en.tests.test_sentence_batch_stress_v1 -v
 python -m languages.en.evaluation.sentence_batch_stress_v1
 ```
+
+## Explicit multi-sentence evidence grouping
+
+`sentence_evidence_v1.py` groups independently parsed controlled-language
+sentences by their **literal normalized subject/action/object** and records
+positive/negative sentence indices. A group with both polarities receives
+`explicit_polarity_conflict=True`; this is **not** a claim of logical
+contradiction, world truth, shared time scope, or pronoun coreference.
+Unsupported sentences remain abstained. No source sentence is returned.
+An eight-case deterministic diagnostic checks basic grouping, mixed polarity,
+unsupported inputs, separate objects/actions, and the 32-sentence limit.
+
+```bash
+python -m unittest languages.en.tests.test_sentence_evidence_v1 languages.en.tests.test_sentence_evidence_benchmark_v1 -v
+python -m languages.en.evaluation.sentence_evidence_benchmark_v1
+```
