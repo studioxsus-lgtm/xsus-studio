@@ -362,3 +362,18 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
                 self.assertFalse(positions["raw_text_exposed"])
                 self.assertFalse(positions["raw_token_ids_exposed"])
                 self.assertFalse(positions["raw_logits_exposed"])
+
+    def test_position_guard_detects_weight_four_regression(self):
+        guard=self.report["first_target_position_regression_guard"]
+        self.assertTrue(guard["arms"]["4"]["position_regression"])
+        self.assertTrue(guard["arms"]["8"]["position_regression"])
+
+    def test_position_guard_preserves_manual_release(self):
+        guard=self.report["first_target_position_regression_guard"]
+        self.assertFalse(guard["position_guard_authorizes_release"])
+        self.assertTrue(guard["human_release_required"])
+
+    def test_position_guard_privacy(self):
+        guard=self.report["first_target_position_regression_guard"]
+        self.assertFalse(guard["raw_text_exposed"])
+        self.assertFalse(guard["raw_token_ids_exposed"])
