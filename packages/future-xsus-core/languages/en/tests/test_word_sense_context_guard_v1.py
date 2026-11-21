@@ -18,6 +18,17 @@ class ContextGuardTests(unittest.TestCase):
         self.assertIsNone(result.sense)
         self.assertTrue(result.guard_triggered)
 
+    def test_ambiguous_baseline_still_records_guard_reason(self):
+        result = analyze("The bank was not a river bank, but held savings.", "bank")
+        self.assertIsNone(result.sense)
+        self.assertTrue(result.guard_triggered)
+        self.assertIn("negated_contrast", result.guard_reasons)
+
+    def test_absent_target_does_not_trigger_guard(self):
+        result = analyze("It was not a river but had savings.", "bank")
+        self.assertFalse(result.guard_triggered)
+        self.assertEqual(result.status, "target_absent")
+
     def test_negated_contrast_abstains(self):
         result = analyze("The python is not a snake but a programming language.", "python")
         self.assertEqual(result.status, "guarded_abstention")
