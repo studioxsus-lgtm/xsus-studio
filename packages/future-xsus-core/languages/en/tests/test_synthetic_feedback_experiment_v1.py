@@ -36,7 +36,7 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
         self.assertEqual(set(self.report["benchmarks"]),{"written-v4","written-v5"})
 
     def test_real_case_counts(self):
-        self.assertTrue(all(row["cases"]==1 for row in self.report["benchmarks"].values()))
+        self.assertTrue(all(row["cases"]==10 for row in self.report["benchmarks"].values()))
 
     def test_review_is_explicit(self):
         self.assertIs(type(self.report["candidate_eligible_for_review"]),bool)
@@ -48,7 +48,7 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
         self.assertFalse(self.report["production_deployed"])
 
     def test_holdout_case_count(self):
-        self.assertEqual(self.report["holdout_cases"],2)
+        self.assertEqual(self.report["holdout_cases"],20)
 
     def test_holdout_counts_consistent(self):
         rows=self.report["benchmarks"].values()
@@ -71,4 +71,18 @@ class SyntheticFeedbackExperimentV1Tests(unittest.TestCase):
                          self.report["feedback_loss_after"]<self.report["feedback_loss_before"])
 
     def test_loss_alone_never_proves_release_readiness(self):
+        self.assertFalse(self.report["release_evidence_sufficient"])
+
+    def test_holdout_baseline_bounded(self):
+        self.assertGreaterEqual(self.report["holdout_baseline_accepted"],0)
+        self.assertLessEqual(self.report["holdout_baseline_accepted"],20)
+
+    def test_holdout_candidate_bounded(self):
+        self.assertGreaterEqual(self.report["holdout_candidate_accepted"],0)
+        self.assertLessEqual(self.report["holdout_candidate_accepted"],20)
+
+    def test_each_holdout_has_ten_cases(self):
+        self.assertEqual([row["cases"] for row in self.report["benchmarks"].values()],[10,10])
+
+    def test_no_unverified_quality_claim_after_expansion(self):
         self.assertFalse(self.report["release_evidence_sufficient"])
