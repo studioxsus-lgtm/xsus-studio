@@ -63,3 +63,17 @@ must be interpreted only within this limited dataset.
 python3 -m languages.en.evaluation.word_sense_benchmark_v1
 python3 -m languages.en.evaluation.word_sense_quality_gate_v1
 ```
+
+## Adversarial challenge (separate from release gate)
+
+The additional 48-case authored challenge covers negation, competing cues,
+repeated words, and sparse context. It is intentionally **non-gating**:
+known limitations should remain visible rather than hiding them to make CI
+pass. Run `python3 -m languages.en.evaluation.word_sense_challenge_report_v1`
+to inspect aggregate and per-target counts without exposing source sentences.
+The existing 63-case diagnostic quality gate remains separate.
+
+The challenge is not externally blind and does not establish real-world
+accuracy. In particular, the cue-based model does not understand negation,
+so adversarial errors are expected and should guide a future opt-in
+context-guard design with regression tests before integration.
