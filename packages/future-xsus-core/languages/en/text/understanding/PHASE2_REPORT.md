@@ -112,3 +112,27 @@ unsupported inputs, separate objects/actions, and the 32-sentence limit.
 python -m unittest languages.en.tests.test_sentence_evidence_v1 languages.en.tests.test_sentence_evidence_benchmark_v1 -v
 python -m languages.en.evaluation.sentence_evidence_benchmark_v1
 ```
+
+## Phase 2 final engineering acceptance
+
+`sentence_phase2_acceptance_v1.py` aggregates the 32-case authored baseline,
+24-case authored challenge, 24-case relation holdout, 8-case evidence diagnostic,
+and 100 iterations of deterministic batch stress. These sum to **88 authored
+diagnostic cases**, plus repeatability checks; the numbers are not independent
+measurements of general language competence.
+
+The acceptance command exits nonzero when any quality, evidence, repeatability,
+privacy, or scope check fails. CI runs the acceptance module and its negative
+regression tests. Phase 2 can be considered **engineering-complete for this
+bounded opt-in controlled English grammar** only after both branch workflows
+pass on the final commit.
+
+**Not authorized:** production deployment, external tool execution, open-domain
+English understanding, independent blind-benchmark claims, coreference,
+logical contradiction, or general document understanding. The language kernel
+remains independent of other XSUS engines and the main website branch.
+
+```bash
+python -m unittest languages.en.tests.test_sentence_phase2_acceptance_v1 -v
+python -m languages.en.evaluation.sentence_phase2_acceptance_v1
+```
