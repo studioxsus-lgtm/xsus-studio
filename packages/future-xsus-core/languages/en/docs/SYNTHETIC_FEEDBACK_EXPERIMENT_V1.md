@@ -336,3 +336,18 @@ only aggregate preference rates, mean logit advantages,
 and winner changes, across all four arms and both holdout
 groups. This is a limited association probe, not proof
 of reasoning, semantic understanding or production readiness.
+
+## First-target contrast identifiability safeguard
+
+Run 44906459966 passed, but the original rotated-prompt
+contrast yielded zero mean target advantage in all arms.
+Because the synthetic holdout reference answers begin with
+the same first token, the cyclic difference telescopes to
+zero regardless of model behavior. The new identifiability
+audit reports first-target diversity, dominant target rate,
+and explicitly marks the shared-target contrast as
+**insufficient_target_diversity**. This prevents a structurally
+uninformative zero from being interpreted as evidence for
+or against semantic prompt conditioning. Future evaluations
+must use independently authored, varied reference starts
+before drawing conclusions about prompt-target association.
