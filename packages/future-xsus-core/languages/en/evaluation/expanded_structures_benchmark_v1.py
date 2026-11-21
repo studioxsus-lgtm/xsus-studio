@@ -1,7 +1,7 @@
 """Deterministic 2000-distinct controlled modifier/tense structures."""
 import json
 
-from languages.en.text.understanding.expanded_english_v1 import SUBJECTS, VERBS, NOUNS
+from languages.en.text.understanding.expanded_english_v1 import SUBJECTS, VERBS, NOUNS, _SINGULAR, _VERB_FORMS
 from languages.en.text.understanding.expanded_structures_v1 import (
     ADJECTIVES, ADVERBS, analyze_structured_clause,
 )
@@ -18,10 +18,12 @@ def evaluate_expanded_structures() -> dict:
         adverb = ADVERBS[(i // 40 + i // 240) % len(ADVERBS)]
         cases.append((subject, verb, noun, adjective, adverb))
     unique = len(set(cases))
+    inflections = {lemma: form for form, lemma in _VERB_FORMS.items() if form != lemma}
     resolved = 0
     for subject, verb, noun, adjective, adverb in cases:
+        verb_form = inflections[verb] if subject in _SINGULAR else verb
         frame = analyze_structured_clause(
-            f"{subject} {adverb} {verb} the {adjective} {noun}.")
+            f"{subject} {verb_form} {adverb} the {adjective} {noun}.")
         resolved += (frame.status == "resolved" and frame.action == verb
                      and frame.object == noun and frame.adjective == adjective
                      and frame.adverb == adverb and frame.tense == "present_simple")
