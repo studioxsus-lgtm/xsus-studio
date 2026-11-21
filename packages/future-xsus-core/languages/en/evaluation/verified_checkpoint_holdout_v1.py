@@ -48,7 +48,7 @@ def inspect_verified_checkpoint_holdout_v1(
         "contract": "future-xsus-core.verified-checkpoint-holdout.v1",
         "cases": len(cases),
         "training_corpora_checked": len(training_paths),
-        "checked_training_conversation_overlap": False,
+        "checked_training_conversation_overlap": True,
         "checkpoint_training_provenance_verified": False,
         "evaluation_sha256": before[1],
         "checkpoint_sha256": before[0],
