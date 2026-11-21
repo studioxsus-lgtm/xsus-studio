@@ -44,6 +44,31 @@ jobs:
             --candidate languages/en/models/checkpoints/xsus-en-written-v5.json.gz \
             > official-written-v4-v5-evidence.json
           python -c 'import json; r=json.load(open("official-written-v4-v5-evidence.json")); print(json.dumps({"checkpoint_sha256":r["checkpoint_sha256"],"benchmarks":r["comparison"]["benchmarks"],"assessment":r["assessment"]},indent=2))'
+      - name: Measure older independent quality v2 and v3 holdouts
+        timeout-minutes: 12
+        run: |
+          python -m languages.en.evaluation.compare \
+            --baseline languages/en/models/checkpoints/xsus-en-written-v4.json.gz \
+            --candidate languages/en/models/checkpoints/xsus-en-written-v5.json.gz \
+            --evaluation languages/en/evaluation/quality-v2.jsonl \
+            --training languages/en/data/training-v5.jsonl \
+            > quality-v2-v4-v5-comparison.json
+          python -m languages.en.evaluation.compare \
+            --baseline languages/en/models/checkpoints/xsus-en-written-v4.json.gz \
+            --candidate languages/en/models/checkpoints/xsus-en-written-v5.json.gz \
+            --evaluation languages/en/evaluation/quality-v3.jsonl \
+            --training languages/en/data/training-v5.jsonl \
+            > quality-v3-v4-v5-comparison.json
+          python -c 'import json; from pathlib import Path; files=[Path("quality-v2-v4-v5-comparison.json"),Path("quality-v3-v4-v5-comparison.json")]; print(json.dumps({f.name:{name:{k:v for k,v in d[name].items() if k in ("cases","accepted","exact_matches","preserved_all_facts")} for name in ("baseline","candidate")} for f in files for d in [json.loads(f.read_text())]},indent=2))'
+      - name: Upload independent quality holdout comparisons
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-xsus-core-independent-quality-v2-v3
+          path: |
+            packages/future-xsus-core/quality-v2-v4-v5-comparison.json
+            packages/future-xsus-core/quality-v3-v4-v5-comparison.json
+          if-no-files-found: warn
       - name: Upload measured writing evidence
         if: always()
         uses: actions/upload-artifact@v4
