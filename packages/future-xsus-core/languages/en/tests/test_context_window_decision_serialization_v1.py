@@ -50,7 +50,8 @@ class DecisionSerialization(unittest.TestCase):
         serialized=json.dumps(decide(data))
         self.assertNotIn("PRIVATE SYNTHETIC MARKER",serialized)
         self.assertNotIn("raw_prompt",serialized)
-        self.assertNotIn("raw_logits",serialized)
+        self.assertNotIn('"raw_logits":',serialized)
+        self.assertFalse(json.loads(serialized)["raw_logits_exposed"])
 
     def test_no_token_identifiers_in_result(self):
         serialized=json.dumps(decide(report()))
