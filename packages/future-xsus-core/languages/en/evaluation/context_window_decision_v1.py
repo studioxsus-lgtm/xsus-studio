@@ -24,6 +24,15 @@ def inspect_context_window_decision_v1(report):
         top = row.get("first_target_top_one_correct")
         matched = row.get("matched_target_preferred_cases")
         first_cases = row.get("first_target_cases")
+        distinct = row.get("distinct_context_windows")
+        collisions = row.get("colliding_cases")
+        changed = row.get("greedy_winner_changed_cases")
+        if type(distinct) is not int or not 1 <= distinct <= cases:
+            raise ValueError("invalid distinct context count")
+        if type(collisions) is not int or not 0 <= collisions <= cases:
+            raise ValueError("invalid collision count")
+        if type(changed) is not int or not 0 <= changed <= cases:
+            raise ValueError("invalid greedy winner change count")
         if type(first_cases) is not int or first_cases != cases:
             raise ValueError("inconsistent first-target case count")
         if any(type(value) not in (int, float) or not isfinite(value) for value in (rank, gap)) or rank < 1 or gap < 0:
