@@ -142,3 +142,17 @@ The experiment scores this mode with `min_visible_chars=1`
 alongside the existing baselines. This is an ablation and may
 produce poor text; it does not fix the underlying training
 distribution or authorize promotion.
+
+## Training-target distribution audit
+
+GitHub Actions run 44901375689 confirmed visible-first decoding
+changes 20/20 empty responses to non-empty one-character outputs,
+but **0/20 accepted**. This is a decoder workaround, not a quality gain.
+
+The experiment now additionally counts EOS, whitespace, printable
+and other target-token categories in the 24 synthetic replay
+examples. This distinguishes a whitespace-heavy training target
+distribution from a model that collapses onto whitespace despite
+other target classes being present. Only aggregate counts are
+reported. Training, release gates and default generation remain
+unchanged.
