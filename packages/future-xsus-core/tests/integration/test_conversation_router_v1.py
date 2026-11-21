@@ -51,10 +51,10 @@ class ConversationRouterTests(unittest.TestCase):
                               expected_revision=0, text="history")
 
     def test_invalid_command_fails_closed(self):
-        with self.assertRaises(ValueError):
-            self.router.reply("alice", self.session.session_id,
-                              expected_revision=0, text="prove INVALID",
-                              rules=(Rule(("a",), "b"),))
+        result = self.router.reply("alice", self.session.session_id,
+                                   expected_revision=0, text="prove INVALID",
+                                   rules=(Rule(("a",), "b"),))
+        self.assertEqual(result.status, "abstained")
 
     def test_no_persistent_cross_session_history(self):
         other = self.router.create("alice")
