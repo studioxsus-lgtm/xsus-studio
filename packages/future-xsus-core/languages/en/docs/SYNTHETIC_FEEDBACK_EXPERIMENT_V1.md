@@ -193,3 +193,17 @@ margin. No raw prompts, token identifiers or hidden vectors are
 included. This diagnostic separates learned output bias from
 context-conditioned hidden activation; it does not change model
 training or imply independent language proficiency.
+
+## Hidden-contribution scaling ablation
+
+Run 44903717326 found positive hidden-state logit advantages for
+whitespace over the output-bias winner in all 20 held-out cases
+(mean margins 0.964026 and 0.976139). To test the contribution
+rather than speculate, generation now accepts an **opt-in**
+`hidden_contribution_scale` between 0 and 1, defaulting to 1.
+At 1 the original model logits are used unchanged. Lower scales
+multiply only the hidden-state contribution to output logits,
+without modifying checkpoint weights or training. The synthetic
+experiment scores scales 0, 0.25, 0.5 and 0.75 on both held-out
+groups. This ablation may increase visible output without
+improving correctness and does not authorize deployment.
