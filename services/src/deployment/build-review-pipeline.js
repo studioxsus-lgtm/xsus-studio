@@ -18,6 +18,11 @@ export async function reviewSavedProjectBuild({projectId,ownerId}={},dependencie
   const files=await dependencies.buildFromSavedProject({projectId,ownerId});
   const result=inspectServerBuild(files);
   if(!result.ok) return reject('BUILD_PREFLIGHT_FAILED');
+  // Recheck ownership after asynchronous generation to reject projects that
+  // were deleted or reassigned while the builder was running.
+  const current=await dependencies.findOwnedProject({projectId,ownerId});
+  if(!current||current.id!==projectId||current.ownerId!==ownerId)
+   return reject('PROJECT_OWNERSHIP_CHANGED');
   return Object.freeze({status:'ready-for-review',reason:'STATIC_VALIDATION_ONLY',
    deployed:false,manifest:result.manifest});
  } catch {
