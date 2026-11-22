@@ -20,7 +20,7 @@ export function createHyperSixEngineAdapter({orchestration,contractVersion,reque
       });
       if (signal?.aborted) throw new CoordinationError("aborted");
       const result=response?.result;
-      if (response?.status !== "completed" || result?.state !== "review_required" ||
+      if (response?.status !== "success" || result?.state !== "review_required" ||
           result?.authorizedForExecution !== false || result?.sideEffects !== false ||
           !Array.isArray(result.stages) || result.stages.length > 6 ||
           result.stages.some(s=>!SIX_ENGINE_STAGE_NAMES.includes(s.stage) ||
