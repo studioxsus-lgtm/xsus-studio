@@ -94,3 +94,23 @@ jobs:
       - name: Test browser API adapter
         working-directory: packages/future-xsus-core/clients/browser
         run: node --test
+
+      - name: Test live HTTP intelligence integration
+        timeout-minutes: 2
+        run: |
+          set -eu
+          export XSUS_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          echo "::add-mask::$XSUS_API_TOKEN"
+          export XSUS_INTELLIGENCE_ENABLED=true
+          export XSUS_TEST_API_URL=http://127.0.0.1:18765
+          work="$(mktemp -d)"
+          python -m services.api.server --database "$work/sessions.db" --port 18765 > "$work/server.log" 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; rm -rf "$work"' EXIT
+          for i in $(seq 1 50); do
+            if curl -fsS "$XSUS_TEST_API_URL/healthz" >/dev/null 2>&1; then break; fi
+            if ! kill -0 "$pid" 2>/dev/null; then cat "$work/server.log"; exit 1; fi
+            sleep 0.2
+          done
+          curl -fsS "$XSUS_TEST_API_URL/healthz" >/dev/null
+          node clients/browser/intelligence-live.mjs
