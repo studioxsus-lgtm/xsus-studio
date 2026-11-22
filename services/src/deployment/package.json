@@ -1,0 +1,13 @@
+{
+  "name": "xsus-app-deployment-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node standalone-server.js",
+    "test": "node --test tests/*.test.js"
+  }
+}
