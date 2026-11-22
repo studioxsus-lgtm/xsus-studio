@@ -1,3 +1,4 @@
+import { taskManagerMarkup, taskManagerCss, taskManagerJs } from './task-manager.js';
 // XSUS App Phase 13: deterministic, review-gated source generator.
 // Does not execute user content, access credentials, or deploy projects.
 const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({
@@ -34,6 +35,7 @@ export function generateSourceFiles(spec) {
   const data = { title: spec.product.label || 'XSUS Application', goal: spec.product.goal,
     pages, components: structure.components, models: structure.dataModels,
     interactions: structure.interactions, requirements: spec.requirements };
+  const isTaskManager = spec.product.profileId === 'task-manager';
   const nav = pages.map(page => '<a href="#' + page.id + '">' + escapeHtml(page.name) + '</a>').join('');
   const sections = pages.map(page => '<section id="' + page.id + '"><h2>' + escapeHtml(page.name) +
     '</h2><p>Ready for implementation.</p></section>').join('');
@@ -43,17 +45,17 @@ export function generateSourceFiles(spec) {
     '<title>' + escapeHtml(data.title) + '</title><link rel="stylesheet" href="styles.css">' +
     '<script src="app.js" defer></script></head><body><header><h1>' + escapeHtml(data.title) +
     '</h1><p>' + escapeHtml(data.goal) + '</p></header><nav aria-label="Screens">' + nav +
-    '</nav><main>' + sections + '<section><h2>Planned features</h2><ul id="features"></ul></section></main>' +
+    '</nav><main>' + sections + (isTaskManager ? taskManagerMarkup : '') + '<section><h2>Planned features</h2><ul id="features"></ul></section></main>' +
     '<footer>XSUS App · Reviewed starter source</footer></body></html>';
   const css = ':root{font:16px/1.6 system-ui;color:#16273a;background:#f3f6fa}' +
     'body{max-width:64rem;margin:auto;padding:1.5rem}nav{display:flex;flex-wrap:wrap;gap:1rem}' +
     'a{color:#14559b}section{background:white;border:1px solid #c7d5e1;border-radius:12px;' +
-    'padding:1rem;margin:1rem 0}h1,h2{line-height:1.25}';
+    'padding:1rem;margin:1rem 0}h1,h2{line-height:1.25}' + (isTaskManager ? taskManagerCss : '');
   const js = '/* XSUS reviewed starter: no remote services or dynamic code evaluation. */\n' +
     'const project = ' + safeJson(data) + ';\n' +
     'const features = document.getElementById("features");\n' +
     'for (const item of project.interactions) { const li = document.createElement("li");' +
-    ' li.textContent = item; features.append(li); }\n';
+    ' li.textContent = item; features.append(li); }\n' + (isTaskManager ? taskManagerJs : '');
   return Object.freeze({ plan, files: Object.freeze({
     'index.html': index, 'styles.css': css, 'app.js': js
   }) });
