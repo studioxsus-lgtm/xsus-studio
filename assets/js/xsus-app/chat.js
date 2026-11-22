@@ -506,7 +506,18 @@ export function initChat() {
     });
   }
   $('#sendBtn').addEventListener('click', send);
-  $('#prompt').addEventListener('input', updateCount);
+  $('#prompt').addEventListener('input', () => {
+    updateCount();
+    // Keep the step field editable, but populate it for goal-only task requests.
+    const field = $('#planSteps');
+    if (!field.value.trim()) {
+      const suggestions = suggestPlanSteps($('#prompt').value);
+      if (suggestions.length) {
+        field.value = suggestions.join('\n');
+        saveRefreshState('builder');
+      }
+    }
+  });
   for (const id of ['prompt', 'planSteps']) $( `#${id}`).addEventListener('keydown', event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); send(); } });
   $('#cancelConceptBtn').addEventListener('click', () => { cancelPending(); toast(t('Request cancelled.')); });
   $('#newConversationBtn').addEventListener('click', () => { cancelPending(); sessions.unshift({ id: nextId++, name: 'New conversation', messages: [] }); activeId = sessions[0].id; renderMessages(); $('#prompt').value = ''; $('#planSteps').value = ''; updateCount(); });
