@@ -9,7 +9,10 @@ export function createConcurrencyLimiter({maxConcurrent=4,maxQueued=100}={}){
       const task=pending.shift();
       if(task.signal?.aborted){task.reject(new Error("Task cancelled"));continue;}
       active++;
-      Promise.resolve().then(()=>task.operation({signal:task.signal})).then(task.resolve,task.reject).finally(()=>{active--;pump();});
+      Promise.resolve().then(()=>task.operation({signal:task.signal})).then(
+        value=>{active--;pump();task.resolve(value);},
+        error=>{active--;pump();task.reject(error);}
+      );
     }
   }
   return Object.freeze({
