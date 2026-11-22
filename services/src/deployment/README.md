@@ -142,3 +142,6 @@ This remains read-only validation, not a transactional lock. The code is committ
 
 ## Phase 18.1 — verified local digest tests
 On Node.js v22.16.0, the five existing tests in `snapshot-revision-digest.node-test.js` were executed locally against a reconstructed copy of the exact GitHub source and all five passed (0 failed, 0 skipped). This is **not** a full checkout or full repository CI run. Two additional regression cases were committed to `supabase-project-revision-reader.node-test.js` to verify canonical key-order invariance and nested content changes across mocked owner-scoped database reads; these two new cases have not been executed here. GitHub Actions and live Supabase remain unverified. Production Render was not redeployed.
+
+## Phase 18.2 — owner-scoped revision integration regression
+`tests/revision-guarded-supabase-integration.node-test.js` composes the actual `createBuilderProjectStore`, `createBuilderProjectRevisionReader`, and `reviewBuildWithRevisionGuard` functions against a stateful mock Supabase client. Four new Node tests cover unchanged snapshots, edits during build, ownership reassignment, and deletion. These tests were committed but their execution in GitHub Actions is not confirmed; no live Supabase credentials or Render deployment were used. Static review is not transactional deployment authorization.
