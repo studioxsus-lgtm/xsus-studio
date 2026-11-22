@@ -1,0 +1,16 @@
+# Reference configuration ONLY. Do not sync as a Blueprint against existing services.
+# Apply settings exclusively to the existing xsus-app-deployment-api service.
+services:
+  - type: web
+    name: xsus-app-deployment-api
+    runtime: node
+    repo: https://github.com/studioxsus-lgtm/xsus-studio
+    branch: main
+    rootDir: services/src/deployment
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: false
+    envVars:
+      - key: XSUS_APP_ALLOWED_ORIGINS
+        value: https://www.xsusstudio.com
