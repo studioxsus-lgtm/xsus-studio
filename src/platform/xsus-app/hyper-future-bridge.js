@@ -120,7 +120,9 @@ export function createHyperFutureBridge({
       const planningGoal = reviewRequired ? body.goal.trim() : language.text;
 
       let plan;
+      let proposal = null;
       try {
+        proposal = body.steps === undefined ? proposeApplicationPlan(planningGoal) : null;
         plan = strategicPlanning.createPlan({
           contractVersion: NEXT_ENGINES_CONTRACT_VERSION,
           requestId,
