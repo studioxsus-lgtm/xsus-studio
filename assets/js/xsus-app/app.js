@@ -26,7 +26,7 @@ initPublishing();
 import { initSettings } from './settings.js';
 initSettings();
 
-import { initRefreshState } from './refresh-state.js?v=20261120-account1';
+import { initRefreshState } from './refresh-state.js?v=20261122-autosave1';
 initRefreshState();
 
 import { initAccountProjects } from './account-projects.js?v=20261122-autosave1';
