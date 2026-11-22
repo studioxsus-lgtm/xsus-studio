@@ -16,6 +16,8 @@ from aiohttp import web
 
 from core.intelligence.xsus_app_adapter_v1 import XSUSAppIntelligenceAdapter
 from core.intelligence.authorized_gateway_v1 import IntelligencePrincipal
+from core.intelligence.xsus_app_adapter_v2 import XSUSAppIntelligenceAdapterV2
+from core.intelligence.request_router_v2 import RouterPrincipal
 
 from core.contracts.common import LanguageTag, require_identifier
 from core.contracts.errors import EngineError, ErrorCode
@@ -222,6 +224,7 @@ def create_app(
     feedback_store: LearningFeedbackStore | None = None, allowed_origins: frozenset[str] = frozenset(),
     learning_status_dir: Path | None = None,
     intelligence_enabled: bool = False,
+    intelligence_v2_adapter: XSUSAppIntelligenceAdapterV2 | None = None,
 ) -> web.Application:
     """Create an app using local owner-scoped session storage and engine routing."""
     if type(max_concurrent_messages) is not int or max_concurrent_messages < 1:
@@ -233,6 +236,8 @@ def create_app(
     if type(intelligence_enabled) is not bool:
         raise ValueError("intelligence_enabled must be boolean")
     intelligence_adapter = XSUSAppIntelligenceAdapter() if intelligence_enabled else None
+    if intelligence_v2_adapter is not None and not isinstance(intelligence_v2_adapter, XSUSAppIntelligenceAdapterV2):
+        raise ValueError('Invalid V2 adapter')
     cors_origins = _validate_origins(allowed_origins)
     active_messages = 0
     active_language_requests = 0
@@ -482,6 +487,44 @@ def create_app(
             return _error(503, "intelligence_unavailable", "Intelligence service unavailable")
         return _json(result)
 
+    async def intelligence_respond_v2(request: web.Request) -> web.Response:
+        nonlocal active_intelligence_requests
+        if intelligence_v2_adapter is None or not intelligence_v2_adapter.enabled:
+            return _error(404, "not_found", "Resource not found")
+        owner = await authenticated_owner(request)
+        if owner is None:
+            return unauthorized()
+        if request.content_type != "application/json":
+            return _error(415, "unsupported_media_type", "Use application/json")
+        try:
+            payload = json.loads((await request.read()).decode("utf-8"),
+                                 object_pairs_hook=_strict_json_pairs,
+                                 parse_constant=_reject_json_constant)
+            scope = "u_" + hashlib.sha256(owner.encode("utf-8")).hexdigest()[:62]
+            principal = RouterPrincipal(scope, frozenset(("reason", "solve", "infer", "search")))
+            if active_intelligence_requests >= min(max_concurrent_messages, 8):
+                return _error(503, "intelligence_unavailable", "Intelligence service unavailable")
+            active_intelligence_requests += 1
+            def release(task):
+                nonlocal active_intelligence_requests
+                active_intelligence_requests -= 1
+                if not task.cancelled():
+                    task.exception()
+            try:
+                task = asyncio.create_task(asyncio.to_thread(intelligence_v2_adapter.respond, principal, payload))
+            except BaseException:
+                active_intelligence_requests -= 1
+                raise
+            task.add_done_callback(release)
+            result = await asyncio.shield(task)
+        except (ValueError, TypeError, UnicodeError, RecursionError):
+            return _error(400, "invalid_intelligence_request", "Invalid V2 request")
+        except PermissionError:
+            return _error(403, "operation_denied", "Operation not permitted")
+        except RuntimeError:
+            return _error(503, "intelligence_unavailable", "Intelligence service unavailable")
+        return _json(result)
+
     async def submit_feedback(request: web.Request) -> web.Response:
         owner = await authenticated_owner(request)
         if owner is None:
@@ -625,6 +668,7 @@ def create_app(
     app.router.add_post(resource + "/messages", send)
     app.router.add_post("/v1/language/proofread", proofread)
     app.router.add_post("/v1/intelligence/reason", intelligence_reason)
+    app.router.add_post("/v2/intelligence/respond", intelligence_respond_v2)
     if feedback_store is not None:
         app.router.add_post("/v1/learning/feedback", submit_feedback)
         app.router.add_get("/v1/learning/feedback", list_feedback, allow_head=False)
