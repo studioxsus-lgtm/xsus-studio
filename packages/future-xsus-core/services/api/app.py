@@ -126,6 +126,19 @@ def _owner(request: web.Request, credentials: tuple[tuple[str, bytes], ...]) -> 
     return match
 
 
+def _strict_json_pairs(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate JSON field")
+        result[key] = value
+    return result
+
+
+def _reject_json_constant(value):
+    raise ValueError("Non-finite JSON constant")
+
+
 def _message(payload: object) -> tuple[str, LanguageTag, int | None]:
     if not isinstance(payload, dict) or set(payload) - {"text", "language", "expected_revision"}:
         raise ValueError("Unexpected message fields")
@@ -220,6 +233,7 @@ def create_app(
     cors_origins = _validate_origins(allowed_origins)
     active_messages = 0
     active_language_requests = 0
+    active_intelligence_requests = 0
 
     @web.middleware
     async def boundary(request, handler):
@@ -408,6 +422,7 @@ def create_app(
         })
 
     async def intelligence_reason(request: web.Request) -> web.Response:
+        nonlocal active_intelligence_requests
         if not intelligence_enabled:
             return _error(404, "not_found", "Resource not found")
         owner = await authenticated_owner(request)
@@ -416,10 +431,26 @@ def create_app(
         if request.content_type != "application/json":
             return _error(415, "unsupported_media_type", "Use application/json")
         try:
-            payload = json.loads((await request.read()).decode("utf-8"))
+            payload = json.loads((await request.read()).decode("utf-8"),
+                                 object_pairs_hook=_strict_json_pairs,
+                                 parse_constant=_reject_json_constant)
             scope = "u_" + hashlib.sha256(owner.encode("utf-8")).hexdigest()[:62]
             principal = IntelligencePrincipal(scope, frozenset(("reason",)))
-            result = await asyncio.to_thread(intelligence_adapter.reason, principal, payload)
+            if active_intelligence_requests >= min(max_concurrent_messages, 8):
+                return _error(503, "intelligence_unavailable", "Intelligence service unavailable")
+            active_intelligence_requests += 1
+            def release(task):
+                nonlocal active_intelligence_requests
+                active_intelligence_requests -= 1
+                if not task.cancelled():
+                    task.exception()
+            try:
+                task = asyncio.create_task(asyncio.to_thread(intelligence_adapter.reason, principal, payload))
+            except BaseException:
+                active_intelligence_requests -= 1
+                raise
+            task.add_done_callback(release)
+            result = await asyncio.shield(task)
         except (ValueError, TypeError, UnicodeError, RecursionError):
             return _error(400, "invalid_intelligence_request", "Invalid reasoning request")
         except PermissionError:
