@@ -18,6 +18,18 @@ describe('deployment preparation',()=>{
    build.artifacts['app.js']+='tampered';
    expect((await prepareDeploymentPlan(build.artifacts)).ready).toBe(false);
  });
+ it('prepares GitHub Pages instructions without deploying',async()=>{
+   const build=await prepareBuild(files);
+   const result=await prepareDeploymentPlan(build.artifacts,'github-pages');
+   expect(result.ready).toBe(true);
+   expect(result.plan.target).toBe('github-pages');
+   expect(result.plan.status).toBe('prepared-not-deployed');
+ });
+ it('prepares Render Static Site instructions',async()=>{
+   const build=await prepareBuild(files);
+   const result=await prepareDeploymentPlan(build.artifacts,'render-static');
+   expect(result.plan.target).toBe('render-static');
+ });
  it('rejects unsupported targets',async()=>{
    await expect(prepareDeploymentPlan({},'production-api')).rejects.toThrow();
  });
