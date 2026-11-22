@@ -151,7 +151,7 @@ export function createHyperFutureBridge({
             core: "future-xsus-core",
             status: language.status,
             text: language.text,
-            review_required: reviewRequired
+            ...(reviewRequired ? { review_required: true } : {})
           },
           plan: { core: "hyper-xsus-core", ...plan.result, ...(proposal ? { proposalSource: proposal.source, category: proposal.category, requiresHumanReview: true } : {}) },
           safety: { executable: false, sideEffects: false }
