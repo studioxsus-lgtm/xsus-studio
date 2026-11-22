@@ -37,7 +37,7 @@ export function generateSourceFiles(spec) {
   const nav = pages.map(page => '<a href="#' + page.id + '">' + escapeHtml(page.name) + '</a>').join('');
   const sections = pages.map(page => '<section id="' + page.id + '"><h2>' + escapeHtml(page.name) +
     '</h2><p>Ready for implementation.</p></section>').join('');
-  const index = '<!doctype html>\\n<html lang="en"><head><meta charset="utf-8">' +
+  const index = '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'self\'; script-src \'self\'; base-uri \'none\'; form-action \'none\'">' +
     '<title>' + escapeHtml(data.title) + '</title><link rel="stylesheet" href="styles.css">' +
@@ -49,11 +49,11 @@ export function generateSourceFiles(spec) {
     'body{max-width:64rem;margin:auto;padding:1.5rem}nav{display:flex;flex-wrap:wrap;gap:1rem}' +
     'a{color:#14559b}section{background:white;border:1px solid #c7d5e1;border-radius:12px;' +
     'padding:1rem;margin:1rem 0}h1,h2{line-height:1.25}';
-  const js = '/* XSUS reviewed starter: no remote services or dynamic code evaluation. */\\n' +
-    'const project = ' + safeJson(data) + ';\\n' +
-    'const features = document.getElementById("features");\\n' +
+  const js = '/* XSUS reviewed starter: no remote services or dynamic code evaluation. */\n' +
+    'const project = ' + safeJson(data) + ';\n' +
+    'const features = document.getElementById("features");\n' +
     'for (const item of project.interactions) { const li = document.createElement("li");' +
-    ' li.textContent = item; features.append(li); }\\n';
+    ' li.textContent = item; features.append(li); }\n';
   return Object.freeze({ plan, files: Object.freeze({
     'index.html': index, 'styles.css': css, 'app.js': js
   }) });
