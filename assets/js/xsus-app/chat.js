@@ -4,7 +4,7 @@ import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enable
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
-import { createDraftPlan, parsePlanSteps, suggestPlanSteps, BridgeRequestError } from './hyper-future-bridge-client.js?v=20261119-bridge2';
+import { createDraftPlan, parsePlanSteps, suggestPlanSteps, BridgeRequestError } from './hyper-future-bridge-client.js?v=20261122-planfix1';
 import { createAppSpecification } from './app-specification/index.js?v=20261120-scaffold1';
 import { approveSpecificationReviewDraft, createSpecificationReviewDraft, parseSpecificationList } from './app-specification/review.js?v=20261120-scaffold1';
 
