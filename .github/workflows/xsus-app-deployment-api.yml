@@ -1,0 +1,38 @@
+name: XSUS App Deployment API checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/src/deployment/**'
+      - '.github/workflows/xsus-app-deployment-api.yml'
+  pull_request:
+    paths:
+      - 'services/src/deployment/**'
+      - '.github/workflows/xsus-app-deployment-api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  standalone-api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/src/deployment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify isolated package has no external dependencies
+        run: |
+          node --input-type=module -e "import p from './package.json' with {type:'json'}; if (Object.keys(p.dependencies||{}).length || Object.keys(p.devDependencies||{}).length) process.exit(1)"
+      - name: Check JavaScript syntax
+        run: |
+          for f in *.js tests/*.js; do node --check "$f"; done
+      - name: Run isolated HTTP tests
+        run: npm test
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=moderate
