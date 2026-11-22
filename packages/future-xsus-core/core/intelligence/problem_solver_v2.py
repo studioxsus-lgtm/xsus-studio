@@ -28,8 +28,7 @@ class ComplexProblemSolver:
         engine = MultiStepReasoner(facts, rules)
         steps = {}
         resolved, unresolved = [], []
-        for goal in goals:
-            result = engine.prove(goal)
+        for goal, result in zip(goals, engine.prove_many(goals)):
             if not result.entailed:
                 unresolved.append(goal)
                 continue
