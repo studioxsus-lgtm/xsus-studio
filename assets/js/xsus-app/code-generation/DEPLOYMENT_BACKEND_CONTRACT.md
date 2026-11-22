@@ -37,3 +37,8 @@ When no authenticated backend is configured, `offlineDeploymentDecision()` retur
 `services/src/deployment/deployment-http-handler.js` exports `handleDeploymentValidationHttp(input, dependencies)`. The framework-neutral handler accepts only POST JSON with an allowlisted Origin, Bearer token, and a maximum 16 KiB request body. It delegates identity, project ownership, and trusted SHA-256 checks to the Phase 14.9 and 14.8 adapters. It returns a status, response headers and body; **it is not mounted on a live HTTP server**. Successful validation means `approved-for-review` with `deployed:false`, not permission to execute.
 
 **Before deployment:** Add a production router binding, verified trusted Supabase clients and authoritative project/artifact stores, server-side rate limiting, origin configuration, request tracing, idempotency and audit controls. Never treat the Origin header as authentication or authorization. This handler must not be exposed as a deployment-execution endpoint.
+
+## Phase 15.1: Node HTTP adapter (not yet mounted)
+`services/src/deployment/deployment-node-adapter.js` exports `createDeploymentNodeHandler(dependencies)`. It handles only `POST /api/deployments/validate`, streams a maximum 16 KiB JSON body, and delegates to the existing authenticated validation handler. It does not open a port, attach to a running Render service, create credentials, or execute deployments. Test coverage is in `tests/unit/xsus-app-deployment-node-adapter.test.js`.
+
+**Production integration remains blocked** until the user confirms the correct Render workspace and service and the actual server entry point and Supabase project/artifact schema are inspected. Do not mount the route blindly or trigger a deployment without those checks.
