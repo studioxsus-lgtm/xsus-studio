@@ -116,3 +116,8 @@ This phase adds tests only; it does not connect a production Supabase client, ru
 Read-only Render verification of the independent `xsus-app-deployment-api` service found `autoDeploy:no`, branch `main`, and only one live deployment, at commit `66fee40e4314264ed37ec100d694aace21f9093e`. The newer deployment-module commits have **not** been deployed. The service remains separate from the XSUS AI Core and Future XSUS Core services. No deployment was triggered.
 
 `tests/production-defaults.node-test.js` adds an isolated local HTTP regression test verifying that `GET /healthz` explicitly reports `deploymentEnabled:false`, that an execution route returns 404, and that GET on the validation route returns 405. The test is included by the existing `npm test` workflow. **Tests still require execution/CI confirmation.** Do not redeploy or activate production integration until the isolated test suite is green and a trusted builder plus server-side authorization are reviewed.
+
+## Phase 17.6 — ownership recheck after asynchronous build
+`build-review-pipeline.js` now calls the owner-scoped `findOwnedProject` a second time after successful static build preflight, denying review if the project was deleted or its owner no longer matches. Three additional Node tests cover repeated verification, deletion and owner change. The integration mock resets its query-filter state after each lookup to support repeated calls.
+
+**Scope:** this is an ownership recheck, not a snapshot revision lock or transaction; concurrent content edits can still occur and must be addressed before any publishing implementation. No live deployment, Supabase write or CI success claim is implied.
