@@ -4,6 +4,7 @@ import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import { createDeploymentNodeHandler } from './deployment-node-adapter.js';
 import { createSupabaseProjectReviewIntegration } from './supabase-project-review-integration.js';
+import { createSupabaseRestReviewClient } from './supabase-rest-review-client.js';
 
 export function createStandaloneDeploymentServer(dependencies={}) {
   const route=createDeploymentNodeHandler(dependencies);
@@ -26,7 +27,19 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   const integration=configured
     ? createSupabaseProjectReviewIntegration({supabaseClient,buildFromSavedProject})
     : {};
-  const server=createStandaloneDeploymentServer({...dependencies,...integration});
+  const supabaseUrl=env.XSUS_APP_SUPABASE_URL;
+  const publishableKey=env.XSUS_APP_SUPABASE_PUBLISHABLE_KEY;
+  const restConfigured=Boolean(supabaseUrl&&publishableKey);
+  // Read-only connection: no trusted application builder is enabled by default.
+  // Authentication and owner-scoped reads work; review remains denied at build preflight.
+  const restIntegration=restConfigured ? {
+    createProjectReviewer(accessToken) {
+      const client=createSupabaseRestReviewClient({url:supabaseUrl,publishableKey,accessToken});
+      return createSupabaseProjectReviewIntegration({supabaseClient:client,
+        buildFromSavedProject:async()=>null}).projectReviewer;
+    }
+  } : {};
+  const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration});
   server.listen(port,'0.0.0.0');
   return server;
 }
