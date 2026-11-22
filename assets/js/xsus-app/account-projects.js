@@ -182,6 +182,53 @@ export function initAccountProjects() {
     } catch { if(current(token,owner)) status.textContent=words()[6]; }
     finally { saving=false; submit.disabled=!currentWorkspaceOwner(); copyButton.disabled=submit.disabled; }
   };
+  // Autosave only projects that the user explicitly saved to their account first.
+  // Keep optimistic revision checks to avoid overwriting a newer remote copy.
+  let autosaveTimer = null;
+  let autosaveBusy = false;
+  let lastAutosaved = '';
+  async function autosaveLinkedProject() {
+    if (autosaveBusy || saving) return;
+    const owner = currentWorkspaceOwner();
+    const session = activeSession();
+    const link = session?.accountProject;
+    if (!owner || !link?.id) return;
+    const snapshot = captureProject();
+    if (!snapshot) return;
+    const fingerprint = JSON.stringify({ id: link.id, content: snapshot });
+    if (fingerprint === lastAutosaved) return;
+    autosaveBusy = true;
+    try {
+      const client = await getSupabaseClient();
+      if (currentWorkspaceOwner() !== owner || activeSession() !== session ||
+          session.accountProject?.token !== link.token) return;
+      snapshot.saveToken = crypto.randomUUID();
+      let query = client.from(table).update({ snapshot })
+        .eq('owner_id', owner).eq('id', link.id);
+      query = link.token == null ? query.is('snapshot->>saveToken', null)
+        : query.eq('snapshot->>saveToken', link.token);
+      const { data, error } = await query.select('id').maybeSingle();
+      if (error || data?.id !== link.id) {
+        // Do not overwrite conflicting remote edits or deleted projects.
+        lastAutosaved = fingerprint;
+        return;
+      }
+      if (currentWorkspaceOwner() === owner && session.accountProject?.token === link.token) {
+        session.accountProject = { ...link, token: snapshot.saveToken };
+        lastAutosaved = fingerprint;
+        saveRefreshState('builder');
+      }
+    } catch {
+      // Keep the local session intact. The account copy can still be saved manually.
+    } finally {
+      autosaveBusy = false;
+    }
+  }
+  document.addEventListener('xsus:workspace-saved', event => {
+    if (event.detail?.section !== 'builder' || !event.detail.owner) return;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => { void autosaveLinkedProject(); }, 1600);
+  });
   translate(); document.addEventListener('xsus:language-changed',translate);
   for(const button of buttons) button.onclick=()=>{
     translate();generation++;status.textContent='';
