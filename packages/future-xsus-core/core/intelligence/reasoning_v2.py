@@ -5,8 +5,7 @@ from core.intelligence.reasoning_v1 import (
 )
 
 class MultiStepReasoner(ReasoningEngine):
-    def prove(self, query):
-        query = _atom(query)
+    def _closure(self):
         known = set(self.facts)
         provenance = {a: ProofStep(a, (), None) for a in self.facts}
         waiting = defaultdict(list)
@@ -28,6 +27,21 @@ class MultiStepReasoner(ReasoningEngine):
                     depth[rule.conclusion] = 1 + max(depth[p] for p in rule.premises)
                     queue.append(rule.conclusion)
         rounds = max(depth.values(), default=0)
+        return known, provenance, depth, rounds
+
+    def prove(self, query):
+        return self.prove_many((query,))[0]
+
+    def prove_many(self, queries):
+        if type(queries) is not tuple or not 1 <= len(queries) <= 32:
+            raise ValueError("Expected 1 to 32 queries")
+        for query in queries:
+            _atom(query)
+        closure = self._closure()
+        return tuple(self._prove_from_closure(query, closure) for query in queries)
+
+    def _prove_from_closure(self, query, closure):
+        known, provenance, depth, rounds = closure
         if query not in known:
             return ReasoningResult("unknown", query, False, (), len(known), rounds,
                                    ("absence_of_proof_is_not_disproof",))
