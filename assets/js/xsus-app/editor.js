@@ -1,4 +1,4 @@
-import { registerRefreshState, saveRefreshState } from './refresh-state.js?v=20261122-autosave1';
+import { registerRefreshState, saveRefreshState } from './refresh-state.js?v=20261122-unified2';
 import { t } from './i18n/language-manager.js?v=20261119-r2';
 import { renderVisualDesign, handleVisualDesignClick, handleVisualDesignInput } from './visual-editor.js';
 import { $, $$, state, refreshIcons } from './state.js';
