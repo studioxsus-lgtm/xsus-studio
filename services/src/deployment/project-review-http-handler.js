@@ -19,10 +19,13 @@ export async function handleProjectReviewHttp(input,deps={}) {
  if(!request||Array.isArray(request)||typeof request!=='object'||
     !isPersistedBuilderProjectId(request.projectId))
   return json(400,{error:'invalid_project_id'});
- if(typeof deps.projectReviewer?.review!=='function')
+ if(typeof deps.projectReviewer?.review!=='function' && typeof deps.createProjectReviewer!=='function')
   return json(503,{error:'review_not_configured'});
  try {
-  const result=await deps.projectReviewer.review({projectId:request.projectId,accessToken:auth.slice(7)});
+  const reviewer=typeof deps.createProjectReviewer==='function'
+   ? deps.createProjectReviewer(auth.slice(7)) : deps.projectReviewer;
+  if(typeof reviewer?.review!=='function')return json(503,{error:'review_not_configured'});
+  const result=await reviewer.review({projectId:request.projectId,accessToken:auth.slice(7)});
   // Only return a bounded, non-sensitive status; do not expose artifacts or internal exceptions.
   if(result?.status==='ready-for-review'&&result.deployed===false)
    return json(200,{status:'ready-for-review',reason:'STATIC_REVIEW_ONLY'});
