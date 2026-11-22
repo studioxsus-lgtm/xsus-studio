@@ -3,7 +3,7 @@ import { composeSourcePreview } from './live-preview.js';
 const names = ['index.html', 'styles.css', 'app.js'];
 const MAX_FILE_LENGTH = 500000;
 
-export function openSourceEditor(initialFiles) {
+export function openSourceEditor(initialFiles, onSave = null) {
   const files = Object.fromEntries(names.map(name => [name, initialFiles[name]]));
   const dialog = document.createElement('dialog');
   dialog.setAttribute('aria-label', 'XSUS source code editor');
@@ -51,6 +51,17 @@ export function openSourceEditor(initialFiles) {
     files[select.value] = textarea.value;
     return true;
   };
+  const save = document.createElement('button');
+  save.type = 'button'; save.textContent = 'Save to project';
+  header.insertBefore(save, download);
+  save.addEventListener('click', () => {
+    if (!readEditor()) return;
+    if (typeof onSave !== 'function') { status.textContent = 'Project saving is unavailable.'; return; }
+    try {
+      onSave(Object.fromEntries(names.map(name => [name, files[name]])));
+      status.textContent = 'Source files saved to this XSUS project.';
+    } catch { status.textContent = 'Could not save source files to the project.'; }
+  });
   const updatePreview = () => {
     if (!readEditor()) return;
     try { frame.srcdoc = composeSourcePreview(files); status.textContent = 'Preview updated (isolated sandbox).'; }
