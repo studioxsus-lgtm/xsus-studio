@@ -27,6 +27,16 @@ describe('XSUS App source generator', () => {
     expect(bundle.plan.deploymentRequested).toBe(false);
     expect(bundle.plan.executableOnServer).toBe(false);
   });
+  it('generates working offline task controls only for task-manager profiles', () => {
+    const taskSpec = { ...spec, product: { ...spec.product, profileId: 'task-manager' } };
+    const bundle = generateSourceFiles(taskSpec);
+    expect(bundle.files['index.html']).toContain('id="task-form"');
+    expect(bundle.files['index.html']).toContain('id="tasks"');
+    expect(bundle.files['styles.css']).toContain('#task-form');
+    expect(bundle.files['app.js']).toContain("localStorage.setItem");
+    expect(bundle.files['app.js']).toContain("renderTasks()");
+    expect(generateSourceFiles(spec).files['index.html']).not.toContain('id="task-form"');
+  });
   it('escapes user-provided markup and script delimiters', () => {
     const result = generateSourceFiles({
       ...spec, product: { label: '<img src=x onerror=alert(1)>', goal: '</script><script>alert(1)</script>' },
