@@ -8,7 +8,7 @@ import sqlite3
 from collections.abc import Mapping
 from hmac import compare_digest
 from pathlib import Path
-from time import time_ns
+from time import time_ns, monotonic
 from typing import Protocol
 from urllib.parse import quote, urlsplit
 
@@ -31,6 +31,9 @@ from core.sessions.session_store import (
 from languages.en.data.preparation.corpus import Example, parse_example
 from languages.en.text.editing.paragraph import ParagraphStatus, proofread_paragraph
 from services.api.identity.errors import IdentityProviderUnavailable
+from services.api.intelligence_metrics_v1 import IntelligenceMetrics
+
+INTELLIGENCE_METRICS = web.AppKey('intelligence_metrics', IntelligenceMetrics)
 
 
 class SessionStore(Protocol):
@@ -234,6 +237,26 @@ def create_app(
     active_messages = 0
     active_language_requests = 0
     active_intelligence_requests = 0
+    metrics = IntelligenceMetrics()
+
+    @web.middleware
+    async def intelligence_monitor(request, handler):
+        if request.method != "POST" or request.path != "/v1/intelligence/reason":
+            return await handler(request)
+        start = monotonic()
+        status = 500
+        try:
+            response = await handler(request)
+            status = response.status
+            return response
+        except asyncio.CancelledError:
+            status = None
+            raise
+        except web.HTTPException as error:
+            status = error.status
+            raise
+        finally:
+            metrics.observe(status, (monotonic() - start) * 1000)
 
     @web.middleware
     async def boundary(request, handler):
@@ -583,7 +606,8 @@ def create_app(
             return _error(404, "feedback_not_found", "Learning feedback not found")
         return web.Response(status=204, headers={"Cache-Control": "no-store"})
 
-    app = web.Application(client_max_size=_MAX_BODY_BYTES, middlewares=[cors_boundary, boundary])
+    app = web.Application(client_max_size=_MAX_BODY_BYTES, middlewares=[intelligence_monitor, cors_boundary, boundary])
+    app[INTELLIGENCE_METRICS] = metrics
     if owner_authenticator is not None:
         start = getattr(owner_authenticator, "start", None)
         close = getattr(owner_authenticator, "close", None)
