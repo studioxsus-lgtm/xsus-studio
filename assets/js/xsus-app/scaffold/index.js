@@ -92,7 +92,7 @@ export function appendScaffoldControls(card, spec, t, onBuild) {
     preview.type = 'button';
     preview.textContent = t('Preview');
     preview.addEventListener('click', () => onBuild(html));
-    controls.replaceChildren(preview, download);
+    controls.replaceChildren(preview, download, source);
   }
   if (spec.builtHtml || builtScaffolds.has(spec)) showDownload(spec.builtHtml || builtScaffolds.get(spec));
   build.addEventListener('click', () => {
