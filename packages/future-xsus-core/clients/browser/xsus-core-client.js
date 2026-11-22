@@ -71,6 +71,20 @@ export function createXsusCoreClient({ baseUrl, getAccessToken, fetchImpl = glob
   }
 
   return Object.freeze({
+    reason: async ({ requestId, query, facts, rules } = {}) => {
+      const result = await request("/v1/intelligence/reason", {
+        method: "POST", body: { contractVersion: "1.0.0", requestId, query, facts, rules },
+      });
+      if (!result || result.contractVersion !== "1.0.0" || result.requestId !== requestId ||
+          result.executionAuthorized !== false || typeof result.verifiedDerivation !== "boolean" ||
+          !Array.isArray(result.limitations) ||
+          !["resolved", "abstained"].includes(result.status) ||
+          (result.status === "resolved" && (result.answer !== query || result.verifiedDerivation !== true)) ||
+          (result.status === "abstained" && (result.answer !== null || result.verifiedDerivation !== false))) {
+        throw new XsusCoreApiError(502, "invalid_response", "Invalid intelligence contract");
+      }
+      return result;
+    },
     createSession: () => request("/v1/sessions", { method: "POST" }),
     listSessions: ({ limit = 20, after } = {}) => {
       const query = new URLSearchParams({ limit: String(limit) });
