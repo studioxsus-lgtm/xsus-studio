@@ -1,0 +1,5 @@
+# Phase 37 — Execution audit and recovery integrity
+
+This module adds an ordered SHA-256-compatible hash chain for execution state transitions. It requires injected digest, readEvents and appendAtomic providers, validates contiguous sequence/revision/fence values, checks the previous state and verifies the full chain before appending. Audit records intentionally exclude prompts, project file contents and personal messages.
+
+**Limitations:** Hash chaining detects edits to returned history but does not protect against full-log replacement, truncation of a tail, or an attacker recomputing hashes. Trusted external checkpoints, access-controlled durable storage and independent signing are needed for tamper-evidence against privileged attackers. The appendAtomic provider must guarantee atomic compare-and-append across processes; the included test implementation is only an in-memory simulation. This audit is not transactionally bound to the execution registry and cannot yet prove a transition occurred or prevent recovery. Do not enable destructive automated recovery based solely on this audit.
