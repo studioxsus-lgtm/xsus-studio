@@ -1,0 +1,26 @@
+name: XSUS App Build Engine Regression
+on:
+  push:
+    branches:
+      - feature/xsus-app-build-engine
+    paths:
+      - 'src/xsus-app-build-engine/**'
+      - 'tests/unit/xsus-app-build-engine-*.test.js'
+      - 'tests/integration/xsus-app-build-engine-*.test.js'
+      - '.github/workflows/xsus-app-build-engine-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: XSUS Build Engine unit and integration tests
+        run: npx vitest run tests/unit/xsus-app-build-engine-*.test.js tests/integration/xsus-app-build-engine-*.test.js
