@@ -1,4 +1,4 @@
-import { openSourceEditor } from '../code-generation/source-editor.js?v=20261122-integrity1';
+import { openSourceEditor } from '../code-generation/source-editor.js?v=20261122-release1';
 import { composeSourcePreview } from '../code-generation/live-preview.js';
 import { generateSourceFiles } from '../code-generation/index.js?v=20261122-summary1';
 import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-undodelete1';
@@ -60,7 +60,7 @@ ${section('Components', components)}${section('Data models', dataModels)}${secti
 
 const builtScaffolds = new WeakMap();
 
-export function appendScaffoldControls(card, spec, t, onBuild, onSourceSave = null) {
+export function appendScaffoldControls(card, spec, t, onBuild, onSourceSave = null, onReleaseSave = null) {
   const sourceFiles = () => spec.sourceFiles || generateSourceFiles(spec).files;
   const controls = document.createElement('div');
   controls.className = 'app-specification-actions';
@@ -128,7 +128,7 @@ export function appendScaffoldControls(card, spec, t, onBuild, onSourceSave = nu
       openSourceEditor(files, edited => {
         if (typeof onSourceSave !== 'function') throw new Error('Project save is unavailable');
         return onSourceSave(edited);
-      }, spec.sourceHistory || []);
+      }, spec.sourceHistory || [], onReleaseSave, spec.buildReleases || []);
     } catch {
       window.alert(t('Review and approve the application specification before generating source files.'));
     }
