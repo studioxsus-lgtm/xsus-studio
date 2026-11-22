@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - run: npm ci
+      - name: Install dependencies without lockfile
+        run: npm install --no-package-lock --ignore-scripts --no-audit --no-fund
       - name: XSUS Build Engine unit and integration tests
         run: npx vitest run tests/unit/xsus-app-build-engine-*.test.js tests/integration/xsus-app-build-engine-*.test.js
