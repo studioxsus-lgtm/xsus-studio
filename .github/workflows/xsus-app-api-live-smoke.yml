@@ -1,0 +1,22 @@
+name: XSUS App API live smoke (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    name: Verify isolated XSUS App API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check deployed health and fail-closed validation
+        env:
+          XSUS_APP_API_URL: https://xsus-app-deployment-api.onrender.com
+        run: node services/src/deployment/scripts/live-smoke.mjs
