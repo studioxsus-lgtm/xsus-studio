@@ -22,11 +22,37 @@ if(allowed.includes(location.origin)){
  status.style.cssText='font:13px/1.5 system-ui;color:#b9d6e7;min-height:18px;margin:12px 0 0;overflow-wrap:anywhere';
  const render=()=>{const l=labels[document.documentElement.lang?.slice(0,2)]||labels.en;
   heading.textContent=l[0];input.placeholder=l[1];input.setAttribute('aria-label',l[1]);button.textContent=l[2];};
+ const projectSelect=document.createElement('select');
+ projectSelect.setAttribute('aria-label','Saved XSUS App projects');
+ projectSelect.style.cssText='display:block;width:100%;box-sizing:border-box;margin-bottom:10px;padding:12px;background:#0b192c;color:#fff;border:1px solid #365778;border-radius:10px';
+ const chooseText={sq:'Zgjidh projektin e ruajtur',en:'Select saved project',fr:'Choisir un projet enregistré'};
+ const choose=()=>{const lang=document.documentElement.lang?.slice(0,2);return chooseText[lang]||chooseText.en;};
+ const emptyOption=document.createElement('option');emptyOption.value='';emptyOption.textContent=choose();projectSelect.append(emptyOption);
+ projectSelect.addEventListener('change',()=>{if(projectSelect.value)input.value=projectSelect.value;});
+ input.placeholder='UUID (optional if selected above)';
+ const loadProjects=async()=>{
+  projectSelect.replaceChildren();
+  const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent=choose();projectSelect.append(placeholder);
+  try{
+   const client=await getSupabaseClient();
+   const {data:sessionData}=await client.auth.getSession();
+   const ownerId=sessionData?.session?.user?.id;
+   if(!ownerId){status.textContent=(labels[document.documentElement.lang?.slice(0,2)]||labels.en)[3];return;}
+   const {data,error}=await client.from('xsus_builder_projects').select('id,name').eq('owner_id',ownerId).order('created_at',{ascending:false}).limit(50);
+   if(error)throw error;
+   for(const project of data||[]){
+    if(!uuid.test(project.id))continue;
+    const option=document.createElement('option');option.value=project.id;option.textContent=String(project.name||'Project').slice(0,120);
+    projectSelect.append(option);
+   }
+   if(!data?.length)status.textContent=({sq:'Nuk u gjet projekt i ruajtur në llogarinë tënde.',en:'No saved projects found in your account.',fr:'Aucun projet enregistré dans votre compte.'})[document.documentElement.lang?.slice(0,2)]||'No saved projects found.';
+  }catch{status.textContent=(labels[document.documentElement.lang?.slice(0,2)]||labels.en)[7];}
+ };
  const description=document.createElement('p');
  description.textContent='XSUS App · Supabase · Secure read-only verification';
  description.style.cssText='font:12px/1.5 system-ui;color:#8da8c5;margin:0 0 18px';
  heading.style.cssText='font:700 18px/1.3 system-ui;margin:0 30px 8px;color:#f1f9ff';
- form.append(input,button);section.append(heading,description,form,status);
+ form.append(projectSelect,input,button);section.append(heading,description,form,status);
  const backdrop=document.createElement('div');
  backdrop.id='xsus-review-backdrop';
  backdrop.style.cssText='position:fixed;inset:0;background:rgba(2,8,20,.7);z-index:2147482998;display:none';
@@ -42,7 +68,7 @@ if(allowed.includes(location.origin)){
  close.style.cssText='position:absolute;right:14px;top:10px;background:transparent;color:#cde4f3;border:0;font-size:26px;cursor:pointer';
  section.prepend(close);
  let open=false;
- const toggle=(show)=>{open=show;section.style.display=show?'block':'none';backdrop.style.display=show?'block':'none';launcher.setAttribute('aria-expanded',String(show));if(show)input.focus();else launcher.focus();};
+ const toggle=(show)=>{open=show;section.style.display=show?'block':'none';backdrop.style.display=show?'block':'none';launcher.setAttribute('aria-expanded',String(show));if(show){projectSelect.focus();void loadProjects();}else launcher.focus();};
  launcher.addEventListener('click',()=>toggle(!open));
  close.addEventListener('click',()=>toggle(false));
  backdrop.addEventListener('click',()=>toggle(false));
