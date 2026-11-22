@@ -60,7 +60,8 @@ ${section('Components', components)}${section('Data models', dataModels)}${secti
 
 const builtScaffolds = new WeakMap();
 
-export function appendScaffoldControls(card, spec, t, onBuild) {
+export function appendScaffoldControls(card, spec, t, onBuild, onSourceSave = null) {
+  const sourceFiles = () => spec.sourceFiles || generateSourceFiles(spec).files;
   const controls = document.createElement('div');
   controls.className = 'app-specification-actions';
   const build = document.createElement('button');
@@ -72,8 +73,8 @@ export function appendScaffoldControls(card, spec, t, onBuild) {
   source.textContent = t('Generate source files (HTML / CSS / JS)');
   source.addEventListener('click', () => {
     try {
-      const bundle = generateSourceFiles(spec);
-      for (const [name, content] of Object.entries(bundle.files)) {
+      const files = sourceFiles();
+      for (const [name, content] of Object.entries(files)) {
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -92,7 +93,7 @@ export function appendScaffoldControls(card, spec, t, onBuild) {
   sourcePreview.textContent = 'Live Preview (HTML / CSS / JS)';
   sourcePreview.addEventListener('click', () => {
     try {
-      const { files } = generateSourceFiles(spec);
+      const files = sourceFiles();
       const dialog = document.createElement('dialog');
       dialog.setAttribute('aria-label', 'Generated source live preview');
       dialog.style.cssText = 'width:min(96vw,1100px);height:min(90dvh,850px);padding:0;border:1px solid #6988ad;border-radius:12px;background:#fff;color:#17243a';
@@ -123,8 +124,11 @@ export function appendScaffoldControls(card, spec, t, onBuild) {
   editSource.textContent = 'Edit source code (HTML / CSS / JS)';
   editSource.addEventListener('click', () => {
     try {
-      const { files } = generateSourceFiles(spec);
-      openSourceEditor(files);
+      const files = sourceFiles();
+      openSourceEditor(files, edited => {
+        if (typeof onSourceSave !== 'function') throw new Error('Project save is unavailable');
+        onSourceSave(edited);
+      });
     } catch {
       window.alert(t('Review and approve the application specification before generating source files.'));
     }
