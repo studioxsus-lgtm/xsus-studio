@@ -39,6 +39,11 @@ jobs:
         run: |
           set -o pipefail
           node --test --test-reporter=tap tests/*.node-test.js | tee xsus-app-tests.tap
+      - name: Verify live XSUS App endpoint security (no credentials)
+        if: github.event_name != 'pull_request'
+        env:
+          XSUS_APP_SMOKE_URL: https://xsus-app-deployment-api.onrender.com
+        run: node --test tests/live-review-smoke.node-test.js
       - name: Upload Node test report
         if: always()
         uses: actions/upload-artifact@v4
