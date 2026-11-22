@@ -22,3 +22,8 @@ Use `createDeploymentRequest(plan, projectId)` to generate a strictly `validate-
 
 ## Failure mode
 When no authenticated backend is configured, `offlineDeploymentDecision()` returns `denied` with `deployed:false`. Never silently switch to browser-side provider calls.
+
+## Phase 14.8: trusted validation service scaffold
+`services/src/deployment/deployment-validation-service.js` exports `validateDeploymentRequest(request, context)`. It is a Node.js server-side library, not an HTTP route and not connected to Render or Supabase. It requires three independently implemented trusted callbacks: `authenticate()`, `authorizeProject(identity, projectId, target)`, and `loadTrustedFiles(identity, projectId)`. Missing callbacks, authentication failures, authorization failures, missing files, and checksum mismatches fail closed. It recomputes SHA-256 from trusted UTF-8 file contents and returns `approved-for-review` only; it never publishes.
+
+**Production integration gate:** Before exposing an HTTP route, wire these callbacks to verified Supabase authentication, authoritative project ownership checks, and a trusted artifact store. Add request size limits, rate limiting, CSRF defenses where applicable, audit logging, idempotency, destination ownership checks, and authenticated approval. Do not pass browser-supplied identity into the trusted context. Do not expose a deploy action until separate execution and rollback mechanisms are reviewed.
