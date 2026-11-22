@@ -229,6 +229,42 @@ export function initAccountProjects() {
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(() => { void autosaveLinkedProject(); }, 1600);
   });
+  // Restore the most recently saved account project after refresh, but never
+  // replace an existing local draft or a project already restored from this tab.
+  let restoreGeneration = 0;
+  async function restoreLastAccountProject() {
+    const generation = ++restoreGeneration;
+    const owner = currentWorkspaceOwner();
+    if (!owner) return;
+    const builder = readWorkspacePart('builder');
+    if (builder.sessions.some(item => item.messages?.length || item.generatedHtml || item.accountProject) ||
+        builder.goal?.trim() || builder.steps?.trim()) return;
+    try {
+      const client = await getSupabaseClient();
+      const { data, error } = await client.from(table)
+        .select('id,name,snapshot,created_at').eq('owner_id',owner)
+        .order('created_at',{ascending:false}).limit(1).maybeSingle();
+      if (error || !data?.snapshot || generation !== restoreGeneration ||
+          currentWorkspaceOwner() !== owner) return;
+      const latest = readWorkspacePart('builder');
+      if (latest.sessions.some(item => item.messages?.length || item.generatedHtml || item.accountProject) ||
+          latest.goal?.trim() || latest.steps?.trim()) return;
+      openProject(data.snapshot, { id:data.id, name:data.name, token:data.snapshot.saveToken ?? null });
+      const toast = document.querySelector('#toast');
+      if (toast) {
+        toast.textContent = document.documentElement.lang === 'sq'
+          ? 'Projekti i fundit u rikthye nga llogaria.'
+          : 'Last saved project restored from your account.';
+        toast.classList.add('show');
+      }
+    } catch {
+      // Never clear local work when the network or account storage is unavailable.
+    }
+  }
+  document.addEventListener('xsus:workspace-owner', () => {
+    ++restoreGeneration;
+    if (currentWorkspaceOwner()) void restoreLastAccountProject();
+  });
   translate(); document.addEventListener('xsus:language-changed',translate);
   for(const button of buttons) button.onclick=()=>{
     translate();generation++;status.textContent='';
