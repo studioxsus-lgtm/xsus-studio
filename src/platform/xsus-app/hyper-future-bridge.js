@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { EngineContractError, NEXT_ENGINES_CONTRACT_VERSION, strategicPlanning }\nimport { proposeApplicationPlan } from "../../hyper-xsus-core/next-engines/strategic-planning/index.js"; from "../../hyper-xsus-core/next-engines/index.js";
+import { EngineContractError, NEXT_ENGINES_CONTRACT_VERSION, strategicPlanning } from "../../hyper-xsus-core/next-engines/index.js";\nimport { proposeApplicationPlan } from "../../hyper-xsus-core/next-engines/strategic-planning/index.js";
 
 export const HYPER_FUTURE_BRIDGE_VERSION = "1.0.0";
 export const HYPER_FUTURE_BRIDGE_PATH = "/api/xsus-app/hyper-future/plan";
