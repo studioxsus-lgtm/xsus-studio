@@ -45,11 +45,13 @@ function hasAcyclicDependencies(steps) {
   return [...byId.keys()].every(visit);
 }
 
-export function validatePlanningResult(result) {
+export function validatePlanningResult(result, { humanReviewed = false } = {}) {
   if (!result || typeof result !== "object" || Array.isArray(result) ||
-      result.status !== "completed" || !validText(result.requestId, 128) ||
-      result.language?.core !== "future-xsus-core" || result.language?.review_required !== false ||
-      !["corrected", "unchanged"].includes(result.language?.status) || !validText(result.language?.text) ||
+      !((result.status === "completed" && result.language?.review_required !== true) ||
+        (humanReviewed === true && result.status === "review_required")) || !validText(result.requestId, 128) ||
+      result.language?.core !== "future-xsus-core" ||
+      !(humanReviewed === true && result.status === "review_required" ||
+        (result.language?.review_required !== true && ["corrected", "unchanged"].includes(result.language?.status))) || !validText(result.language?.text) ||
       result.plan?.core !== "hyper-xsus-core" || result.plan?.state !== "draft" ||
       result.plan?.executable !== false || result.plan?.dependencyGraphValid !== true ||
       result.safety?.executable !== false || result.safety?.sideEffects !== false ||
