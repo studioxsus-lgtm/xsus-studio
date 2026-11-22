@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { createDeploymentNodeHandler } from './deployment-node-adapter.js';
 import { createSupabaseProjectReviewIntegration } from './supabase-project-review-integration.js';
 import { createSupabaseRestReviewClient } from './supabase-rest-review-client.js';
+import { createXsUsAppSavedProjectBuilder } from './xsus-app-build-engine.js';
 
 export function createStandaloneDeploymentServer(dependencies={}) {
   const route=createDeploymentNodeHandler(dependencies);
@@ -41,8 +42,12 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   const restIntegration=restConfigured ? {
     createProjectReviewer(accessToken) {
       const client=createSupabaseRestReviewClient({url:supabaseUrl,publishableKey,accessToken});
+      // Feature flag is OFF by default. A passing scaffold review is not a
+      // functional app, production deployment, or an AI-generated application.
+      const builder=env.XSUS_APP_ENABLE_SCAFFOLD_REVIEW==='true'
+        ?createXsUsAppSavedProjectBuilder(client):async()=>null;
       return createSupabaseProjectReviewIntegration({supabaseClient:client,
-        buildFromSavedProject:async()=>null}).projectReviewer;
+        buildFromSavedProject:builder}).projectReviewer;
     }
   } : {};
   const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration});
