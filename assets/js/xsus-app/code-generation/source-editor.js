@@ -1,3 +1,4 @@
+import { prepareBuild } from './build-pipeline.js';
 import { validateSourceFiles } from './source-validator.js';
 import { composeSourcePreview } from './live-preview.js';
 
@@ -28,6 +29,8 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   const report = document.createElement('div');
   report.setAttribute('role','status');
   report.style.cssText = 'max-height:105px;overflow:auto;padding:4px 12px;font:12px/1.4 system-ui';
+  const build = document.createElement('button');
+  build.type = 'button'; build.textContent = 'Build project';
   const download = document.createElement('button');
   download.type = 'button'; download.textContent = 'Download files';
   const reset = document.createElement('button');
@@ -51,7 +54,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     });
   }
   renderRevisions();
-  header.append(title,select,refresh,validate,revisions,restore,download,reset,close);
+  header.append(title,select,refresh,validate,revisions,restore,build,download,reset,close);
   const workspace = document.createElement('div');
   workspace.className = 'xsus-source-workspace';
   const responsive = document.createElement('style');
@@ -152,6 +155,18 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     updatePreview();
     dirty = true;
     status.textContent = 'Previous version loaded. Press Save to project to keep it.';
+  });
+  build.addEventListener('click', () => {
+    if (!readEditor()) return;
+    const result = prepareBuild(files);
+    runValidation();
+    if (!result.ok) { status.textContent = 'Build blocked: resolve validation errors.'; return; }
+    for (const [name, content] of Object.entries(result.artifacts)) {
+      const url = URL.createObjectURL(new Blob([content], {type:'text/plain;charset=utf-8'}));
+      const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    }
+    status.textContent = 'Build prepared: 3 source files and build manifest. Not deployed.';
   });
   download.addEventListener('click', () => {
     if (!runValidation()) { status.textContent = 'Fix blocking validation errors before exporting.'; return; }
