@@ -1,3 +1,4 @@
+import { appendBuildRelease } from './release-manager.js';
 import { verifyBuildArtifacts } from './artifact-integrity.js';
 import { inspectBuildReadiness } from './build-diagnostics.js';
 import { prepareBuild } from './build-pipeline.js';
@@ -7,9 +8,10 @@ import { composeSourcePreview } from './live-preview.js';
 const names = ['index.html', 'styles.css', 'app.js'];
 const MAX_FILE_LENGTH = 500000;
 
-export function openSourceEditor(initialFiles, onSave = null, initialHistory = []) {
+export function openSourceEditor(initialFiles, onSave = null, initialHistory = [], onReleaseSave = null, initialReleases = []) {
   const files = Object.fromEntries(names.map(name => [name, initialFiles[name]]));
   let history = Array.isArray(initialHistory) ? structuredClone(initialHistory) : [];
+  let releases = Array.isArray(initialReleases) ? structuredClone(initialReleases) : [];
   const dialog = document.createElement('dialog');
   dialog.setAttribute('aria-label', 'XSUS source code editor');
   dialog.style.cssText = 'width:min(98vw,1250px);height:min(94dvh,900px);padding:0;border:1px solid #6988ad;border-radius:12px;background:#f7f9fc;color:#17243a';
@@ -35,6 +37,8 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   diagnostics.type = 'button'; diagnostics.textContent = 'Build diagnostics';
   const build = document.createElement('button');
   build.type = 'button'; build.textContent = 'Build project';
+  const releaseHistory = document.createElement('button');
+  releaseHistory.type = 'button'; releaseHistory.textContent = 'Release history';
   const download = document.createElement('button');
   download.type = 'button'; download.textContent = 'Download files';
   const reset = document.createElement('button');
@@ -58,7 +62,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     });
   }
   renderRevisions();
-  header.append(title,select,refresh,validate,diagnostics,revisions,restore,build,download,reset,close);
+  header.append(title,select,refresh,validate,diagnostics,revisions,restore,build,releaseHistory,download,reset,close);
   const workspace = document.createElement('div');
   workspace.className = 'xsus-source-workspace';
   const responsive = document.createElement('style');
@@ -179,6 +183,20 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     dirty = true;
     status.textContent = 'Previous version loaded. Press Save to project to keep it.';
   });
+  releaseHistory.addEventListener('click', () => {
+    report.replaceChildren();
+    const heading = document.createElement('strong');
+    heading.textContent = 'Prepared releases (not deployed)';
+    report.append(heading);
+    for (const release of releases.slice().reverse()) {
+      const line = document.createElement('div');
+      line.textContent = 'Build #' + release.number + ' · ' + release.createdAt + ' · ' + release.status;
+      report.append(line);
+    }
+    if (!releases.length) {
+      const line = document.createElement('div'); line.textContent = 'No recorded builds yet.'; report.append(line);
+    }
+  });
   build.addEventListener('click', async () => {
     if (!readEditor()) return;
     build.disabled = true;
@@ -190,12 +208,23 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     if (!result.ok) { status.textContent = 'Build blocked: resolve validation errors.'; return; }
     const integrity = await verifyBuildArtifacts(result.artifacts);
     if (!integrity.ok) { status.textContent = 'Build integrity verification failed.'; return; }
+    if (typeof onReleaseSave !== 'function') {
+      status.textContent = 'Release recording is unavailable for this project.'; return;
+    }
+    try {
+      const manifest = JSON.parse(result.artifacts['xsus-build-manifest.json']);
+      const next = appendBuildRelease(releases, manifest);
+      onReleaseSave(next);
+      releases = next;
+    } catch {
+      status.textContent = 'Release could not be recorded; build download cancelled.'; return;
+    }
     for (const [name, content] of Object.entries(result.artifacts)) {
       const url = URL.createObjectURL(new Blob([content], {type:'text/plain;charset=utf-8'}));
       const a = document.createElement('a'); a.href = url; a.download = name; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 30000);
     }
-    status.textContent = 'Build verified with SHA-256: 3 files and manifest. Not deployed.';
+    status.textContent = 'Verified build recorded in release history and prepared for download. Not deployed.';
   });
   download.addEventListener('click', () => {
     if (!runValidation()) { status.textContent = 'Fix blocking validation errors before exporting.'; return; }
