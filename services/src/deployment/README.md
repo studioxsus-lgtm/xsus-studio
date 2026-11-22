@@ -134,3 +134,8 @@ Read-only Render verification of the independent `xsus-app-deployment-api` servi
 `revision-guarded-build-review.js` exports `reviewBuildWithRevisionGuard`, a separate fail-closed orchestration that requires a server-injected `readOwnedRevision` dependency, checks the initial digest, invokes the existing ownership-checked static review, and re-reads the digest before returning a review-only result. Changed/missing revisions, failed ownership, invalid identity, and exceptions deny without exposing content. Eight native Node tests cover these paths.
 
 This is not wired to the public HTTP handler or production Supabase. Its before/after comparison detects observed concurrent changes but **does not guarantee atomicity** or prevent edits after the final read. No production deploy is authorized. CI execution remains unverified.
+
+## Phase 18.0 — canonical JSONB revision digests
+`snapshot-revision-digest.js` canonicalizes nested JSON values by sorting object keys while preserving array order before hashing. The owner-scoped `supabase-project-revision-reader.js` now uses this helper instead of hashing the incidental JSON serialization order. Five Node tests cover object-key reordering, content edits, array-order sensitivity, malformed/oversized values, and non-disclosure.
+
+This remains read-only validation, not a transactional lock. The code is committed but no complete CI run or live Supabase integration was verified in this phase. Render deployment is unchanged; XSUS AI Core and Future XSUS Core remain untouched.
