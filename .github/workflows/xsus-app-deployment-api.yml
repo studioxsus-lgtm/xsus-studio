@@ -31,7 +31,10 @@ jobs:
           node --input-type=module -e "import p from './package.json' with {type:'json'}; if (Object.keys(p.dependencies||{}).length || Object.keys(p.devDependencies||{}).length) process.exit(1)"
       - name: Check JavaScript syntax
         run: |
-          for f in *.js tests/*.js scripts/*.mjs; do node --check "$f"; done
+          shopt -s nullglob
+          files=( *.js tests/*.js scripts/*.mjs )
+          if (( ${#files[@]} == 0 )); then echo "No JavaScript files found"; exit 1; fi
+          for f in "${files[@]}"; do node --check "$f"; done
       - name: Run isolated HTTP tests
         run: npm test
       - name: Production dependency audit
