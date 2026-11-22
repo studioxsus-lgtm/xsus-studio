@@ -35,7 +35,7 @@ class HTTPMetricsTests(unittest.IsolatedAsyncioTestCase):
         async with TestClient(TestServer(app)) as client:
             path = "/v1/intelligence/reason"
             payload = {"contractVersion": "1.0.0", "requestId": "private-id",
-                       "query": "private-fact", "facts": ["private-fact"], "rules": []}
+                       "query": "private_fact", "facts": ["private_fact"], "rules": []}
             response = await client.post(path, json=payload,
                            headers={"Authorization": "Bearer private-token"})
             self.assertEqual(response.status, 200)
@@ -46,7 +46,7 @@ class HTTPMetricsTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(report["status_classes"]["2xx"], 1)
             self.assertEqual(report["status_classes"]["4xx"], 1)
             serialized = json.dumps(report)
-            for secret in ("private-token", "private-fact", "private-id", "alice"):
+            for secret in ("private-token", "private_fact", "private-id", "alice"):
                 self.assertNotIn(secret, serialized)
             self.assertEqual((await client.get("/healthz")).status, 200)
             self.assertEqual(app[INTELLIGENCE_METRICS].snapshot()["completed_requests"], 2)
