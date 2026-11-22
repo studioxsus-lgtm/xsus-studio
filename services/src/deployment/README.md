@@ -11,20 +11,28 @@ PORT=3001 XSUS_APP_ALLOWED_ORIGINS=https://www.xsusstudio.com node services/src/
 
 `GET /healthz` responds with `deploymentEnabled:false`. `POST /api/deployments/validate` remains fail-closed (503) until trusted Supabase clients, authoritative project ownership queries and trusted artifact storage are injected. No endpoint can execute deployments.
 
-## Proposed *new* Render service (not created)
+## Existing Render service (created, verified live on initial deployment)
 - Name: `xsus-app-deployment-api`
 - Repository: `studioxsus-lgtm/xsus-studio`
 - Branch: `main`
 - Runtime: Node.js 20+
-- Root directory: repository root
-- Build command: `npm install`
-- Start command: `node services/src/deployment/standalone-server.js`
+- Current root directory: repository root (isolation change not yet applied)
+- Current build command: `npm install`
+- Current start command: `node services/src/deployment/standalone-server.js`
 - Health check: `/healthz`
 - Environment: `XSUS_APP_ALLOWED_ORIGINS=https://www.xsusstudio.com` (no provider secrets until backend integration is audited)
 
 Do **not** repoint or redeploy existing `xsus-studio` or `future-xsus-core-api` services. The current API is validation-only and not production-ready for authorization until trusted dependencies and rate limits are configured. Avoid treating a passing health check as deployment authorization.
 
 ## Phase 15.5 — dependency isolation and smoke tests
-The standalone service now has its own `services/src/deployment/package.json` with **zero declared third-party runtime dependencies**. From that directory run `node --test tests/*.test.js` or `npm test`. This does not mean the existing root dependency audit is resolved: Render currently runs `npm install` at repository root, and the initial deployment reported **2 critical and 1 moderate** npm audit findings. Their package identities and exploitability have not been established.
+The standalone service now has its own `services/src/deployment/package.json` with **zero declared third-party runtime dependencies**. From that directory run `node --test tests/*.node-test.js` or `npm test`. This does not mean the existing root dependency audit is resolved: Render currently runs `npm install` at repository root, and the initial deployment reported **2 critical and 1 moderate** npm audit findings. Their package identities and exploitability have not been established.
 
 For a future **isolated** build of this service, use Render root directory `services/src/deployment`, build command `npm install --omit=dev`, start command `npm start`, and health path `/healthz`. Do not apply these settings to existing XSUS AI Core or Future XSUS Core services. This proposed change needs a reviewed redeployment of only `xsus-app-deployment-api`. Its production authorization remains disabled until trusted project and artifact stores are implemented.
+
+## Phase 15.8 — reviewed Render settings, not yet applied
+The manual live-smoke workflow was reported passing on main. The current Render deployment still uses repository-root `npm install`; a successful HTTP smoke test does **not** establish that root dependencies are safe.
+
+The separate `render-service.yaml` is a **reference configuration**, not an applied Blueprint. Change **only** the existing `xsus-app-deployment-api` service's Root Directory to `services/src/deployment`, Build Command to `npm install --omit=dev`, Start Command to `npm start`, and Health Check Path to `/healthz`. Leave auto-deploy off. After redeploying that service, rerun the live smoke workflow and check its build logs for dependency audit findings. Do not change the `xsus-studio` or `future-xsus-core-api` services.
+
+### Supabase integration gate
+No database schema or trusted artifact store has yet been verified. Do not add a service-role key or enable authorization solely on the strength of the smoke test. Before wiring the backend, confirm table and storage policies, ownership enforcement, secret handling, and rate limits; then add integration tests using a dedicated test project. The endpoint must remain validation-only and fail-closed until these checks pass.
