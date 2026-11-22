@@ -29,7 +29,13 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
     : {};
   const supabaseUrl=env.XSUS_APP_SUPABASE_URL;
   const publishableKey=env.XSUS_APP_SUPABASE_PUBLISHABLE_KEY;
+  // A half-configured production connection must fail startup visibly.
+  if (Boolean(supabaseUrl)!==Boolean(publishableKey))
+    throw new TypeError('Incomplete XSUS App Supabase configuration');
   const restConfigured=Boolean(supabaseUrl&&publishableKey);
+  if (restConfigured && (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(supabaseUrl) ||
+      !publishableKey.startsWith('sb_publishable_')))
+    throw new TypeError('Invalid XSUS App Supabase configuration');
   // Read-only connection: no trusted application builder is enabled by default.
   // Authentication and owner-scoped reads work; review remains denied at build preflight.
   const restIntegration=restConfigured ? {
