@@ -42,3 +42,18 @@ test('trusted Supabase injection routes review through auth and builder without 
   assert.equal(built,1);
  }finally{await close(server);}
 });
+
+test('partial Supabase environment cannot silently disable project review',()=>{
+ assert.throws(()=>startStandaloneDeploymentServer({env:{PORT:'0',
+  XSUS_APP_SUPABASE_URL:'https://example.supabase.co'}}),/Incomplete XSUS App Supabase configuration/);
+ assert.throws(()=>startStandaloneDeploymentServer({env:{PORT:'0',
+  XSUS_APP_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_example'}}),/Incomplete XSUS App Supabase configuration/);
+});
+test('unsafe Supabase configuration fails before server starts',()=>{
+ assert.throws(()=>startStandaloneDeploymentServer({env:{PORT:'0',
+  XSUS_APP_SUPABASE_URL:'http://example.supabase.co',
+  XSUS_APP_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_example'}}),/Invalid XSUS App Supabase configuration/);
+ assert.throws(()=>startStandaloneDeploymentServer({env:{PORT:'0',
+  XSUS_APP_SUPABASE_URL:'https://example.supabase.co',
+  XSUS_APP_SUPABASE_PUBLISHABLE_KEY:'service_role_not_allowed'}}),/Invalid XSUS App Supabase configuration/);
+});
