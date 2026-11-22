@@ -38,3 +38,35 @@ test('rejects builder failure without leaking its message',async()=>{
  const r=await reviewSavedProjectBuild(args,{...deps(),buildFromSavedProject:async()=>{throw Error('private snapshot text');}});
  assert.equal(r.status,'denied');assert.equal(JSON.stringify(r).includes('private'),false);
 });
+
+test('ownership is rechecked after builder completes',async()=>{
+ let checks=0;
+ const r=await reviewSavedProjectBuild(args,{
+  findOwnedProject:async()=>{checks++;return {id:projectId,ownerId};},
+  buildFromSavedProject:async()=>files
+ });
+ assert.equal(checks,2);
+ assert.equal(r.status,'ready-for-review');
+ assert.equal(r.deployed,false);
+});
+test('project deleted during build fails closed',async()=>{
+ let checks=0;
+ const r=await reviewSavedProjectBuild(args,{
+  findOwnedProject:async()=>++checks===1?{id:projectId,ownerId}:null,
+  buildFromSavedProject:async()=>files
+ });
+ assert.equal(checks,2);
+ assert.equal(r.status,'denied');
+ assert.equal(r.reason,'PROJECT_OWNERSHIP_CHANGED');
+ assert.equal(r.deployed,false);
+});
+test('project ownership changed during build fails closed',async()=>{
+ let checks=0;
+ const r=await reviewSavedProjectBuild(args,{
+  findOwnedProject:async()=>++checks===1?{id:projectId,ownerId}:
+   {id:projectId,ownerId:'33333333-3333-4333-8333-333333333333'},
+  buildFromSavedProject:async()=>files
+ });
+ assert.equal(r.status,'denied');
+ assert.equal(r.reason,'PROJECT_OWNERSHIP_CHANGED');
+});
