@@ -14,6 +14,26 @@ export function createDeploymentNodeHandler(dependencies) {
       const path=req.url?.split('?')[0];
       if (path!=='/api/deployments/validate' && path!=='/api/projects/review')
         return reply(404,{error:'not_found',deployed:false});
+      // Browser preflight must be handled before reading request body.
+      // Never reflect an untrusted Origin into CORS response headers.
+      if (req.method==='OPTIONS' && path==='/api/projects/review') {
+        const origin=req.headers.origin;
+        if (typeof origin!=='string'||!dependencies?.allowedOrigins?.includes(origin))
+          return reply(403,{error:'origin_not_allowed',deployed:false});
+        const method=req.headers['access-control-request-method'];
+        const requested=String(req.headers['access-control-request-headers']??'').toLowerCase()
+          .split(',').map(x=>x.trim()).filter(Boolean);
+        if (method!=='POST'||requested.some(x=>!['authorization','content-type'].includes(x)))
+          return reply(403,{error:'preflight_denied',deployed:false});
+        res.writeHead(204,{
+          'access-control-allow-origin':origin,
+          'access-control-allow-methods':'POST',
+          'access-control-allow-headers':'authorization, content-type',
+          'access-control-max-age':'300',
+          'vary':'Origin'
+        });
+        res.end();return;
+      }
       if (req.method!=='POST') return reply(405,{error:'method_not_allowed',deployed:false},{allow:'POST'});
       const length=Number(req.headers['content-length']);
       if (req.headers['content-length']!==undefined && (!Number.isSafeInteger(length)||length<0||length>MAX_BYTES))
@@ -28,7 +48,11 @@ export function createDeploymentNodeHandler(dependencies) {
       const result=path==='/api/projects/review'
         ? await handleProjectReviewHttp(input,dependencies)
         : await handleDeploymentValidationHttp(input,dependencies);
-      return reply(result.status,result.body,result.headers);
+      const origin=req.headers.origin;
+      const cors=path==='/api/projects/review' && typeof origin==='string' &&
+        dependencies?.allowedOrigins?.includes(origin)
+        ? {'access-control-allow-origin':origin,'vary':'Origin'} : {};
+      return reply(result.status,result.body,{...result.headers,...cors});
     } catch {
       return reply(503,{error:'validation_unavailable',deployed:false});
     }
