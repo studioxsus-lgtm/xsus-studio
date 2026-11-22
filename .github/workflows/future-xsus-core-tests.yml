@@ -114,3 +114,13 @@ jobs:
           done
           curl -fsS "$XSUS_TEST_API_URL/healthz" >/dev/null
           node clients/browser/intelligence-live.mjs
+          node clients/browser/intelligence-load.mjs > intelligence-load-report.json
+          cat intelligence-load-report.json
+
+      - name: Upload intelligence load evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-xsus-core-intelligence-load
+          path: packages/future-xsus-core/intelligence-load-report.json
+          if-no-files-found: warn
