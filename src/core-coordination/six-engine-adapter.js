@@ -24,7 +24,7 @@ export function createHyperSixEngineAdapter({orchestration,contractVersion,reque
           result?.authorizedForExecution !== false || result?.sideEffects !== false ||
           !Array.isArray(result.stages) || result.stages.length > 6 ||
           result.stages.some(s=>!SIX_ENGINE_STAGE_NAMES.includes(s.stage) ||
-            !["completed","rejected"].includes(s.status)))
+            !["success","rejected"].includes(s.status)))
         throw new CoordinationError("invalid_orchestration_result");
       return Object.freeze({
         status:"review_required",authorizedForExecution:false,sideEffects:false,
