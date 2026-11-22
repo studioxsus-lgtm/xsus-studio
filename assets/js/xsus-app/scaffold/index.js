@@ -1,4 +1,4 @@
-import { openSourceEditor } from '../code-generation/source-editor.js?v=20261122-history1';
+import { openSourceEditor } from '../code-generation/source-editor.js?v=20261122-workspace1';
 import { composeSourcePreview } from '../code-generation/live-preview.js';
 import { generateSourceFiles } from '../code-generation/index.js?v=20261122-summary1';
 import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-undodelete1';
