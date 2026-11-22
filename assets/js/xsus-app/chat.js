@@ -131,13 +131,32 @@ function addPlan(result, reviewKey = result.requestId) {
   const request = document.createElement('small'); request.className = 'bridge-request-id';
   request.textContent = `${t('Request ID')}: ${result.requestId}`;
   card.append(meta, heading, language, list, badges, note, request); bubble.append(card);
-  if (result.status === 'completed') {
+  // A review-required plan must never advance automatically. The user must
+  // explicitly accept the original English goal before a specification is made.
+  const acceptedReview = specificationReviews.get(reviewKey)?.humanReviewed === true;
+  if (result.status === 'review_required' && !acceptedReview) {
+    const reviewButton = document.createElement('button');
+    reviewButton.type = 'button';
+    reviewButton.className = 'app-specification-approve';
+    reviewButton.textContent = t('Review original goal and continue');
+    reviewButton.addEventListener('click', () => {
+      const confirmation = window.confirm(
+        'Review the original English goal and the proposed steps above. ' +
+        'Continue to an editable specification? This does not execute, save, or deploy code.'
+      );
+      if (!confirmation) return;
+      specificationReviews.set(reviewKey, { humanReviewed: true });
+      renderMessages();
+    });
+    card.append(reviewButton);
+  }
+  if (result.status === 'completed' || acceptedReview) {
     try {
-      const specification = createAppSpecification(result);
+      const specification = createAppSpecification(result, { humanReviewed: acceptedReview });
       let reviewDraft = specificationReviews.get(reviewKey);
       if (reviewDraft?.state !== 'discarded') {
         if (!reviewDraft) {
-        reviewDraft = createSpecificationReviewDraft(specification);
+        reviewDraft = { ...createSpecificationReviewDraft(specification), humanReviewed: acceptedReview };
         specificationReviews.set(reviewKey, reviewDraft);
         }
         bubble.append(renderSpecificationCard(specification, reviewDraft, reviewKey));
