@@ -1,3 +1,4 @@
+import { openSourceEditor } from '../code-generation/source-editor.js';
 import { composeSourcePreview } from '../code-generation/live-preview.js';
 import { generateSourceFiles } from '../code-generation/index.js?v=20261122-summary1';
 import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-undodelete1';
@@ -117,6 +118,18 @@ export function appendScaffoldControls(card, spec, t, onBuild) {
     }
   });
   controls.append(sourcePreview);
+  const editSource = document.createElement('button');
+  editSource.type = 'button';
+  editSource.textContent = 'Edit source code (HTML / CSS / JS)';
+  editSource.addEventListener('click', () => {
+    try {
+      const { files } = generateSourceFiles(spec);
+      openSourceEditor(files);
+    } catch {
+      window.alert(t('Review and approve the application specification before generating source files.'));
+    }
+  });
+  controls.append(editSource);
   card.append(controls);
   function showDownload(html) {
     const download = document.createElement('button');
@@ -134,7 +147,7 @@ export function appendScaffoldControls(card, spec, t, onBuild) {
     preview.type = 'button';
     preview.textContent = t('Preview');
     preview.addEventListener('click', () => onBuild(html));
-    controls.replaceChildren(preview, download, source, sourcePreview);
+    controls.replaceChildren(preview, download, source, sourcePreview, editSource);
   }
   if (spec.builtHtml || builtScaffolds.has(spec)) showDownload(spec.builtHtml || builtScaffolds.get(spec));
   build.addEventListener('click', () => {
