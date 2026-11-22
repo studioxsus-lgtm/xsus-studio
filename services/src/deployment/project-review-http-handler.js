@@ -29,6 +29,10 @@ export async function handleProjectReviewHttp(input,deps={}) {
   // Only return a bounded, non-sensitive status; do not expose artifacts or internal exceptions.
   if(result?.status==='ready-for-review'&&result.deployed===false)
    return json(200,{status:'ready-for-review',reason:'STATIC_REVIEW_ONLY'});
+  // Only an authenticated owner can reach build preflight; distinguish a
+  // missing trusted builder from an authentication/ownership denial.
+  if(result?.reason==='BUILD_PREFLIGHT_FAILED')
+   return json(409,{status:'blocked',reason:'BUILD_NOT_AVAILABLE'});
   return json(403,{status:'denied',reason:'REVIEW_DENIED'});
  } catch{return json(503,{error:'review_unavailable'});}
 }
