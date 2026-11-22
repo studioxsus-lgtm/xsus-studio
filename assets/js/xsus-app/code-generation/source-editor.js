@@ -1,3 +1,4 @@
+import { authorizeDeploymentPreparation } from './deployment-authorization.js';
 import { DEPLOYMENT_TARGETS } from './deployment-targets.js';
 import { prepareDeploymentPlan } from './deployment-preflight.js';
 import { appendBuildRelease } from './release-manager.js';
@@ -47,6 +48,16 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     const option = document.createElement('option');
     option.value=id; option.textContent=config.label; targetSelect.append(option);
   }
+  const acknowledgement = document.createElement('label');
+  acknowledgement.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font:12px system-ui';
+  const acknowledged = document.createElement('input');
+  acknowledged.type = 'checkbox';
+  acknowledgement.append(acknowledged,document.createTextNode('I reviewed the deployment target and risks'));
+  const confirmation = document.createElement('input');
+  confirmation.type = 'text';
+  confirmation.placeholder = 'Type PREPARE';
+  confirmation.setAttribute('aria-label','Type PREPARE to confirm plan export');
+  confirmation.style.cssText = 'max-width:105px';
   const deployment = document.createElement('button');
   deployment.type = 'button'; deployment.textContent = 'Prepare deployment';
   const download = document.createElement('button');
@@ -72,7 +83,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     });
   }
   renderRevisions();
-  header.append(title,select,refresh,validate,diagnostics,revisions,restore,build,targetSelect,deployment,releaseHistory,download,reset,close);
+  header.append(title,select,refresh,validate,diagnostics,revisions,restore,build,targetSelect,acknowledgement,confirmation,deployment,releaseHistory,download,reset,close);
   const workspace = document.createElement('div');
   workspace.className = 'xsus-source-workspace';
   const responsive = document.createElement('style');
@@ -195,6 +206,10 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   });
   deployment.addEventListener('click', async () => {
     if (!readEditor()) return;
+    const consent = authorizeDeploymentPreparation({target:targetSelect.value,acknowledged:acknowledged.checked,confirmation:confirmation.value},Object.keys(DEPLOYMENT_TARGETS));
+    if (!consent.authorized) { status.textContent = consent.reason; return; }
+    acknowledged.checked = false;
+    confirmation.value = '';
     deployment.disabled = true;
     try {
       const buildResult = await prepareBuild(files);
