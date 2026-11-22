@@ -225,6 +225,7 @@ def create_app(
     learning_status_dir: Path | None = None,
     intelligence_enabled: bool = False,
     intelligence_v2_adapter: XSUSAppIntelligenceAdapterV2 | None = None,
+    intelligence_v2_permissions: Mapping[str, frozenset[str]] | None = None,
 ) -> web.Application:
     """Create an app using local owner-scoped session storage and engine routing."""
     if type(max_concurrent_messages) is not int or max_concurrent_messages < 1:
@@ -238,6 +239,16 @@ def create_app(
     intelligence_adapter = XSUSAppIntelligenceAdapter() if intelligence_enabled else None
     if intelligence_v2_adapter is not None and not isinstance(intelligence_v2_adapter, XSUSAppIntelligenceAdapterV2):
         raise ValueError('Invalid V2 adapter')
+    public_operations = frozenset(("reason", "solve", "infer", "search"))
+    v2_permissions = None
+    if intelligence_v2_permissions is not None:
+        if not isinstance(intelligence_v2_permissions, Mapping):
+            raise ValueError("Invalid V2 permissions policy")
+        v2_permissions = dict(intelligence_v2_permissions)
+        for identity, permissions in v2_permissions.items():
+            require_identifier(identity, "owner_id")
+            if type(permissions) is not frozenset or not permissions <= public_operations:
+                raise ValueError("Invalid V2 permissions")
     cors_origins = _validate_origins(allowed_origins)
     active_messages = 0
     active_language_requests = 0
@@ -501,7 +512,10 @@ def create_app(
                                  object_pairs_hook=_strict_json_pairs,
                                  parse_constant=_reject_json_constant)
             scope = "u_" + hashlib.sha256(owner.encode("utf-8")).hexdigest()[:62]
-            principal = RouterPrincipal(scope, frozenset(("reason", "solve", "infer", "search")))
+            permissions = public_operations if v2_permissions is None else v2_permissions.get(owner, frozenset())
+            if not permissions:
+                return _error(403, "operation_denied", "Operation not permitted")
+            principal = RouterPrincipal(scope, permissions)
             if active_intelligence_requests >= min(max_concurrent_messages, 8):
                 return _error(503, "intelligence_unavailable", "Intelligence service unavailable")
             active_intelligence_requests += 1
