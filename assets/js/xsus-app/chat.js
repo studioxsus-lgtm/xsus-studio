@@ -1,7 +1,7 @@
 import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261122-unified2';
 import { showGeneratedHtml } from './editor.js?v=20261120-account1';
-import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261122-release1';
+import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261122-deployprep1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
