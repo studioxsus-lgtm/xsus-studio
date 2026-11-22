@@ -13,7 +13,21 @@ export function createRemoteSandboxProvider({transport,endpoint,allowedOrigin}={
   return Object.freeze({
     async execute({manifest,policy,executionId,artifactDigest,signal}={}){
       const artifact=validateBuildManifest(manifest);
-      const limits=createSandboxPolicy(policy);
+      // Revalidate numeric limits while preserving only the fixed, restrictive policy flags.
+      // Reject any altered or unexpected normalized policy fields.
+      if(!policy||typeof policy!=="object"||Array.isArray(policy))throw new TypeError("Invalid sandbox policy");
+      const allowed=new Set(["version","timeoutMs","memoryMb","cpuMs","maxOutputBytes","network","filesystem","privileged"]);
+      for(const key of Object.keys(policy))if(!allowed.has(key))throw new TypeError("Unsupported sandbox policy option");
+      if(Object.hasOwn(policy,"network")&&policy.network!=="disabled")throw new TypeError("Sandbox network must remain disabled");
+      if(Object.hasOwn(policy,"filesystem")&&policy.filesystem!=="ephemeral")throw new TypeError("Sandbox filesystem must remain ephemeral");
+      if(Object.hasOwn(policy,"privileged")&&policy.privileged!==false)throw new TypeError("Sandbox must remain unprivileged");
+      if(Object.hasOwn(policy,"version")&&policy.version!=="0.1.0")throw new TypeError("Unsupported sandbox policy version");
+      const limits=createSandboxPolicy({
+        timeoutMs:policy.timeoutMs,
+        memoryMb:policy.memoryMb,
+        cpuMs:policy.cpuMs,
+        maxOutputBytes:policy.maxOutputBytes
+      });
       if(typeof executionId!=="string"||!ID.test(executionId))throw new TypeError("Invalid execution ID");
       if(typeof artifactDigest!=="string"||!DIGEST.test(artifactDigest))throw new TypeError("Invalid artifact digest");
       if(signal?.aborted)throw new Error("Sandbox request cancelled");
