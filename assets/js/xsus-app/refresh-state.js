@@ -16,6 +16,7 @@ export function saveRefreshState(section) {
   if (!owner) return;
   try {
     sessionStorage.setItem(key(section), JSON.stringify(sections.get(section).read()));
+    document.dispatchEvent(new CustomEvent('xsus:workspace-saved', { detail: { section, owner } }));
   } catch {
     if (warned) return;
     warned = true;
