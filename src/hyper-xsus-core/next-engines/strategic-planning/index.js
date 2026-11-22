@@ -45,3 +45,30 @@ export function schedulePlan(input) {
   for(const id of nodes.keys())visit(id);
   return result(req,{orderedStepIds:order,dependencyGraphValid:true,executable:false});
 }
+
+/**
+ * Deterministic, review-only planning for supported application categories.
+ * Unlike createPlan, this derives steps from the goal rather than requiring
+ * the browser to supply them. It does not execute or generate code.
+ */
+export function proposeApplicationPlan(goal) {
+  const value=string(goal,"goal").trim();
+  if(value.length>4096)throw new EngineContractError("INPUT_TOO_LARGE","Goal exceeds limit");
+  const normalized=value.toLowerCase();
+  const isTasks=/\\b(task|tasks|todo|to-do|project management|kanban)\\b/.test(normalized);
+  const isBooking=/\\b(book|booking|reservation|appointment|calendar)\\b/.test(normalized);
+  const isStore=/\\b(store|shop|e-commerce|ecommerce|checkout|cart)\\b/.test(normalized);
+  const category=isTasks?"task-management":isBooking?"booking":isStore?"commerce":"general";
+  const features={
+    "task-management":["Define task, project, and user roles and acceptance criteria.","Model projects, tasks, assignments, statuses, and progress.","Design authentication and project-level access rules.","Build the dashboard, project list, and task editing interfaces.","Implement task lifecycle, filtering, and progress tracking."],
+    booking:["Define booking actors, resources, and acceptance criteria.","Model availability, bookings, and customer records.","Design authentication and booking authorization.","Build calendar, availability search, and booking screens.","Implement booking creation, cancellation, and conflict checks."],
+    commerce:["Define catalog, order, and checkout requirements.","Model products, carts, orders, and customer records.","Design authentication and order access rules.","Build product catalog, cart, and checkout screens.","Implement cart updates and server-side order validation."],
+    general:["Define the application requirements and acceptance criteria.","Design data entities, relationships, and storage boundaries.","Design authentication, permissions, and security constraints.","Build the core navigation and application screens.","Implement the primary user workflows and validation."]
+  };
+  const tasks=[...features[category],
+    "Add accessibility, responsive layouts, and error handling.",
+    "Test security, business workflows, and failure cases.",
+    "Review and approve the plan before any code generation or deployment."];
+  return Object.freeze({category,source:"hyper-xsus-core/deterministic-planner",requiresHumanReview:true,
+    steps:tasks.map((task,i)=>({id:`step-${i+1}`,task,dependsOn:i?[`step-${i}`]:[]}))});
+}
