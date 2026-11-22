@@ -1,3 +1,4 @@
+import { composeSourcePreview } from '../code-generation/live-preview.js';
 import { generateSourceFiles } from '../code-generation/index.js?v=20261122-summary1';
 import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-undodelete1';
 
@@ -85,6 +86,37 @@ export function appendScaffoldControls(card, spec, t, onBuild) {
     }
   });
   controls.append(source);
+  const sourcePreview = document.createElement('button');
+  sourcePreview.type = 'button';
+  sourcePreview.textContent = 'Live Preview (HTML / CSS / JS)';
+  sourcePreview.addEventListener('click', () => {
+    try {
+      const { files } = generateSourceFiles(spec);
+      const dialog = document.createElement('dialog');
+      dialog.setAttribute('aria-label', 'Generated source live preview');
+      dialog.style.cssText = 'width:min(96vw,1100px);height:min(90dvh,850px);padding:0;border:1px solid #6988ad;border-radius:12px;background:#fff;color:#17243a';
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:12px';
+      const title = document.createElement('strong');
+      title.textContent = 'XSUS App · Live Source Preview';
+      const close = document.createElement('button');
+      close.type = 'button'; close.textContent = 'Close';
+      close.addEventListener('click', () => dialog.close());
+      header.append(title, close);
+      const frame = document.createElement('iframe');
+      frame.title = 'Isolated generated application preview';
+      frame.setAttribute('sandbox', 'allow-scripts');
+      frame.style.cssText = 'display:block;width:100%;height:calc(100% - 54px);border:0;background:white';
+      frame.srcdoc = composeSourcePreview(files);
+      dialog.append(header, frame);
+      dialog.addEventListener('close', () => dialog.remove(), { once:true });
+      document.body.append(dialog);
+      dialog.showModal();
+    } catch {
+      window.alert(t('Review and approve the application specification before generating source files.'));
+    }
+  });
+  controls.append(sourcePreview);
   card.append(controls);
   function showDownload(html) {
     const download = document.createElement('button');
@@ -102,7 +134,7 @@ export function appendScaffoldControls(card, spec, t, onBuild) {
     preview.type = 'button';
     preview.textContent = t('Preview');
     preview.addEventListener('click', () => onBuild(html));
-    controls.replaceChildren(preview, download, source);
+    controls.replaceChildren(preview, download, source, sourcePreview);
   }
   if (spec.builtHtml || builtScaffolds.has(spec)) showDownload(spec.builtHtml || builtScaffolds.get(spec));
   build.addEventListener('click', () => {
