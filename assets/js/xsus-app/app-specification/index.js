@@ -22,8 +22,8 @@ function profileFor(goal) {
   return [taskManagerProfile, bookingProfile, onlineStoreProfile].find(profile => profile.matches(goal)) ?? GENERAL_PROFILE;
 }
 
-export function createAppSpecification(result) {
-  validatePlanningResult(result);
+export function createAppSpecification(result, options = {}) {
+  validatePlanningResult(result, options);
   const goal = result.plan.goal.trim();
   const profile = profileFor(goal);
   return deepFreeze({
@@ -36,7 +36,7 @@ export function createAppSpecification(result) {
       id: step.id,
       text: step.task.trim(),
       dependsOn: [...step.dependsOn],
-      source: "user-supplied-plan"
+      source: result.plan.proposalSource ? "hyper-proposed-plan" : "user-supplied-plan"
     })),
     proposedStructure: {
       pages: [...profile.pages],
