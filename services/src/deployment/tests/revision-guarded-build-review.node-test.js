@@ -88,10 +88,12 @@ test('owner reassigned after final revision read fails closed',async()=>{
  assert.equal(result.reason,'PROJECT_OWNERSHIP_CHANGED');
  assert.equal(result.deployed,false);
 });
-test('missing final ownership check dependency fails closed',async()=>{
+test('stable revision and unchanged owner pass all three ownership checks',async()=>{
+ let checks=0;
  const result=await reviewBuildWithRevisionGuard(args,{
-  ...deps(),findOwnedProject:async()=>({id:projectId,ownerId})
+  ...deps(),findOwnedProject:async()=>{checks++;return {id:projectId,ownerId};}
  });
+ assert.equal(checks,3);
  assert.equal(result.status,'ready-for-review');
  assert.equal(result.deployed,false);
 });
