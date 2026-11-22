@@ -2,6 +2,16 @@ import { generateSourceFiles } from '../code-generation/index.js?v=20261122-phas
 import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-undodelete1';
 
 const escapeText = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+// Display a concise product summary; retain the full goal in the reviewed specification.
+function productSummary(spec) {
+  const label = typeof spec.product?.label === 'string' ? spec.product.label.trim() : '';
+  const profile = spec.product?.profileId;
+  if (profile === 'task-manager') return 'Organize projects, manage tasks, and track team progress in one workspace.';
+  const goal = typeof spec.product?.goal === 'string' ? spec.product.goal.trim() : '';
+  const first = goal.split(/(?<=[.!?])\\s+/u)[0] || '';
+  const summary = first.length <= 180 ? first : first.slice(0, 177).replace(/\\s+\\S*$/, '') + '…';
+  return summary || label || 'Your application workspace.';
+}
 const section = (name, items) => items.length ? `<section><h2>${name}</h2><ul>${items.map(item => `<li>${escapeText(item)}</li>`).join('')}</ul></section>` : '';
 
 // Upgrade the previous persistent board without replacing its project, board ID or task data.
@@ -42,7 +52,7 @@ export function buildScaffold(spec) {
   return `<!doctype html>
 <html lang="en"${interactive ? ` data-board="${crypto.randomUUID()}"` : ''}><head><meta charset="utf-8">${policy}<meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeText(spec.product.label)}</title>
 <style>body{max-width:60rem;margin:auto;padding:1.5rem;font:1rem/1.6 system-ui;color:#16273a;background:#f3f6fa;overflow-wrap:anywhere}nav{display:flex;flex-wrap:wrap;gap:1rem}section{background:white;border:1px solid #c7d5e1;border-radius:.6rem;margin:1rem 0;padding:1rem}h2{margin:0}a{color:#14559b}${interactive ? boardStyles : ''}</style></head>
-<body><header><h1>${escapeText(spec.product.label)}</h1><p>${escapeText(spec.product.goal)}</p></header><nav aria-label="Screens">${links}</nav><main>${screens}
+<body><header><h1>${escapeText(spec.product.label)}</h1><p>${escapeText(productSummary(spec))}</p></header><nav aria-label="Screens">${links}</nav><main>${screens}
 ${section('Components', components)}${section('Data models', dataModels)}${section('Planned interactions', interactions)}${section('Requirements', spec.requirements)}</main>${interactive ? `<script>${boardScript}</script>` : ''}</body></html>`;
 }
 
