@@ -12,6 +12,9 @@ function canonical(value,depth=0,seen=new WeakSet()) {
  if(Array.isArray(value)) {
   if(seen.has(value)) throw new TypeError('Cyclic snapshot');
   seen.add(value);
+  if(Object.keys(value).length!==value.length ||
+     Object.keys(value).some(key=>!(/^(0|[1-9][0-9]*)$/.test(key)) || Number(key)>=value.length))
+   throw new TypeError('Sparse or non-JSON array');
   const result='['+value.map(item=>canonical(item,depth+1,seen)).join(',')+']';
   seen.delete(value);
   return result;
