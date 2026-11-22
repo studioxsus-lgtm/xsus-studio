@@ -1,4 +1,4 @@
-import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261122-autosave1';
+import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261122-unified2';
 import { showGeneratedHtml } from './editor.js?v=20261120-account1';
 import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261122-phase13b';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
