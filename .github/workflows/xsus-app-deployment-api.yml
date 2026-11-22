@@ -35,8 +35,17 @@ jobs:
           files=( *.js tests/*.js scripts/*.mjs )
           if (( ${#files[@]} == 0 )); then echo "No JavaScript files found"; exit 1; fi
           for f in "${files[@]}"; do node --check "$f"; done
-      - name: Run isolated HTTP tests
-        run: npm test
+      - name: Run isolated Node test suite and retain TAP report
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap tests/*.node-test.js | tee xsus-app-tests.tap
+      - name: Upload Node test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xsus-app-deployment-node-tests
+          path: services/src/deployment/xsus-app-tests.tap
+          if-no-files-found: warn
       - name: Production dependency audit
         run: |
           npm install --package-lock-only --ignore-scripts
