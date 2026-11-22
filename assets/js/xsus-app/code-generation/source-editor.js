@@ -47,7 +47,28 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   renderRevisions();
   header.append(title,select,refresh,revisions,restore,download,reset,close);
   const workspace = document.createElement('div');
-  workspace.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));height:calc(100% - 104px);gap:8px;padding:8px;box-sizing:border-box';
+  workspace.style.cssText = 'display:grid;grid-template-columns:minmax(125px,170px) minmax(0,1fr) minmax(0,1fr);height:calc(100% - 104px);gap:8px;padding:8px;box-sizing:border-box;overflow:auto';
+  const explorer = document.createElement('nav');
+  explorer.setAttribute('aria-label','Project file explorer');
+  explorer.style.cssText = 'display:flex;flex-direction:column;gap:6px;min-width:125px';
+  const explorerTitle = document.createElement('strong'); explorerTitle.textContent = 'PROJECT FILES';
+  explorer.append(explorerTitle);
+  const fileButtons = new Map();
+  for (const name of names) {
+    const button = document.createElement('button');
+    button.type = 'button'; button.textContent = name;
+    button.style.cssText = 'text-align:left;padding:8px;overflow-wrap:anywhere';
+    button.addEventListener('click', () => { select.value = name; select.dispatchEvent(new Event('change')); });
+    explorer.append(button); fileButtons.set(name,button);
+  }
+  function updateExplorer() {
+    for (const [name,button] of fileButtons) {
+      const active = name === select.value;
+      button.setAttribute('aria-current', active ? 'page' : 'false');
+      button.style.fontWeight = active ? '700' : '400';
+    }
+  }
+  updateExplorer();
   const textarea = document.createElement('textarea');
   textarea.setAttribute('aria-label','Edit selected source file');
   textarea.spellcheck = false;
@@ -56,7 +77,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   frame.title = 'Sandboxed live code preview';
   frame.setAttribute('sandbox','allow-scripts');
   frame.style.cssText = 'width:100%;height:100%;border:1px solid #b4c8db;border-radius:8px;background:white;box-sizing:border-box';
-  workspace.append(textarea,frame);
+  workspace.append(explorer,textarea,frame);
   const status = document.createElement('p');
   status.setAttribute('role','status');
   status.style.cssText = 'margin:0;padding:2px 12px;font-size:12px';
@@ -69,6 +90,8 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     files[select.value] = textarea.value;
     return true;
   };
+  let dirty = false;
+  textarea.addEventListener('input', () => { dirty = true; status.textContent = 'Unsaved source changes'; });
   const save = document.createElement('button');
   save.type = 'button'; save.textContent = 'Save to project';
   header.insertBefore(save, download);
@@ -78,6 +101,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     try {
       const result = onSave(Object.fromEntries(names.map(name => [name, files[name]])));
       if (Array.isArray(result)) { history = structuredClone(result); renderRevisions(); }
+      dirty = false;
       status.textContent = 'Source files saved to this XSUS project.';
     } catch { status.textContent = 'Could not save source files to the project.'; }
   });
@@ -92,6 +116,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     else { select.value = previous; status.textContent = 'File exceeds the 500 KB editor limit.'; return; }
     textarea.value = files[select.value];
     select.dataset.previous = select.value;
+    updateExplorer();
   });
   refresh.addEventListener('click', updatePreview);
   restore.addEventListener('click', () => {
@@ -101,6 +126,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     for (const name of names) files[name] = history[index].files[name];
     textarea.value = files[select.value];
     updatePreview();
+    dirty = true;
     status.textContent = 'Previous version loaded. Press Save to project to keep it.';
   });
   download.addEventListener('click', () => {
@@ -116,9 +142,11 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     if (!window.confirm('Discard all source edits in this editor?')) return;
     for (const name of names) files[name] = initialFiles[name];
     textarea.value = files[select.value];
+    dirty = true;
     updatePreview();
   });
-  close.addEventListener('click', () => dialog.close());
+  close.addEventListener('click', () => { if (!dirty || window.confirm('Close with unsaved source changes?')) dialog.close(); });
+  dialog.addEventListener('cancel', event => { if (dirty && !window.confirm('Close with unsaved source changes?')) event.preventDefault(); });
   dialog.addEventListener('close', () => { frame.removeAttribute('srcdoc'); dialog.remove(); }, {once:true});
   select.dataset.previous = names[0];
   textarea.value = files[names[0]];
