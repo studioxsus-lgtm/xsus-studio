@@ -21,6 +21,26 @@ if(allowed.includes(location.origin)){
  form.append(input,button);section.append(heading,form,status);
  const workspace=document.getElementById('workspace');
  (workspace||document.querySelector('main')||document.body).append(section);
+ // Always-visible launcher: the builder is a viewport-sized workspace and
+ // content appended after it is otherwise unreachable on mobile.
+ const launcher=document.createElement('button');
+ launcher.type='button';
+ launcher.id='xsus-project-review-open';
+ launcher.textContent='Project review';
+ launcher.setAttribute('aria-controls',section.id);
+ launcher.setAttribute('aria-expanded','false');
+ launcher.style.cssText='position:fixed;right:12px;bottom:82px;z-index:2147483000;padding:11px 14px;border:1px solid #45b9d8;border-radius:12px;background:#102e44;color:#fff;font:600 13px system-ui;box-shadow:0 4px 18px #0008;cursor:pointer';
+ section.hidden=true;
+ section.style.cssText+=';position:fixed;right:12px;bottom:140px;z-index:2147483000;width:min(440px,calc(100vw - 24px));max-height:65vh;overflow:auto;box-shadow:0 12px 40px #000b';
+ const close=document.createElement('button');
+ close.type='button';close.textContent='×';close.setAttribute('aria-label','Close project review');
+ close.style.cssText='float:right;background:transparent;color:white;border:0;font-size:24px;cursor:pointer';
+ section.prepend(close);
+ const toggle=(show)=>{section.hidden=!show;launcher.setAttribute('aria-expanded',String(show));if(show)input.focus();};
+ launcher.addEventListener('click',()=>toggle(section.hidden));
+ close.addEventListener('click',()=>toggle(false));
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!section.hidden)toggle(false);});
+ document.body.append(launcher);
  render();
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
  form.addEventListener('submit',async event=>{
