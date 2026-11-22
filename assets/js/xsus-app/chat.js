@@ -1,3 +1,4 @@
+import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261122-unified2';
 import { showGeneratedHtml } from './editor.js?v=20261120-account1';
 import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261122-source-save1';
@@ -108,8 +109,10 @@ function renderSpecificationCard(specification, draft, reviewKey) {
       typeof editedFiles[name] === 'string' && editedFiles[name].length <= 500000)) {
       throw new TypeError('Invalid source files.');
     }
+    liveDraft.sourceHistory = appendSourceRevision(liveDraft.sourceHistory, editedFiles);
     liveDraft.sourceFiles = structuredClone(editedFiles);
     saveRefreshState('builder');
+    return liveDraft.sourceHistory;
   });
   return specCard;
 }
