@@ -1,4 +1,5 @@
 import { handleDeploymentValidationHttp } from './deployment-http-handler.js';
+import { handleProjectReviewHttp } from './project-review-http-handler.js';
 
 // Explicitly mount on a trusted Node HTTP server; this module never starts a listener.
 const MAX_BYTES=16*1024;
@@ -10,7 +11,8 @@ export function createDeploymentNodeHandler(dependencies) {
       res.end(JSON.stringify(body));
     };
     try {
-      if (req.url?.split('?')[0]!=='/api/deployments/validate')
+      const path=req.url?.split('?')[0];
+      if (path!=='/api/deployments/validate' && path!=='/api/projects/review')
         return reply(404,{error:'not_found',deployed:false});
       if (req.method!=='POST') return reply(405,{error:'method_not_allowed',deployed:false},{allow:'POST'});
       const length=Number(req.headers['content-length']);
@@ -22,7 +24,10 @@ export function createDeploymentNodeHandler(dependencies) {
         if (bytes>MAX_BYTES) return reply(413,{error:'invalid_body_size',deployed:false});
         chunks.push(Buffer.from(chunk));
       }
-      const result=await handleDeploymentValidationHttp({method:req.method,headers:req.headers,body:Buffer.concat(chunks).toString('utf8')},dependencies);
+      const input={method:req.method,headers:req.headers,body:Buffer.concat(chunks).toString('utf8')};
+      const result=path==='/api/projects/review'
+        ? await handleProjectReviewHttp(input,dependencies)
+        : await handleDeploymentValidationHttp(input,dependencies);
       return reply(result.status,result.body,result.headers);
     } catch {
       return reply(503,{error:'validation_unavailable',deployed:false});
