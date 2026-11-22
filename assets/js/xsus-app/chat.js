@@ -80,7 +80,7 @@ function renderSpecificationCard(specification, draft, reviewKey) {
         status.textContent = t(result.errors[0] === 'pages_required' ? 'Add at least one page or screen before approval.' : result.errors[0] === 'requirements_required' ? 'Add at least one user requirement before approval.' : 'Review the specification fields and try again.');
         return;
       }
-      specificationReviews.set(reviewKey, result.specification);
+      specificationReviews.set(reviewKey, { ...result.specification, humanReviewed: draft.humanReviewed === true });
       saveRefreshState('builder');
       specCard.replaceWith(renderSpecificationCard(specification, result.specification, reviewKey));
     });
@@ -155,7 +155,7 @@ function addPlan(result, reviewKey = result.requestId) {
       const specification = createAppSpecification(result, { humanReviewed: acceptedReview });
       let reviewDraft = specificationReviews.get(reviewKey);
       if (reviewDraft?.state !== 'discarded') {
-        if (!reviewDraft) {
+        if (!reviewDraft?.state) {
         reviewDraft = { ...createSpecificationReviewDraft(specification), humanReviewed: acceptedReview };
         specificationReviews.set(reviewKey, reviewDraft);
         }
