@@ -53,3 +53,25 @@ const noBackend=await probe('/api/deployments/validate',{
 assert.equal(noBackend.response.status,503);
 assert.equal(noBackend.body.deployed,false);
 console.log('PASS: missing trusted backend dependencies fail closed');
+
+const wrongOrigin=await probe('/api/deployments/validate',{
+  method:'POST',headers:{origin:'https://untrusted.example','content-type':'application/json',authorization:'Bearer smoke-test-placeholder'},body:'{}'
+});
+assert.equal(wrongOrigin.response.status,403);
+assert.equal(wrongOrigin.body.deployed,false);
+console.log('PASS: untrusted origin rejected');
+
+const oversized=await probe('/api/deployments/validate',{
+  method:'POST',headers:{origin,'content-type':'application/json'},
+  body:'x'.repeat(16*1024+1)
+});
+assert.equal(oversized.response.status,413);
+assert.equal(oversized.body.deployed,false);
+console.log('PASS: oversized request rejected');
+
+const unsupported=await probe('/api/deployments/validate',{
+  method:'POST',headers:{origin,'content-type':'text/plain'},body:'{}'
+});
+assert.equal(unsupported.response.status,415);
+assert.equal(unsupported.body.deployed,false);
+console.log('PASS: unsupported media type rejected');
