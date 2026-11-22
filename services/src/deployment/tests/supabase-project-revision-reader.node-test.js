@@ -47,3 +47,21 @@ test('invalid IDs reject before database access',async()=>{
  const reader=createBuilderProjectRevisionReader({from(){throw Error('must not query');}});
  assert.equal(await reader.readOwnedRevision({projectId:'bad',ownerId}),null);
 });
+
+test('JSONB key reordering across owner-scoped reads is not a content change',async()=>{
+ const first={version:1,session:{goal:'same',steps:[1,2]},boards:[]};
+ const second={boards:[],session:{steps:[1,2],goal:'same'},version:1};
+ const reader=createBuilderProjectRevisionReader(client([row(first),row(second)]));
+ const before=await reader.readOwnedRevision({projectId,ownerId});
+ const after=await reader.readOwnedRevision({projectId,ownerId});
+ assert.equal(inspectStableProjectRevision(before,after).stable,true);
+});
+test('nested content changes across owner-scoped reads are detected',async()=>{
+ const reader=createBuilderProjectRevisionReader(client([
+  row({session:{goal:'A',steps:[1,2]}}),
+  row({session:{steps:[1,3],goal:'A'}})
+ ]));
+ const before=await reader.readOwnedRevision({projectId,ownerId});
+ const after=await reader.readOwnedRevision({projectId,ownerId});
+ assert.equal(inspectStableProjectRevision(before,after).reason,'PROJECT_REVISION_CHANGED');
+});
