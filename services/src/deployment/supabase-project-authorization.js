@@ -2,18 +2,20 @@
 // This module does not create clients, assume a database schema, or expose an HTTP endpoint.
 const PROJECT_ID=/^[a-zA-Z0-9_-]{1,128}$/;
 export function createSupabaseDeploymentContext({authClient,projectStore,artifactStore,accessToken}) {
-  if (!authClient?.auth?.getUser || typeof projectStore?.findOwnedProject!=='function' ||
+  if (typeof authClient?.auth?.getUser!=='function' || typeof projectStore?.findOwnedProject!=='function' ||
       typeof artifactStore?.loadFiles!=='function' ||
       typeof accessToken!=='string' || !accessToken.trim())
     throw new TypeError('Trusted Supabase dependencies and bearer token are required');
   let authenticatedUser=null;
   return {
     async authenticate() {
+      authenticatedUser=null;
       const {data,error}=await authClient.auth.getUser(accessToken);
       if (error || !data?.user?.id || typeof data.user.id!=='string')
         throw new Error('Authentication failed');
+      // A failed reauthentication must never preserve an earlier identity.
       authenticatedUser={id:data.user.id};
-      return authenticatedUser;
+      return {...authenticatedUser};
     },
     async authorizeProject(identity,projectId,target) {
       if (!authenticatedUser || identity?.id!==authenticatedUser.id ||
