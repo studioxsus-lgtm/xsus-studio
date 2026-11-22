@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { EngineContractError, NEXT_ENGINES_CONTRACT_VERSION, strategicPlanning } from "../../hyper-xsus-core/next-engines/index.js";
+import { EngineContractError, NEXT_ENGINES_CONTRACT_VERSION, strategicPlanning }\nimport { proposeApplicationPlan } from "../../hyper-xsus-core/next-engines/strategic-planning/index.js"; from "../../hyper-xsus-core/next-engines/index.js";
 
 export const HYPER_FUTURE_BRIDGE_VERSION = "1.0.0";
 export const HYPER_FUTURE_BRIDGE_PATH = "/api/xsus-app/hyper-future/plan";
@@ -18,10 +18,10 @@ function validIdentifier(value) {
 function validateInput(body) {
   if (!body || typeof body !== "object" || Array.isArray(body) ||
       Object.keys(body).some(key => !["goal", "steps"].includes(key)) ||
-      !validText(body.goal) || !Array.isArray(body.steps) || body.steps.length < 1 || body.steps.length > MAX_STEPS) {
+      !validText(body.goal) || (body.steps !== undefined && (!Array.isArray(body.steps) || body.steps.length < 1 || body.steps.length > MAX_STEPS))) {
     return false;
   }
-  return body.steps.every(step => step && typeof step === "object" && !Array.isArray(step) &&
+  return (body.steps ?? []).every(step => step && typeof step === "object" && !Array.isArray(step) &&
     Object.keys(step).length === 3 && Object.hasOwn(step, "id") && Object.hasOwn(step, "task") &&
     Object.hasOwn(step, "dependsOn") && validIdentifier(step.id) && validText(step.task, MAX_TEXT_CHARS) &&
     Array.isArray(step.dependsOn) && step.dependsOn.length <= MAX_STEPS &&
@@ -125,7 +125,7 @@ export function createHyperFutureBridge({
           requestId,
           engineId: "strategic-planning",
           operation: "planning.create",
-          payload: { goal: planningGoal, steps: body.steps },
+          payload: { goal: planningGoal, steps: proposal?.steps ?? body.steps },
           context: {
             traceId: requestId,
             principalId: user.userId,
@@ -143,14 +143,14 @@ export function createHyperFutureBridge({
         data: {
           bridgeVersion: HYPER_FUTURE_BRIDGE_VERSION,
           requestId,
-          status: reviewRequired ? "review_required" : "completed",
+          status: reviewRequired || proposal ? "review_required" : "completed",
           language: {
             core: "future-xsus-core",
             status: language.status,
             text: language.text,
             review_required: reviewRequired
           },
-          plan: { core: "hyper-xsus-core", ...plan.result },
+          plan: { core: "hyper-xsus-core", ...plan.result, ...(proposal ? { proposalSource: proposal.source, category: proposal.category, requiresHumanReview: true } : {}) },
           safety: { executable: false, sideEffects: false }
         }
       };
