@@ -1,5 +1,5 @@
 import { getSupabaseClient } from './auth-session.js';
-import { currentWorkspaceOwner, readWorkspacePart, restoreWorkspacePart, saveRefreshState } from './refresh-state.js?v=20261122-autosave1';
+import { currentWorkspaceOwner, readWorkspacePart, restoreWorkspacePart, saveRefreshState } from './refresh-state.js?v=20261122-unified2';
 
 const labels = {
   en:['My projects','Project name','Save a copy','Sign in to access your projects.','Saved to your account.','No saved projects.','Account storage is unavailable.','Show more','Close','Saving…','Open','Enter an app idea or build a project first.'],
