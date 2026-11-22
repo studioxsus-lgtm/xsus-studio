@@ -16,13 +16,13 @@ export function createDeploymentNodeHandler(dependencies) {
       const length=Number(req.headers['content-length']);
       if (req.headers['content-length']!==undefined && (!Number.isSafeInteger(length)||length<0||length>MAX_BYTES))
         return reply(413,{error:'invalid_body_size',deployed:false});
-      let body='',bytes=0;
+      const chunks=[]; let bytes=0;
       for await (const chunk of req) {
         bytes+=Buffer.byteLength(chunk);
         if (bytes>MAX_BYTES) return reply(413,{error:'invalid_body_size',deployed:false});
-        body+=chunk.toString('utf8');
+        chunks.push(Buffer.from(chunk));
       }
-      const result=await handleDeploymentValidationHttp({method:req.method,headers:req.headers,body},dependencies);
+      const result=await handleDeploymentValidationHttp({method:req.method,headers:req.headers,body:Buffer.concat(chunks).toString('utf8')},dependencies);
       return reply(result.status,result.body,result.headers);
     } catch {
       return reply(503,{error:'validation_unavailable',deployed:false});
