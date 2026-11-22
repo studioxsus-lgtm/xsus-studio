@@ -111,7 +111,7 @@ function addPlan(result, reviewKey = result.requestId) {
   const needsReview = result.status === 'review_required' || result.language?.review_required === true;
   const heading = document.createElement('h3'); heading.textContent = t(needsReview ? 'Draft plan needs review' : 'Validated draft plan');
   const language = document.createElement('p');
-  language.textContent = `${t(needsReview ? 'Future XSUS Core could not fully verify the English goal' : 'Future XSUS Core reviewed the English goal')}: “${result.language.text}” (${result.language.status}).`;
+  language.textContent = `${t(result.language?.review_required ? 'Future XSUS Core could not fully verify the English goal' : 'Future XSUS Core reviewed the English goal')}: “${result.language.text}” (${result.language.status}).` + (result.plan?.proposalSource ? ` ${t('Hyper XSUS Core proposed the development steps for human review.')}` : '');
   const list = document.createElement('ol'); list.className = 'bridge-plan-steps';
   for (const step of result.plan.steps) {
     const item = document.createElement('li');
