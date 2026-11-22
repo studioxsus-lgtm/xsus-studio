@@ -28,6 +28,7 @@ def create_local_app(
     allowed_origins: frozenset[str] = frozenset(),
     learning_worker_enabled: bool = False, learning_poll_seconds: int = 60,
     learning_registry: Path | None = None, learning_output_dir: Path | None = None,
+    intelligence_enabled: bool = False,
 ) -> web.Application:
     supabase_configured = supabase_url is not None or supabase_publishable_key is not None
     if supabase_configured:
@@ -55,6 +56,7 @@ def create_local_app(
         feedback_store=feedback_store,
         allowed_origins=allowed_origins,
         learning_status_dir=resolved_learning_output,
+        intelligence_enabled=intelligence_enabled,
     )
     if type(learning_worker_enabled) is not bool:
         raise ValueError("Learning-worker enabled flag must be boolean")
@@ -88,8 +90,12 @@ def main() -> None:
         if worker_setting not in {"true", "false"}:
             raise ValueError("XSUS_LEARNING_WORKER_ENABLED must be true or false")
         learning_poll_seconds = int(os.environ.get("XSUS_LEARNING_WORKER_POLL_SECONDS", "60"))
+        intelligence_setting = os.environ.get("XSUS_INTELLIGENCE_ENABLED", "false").strip().lower()
+        if intelligence_setting not in {"true", "false"}:
+            raise ValueError("XSUS_INTELLIGENCE_ENABLED must be true or false")
         app = create_local_app(
             args.database,
+            intelligence_enabled=intelligence_setting == "true",
             owner=os.environ.get("XSUS_API_OWNER", "local-api"),
             token=os.environ.get("XSUS_API_TOKEN"),
             supabase_url=supabase_url,
