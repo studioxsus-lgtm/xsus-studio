@@ -36,3 +36,8 @@ The separate `render-service.yaml` is a **reference configuration**, not an appl
 
 ### Supabase integration gate
 No database schema or trusted artifact store has yet been verified. Do not add a service-role key or enable authorization solely on the strength of the smoke test. Before wiring the backend, confirm table and storage policies, ownership enforcement, secret handling, and rate limits; then add integration tests using a dedicated test project. The endpoint must remain validation-only and fail-closed until these checks pass.
+
+## Phase 15.9 — security regression gates
+Nine isolated Node HTTP tests now cover health, route separation, methods, authentication gate, missing trusted backend, untrusted origins, oversized bodies, and unsupported content types. The manually triggered live-smoke workflow additionally probes these rejection cases against the deployed service without credentials or state-changing operations. The live-smoke test is **not** a substitute for project ownership and Supabase RLS integration tests.
+
+These changes affect only the XSUS App deployment service tests and documentation. They do not change the Render service settings or trigger a deploy (auto-deploy is disabled). After applying the isolated Render root-directory settings and redeploying this service alone, rerun the manual live smoke and verify the results.
