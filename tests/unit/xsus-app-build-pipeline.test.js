@@ -6,14 +6,14 @@ const files = {
   'app.js':'console.log("ready");'
 };
 describe('XSUS App build pipeline', () => {
-  it('builds three source files plus a manifest', () => {
-    const result = prepareBuild(files,'Task Manager');
+  it('builds three source files plus a manifest', async () => {
+    const result = await prepareBuild(files,'Task Manager');
     expect(result.ok).toBe(true);
     expect(Object.keys(result.artifacts)).toEqual(['index.html','styles.css','app.js','xsus-build-manifest.json']);
     expect(JSON.parse(result.artifacts['xsus-build-manifest.json']).project).toBe('Task Manager');
   });
-  it('blocks builds with missing files', () => {
-    const result = prepareBuild({...files,'app.js':undefined});
+  it('blocks builds with missing files', async () => {
+    const result = await prepareBuild({...files,'app.js':undefined});
     expect(result.ok).toBe(false);
     expect(result.artifacts).toBe(null);
   });
