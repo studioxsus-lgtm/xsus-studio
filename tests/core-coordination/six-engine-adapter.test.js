@@ -1,7 +1,7 @@
 import {describe,it,expect,vi} from "vitest";
 import {createHyperSixEngineAdapter,SIX_ENGINE_STAGE_NAMES} from "../../src/core-coordination/six-engine-adapter.js";
 const options={contractVersion:"1.0.0",requestId:"req-1",principalId:"user-1"};
-const safe={status:"completed",result:{state:"review_required",authorizedForExecution:false,sideEffects:false,stages:[{stage:"truth",status:"completed",result:{verdict:"insufficient_evidence"}}]}};
+const safe={status:"success",result:{state:"review_required",authorizedForExecution:false,sideEffects:false,stages:[{stage:"truth",status:"completed",result:{verdict:"insufficient_evidence"}}]}};
 describe("Phase 12.5.5 real Hyper six-engine orchestration adapter",()=>{
   it("exposes all six stages",()=>expect(SIX_ENGINE_STAGE_NAMES).toHaveLength(6));
   it("uses the real orchestration request envelope and strips stage internals",async()=>{
