@@ -7,8 +7,8 @@ import { createDeploymentNodeHandler } from './deployment-node-adapter.js';
 export function createStandaloneDeploymentServer(dependencies={}) {
   const route=createDeploymentNodeHandler(dependencies);
   return http.createServer((req,res)=>{
-    if (req.url?.split('?')[0]==='/healthz') {
-      res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});
+    if (req.url?.split('?')[0]==='/healthz' && req.method==='GET') {
+      res.writeHead(200,{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'});
       res.end(JSON.stringify({ok:true,service:'xsus-app-deployment-validation',deploymentEnabled:false}));
       return;
     }
