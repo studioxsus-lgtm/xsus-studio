@@ -1,3 +1,4 @@
+import { validateSourceFiles } from './source-validator.js';
 import { composeSourcePreview } from './live-preview.js';
 
 const names = ['index.html', 'styles.css', 'app.js'];
@@ -22,6 +23,11 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   }
   const refresh = document.createElement('button');
   refresh.type = 'button'; refresh.textContent = 'Update preview';
+  const validate = document.createElement('button');
+  validate.type = 'button'; validate.textContent = 'Validate build';
+  const report = document.createElement('div');
+  report.setAttribute('role','status');
+  report.style.cssText = 'max-height:105px;overflow:auto;padding:4px 12px;font:12px/1.4 system-ui';
   const download = document.createElement('button');
   download.type = 'button'; download.textContent = 'Download files';
   const reset = document.createElement('button');
@@ -45,7 +51,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     });
   }
   renderRevisions();
-  header.append(title,select,refresh,revisions,restore,download,reset,close);
+  header.append(title,select,refresh,validate,revisions,restore,download,reset,close);
   const workspace = document.createElement('div');
   workspace.className = 'xsus-source-workspace';
   const responsive = document.createElement('style');
@@ -84,7 +90,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   const status = document.createElement('p');
   status.setAttribute('role','status');
   status.style.cssText = 'margin:0;padding:2px 12px;font-size:12px';
-  dialog.append(responsive,header,workspace,status);
+  dialog.append(responsive,header,workspace,report,status);
   const readEditor = () => {
     if (textarea.value.length > MAX_FILE_LENGTH) {
       status.textContent = 'File exceeds the 500 KB editor limit.';
@@ -108,6 +114,21 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
       status.textContent = 'Source files saved to this XSUS project.';
     } catch { status.textContent = 'Could not save source files to the project.'; }
   });
+  const runValidation = () => {
+    if (!readEditor()) return false;
+    const result = validateSourceFiles(files);
+    report.replaceChildren();
+    const summary = document.createElement('strong');
+    summary.textContent = result.ok ? 'Static preflight: no blocking errors' : 'Static preflight: blocking errors found';
+    report.append(summary);
+    for (const issue of result.issues) {
+      const line = document.createElement('div');
+      line.textContent = issue.level.toUpperCase() + ' · ' + issue.file + ': ' + issue.message;
+      report.append(line);
+    }
+    return result.ok;
+  };
+  validate.addEventListener('click', runValidation);
   const updatePreview = () => {
     if (!readEditor()) return;
     try { frame.srcdoc = composeSourcePreview(files); status.textContent = 'Preview updated (isolated sandbox).'; }
@@ -133,7 +154,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     status.textContent = 'Previous version loaded. Press Save to project to keep it.';
   });
   download.addEventListener('click', () => {
-    if (!readEditor()) return;
+    if (!runValidation()) { status.textContent = 'Fix blocking validation errors before exporting.'; return; }
     for (const name of names) {
       const url = URL.createObjectURL(new Blob([files[name]], {type:'text/plain;charset=utf-8'}));
       const a = document.createElement('a'); a.href=url; a.download=name; a.click();
