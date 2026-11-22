@@ -1,3 +1,4 @@
+import { inspectBuildReadiness } from './build-diagnostics.js';
 import { prepareBuild } from './build-pipeline.js';
 import { validateSourceFiles } from './source-validator.js';
 import { composeSourcePreview } from './live-preview.js';
@@ -29,6 +30,8 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   const report = document.createElement('div');
   report.setAttribute('role','status');
   report.style.cssText = 'max-height:105px;overflow:auto;padding:4px 12px;font:12px/1.4 system-ui';
+  const diagnostics = document.createElement('button');
+  diagnostics.type = 'button'; diagnostics.textContent = 'Build diagnostics';
   const build = document.createElement('button');
   build.type = 'button'; build.textContent = 'Build project';
   const download = document.createElement('button');
@@ -54,7 +57,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     });
   }
   renderRevisions();
-  header.append(title,select,refresh,validate,revisions,restore,build,download,reset,close);
+  header.append(title,select,refresh,validate,diagnostics,revisions,restore,build,download,reset,close);
   const workspace = document.createElement('div');
   workspace.className = 'xsus-source-workspace';
   const responsive = document.createElement('style');
@@ -132,6 +135,25 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     return result.ok;
   };
   validate.addEventListener('click', runValidation);
+  diagnostics.addEventListener('click', () => {
+    if (!readEditor()) return;
+    const result = inspectBuildReadiness(files);
+    report.replaceChildren();
+    const heading = document.createElement('strong');
+    heading.textContent = 'Build readiness: ' + result.status;
+    report.append(heading);
+    for (const check of result.checks) {
+      const line = document.createElement('div');
+      line.textContent = (check.passed ? 'PASS' : check.blocking ? 'BLOCKED' : 'REVIEW') + ' · ' + check.label;
+      report.append(line);
+    }
+    for (const limitation of result.limitations) {
+      const line = document.createElement('div');
+      line.textContent = 'LIMITATION · ' + limitation;
+      report.append(line);
+    }
+    status.textContent = result.canBuild ? 'Build preparation allowed; review diagnostics before publishing.' : 'Build preparation blocked.';
+  });
   const updatePreview = () => {
     if (!readEditor()) return;
     try { frame.srcdoc = composeSourcePreview(files); status.textContent = 'Preview updated (isolated sandbox).'; }
