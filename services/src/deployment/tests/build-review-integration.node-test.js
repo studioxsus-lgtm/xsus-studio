@@ -15,6 +15,7 @@ function ownerScopedClient({row={id:projectId,owner_id:ownerId},error=null}={}) 
   eq(key,value){filters.push([key,value]);return this;},
   async maybeSingle(){
    assert.deepEqual(filters,[['id',projectId],['owner_id',ownerId]]);
+   filters.length=0;
    return {data:row,error};
   }
  };
