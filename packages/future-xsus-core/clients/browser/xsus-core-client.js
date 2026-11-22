@@ -71,6 +71,21 @@ export function createXsusCoreClient({ baseUrl, getAccessToken, fetchImpl = glob
   }
 
   return Object.freeze({
+    respondV2: async ({ requestId, text, facts = [], rules = [] } = {}) => {
+      const result = await request("/v2/intelligence/respond", {
+        method: "POST", body: { contractVersion: "2.0.0", requestId, text, facts, rules },
+      });
+      if (!result || result.contractVersion !== "2.0.0" || result.requestId !== requestId ||
+          !["resolved", "partial", "abstained", "proposed"].includes(result.status) ||
+          !["reason", "solve", "infer", "search", "unrecognized"].includes(result.operation) ||
+          typeof result.text !== "string" || !result.text.trim() ||
+          !Number.isSafeInteger(result.memoryRevision) || result.memoryRevision < 0 ||
+          !Array.isArray(result.limitations) || result.limitations.some(x => typeof x !== "string") ||
+          result.executionAuthorized !== false || result.externalTruthVerified !== false) {
+        throw new XsusCoreApiError(502, "invalid_response", "Invalid intelligence V2 contract");
+      }
+      return result;
+    },
     reason: async ({ requestId, query, facts, rules } = {}) => {
       const result = await request("/v1/intelligence/reason", {
         method: "POST", body: { contractVersion: "1.0.0", requestId, query, facts, rules },
