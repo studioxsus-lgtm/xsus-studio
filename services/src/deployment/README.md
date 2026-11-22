@@ -145,3 +145,6 @@ On Node.js v22.16.0, the five existing tests in `snapshot-revision-digest.node-t
 
 ## Phase 18.2 — owner-scoped revision integration regression
 `tests/revision-guarded-supabase-integration.node-test.js` composes the actual `createBuilderProjectStore`, `createBuilderProjectRevisionReader`, and `reviewBuildWithRevisionGuard` functions against a stateful mock Supabase client. Four new Node tests cover unchanged snapshots, edits during build, ownership reassignment, and deletion. These tests were committed but their execution in GitHub Actions is not confirmed; no live Supabase credentials or Render deployment were used. Static review is not transactional deployment authorization.
+
+## Phase 18.3 — post-build concurrency regressions
+Two more integration tests in `revision-guarded-supabase-integration.node-test.js` simulate (1) ownership reassignment immediately after the final snapshot digest read and (2) a snapshot edit after the existing build review's second ownership lookup. Both cases must deny review. These tests use a stateful mock and were committed without a verified GitHub Actions result. A separate atomic database revision lock remains required for production deployment.
