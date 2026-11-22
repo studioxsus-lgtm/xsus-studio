@@ -16,6 +16,9 @@ from languages.en.engine.english_engine import ENGLISH, create_engine
 from languages.en.learning.feedback_store import SQLiteFeedbackStore
 from services.api.identity.supabase import SupabaseUserAuthenticator
 from services.api.learning_worker import attach_learning_worker
+from core.intelligence.persistent_memory_v2 import PersistentMemory
+from core.intelligence.runtime_v2 import IntelligenceRuntime
+from core.intelligence.xsus_app_adapter_v2 import XSUSAppIntelligenceAdapterV2
 
 from .app import create_app
 
@@ -29,6 +32,7 @@ def create_local_app(
     learning_worker_enabled: bool = False, learning_poll_seconds: int = 60,
     learning_registry: Path | None = None, learning_output_dir: Path | None = None,
     intelligence_enabled: bool = False,
+    intelligence_v2_enabled: bool = False,
 ) -> web.Application:
     supabase_configured = supabase_url is not None or supabase_publishable_key is not None
     if supabase_configured:
@@ -42,6 +46,15 @@ def create_local_app(
             raise ValueError("XSUS_API_TOKEN must contain 32–256 URL-safe characters")
         owner_authenticator = None
         owner_tokens = {owner: token}
+    if type(intelligence_v2_enabled) is not bool:
+        raise ValueError("Intelligence V2 flag must be boolean")
+    intelligence_v2_adapter = None
+    if intelligence_v2_enabled:
+        if not database.parent.is_dir():
+            raise ValueError("Persistent database directory is unavailable")
+        memory_path = database.with_name(database.stem + ".intelligence-v2.sqlite3")
+        intelligence_v2_adapter = XSUSAppIntelligenceAdapterV2(
+            IntelligenceRuntime(PersistentMemory(str(memory_path))), enabled=True)
     executor = create_local_executor((create_engine(),))
     store = SQLiteSessionStore(database)
     feedback_store = SQLiteFeedbackStore(database.with_name(database.stem + ".feedback.sqlite3"))
@@ -57,6 +70,7 @@ def create_local_app(
         allowed_origins=allowed_origins,
         learning_status_dir=resolved_learning_output,
         intelligence_enabled=intelligence_enabled,
+        intelligence_v2_adapter=intelligence_v2_adapter,
     )
     if type(learning_worker_enabled) is not bool:
         raise ValueError("Learning-worker enabled flag must be boolean")
@@ -93,9 +107,13 @@ def main() -> None:
         intelligence_setting = os.environ.get("XSUS_INTELLIGENCE_ENABLED", "false").strip().lower()
         if intelligence_setting not in {"true", "false"}:
             raise ValueError("XSUS_INTELLIGENCE_ENABLED must be true or false")
+        intelligence_v2_setting = os.environ.get("XSUS_INTELLIGENCE_V2_ENABLED", "false").strip().lower()
+        if intelligence_v2_setting not in {"true", "false"}:
+            raise ValueError("XSUS_INTELLIGENCE_V2_ENABLED must be true or false")
         app = create_local_app(
             args.database,
             intelligence_enabled=intelligence_setting == "true",
+            intelligence_v2_enabled=intelligence_v2_setting == "true",
             owner=os.environ.get("XSUS_API_OWNER", "local-api"),
             token=os.environ.get("XSUS_API_TOKEN"),
             supabase_url=supabase_url,
