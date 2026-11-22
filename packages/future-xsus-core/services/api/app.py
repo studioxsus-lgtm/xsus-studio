@@ -408,6 +408,8 @@ def create_app(
         })
 
     async def intelligence_reason(request: web.Request) -> web.Response:
+        if not intelligence_enabled:
+            return _error(404, "not_found", "Resource not found")
         owner = await authenticated_owner(request)
         if owner is None:
             return unauthorized()
@@ -567,8 +569,7 @@ def create_app(
     app.router.add_delete(resource, delete)
     app.router.add_post(resource + "/messages", send)
     app.router.add_post("/v1/language/proofread", proofread)
-    if intelligence_enabled:
-        app.router.add_post("/v1/intelligence/reason", intelligence_reason)
+    app.router.add_post("/v1/intelligence/reason", intelligence_reason)
     if feedback_store is not None:
         app.router.add_post("/v1/learning/feedback", submit_feedback)
         app.router.add_get("/v1/learning/feedback", list_feedback, allow_head=False)
