@@ -1,3 +1,4 @@
+import { generateSourceFiles } from '../code-generation/index.js?v=20261122-phase13a';
 import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-undodelete1';
 
 const escapeText = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -54,6 +55,26 @@ export function appendScaffoldControls(card, spec, t, onBuild) {
   build.type = 'button';
   build.textContent = t('Build starter app');
   controls.append(build);
+  const source = document.createElement('button');
+  source.type = 'button';
+  source.textContent = t('Generate source files (HTML / CSS / JS)');
+  source.addEventListener('click', () => {
+    try {
+      const bundle = generateSourceFiles(spec);
+      for (const [name, content] of Object.entries(bundle.files)) {
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = name;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      }
+    } catch {
+      window.alert(t('Review and approve the application specification before generating source files.'));
+    }
+  });
+  controls.append(source);
   card.append(controls);
   function showDownload(html) {
     const download = document.createElement('button');
