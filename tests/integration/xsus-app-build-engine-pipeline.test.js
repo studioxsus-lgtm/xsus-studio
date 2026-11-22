@@ -3,7 +3,7 @@ import {createBuildPipeline} from "../../src/xsus-app-build-engine/integration/b
 import {createFutureLanguageAdapter} from "../../src/xsus-app-build-engine/adapters/future-language-adapter.js";
 import {createHyperIntelligenceAdapter} from "../../src/xsus-app-build-engine/adapters/hyper-intelligence-adapter.js";
 const request={prompt:"Build a home page",projectId:"demo-app"};
-const options={id:"job-1"};
+const options={id:"job-0001"};
 const languageAdapter=createFutureLanguageAdapter({engine:{interpret:async()=>({intent:"Demo application",features:["home"],language:"en"})}});
 const intelligenceAdapter=createHyperIntelligenceAdapter({engine:{plan:async()=>({tasks:[{id:"design",action:"design",description:"Design home page",dependsOn:[]}]})}});
 describe("XSUS App Build Engine phase 21 integration",()=>{
