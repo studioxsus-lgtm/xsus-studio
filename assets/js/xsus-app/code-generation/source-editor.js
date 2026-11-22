@@ -1,3 +1,4 @@
+import { prepareDeploymentPlan } from './deployment-preflight.js';
 import { appendBuildRelease } from './release-manager.js';
 import { verifyBuildArtifacts } from './artifact-integrity.js';
 import { inspectBuildReadiness } from './build-diagnostics.js';
@@ -39,6 +40,8 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   build.type = 'button'; build.textContent = 'Build project';
   const releaseHistory = document.createElement('button');
   releaseHistory.type = 'button'; releaseHistory.textContent = 'Release history';
+  const deployment = document.createElement('button');
+  deployment.type = 'button'; deployment.textContent = 'Prepare deployment';
   const download = document.createElement('button');
   download.type = 'button'; download.textContent = 'Download files';
   const reset = document.createElement('button');
@@ -62,7 +65,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     });
   }
   renderRevisions();
-  header.append(title,select,refresh,validate,diagnostics,revisions,restore,build,releaseHistory,download,reset,close);
+  header.append(title,select,refresh,validate,diagnostics,revisions,restore,build,deployment,releaseHistory,download,reset,close);
   const workspace = document.createElement('div');
   workspace.className = 'xsus-source-workspace';
   const responsive = document.createElement('style');
@@ -182,6 +185,33 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     updatePreview();
     dirty = true;
     status.textContent = 'Previous version loaded. Press Save to project to keep it.';
+  });
+  deployment.addEventListener('click', async () => {
+    if (!readEditor()) return;
+    deployment.disabled = true;
+    try {
+      const buildResult = await prepareBuild(files);
+      if (!buildResult.ok) { status.textContent = 'Deployment preparation blocked by source validation.'; return; }
+      const result = await prepareDeploymentPlan(buildResult.artifacts);
+      if (!result.ready) { status.textContent = 'Deployment preparation blocked by artifact integrity.'; return; }
+      report.replaceChildren();
+      const heading = document.createElement('strong');
+      heading.textContent = 'Static hosting preparation · NOT DEPLOYED';
+      report.append(heading);
+      for (const step of result.plan.manualSteps) {
+        const line = document.createElement('div');
+        line.textContent = 'STEP · ' + step; report.append(line);
+      }
+      for (const warning of result.plan.warnings) {
+        const line = document.createElement('div');
+        line.textContent = 'REVIEW · ' + warning; report.append(line);
+      }
+      const url = URL.createObjectURL(new Blob([JSON.stringify(result.plan,null,2)+'\\n'],{type:'application/json'}));
+      const a = document.createElement('a'); a.href=url; a.download='xsus-deployment-plan.json'; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      status.textContent = 'Deployment plan downloaded. No files uploaded or published.';
+    } catch { status.textContent = 'Could not prepare deployment plan.'; }
+    finally { deployment.disabled = false; }
   });
   releaseHistory.addEventListener('click', () => {
     report.replaceChildren();
