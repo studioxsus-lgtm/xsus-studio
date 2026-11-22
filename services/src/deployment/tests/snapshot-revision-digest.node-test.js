@@ -39,3 +39,14 @@ test('repeated noncyclic references are serialized consistently',()=>{
  assert.equal(digestPersistedSnapshot({a:shared,b:shared}),
   digestPersistedSnapshot({b:{value:'ok'},a:{value:'ok'}}));
 });
+
+test('sparse arrays and non-index array properties fail closed',()=>{
+ const sparse=new Array(2);sparse[1]='value';
+ const extra=['value'];extra.meta='not-json';
+ assert.equal(digestPersistedSnapshot({items:sparse}),null);
+ assert.equal(digestPersistedSnapshot({items:extra}),null);
+});
+test('dense JSON arrays continue to hash deterministically',()=>{
+ assert.equal(digestPersistedSnapshot({items:['a',null,3]}),
+  digestPersistedSnapshot({items:['a',null,3]}));
+});
