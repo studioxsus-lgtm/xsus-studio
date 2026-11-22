@@ -1,0 +1,33 @@
+name: Phase 12.5 Integration Gate
+on:
+  pull_request:
+    paths:
+      - 'src/core-coordination/**'
+      - 'src/platform/xsus-app/hyper-future-review-route.js'
+      - 'server.js'
+      - 'tests/integration/phase-12-5-*.test.js'
+      - '.github/workflows/phase-12-5-integration.yml'
+  workflow_dispatch:
+jobs:
+  phase-12-5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Validate server syntax
+        run: node --check server.js
+      - name: Validate coordination modules
+        run: |
+          node --check src/core-coordination/phase-12-5.js
+          node --check src/core-coordination/real-adapters.js
+          node --check src/core-coordination/six-engine-adapter.js
+          node --check src/platform/xsus-app/hyper-future-review-route.js
+      - name: Run targeted integration tests
+        run: npx vitest run tests/integration/phase-12-5-runtime-bridge.test.js tests/integration/phase-12-5-review-route.test.js
