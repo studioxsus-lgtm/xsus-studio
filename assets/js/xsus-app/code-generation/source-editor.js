@@ -1,3 +1,4 @@
+import { DEPLOYMENT_TARGETS } from './deployment-targets.js';
 import { prepareDeploymentPlan } from './deployment-preflight.js';
 import { appendBuildRelease } from './release-manager.js';
 import { verifyBuildArtifacts } from './artifact-integrity.js';
@@ -40,6 +41,12 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   build.type = 'button'; build.textContent = 'Build project';
   const releaseHistory = document.createElement('button');
   releaseHistory.type = 'button'; releaseHistory.textContent = 'Release history';
+  const targetSelect = document.createElement('select');
+  targetSelect.setAttribute('aria-label','Deployment target');
+  for (const [id,config] of Object.entries(DEPLOYMENT_TARGETS)) {
+    const option = document.createElement('option');
+    option.value=id; option.textContent=config.label; targetSelect.append(option);
+  }
   const deployment = document.createElement('button');
   deployment.type = 'button'; deployment.textContent = 'Prepare deployment';
   const download = document.createElement('button');
@@ -65,7 +72,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     });
   }
   renderRevisions();
-  header.append(title,select,refresh,validate,diagnostics,revisions,restore,build,deployment,releaseHistory,download,reset,close);
+  header.append(title,select,refresh,validate,diagnostics,revisions,restore,build,targetSelect,deployment,releaseHistory,download,reset,close);
   const workspace = document.createElement('div');
   workspace.className = 'xsus-source-workspace';
   const responsive = document.createElement('style');
@@ -192,11 +199,11 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     try {
       const buildResult = await prepareBuild(files);
       if (!buildResult.ok) { status.textContent = 'Deployment preparation blocked by source validation.'; return; }
-      const result = await prepareDeploymentPlan(buildResult.artifacts);
+      const result = await prepareDeploymentPlan(buildResult.artifacts,targetSelect.value);
       if (!result.ready) { status.textContent = 'Deployment preparation blocked by artifact integrity.'; return; }
       report.replaceChildren();
       const heading = document.createElement('strong');
-      heading.textContent = 'Static hosting preparation · NOT DEPLOYED';
+      heading.textContent = result.plan.targetLabel + ' · NOT DEPLOYED';
       report.append(heading);
       for (const step of result.plan.manualSteps) {
         const line = document.createElement('div');
