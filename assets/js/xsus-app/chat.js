@@ -5,7 +5,7 @@ import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
 import { toast } from './notifications.js';
 import { createDraftPlan, parsePlanSteps, BridgeRequestError } from './hyper-future-bridge-client.js?v=20261122-goalplan1';
-import { createAppSpecification } from './app-specification/index.js?v=20261120-scaffold1';
+import { createAppSpecification } from './app-specification/index.js?v=20261122-reviewed1';
 import { approveSpecificationReviewDraft, createSpecificationReviewDraft, parseSpecificationList } from './app-specification/review.js?v=20261120-scaffold1';
 
 // Conversation drafts stay in memory on this page. Credentials and prompts are never persisted here.
