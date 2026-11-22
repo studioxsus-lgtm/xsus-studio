@@ -67,3 +67,41 @@ test('project deleted during build is denied',async()=>{
  assert.equal(result.status,'denied');
  assert.equal(result.deployed,false);
 });
+
+test('owner reassigned after final digest read is rejected',async()=>{
+ const state={exists:true,ownerId,snapshot:{version:1}};
+ const client=mockClient(state);
+ const store=createBuilderProjectStore(client);
+ const reader=createBuilderProjectRevisionReader(client);
+ let revisionReads=0;
+ const result=await reviewBuildWithRevisionGuard(args,{
+  findOwnedProject:store.findOwnedProject,
+  readOwnedRevision:async identity=>{
+   const digest=await reader.readOwnedRevision(identity);
+   if(++revisionReads===2) state.ownerId='33333333-3333-4333-8333-333333333333';
+   return digest;
+  },
+  buildFromSavedProject:async()=>files
+ });
+ assert.equal(revisionReads,2);
+ assert.equal(result.reason,'PROJECT_OWNERSHIP_CHANGED');
+ assert.equal(result.deployed,false);
+});
+test('snapshot changes after build review but before final digest read are rejected',async()=>{
+ const state={exists:true,ownerId,snapshot:{version:1}};
+ const client=mockClient(state);
+ const store=createBuilderProjectStore(client);
+ const reader=createBuilderProjectRevisionReader(client);
+ let ownerChecks=0;
+ const result=await reviewBuildWithRevisionGuard(args,{
+  findOwnedProject:async identity=>{
+   const owner=await store.findOwnedProject(identity);
+   if(++ownerChecks===2) state.snapshot.version=2;
+   return owner;
+  },
+  readOwnedRevision:reader.readOwnedRevision,
+  buildFromSavedProject:async()=>files
+ });
+ assert.equal(result.reason,'PROJECT_REVISION_CHANGED');
+ assert.equal(result.deployed,false);
+});
