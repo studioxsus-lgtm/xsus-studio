@@ -151,3 +151,6 @@ Two more integration tests in `revision-guarded-supabase-integration.node-test.j
 
 ## Phase 18.4 — bounded snapshot traversal
 `snapshot-revision-digest.js` now limits recursive JSON canonicalization to 64 levels and rejects cyclic references. Shared but noncyclic nested objects remain valid. Three native Node regression tests cover depth limits, cycles, and repeated references. This prevents unbounded recursion for these cases but is not a complete streaming or memory-bound JSON parser. Changes are committed; full CI results and live Supabase validation remain unverified. Deployment remains disabled.
+
+## Phase 18.5 — local Node 22 verification and array-shape guard
+The eight Phase 18.4 canonical-digest tests were executed locally with Node.js v22.16.0 against reconstructed GitHub source: 8 passed, 0 failed. Two new regression tests and an array-shape guard reject sparse arrays and non-index array properties; the resulting ten tests were executed locally on the updated reconstructed source: 10 passed, 0 failed. This is not a full repository checkout or GitHub Actions verification. The current standalone Render deployment is unchanged.
