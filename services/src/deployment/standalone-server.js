@@ -3,6 +3,7 @@
 import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import { createDeploymentNodeHandler } from './deployment-node-adapter.js';
+import { createSupabaseProjectReviewIntegration } from './supabase-project-review-integration.js';
 
 export function createStandaloneDeploymentServer(dependencies={}) {
   const route=createDeploymentNodeHandler(dependencies);
@@ -16,11 +17,16 @@ export function createStandaloneDeploymentServer(dependencies={}) {
   });
 }
 
-export function startStandaloneDeploymentServer({env=process.env,dependencies={}}={}) {
+export function startStandaloneDeploymentServer({env=process.env,dependencies={},supabaseClient,buildFromSavedProject}={}) {
   const port=Number(env.PORT??3001);
   if (!Number.isInteger(port)||port<0||port>65535) throw new TypeError('Invalid PORT');
-  // A separate production integration must inject trusted clients and stores.
-  const server=createStandaloneDeploymentServer(dependencies);
+  // A trusted server bootstrap may inject Supabase and a server-only builder.
+  // Neither is inferred from browser input or environment secrets.
+  const configured= supabaseClient!==undefined || buildFromSavedProject!==undefined;
+  const integration=configured
+    ? createSupabaseProjectReviewIntegration({supabaseClient,buildFromSavedProject})
+    : {};
+  const server=createStandaloneDeploymentServer({...dependencies,...integration});
   server.listen(port,'0.0.0.0');
   return server;
 }
