@@ -47,6 +47,9 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   renderRevisions();
   header.append(title,select,refresh,revisions,restore,download,reset,close);
   const workspace = document.createElement('div');
+  workspace.className = 'xsus-source-workspace';
+  const responsive = document.createElement('style');
+  responsive.textContent = '@media(max-width:760px){.xsus-source-workspace{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(200px,1fr) minmax(200px,1fr)}.xsus-source-workspace nav{flex-direction:row!important;flex-wrap:wrap}}';
   workspace.style.cssText = 'display:grid;grid-template-columns:minmax(125px,170px) minmax(0,1fr) minmax(0,1fr);height:calc(100% - 104px);gap:8px;padding:8px;box-sizing:border-box;overflow:auto';
   const explorer = document.createElement('nav');
   explorer.setAttribute('aria-label','Project file explorer');
@@ -81,7 +84,7 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
   const status = document.createElement('p');
   status.setAttribute('role','status');
   status.style.cssText = 'margin:0;padding:2px 12px;font-size:12px';
-  dialog.append(header,workspace,status);
+  dialog.append(responsive,header,workspace,status);
   const readEditor = () => {
     if (textarea.value.length > MAX_FILE_LENGTH) {
       status.textContent = 'File exceeds the 500 KB editor limit.';
