@@ -19,6 +19,7 @@ import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js"
 import { createHyperApplicationHttpHandler } from "./src/platform/xsus-app/xsus-hyper-application-http.js";
 import { createHyperApplicationDispatcher } from "./src/platform/xsus-app/xsus-hyper-application-dispatcher.js";
 import { createHyperFutureBridge, HYPER_FUTURE_BRIDGE_PATH } from "./src/platform/xsus-app/hyper-future-bridge.js";
+import { createHyperFutureReviewRoute, HYPER_FUTURE_REVIEW_PATH } from "./src/platform/xsus-app/hyper-future-review-route.js";
 import { createHyperNodeRuntimeRoute } from "./src/platform/xsus-app/hyper-v8235-node-runtime-route.js";
 import { createHyperAppBackendComposition } from "./src/platform/xsus-app/hyper-v8234-backend-composition.js";
 import { createHyperEvidenceOwnerAuthorizer } from "./src/platform/xsus-app/hyper-evidence-owner-authorizer.js";
@@ -126,6 +127,17 @@ const hyperFutureBridge = process.env.XSUS_HYPER_FUTURE_BRIDGE_ENABLED === "true
             supabaseKey: process.env.SUPABASE_ANON_KEY
         });
         return createHyperFutureBridge({ verifyUser: auth.verifyUser });
+    })()
+    : null;
+
+// Separate authenticated, review-only orchestration route; OFF by default.
+const hyperFutureReview = process.env.XSUS_HYPER_FUTURE_REVIEW_ENABLED === "true"
+    ? (() => {
+        const auth = createPrivateChatAuthorization({
+            supabaseUrl: process.env.SUPABASE_URL,
+            supabaseKey: process.env.SUPABASE_ANON_KEY
+        });
+        return createHyperFutureReviewRoute({ verifyUser: auth.verifyUser });
     })()
     : null;
 
@@ -375,6 +387,23 @@ const server = http.createServer(
                 return sendJSON(res, statusCode, {
                     error: statusCode === 413 ? "Request body is too large." : "Invalid bridge request."
                 });
+            }
+        }
+
+        if (pathname === HYPER_FUTURE_REVIEW_PATH) {
+            if (!hyperFutureReview) return sendJSON(res, 503, { error: "Review bridge is not enabled." });
+            if (req.method !== "POST") return sendJSON(res, 405, { error: "Method not allowed." });
+            if (!req.headers["content-type"]?.includes("application/json"))
+                return sendJSON(res, 415, { error: "Content-Type must be application/json." });
+            try {
+                const body = await readJSONBody(req);
+                const result = await hyperFutureReview.handle({
+                    method: req.method, authorization: req.headers.authorization, body
+                });
+                return sendJSON(res, result.status, result.data);
+            } catch (error) {
+                const statusCode = Number.isInteger(error?.statusCode) ? error.statusCode : 400;
+                return sendJSON(res, statusCode, { error: "Invalid review request." });
             }
         }
 
