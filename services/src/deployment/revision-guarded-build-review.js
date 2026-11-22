@@ -17,6 +17,13 @@ export async function reviewBuildWithRevisionGuard({projectId,ownerId}={},depend
   const after=await dependencies.readOwnedRevision({projectId,ownerId});
   const revision=inspectStableProjectRevision(before,after);
   if(!revision.stable) return deny(revision.reason);
+  // The revision read and ownership recheck are distinct operations.
+  // A final owner check narrows the race window; it is not a transaction.
+  if(typeof dependencies.findOwnedProject!=='function')
+   return deny('TRUSTED_DEPENDENCIES_UNAVAILABLE');
+  const finalOwner=await dependencies.findOwnedProject({projectId,ownerId});
+  if(!finalOwner||finalOwner.id!==projectId||finalOwner.ownerId!==ownerId)
+   return deny('PROJECT_OWNERSHIP_CHANGED');
   return Object.freeze({...review,reason:'STATIC_REVIEW_REVISION_STABLE',deployed:false});
  } catch {
   return deny('REVISION_REVIEW_UNAVAILABLE');
