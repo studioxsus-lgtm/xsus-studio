@@ -7,12 +7,30 @@ export class BridgeRequestError extends Error {
   constructor(code) { super(code); this.name = "BridgeRequestError"; this.code = code; }
 }
 
+// A draft plan needs actionable tasks, not copies of the user's instructions.
+// This is a deterministic starter template, not AI-generated planning.
+export function suggestPlanSteps(goal) {
+  const text = String(goal ?? "").toLowerCase();
+  if (!/task|project management|detyr/.test(text)) return [];
+  return [
+    "Define user roles, requirements, and acceptance criteria.",
+    "Design the data model for users, projects, tasks, and progress.",
+    "Design authentication, authorization, and project access rules.",
+    "Build the dashboard and project management screens.",
+    "Implement task creation, editing, assignment, and status tracking.",
+    "Implement progress metrics and activity history.",
+    "Test access control, workflows, errors, and responsive layouts.",
+    "Review the implementation plan before any code generation or deployment."
+  ];
+}
+
 export function parsePlanSteps(value) {
   const tasks = String(value ?? "").split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-  if (!tasks.length || tasks.length > MAX_STEPS || tasks.some(task => task.length > 4096)) {
+  if (!tasks.length || tasks.length > MAX_STEPS || tasks.some(task => task.length > 4096) ||
+      tasks.some(task => /^(?:create a .*application|plan the development step by step|use future xsus core|do not execute or deploy|return the validated development plan)/i.test(task))) {
     throw new BridgeRequestError("invalid_steps");
   }
-  return tasks.map((task, index) => ({ id: `step-${index + 1}`, task, dependsOn: [] }));
+  return tasks.map((task, index) => ({ id: `step-${index + 1}`, task, dependsOn: index ? [`step-${index}`] : [] }));
 }
 
 export async function createDraftPlan({ goal, steps, signal } = {}) {
