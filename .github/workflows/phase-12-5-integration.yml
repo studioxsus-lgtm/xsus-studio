@@ -19,8 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - run: npm ci
+      - name: Install dependencies without lockfile
+        run: npm install --no-package-lock --ignore-scripts --no-audit --no-fund
       - name: Validate server syntax
         run: node --check server.js
       - name: Validate coordination modules
