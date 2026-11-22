@@ -14,6 +14,9 @@ from urllib.parse import quote, urlsplit
 
 from aiohttp import web
 
+from core.intelligence.xsus_app_adapter_v1 import XSUSAppIntelligenceAdapter
+from core.intelligence.authorized_gateway_v1 import IntelligencePrincipal
+
 from core.contracts.common import LanguageTag, require_identifier
 from core.contracts.errors import EngineError, ErrorCode
 from core.contracts.response import EngineResponse, TextResult
@@ -202,6 +205,7 @@ def create_app(
     max_concurrent_messages: int = 8, supported_languages: frozenset[LanguageTag] | None = None,
     feedback_store: LearningFeedbackStore | None = None, allowed_origins: frozenset[str] = frozenset(),
     learning_status_dir: Path | None = None,
+    intelligence_enabled: bool = False,
 ) -> web.Application:
     """Create an app using local owner-scoped session storage and engine routing."""
     if type(max_concurrent_messages) is not int or max_concurrent_messages < 1:
@@ -210,6 +214,9 @@ def create_app(
         credentials = _encode_credentials(owner_tokens or {})
     else:
         credentials = _encode_credentials(owner_tokens) if owner_tokens else ()
+    if type(intelligence_enabled) is not bool:
+        raise ValueError("intelligence_enabled must be boolean")
+    intelligence_adapter = XSUSAppIntelligenceAdapter() if intelligence_enabled else None
     cors_origins = _validate_origins(allowed_origins)
     active_messages = 0
     active_language_requests = 0
@@ -400,6 +407,25 @@ def create_app(
             "persisted": False,
         })
 
+    async def intelligence_reason(request: web.Request) -> web.Response:
+        owner = await authenticated_owner(request)
+        if owner is None:
+            return unauthorized()
+        if request.content_type != "application/json":
+            return _error(415, "unsupported_media_type", "Use application/json")
+        try:
+            payload = json.loads((await request.read()).decode("utf-8"))
+            scope = "u_" + hashlib.sha256(owner.encode("utf-8")).hexdigest()[:62]
+            principal = IntelligencePrincipal(scope, frozenset(("reason",)))
+            result = await asyncio.to_thread(intelligence_adapter.reason, principal, payload)
+        except (ValueError, TypeError, UnicodeError, RecursionError):
+            return _error(400, "invalid_intelligence_request", "Invalid reasoning request")
+        except PermissionError:
+            return _error(403, "operation_denied", "Operation not permitted")
+        except RuntimeError:
+            return _error(503, "intelligence_unavailable", "Intelligence service unavailable")
+        return _json(result)
+
     async def submit_feedback(request: web.Request) -> web.Response:
         owner = await authenticated_owner(request)
         if owner is None:
@@ -541,6 +567,8 @@ def create_app(
     app.router.add_delete(resource, delete)
     app.router.add_post(resource + "/messages", send)
     app.router.add_post("/v1/language/proofread", proofread)
+    if intelligence_enabled:
+        app.router.add_post("/v1/intelligence/reason", intelligence_reason)
     if feedback_store is not None:
         app.router.add_post("/v1/learning/feedback", submit_feedback)
         app.router.add_get("/v1/learning/feedback", list_feedback, allow_head=False)
