@@ -1,4 +1,4 @@
-import { generateSourceFiles } from '../code-generation/index.js?v=20261122-phase13crud1';
+import { generateSourceFiles } from '../code-generation/index.js?v=20261122-summary1';
 import { boardMarkup, boardStyles, boardScript } from './task-board.js?v=20261120-undodelete1';
 
 const escapeText = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
