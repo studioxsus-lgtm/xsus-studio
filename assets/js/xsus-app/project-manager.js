@@ -1,4 +1,4 @@
-import { registerRefreshState, saveRefreshState } from './refresh-state.js?v=20261122-autosave1';
+import { registerRefreshState, saveRefreshState } from './refresh-state.js?v=20261122-unified2';
 import { t } from './i18n/language-manager.js';
 // XSUS App V2.7 — in-memory UI demo, no backend or persistence.
 import { $, refreshIcons } from './state.js';
