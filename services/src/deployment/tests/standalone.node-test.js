@@ -36,3 +36,16 @@ test('configured token without trusted dependencies fails closed',()=>withServer
  const r=await request(port,{path:'/api/deployments/validate',method:'POST',headers:{origin:'https://www.xsusstudio.com','content-type':'application/json',authorization:'Bearer placeholder'},body:'{}'});
  assert.equal(r.status,503);assert.equal(r.body.deployed,false);
 }));
+
+test('rejects untrusted origin even with a bearer token',()=>withServer(async port=>{
+ const r=await request(port,{path:'/api/deployments/validate',method:'POST',headers:{origin:'https://untrusted.example','content-type':'application/json',authorization:'Bearer placeholder'},body:'{}'});
+ assert.equal(r.status,403);assert.equal(r.body.deployed,false);
+}));
+test('rejects oversized validation body',()=>withServer(async port=>{
+ const r=await request(port,{path:'/api/deployments/validate',method:'POST',headers:{origin:'https://www.xsusstudio.com','content-type':'application/json'},body:'x'.repeat(16*1024+1)});
+ assert.equal(r.status,413);assert.equal(r.body.deployed,false);
+}));
+test('rejects unsupported media type',()=>withServer(async port=>{
+ const r=await request(port,{path:'/api/deployments/validate',method:'POST',headers:{origin:'https://www.xsusstudio.com','content-type':'text/plain'},body:'{}'});
+ assert.equal(r.status,415);assert.equal(r.body.deployed,false);
+}));
