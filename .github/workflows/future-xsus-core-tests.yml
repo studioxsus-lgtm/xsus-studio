@@ -116,11 +116,15 @@ jobs:
           node clients/browser/intelligence-live.mjs
           node clients/browser/intelligence-load.mjs > intelligence-load-report.json
           cat intelligence-load-report.json
+          python -m services.api.production_acceptance_v1 intelligence-load-report.json > production-acceptance-report.json
+          cat production-acceptance-report.json
 
       - name: Upload intelligence load evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: future-xsus-core-intelligence-load
-          path: packages/future-xsus-core/intelligence-load-report.json
+          path: |
+            packages/future-xsus-core/intelligence-load-report.json
+            packages/future-xsus-core/production-acceptance-report.json
           if-no-files-found: warn
