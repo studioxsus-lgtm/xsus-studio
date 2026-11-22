@@ -148,3 +148,6 @@ On Node.js v22.16.0, the five existing tests in `snapshot-revision-digest.node-t
 
 ## Phase 18.3 — post-build concurrency regressions
 Two more integration tests in `revision-guarded-supabase-integration.node-test.js` simulate (1) ownership reassignment immediately after the final snapshot digest read and (2) a snapshot edit after the existing build review's second ownership lookup. Both cases must deny review. These tests use a stateful mock and were committed without a verified GitHub Actions result. A separate atomic database revision lock remains required for production deployment.
+
+## Phase 18.4 — bounded snapshot traversal
+`snapshot-revision-digest.js` now limits recursive JSON canonicalization to 64 levels and rejects cyclic references. Shared but noncyclic nested objects remain valid. Three native Node regression tests cover depth limits, cycles, and repeated references. This prevents unbounded recursion for these cases but is not a complete streaming or memory-bound JSON parser. Changes are committed; full CI results and live Supabase validation remain unverified. Deployment remains disabled.
