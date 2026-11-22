@@ -97,7 +97,15 @@ if(allowed.includes(location.origin)){
     'content-type':'application/json',authorization:'Bearer '+token},
     body:JSON.stringify({projectId}),signal:AbortSignal.timeout(15000),cache:'no-store'});
    const result=await response.json();
-   status.textContent=response.ok&&result.status==='ready-for-review'&&result.deployed===false?l[5]:l[6];
+   const blocked={
+    sq:'Projekti u gjet, por ndërtuesi i sigurt nuk është aktivizuar ende. Projekti nuk është publikuar.',
+    en:'Project found, but the trusted builder is not enabled yet. Nothing was deployed.',
+    fr:'Projet trouvé, mais le générateur sécurisé n’est pas encore activé. Aucun déploiement.'
+   };
+   const lang=document.documentElement.lang?.slice(0,2);
+   status.textContent=response.ok&&result.status==='ready-for-review'&&result.deployed===false
+    ?l[5]:response.status===409&&result.reason==='BUILD_NOT_AVAILABLE'
+    ?(blocked[lang]||blocked.en):l[6];
   }catch{status.textContent=l[7];}
   finally{button.disabled=false;}
  });
