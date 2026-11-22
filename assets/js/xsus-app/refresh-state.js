@@ -41,7 +41,6 @@ function selectOwner(id) {
   const first = owner === undefined;
   owner = id;
   warned = false;
-  document.dispatchEvent(new Event('xsus:workspace-owner'));
   for (const [section, adapter] of sections) {
     let saved;
     try { saved = id && JSON.parse(sessionStorage.getItem(key(section))); } catch {}
@@ -49,11 +48,14 @@ function selectOwner(id) {
       try { adapter.restore(saved || null); } catch { adapter.restore(null); }
     }
   }
+  document.dispatchEvent(new Event('xsus:workspace-owner'));
 }
 
 export async function initRefreshState() {
   try {
     const client = await getSupabaseClient();
     client.auth.onAuthStateChange((_event, session) => selectOwner(session?.user?.id || null));
+    const { data } = await client.auth.getSession();
+    selectOwner(data?.session?.user?.id || null);
   } catch { selectOwner(null); }
 }
