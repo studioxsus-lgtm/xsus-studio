@@ -35,7 +35,7 @@ export function parsePlanSteps(value) {
 
 export async function createDraftPlan({ goal, steps, signal } = {}) {
   const cleanGoal = typeof goal === "string" ? goal.trim() : "";
-  if (!cleanGoal || cleanGoal.length > 4096 || !Array.isArray(steps) || !steps.length || steps.length > MAX_STEPS) {
+  if (!cleanGoal || cleanGoal.length > 4096 || (steps !== undefined && (!Array.isArray(steps) || !steps.length || steps.length > MAX_STEPS))) {
     throw new BridgeRequestError("invalid_input");
   }
   if (!/^https:\/\/(www\.)?xsusstudio\.com$/.test(window.location.origin)) {
@@ -50,7 +50,7 @@ export async function createDraftPlan({ goal, steps, signal } = {}) {
     response = await fetch(BRIDGE_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ goal: cleanGoal, steps }),
+      body: JSON.stringify(steps === undefined ? { goal: cleanGoal } : { goal: cleanGoal, steps }),
       signal: requestSignal,
       credentials: "omit",
       redirect: "error"
@@ -70,7 +70,7 @@ export async function createDraftPlan({ goal, steps, signal } = {}) {
       result.safety?.executable !== false || result.safety?.sideEffects !== false ||
       result.plan?.state !== "draft" || result.plan?.executable !== false ||
       result.plan?.dependencyGraphValid !== true || !Array.isArray(result.plan?.steps) ||
-      (result.status === "review_required" && result.language?.review_required !== true)) {
+      (result.status === "review_required" && result.language?.review_required !== true && result.plan?.requiresHumanReview !== true)) {
     throw new BridgeRequestError("invalid_response");
   }
   return result;
