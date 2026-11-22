@@ -1,3 +1,4 @@
+import { verifyBuildArtifacts } from './artifact-integrity.js';
 import { inspectBuildReadiness } from './build-diagnostics.js';
 import { prepareBuild } from './build-pipeline.js';
 import { validateSourceFiles } from './source-validator.js';
@@ -178,17 +179,23 @@ export function openSourceEditor(initialFiles, onSave = null, initialHistory = [
     dirty = true;
     status.textContent = 'Previous version loaded. Press Save to project to keep it.';
   });
-  build.addEventListener('click', () => {
+  build.addEventListener('click', async () => {
     if (!readEditor()) return;
-    const result = prepareBuild(files);
+    build.disabled = true;
+    let result;
+    try { result = await prepareBuild(files); }
+    catch { status.textContent = 'Build failed: secure SHA-256 hashing is unavailable.'; build.disabled = false; return; }
+    build.disabled = false;
     runValidation();
     if (!result.ok) { status.textContent = 'Build blocked: resolve validation errors.'; return; }
+    const integrity = await verifyBuildArtifacts(result.artifacts);
+    if (!integrity.ok) { status.textContent = 'Build integrity verification failed.'; return; }
     for (const [name, content] of Object.entries(result.artifacts)) {
       const url = URL.createObjectURL(new Blob([content], {type:'text/plain;charset=utf-8'}));
       const a = document.createElement('a'); a.href = url; a.download = name; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 30000);
     }
-    status.textContent = 'Build prepared: 3 source files and build manifest. Not deployed.';
+    status.textContent = 'Build verified with SHA-256: 3 files and manifest. Not deployed.';
   });
   download.addEventListener('click', () => {
     if (!runValidation()) { status.textContent = 'Fix blocking validation errors before exporting.'; return; }
