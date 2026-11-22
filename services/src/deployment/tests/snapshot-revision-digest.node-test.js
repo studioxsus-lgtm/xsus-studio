@@ -23,3 +23,19 @@ test('digest is deterministic, hexadecimal, and does not expose content',()=>{
  assert.match(digest,/^[a-f0-9]{64}$/);
  assert.equal(digest.includes('private'),false);
 });
+
+test('deeply nested snapshots fail closed without unbounded recursion',()=>{
+ let value='leaf';
+ for(let i=0;i<80;i++) value={next:value};
+ assert.equal(digestPersistedSnapshot(value),null);
+});
+test('cyclic snapshots fail closed',()=>{
+ const snapshot={version:1};
+ snapshot.self=snapshot;
+ assert.equal(digestPersistedSnapshot(snapshot),null);
+});
+test('repeated noncyclic references are serialized consistently',()=>{
+ const shared={value:'ok'};
+ assert.equal(digestPersistedSnapshot({a:shared,b:shared}),
+  digestPersistedSnapshot({b:{value:'ok'},a:{value:'ok'}}));
+});
