@@ -3,8 +3,9 @@ import { composeSourcePreview } from './live-preview.js';
 const names = ['index.html', 'styles.css', 'app.js'];
 const MAX_FILE_LENGTH = 500000;
 
-export function openSourceEditor(initialFiles, onSave = null) {
+export function openSourceEditor(initialFiles, onSave = null, initialHistory = []) {
   const files = Object.fromEntries(names.map(name => [name, initialFiles[name]]));
+  let history = Array.isArray(initialHistory) ? structuredClone(initialHistory) : [];
   const dialog = document.createElement('dialog');
   dialog.setAttribute('aria-label', 'XSUS source code editor');
   dialog.style.cssText = 'width:min(98vw,1250px);height:min(94dvh,900px);padding:0;border:1px solid #6988ad;border-radius:12px;background:#f7f9fc;color:#17243a';
@@ -27,7 +28,24 @@ export function openSourceEditor(initialFiles, onSave = null) {
   reset.type = 'button'; reset.textContent = 'Reset edits';
   const close = document.createElement('button');
   close.type = 'button'; close.textContent = 'Close';
-  header.append(title,select,refresh,download,reset,close);
+  const revisions = document.createElement('select');
+  revisions.setAttribute('aria-label', 'Saved source versions');
+  const restore = document.createElement('button');
+  restore.type = 'button'; restore.textContent = 'Restore version';
+  function renderRevisions() {
+    revisions.replaceChildren();
+    const placeholder = document.createElement('option');
+    placeholder.value = ''; placeholder.textContent = 'Version history';
+    revisions.append(placeholder);
+    history.forEach((entry, index) => {
+      const option = document.createElement('option');
+      option.value = String(index);
+      option.textContent = new Date(entry.createdAt).toLocaleString() + ' · v' + (index + 1);
+      revisions.append(option);
+    });
+  }
+  renderRevisions();
+  header.append(title,select,refresh,revisions,restore,download,reset,close);
   const workspace = document.createElement('div');
   workspace.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));height:calc(100% - 104px);gap:8px;padding:8px;box-sizing:border-box';
   const textarea = document.createElement('textarea');
@@ -58,7 +76,8 @@ export function openSourceEditor(initialFiles, onSave = null) {
     if (!readEditor()) return;
     if (typeof onSave !== 'function') { status.textContent = 'Project saving is unavailable.'; return; }
     try {
-      onSave(Object.fromEntries(names.map(name => [name, files[name]])));
+      const result = onSave(Object.fromEntries(names.map(name => [name, files[name]])));
+      if (Array.isArray(result)) { history = structuredClone(result); renderRevisions(); }
       status.textContent = 'Source files saved to this XSUS project.';
     } catch { status.textContent = 'Could not save source files to the project.'; }
   });
@@ -75,6 +94,15 @@ export function openSourceEditor(initialFiles, onSave = null) {
     select.dataset.previous = select.value;
   });
   refresh.addEventListener('click', updatePreview);
+  restore.addEventListener('click', () => {
+    const index = Number(revisions.value);
+    if (revisions.value === '' || !history[index]?.files) return;
+    if (!window.confirm('Restore this saved version? Unsaved edits in this editor will be replaced.')) return;
+    for (const name of names) files[name] = history[index].files[name];
+    textarea.value = files[select.value];
+    updatePreview();
+    status.textContent = 'Previous version loaded. Press Save to project to keep it.';
+  });
   download.addEventListener('click', () => {
     if (!readEditor()) return;
     for (const name of names) {
