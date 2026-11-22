@@ -36,6 +36,9 @@ export function generateSourceFiles(spec) {
     pages, components: structure.components, models: structure.dataModels,
     interactions: structure.interactions, requirements: spec.requirements };
   const isTaskManager = spec.product.profileId === 'task-manager';
+  const displaySummary = isTaskManager
+    ? 'Organize projects, manage tasks, and track team progress in one workspace.'
+    : (data.goal.split(/[.!?]\\s+/)[0] || data.goal).slice(0, 180);
   const nav = pages.map(page => '<a href="#' + page.id + '">' + escapeHtml(page.name) + '</a>').join('');
   const sections = pages.map(page => '<section id="' + page.id + '"><h2>' + escapeHtml(page.name) +
     '</h2><p>Ready for implementation.</p></section>').join('');
@@ -44,7 +47,7 @@ export function generateSourceFiles(spec) {
     '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'self\'; script-src \'self\'; base-uri \'none\'; form-action \'none\'">' +
     '<title>' + escapeHtml(data.title) + '</title><link rel="stylesheet" href="styles.css">' +
     '<script src="app.js" defer></script></head><body><header><h1>' + escapeHtml(data.title) +
-    '</h1><p>' + escapeHtml(data.goal) + '</p></header><nav aria-label="Screens">' + nav +
+    '</h1><p>' + escapeHtml(displaySummary) + '</p></header><nav aria-label="Screens">' + nav +
     '</nav><main>' + sections + (isTaskManager ? taskManagerMarkup : '') + '<section><h2>Planned features</h2><ul id="features"></ul></section></main>' +
     '<footer>XSUS App · Reviewed starter source</footer></body></html>';
   const css = ':root{font:16px/1.6 system-ui;color:#16273a;background:#f3f6fa}' +
