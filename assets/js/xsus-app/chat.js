@@ -99,6 +99,17 @@ function renderSpecificationCard(specification, draft, reviewKey) {
     saveRefreshState('builder');
     renderBoardActions(html);
     showGeneratedHtml(html, true);
+  }, editedFiles => {
+    const liveDraft = specificationReviews.get(reviewKey);
+    if (liveDraft !== draft || liveDraft.state !== 'approved_for_next_phase') {
+      throw new Error('This project review is no longer active.');
+    }
+    if (!['index.html', 'styles.css', 'app.js'].every(name =>
+      typeof editedFiles[name] === 'string' && editedFiles[name].length <= 500000)) {
+      throw new TypeError('Invalid source files.');
+    }
+    liveDraft.sourceFiles = structuredClone(editedFiles);
+    saveRefreshState('builder');
   });
   return specCard;
 }
