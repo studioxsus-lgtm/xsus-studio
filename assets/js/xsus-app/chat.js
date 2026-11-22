@@ -113,6 +113,14 @@ function renderSpecificationCard(specification, draft, reviewKey) {
     liveDraft.sourceFiles = structuredClone(editedFiles);
     saveRefreshState('builder');
     return liveDraft.sourceHistory;
+  }, releases => {
+    const liveDraft = specificationReviews.get(reviewKey);
+    if (liveDraft !== draft || liveDraft.state !== 'approved_for_next_phase') {
+      throw new Error('This project review is no longer active.');
+    }
+    if (!Array.isArray(releases) || releases.length > 20) throw new TypeError('Invalid release history.');
+    liveDraft.buildReleases = structuredClone(releases);
+    saveRefreshState('builder');
   });
   return specCard;
 }
