@@ -74,3 +74,24 @@ test('revision reader exceptions fail closed without exposing private data',asyn
  assert.equal(result.reason,'REVISION_REVIEW_UNAVAILABLE');
  assert.equal(JSON.stringify(result).includes('private'),false);
 });
+
+test('owner reassigned after final revision read fails closed',async()=>{
+ let checks=0;
+ const result=await reviewBuildWithRevisionGuard(args,{
+  ...deps(),
+  findOwnedProject:async()=>++checks===3
+   ? {id:projectId,ownerId:'33333333-3333-4333-8333-333333333333'}
+   : {id:projectId,ownerId}
+ });
+ assert.equal(checks,3);
+ assert.equal(result.status,'denied');
+ assert.equal(result.reason,'PROJECT_OWNERSHIP_CHANGED');
+ assert.equal(result.deployed,false);
+});
+test('missing final ownership check dependency fails closed',async()=>{
+ const result=await reviewBuildWithRevisionGuard(args,{
+  ...deps(),findOwnedProject:async()=>({id:projectId,ownerId})
+ });
+ assert.equal(result.status,'ready-for-review');
+ assert.equal(result.deployed,false);
+});
