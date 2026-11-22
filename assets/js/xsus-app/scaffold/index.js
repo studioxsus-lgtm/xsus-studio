@@ -8,8 +8,8 @@ function productSummary(spec) {
   const profile = spec.product?.profileId;
   if (profile === 'task-manager') return 'Organize projects, manage tasks, and track team progress in one workspace.';
   const goal = typeof spec.product?.goal === 'string' ? spec.product.goal.trim() : '';
-  const first = goal.split(/(?<=[.!?])\\s+/u)[0] || '';
-  const summary = first.length <= 180 ? first : first.slice(0, 177).replace(/\\s+\\S*$/, '') + '…';
+  const first = goal.split(/(?<=[.!?])\s+/u)[0] || '';
+  const summary = first.length <= 180 ? first : first.slice(0, 177).replace(/\s+\S*$/, '') + '…';
   return summary || label || 'Your application workspace.';
 }
 const section = (name, items) => items.length ? `<section><h2>${name}</h2><ul>${items.map(item => `<li>${escapeText(item)}</li>`).join('')}</ul></section>` : '';
