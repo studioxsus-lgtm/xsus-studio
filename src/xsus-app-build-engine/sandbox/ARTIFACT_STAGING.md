@@ -1,0 +1,7 @@
+# Phase 32 — Secure artifact staging (initial host filesystem implementation)
+
+Server-side Node.js implementation of artifact staging for the Docker driver. Uses the existing build manifest validator, fixed staging root, exclusive creation, restrictive modes, no-follow file opens, validation of directory ownership mode, fsync of written files, cleanup on failed writes and identity-bound deletion.
+
+**Deployment prerequisites:** The staging directory `/var/lib/xsus-sandbox/staging` and its parents must be provisioned by a trusted administrator with correct ownership and restrictive permissions. A container mount under `/workspace` must permit the unprivileged runtime UID to read staged files, while preventing other tenants from reading or writing them. This implementation does not establish that ownership model.
+
+**Security limitations:** Path-based directory checks followed by filesystem operations are subject to race conditions if a hostile local process can modify directories. Do not deploy on a multi-tenant host until staging is moved to a privileged, race-resistant filesystem helper using directory file descriptors/openat2 and verified ownership. The current code has no successful filesystem integration tests because CI must not mutate the fixed production path. Host cleanup after process crashes also requires a supervisor. Never treat this module or mock tests as evidence of production isolation.
