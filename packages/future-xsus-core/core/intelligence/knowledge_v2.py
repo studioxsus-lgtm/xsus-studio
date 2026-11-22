@@ -1,7 +1,7 @@
 """Derive formal claims only from unambiguous owner-scoped assertions."""
 from dataclasses import dataclass
 from .knowledge_v1 import KnowledgeStore, _id
-from .reasoning_v1 import _atom, verify_proof
+from .reasoning_v1 import _atom, verify_proof, ProofStep
 from .reasoning_v2 import MultiStepReasoner
 
 @dataclass(frozen=True, slots=True)
@@ -26,8 +26,11 @@ class EvidenceReasoner:
         groups = {}
         for record in self.store.records_for_owner(owner_id):
             # Only explicitly encoded formal assertions are eligible.
-            _atom(record.key)
             if record.value not in ("true", "false"):
+                continue
+            try:
+                _atom(record.key)
+            except ValueError:
                 continue
             groups.setdefault(record.key, []).append(record)
         conflicts = tuple(sorted(k for k, rows in groups.items()
@@ -36,7 +39,8 @@ class EvidenceReasoner:
         facts = tuple(sorted(k for k in groups if k not in denied))
         # Reject rules that would bypass explicit negative or conflicting evidence.
         engine = MultiStepReasoner(facts, rules)
-        allowed = tuple(r for r in engine.rules if r.conclusion not in denied)
+        indices = tuple(i for i,r in enumerate(engine.rules) if r.conclusion not in denied)
+        allowed = tuple(engine.rules[i] for i in indices)
         result = MultiStepReasoner(facts, allowed).prove(query)
         if not result.entailed:
             status = "conflict" if query in conflicts else "unknown"
@@ -46,5 +50,5 @@ class EvidenceReasoner:
         roots = {s.conclusion for s in result.proof if s.rule_index is None}
         sources = tuple(sorted({(k,r.evidence.source_id,r.evidence.digest)
                                 for k in roots for r in groups[k]}))
-        # Rule references are indices into the filtered rule sequence.
-        return EvidenceDerivation("supported",query,result.proof,sources,conflicts,True)
+        proof = tuple(ProofStep(s.conclusion,s.premises,None if s.rule_index is None else indices[s.rule_index]) for s in result.proof)
+        return EvidenceDerivation("supported",query,proof,sources,conflicts,True)
