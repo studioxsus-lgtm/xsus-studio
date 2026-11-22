@@ -44,7 +44,7 @@ function renderTasks() {
 }
 taskForm.addEventListener('submit', event => { event.preventDefault();
   const name = document.getElementById('task-name').value.trim(); if (!name || tasks.length >= 500) return;
-  tasks.push({ id: crypto.randomUUID(), name: name.slice(0,200),
+  tasks.push({ id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random(), name: name.slice(0,200),
     due: document.getElementById('task-date').value, done:false });
   taskForm.reset(); persistTasks(); renderTasks();
 });
