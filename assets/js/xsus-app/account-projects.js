@@ -167,7 +167,8 @@ export function initAccountProjects() {
       if (link) {
         const result = await updateLinkedAccountProject(client,{table,owner,id,token:link.token,snapshot,name});
         if (result !== 'saved') {
-          if (current(token,owner)) status.textContent=(saveLabels[document.documentElement.lang] || saveLabels.en)[2];
+          if (current(token,owner)) status.textContent=result==='revision-conflict'
+            ? (saveLabels[document.documentElement.lang] || saveLabels.en)[2] : words()[6];
           return;
         }
       } else {
