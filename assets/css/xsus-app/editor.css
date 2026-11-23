@@ -31,3 +31,10 @@
 .design-properties h3{font-size:13px;margin:0 0 20px}
 .property{font-size:12px;color:#9cafc9;display:flex;justify-content:space-between;border-bottom:1px solid #293d54;padding:13px 0}
 .property b{color:#e1ecfb}
+
+/* XSUS App: keep editor mode controls above resizable code/preview surfaces. */
+#editorPanel > .editor-tools { position:relative; z-index:30; pointer-events:auto; isolation:isolate; }
+#editorPanel > .editor-tools .tabs,
+#editorPanel > .editor-tools .device-tools { position:relative; z-index:1; pointer-events:auto; }
+#editorPanel > .editor-tools button[data-mode],
+#editorPanel > .editor-tools button[data-device] { position:relative; pointer-events:auto; touch-action:manipulation; cursor:pointer; }
