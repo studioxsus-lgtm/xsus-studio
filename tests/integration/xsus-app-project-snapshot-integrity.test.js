@@ -22,6 +22,14 @@ describe('XSUS App phase 1.7 account snapshot recovery integrity',()=>{
     const s=snapshot();s.boards=[['missing-data']];
     expect(inspectAccountProjectSnapshot(s).reason).toBe('invalid-relations');
   });
+  it('rejects invalid generated preview types',()=>{
+    const s=snapshot();s.session.generatedHtml={html:'not a string'};
+    expect(inspectAccountProjectSnapshot(s).reason).toBe('invalid-preview');
+  });
+  it('rejects null or malformed conversation entries',()=>{
+    const s=snapshot();s.session.messages=[null];
+    expect(inspectAccountProjectSnapshot(s).reason).toBe('invalid-messages');
+  });
   it('accepts legacy snapshots without generated source history',()=>{
     const s=snapshot();delete s.session.generatedSourceHistory;delete s.session.generatedFiles;
     expect(inspectAccountProjectSnapshot(s).ok).toBe(true);
