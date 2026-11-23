@@ -129,6 +129,10 @@ function applyGeneratedChanges(){
   try{
     generatedFiles[currentFile]=source;
     generatedHtml=assembleGeneratedPreview();
+    document.dispatchEvent(new CustomEvent('xsus:generated-files-updated',{detail:{
+      files:Object.fromEntries(Object.entries(generatedFiles).map(([path,content])=>[path,content])),
+      html:generatedHtml
+    }}));
     updateMode('preview');
     toast('Changes applied to Preview');
   }catch(error){
