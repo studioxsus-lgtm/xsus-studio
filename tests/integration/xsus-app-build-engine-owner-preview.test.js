@@ -4,13 +4,13 @@ import {createStandaloneDeploymentServer} from "../../services/src/deployment/st
 const projectId="33333333-3333-4333-8333-333333333333";
 const ownerId="11111111-1111-4111-8111-111111111111";
 const origin="https://www.xsusstudio.com";
-async function run({enabled=true,token="valid-token-long-enough",requestProjectId=projectId,storedOwner=ownerId,originHeader=origin,authUser=ownerId,previewFails=false,invalidFiles=false,goal="Notes app",dbError=false,missingProject=false}={}){
+async function run({enabled=true,token="valid-token-long-enough",requestProjectId=projectId,storedOwner=ownerId,originHeader=origin,authUser=ownerId,previewFails=false,invalidFiles=false,goal="Notes app",projectName="Saved project",dbError=false,missingProject=false}={}){
  let calls=0;
  const server=createStandaloneDeploymentServer({
    allowedOrigins:[origin],userPreviewEnabled:enabled,
    createUserPreviewClient:()=>({
      auth:{getUser:async()=>({data:{user:authUser?{id:authUser}:null},error:authUser?null:{message:"invalid"}})},
-     from:()=>{const q={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:missingProject?null:{id:projectId,owner_id:storedOwner,snapshot:{goal}},error:dbError?{message:"database unavailable"}:null})};return q;}
+     from:()=>{const q={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:missingProject?null:{id:projectId,owner_id:storedOwner,name:projectName,snapshot:{goal}},error:dbError?{message:"database unavailable"}:null})};return q;}
    }),
    previewProxy:async()=>{calls++;if(previewFails)throw Error("worker offline");return {kind:"static-preview",requiresReview:true,files:invalidFiles?[{path:"index.html",content:"ok"}]:[{path:"index.html",content:"<html></html>"},{path:"styles.css",content:"body{}"},{path:"main.js",content:"console.log(1)"}]};}
  });
@@ -44,7 +44,8 @@ describe("XSUS saved-project owner preview",()=>{
  it("rejects a token with spaces",async()=>{const r=await run({token:"bad token"});expect(r.status).toBe(401);expect(r.calls).toBe(0);});
  it("does not return preview files to a different authenticated user",async()=>{const r=await run({authUser:"99999999-9999-4999-8999-999999999999"});expect(r.status).toBe(404);expect(r.calls).toBe(0);});
  it("rejects incomplete worker artifact manifests",async()=>{const r=await run({invalidFiles:true});expect(r.status).toBe(503);expect(r.calls).toBe(1);});
- it("rejects a saved project without a usable goal",async()=>{const r=await run({goal:"   "});expect(r.status).toBe(422);expect(r.calls).toBe(0);});
+ it("supports older projects with a saved name but no goal",async()=>{const r=await run({goal:"   ",projectName:"Task manager"});expect(r.status).toBe(200);expect(r.calls).toBe(1);});
+ it("rejects projects without a usable goal or name",async()=>{const r=await run({goal:"   ",projectName:"  "});expect(r.status).toBe(422);expect(r.calls).toBe(0);});
  it("rejects oversized generated files",async()=>{
   let calls=0;
   const server=createStandaloneDeploymentServer({
