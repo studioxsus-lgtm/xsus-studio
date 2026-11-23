@@ -40,7 +40,7 @@ export function createStandaloneDeploymentServer(dependencies={}) {
       if(!dependencies.userPreviewEnabled||typeof dependencies.createUserPreviewClient!=="function"||typeof dependencies.previewProxy!=="function"){reply(503,{error:"build_unavailable"});return;}
       const token=req.headers.authorization;
       if(typeof token!=="string"||token.length<23||token.length>8200||!/^Bearer [A-Za-z0-9._~+/-]+=*$/.test(token)){reply(401,{error:"authentication_required"});return;}
-      if(!/^application\\/json(?:\\s*;|\\s*$)/i.test(String(req.headers["content-type"]??""))){reply(415,{error:"unsupported_media_type"});return;}
+      if(!/^application\/json(?:\s*;|\s*$)/i.test(String(req.headers["content-type"]??""))){reply(415,{error:"unsupported_media_type"});return;}
       void (async()=>{
         try{
           const chunks=[];let size=0;
