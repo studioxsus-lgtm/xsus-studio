@@ -1,0 +1,16 @@
+name: XSUS App Preview Staging HTTP Smoke
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  staging-http-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify staging rejects unauthenticated and cross-origin requests
+        run: node tests/smoke/xsus-app-preview-staging-http.mjs
