@@ -3,7 +3,7 @@ import { SOURCE_PATHS, validProjectSource, copyProjectSource, restoreProjectSour
 import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-formfix2';
 import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart, currentWorkspaceOwner } from './refresh-state.js?v=20261122-unified2';
-import { showGeneratedHtml, showGeneratedFiles, getGeneratedPreviewHtml } from './editor.js?v=20261123-datastore24';
+import { showGeneratedHtml, showGeneratedFiles, getGeneratedPreviewHtml } from './editor.js?v=20261123-cloud25';
 import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261122-authgate1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
