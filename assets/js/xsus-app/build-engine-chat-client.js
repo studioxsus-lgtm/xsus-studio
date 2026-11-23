@@ -1,4 +1,5 @@
 import {getUserAccessToken} from './auth-session.js';
+import {reservationAppSpec} from './app-specification/reservations.js';
 import {createDraftPlan} from './hyper-future-bridge-client.js?v=20261122-goalplan1';
 
 // The installed Build Engine accepts a single goal and classifies its first
@@ -45,9 +46,11 @@ export async function buildFromChatGoal(goal,{steps,signal,onPlan}={}){
       throw new Error('Plan review cancelled.');
     }
   }
+  const appSpec = reservationAppSpec(goal, plan);
+  const payload = appSpec ? {goal:plan.language.text.trim().slice(0,100), appSpec} : {goal:buildGoal};
   const token=await getUserAccessToken();
   if(!token)throw new Error('Sign in to XSUS Studio to generate an application.');
-  const response=await fetch(ENDPOINT,{method:'POST',mode:'cors',cache:'no-store',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({goal:buildGoal}),signal});
+  const response=await fetch(ENDPOINT,{method:'POST',mode:'cors',cache:'no-store',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify(payload),signal});
   if(!response.ok)throw new Error(response.status===401?'Session expired. Sign in again.':'Build Engine unavailable ('+response.status+').');
   const result=await response.json();
   if(result?.kind!=='static-preview'||result.requiresReview!==true||!Array.isArray(result.files)||result.files.length!==3)throw new Error('Invalid Build Engine response');
