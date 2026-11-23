@@ -1,0 +1,5 @@
+# Phase 69 — reliability regression and durable admission boundary
+
+A new opt-in durable admission wrapper requires an atomic operation claim and a fencing token before executing the Phase 68 build engine. It records a terminal status after the build and preserves both execution and persistence failures when both occur. Rejected claims fail closed, and a cancellation after claiming is recorded as uncertain.
+
+**Critical constraints:** This wrapper does not implement a real PostgreSQL claim, host fence verification, or durable ledger itself; those are trusted injected dependencies and must be connected and tested before production. The existing Phase 68 entry point remains non-durable and must not be exposed directly to untrusted production traffic. The fence is passed to the terminal recorder, but the underlying runtime does not yet enforce it; physical execution still requires host-side fencing. Tests use mocks, not real database concurrency. CI status is independent of committed code.
