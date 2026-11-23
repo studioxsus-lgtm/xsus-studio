@@ -12,98 +12,6 @@ const samples = {
 };
 let generatedHtml = null;
 let generatedFiles = null;
-// Sandboxed previews have an opaque origin: native localStorage is unavailable.
-// Persist only a bounded, project-scoped virtual storage snapshot in the parent.
-function previewStorageKey(){
- if(!generatedFiles)return null;
- const source=generatedFiles['index.html']+'\\0'+generatedFiles['main.js'];
- let hash=2166136261;
- for(let i=0;i<source.length;i++)hash=Math.imul(hash^source.charCodeAt(i),16777619);
- return 'xsus-app:preview-data:v1:'+ (hash>>>0).toString(16);
-}
-function injectPreviewStorage(doc){
- const key=previewStorageKey();
- if(!key)return;
- let data={};
- try{const raw=localStorage.getItem(key);if(raw){const parsed=JSON.parse(raw);if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))data=parsed;}}catch{}
- const bridge=doc.createElement('script');
- bridge.textContent='('+function(initial,storageKey){
-   const values={...initial};
-   const emit=()=>parent.postMessage({type:'xsus-preview-storage',key:storageKey,values},'*');
-   const storage={
-     getItem(key){key=String(key);return Object.prototype.hasOwnProperty.call(values,key)?String(values[key]):null;},
-     setItem(key,value){values[String(key)]=String(value);emit();},
-     removeItem(key){delete values[String(key)];emit();},
-     clear(){for(const key of Object.keys(values))delete values[key];emit();},
-     key(index){return Object.keys(values)[index]??null;},
-     get length(){return Object.keys(values).length;}
-   };
-   try{Object.defineProperty(window,'localStorage',{configurable:true,value:storage});}catch{}
-   // Some generated apps keep records in JS memory only. Replay user-created
-   // records after refresh, even when their generated code never uses storage.
-   const replayKey='__xsus_preview_actions_v1__';
-   let actions=[];
-   try{const saved=JSON.parse(values[replayKey]||'[]');if(Array.isArray(saved))actions=saved.slice(-100);}catch{}
-   let replaying=false;
-   const record=action=>{
-     if(replaying||actions.length>=100)return;
-     actions.push(action);
-     values[replayKey]=JSON.stringify(actions);
-     emit();
-   };
-   const fields=()=>[...document.querySelectorAll('input,textarea,select')].filter(el=>el.name||el.id||el.type!=='hidden');
-   const capture=()=>fields().map((el,i)=>({i,value:el.value,checked:el.checked}));
-   document.addEventListener('click',event=>{
-     if(replaying)return;
-     const button=event.target.closest('button,input[type="submit"]');
-     if(!button)return;
-     const label=(button.textContent||button.value||'').trim().toLowerCase();
-     if(/^(add record|add task|add new|create task|save task|shto|shto detyrë)$/.test(label)){
-       record({type:'add',label,fields:capture()});
-     }else if(/^(remove|delete|fshi)$/.test(label)){
-       const candidates=[...document.querySelectorAll('button')].filter(el=>(el.textContent||'').trim().toLowerCase()===label);
-       record({type:'remove',label,index:candidates.indexOf(button)});
-     }
-   },true);
-   window.addEventListener('load',()=>{
-     if(!actions.length)return;
-     setTimeout(()=>{
-       replaying=true;
-       try{
-         for(const action of actions){
-           if(action.type==='add'){
-             const all=fields();
-             for(const field of action.fields||[]){
-               const el=all[field.i];if(!el)continue;
-               el.value=field.value;
-               if(el.type==='checkbox'||el.type==='radio')el.checked=!!field.checked;
-               el.dispatchEvent(new Event('input',{bubbles:true}));
-               el.dispatchEvent(new Event('change',{bubbles:true}));
-             }
-           }
-           const candidates=[...document.querySelectorAll('button,input[type="submit"]')].filter(el=>
-             (el.textContent||el.value||'').trim().toLowerCase()===action.label);
-           const target=candidates[action.type==='remove'?action.index:0];
-           target?.click();
-         }
-       }finally{replaying=false;}
-     },100);
-   },{once:true});
- }.toString()+')('+JSON.stringify(data)+','+JSON.stringify(key)+');';
- doc.head.append(bridge);
-}
-window.addEventListener('message',event=>{
- const frame=document.querySelector('[data-generated-preview]');
- if(!frame||event.source!==frame.contentWindow||event.origin!=='null')return;
- const payload=event.data;
- const key=previewStorageKey();
- if(payload?.type!=='xsus-preview-storage'||!key||payload.key!==key||
-   !payload.values||typeof payload.values!=='object'||Array.isArray(payload.values))return;
- try{
-   const raw=JSON.stringify(payload.values);
-   if(raw.length<=100000)localStorage.setItem(key,raw);
- }catch{}
-});
 const generatedCsp = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'";
 function assembleGeneratedPreview(){
  if(!generatedFiles)return generatedHtml;
@@ -112,7 +20,6 @@ function assembleGeneratedPreview(){
  doc.querySelectorAll('*').forEach(node=>{for(const attr of [...node.attributes])if(/^on/i.test(attr.name)||['src','srcset','srcdoc','formaction','target'].includes(attr.name.toLowerCase())||(node.localName==='a'&&attr.name.toLowerCase()==='href'))node.removeAttribute(attr.name);});
  const csp=doc.createElement('meta');csp.httpEquiv='Content-Security-Policy';csp.content=generatedCsp;doc.head.prepend(csp);
  const style=doc.createElement('style');style.textContent=generatedFiles['styles.css'];doc.head.append(style);
- injectPreviewStorage(doc);
  const script=doc.createElement('script');script.textContent=generatedFiles['main.js'];doc.body.append(script);
  return '<!doctype html>'+doc.documentElement.outerHTML;
 }
