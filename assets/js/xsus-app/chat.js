@@ -39,7 +39,11 @@ function restoreSourceFiles(session){
   if(!key)return;
   try{
     const saved=JSON.parse(localStorage.getItem(key)||'null');
-    if(validSourceFiles(saved))session.generatedFiles=Object.fromEntries(SOURCE_PATHS.map(path=>[path,saved[path]]));
+    // The workspace snapshot is authoritative when it already contains source files.
+    // In particular, never overwrite a freshly imported account project with an
+    // unrelated local source cache that happens to reuse the same numeric session id.
+    if(validSourceFiles(saved) && !validSourceFiles(session.generatedFiles))
+      session.generatedFiles=Object.fromEntries(SOURCE_PATHS.map(path=>[path,saved[path]]));
   }catch(error){console.warn('[xsus-source-restore-failed]',error?.name||'Error');}
 }
 
