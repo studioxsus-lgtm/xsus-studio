@@ -8,3 +8,8 @@ export function nextAccountRetryDelay(failures){
 export function shouldRetryAccountSave({result,ownerMatches,linked,conflicted}){
   return result==='retryable-error'&&ownerMatches===true&&linked===true&&conflicted!==true;
 }
+
+export function isCurrentAccountSaveTarget({owner,activeOwner,session,activeSession,projectId,token}){
+  return Boolean(owner&&owner===activeOwner&&session&&session===activeSession&&
+    projectId&&session.accountProject?.id===projectId&&session.accountProject?.token===token);
+}
