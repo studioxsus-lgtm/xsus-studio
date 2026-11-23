@@ -85,11 +85,11 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
       method:"POST",headers:{"authorization":"Bearer "+env.XSUS_BUILD_WORKER_SHARED_SECRET,"content-type":"application/json"},
       body:JSON.stringify({name}),signal:AbortSignal.timeout(12000),redirect:"error"
     });
-    if(!response.ok)throw new Error("Worker preview failed");
+    if(!response.ok){console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"worker_response",status:response.status}));throw new Error("Worker preview failed");}
     const result=await response.json();
     if(result?.kind!=="static-preview"||result?.requiresReview!==true||!Array.isArray(result.files)||result.files.length!==3||
        JSON.stringify(result.files.map(f=>f.path))!==JSON.stringify(["index.html","styles.css","main.js"])||
-       result.files.some(f=>typeof f.content!=="string"||f.content.length>500000))throw new Error("Invalid preview manifest");
+       result.files.some(f=>typeof f.content!=="string"||f.content.length>500000)){console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"manifest",kind:result?.kind,files:Array.isArray(result?.files)?result.files.map(f=>f.path):[]}));throw new Error("Invalid preview manifest");}
     return result;
   }:undefined;
   const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined,previewProxyEnabled,previewProxy});
