@@ -1,3 +1,4 @@
+import { SOURCE_PATHS, validProjectSource, copyProjectSource, restoreProjectSource } from './project-source-snapshot.js';
 import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-formfix2';
 import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart, currentWorkspaceOwner } from './refresh-state.js?v=20261122-unified2';
@@ -13,20 +14,17 @@ import { approveSpecificationReviewDraft, createSpecificationReviewDraft, parseS
 // Conversation drafts stay in memory on this page. Credentials and prompts are never persisted here.
 const sessions = [{ id: 1, name: 'New conversation', messages: [] }];
 const specificationReviews = new Map();
-const SOURCE_PATHS=['index.html','styles.css','main.js'];
 function sourceKey(id){
   const owner=currentWorkspaceOwner();
   return owner ? 'xsus-app:source:v1:'+owner+':'+id : null;
 }
-function validSourceFiles(files){
-  return files && SOURCE_PATHS.every(path=>typeof files[path]==='string' && files[path].length>0 && files[path].length<=250000);
-}
+const validSourceFiles=validProjectSource;
 function storeSourceFiles(session){
   if(!session || !validSourceFiles(session.generatedFiles))return false;
   const key=sourceKey(session.id);
   if(!key)return false;
   try{
-    localStorage.setItem(key,JSON.stringify(Object.fromEntries(SOURCE_PATHS.map(path=>[path,session.generatedFiles[path]]))));
+    localStorage.setItem(key,JSON.stringify(copyProjectSource(session.generatedFiles)));
     return true;
   }catch(error){
     console.warn('[xsus-source-save-failed]',error?.name||'Error');
@@ -42,8 +40,8 @@ function restoreSourceFiles(session){
     // The workspace snapshot is authoritative when it already contains source files.
     // In particular, never overwrite a freshly imported account project with an
     // unrelated local source cache that happens to reuse the same numeric session id.
-    if(validSourceFiles(saved) && !validSourceFiles(session.generatedFiles))
-      session.generatedFiles=Object.fromEntries(SOURCE_PATHS.map(path=>[path,saved[path]]));
+    const restored=restoreProjectSource(session.generatedFiles,saved);
+    if(restored)session.generatedFiles=restored;
   }catch(error){console.warn('[xsus-source-restore-failed]',error?.name||'Error');}
 }
 
