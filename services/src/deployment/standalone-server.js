@@ -63,6 +63,26 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   const workerConnectivity=workerConfigured?createBuildWorkerConnectivity({workerUrl:env.XSUS_BUILD_WORKER_URL,sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET}):undefined;
   const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined});
   server.listen(port,'0.0.0.0',()=>{
+    if(workerConfigured&&env.XSUS_STATIC_PREVIEW_PROBE==="true"){
+      void (async()=>{
+        try{
+          const response=await fetch(new URL("/internal/static-preview",env.XSUS_BUILD_WORKER_URL),{
+            method:"POST",
+            headers:{"authorization":"Bearer "+env.XSUS_BUILD_WORKER_SHARED_SECRET,"content-type":"application/json"},
+            body:JSON.stringify({name:"XSUS Preview Smoke Test"}),
+            signal:AbortSignal.timeout(12000)
+          });
+          const result=await response.json();
+          const paths=Array.isArray(result?.files)?result.files.map(f=>f.path):[];
+          const valid=response.ok&&result?.kind==="static-preview"&&result?.requiresReview===true&&
+            JSON.stringify(paths)===JSON.stringify(["index.html","styles.css","main.js"])&&
+            result.files.every(f=>typeof f.content==="string"&&f.content.length>0);
+          console.info("[xsus-static-preview-smoke]",JSON.stringify({success:valid,status:response.status,files:valid?paths:[]}));
+        }catch{
+          console.info("[xsus-static-preview-smoke]",JSON.stringify({success:false}));
+        }
+      })();
+    }
     if(workerConnectivity){
       void workerConnectivity.check().then(result=>{
         console.info('[xsus-build-worker-connectivity]',JSON.stringify({connected:result.connected===true,buildEnabled:false}));
