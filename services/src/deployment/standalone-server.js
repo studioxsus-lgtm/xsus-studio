@@ -27,6 +27,36 @@ export function createStandaloneDeploymentServer(dependencies={}) {
       if(!workerConnectivity||!connectivityToken||req.headers.authorization!=='Bearer '+connectivityToken){res.writeHead(404);res.end(JSON.stringify({error:'not_found'}));return;}
       void workerConnectivity.check().then(result=>{res.writeHead(result.connected?200:503);res.end(JSON.stringify(result));}).catch(()=>{res.writeHead(503);res.end(JSON.stringify({connected:false}));});return;
     }
+    if(req.url?.split("?")[0]==="/api/build/from-goal"){
+      const origin=req.headers.origin;
+      const allowed=typeof origin==="string"&&dependencies.allowedOrigins?.includes(origin);
+      const reply=(status,body)=>{if(res.writableEnded)return;res.writeHead(status,{"content-type":"application/json","cache-control":"no-store","x-content-type-options":"nosniff",...(allowed?{"access-control-allow-origin":origin,"vary":"Origin"}:{})});res.end(JSON.stringify(body));};
+      if(req.method==="OPTIONS"){
+        if(!allowed||req.headers["access-control-request-method"]!=="POST"){reply(403,{error:"preflight_denied"});return;}
+        res.writeHead(204,{"access-control-allow-origin":origin,"access-control-allow-methods":"POST","access-control-allow-headers":"authorization, content-type","vary":"Origin"});res.end();return;
+      }
+      if(req.method!=="POST"){reply(405,{error:"method_not_allowed"});return;}
+      if(!allowed){reply(403,{error:"origin_not_allowed"});return;}
+      if(!dependencies.userPreviewEnabled||typeof dependencies.createUserPreviewClient!=="function"||typeof dependencies.previewProxy!=="function"){reply(503,{error:"build_unavailable"});return;}
+      const token=req.headers.authorization;
+      if(typeof token!=="string"||token.length<23||token.length>8200||!/^Bearer [A-Za-z0-9._~+/-]+=*$/.test(token)){reply(401,{error:"authentication_required"});return;}
+      if(!/^application\\/json(?:\\s*;|\\s*$)/i.test(String(req.headers["content-type"]??""))){reply(415,{error:"unsupported_media_type"});return;}
+      void (async()=>{
+        try{
+          const chunks=[];let size=0;
+          if(Number(req.headers["content-length"]??0)>4096){reply(413,{error:"payload_too_large"});return;}
+          for await(const chunk of req){size+=chunk.length;if(size>4096){reply(413,{error:"payload_too_large"});return;}chunks.push(chunk);}
+          let body;try{body=JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{reply(400,{error:"invalid_json"});return;}
+          if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).length!==1||typeof body.goal!=="string"||!body.goal.trim()||body.goal.length>2000){reply(400,{error:"invalid_goal"});return;}
+          const client=dependencies.createUserPreviewClient(token.slice(7));
+          const verified=await client.auth.getUser(token.slice(7));
+          if(verified?.error||!verified?.data?.user?.id){reply(401,{error:"authentication_required"});return;}
+          const result=await dependencies.previewProxy({name:body.goal.trim().slice(0,100)});
+          if(result?.kind!=="static-preview"||result?.requiresReview!==true||!Array.isArray(result.files)||result.files.length!==3||!["index.html","styles.css","main.js"].every(path=>result.files.some(file=>file?.path===path&&typeof file.content==="string"&&file.content.length>0&&file.content.length<=250000))){reply(503,{error:"invalid_build_result"});return;}
+          reply(200,{kind:"static-preview",requiresReview:true,files:result.files});
+        }catch(error){console.warn("[xsus-goal-build-failure]",JSON.stringify({type:error?.name||"Error"}));reply(503,{error:"build_unavailable"});}
+      })();return;
+    }
     if(req.url?.split("?")[0]==="/api/projects/build-preview"){
       const origin=req.headers.origin;
       const allowed=typeof origin==="string"&&dependencies.allowedOrigins?.includes(origin);
