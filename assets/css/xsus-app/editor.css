@@ -38,3 +38,7 @@
 #editorPanel > .editor-tools .device-tools { position:relative; z-index:1; pointer-events:auto; }
 #editorPanel > .editor-tools button[data-mode],
 #editorPanel > .editor-tools button[data-device] { position:relative; pointer-events:auto; touch-action:manipulation; cursor:pointer; }
+
+#editorPanel .editor-tools:has(#androidDownload:not([hidden])) { flex-wrap:wrap; }
+#androidDownload { width:auto; white-space:nowrap; padding:0 8px; cursor:pointer; }
+#androidDownload[hidden] { display:none; }

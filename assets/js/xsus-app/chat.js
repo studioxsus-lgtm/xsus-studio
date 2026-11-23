@@ -334,6 +334,11 @@ function renderBoardActions(html) {
 function renderMessages() {
   const target = $('#chatMessages'); target.replaceChildren();
   const session = current();
+  const apkButton = $('#androidDownload');
+  if (apkButton) {
+    apkButton.hidden = !validSourceFiles(session.generatedFiles);
+    apkButton.textContent = ({sq:'Shkarko APK', fr:'Télécharger APK'})[document.documentElement.lang] || 'Download APK';
+  }
   if(session.generatedFiles && ['index.html','styles.css','main.js'].every(p=>typeof session.generatedFiles[p]==='string')) showGeneratedFiles(session.generatedFiles,false);
   else showGeneratedHtml(session.generatedHtml ?? null);
   if (!session.messages.length) {
@@ -581,6 +586,26 @@ async function send() {
 }
 
 export function initChat() {
+  const apkButton = $('#androidDownload');
+  apkButton?.addEventListener('click', async () => {
+    const session = current();
+    if (!validSourceFiles(session?.generatedFiles) || apkButton.disabled) return;
+    const files = copyProjectSource(session.generatedFiles);
+    if (!session.androidProjectId) {
+      session.androidProjectId = crypto.randomUUID().replaceAll('-', '');
+      saveRefreshState('builder');
+    }
+    apkButton.disabled = true;
+    try {
+      const {downloadProjectApk} = await import('./android/download.js?v=1');
+      await downloadProjectApk(files, session.androidProjectId);
+    } catch (error) {
+      console.error('[xsus-android-export]', error?.name);
+      const messages = {sq:'Eksporti APK dështoi. Kontrollo hapësirën e shfletuesit dhe provo përsëri.',
+        fr:'Échec de l’export APK. Vérifiez le stockage du navigateur et réessayez.'};
+      toast(messages[document.documentElement.lang] || 'APK export failed. Check browser storage and retry.');
+    } finally { apkButton.disabled = false; }
+  });
   document.addEventListener('xsus:restore-generated-revision',event=>{
     const session=current();
     const files=findGeneratedSourceRevision(session?.generatedSourceHistory,event.detail?.id);

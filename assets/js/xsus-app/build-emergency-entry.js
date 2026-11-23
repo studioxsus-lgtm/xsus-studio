@@ -9,8 +9,9 @@ status.style.cssText='padding:10px 12px;font-size:13px;line-height:1.5;color:#c7
 button?.insertAdjacentElement('afterend',status);
 function message(value){status.textContent=value;}
 const RECOVERY_KEY='xsus-app:emergency-build:v2';
+let recoveryProjectId;
 function persistBuild(goal,files){
-  try{localStorage.setItem(RECOVERY_KEY,JSON.stringify({goal,files}));return true;}
+  try{localStorage.setItem(RECOVERY_KEY,JSON.stringify({goal,files,androidProjectId:recoveryProjectId}));return true;}
   catch{message('Browser storage is unavailable. Export your code before refreshing.');return false;}
 }
 function renderBuild(goal,files){
@@ -35,7 +36,18 @@ function renderBuild(goal,files){
   frame.srcdoc='<!doctype html>'+doc.documentElement.outerHTML;
   const preview=document.createElement('button');preview.type='button';preview.textContent='Preview';
   preview.onclick=()=>{source.hidden=true;frame.hidden=false;};
-  tabs.append(preview);
+  const apk=document.createElement('button');
+  apk.type='button';
+  apk.textContent=({sq:'Shkarko APK',fr:'Télécharger APK'})[document.documentElement.lang]||'Download APK';
+  apk.addEventListener('click', async ()=>{
+    apk.disabled=true;
+    try {
+      const {downloadProjectApk}=await import('./android/download.js?v=1');
+      await downloadProjectApk(files,recoveryProjectId);
+    } catch {message('Android APK export failed. Check browser storage and retry.');}
+    finally {apk.disabled=false;}
+  });
+  tabs.append(preview,apk);
   for(const [name,code] of Object.entries(files)){
     const tab=document.createElement('button');tab.type='button';tab.textContent=name;
     tab.onclick=()=>{frame.hidden=true;source.hidden=false;source.value=code;};
@@ -52,6 +64,7 @@ async function recoverBuild(){
   try{
     const [{buildFromChatGoal}]=await Promise.all([import('./build-engine-chat-client.js?v=reservation2')]);
     const result=await buildFromChatGoal(goal);
+    recoveryProjectId=crypto.randomUUID().replaceAll('-','');
     renderBuild(goal,result.files);
     if(!persistBuild(goal,result.files))return;
     message('Application generated. Preview and source files are available on the right.');
@@ -71,6 +84,8 @@ window.addEventListener('load',()=>{
     try{
       const saved=JSON.parse(localStorage.getItem(RECOVERY_KEY)||'null');
       if(!saved||!saved.files||!['index.html','styles.css','main.js'].every(key=>typeof saved.files[key]==='string'))return;
+      recoveryProjectId=saved.androidProjectId||crypto.randomUUID().replaceAll('-','');
+      if(!saved.androidProjectId)persistBuild(saved.goal,saved.files);
       renderBuild(saved.goal,saved.files);
       message('Previously generated application restored from browser storage.');
     }catch(error){message('Saved application could not be restored: '+(error?.message||'invalid data'));}
