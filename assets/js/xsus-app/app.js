@@ -29,5 +29,5 @@ initSettings();
 import { initRefreshState } from './refresh-state.js?v=20261122-unified2';
 initRefreshState();
 
-import { initAccountProjects } from './account-projects.js?v=20261122-unified2';
+import { initAccountProjects } from './account-projects.js?v=20261123-autosave12';
 initAccountProjects();
