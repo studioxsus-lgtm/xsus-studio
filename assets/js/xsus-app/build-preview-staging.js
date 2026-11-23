@@ -45,12 +45,13 @@ if(ORIGINS.has(location.origin)){
    if(!response.ok)throw new Error('Preview request failed ('+response.status+').');
    const result=await response.json();
    if(result.projectId!==projectId||result.kind!=='static-preview'||result.requiresReview!==true||!Array.isArray(result.files))throw new Error('Invalid preview response.');
+   if(result.files.length!==3||result.files.some(f=>!f||typeof f.path!=='string'||typeof f.content!=='string'||f.content.length>250000))throw new Error('Invalid preview files.');
    const map=new Map(result.files.map(f=>[f.path,f.content]));
    if(map.size!==3||!['index.html','styles.css','main.js'].every(p=>typeof map.get(p)==='string'&&map.get(p).length>0))throw new Error('Incomplete preview files.');
    // Keep generated content isolated from the XSUS Studio origin. Deny external network and navigation.
-   const policy='<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data:; form-action \'none\'; base-uri \'none\'">';
    const doc=new DOMParser().parseFromString(map.get('index.html'),'text/html');
    doc.querySelectorAll('script,link[rel="stylesheet"],iframe,object,embed,base,meta[http-equiv="refresh"]').forEach(node=>node.remove());
+   doc.querySelectorAll('*').forEach(node=>{for(const attr of [...node.attributes]){if(/^on/i.test(attr.name)||['srcdoc','formaction'].includes(attr.name.toLowerCase()))node.removeAttribute(attr.name);}});
    const csp=doc.createElement('meta');csp.httpEquiv='Content-Security-Policy';csp.content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'";doc.head.prepend(csp);
    const style=doc.createElement('style');style.textContent=map.get('styles.css');doc.head.append(style);
    const script=doc.createElement('script');script.textContent=map.get('main.js');doc.body.append(script);
