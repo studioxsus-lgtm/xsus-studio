@@ -1,6 +1,7 @@
 // XSUS App deployment validation service. Separate from XSUS AI Core.
 // No provider deployments, no credentials loaded, and no production integrations by default.
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { createDeploymentNodeHandler } from './deployment-node-adapter.js';
 import { createSupabaseProjectReviewIntegration } from './supabase-project-review-integration.js';
@@ -27,7 +28,11 @@ export function createStandaloneDeploymentServer(dependencies={}) {
     if(req.url?.split("?")[0]==="/internal/build-preview"){
       const reply=(status,body)=>{if(res.writableEnded)return;res.writeHead(status,{"content-type":"application/json","cache-control":"no-store","x-content-type-options":"nosniff"});res.end(JSON.stringify(body));};
       if(req.method!=="POST"){reply(405,{error:"method_not_allowed"});return;}
-      if(!dependencies.previewProxyEnabled||!dependencies.previewProxy||!connectivityToken||req.headers.authorization!=="Bearer "+connectivityToken){reply(404,{error:"not_found"});return;}
+      if(!dependencies.previewProxyEnabled||!dependencies.previewProxy||!connectivityToken){reply(404,{error:"not_found"});return;}
+      const supplied=req.headers.authorization;
+      const expected="Bearer "+connectivityToken;
+      if(typeof supplied!=="string"||Buffer.byteLength(supplied)!==Buffer.byteLength(expected)||
+         !crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(expected))){reply(404,{error:"not_found"});return;}
       void (async()=>{
         try{
           const chunks=[];let size=0;
