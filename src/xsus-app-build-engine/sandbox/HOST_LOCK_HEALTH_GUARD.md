@@ -1,0 +1,5 @@
+# Phase 54 — Host lock health guard
+
+Wraps an exclusive lock coordinator with an injected trusted monitor. The monitor verifies lock health before and after the callback and invokes `onLost` to abort a cooperative action if the lock is lost during execution. Cleanup is attempted on all callback outcomes. If lock loss is observed, the outcome is treated as uncertain, not successful.
+
+**Security caveats:** This guard does not implement the monitor or physical cancellation. A PostgreSQL advisory lock may disappear after session loss while an in-flight Docker action continues; an AbortSignal is cooperative and cannot guarantee termination. A real monitor must be bound to the **same pinned PostgreSQL session** as the advisory lock, and the current Phase 53 coordinator does not expose such a session to this guard. Thus the components are not yet wired for live use. The callback must honor cancellation, the host must independently enforce durable fencing, and recovery must reconcile uncertain physical effects. The guard does not guarantee continuous lock ownership between health checks. Tests use mocks; no live PostgreSQL or host was accessed.
