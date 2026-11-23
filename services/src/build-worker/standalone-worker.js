@@ -32,7 +32,7 @@ export function createBuildWorkerServer({sharedSecret,previewEnabled=false}={}){
    void (async()=>{
     try{
      const length=req.headers["content-length"];
-     if(length!==undefined&&(!/^\\d+$/.test(String(length))||Number(length)>2048)){res.writeHead(413);res.end(JSON.stringify({error:"payload_too_large"}));return;}
+     if(length!==undefined&&(!/^\d+$/.test(String(length))||Number(length)>2048)){res.writeHead(413);res.end(JSON.stringify({error:"payload_too_large"}));return;}
      const chunks=[];let size=0;
      for await(const chunk of req){size+=chunk.length;if(size>2048){res.writeHead(413);res.end(JSON.stringify({error:"payload_too_large"}));return;}chunks.push(chunk);}
      let body;try{body=JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{res.writeHead(400);res.end(JSON.stringify({error:"invalid_json"}));return;}
