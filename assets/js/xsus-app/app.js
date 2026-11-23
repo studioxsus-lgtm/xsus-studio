@@ -1,8 +1,8 @@
 import { initModalCoordinator } from './modal-coordinator.js';
 initModalCoordinator();
 // XSUS App — functional builder entry point. Independent from Studio demo scripts.
-import { initEditor } from './editor.js?v=20261123-history11';
-import { initChat } from './chat.js?v=20261123-recovery20';
+import { initEditor } from './editor.js?v=20261123-previewstorage21';
+import { initChat } from './chat.js?v=20261123-previewstorage21';
 import { initNavigation } from './navigation.js?v=20261120-templates1';
 import { initDashboard } from './dashboard.js';
 initEditor();
