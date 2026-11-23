@@ -1,3 +1,4 @@
+import {inspectAccountProjectSnapshot} from './project-snapshot-integrity.js';
 import {updateLinkedAccountProject} from './account-save-operation.js';
 import {nextAccountRetryDelay,shouldRetryAccountSave} from './account-retry-policy.js';
 import {hasProjectWork,canCaptureProject} from './project-recovery-policy.js';
@@ -40,7 +41,7 @@ export function captureProject() {
 }
 
 export function openProject(project, accountProject = null) {
-  if (project?.version !== 1 || !Array.isArray(project.session?.messages) || !Array.isArray(project.reviews) || !Array.isArray(project.boards)) throw Error('Unsupported project');
+  if (!inspectAccountProjectSnapshot(project).ok) throw Error('Unsupported or corrupted project snapshot');
   const builder = readWorkspacePart('builder');
   const id = builder.nextId;
   // Give each imported copy its own review and board IDs.
