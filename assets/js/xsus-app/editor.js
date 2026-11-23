@@ -261,8 +261,19 @@ export function initEditor() {
     for (const [id, tasks] of saved || []) previewTasks.set(id, tasks);
     renderEditor();
   });
-  $$('[data-mode]').forEach(button=>button.addEventListener('click',()=>updateMode(button.dataset.mode)));
-  $$('[data-device]').forEach(button=>button.addEventListener('click',()=>updateDevice(button.dataset.device)));
+  // Delegate toolbar actions so translated/re-rendered controls remain clickable.
+  // Restrict handling to the editor toolbar, not controls inside generated apps.
+  const toolbar = document.querySelector('.editor-tools');
+  toolbar?.addEventListener('click', event => {
+    const button = event.target instanceof Element ? event.target.closest('button[data-mode], button[data-device]') : null;
+    if (!button || !toolbar.contains(button)) return;
+    event.preventDefault();
+    if (button.dataset.mode && ['split','code','design','preview'].includes(button.dataset.mode)) {
+      updateMode(button.dataset.mode);
+    } else if (button.dataset.device && ['desktop','tablet','mobile'].includes(button.dataset.device)) {
+      updateDevice(button.dataset.device);
+    }
+  });
   const target=$('#editorBody');
   target?.addEventListener('click',event=>{
     const apply=event.target.closest('[data-editor-action="apply-generated"]');
