@@ -11,6 +11,24 @@ const samples = {
   'package.json': `{\n  "name": "xsus-design-sample",\n  "private": true,\n  "version": "0.0.0-demo"\n}`
 };
 let generatedHtml = null;
+let generatedFiles = null;
+const generatedCsp = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'";
+function assembleGeneratedPreview(){
+ if(!generatedFiles)return generatedHtml;
+ const doc=new DOMParser().parseFromString(generatedFiles['index.html'],'text/html');
+ doc.querySelectorAll('script,link,iframe,object,embed,base,meta[http-equiv]').forEach(node=>node.remove());
+ doc.querySelectorAll('*').forEach(node=>{for(const attr of [...node.attributes])if(/^on/i.test(attr.name)||['src','srcset','srcdoc','formaction','target'].includes(attr.name.toLowerCase())||(node.localName==='a'&&attr.name.toLowerCase()==='href'))node.removeAttribute(attr.name);});
+ const csp=doc.createElement('meta');csp.httpEquiv='Content-Security-Policy';csp.content=generatedCsp;doc.head.prepend(csp);
+ const style=doc.createElement('style');style.textContent=generatedFiles['styles.css'];doc.head.append(style);
+ const script=doc.createElement('script');script.textContent=generatedFiles['main.js'];doc.body.append(script);
+ return '<!doctype html>'+doc.documentElement.outerHTML;
+}
+export function showGeneratedFiles(files,openPreview=true){
+ if(!files||!['index.html','styles.css','main.js'].every(p=>typeof files[p]==='string'&&files[p].length<=250000))throw new TypeError('Invalid build files');
+ generatedFiles=Object.fromEntries(['index.html','styles.css','main.js'].map(p=>[p,files[p]]));
+ showGeneratedHtml(assembleGeneratedPreview(),openPreview);
+}
+
 const previewTasks = new Map();
 window.addEventListener('message', event => {
   const frame = document.querySelector('[data-generated-preview]');
@@ -35,7 +53,7 @@ export function showGeneratedHtml(html, openPreview = false) {
   }
 }
 
-const fileContent = () => generatedHtml ?? samples[currentFile];
+const fileContent = () => generatedFiles ? generatedFiles[currentFile] : (generatedHtml ?? samples[currentFile]);
 
 let currentFile = 'App.jsx';
 let explorerOpen = true;
@@ -47,12 +65,12 @@ const escapeHtml = value => value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
 const ui = value => escapeHtml(t(value));
 const icon = name => `<i data-lucide="${name}"></i>`;
 function fileTree() {
-  return `<aside class="file-explorer ${explorerOpen ? '' : 'is-collapsed'}" aria-label="${ui(generatedHtml ? 'EXPLORER' : 'Demo file explorer')}"><div class="explorer-title">${icon('folder-tree')} <span>${ui('EXPLORER')}</span><button type="button" class="editor-mini" data-editor-action="toggle-explorer" aria-label="${ui('Toggle file explorer')}">${icon(explorerOpen?'panel-left-close':'panel-left-open')}</button></div>${explorerOpen ? `<div class="explorer-group">${icon('folder-open')} <span>${generatedHtml ? 'HTML' : ui('MY APP / DEMO')}</span></div>${(generatedHtml ? ['index.html'] : Object.keys(samples)).map(name=>`<button type="button" class="explorer-file ${currentFile===name?'selected':''}" data-file="${escapeHtml(name)}">${icon(name.endsWith('.css')?'file-type':'file-code-2')}<span>${escapeHtml(name)}</span></button>`).join('')}<div class="explorer-foot">${ui(generatedHtml ? 'READ ONLY' : 'Local samples · Read only')}</div>` : ''}</aside>`;
+  return `<aside class="file-explorer ${explorerOpen ? '' : 'is-collapsed'}" aria-label="${ui(generatedHtml ? 'EXPLORER' : 'Demo file explorer')}"><div class="explorer-title">${icon('folder-tree')} <span>${ui('EXPLORER')}</span><button type="button" class="editor-mini" data-editor-action="toggle-explorer" aria-label="${ui('Toggle file explorer')}">${icon(explorerOpen?'panel-left-close':'panel-left-open')}</button></div>${explorerOpen ? `<div class="explorer-group">${icon('folder-open')} <span>${generatedHtml ? 'HTML' : ui('MY APP / DEMO')}</span></div>${(generatedFiles ? ['index.html','styles.css','main.js'] : generatedHtml ? ['index.html'] : Object.keys(samples)).map(name=>`<button type="button" class="explorer-file ${currentFile===name?'selected':''}" data-file="${escapeHtml(name)}">${icon(name.endsWith('.css')?'file-type':'file-code-2')}<span>${escapeHtml(name)}</span></button>`).join('')}<div class="explorer-foot">${generatedFiles ? 'Editable generated files' : ui(generatedHtml ? 'READ ONLY' : 'Local samples · Read only')}</div>` : ''}</aside>`;
 }
 function codePane() {
   const content = escapeHtml(fileContent());
   const numbered = content.split('\n').map((line,index)=>`<div class="code-line"><span class="line-number">${index+1}</span><span>${line || ' '}</span></div>`).join('');
-  return `<section class="advanced-code-pane" aria-label="${generatedHtml ? 'index.html' : ui('Code editor sample')}">${fileTree()}<div class="code-main"><div class="file-tabs"><span class="file-tab active">${icon('file-code-2')} ${escapeHtml(currentFile)} <span class="file-readonly">${ui('READ ONLY')}</span></span><button type="button" class="editor-mini" data-editor-action="copy-code" title="${ui(generatedHtml ? 'Copy' : 'Copy demo code')}" aria-label="${ui(generatedHtml ? 'Copy' : 'Copy demo code')}">${icon('copy')}</button></div><div class="code-sample" role="region" tabindex="0" aria-label="${ui(generatedHtml ? 'READ ONLY' : 'Read-only sample code')}">${numbered}</div><div class="code-footer">${icon('shield-check')} ${generatedHtml ? 'index.html' : ui('Design sample · No code execution')}</div></div></section>`;
+  return `<section class="advanced-code-pane" aria-label="${generatedHtml ? 'index.html' : ui('Code editor sample')}">${fileTree()}<div class="code-main"><div class="file-tabs"><span class="file-tab active">${icon('file-code-2')} ${escapeHtml(currentFile)} <span class="file-readonly">${generatedFiles ? 'EDITABLE' : ui('READ ONLY')}</span></span><button type="button" class="editor-mini" data-editor-action="copy-code" title="${ui(generatedHtml ? 'Copy' : 'Copy demo code')}" aria-label="${ui(generatedHtml ? 'Copy' : 'Copy demo code')}">${icon('copy')}</button></div>${generatedFiles ? `<textarea data-generated-source aria-label="Edit ${escapeHtml(currentFile)}" spellcheck="false" style="display:block;width:100%;min-height:380px;flex:1;background:#0b1529;color:#e7f2ff;border:1px solid #354665;padding:16px;font:13px/1.55 monospace;resize:vertical">${content}</textarea><button type="button" data-editor-action="apply-generated" style="margin:8px;padding:9px 14px">Apply changes to Preview</button>` : `<div class="code-sample" role="region" tabindex="0" aria-label="${ui(generatedHtml ? 'READ ONLY' : 'Read-only sample code')}">${numbered}</div>`}<div class="code-footer">${icon('shield-check')} ${generatedHtml ? 'index.html' : ui('Design sample · No code execution')}</div></div></section>`;
 }
 function canvas() {
   if (generatedHtml) return `<iframe sandbox="" data-generated-preview title="${ui('Starter app preview')}" class="app-canvas ${state.device}" style="--preview-scale:${previewScale/100};height:100%;min-height:16rem;border:0"></iframe>`;
@@ -95,12 +113,14 @@ function updateDevice(device) {
   renderEditor();
 }
 function toast(message) { const node = $('#toast'); if(node) { node.textContent=message; node.classList.add('show'); setTimeout(()=>node.classList.remove('show'),2600); } }
+function targetValueForGenerated(){return $('#editorBody')?.querySelector('[data-generated-source]')?.value ?? null;}
 function onEditorClick(event) {
   if (event.target.closest('[data-visual-action], [data-visual-add], [data-visual-select]')) { handleVisualDesignClick(event); renderEditor(); return; }
   const file=event.target.closest('[data-file]');
   if(file){currentFile=file.dataset.file;renderEditor();return;}
   const action=event.target.closest('[data-editor-action]')?.dataset.editorAction;
   if(!action) return;
+  if(action==='apply-generated' && generatedFiles){const source=targetValueForGenerated();if(source===null)return;if(source.length>250000){toast('File exceeds 250 KB');return;}generatedFiles[currentFile]=source;generatedHtml=assembleGeneratedPreview();renderEditor();toast('Preview updated');return;}
   if(action==='toggle-explorer') explorerOpen=!explorerOpen;
   if(action==='zoom-in') previewScale=Math.min(150,previewScale+10);
   if(action==='zoom-out') previewScale=Math.max(60,previewScale-10);
