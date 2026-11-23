@@ -1,3 +1,4 @@
+import {appendGeneratedSourceRevision} from './generated-source-history.js';
 import { SOURCE_PATHS, validProjectSource, copyProjectSource, restoreProjectSource } from './project-source-snapshot.js';
 import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-formfix2';
 import { appendSourceRevision } from './code-generation/source-history.js';
@@ -535,6 +536,7 @@ async function send() {
           if(requestController===controller && sessionId===activeId){
             session.generatedHtml=generated.html;
             session.generatedFiles=generated.files;
+            session.generatedSourceHistory=appendGeneratedSourceRevision(session.generatedSourceHistory,generated.files);
             storeSourceFiles(session);
             session.messages.push({role:'assistant',text:'Build Engine generated index.html, styles.css and main.js. Static starter app ready for review in Editor / Preview.'});
             renderMessages();
@@ -573,6 +575,7 @@ export function initChat() {
     if(!session)return;
     session.generatedFiles=Object.fromEntries(['index.html','styles.css','main.js'].map(path=>[path,files[path]]));
     session.generatedHtml=event.detail.html;
+    if(event.detail.checkpoint)session.generatedSourceHistory=appendGeneratedSourceRevision(session.generatedSourceHistory,files);
     storeSourceFiles(session);
     saveRefreshState('builder');
   });
