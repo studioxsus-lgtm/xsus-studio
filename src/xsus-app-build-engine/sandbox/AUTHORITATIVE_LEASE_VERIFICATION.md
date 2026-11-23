@@ -1,0 +1,5 @@
+# Phase 46 — Authoritative PostgreSQL lease verification
+
+The backend-only verifier checks execution ID, holder ID, fence and expiry in a single parameterized PostgreSQL SELECT. Expiry is evaluated using `clock_timestamp()` on the database server, not the worker's local clock. Missing or stale rows return a negative result. Invalid or contradictory responses fail closed.
+
+**Important limitation:** A successful SELECT is only a point-in-time observation, not a lock or permission to perform a future host operation. The lease may expire or be replaced immediately after verification. Host-side launch/cleanup must enforce fencing atomically at the action boundary; workers must not use this method as their sole authorization. The Phase 44 lease manager still calculates expirations using its injected clock and needs a database-time acquire/renew implementation. This module does not apply migrations, configure RLS or access a live database. Tests use a mocked query executor and are not proof of real PostgreSQL behavior.
