@@ -42,6 +42,7 @@ if(ORIGINS.has(location.origin)){
  close.addEventListener('click',()=>panel.close());
  panel.addEventListener('close',()=>{previewGeneration++;activePreview?.abort();activePreview=null;frame.removeAttribute('srcdoc');frame.style.display='none';select.disabled=false;build.disabled=false;});
  build.addEventListener('click',async()=>{
+  if(build.disabled||select.disabled)return;
   const projectId=select.value;if(!UUID.test(projectId))return;
   activePreview?.abort();const controller=new AbortController();activePreview=controller;const generation=++previewGeneration;
   build.disabled=true;select.disabled=true;status.textContent='Generating secure staging preview…';frame.style.display='none';frame.removeAttribute('srcdoc');
@@ -56,7 +57,7 @@ if(ORIGINS.has(location.origin)){
     throw new Error(messages[response.status]||'Preview request failed ('+response.status+').');
    }
    const result=await response.json();
-   if(generation!==previewGeneration||!panel.open)return;
+   if(generation!==previewGeneration||!panel.open||controller.signal.aborted||select.value!==projectId)return;
    if(result.projectId!==projectId||result.kind!=='static-preview'||result.requiresReview!==true||!Array.isArray(result.files))throw new Error('Invalid preview response.');
    if(result.files.length!==3||result.files.some(f=>!f||typeof f.path!=='string'||typeof f.content!=='string'||f.content.length>250000))throw new Error('Invalid preview files.');
    const map=new Map(result.files.map(f=>[f.path,f.content]));
