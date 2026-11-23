@@ -1,6 +1,6 @@
 import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-formfix2';
 import { appendSourceRevision } from './code-generation/source-history.js';
-import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261122-unified2';
+import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart, currentWorkspaceOwner } from './refresh-state.js?v=20261122-unified2';
 import { showGeneratedHtml, showGeneratedFiles } from './editor.js?v=20261123-autosave7';
 import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261122-authgate1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
@@ -13,6 +13,36 @@ import { approveSpecificationReviewDraft, createSpecificationReviewDraft, parseS
 // Conversation drafts stay in memory on this page. Credentials and prompts are never persisted here.
 const sessions = [{ id: 1, name: 'New conversation', messages: [] }];
 const specificationReviews = new Map();
+const SOURCE_PATHS=['index.html','styles.css','main.js'];
+function sourceKey(id){
+  const owner=currentWorkspaceOwner();
+  return owner ? 'xsus-app:source:v1:'+owner+':'+id : null;
+}
+function validSourceFiles(files){
+  return files && SOURCE_PATHS.every(path=>typeof files[path]==='string' && files[path].length>0 && files[path].length<=250000);
+}
+function storeSourceFiles(session){
+  if(!session || !validSourceFiles(session.generatedFiles))return false;
+  const key=sourceKey(session.id);
+  if(!key)return false;
+  try{
+    localStorage.setItem(key,JSON.stringify(Object.fromEntries(SOURCE_PATHS.map(path=>[path,session.generatedFiles[path]]))));
+    return true;
+  }catch(error){
+    console.warn('[xsus-source-save-failed]',error?.name||'Error');
+    toast('Source files could not be saved. Check browser storage.');
+    return false;
+  }
+}
+function restoreSourceFiles(session){
+  const key=sourceKey(session.id);
+  if(!key)return;
+  try{
+    const saved=JSON.parse(localStorage.getItem(key)||'null');
+    if(validSourceFiles(saved))session.generatedFiles=Object.fromEntries(SOURCE_PATHS.map(path=>[path,saved[path]]));
+  }catch(error){console.warn('[xsus-source-restore-failed]',error?.name||'Error');}
+}
+
 let activeId = 1;
 let nextId = 2;
 let busy = false;
@@ -503,6 +533,7 @@ async function send() {
           if(requestController===controller && sessionId===activeId){
             session.generatedHtml=generated.html;
             session.generatedFiles=generated.files;
+            storeSourceFiles(session);
             session.messages.push({role:'assistant',text:'Build Engine generated index.html, styles.css and main.js. Static starter app ready for review in Editor / Preview.'});
             renderMessages();
             showGeneratedFiles(generated.files,true);
@@ -540,6 +571,7 @@ export function initChat() {
     if(!session)return;
     session.generatedFiles=Object.fromEntries(['index.html','styles.css','main.js'].map(path=>[path,files[path]]));
     session.generatedHtml=event.detail.html;
+    storeSourceFiles(session);
     saveRefreshState('builder');
   });
   registerRefreshState('builder', () => ({
@@ -550,7 +582,10 @@ export function initChat() {
     sessions.splice(0, sessions.length, ...(saved?.sessions || [{id:1, name:'New conversation', messages:[]}]));
     activeId = saved?.activeId || 1;
     nextId = saved?.nextId || 2;
-    for (const session of sessions) if (session.generatedHtml) session.generatedHtml = upgradeTaskBoard(session.generatedHtml);
+    for(const session of sessions){
+      restoreSourceFiles(session);
+      if(session.generatedHtml && !validSourceFiles(session.generatedFiles))session.generatedHtml=upgradeTaskBoard(session.generatedHtml);
+    }
     specificationReviews.clear();
     for (const [id, draft] of saved?.reviews || []) {
       if (draft.builtHtml) draft.builtHtml = upgradeTaskBoard(draft.builtHtml);
