@@ -23,6 +23,7 @@ function assembleGeneratedPreview(){
  const script=doc.createElement('script');script.textContent=generatedFiles['main.js'];doc.body.append(script);
  return '<!doctype html>'+doc.documentElement.outerHTML;
 }
+export function getGeneratedPreviewHtml(){return generatedHtml;}
 export function showGeneratedFiles(files,openPreview=true){
  if(!files||!['index.html','styles.css','main.js'].every(p=>typeof files[p]==='string'&&files[p].length<=250000))throw new TypeError('Invalid build files');
  generatedFiles=Object.fromEntries(['index.html','styles.css','main.js'].map(p=>[p,files[p]]));
