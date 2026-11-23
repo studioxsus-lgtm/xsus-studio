@@ -70,5 +70,19 @@ describe("XSUS saved-project owner preview",()=>{
    expect(foreign.status).toBe(403);
   }finally{await new Promise(resolve=>server.close(resolve));}
  });
+ it("rejects malformed JSON before Supabase access",async()=>{
+  const server=createStandaloneDeploymentServer({allowedOrigins:[origin],userPreviewEnabled:true,createUserPreviewClient:()=>{throw Error("unexpected Supabase access");},previewProxy:()=>{throw Error("unexpected worker access");}});
+  server.listen(0,"127.0.0.1");await once(server,"listening");
+  try{
+   const url="http://127.0.0.1:"+server.address().port+"/api/projects/build-preview";
+   const headers={origin,authorization:"Bearer valid-token-long-enough","content-type":"application/json"};
+   const malformed=await fetch(url,{method:"POST",headers,body:"{"});
+   expect(malformed.status).toBe(400);
+   const oversized=await fetch(url,{method:"POST",headers,body:JSON.stringify({projectId,extra:"x".repeat(2100)})});
+   expect(oversized.status).toBe(413);
+   const extra=await fetch(url,{method:"POST",headers,body:JSON.stringify({projectId,extra:true})});
+   expect(extra.status).toBe(400);
+  }finally{await new Promise(resolve=>server.close(resolve));}
+ });
  it("fails closed if worker unavailable",async()=>{const r=await run({previewFails:true});expect(r.status).toBe(503);});
 });
