@@ -50,7 +50,7 @@ async function recoverBuild(){
   button.disabled=true;
   message('Generating your application…');
   try{
-    const [{buildFromChatGoal}]=await Promise.all([import('./build-engine-chat-client.js')]);
+    const [{buildFromChatGoal}]=await Promise.all([import('./build-engine-chat-client.js?v=reservation2')]);
     const result=await buildFromChatGoal(goal);
     renderBuild(goal,result.files);
     if(!persistBuild(goal,result.files))return;

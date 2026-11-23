@@ -1,6 +1,6 @@
 import {appendGeneratedSourceRevision,findGeneratedSourceRevision} from './generated-source-history.js';
 import { SOURCE_PATHS, validProjectSource, copyProjectSource, restoreProjectSource } from './project-source-snapshot.js';
-import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-three-cores';
+import { buildFromChatGoal } from './build-engine-chat-client.js?v=reservation2';
 import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart, currentWorkspaceOwner } from './refresh-state.js?v=20261122-unified2';
 import { showGeneratedHtml, showGeneratedFiles, getGeneratedPreviewHtml } from './editor.js?v=20261123-toolbar31';

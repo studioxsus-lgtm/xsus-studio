@@ -1,5 +1,5 @@
 import {getUserAccessToken} from './auth-session.js';
-import {reservationAppSpec} from './app-specification/reservations.js';
+import {reservationAppSpec} from './app-specification/reservations.js?v=reservation2';
 import {createDraftPlan} from './hyper-future-bridge-client.js?v=20261122-goalplan1';
 
 // The installed Build Engine accepts a single goal and classifies its first
@@ -57,6 +57,20 @@ export async function buildFromChatGoal(goal,{steps,signal,onPlan}={}){
   const files=new Map(result.files.map(file=>[file.path,file.content]));
   if(files.size!==3||!['index.html','styles.css','main.js'].every(p=>typeof files.get(p)==='string'&&files.get(p).length>0&&files.get(p).length<=250000))throw new Error('Invalid generated files');
   const doc=new DOMParser().parseFromString(files.get('index.html'),'text/html');
+  if (appSpec) {
+    const requiredControls = [
+      'select[name="resource"]', 'input[name="time"][type="datetime-local"]',
+      appSpec.resource === 'table' ? 'input[name="party"][type="number"]' : 'select[name="service"]'
+    ];
+    if (!requiredControls.every(selector => doc.querySelector('form ' + selector))) {
+      const messages = {
+        sq: 'Motori ktheu një formular rezervimi pa opsionet e kërkuara. Provo përsëri.',
+        fr: 'Le moteur a renvoyé un formulaire sans les options de réservation demandées. Réessayez.',
+        en: 'The build engine returned a form without the requested booking options. Please retry.'
+      };
+      throw new Error(messages[document.documentElement.lang] || messages.en);
+    }
+  }
   doc.querySelectorAll('script,link,iframe,object,embed,base,meta[http-equiv]').forEach(node=>node.remove());
   doc.querySelectorAll('*').forEach(node=>{for(const attr of [...node.attributes]){if(/^on/i.test(attr.name)||['src','srcset','srcdoc','formaction','target'].includes(attr.name.toLowerCase())||(node.localName==='a'&&attr.name.toLowerCase()==='href'))node.removeAttribute(attr.name);}});
   const csp=doc.createElement('meta');csp.httpEquiv='Content-Security-Policy';csp.content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'";doc.head.prepend(csp);
