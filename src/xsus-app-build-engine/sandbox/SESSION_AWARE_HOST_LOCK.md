@@ -1,0 +1,5 @@
+# Phase 56 — Session-aware PostgreSQL host lock
+
+This module connects the Phase 55 session-health probe to the **same dedicated PostgreSQL client** used to acquire a session-scoped advisory lock. It captures the backend PID, acquires the lock, checks the session before and after the callback, and releases the advisory lock and connection in finally. A failed check fails closed. The callback receives an AbortSignal for future cooperative cancellation.
+
+**Critical limitations:** These are point-in-time checks, not continuous monitoring. Session loss between probes can release a lock while a physical host action remains active. The callback must not issue concurrent queries on the pinned client. The Phase 51 integration currently accepts a one-argument lock callback and can use this module as its lock adapter, but it does not consume the AbortSignal; physical cancellation and durable host fencing are still missing. Real PostgreSQL concurrency and network-failure tests are required before production. No live PostgreSQL, Docker or deployment operations were performed. Tests use mocked clients.
