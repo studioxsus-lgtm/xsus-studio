@@ -47,5 +47,19 @@ describe("XSUS saved-project owner preview",()=>{
   try{const response=await fetch("http://127.0.0.1:"+server.address().port+"/api/projects/build-preview",{method:"POST",headers:{origin,authorization:"Bearer valid-token-long-enough","content-type":"application/json"},body:JSON.stringify({projectId})});expect(response.status).toBe(503);expect(calls).toBe(1);}
   finally{await new Promise(resolve=>server.close(resolve));}
  });
+ it("allows only the expected CORS preflight",async()=>{
+  const server=createStandaloneDeploymentServer({allowedOrigins:[origin]});
+  server.listen(0,"127.0.0.1");await once(server,"listening");
+  try{
+   const url="http://127.0.0.1:"+server.address().port+"/api/projects/build-preview";
+   const allowed=await fetch(url,{method:"OPTIONS",headers:{origin,"access-control-request-method":"POST","access-control-request-headers":"authorization, content-type"}});
+   expect(allowed.status).toBe(204);
+   expect(allowed.headers.get("access-control-allow-origin")).toBe(origin);
+   const denied=await fetch(url,{method:"OPTIONS",headers:{origin,"access-control-request-method":"POST","access-control-request-headers":"x-admin-token"}});
+   expect(denied.status).toBe(403);
+   const foreign=await fetch(url,{method:"OPTIONS",headers:{origin:"https://evil.example","access-control-request-method":"POST"}});
+   expect(foreign.status).toBe(403);
+  }finally{await new Promise(resolve=>server.close(resolve));}
+ });
  it("fails closed if worker unavailable",async()=>{const r=await run({previewFails:true});expect(r.status).toBe(503);});
 });
