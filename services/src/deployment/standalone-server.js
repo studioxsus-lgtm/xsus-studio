@@ -11,6 +11,8 @@ import { createXsUsAppSavedProjectBuilder } from './xsus-app-build-engine.js';
 import { createBuildWorkerConnectivity } from './build-worker-connectivity.js';
 import { generateWorkerStaticPreview } from '../build-worker/static-preview-build.js';
 
+import {validReservationSpec} from "../build-worker/reservation-preview.js";
+
 export function createStandaloneDeploymentServer(dependencies={}) {
   const route=createDeploymentNodeHandler(dependencies);
   const workerConnectivity=dependencies.workerConnectivity;
@@ -47,11 +49,11 @@ export function createStandaloneDeploymentServer(dependencies={}) {
           if(Number(req.headers["content-length"]??0)>4096){reply(413,{error:"payload_too_large"});return;}
           for await(const chunk of req){size+=chunk.length;if(size>4096){reply(413,{error:"payload_too_large"});return;}chunks.push(chunk);}
           let body;try{body=JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{reply(400,{error:"invalid_json"});return;}
-          if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).length!==1||typeof body.goal!=="string"||!body.goal.trim()||body.goal.length>2000){reply(400,{error:"invalid_goal"});return;}
+          if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).some(key=>key!=="goal"&&key!=="appSpec")||(body.appSpec!==undefined&&!validReservationSpec(body.appSpec))||typeof body.goal!=="string"||!body.goal.trim()||body.goal.length>2000){reply(400,{error:"invalid_goal"});return;}
           const client=dependencies.createUserPreviewClient(token.slice(7));
           const verified=await client.auth.getUser(token.slice(7));
           if(verified?.error||!verified?.data?.user?.id){reply(401,{error:"authentication_required"});return;}
-          const result=await dependencies.previewProxy({name:body.goal.trim().slice(0,100)});
+          const result=await dependencies.previewProxy({name:body.goal.trim().slice(0,100), ...(body.appSpec && {appSpec:body.appSpec})});
           if(result?.kind!=="static-preview"||result?.requiresReview!==true||!Array.isArray(result.files)||result.files.length!==3||!["index.html","styles.css","main.js"].every(path=>result.files.some(file=>file?.path===path&&typeof file.content==="string"&&file.content.length>0&&file.content.length<=250000))){reply(503,{error:"invalid_build_result"});return;}
           reply(200,{kind:"static-preview",requiresReview:true,files:result.files});
         }catch(error){console.warn("[xsus-goal-build-failure]",JSON.stringify({type:error?.name||"Error"}));reply(503,{error:"build_unavailable"});}
@@ -160,19 +162,19 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   // Staging-only recovery for Render Free worker gateway outages. The same
   // deterministic static generator runs locally; never executes user code.
   const localStaticFallback=env.XSUS_STAGING_STATIC_PREVIEW_FALLBACK==="true"&&env.XSUS_USER_PROJECT_PREVIEW_ENABLED==="true";
-  const fallbackPreview=(name,reason)=>{
+  const fallbackPreview=(request,reason)=>{
     if(!localStaticFallback)throw new Error(reason);
     console.warn("[xsus-preview-local-fallback]",JSON.stringify({reason}));
-    try {return generateWorkerStaticPreview({name});}
+    try {return generateWorkerStaticPreview(request);}
     catch(error){
       console.warn("[xsus-preview-local-fallback-failure]",JSON.stringify({type:error?.name||"Error",code:typeof error?.code==="string"?error.code:"unknown"}));
       throw new Error("Local static preview generator failed");
     }
   };
-  const previewProxy=previewProxyEnabled?async({name})=>{
+  const previewProxy=previewProxyEnabled?async(request)=>{
     // Staging fallback runs the same deterministic generator without relying
     // on an intermittently unavailable external Render Free worker gateway.
-    if(localStaticFallback)return fallbackPreview(name,"staging_local_static_generator");
+    if(localStaticFallback)return fallbackPreview(request,"staging_local_static_generator");
     let response;
     for(let attempt=1;attempt<=4;attempt++){
       // Probe upstream readiness before posting a preview. The worker can be
@@ -189,18 +191,18 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
       try {
         response=await fetch(new URL("/internal/static-preview",env.XSUS_BUILD_WORKER_URL),{
           method:"POST",headers:{"authorization":"Bearer "+env.XSUS_BUILD_WORKER_SHARED_SECRET,"content-type":"application/json"},
-          body:JSON.stringify({name}),signal:AbortSignal.timeout(25000),redirect:"error"
+          body:JSON.stringify(request),signal:AbortSignal.timeout(25000),redirect:"error"
         });
       } catch(error) {
         console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"worker_network",reason:error?.name==="TimeoutError"?"timeout":"network_error",attempt}));
-        if(attempt===4)return fallbackPreview(name,"worker_network_unavailable");
+        if(attempt===4)return fallbackPreview(request,"worker_network_unavailable");
         await new Promise(resolve=>setTimeout(resolve,attempt===1?3000:attempt===2?7000:12000));
         continue;
       }
       if(response.ok)break;
       console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"worker_response",status:response.status,attempt}));
       if(![502,503,504].includes(response.status))throw new Error("Worker preview failed");
-      if(attempt===4)return fallbackPreview(name,"worker_gateway_unavailable");
+      if(attempt===4)return fallbackPreview(request,"worker_gateway_unavailable");
       await response.body?.cancel();
       await new Promise(resolve=>setTimeout(resolve,attempt===1?3000:attempt===2?7000:12000));
     }

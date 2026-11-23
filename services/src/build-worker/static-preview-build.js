@@ -1,3 +1,4 @@
+import {reservationFiles} from './reservation-preview.js';
 import {createProjectArchitecture} from "../../../src/xsus-app-build-engine/architecture/project-architect.js";
 import {generateStaticApp} from "../../../src/xsus-app-build-engine/generator/code-generator.js";
 import {validateBuildManifest} from "../../../src/xsus-app-build-engine/build/build-manifest.js";
@@ -22,13 +23,13 @@ function makeGoalFiles(name){
  const js='const form=document.getElementById("entry-form"),list=document.getElementById("records"),empty=document.getElementById("empty");const search=document.getElementById("record-search");search?.addEventListener("input",render);let records=[];function render(){list.replaceChildren();records.forEach((item,index)=>{if(search && !item.join(" ").toLowerCase().includes(search.value.trim().toLowerCase()))return;const li=document.createElement("li"),span=document.createElement("span"),button=document.createElement("button");span.textContent=item.join(" · ");button.type="button";button.textContent="Remove";button.addEventListener("click",()=>{records.splice(index,1);render()});li.append(span,button);list.append(li)});document.getElementById("total").textContent=String(records.length);document.getElementById("latest").textContent=records.length?records[records.length-1][0]:"—";empty.hidden=records.length>0}form.addEventListener("submit",event=>{event.preventDefault();const values=Array.from(new FormData(form).values()).map(String);if(!values[0].trim())return;records.push(values);form.reset();render()});render();';
  return [{path:"index.html",content:html},{path:"styles.css",content:css},{path:"main.js",content:js}];
 }
-export function generateWorkerStaticPreview({name}={}){
+export function generateWorkerStaticPreview({name,appSpec}={}){
  if(typeof name!=="string"||!name.trim()||name.length>100)throw new TypeError("Invalid preview name");
  const slug=escapeSlug(name);
  const project=SAFE.test(slug)?slug:"xsus-preview";
  const architecture=createProjectArchitecture({name,slug:project,modules:[{id:"home",kind:"page"}],routes:[{id:"home",path:"/",moduleId:"home"}]});
  const baseline=validateBuildManifest(generateStaticApp(architecture));
- const files=makeGoalFiles(name);
+ const files=appSpec===undefined ? makeGoalFiles(name) : reservationFiles(appSpec);
  const manifest=validateBuildManifest({...baseline,files});
  return Object.freeze({project:manifest.project,files:manifest.files.map(({path,content})=>({path,content})),kind:"static-preview",requiresReview:true});
 }

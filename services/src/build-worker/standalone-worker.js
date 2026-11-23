@@ -36,7 +36,7 @@ export function createBuildWorkerServer({sharedSecret,previewEnabled=false}={}){
      const chunks=[];let size=0;
      for await(const chunk of req){size+=chunk.length;if(size>2048){res.writeHead(413);res.end(JSON.stringify({error:"payload_too_large"}));return;}chunks.push(chunk);}
      let body;try{body=JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{res.writeHead(400);res.end(JSON.stringify({error:"invalid_json"}));return;}
-     if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).some(k=>k!=="name")){res.writeHead(400);res.end(JSON.stringify({error:"invalid_request"}));return;}
+     if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).some(k=>k!=="name"&&k!=="appSpec")){res.writeHead(400);res.end(JSON.stringify({error:"invalid_request"}));return;}
      let preview;try{preview=generateWorkerStaticPreview(body);}catch{res.writeHead(400);res.end(JSON.stringify({error:"invalid_request"}));return;}
      res.writeHead(200);res.end(JSON.stringify(preview));
     }catch{if(!res.writableEnded){res.writeHead(503);res.end(JSON.stringify({error:"preview_unavailable"}));}}
