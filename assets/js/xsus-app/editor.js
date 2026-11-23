@@ -26,7 +26,10 @@ function assembleGeneratedPreview(){
 export function showGeneratedFiles(files,openPreview=true){
  if(!files||!['index.html','styles.css','main.js'].every(p=>typeof files[p]==='string'&&files[p].length<=250000))throw new TypeError('Invalid build files');
  generatedFiles=Object.fromEntries(['index.html','styles.css','main.js'].map(p=>[p,files[p]]));
- showGeneratedHtml(assembleGeneratedPreview(),openPreview);
+ generatedHtml=assembleGeneratedPreview();
+ currentFile='index.html';
+ renderEditor();
+ if(openPreview){updateMode('preview');$('[data-mobile="editor"]')?.click();}
 }
 
 const previewTasks = new Map();
@@ -98,6 +101,7 @@ export function renderEditor() {
   }
   const preview = target.querySelector('[data-generated-preview]');
   if (preview) {
+    if(generatedFiles) generatedHtml=assembleGeneratedPreview();
     if (generatedHtml.includes('<meta http-equiv="Content-Security-Policy"')) {
       preview.setAttribute('sandbox', 'allow-scripts allow-forms allow-downloads');
     }
