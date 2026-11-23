@@ -29,5 +29,5 @@ initSettings();
 import { initRefreshState } from './refresh-state.js?v=20261122-unified2';
 initRefreshState();
 
-import { initAccountProjects } from './account-projects.js?v=20261123-recovery13';
+import { initAccountProjects } from './account-projects.js?v=20261123-retry14';
 initAccountProjects();
