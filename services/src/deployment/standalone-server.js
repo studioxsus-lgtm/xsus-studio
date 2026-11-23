@@ -24,6 +24,24 @@ export function createStandaloneDeploymentServer(dependencies={}) {
       if(!workerConnectivity||!connectivityToken||req.headers.authorization!=='Bearer '+connectivityToken){res.writeHead(404);res.end(JSON.stringify({error:'not_found'}));return;}
       void workerConnectivity.check().then(result=>{res.writeHead(result.connected?200:503);res.end(JSON.stringify(result));}).catch(()=>{res.writeHead(503);res.end(JSON.stringify({connected:false}));});return;
     }
+    if(req.url?.split("?")[0]==="/internal/build-preview"){
+      const reply=(status,body)=>{if(res.writableEnded)return;res.writeHead(status,{"content-type":"application/json","cache-control":"no-store","x-content-type-options":"nosniff"});res.end(JSON.stringify(body));};
+      if(req.method!=="POST"){reply(405,{error:"method_not_allowed"});return;}
+      if(!dependencies.previewProxyEnabled||!dependencies.previewProxy||!connectivityToken||req.headers.authorization!=="Bearer "+connectivityToken){reply(404,{error:"not_found"});return;}
+      void (async()=>{
+        try{
+          const chunks=[];let size=0;
+          const len=req.headers["content-length"];
+          if(len!==undefined&&(!/^\\d+$/.test(String(len))||Number(len)>2048)){reply(413,{error:"payload_too_large"});return;}
+          for await(const chunk of req){size+=chunk.length;if(size>2048){reply(413,{error:"payload_too_large"});return;}chunks.push(chunk);}
+          let body;try{body=JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{reply(400,{error:"invalid_json"});return;}
+          if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).some(k=>k!=="name")||typeof body.name!=="string"||!body.name.trim()||body.name.length>100){reply(400,{error:"invalid_request"});return;}
+          const result=await dependencies.previewProxy({name:body.name});
+          if(!result||result.kind!=="static-preview"||!Array.isArray(result.files)){reply(503,{error:"preview_unavailable"});return;}
+          reply(200,result);
+        }catch{reply(503,{error:"preview_unavailable"});}
+      })();return;
+    }
     void route(req,res);
   });
 }
@@ -61,7 +79,20 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   } : {};
   const workerConfigured=Boolean(env.XSUS_BUILD_WORKER_URL&&env.XSUS_BUILD_WORKER_SHARED_SECRET&&env.XSUS_BUILD_STATUS_TOKEN);
   const workerConnectivity=workerConfigured?createBuildWorkerConnectivity({workerUrl:env.XSUS_BUILD_WORKER_URL,sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET}):undefined;
-  const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined});
+  const previewProxyEnabled=workerConfigured&&env.XSUS_BUILD_PREVIEW_PROXY_ENABLED==="true";
+  const previewProxy=previewProxyEnabled?async({name})=>{
+    const response=await fetch(new URL("/internal/static-preview",env.XSUS_BUILD_WORKER_URL),{
+      method:"POST",headers:{"authorization":"Bearer "+env.XSUS_BUILD_WORKER_SHARED_SECRET,"content-type":"application/json"},
+      body:JSON.stringify({name}),signal:AbortSignal.timeout(12000),redirect:"error"
+    });
+    if(!response.ok)throw new Error("Worker preview failed");
+    const result=await response.json();
+    if(result?.kind!=="static-preview"||result?.requiresReview!==true||!Array.isArray(result.files)||result.files.length!==3||
+       JSON.stringify(result.files.map(f=>f.path))!==JSON.stringify(["index.html","styles.css","main.js"])||
+       result.files.some(f=>typeof f.content!=="string"||f.content.length>500000))throw new Error("Invalid preview manifest");
+    return result;
+  }:undefined;
+  const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined,previewProxyEnabled,previewProxy});
   server.listen(port,'0.0.0.0',()=>{
     if(workerConfigured&&env.XSUS_STATIC_PREVIEW_PROBE==="true"){
       void (async()=>{
