@@ -197,6 +197,7 @@ export function initAccountProjects() {
     const session = activeSession();
     const link = session?.accountProject;
     if (!owner || !link?.id) return;
+    if (autosaveConflict === link.id) return;
     const snapshot = captureProject();
     if (!snapshot) return;
     const fingerprint = JSON.stringify({ id: link.id, content: snapshot });
@@ -212,7 +213,8 @@ export function initAccountProjects() {
       query = link.token == null ? query.is('snapshot->>saveToken', null)
         : query.eq('snapshot->>saveToken', link.token);
       const { data, error } = await query.select('id').maybeSingle();
-      if (error || data?.id !== link.id) {
+      if (error) throw error;
+      if (data?.id !== link.id) {
         // Do not overwrite conflicting remote edits or deleted projects.
         autosaveConflict = link.id;
         if (currentWorkspaceOwner() === owner) {
