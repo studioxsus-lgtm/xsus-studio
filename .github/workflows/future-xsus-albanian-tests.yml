@@ -1,0 +1,36 @@
+name: Future XSUS Core - Albanian tests
+
+on:
+  push:
+    branches:
+      - future-xsus-core
+    paths:
+      - 'packages/future-xsus-core/languages/sq/**'
+      - 'packages/future-xsus-core/scripts/test_albanian.py'
+      - '.github/workflows/future-xsus-albanian-tests.yml'
+  pull_request:
+    paths:
+      - 'packages/future-xsus-core/languages/sq/**'
+      - 'packages/future-xsus-core/scripts/test_albanian.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  albanian-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile Albanian sources
+        run: python -m compileall -q packages/future-xsus-core/languages/sq
+      - name: Run Albanian regression suite
+        run: python packages/future-xsus-core/scripts/test_albanian.py
