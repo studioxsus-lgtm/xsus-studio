@@ -1,0 +1,5 @@
+# Phase 71 — Docker-readable artifact staging handoff
+
+The existing artifact staging creates directories 0700 and files 0600, while the container executes as 65534:65534. This new adapter requires a trusted host helper to transfer directory/file ownership to that UID/GID and independently verify the result before the Docker driver can mount the files. It never makes files world-readable. Failure to verify ownership blocks execution and triggers cleanup.
+
+**Not yet a live Docker fix:** The trusted `prepareOwnership` and `verifyOwnership` functions are injected, not implemented as privileged host operations. They must operate on race-resistant file descriptors, verify every directory and file (including nested paths), and account for rootless Docker user-namespace UID/GID mapping. The Docker daemon, parent staging permissions, and host isolation must be tested on a disposable hardened host. A host-side symlink or TOCTOU vulnerability must not be introduced. Do not use a naive recursive chown of attacker-controlled paths. No production deployment is authorized.
