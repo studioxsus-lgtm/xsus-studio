@@ -1,9 +1,9 @@
 import {appendGeneratedSourceRevision,findGeneratedSourceRevision} from './generated-source-history.js';
 import { SOURCE_PATHS, validProjectSource, copyProjectSource, restoreProjectSource } from './project-source-snapshot.js';
-import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-formfix2';
+import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-three-cores';
 import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart, currentWorkspaceOwner } from './refresh-state.js?v=20261122-unified2';
-import { showGeneratedHtml, showGeneratedFiles, getGeneratedPreviewHtml } from './editor.js?v=20261123-toolbar30';
+import { showGeneratedHtml, showGeneratedFiles, getGeneratedPreviewHtml } from './editor.js?v=20261123-toolbar31';
 import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261122-authgate1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
@@ -490,11 +490,17 @@ async function send() {
   requestController = controller;
   $('#chatProgress').classList.remove('hidden'); $('#sendBtn').disabled = true;
   const sessionId = activeId;
-  // Application generation must not depend on the optional planning service.
-  // The Build Engine is the primary path for new apps; planning remains for edits.
   if (!edit) {
     try {
-      const generated = await buildFromChatGoal(goal,{signal:controller.signal});
+      const generated = await buildFromChatGoal(goal, {
+        steps, signal: controller.signal,
+        onPlan(result) {
+          if (requestController !== controller || sessionId !== activeId) return;
+          const steps = result.plan.steps.map((step, index) => (index + 1) + '. ' + step.task);
+          session.messages.push({role:'assistant', text:[result.language.text, ...steps].join('\n')});
+          renderMessages();
+        }
+      });
       if(requestController===controller && sessionId===activeId){
         session.generatedHtml=generated.html;
         session.generatedFiles=generated.files;
@@ -507,6 +513,7 @@ async function send() {
       }
     } catch(error) {
       if(error?.name!=='AbortError' && requestController===controller && sessionId===activeId){
+        input.value = goal; $('#planSteps').value = rawSteps; updateCount();
         session.messages.push({role:'assistant',text:'Application generation failed: '+(error?.message||'Build Engine unavailable')});
         renderMessages();
         saveRefreshState('builder');
@@ -555,29 +562,8 @@ async function send() {
         session.messages.push({role:'assistant', text:showError('review_required')});
         input.value = goal;
         updateCount();
-      } else session.messages.push(result.plan ? { role: 'plan', result } : { role: 'review', result });
-      renderMessages();
-      // Build Engine is independent; the AI composer is the only build entry point.
-      if (!edit && requestController === controller && sessionId === activeId) {
-        try {
-          const generated = await buildFromChatGoal(goal,{signal:controller.signal});
-          if(requestController===controller && sessionId===activeId){
-            session.generatedHtml=generated.html;
-            session.generatedFiles=generated.files;
-            session.generatedSourceHistory=appendGeneratedSourceRevision(session.generatedSourceHistory,generated.files);
-            storeSourceFiles(session);
-            session.messages.push({role:'assistant',text:'Build Engine generated index.html, styles.css and main.js. Static starter app ready for review in Editor / Preview.'});
-            renderMessages();
-            showGeneratedFiles(generated.files,true);
-            saveRefreshState('builder');
-          }
-        } catch(buildError) {
-          if(buildError?.name!=='AbortError' && requestController===controller && sessionId===activeId){
-            session.messages.push({role:'assistant',text:'Build Engine: '+(buildError?.message||'Generation failed')+'. The draft plan is still available.'});
-            renderMessages();
-          }
-        }
       }
+      renderMessages();
     }
   } catch (error) {
     if (error?.name !== 'AbortError' && requestController === controller && sessionId === activeId) {
