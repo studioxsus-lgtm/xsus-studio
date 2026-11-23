@@ -1,3 +1,4 @@
+import {hasProjectWork,canCaptureProject} from './project-recovery-policy.js';
 import {classifyAccountSaveResult} from './account-autosave-policy.js';
 import { getSupabaseClient } from './auth-session.js';
 import { currentWorkspaceOwner, readWorkspacePart, restoreWorkspacePart, saveRefreshState } from './refresh-state.js?v=20261122-unified2';
@@ -28,7 +29,7 @@ const boardId = html => html?.match(/<html lang="en" data-board="([a-f0-9-]+)"/)
 export function captureProject() {
   const builder = readWorkspacePart('builder');
   const session = builder.sessions.find(item => item.id === builder.activeId);
-  if (!session.messages.length && !builder.goal.trim() && !builder.steps.trim() && !session.generatedHtml) return null;
+  if (!canCaptureProject(builder,session)) return null;
   const ids = new Set(session.messages.map(m => m.reviewKey ?? m.result?.requestId).filter(Boolean));
   const reviews = builder.reviews.filter(([id]) => ids.has(id));
   const boards = new Set([session.generatedHtml, ...reviews.map(([,r]) => r.builtHtml)].map(boardId).filter(Boolean));
@@ -256,8 +257,7 @@ export function initAccountProjects() {
     const owner = currentWorkspaceOwner();
     if (!owner) return;
     const builder = readWorkspacePart('builder');
-    if (builder.sessions.some(item => item.messages?.length || item.generatedHtml || item.accountProject) ||
-        builder.goal?.trim() || builder.steps?.trim()) return;
+    if (hasProjectWork(builder)) return;
     try {
       const client = await getSupabaseClient();
       const { data, error } = await client.from(table)
@@ -266,8 +266,7 @@ export function initAccountProjects() {
       if (error || !data?.snapshot || generation !== restoreGeneration ||
           currentWorkspaceOwner() !== owner) return;
       const latest = readWorkspacePart('builder');
-      if (latest.sessions.some(item => item.messages?.length || item.generatedHtml || item.accountProject) ||
-          latest.goal?.trim() || latest.steps?.trim()) return;
+      if (hasProjectWork(latest)) return;
       openProject(data.snapshot, { id:data.id, name:data.name, token:data.snapshot.saveToken ?? null });
       const toast = document.querySelector('#toast');
       if (toast) {
