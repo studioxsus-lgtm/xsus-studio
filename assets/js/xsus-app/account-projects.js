@@ -185,7 +185,16 @@ export function initAccountProjects() {
       if (!current(token,owner)) return;
       translate(); status.textContent=words()[4]; generation++; await fetchPage(true);
     } catch { if(current(token,owner)) status.textContent=words()[6]; }
-    finally { saving=false; submit.disabled=!currentWorkspaceOwner(); copyButton.disabled=submit.disabled; }
+    finally {
+      saving=false;
+      submit.disabled=!currentWorkspaceOwner();copyButton.disabled=submit.disabled;
+      // A workspace edit during manual save must not be silently stranded.
+      if(autosavePending){
+        autosavePending=false;
+        clearTimeout(autosaveTimer);
+        autosaveTimer=setTimeout(()=>{void autosaveLinkedProject();},1600);
+      }
+    }
   };
   // Autosave only projects that the user explicitly saved to their account first.
   // Keep optimistic revision checks to avoid overwriting a newer remote copy.
