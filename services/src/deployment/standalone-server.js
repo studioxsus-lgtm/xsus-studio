@@ -63,7 +63,7 @@ export function createStandaloneDeploymentServer(dependencies={}) {
           const result=await dependencies.previewProxy({name:goal.trim().slice(0,100)});
           if(result?.kind!=="static-preview"||result?.requiresReview!==true||!Array.isArray(result.files)||result.files.length!==3||new Set(result.files.map(file=>file?.path)).size!==3||!["index.html","styles.css","main.js"].every(path=>result.files.some(file=>file?.path===path&&typeof file.content==="string"&&file.content.length>0&&file.content.length<=250000))){console.warn("[xsus-user-preview-failure]",JSON.stringify({stage:"manifest_validation"}));reply(503,{error:"preview_unavailable"});return;}
           reply(200,{projectId:body.projectId,kind:result.kind,requiresReview:true,files:result.files});
-        }catch(error){console.warn("[xsus-user-preview-failure]",JSON.stringify({stage:"preview_proxy",reason:error?.name==="TimeoutError"?"timeout":"upstream_failure"}));reply(503,{error:"preview_unavailable"});}
+        }catch(error){console.warn("[xsus-user-preview-failure]",JSON.stringify({stage:"preview_proxy",reason:error?.name==="TimeoutError"?"timeout":error?.message==="Invalid preview manifest"?"invalid_worker_manifest":error?.message==="Worker preview failed"?"worker_http_failure":error?.message==="Worker preview network unavailable"?"worker_network_failure":"unexpected_proxy_error"}));reply(503,{error:"preview_unavailable"});}
       })();return;
     }
     if(req.url?.split("?")[0]==="/internal/build-preview"){
