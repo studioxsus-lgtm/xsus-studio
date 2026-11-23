@@ -27,6 +27,15 @@ describe("XSUS saved-project owner preview",()=>{
  it("does not expose nonexistent projects",async()=>{const r=await run({missingProject:true});expect(r.status).toBe(404);expect(r.calls).toBe(0);});
  it("fails closed on a Supabase project lookup error",async()=>{const r=await run({dbError:true});expect(r.status).toBe(503);expect(r.calls).toBe(0);});
  it("denies invalid auth",async()=>{const r=await run({authUser:null});expect(r.status).toBe(401);expect(r.calls).toBe(0);});
+ it("rejects requests without an Origin header",async()=>{
+  const server=createStandaloneDeploymentServer({allowedOrigins:[origin],userPreviewEnabled:true,createUserPreviewClient:()=>{throw Error("must not authenticate");},previewProxy:()=>{throw Error("must not generate");}});
+  server.listen(0,"127.0.0.1");await once(server,"listening");
+  try{
+   const response=await fetch("http://127.0.0.1:"+server.address().port+"/api/projects/build-preview",{method:"POST",headers:{"authorization":"Bearer valid-token-long-enough","content-type":"application/json"},body:JSON.stringify({projectId})});
+   expect(response.status).toBe(403);
+   expect(response.headers.get("access-control-allow-origin")).toBeNull();
+  }finally{await new Promise(resolve=>server.close(resolve));}
+ });
  it("denies unknown browser origin",async()=>{const r=await run({originHeader:"https://evil.example"});expect(r.status).toBe(403);expect(r.calls).toBe(0);});
  it("rejects malformed project IDs",async()=>{const r=await run({requestProjectId:"not-an-id"});expect(r.status).toBe(400);expect(r.calls).toBe(0);});
  it("rejects missing bearer credentials",async()=>{const r=await run({token:""});expect(r.status).toBe(401);expect(r.calls).toBe(0);});
