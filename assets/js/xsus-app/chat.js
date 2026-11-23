@@ -1,3 +1,4 @@
+import { buildFromChatGoal } from './build-engine-chat-client.js';
 import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261122-unified2';
 import { showGeneratedHtml } from './editor.js?v=20261120-account1';
@@ -494,6 +495,24 @@ async function send() {
         updateCount();
       } else session.messages.push(result.plan ? { role: 'plan', result } : { role: 'review', result });
       renderMessages();
+      // Build Engine is independent; the AI composer is the only build entry point.
+      if (!edit && requestController === controller && sessionId === activeId) {
+        try {
+          const generated = await buildFromChatGoal(goal,{signal:controller.signal});
+          if(requestController===controller && sessionId===activeId){
+            session.generatedHtml=generated.html;
+            session.messages.push({role:'assistant',text:'Build Engine generated index.html, styles.css and main.js. Static starter app ready for review in Editor / Preview.'});
+            renderMessages();
+            showGeneratedHtml(generated.html,true);
+            saveRefreshState('builder');
+          }
+        } catch(buildError) {
+          if(buildError?.name!=='AbortError' && requestController===controller && sessionId===activeId){
+            session.messages.push({role:'assistant',text:'Build Engine: '+(buildError?.message||'Generation failed')+'. The draft plan is still available.'});
+            renderMessages();
+          }
+        }
+      }
     }
   } catch (error) {
     if (error?.name !== 'AbortError' && requestController === controller && sessionId === activeId) {
