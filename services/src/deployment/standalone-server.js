@@ -140,10 +140,17 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
           await health.body?.cancel();
         }catch{console.info("[xsus-worker-readiness]",JSON.stringify({ok:false}));}
       }
-      response=await fetch(new URL("/internal/static-preview",env.XSUS_BUILD_WORKER_URL),{
-        method:"POST",headers:{"authorization":"Bearer "+env.XSUS_BUILD_WORKER_SHARED_SECRET,"content-type":"application/json"},
-        body:JSON.stringify({name}),signal:AbortSignal.timeout(25000),redirect:"error"
-      });
+      try {
+        response=await fetch(new URL("/internal/static-preview",env.XSUS_BUILD_WORKER_URL),{
+          method:"POST",headers:{"authorization":"Bearer "+env.XSUS_BUILD_WORKER_SHARED_SECRET,"content-type":"application/json"},
+          body:JSON.stringify({name}),signal:AbortSignal.timeout(25000),redirect:"error"
+        });
+      } catch(error) {
+        console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"worker_network",reason:error?.name==="TimeoutError"?"timeout":"network_error",attempt}));
+        if(attempt===4)throw new Error("Worker preview network unavailable");
+        await new Promise(resolve=>setTimeout(resolve,attempt===1?3000:attempt===2?7000:12000));
+        continue;
+      }
       if(response.ok)break;
       console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"worker_response",status:response.status,attempt}));
       if(![502,503,504].includes(response.status)||attempt===4)throw new Error("Worker preview failed");
