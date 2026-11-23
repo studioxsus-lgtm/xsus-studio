@@ -32,7 +32,7 @@ export function createStandaloneDeploymentServer(dependencies={}) {
         try{
           const chunks=[];let size=0;
           const len=req.headers["content-length"];
-          if(len!==undefined&&(!/^\\d+$/.test(String(len))||Number(len)>2048)){reply(413,{error:"payload_too_large"});return;}
+          if(len!==undefined&&(!/^\d+$/.test(String(len))||Number(len)>2048)){reply(413,{error:"payload_too_large"});return;}
           for await(const chunk of req){size+=chunk.length;if(size>2048){reply(413,{error:"payload_too_large"});return;}chunks.push(chunk);}
           let body;try{body=JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{reply(400,{error:"invalid_json"});return;}
           if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).some(k=>k!=="name")||typeof body.name!=="string"||!body.name.trim()||body.name.length>100){reply(400,{error:"invalid_request"});return;}
