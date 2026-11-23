@@ -1,0 +1,5 @@
+# Phase 52 — Persistent PostgreSQL host operation store
+
+Implements the Phase 50 durable host-operation store interface with parameterized SQL, unique (execution_id, operation_id) keys, INSERT ... ON CONFLICT DO NOTHING, and conditional UPDATE (CAS) from pending to applied or uncertain. Database rows are validated and unsafe bigint conversions fail closed. Schema is a **draft**, not an applied migration. Requires the parent execution row to exist first.
+
+**Important:** PostgreSQL persistence alone does not supply the cross-process exclusive lock required by Phase 51. A transaction-scoped/advisory lock or equivalent host-wide lock must be implemented and tested with real PostgreSQL, and must cover the physical action and durable acknowledgement. Database locks held across slow host actions need carefully bounded timeouts and crash reconciliation. This store does not verify actual host side effects or make them exactly-once. No live database or Docker execution was performed; tests use mocked SQL. Dedicated backend permissions and FORCE RLS policies require a reviewed migration.
