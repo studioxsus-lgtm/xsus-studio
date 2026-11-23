@@ -114,13 +114,28 @@ function updateDevice(device) {
 }
 function toast(message) { const node = $('#toast'); if(node) { node.textContent=message; node.classList.add('show'); setTimeout(()=>node.classList.remove('show'),2600); } }
 function targetValueForGenerated(){return $('#editorBody')?.querySelector('[data-generated-source]')?.value ?? null;}
+function applyGeneratedChanges(){
+  if(!generatedFiles){toast('Generate an app before editing');return;}
+  const source=targetValueForGenerated();
+  if(source===null){toast('Source editor unavailable');return;}
+  if(source.length>250000){toast('File exceeds 250 KB');return;}
+  try{
+    generatedFiles[currentFile]=source;
+    generatedHtml=assembleGeneratedPreview();
+    updateMode('preview');
+    toast('Changes applied to Preview');
+  }catch(error){
+    console.error('[xsus-editor-apply]',error);
+    toast('Preview update failed');
+  }
+}
 function onEditorClick(event) {
   if (event.target.closest('[data-visual-action], [data-visual-add], [data-visual-select]')) { handleVisualDesignClick(event); renderEditor(); return; }
   const file=event.target.closest('[data-file]');
   if(file){currentFile=file.dataset.file;renderEditor();return;}
   const action=event.target.closest('[data-editor-action]')?.dataset.editorAction;
   if(!action) return;
-  if(action==='apply-generated' && generatedFiles){const source=targetValueForGenerated();if(source===null)return;if(source.length>250000){toast('File exceeds 250 KB');return;}generatedFiles[currentFile]=source;generatedHtml=assembleGeneratedPreview();renderEditor();toast('Preview updated');return;}
+  if(action==='apply-generated'){applyGeneratedChanges();return;}
   if(action==='toggle-explorer') explorerOpen=!explorerOpen;
   if(action==='zoom-in') previewScale=Math.min(150,previewScale+10);
   if(action==='zoom-out') previewScale=Math.max(60,previewScale-10);
@@ -137,7 +152,11 @@ export function initEditor() {
   $$('[data-mode]').forEach(button=>button.addEventListener('click',()=>updateMode(button.dataset.mode)));
   $$('[data-device]').forEach(button=>button.addEventListener('click',()=>updateDevice(button.dataset.device)));
   const target=$('#editorBody');
-  target?.addEventListener('click',onEditorClick);
+  target?.addEventListener('click',event=>{
+    const apply=event.target.closest('[data-editor-action="apply-generated"]');
+    if(apply){event.preventDefault();applyGeneratedChanges();return;}
+    onEditorClick(event);
+  });
   target?.addEventListener('change',event=>{if(event.target.id==='demo-element')selectedElement=event.target.value; if(event.target.matches('[data-visual-input]')) {handleVisualDesignInput(event);renderEditor();}});
   target?.addEventListener('input',event=>{if(event.target.matches('[data-visual-range]')){handleVisualDesignInput(event);const node=target.querySelector('[data-visual-selected]');if(node)node.style.borderRadius=event.target.value+'px';}});
   target?.addEventListener('keydown',event=>{if(!event.target.matches('.split-divider'))return;if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();splitRatio=Math.max(30,Math.min(70,splitRatio+(event.key==='ArrowRight'?5:-5)));renderEditor();target.querySelector('.split-divider')?.focus();}});
