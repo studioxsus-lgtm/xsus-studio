@@ -1,7 +1,7 @@
 import {getSupabaseClient,getUserAccessToken} from './auth-session.js';
 // Branch-only staging integration. Generated files are untrusted and never executed in the parent origin.
 const API='https://xsus-app-build-api-staging.onrender.com/api/projects/build-preview';
-const ORIGINS=new Set(['https://www.xsusstudio.com','https://xsusstudio.com']);
+const ORIGINS=new Set(['https://www.xsusstudio.com','https://xsusstudio.com','https://xsus-app-build-preview-staging.onrender.com']);
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 if(ORIGINS.has(location.origin)){
  const panel=document.createElement('dialog');
