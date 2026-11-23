@@ -16,3 +16,7 @@ wait_for_heading 'XSUS booking saved'
 adb shell am force-stop "$pkg"
 adb shell am start -W -n "$activity"
 wait_for_heading 'XSUS booking restored'
+adb install -r /tmp/restaurant-v2.apk
+adb shell dumpsys package "$pkg" | grep -F 'versionCode=2 ' >/dev/null
+adb shell am start -W -n "$activity"
+wait_for_heading 'XSUS v2 retained original booking'

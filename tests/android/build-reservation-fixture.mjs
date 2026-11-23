@@ -23,5 +23,17 @@ if(process.argv.includes('--emulator')) {
   `;
 }
 const host=JSON.parse(await readFile(new URL('../../src/xsus-app-build-engine/android/distribution/host.json',import.meta.url)));
-const apk=await buildApk({files,host,title:'XSUS Restaurant',projectId:'ab'.repeat(16),keys:await createSigningKey()});
-await writeFile(process.argv[2],apk);
+const options={files,host,title:'XSUS Restaurant',projectId:'ab'.repeat(16),keys:await createSigningKey()};
+await writeFile(process.argv[2],await buildApk(options));
+if(process.argv.includes('--emulator')){
+  // V2 only reads existing bookings. It cannot pass by recreating the fixture.
+  const updated=Object.fromEntries(preview.files.map(file=>[file.path,file.content]));
+  updated['main.js'] += `
+    const entries=document.querySelectorAll('#bookings li');
+    if(entries.length===1 && entries[0].textContent.includes('Android test') &&
+        entries[0].textContent.includes('8 seats')){
+      document.querySelector('h1').textContent='XSUS v2 retained original booking';
+    }
+  `;
+  await writeFile(process.argv[2].replace(/\.apk$/, '-v2.apk'),await buildApk({...options,files:updated,versionCode:2}));
+}

@@ -34,7 +34,7 @@ async function certificate(key, publicKey) {
 }
 
 // AAPT emits an unstyled UTF-16 string pool at the start of this fixed manifest.
-function manifest(template, packageName, title) {
+function manifest(template, packageName, title, versionCode) {
   const view = new DataView(template.buffer, template.byteOffset);
   const start = 8;
   const oldSize = view.getUint32(start+4,true), count = view.getUint32(start+8,true);
@@ -45,11 +45,14 @@ function manifest(template, packageName, title) {
   const header = new DataView(pool.buffer);
   const strings = [];
   let size = 0;
+  let versionAttribute = -1;
   for (let i=0; i<count; i++) {
     const offset = start+dataStart+header.getUint32(28+i*4,true);
     const length = view.getUint16(offset,true);
     let value = new TextDecoder('utf-16le').decode(template.subarray(offset+2,offset+2+length*2));
     if (value==='com.xsusstudio.app.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') value=packageName;
+    if (value==='versionCode') versionAttribute=i;
+    if (value==='1.0') value=versionCode+'.0';
     if (value==='XSUS_APPLICATION_TITLE') value=title;
     const data=new Uint8Array(4+value.length*2);
     const out=new DataView(data.buffer);
@@ -61,7 +64,30 @@ function manifest(template, packageName, title) {
   const padding = new Uint8Array((4-size%4)%4);
   header.setUint32(4,pool.length+size+padding.length,true);
   const result=join(template.slice(0,start),pool,...strings,padding,template.slice(start+oldSize));
-  new DataView(result.buffer).setUint32(4,result.length,true);
+  const xml=new DataView(result.buffer);
+  xml.setUint32(4,result.length,true);
+  // Patch the typed integer in the manifest start element. The string pool
+  // alone only changes versionName, which Android displays to the user.
+  let patched=false;
+  for(let pos=start+header.getUint32(4,true);pos<result.length;) {
+    const chunkSize=xml.getUint32(pos+4,true);
+    if(chunkSize<8 || pos+chunkSize>result.length) throw new Error('Invalid manifest chunk');
+    if(xml.getUint16(pos,true)===0x0102) {
+      const ext=pos+xml.getUint16(pos+2,true);
+      const attrs=ext+xml.getUint16(ext+8,true);
+      const stride=xml.getUint16(ext+10,true), count=xml.getUint16(ext+12,true);
+      for(let i=0;i<count;i++){
+        const attr=attrs+i*stride;
+        if(xml.getUint32(attr+4,true)===versionAttribute && xml.getUint8(attr+15)===0x10){
+          xml.setUint32(attr+16,versionCode,true);
+          patched=true;
+        }
+      }
+      break;
+    }
+    pos+=chunkSize;
+  }
+  if(!patched) throw new Error('Android manifest lacks a versionCode');
   return result;
 }
 const crcTable = Uint32Array.from({length:256},(_,n)=>{
@@ -110,10 +136,11 @@ async function signedArchive(entries, keys) {
   return join(body,block,central,end);
 }
 
-export async function buildApk({files,title,projectId,keys,host}) {
+export async function buildApk({files,title,projectId,keys,host,versionCode=1}) {
+  if(!Number.isInteger(versionCode)||versionCode<1||versionCode>2100000000) throw new Error('Invalid Android version');
   if(!/^[a-f0-9]{32}$/.test(projectId)) throw new Error('Invalid Android project ID');
   const entries=[
-    ['AndroidManifest.xml',manifest(decode(host.manifest),'com.xsusstudio.app.p'+projectId,String(title||'XSUS App').slice(0,60))],
+    ['AndroidManifest.xml',manifest(decode(host.manifest),'com.xsusstudio.app.p'+projectId,String(title||'XSUS App').slice(0,60),versionCode)],
     ['classes.dex',decode(host.dex)]
   ];
   for(const path of ['index.html','styles.css','main.js']) {
