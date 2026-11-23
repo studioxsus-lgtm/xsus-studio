@@ -490,6 +490,34 @@ async function send() {
   requestController = controller;
   $('#chatProgress').classList.remove('hidden'); $('#sendBtn').disabled = true;
   const sessionId = activeId;
+  // Application generation must not depend on the optional planning service.
+  // The Build Engine is the primary path for new apps; planning remains for edits.
+  if (!edit) {
+    try {
+      const generated = await buildFromChatGoal(goal,{signal:controller.signal});
+      if(requestController===controller && sessionId===activeId){
+        session.generatedHtml=generated.html;
+        session.generatedFiles=generated.files;
+        session.generatedSourceHistory=appendGeneratedSourceRevision(session.generatedSourceHistory,generated.files);
+        storeSourceFiles(session);
+        showGeneratedFiles(generated.files,true);
+        session.messages.push({role:'assistant',text:'Application generated. Open Code or Preview to inspect index.html, styles.css and main.js.'});
+        renderMessages();
+        saveRefreshState('builder');
+      }
+    } catch(error) {
+      if(error?.name!=='AbortError' && requestController===controller && sessionId===activeId){
+        session.messages.push({role:'assistant',text:'Application generation failed: '+(error?.message||'Build Engine unavailable')});
+        renderMessages();
+        saveRefreshState('builder');
+      }
+    } finally {
+      if(requestController===controller){
+        requestController=null;busy=false;$('#chatProgress').classList.add('hidden');$('#sendBtn').disabled=false;
+      }
+    }
+    return;
+  }
   try {
     const result = await createDraftPlan({ goal: edit ? editGoal : goal, steps, signal: controller.signal });
     if (requestController === controller && sessionId === activeId) {
