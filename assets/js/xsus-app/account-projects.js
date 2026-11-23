@@ -1,3 +1,4 @@
+import {classifyAccountSaveResult} from './account-autosave-policy.js';
 import { getSupabaseClient } from './auth-session.js';
 import { currentWorkspaceOwner, readWorkspacePart, restoreWorkspacePart, saveRefreshState } from './refresh-state.js?v=20261122-unified2';
 
@@ -213,8 +214,9 @@ export function initAccountProjects() {
       query = link.token == null ? query.is('snapshot->>saveToken', null)
         : query.eq('snapshot->>saveToken', link.token);
       const { data, error } = await query.select('id').maybeSingle();
-      if (error) throw error;
-      if (data?.id !== link.id) {
+      const result=classifyAccountSaveResult(error,data?.id,link.id);
+      if(result==='retryable-error')throw error;
+      if(result==='revision-conflict') {
         // Do not overwrite conflicting remote edits or deleted projects.
         autosaveConflict = link.id;
         if (currentWorkspaceOwner() === owner) {
