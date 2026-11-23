@@ -1,7 +1,7 @@
 import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-formfix2';
 import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261122-unified2';
-import { showGeneratedHtml } from './editor.js?v=20261120-account1';
+import { showGeneratedHtml, showGeneratedFiles } from './editor.js?v=20261120-account1';
 import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261122-authgate1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
@@ -503,7 +503,7 @@ async function send() {
             session.generatedHtml=generated.html;
             session.messages.push({role:'assistant',text:'Build Engine generated index.html, styles.css and main.js. Static starter app ready for review in Editor / Preview.'});
             renderMessages();
-            showGeneratedHtml(generated.html,true);
+            showGeneratedFiles(generated.files,true);
             saveRefreshState('builder');
           }
         } catch(buildError) {
