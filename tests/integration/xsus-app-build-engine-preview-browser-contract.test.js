@@ -26,6 +26,11 @@ describe("XSUS App branch-only preview browser safety contract",()=>{
   expect(source).toContain("generation!==previewGeneration");
   expect(source).toContain("controller.signal.aborted");
  });
+ it("locks the project selection while a request is in progress",()=>{
+  expect(source).toContain("select.disabled=true;build.disabled=true");
+  expect(source).toContain("build.disabled=true;select.disabled=true;status.textContent='Generating");
+  expect(source).toContain("select.disabled=false;build.disabled=false");
+ });
  it("requires exactly three bounded generated artifacts",()=>{
   expect(source).toContain("result.files.length!==3");
   expect(source).toContain("f.content.length>250000");
