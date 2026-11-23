@@ -14,7 +14,7 @@ initDashboard();
 import { initProjectManager } from './project-manager.js?v=20261122-unified2';
 initProjectManager();
 
-import { initVersionHistory } from './version-history.js';
+import { initVersionHistory } from './version-history.js?v=20261123-history11';
 initVersionHistory();
 
 import { initTestingDiagnostics } from './testing-diagnostics.js';
