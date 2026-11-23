@@ -1,0 +1,20 @@
+import {describe,it,expect,vi} from "vitest";
+import {createPostgresHostOperationStore} from "../../src/xsus-app-build-engine/sandbox/postgres-host-operation-store.js";
+const record={executionId:"execution-0001",operationId:"operation-0001",holderId:"worker-0001",fence:3,operation:"launch",status:"pending"};
+const row=(r=record)=>({execution_id:r.executionId,operation_id:r.operationId,holder_id:r.holderId,fence:String(r.fence),operation:r.operation,status:r.status});
+const setup=(result=[])=>{const query=vi.fn(async()=>({rows:result}));return {store:createPostgresHostOperationStore({query}),query};};
+describe("XSUS phase 52 PostgreSQL host operation store",()=>{
+ it("requires trusted query",()=>expect(()=>createPostgresHostOperationStore()).toThrow("query"));
+ it("reads a record",async()=>expect(await setup([row()]).store.read(record.executionId,record.operationId)).toEqual(record));
+ it("returns null for missing record",async()=>expect(await setup().store.read(record.executionId,record.operationId)).toBeNull());
+ it("uses parameterized read",async()=>{const x=setup();await x.store.read(record.executionId,record.operationId);expect(x.query.mock.calls[0][1]).toEqual([record.executionId,record.operationId]);});
+ it("inserts pending operation",async()=>expect(await setup([row()]).store.createIfAbsent(record)).toBe(true));
+ it("rejects duplicate insert",async()=>expect(await setup().store.createIfAbsent(record)).toBe(false));
+ it("rejects nonpending initial state",async()=>await expect(setup().store.createIfAbsent({...record,status:"applied"})).rejects.toThrow("pending"));
+ it("updates pending to applied",async()=>expect(await setup([row({...record,status:"applied"})]).store.compareAndSwap(record,{...record,status:"applied"})).toBe(true));
+ it("updates pending to uncertain",async()=>expect(await setup([row({...record,status:"uncertain"})]).store.compareAndSwap(record,{...record,status:"uncertain"})).toBe(true));
+ it("rejects lost CAS race",async()=>expect(await setup().store.compareAndSwap(record,{...record,status:"applied"})).toBe(false));
+ it("rejects terminal state rewrites",async()=>await expect(setup().store.compareAndSwap({...record,status:"applied"},{...record,status:"uncertain"})).rejects.toThrow("transition"));
+ it("rejects forged identity on read",async()=>await expect(setup([row({...record,operationId:"operation-0002"})]).store.read(record.executionId,record.operationId)).rejects.toThrow("mismatch"));
+ it("rejects unsafe database fences",async()=>await expect(setup([{...row(),fence:"9007199254740993"}]).store.read(record.executionId,record.operationId)).rejects.toThrow("Unsafe"));
+});
