@@ -23,18 +23,19 @@ if(ORIGINS.has(location.origin)){
  let activePreview=null;
  let previewGeneration=0;
  const open=async()=>{
-  activePreview?.abort();activePreview=null;previewGeneration++;
+  activePreview?.abort();activePreview=null;const generation=++previewGeneration;
   panel.showModal();status.textContent='Loading saved projects…';frame.style.display='none';frame.removeAttribute('srcdoc');files.textContent='';
   select.replaceChildren(new Option('Select a saved project',''));build.disabled=true;
   try{
    const client=await getSupabaseClient();const {data,error}=await client.auth.getUser();
    if(error||!data?.user?.id)throw new Error('Sign in to XSUS Studio first.');
    const {data:projects,error:queryError}=await client.from('xsus_builder_projects').select('id,name').eq('owner_id',data.user.id).order('created_at',{ascending:false}).limit(50);
+   if(generation!==previewGeneration||!panel.open)return;
    if(queryError)throw queryError;
    for(const project of projects||[]){if(UUID.test(project.id))select.add(new Option(String(project.name||'Project').slice(0,100),project.id));}
    status.textContent=select.options.length>1?'Choose a project to generate a static preview.':'No saved projects found.';
    build.disabled=select.options.length<2;
-  }catch(error){status.textContent=error?.message==='Sign in to XSUS Studio first.'?error.message:'Unable to load projects.';}
+  }catch(error){if(generation===previewGeneration&&panel.open)status.textContent=error?.message==='Sign in to XSUS Studio first.'?error.message:'Unable to load projects.';}
  };
  launcher.addEventListener('click',()=>void open());
  close.addEventListener('click',()=>panel.close());
