@@ -1,4 +1,4 @@
-import { buildFromChatGoal } from './build-engine-chat-client.js';
+import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-formfix2';
 import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261122-unified2';
 import { showGeneratedHtml } from './editor.js?v=20261120-account1';
