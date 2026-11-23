@@ -125,7 +125,7 @@ function updateDevice(device) {
 }
 function toast(message) { const node = $('#toast'); if(node) { node.textContent=message; node.classList.add('show'); setTimeout(()=>node.classList.remove('show'),2600); } }
 function targetValueForGenerated(){return $('#editorBody')?.querySelector('[data-generated-source]')?.value ?? null;}
-function persistGeneratedSource(){
+function persistGeneratedSource(checkpoint=false){
   if(!generatedFiles)return false;
   const source=targetValueForGenerated();
   if(source===null||source.length>250000)return false;
@@ -133,14 +133,15 @@ function persistGeneratedSource(){
   generatedHtml=assembleGeneratedPreview();
   document.dispatchEvent(new CustomEvent('xsus:generated-files-updated',{detail:{
     files:Object.fromEntries(Object.entries(generatedFiles)),
-    html:generatedHtml
+    html:generatedHtml,
+    checkpoint
   }}));
   return true;
 }
 function applyGeneratedChanges(){
   if(!generatedFiles){toast('Generate an app before editing');return;}
   try{
-    if(!persistGeneratedSource()){toast('Unable to save source changes');return;}
+    if(!persistGeneratedSource(true)){toast('Unable to save source changes');return;}
     updateMode('preview');
     toast('Changes applied to Preview');
   }catch(error){
