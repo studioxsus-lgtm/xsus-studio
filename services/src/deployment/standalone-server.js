@@ -9,6 +9,7 @@ import { createSupabaseProjectReviewIntegration } from './supabase-project-revie
 import { createSupabaseRestReviewClient } from './supabase-rest-review-client.js';
 import { createXsUsAppSavedProjectBuilder } from './xsus-app-build-engine.js';
 import { createBuildWorkerConnectivity } from './build-worker-connectivity.js';
+import { generateWorkerStaticPreview } from '../build-worker/static-preview-build.js';
 
 export function createStandaloneDeploymentServer(dependencies={}) {
   const route=createDeploymentNodeHandler(dependencies);
@@ -126,6 +127,14 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   const workerConfigured=Boolean(env.XSUS_BUILD_WORKER_URL&&env.XSUS_BUILD_WORKER_SHARED_SECRET&&env.XSUS_BUILD_STATUS_TOKEN);
   const workerConnectivity=workerConfigured?createBuildWorkerConnectivity({workerUrl:env.XSUS_BUILD_WORKER_URL,sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET}):undefined;
   const previewProxyEnabled=workerConfigured&&env.XSUS_BUILD_PREVIEW_PROXY_ENABLED==="true";
+  // Staging-only recovery for Render Free worker gateway outages. The same
+  // deterministic static generator runs locally; never executes user code.
+  const localStaticFallback=env.XSUS_STAGING_STATIC_PREVIEW_FALLBACK==="true"&&env.XSUS_USER_PROJECT_PREVIEW_ENABLED==="true";
+  const fallbackPreview=(name,reason)=>{
+    if(!localStaticFallback)throw new Error(reason);
+    console.warn("[xsus-preview-local-fallback]",JSON.stringify({reason}));
+    return generateWorkerStaticPreview({name});
+  };
   const previewProxy=previewProxyEnabled?async({name})=>{
     let response;
     for(let attempt=1;attempt<=4;attempt++){
@@ -147,13 +156,14 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
         });
       } catch(error) {
         console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"worker_network",reason:error?.name==="TimeoutError"?"timeout":"network_error",attempt}));
-        if(attempt===4)throw new Error("Worker preview network unavailable");
+        if(attempt===4)return fallbackPreview(name,"worker_network_unavailable");
         await new Promise(resolve=>setTimeout(resolve,attempt===1?3000:attempt===2?7000:12000));
         continue;
       }
       if(response.ok)break;
       console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"worker_response",status:response.status,attempt}));
-      if(![502,503,504].includes(response.status)||attempt===4)throw new Error("Worker preview failed");
+      if(![502,503,504].includes(response.status))throw new Error("Worker preview failed");
+      if(attempt===4)return fallbackPreview(name,"worker_gateway_unavailable");
       await response.body?.cancel();
       await new Promise(resolve=>setTimeout(resolve,attempt===1?3000:attempt===2?7000:12000));
     }
