@@ -1,12 +1,18 @@
 import {describe,it,expect} from "vitest";
 import {readFileSync} from "node:fs";
 const source=readFileSync(new URL("../../assets/js/xsus-app/build-preview-staging.js",import.meta.url),"utf8");
+const authSource=readFileSync(new URL("../../assets/js/xsus-app/auth-session.js",import.meta.url),"utf8");
 const html=readFileSync(new URL("../../app.html",import.meta.url),"utf8");
 describe("XSUS App branch-only preview browser safety contract",()=>{
  it("loads the staging-only module from app.html",()=>{
   expect(html).toContain('assets/js/xsus-app/build-preview-staging.js');
   expect(source).toContain("xsus-app-build-api-staging.onrender.com");
   expect(source).not.toContain("xsus-app-deployment-api.onrender.com");
+ });
+ it("allows staging Supabase auth only on the explicit preview host",()=>{
+  expect(authSource).toContain("https://xsus-app-build-preview-staging.onrender.com");
+  expect(source).toContain("https://xsus-app-build-preview-staging.onrender.com");
+  expect(authSource).toContain("ALLOWED_ORIGINS.has(window.location.origin)");
  });
  it("keeps generated JavaScript in an opaque-origin iframe",()=>{
   expect(source).toContain("setAttribute('sandbox','allow-scripts')");
