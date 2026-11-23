@@ -30,6 +30,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install API integration test dependencies
+        run: python -m pip install -r packages/future-xsus-core/requirements-remote.txt
       - name: Compile Albanian sources
         run: python -m compileall -q packages/future-xsus-core/languages/sq
       - name: Run Albanian regression suite
