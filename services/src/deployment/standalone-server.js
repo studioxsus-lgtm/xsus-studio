@@ -2,6 +2,7 @@
 // No provider deployments, no credentials loaded, and no production integrations by default.
 import http from 'node:http';
 import crypto from 'node:crypto';
+import {isPersistedBuilderProjectId} from './project-id-contract.js';
 import { pathToFileURL } from 'node:url';
 import { createDeploymentNodeHandler } from './deployment-node-adapter.js';
 import { createSupabaseProjectReviewIntegration } from './supabase-project-review-integration.js';
@@ -24,6 +25,44 @@ export function createStandaloneDeploymentServer(dependencies={}) {
       if(req.method!=='GET'){res.writeHead(405);res.end(JSON.stringify({error:'method_not_allowed'}));return;}
       if(!workerConnectivity||!connectivityToken||req.headers.authorization!=='Bearer '+connectivityToken){res.writeHead(404);res.end(JSON.stringify({error:'not_found'}));return;}
       void workerConnectivity.check().then(result=>{res.writeHead(result.connected?200:503);res.end(JSON.stringify(result));}).catch(()=>{res.writeHead(503);res.end(JSON.stringify({connected:false}));});return;
+    }
+    if(req.url?.split("?")[0]==="/api/projects/build-preview"){
+      const origin=req.headers.origin;
+      const allowed=typeof origin==="string"&&dependencies.allowedOrigins?.includes(origin);
+      const reply=(status,body)=>{if(res.writableEnded)return;res.writeHead(status,{"content-type":"application/json","cache-control":"no-store","x-content-type-options":"nosniff",...(allowed?{"access-control-allow-origin":origin,"vary":"Origin"}:{})});res.end(JSON.stringify(body));};
+      if(req.method==="OPTIONS"){
+        if(!allowed){reply(403,{error:"origin_not_allowed"});return;}
+        if(req.headers["access-control-request-method"]!=="POST"||
+           String(req.headers["access-control-request-headers"]??"").toLowerCase().split(",").some(h=>h.trim()&&!["authorization","content-type"].includes(h.trim()))){reply(403,{error:"preflight_denied"});return;}
+        res.writeHead(204,{"access-control-allow-origin":origin,"access-control-allow-methods":"POST","access-control-allow-headers":"authorization, content-type","access-control-max-age":"300","vary":"Origin"});res.end();return;
+      }
+      if(req.method!=="POST"){reply(405,{error:"method_not_allowed"});return;}
+      if(!allowed){reply(403,{error:"origin_not_allowed"});return;}
+      if(!dependencies.userPreviewEnabled||typeof dependencies.createUserPreviewClient!=="function"||typeof dependencies.previewProxy!=="function"){reply(503,{error:"preview_not_configured"});return;}
+      const token=req.headers.authorization;
+      if(typeof token!=="string"||!/^Bearer [A-Za-z0-9._~+/-]+=*$/.test(token)){reply(401,{error:"authentication_required"});return;}
+      if(!/^application\/json(?:\s*;|\s*$)/i.test(String(req.headers["content-type"]??""))){reply(415,{error:"unsupported_media_type"});return;}
+      void (async()=>{
+        try{
+          const chunks=[];let size=0;
+          if(Number(req.headers["content-length"]??0)>2048){reply(413,{error:"payload_too_large"});return;}
+          for await(const chunk of req){size+=chunk.length;if(size>2048){reply(413,{error:"payload_too_large"});return;}chunks.push(chunk);}
+          let body;try{body=JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{reply(400,{error:"invalid_json"});return;}
+          if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).length!==1||!isPersistedBuilderProjectId(body.projectId)){reply(400,{error:"invalid_project_id"});return;}
+          const client=dependencies.createUserPreviewClient(token.slice(7));
+          const verified=await client.auth.getUser(token.slice(7));
+          const ownerId=verified?.data?.user?.id;
+          if(verified?.error||typeof ownerId!=="string"||!ownerId){reply(401,{error:"authentication_required"});return;}
+          const {data,error}=await client.from("xsus_builder_projects").select("id,owner_id,snapshot").eq("id",body.projectId).eq("owner_id",ownerId).maybeSingle();
+          if(error){reply(503,{error:"project_unavailable"});return;}
+          if(!data||data.id!==body.projectId||data.owner_id!==ownerId){reply(404,{error:"project_not_found"});return;}
+          const goal=data.snapshot?.goal;
+          if(typeof goal!=="string"||!goal.trim()){reply(422,{error:"invalid_saved_project"});return;}
+          const result=await dependencies.previewProxy({name:goal.trim().slice(0,100)});
+          if(result?.kind!=="static-preview"||result?.requiresReview!==true||!Array.isArray(result.files)){reply(503,{error:"preview_unavailable"});return;}
+          reply(200,{projectId:body.projectId,kind:result.kind,requiresReview:true,files:result.files});
+        }catch{reply(503,{error:"preview_unavailable"});}
+      })();return;
     }
     if(req.url?.split("?")[0]==="/internal/build-preview"){
       const reply=(status,body)=>{if(res.writableEnded)return;res.writeHead(status,{"content-type":"application/json","cache-control":"no-store","x-content-type-options":"nosniff"});res.end(JSON.stringify(body));};
@@ -104,7 +143,10 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
        result.files.some(f=>typeof f.content!=="string"||f.content.length>500000)){console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"manifest",kind:result?.kind,files:Array.isArray(result?.files)?result.files.map(f=>f.path):[]}));throw new Error("Invalid preview manifest");}
     return result;
   }:undefined;
-  const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined,previewProxyEnabled,previewProxy});
+  const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined,previewProxyEnabled,previewProxy,
+    userPreviewEnabled:previewProxyEnabled&&restConfigured&&env.XSUS_USER_PROJECT_PREVIEW_ENABLED==='true',
+    createUserPreviewClient:restConfigured?(token)=>createSupabaseRestReviewClient({url:supabaseUrl,publishableKey,accessToken:token}):undefined,
+    allowedOrigins:typeof env.XSUS_APP_ALLOWED_ORIGINS==='string'?env.XSUS_APP_ALLOWED_ORIGINS.split(',').map(x=>x.trim()).filter(x=>/^https:\/\//.test(x)):[]});
   server.listen(port,'0.0.0.0',()=>{
     if(previewProxyEnabled&&env.XSUS_PREVIEW_PROXY_SMOKE==="true"){
       void (async()=>{
