@@ -49,12 +49,12 @@ if(ORIGINS.has(location.origin)){
    if(map.size!==3||!['index.html','styles.css','main.js'].every(p=>typeof map.get(p)==='string'&&map.get(p).length>0))throw new Error('Incomplete preview files.');
    // Keep generated content isolated from the XSUS Studio origin. Deny external network and navigation.
    const policy='<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data:; form-action \'none\'; base-uri \'none\'">';
-   const css='<style>'+map.get('styles.css').replace(/<\\/style/gi,'<\\/style')+'</style>';
-   const js='<script>'+map.get('main.js').replace(/<\\/script/gi,'<\\/script')+'<\\/script>';
-   let html=map.get('index.html').replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi,'').replace(/<link\\b[^>]*rel=["\']stylesheet["\'][^>]*>/gi,'');
-   html=html.replace(/<head[^>]*>/i,m=>m+policy+css);
-   html=html.replace(/<\\/body>/i,js+'</body>');
-   frame.srcdoc=html;frame.style.display='block';
+   const doc=new DOMParser().parseFromString(map.get('index.html'),'text/html');
+   doc.querySelectorAll('script,link[rel="stylesheet"],iframe,object,embed,base,meta[http-equiv="refresh"]').forEach(node=>node.remove());
+   const csp=doc.createElement('meta');csp.httpEquiv='Content-Security-Policy';csp.content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'";doc.head.prepend(csp);
+   const style=doc.createElement('style');style.textContent=map.get('styles.css');doc.head.append(style);
+   const script=doc.createElement('script');script.textContent=map.get('main.js');doc.body.append(script);
+   frame.srcdoc='<!doctype html>'+doc.documentElement.outerHTML;frame.style.display='block';
    files.textContent='Generated: index.html · styles.css · main.js (review required)';
    status.textContent='Static preview ready. Not deployed.';
   }catch(error){status.textContent=error?.message?.startsWith('Preview request failed')?error.message:'Preview unavailable or response invalid.';}
