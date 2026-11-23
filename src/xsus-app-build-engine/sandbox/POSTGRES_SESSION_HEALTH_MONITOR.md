@@ -1,0 +1,5 @@
+# Phase 55 — PostgreSQL pinned-session health probe
+
+This module provides a fail-closed health probe for a dedicated PostgreSQL session holding a session-scoped advisory lock. It checks backend PID and reentrant advisory-lock acquisition, balancing the additional acquisition with an unlock. A failed probe signals loss via onLost and prevents subsequent success.
+
+**Not yet integrated or production-ready:** The Phase 53 lock coordinator does not expose its pinned client or backend PID, so this monitor is not yet connected to Phase 54. The probe must run on the exact same client and must not race with other queries on that client. PostgreSQL advisory locks are reentrant, so the probe is not proof of uninterrupted lock ownership between checks. A new backend could obtain the lock after session loss, and physical host actions might continue; host-side durable fencing remains mandatory. No timers are installed: this is an on-demand probe, not continuous monitoring. Tests use mock clients; no live database or host was accessed.
