@@ -1,0 +1,5 @@
+# Phase 57 — Continuous lock watchdog
+
+A scheduler-injected, cooperative polling watchdog for a trusted lock-health monitor. It checks before and after a callback and schedules periodic checks while it runs. Detected loss aborts a signal and marks the outcome uncertain. It never claims to stop a physical host action.
+
+**Important limitations:** The Phase 55 probe uses the pinned PostgreSQL connection; scheduling concurrent probes while other SQL operations use that connection can race. Do not wire this watchdog directly to a shared client without a serializing query gate. Polling is not continuous proof of lock ownership, and cooperative cancellation does not fence host actions. The callback may ignore abort; in that case the watchdog awaits its completion. Production requires durable host fencing, action timeouts, crash reconciliation, and real PostgreSQL integration tests. This implementation uses injected scheduler callbacks and mocked tests only; no live host or database was accessed.
