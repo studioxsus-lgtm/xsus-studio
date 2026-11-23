@@ -45,8 +45,11 @@ if(ORIGINS.has(location.origin)){
   activePreview?.abort();const controller=new AbortController();activePreview=controller;const generation=++previewGeneration;
   build.disabled=true;status.textContent='Generating secure staging preview…';frame.style.display='none';frame.removeAttribute('srcdoc');
   try{
-   const token=await getUserAccessToken();if(!token)throw new Error('Sign in to XSUS Studio first.');
+   const token=await getUserAccessToken();
+   if(generation!==previewGeneration||!panel.open||controller.signal.aborted)return;
+   if(!token)throw new Error('Sign in to XSUS Studio first.');
    const response=await fetch(API,{method:'POST',mode:'cors',cache:'no-store',headers:{'authorization':'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({projectId}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(120000)])});
+   if(generation!==previewGeneration||!panel.open||controller.signal.aborted)return;
    if(!response.ok){
     const messages={401:'Session expired. Sign in again.',403:'This website origin is not allowed.',404:'Project not found or not owned by your account.',422:'The saved project needs a valid goal.',503:'Preview service is temporarily unavailable.'};
     throw new Error(messages[response.status]||'Preview request failed ('+response.status+').');
