@@ -1,0 +1,32 @@
+name: Android APK booking smoke test
+on:
+  push:
+    branches: [feature/xsus-app-build-engine]
+    paths:
+      - 'src/xsus-app-build-engine/android/**'
+      - 'tests/android/**'
+      - '.github/workflows/android-booking-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  install-and-reopen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build and verify signed APK
+        run: |
+          node tests/android/build-reservation-fixture.mjs /tmp/restaurant.apk --emulator
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose /tmp/restaurant.apk
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Install, reserve and cold-start
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          script: bash tests/android/verify-reopen.sh
