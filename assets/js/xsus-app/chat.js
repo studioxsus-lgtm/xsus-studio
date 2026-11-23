@@ -301,7 +301,8 @@ function renderBoardActions(html) {
 function renderMessages() {
   const target = $('#chatMessages'); target.replaceChildren();
   const session = current();
-  showGeneratedHtml(session.generatedHtml ?? null);
+  if(session.generatedFiles && ['index.html','styles.css','main.js'].every(p=>typeof session.generatedFiles[p]==='string')) showGeneratedFiles(session.generatedFiles,false);
+  else showGeneratedHtml(session.generatedHtml ?? null);
   if (!session.messages.length) {
     const welcome = document.createElement('div'); welcome.className = 'chat-welcome';
     const welcomeTitle = document.createElement('h2'); welcomeTitle.textContent = t('What will you build today?');
@@ -501,6 +502,7 @@ async function send() {
           const generated = await buildFromChatGoal(goal,{signal:controller.signal});
           if(requestController===controller && sessionId===activeId){
             session.generatedHtml=generated.html;
+            session.generatedFiles=generated.files;
             session.messages.push({role:'assistant',text:'Build Engine generated index.html, styles.css and main.js. Static starter app ready for review in Editor / Preview.'});
             renderMessages();
             showGeneratedFiles(generated.files,true);
