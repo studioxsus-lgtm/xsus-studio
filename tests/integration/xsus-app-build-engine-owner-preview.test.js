@@ -27,5 +27,8 @@ describe("XSUS saved-project owner preview",()=>{
  it("denies invalid auth",async()=>{const r=await run({authUser:null});expect(r.status).toBe(401);expect(r.calls).toBe(0);});
  it("denies unknown browser origin",async()=>{const r=await run({originHeader:"https://evil.example"});expect(r.status).toBe(403);expect(r.calls).toBe(0);});
  it("rejects malformed project IDs",async()=>{const r=await run({requestProjectId:"not-an-id"});expect(r.status).toBe(400);expect(r.calls).toBe(0);});
+ it("rejects missing bearer credentials",async()=>{const r=await run({token:""});expect(r.status).toBe(401);expect(r.calls).toBe(0);});
+ it("rejects a token with spaces",async()=>{const r=await run({token:"bad token"});expect(r.status).toBe(401);expect(r.calls).toBe(0);});
+ it("does not return preview files to a different authenticated user",async()=>{const r=await run({authUser:"99999999-9999-4999-8999-999999999999"});expect(r.status).toBe(404);expect(r.calls).toBe(0);});
  it("fails closed if worker unavailable",async()=>{const r=await run({previewFails:true});expect(r.status).toBe(503);});
 });
