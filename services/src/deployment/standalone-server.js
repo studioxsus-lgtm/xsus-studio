@@ -81,11 +81,18 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   const workerConnectivity=workerConfigured?createBuildWorkerConnectivity({workerUrl:env.XSUS_BUILD_WORKER_URL,sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET}):undefined;
   const previewProxyEnabled=workerConfigured&&env.XSUS_BUILD_PREVIEW_PROXY_ENABLED==="true";
   const previewProxy=previewProxyEnabled?async({name})=>{
-    const response=await fetch(new URL("/internal/static-preview",env.XSUS_BUILD_WORKER_URL),{
-      method:"POST",headers:{"authorization":"Bearer "+env.XSUS_BUILD_WORKER_SHARED_SECRET,"content-type":"application/json"},
-      body:JSON.stringify({name}),signal:AbortSignal.timeout(12000),redirect:"error"
-    });
-    if(!response.ok){console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"worker_response",status:response.status}));throw new Error("Worker preview failed");}
+    let response;
+    for(let attempt=1;attempt<=3;attempt++){
+      response=await fetch(new URL("/internal/static-preview",env.XSUS_BUILD_WORKER_URL),{
+        method:"POST",headers:{"authorization":"Bearer "+env.XSUS_BUILD_WORKER_SHARED_SECRET,"content-type":"application/json"},
+        body:JSON.stringify({name}),signal:AbortSignal.timeout(25000),redirect:"error"
+      });
+      if(response.ok)break;
+      console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"worker_response",status:response.status,attempt}));
+      if(![502,503,504].includes(response.status)||attempt===3)throw new Error("Worker preview failed");
+      await response.body?.cancel();
+      await new Promise(resolve=>setTimeout(resolve,attempt*1500));
+    }
     const result=await response.json();
     if(result?.kind!=="static-preview"||result?.requiresReview!==true||!Array.isArray(result.files)||result.files.length!==3||
        JSON.stringify(result.files.map(f=>f.path))!==JSON.stringify(["index.html","styles.css","main.js"])||
