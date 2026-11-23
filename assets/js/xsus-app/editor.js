@@ -125,18 +125,22 @@ function updateDevice(device) {
 }
 function toast(message) { const node = $('#toast'); if(node) { node.textContent=message; node.classList.add('show'); setTimeout(()=>node.classList.remove('show'),2600); } }
 function targetValueForGenerated(){return $('#editorBody')?.querySelector('[data-generated-source]')?.value ?? null;}
+function persistGeneratedSource(){
+  if(!generatedFiles)return false;
+  const source=targetValueForGenerated();
+  if(source===null||source.length>250000)return false;
+  generatedFiles[currentFile]=source;
+  generatedHtml=assembleGeneratedPreview();
+  document.dispatchEvent(new CustomEvent('xsus:generated-files-updated',{detail:{
+    files:Object.fromEntries(Object.entries(generatedFiles)),
+    html:generatedHtml
+  }}));
+  return true;
+}
 function applyGeneratedChanges(){
   if(!generatedFiles){toast('Generate an app before editing');return;}
-  const source=targetValueForGenerated();
-  if(source===null){toast('Source editor unavailable');return;}
-  if(source.length>250000){toast('File exceeds 250 KB');return;}
   try{
-    generatedFiles[currentFile]=source;
-    generatedHtml=assembleGeneratedPreview();
-    document.dispatchEvent(new CustomEvent('xsus:generated-files-updated',{detail:{
-      files:Object.fromEntries(Object.entries(generatedFiles).map(([path,content])=>[path,content])),
-      html:generatedHtml
-    }}));
+    if(!persistGeneratedSource()){toast('Unable to save source changes');return;}
     updateMode('preview');
     toast('Changes applied to Preview');
   }catch(error){
@@ -173,7 +177,7 @@ export function initEditor() {
     onEditorClick(event);
   });
   target?.addEventListener('change',event=>{if(event.target.id==='demo-element')selectedElement=event.target.value; if(event.target.matches('[data-visual-input]')) {handleVisualDesignInput(event);renderEditor();}});
-  target?.addEventListener('input',event=>{if(event.target.matches('[data-visual-range]')){handleVisualDesignInput(event);const node=target.querySelector('[data-visual-selected]');if(node)node.style.borderRadius=event.target.value+'px';}});
+  target?.addEventListener('input',event=>{if(event.target.matches('[data-generated-source]')){try{persistGeneratedSource();}catch(error){console.error('[xsus-editor-autosave]',error);}return;}if(event.target.matches('[data-visual-range]')){handleVisualDesignInput(event);const node=target.querySelector('[data-visual-selected]');if(node)node.style.borderRadius=event.target.value+'px';}});
   target?.addEventListener('keydown',event=>{if(!event.target.matches('.split-divider'))return;if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();splitRatio=Math.max(30,Math.min(70,splitRatio+(event.key==='ArrowRight'?5:-5)));renderEditor();target.querySelector('.split-divider')?.focus();}});
   let dragging=false;
   target?.addEventListener('pointerdown',event=>{if(!event.target.matches('.split-divider'))return;dragging=true;event.target.setPointerCapture(event.pointerId);});
