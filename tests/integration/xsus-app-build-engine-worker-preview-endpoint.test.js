@@ -18,5 +18,6 @@ describe("XSUS authenticated static preview endpoint",()=>{
  it("rejects malformed project names",async()=>expect((await request({body:{name:""}})).status).toBe(400));
  it("rejects extra user-supplied fields",async()=>expect((await request({body:{name:"Notes",ownerId:"admin"}})).status).toBe(400));
  it("escapes HTML in generated title",async()=>{const r=await request({body:{name:"<script>alert(1)</script>"}});expect(r.status).toBe(200);expect(r.data.files[0].content).not.toContain("<script>");});
+ it("accepts standard fetch content-length without rejecting a small request",async()=>{const r=await request({body:{name:"XSUS Preview Smoke Test"}});expect(r.status).toBe(200);expect(r.data.files).toHaveLength(3);});
  it("never claims Docker execution",async()=>{const r=await request();expect(r.data.kind).toBe("static-preview");expect(r.data.requiresReview).toBe(true);});
 });
