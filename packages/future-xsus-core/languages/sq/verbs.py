@@ -18,7 +18,6 @@ _PARADIGMS = {
     "jam": {
         ("Pres", "Ind"): ("jam", "je", "është", "jemi", "jeni", "janë"),
         ("Imp", "Ind"): ("isha", "ishe", "ishte", "ishim", "ishit", "ishin"),
-        ("Aor", "Ind"): ("qeshë", "qe", "qe", "qemë", "qetë", "qenë"),
     },
     "kam": {
         ("Pres", "Ind"): ("kam", "ke", "ka", "kemi", "keni", "kanë"),
