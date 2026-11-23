@@ -1,0 +1,5 @@
+# Phase 48 — Host-level fencing boundary
+
+This backend-only module defines an authenticated interface for `launch`, `stop` and `cleanup` actions with execution identity, holder identity and monotonically increasing lease fence. It rejects malformed requests, denied authorization, rejected or unapplied host actions, and contradictory acknowledgements.
+
+**Critical production requirement:** `agent.applyFencedAction` is an injected contract, NOT an implemented host daemon. The trusted host agent must enforce fencing atomically with the physical operation using an authoritative fence ledger and reject stale holders. A PostgreSQL SELECT followed by Docker commands is vulnerable to a takeover race and is not sufficient. Agent identity, action idempotency, host crash recovery, durable acknowledgements, and cancellation reconciliation are still missing. Do not treat a successful mocked acknowledgement as proof of container isolation or execution. No live host, Docker daemon, or database was accessed. The integration tests are contract tests with mocks.
