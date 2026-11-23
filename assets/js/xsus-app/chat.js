@@ -532,6 +532,16 @@ async function send() {
 }
 
 export function initChat() {
+  // Persist source edits on the active conversation, not only in the transient editor.
+  document.addEventListener('xsus:generated-files-updated',event=>{
+    const files=event.detail?.files;
+    if(!files || !['index.html','styles.css','main.js'].every(path=>typeof files[path]==='string'&&files[path].length<=250000))return;
+    const session=current();
+    if(!session)return;
+    session.generatedFiles=Object.fromEntries(['index.html','styles.css','main.js'].map(path=>[path,files[path]]));
+    session.generatedHtml=event.detail.html;
+    saveRefreshState('builder');
+  });
   registerRefreshState('builder', () => ({
     sessions, reviews: [...specificationReviews], activeId, nextId,
     goal: $('#prompt').value, steps: $('#planSteps').value
