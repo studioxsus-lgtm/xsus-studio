@@ -1,0 +1,5 @@
+# Phase 59 — Durable cancellation and recovery receipts
+
+Adds an injected persistent-store contract for uncertain cancellation receipts: read, createIfAbsent and compareAndSwap. A cancellation receipt records execution/operation IDs, reason, stop-request outcome, state and revision. Duplicate identical records are idempotent; conflicting records fail closed. A trusted reviewer can move an uncertain receipt to reviewed using an authorized evidence reference and optimistic concurrency.
+
+**Not a physical recovery engine:** Reviewed does not mean the host action was stopped, cleaned or proven safe. This module does not automatically retry, relaunch or delete containers. A real durable SQL store, trusted evidence validation, crash-safe atomicity and integration with Phase 58's recordUncertain callback are still required. The evidenceId is only an opaque reference; do not store private evidence payloads here. Tests use in-memory mocked storage; no database migration or live host execution was performed.
