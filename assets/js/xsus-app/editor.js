@@ -53,7 +53,7 @@ function injectPreviewDataStore(doc){
    publish();
   },true);
   window.addEventListener('load',()=>{
-   if(!state.actions.length)return;
+   if(!state.actions.length||Object.keys(state.items).length)return;
    setTimeout(()=>{
     replay=true;
     try{
