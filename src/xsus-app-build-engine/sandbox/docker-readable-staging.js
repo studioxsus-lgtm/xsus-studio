@@ -29,7 +29,7 @@ export function createDockerReadableStaging({staging,prepareOwnership,verifyOwne
     throw error;
    }
   },
-  removeMaterialized(staged,{executionId}={}){
+  async removeMaterialized(staged,{executionId}={}){
    if(staged?.path!==ROOT+executionId||staged.containerUid!==RUNTIME_UID||staged.containerGid!==RUNTIME_GID||typeof executionId!=="string"||!ID.test(executionId))throw new TypeError("Invalid Docker staging cleanup identity");
    return staging.removeMaterialized(staged,{executionId});
   }
