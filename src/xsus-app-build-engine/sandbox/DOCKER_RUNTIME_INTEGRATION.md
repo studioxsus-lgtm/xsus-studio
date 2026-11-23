@@ -1,0 +1,5 @@
+# Phase 62 — Docker runtime integration
+
+Composes existing Docker driver (Phase 30), isolated executor (Phase 29), and controlled cancellation (Phase 58) into one callable interface. The runtime requires a digest-pinned image, verified host isolation, secure staging, a trusted Docker process runner, a stop provider, and an uncertainty recorder. The Docker driver keeps network disabled, root filesystem read-only, capabilities dropped, and resource limits enforced by contract.
+
+**Scope:** This is composition code with mocked tests. No Docker daemon, PostgreSQL, or Render service was accessed. The test suite currently covers fail-closed validation paths; a valid build-manifest fixture and actual sandbox execution must be tested before claiming end-to-end functionality. The staging permissions from Phase 32 may be incompatible with container UID 65534 and need remediation. Cancellation is cooperative and the stop provider is injected, not implemented. The module is not deployed or production-ready.
