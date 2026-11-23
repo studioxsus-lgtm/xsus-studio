@@ -74,7 +74,7 @@ export function renderEditor() {
   const preview = target.querySelector('[data-generated-preview]');
   if (preview) {
     if (generatedHtml.includes('<meta http-equiv="Content-Security-Policy"')) {
-      preview.setAttribute('sandbox', 'allow-scripts allow-downloads');
+      preview.setAttribute('sandbox', 'allow-scripts allow-forms allow-downloads');
     }
     const id = generatedHtml.match(/<html lang="en" data-board="([a-f0-9-]+)"/)?.[1];
     if (id) preview.dataset.board = id;
