@@ -1,0 +1,5 @@
+# Phase 44 — Durable lease and fencing contracts
+
+The lease manager requires an injected persistent store with atomic `read`, `createIfAbsent`, and `compareAndSwap`. It supports acquire, renew, verify and release. A new acquisition after expiration/release increases the fencing token monotonically; a stale holder cannot renew or verify the new lease. The SQL schema is a draft only.
+
+**Critical:** This is not yet an actual PostgreSQL lease adapter. The in-memory test store only simulates atomic compare-and-swap. The lease fence is distinct from the execution lifecycle fence. All host-side actions (Docker launch, cleanup, artifact staging) must enforce the lease fencing token against a trusted authoritative store; a successful `verify` before an action alone cannot prevent a subsequent takeover race. Lease expiry does not prove a process stopped. No automatic takeover should execute a workload until prior host execution is proven fenced/stopped. Clock consistency must be provided by the database or another authoritative time source, not untrusted worker clocks. No production deployment or migration was performed.
