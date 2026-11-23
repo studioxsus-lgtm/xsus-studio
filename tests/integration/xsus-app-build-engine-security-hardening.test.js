@@ -1,0 +1,21 @@
+import {describe,it,expect,vi} from "vitest";
+import {enforceBuildSecurity} from "../../src/xsus-app-build-engine/integration/build-security-gate.js";
+import {createSecureVerifiedProjectBuild} from "../../src/xsus-app-build-engine/integration/secure-verified-project-build.js";
+const base={project:"notes-app",files:[{path:"index.html",content:"<!doctype html><html><main></main><link rel=\"stylesheet\" href=\"./styles.css\"><script type=\"module\" src=\"./main.js\"></script></html>"},{path:"styles.css",content:"body{}"},{path:"main.js",content:"console.log('ok')"}]};
+const request={ownerId:"owner-0001",projectId:"project-0001",executionId:"execution-0001",operationId:"operation-0001",prompt:"Notes app"};
+const architecture={name:"Notes",slug:"notes-app",modules:[{id:"home",kind:"page"}],routes:[{id:"homeRoute",path:"/",moduleId:"home"}]};
+describe("XSUS phase 66 security hardening",()=>{
+ it("accepts valid static source",()=>expect(enforceBuildSecurity({manifest:base}).totalBytes).toBeGreaterThan(0));
+ it("defaults to network-disabled policy",()=>expect(enforceBuildSecurity({manifest:base}).policy.network).toBe("disabled"));
+ it("defaults to unprivileged runtime",()=>expect(enforceBuildSecurity({manifest:base}).policy.privileged).toBe(false));
+ it("rejects excessive memory",()=>expect(()=>enforceBuildSecurity({manifest:base,policy:{memoryMb:257}})).toThrow());
+ it("rejects excessive timeout",()=>expect(()=>enforceBuildSecurity({manifest:base,policy:{timeoutMs:30001}})).toThrow());
+ it("rejects unsupported policy keys",()=>expect(()=>enforceBuildSecurity({manifest:base,policy:{network:"enabled"}})).toThrow());
+ it("rejects environment files",()=>expect(()=>enforceBuildSecurity({manifest:{...base,files:[...base.files,{path:".env",content:"SECRET=1"}]}})).toThrow());
+ it("rejects nested credentials",()=>expect(()=>enforceBuildSecurity({manifest:{...base,files:[...base.files,{path:"config/credentials.json",content:"{}"}]}})).toThrow());
+ it("rejects executable scripts",()=>expect(()=>enforceBuildSecurity({manifest:{...base,files:[...base.files,{path:"tools/run.sh",content:"echo hi"}]}})).toThrow());
+ it("rejects aggregate oversized source",()=>expect(()=>enforceBuildSecurity({manifest:{...base,files:[...base.files,...Array.from({length:5},(_,i)=>({path:"file"+i+".txt",content:"x".repeat(450000)}))]}})).toThrow("aggregate"));
+ it("rejects unsafe traversal",()=>expect(()=>enforceBuildSecurity({manifest:{...base,files:[...base.files,{path:"../secret",content:"x"}]}})).toThrow());
+ it("executes generated scaffold under restricted policy",async()=>{const runtime={execute:vi.fn(async()=>({success:true,diagnostics:[]}))};const api=createSecureVerifiedProjectBuild({planner:async()=>architecture,authorize:async()=>true,runtime,recordResult:async()=>{}});expect((await api.build(request)).status).toBe("succeeded");expect(runtime.execute.mock.calls[0][0].policy).toMatchObject({network:"disabled",privileged:false});});
+ it("rejects dangerous requested policy before invoking runtime",async()=>{const runtime={execute:vi.fn()};const api=createSecureVerifiedProjectBuild({planner:async()=>architecture,authorize:async()=>true,runtime,recordResult:async()=>{}});await expect(api.build({...request,policy:{memoryMb:1024}})).rejects.toThrow();expect(runtime.execute).not.toHaveBeenCalled();});
+});
