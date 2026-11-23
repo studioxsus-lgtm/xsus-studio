@@ -1,9 +1,9 @@
-import {appendGeneratedSourceRevision} from './generated-source-history.js';
+import {appendGeneratedSourceRevision,findGeneratedSourceRevision} from './generated-source-history.js';
 import { SOURCE_PATHS, validProjectSource, copyProjectSource, restoreProjectSource } from './project-source-snapshot.js';
 import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-formfix2';
 import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart, currentWorkspaceOwner } from './refresh-state.js?v=20261122-unified2';
-import { showGeneratedHtml, showGeneratedFiles } from './editor.js?v=20261123-checkpoints10';
+import { showGeneratedHtml, showGeneratedFiles, getGeneratedPreviewHtml } from './editor.js?v=20261123-history11';
 import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261122-authgate1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
@@ -567,6 +567,22 @@ async function send() {
 }
 
 export function initChat() {
+  document.addEventListener('xsus:restore-generated-revision',event=>{
+    const session=current();
+    const files=findGeneratedSourceRevision(session?.generatedSourceHistory,event.detail?.id);
+    if(!session||!files)return;
+    // A restore is itself a new checkpoint; users can undo it using History.
+    if(validSourceFiles(session.generatedFiles))
+      session.generatedSourceHistory=appendGeneratedSourceRevision(session.generatedSourceHistory,session.generatedFiles);
+    session.generatedFiles=files;
+    showGeneratedFiles(files,true);
+    session.generatedHtml=getGeneratedPreviewHtml();
+    session.generatedSourceHistory=appendGeneratedSourceRevision(session.generatedSourceHistory,files);
+    storeSourceFiles(session);
+    saveRefreshState('builder');
+    document.dispatchEvent(new Event('xsus:generated-revision-restored'));
+  });
+
   // Persist source edits on the active conversation, not only in the transient editor.
   document.addEventListener('xsus:generated-files-updated',event=>{
     const files=event.detail?.files;
