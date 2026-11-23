@@ -64,7 +64,7 @@ if(ORIGINS.has(location.origin)){
    const doc=new DOMParser().parseFromString(map.get('index.html'),'text/html');
    if(doc.querySelector('parsererror'))throw new Error('Invalid preview HTML.');
    doc.querySelectorAll('script,link,iframe,object,embed,base,form,meta[http-equiv]').forEach(node=>node.remove());
-   doc.querySelectorAll('*').forEach(node=>{for(const attr of [...node.attributes]){if(/^on/i.test(attr.name)||['srcdoc','formaction','target'].includes(attr.name.toLowerCase()))node.removeAttribute(attr.name);}});
+   doc.querySelectorAll('*').forEach(node=>{for(const attr of [...node.attributes]){if(/^on/i.test(attr.name)||['srcdoc','formaction','target'].includes(attr.name.toLowerCase())||(node.localName==='a'&&attr.name.toLowerCase()==='href'))node.removeAttribute(attr.name);}});
    const csp=doc.createElement('meta');csp.httpEquiv='Content-Security-Policy';csp.content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'";doc.head.prepend(csp);
    const style=doc.createElement('style');style.textContent=map.get('styles.css');doc.head.append(style);
    const script=doc.createElement('script');script.textContent=map.get('main.js');doc.body.append(script);
