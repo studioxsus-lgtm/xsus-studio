@@ -4,13 +4,13 @@ import {createStandaloneDeploymentServer} from "../../services/src/deployment/st
 const projectId="33333333-3333-4333-8333-333333333333";
 const ownerId="11111111-1111-4111-8111-111111111111";
 const origin="https://www.xsusstudio.com";
-async function run({enabled=true,token="valid-token-long-enough",requestProjectId=projectId,storedOwner=ownerId,originHeader=origin,authUser=ownerId,previewFails=false,invalidFiles=false}={}){
+async function run({enabled=true,token="valid-token-long-enough",requestProjectId=projectId,storedOwner=ownerId,originHeader=origin,authUser=ownerId,previewFails=false,invalidFiles=false,goal="Notes app"}={}){
  let calls=0;
  const server=createStandaloneDeploymentServer({
    allowedOrigins:[origin],userPreviewEnabled:enabled,
    createUserPreviewClient:()=>({
      auth:{getUser:async()=>({data:{user:authUser?{id:authUser}:null},error:authUser?null:{message:"invalid"}})},
-     from:()=>{const q={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:{id:projectId,owner_id:storedOwner,snapshot:{goal:"Notes app"}},error:null})};return q;}
+     from:()=>{const q={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:{id:projectId,owner_id:storedOwner,snapshot:{goal}},error:null})};return q;}
    }),
    previewProxy:async()=>{calls++;if(previewFails)throw Error("worker offline");return {kind:"static-preview",requiresReview:true,files:invalidFiles?[{path:"index.html",content:"ok"}]:[{path:"index.html",content:"<html></html>"},{path:"styles.css",content:"body{}"},{path:"main.js",content:"console.log(1)"}]};}
  });
@@ -31,5 +31,17 @@ describe("XSUS saved-project owner preview",()=>{
  it("rejects a token with spaces",async()=>{const r=await run({token:"bad token"});expect(r.status).toBe(401);expect(r.calls).toBe(0);});
  it("does not return preview files to a different authenticated user",async()=>{const r=await run({authUser:"99999999-9999-4999-8999-999999999999"});expect(r.status).toBe(404);expect(r.calls).toBe(0);});
  it("rejects incomplete worker artifact manifests",async()=>{const r=await run({invalidFiles:true});expect(r.status).toBe(503);expect(r.calls).toBe(1);});
+ it("rejects a saved project without a usable goal",async()=>{const r=await run({goal:"   "});expect(r.status).toBe(422);expect(r.calls).toBe(0);});
+ it("rejects oversized generated files",async()=>{
+  let calls=0;
+  const server=createStandaloneDeploymentServer({
+   allowedOrigins:[origin],userPreviewEnabled:true,
+   createUserPreviewClient:()=>({auth:{getUser:async()=>({data:{user:{id:ownerId}},error:null})},from:()=>{const q={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:{id:projectId,owner_id:ownerId,snapshot:{goal:"Notes app"}},error:null})};return q;}}),
+   previewProxy:async()=>{calls++;return {kind:"static-preview",requiresReview:true,files:[{path:"index.html",content:"x".repeat(250001)},{path:"styles.css",content:"body{}"},{path:"main.js",content:"void 0"}]};}
+  });
+  server.listen(0,"127.0.0.1");await once(server,"listening");
+  try{const response=await fetch("http://127.0.0.1:"+server.address().port+"/api/projects/build-preview",{method:"POST",headers:{origin,authorization:"Bearer valid-token-long-enough","content-type":"application/json"},body:JSON.stringify({projectId})});expect(response.status).toBe(503);expect(calls).toBe(1);}
+  finally{await new Promise(resolve=>server.close(resolve));}
+ });
  it("fails closed if worker unavailable",async()=>{const r=await run({previewFails:true});expect(r.status).toBe(503);});
 });
