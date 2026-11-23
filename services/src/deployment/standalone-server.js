@@ -6,14 +6,23 @@ import { createDeploymentNodeHandler } from './deployment-node-adapter.js';
 import { createSupabaseProjectReviewIntegration } from './supabase-project-review-integration.js';
 import { createSupabaseRestReviewClient } from './supabase-rest-review-client.js';
 import { createXsUsAppSavedProjectBuilder } from './xsus-app-build-engine.js';
+import { createBuildWorkerConnectivity } from './build-worker-connectivity.js';
 
 export function createStandaloneDeploymentServer(dependencies={}) {
   const route=createDeploymentNodeHandler(dependencies);
+  const workerConnectivity=dependencies.workerConnectivity;
+  const connectivityToken=dependencies.connectivityToken;
   return http.createServer((req,res)=>{
     if (req.url?.split('?')[0]==='/healthz' && req.method==='GET') {
       res.writeHead(200,{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'});
       res.end(JSON.stringify({ok:true,service:'xsus-app-deployment-validation',deploymentEnabled:false}));
       return;
+    }
+    if(req.url?.split('?')[0]==='/internal/build-worker/status'){
+      res.setHeader('content-type','application/json');res.setHeader('cache-control','no-store');
+      if(req.method!=='GET'){res.writeHead(405);res.end(JSON.stringify({error:'method_not_allowed'}));return;}
+      if(!workerConnectivity||!connectivityToken||req.headers.authorization!=='Bearer '+connectivityToken){res.writeHead(404);res.end(JSON.stringify({error:'not_found'}));return;}
+      void workerConnectivity.check().then(result=>{res.writeHead(result.connected?200:503);res.end(JSON.stringify(result));}).catch(()=>{res.writeHead(503);res.end(JSON.stringify({connected:false}));});return;
     }
     void route(req,res);
   });
@@ -50,7 +59,9 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
         buildFromSavedProject:builder}).projectReviewer;
     }
   } : {};
-  const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration});
+  const workerConfigured=Boolean(env.XSUS_BUILD_WORKER_URL&&env.XSUS_BUILD_WORKER_SHARED_SECRET&&env.XSUS_BUILD_STATUS_TOKEN);
+  const workerConnectivity=workerConfigured?createBuildWorkerConnectivity({workerUrl:env.XSUS_BUILD_WORKER_URL,sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET}):undefined;
+  const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined});
   server.listen(port,'0.0.0.0');
   return server;
 }
