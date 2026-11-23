@@ -1,3 +1,4 @@
+import {updateLinkedAccountProject} from './account-save-operation.js';
 import {nextAccountRetryDelay,shouldRetryAccountSave} from './account-retry-policy.js';
 import {hasProjectWork,canCaptureProject} from './project-recovery-policy.js';
 import {classifyAccountSaveResult} from './account-autosave-policy.js';
@@ -164,11 +165,8 @@ export function initAccountProjects() {
       const client=await getSupabaseClient();
       if (!current(token,owner)) return;
       if (link) {
-        let query = client.from(table).update({name,snapshot}).eq('owner_id',owner).eq('id',id);
-        query = link.token == null ? query.is('snapshot->>saveToken',null) : query.eq('snapshot->>saveToken',link.token);
-        const {data,error} = await query.select('id').maybeSingle();
-        if (error) throw error;
-        if (data?.id !== id) {
+        const result = await updateLinkedAccountProject(client,{table,owner,id,token:link.token,snapshot,name});
+        if (result !== 'saved') {
           if (current(token,owner)) status.textContent=(saveLabels[document.documentElement.lang] || saveLabels.en)[2];
           return;
         }
@@ -213,13 +211,10 @@ export function initAccountProjects() {
       if (currentWorkspaceOwner() !== owner || activeSession() !== session ||
           session.accountProject?.token !== link.token) return;
       snapshot.saveToken = crypto.randomUUID();
-      let query = client.from(table).update({ snapshot })
-        .eq('owner_id', owner).eq('id', link.id);
-      query = link.token == null ? query.is('snapshot->>saveToken', null)
-        : query.eq('snapshot->>saveToken', link.token);
-      const { data, error } = await query.select('id').maybeSingle();
-      const result=classifyAccountSaveResult(error,data?.id,link.id);
-      if(result==='retryable-error')throw error;
+      const result=await updateLinkedAccountProject(client,{
+        table,owner,id:link.id,token:link.token,snapshot
+      });
+      if(result==='retryable-error')throw Error('Transient account save failure');
       if(result==='revision-conflict') {
         // Do not overwrite conflicting remote edits or deleted projects.
         autosaveConflict = link.id;
