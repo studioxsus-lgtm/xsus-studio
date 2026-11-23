@@ -1,7 +1,7 @@
 import { buildFromChatGoal } from './build-engine-chat-client.js?v=20261123-formfix2';
 import { appendSourceRevision } from './code-generation/source-history.js';
 import { registerRefreshState, saveRefreshState, restoreWorkspacePart, readWorkspacePart } from './refresh-state.js?v=20261122-unified2';
-import { showGeneratedHtml, showGeneratedFiles } from './editor.js?v=20261123-editable1';
+import { showGeneratedHtml, showGeneratedFiles } from './editor.js?v=20261123-applyfix3';
 import { appendScaffoldControls, upgradeTaskBoard, enableTaskAssignments, enableMemberFilter } from './scaffold/index.js?v=20261122-authgate1';
 import { t } from './i18n/language-manager.js?v=20261120-scaffold1';
 import { $, $$ } from './state.js';
