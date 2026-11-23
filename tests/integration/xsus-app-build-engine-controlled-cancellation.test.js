@@ -9,8 +9,8 @@ describe("XSUS phase 58 controlled cancellation",()=>{
  it("clears timer after completion",async()=>{const x=setup();await x.coordinator.execute({...args,run:async()=>{}});expect(x.cancel).toHaveBeenCalledOnce();});
  it("does not request stop on success",async()=>{const x=setup();await x.coordinator.execute({...args,run:async()=>{}});expect(x.requestStop).not.toHaveBeenCalled();});
  it("marks timed out execution uncertain",async()=>{const x=setup();await expect(x.coordinator.execute({...args,run:async()=>{x.timeout();}})).rejects.toThrow("requires reconciliation");expect(x.recordUncertain).toHaveBeenCalledOnce();});
- it("requests stop on timeout",async()=>{const x=setup();await expect(x.coordinator.execute({...args,run:async()=>x.timeout()})).rejects.toThrow("uncertain");expect(x.requestStop).toHaveBeenCalledWith({executionId,operationId,reason:"timeout"});});
- it("signals cooperative cancellation",async()=>{const x=setup();await expect(x.coordinator.execute({...args,run:async({signal})=>{x.timeout();expect(signal.aborted).toBe(true);}})).rejects.toThrow("uncertain");});
+ it("requests stop on timeout",async()=>{const x=setup();await expect(x.coordinator.execute({...args,run:async()=>x.timeout()})).rejects.toThrow("requires reconciliation");expect(x.requestStop).toHaveBeenCalledWith({executionId,operationId,reason:"timeout"});});
+ it("signals cooperative cancellation",async()=>{const x=setup();await expect(x.coordinator.execute({...args,run:async({signal})=>{x.timeout();expect(signal.aborted).toBe(true);}})).rejects.toThrow("requires reconciliation");});
  it("rejects already cancelled signal",async()=>{const x=setup(),controller=new AbortController();controller.abort();await expect(x.coordinator.execute({...args,signal:controller.signal,run:async()=>{}})).rejects.toThrow("before start");});
  it("preserves original run failure",async()=>await expect(setup().coordinator.execute({...args,run:async()=>{throw new Error("run failed");}})).rejects.toThrow("run failed"));
  it("rejects invalid timeout",async()=>await expect(setup().coordinator.execute({...args,timeoutMs:0,run:async()=>{}})).rejects.toThrow("Invalid"));
