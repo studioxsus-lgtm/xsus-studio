@@ -175,6 +175,8 @@ export function initAccountProjects() {
       }
       if (currentWorkspaceOwner() === owner && readWorkspacePart('builder').sessions.includes(session)) {
         session.accountProject={id,name,token:snapshot.saveToken};
+        autosaveConflict = null;
+        lastAutosaved = '';
         saveRefreshState('builder');
       }
       if (!current(token,owner)) return;
@@ -187,8 +189,10 @@ export function initAccountProjects() {
   let autosaveTimer = null;
   let autosaveBusy = false;
   let lastAutosaved = '';
+  let autosavePending = false;
+  let autosaveConflict = null;
   async function autosaveLinkedProject() {
-    if (autosaveBusy || saving) return;
+    if (autosaveBusy || saving) { autosavePending = true; return; }
     const owner = currentWorkspaceOwner();
     const session = activeSession();
     const link = session?.accountProject;
@@ -210,22 +214,33 @@ export function initAccountProjects() {
       const { data, error } = await query.select('id').maybeSingle();
       if (error || data?.id !== link.id) {
         // Do not overwrite conflicting remote edits or deleted projects.
-        lastAutosaved = fingerprint;
+        autosaveConflict = link.id;
+        if (currentWorkspaceOwner() === owner) {
+          status.textContent = (saveLabels[document.documentElement.lang] || saveLabels.en)[2];
+          document.dispatchEvent(new CustomEvent('xsus:project-autosave-conflict',{detail:{projectId:link.id}}));
+        }
         return;
       }
       if (currentWorkspaceOwner() === owner && session.accountProject?.token === link.token) {
         session.accountProject = { ...link, token: snapshot.saveToken };
         lastAutosaved = fingerprint;
+        autosaveConflict = null;
         saveRefreshState('builder');
       }
     } catch {
       // Keep the local session intact. The account copy can still be saved manually.
     } finally {
       autosaveBusy = false;
+      if (autosavePending) {
+        autosavePending = false;
+        clearTimeout(autosaveTimer);
+        autosaveTimer = setTimeout(() => { void autosaveLinkedProject(); }, 1600);
+      }
     }
   }
   document.addEventListener('xsus:workspace-saved', event => {
     if (event.detail?.section !== 'builder' || !event.detail.owner) return;
+    if (autosaveBusy) { autosavePending = true; return; }
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(() => { void autosaveLinkedProject(); }, 1600);
   });
