@@ -27,6 +27,8 @@ await probe('missing-token-post','POST',{origin:allowedOrigin,'content-type':'ap
 await probe('wrong-method','GET',{origin:allowedOrigin},405);
 await probe('invalid-content-type','POST',{origin:allowedOrigin,authorization:'Bearer valid-token-long-enough','content-type':'text/plain'},415,'{}');
 await probe('invalid-project-id','POST',{origin:allowedOrigin,authorization:'Bearer valid-token-long-enough','content-type':'application/json'},400,JSON.stringify({projectId:'not-a-uuid'}));
+await probe('malformed-json','POST',{origin:allowedOrigin,authorization:'Bearer valid-token-long-enough','content-type':'application/json'},400,'{');
+await probe('oversized-json','POST',{origin:allowedOrigin,authorization:'Bearer valid-token-long-enough','content-type':'application/json'},413,JSON.stringify({projectId:'33333333-3333-4333-8333-333333333333',extra:'x'.repeat(2100)}));
 await probe('invalid-preflight-header','OPTIONS',{origin:allowedOrigin,'access-control-request-method':'POST','access-control-request-headers':'x-admin-token'},403);
 const preflight=await request('OPTIONS',{origin:allowedOrigin,'access-control-request-method':'POST','access-control-request-headers':'authorization, content-type'});
 assert.equal(preflight.status,204,'allowed preflight HTTP status');
