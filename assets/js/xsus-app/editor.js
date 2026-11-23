@@ -1,7 +1,8 @@
 import { registerRefreshState, saveRefreshState } from './refresh-state.js?v=20261122-unified2';
 import { t } from './i18n/language-manager.js?v=20261119-r2';
 import { renderVisualDesign, handleVisualDesignClick, handleVisualDesignInput } from './visual-editor.js';
-import { $, $$, state, refreshIcons } from './state.js';
+import { $, $, state, refreshIcons } from './state.js';
+import {loadPreviewCloudData,queuePreviewCloudSave} from './preview-cloud-storage.js?v=20261123-cloud1';
 
 // Independent, local-only design samples. Nothing is executed, compiled, or persisted.
 const samples = {
@@ -19,6 +20,21 @@ function previewDataKey(){
  let h=2166136261;
  for(let i=0;i<source.length;i++)h=Math.imul(h^source.charCodeAt(i),16777619);
  return 'xsus-app:preview-records:v2:'+(h>>>0).toString(16);
+}
+const cloudChecked=new Set();
+function restorePreviewFromCloud(key,files){
+ if(!key||cloudChecked.has(key))return;
+ cloudChecked.add(key);
+ void loadPreviewCloudData(key).then(payload=>{
+  if(!payload||previewDataKey()!==key||generatedFiles!==files)return;
+  // Local browser data always wins; never overwrite an existing local snapshot.
+  try{
+   if(localStorage.getItem(key)!==null)return;
+   localStorage.setItem(key,JSON.stringify(payload));
+   generatedHtml=assembleGeneratedPreview();
+   renderEditor();
+  }catch{}
+ }).catch(error=>console.warn('[xsus-preview-cloud-load]',error?.message||'unavailable'));
 }
 function injectPreviewDataStore(doc){
  const key=previewDataKey();
@@ -82,7 +98,7 @@ window.addEventListener('message',event=>{
  if(payload?.type!=='xsus-preview-data-v2'||payload.key!==previewDataKey())return;
  try{
   const value=JSON.stringify(payload.state);
-  if(value.length<=100000)localStorage.setItem(payload.key,value);
+  if(value.length<=100000){localStorage.setItem(payload.key,value);queuePreviewCloudSave(payload.key,payload.state);}
  }catch{}
 });
 const generatedCsp = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'";
@@ -102,6 +118,7 @@ export function showGeneratedFiles(files,openPreview=true){
  if(!files||!['index.html','styles.css','main.js'].every(p=>typeof files[p]==='string'&&files[p].length<=250000))throw new TypeError('Invalid build files');
  generatedFiles=Object.fromEntries(['index.html','styles.css','main.js'].map(p=>[p,files[p]]));
  generatedHtml=assembleGeneratedPreview();
+ restorePreviewFromCloud(previewDataKey(),generatedFiles);
  currentFile='index.html';
  renderEditor();
  if(openPreview){updateMode('preview');$('[data-mobile="editor"]')?.click();}
