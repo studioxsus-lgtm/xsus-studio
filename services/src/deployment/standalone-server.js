@@ -128,6 +128,17 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   const previewProxy=previewProxyEnabled?async({name})=>{
     let response;
     for(let attempt=1;attempt<=4;attempt++){
+      // Probe upstream readiness before posting a preview. The worker can be
+      // cold-starting on Render; a failed probe is diagnostic, not authorization.
+      if(attempt===1){
+        try{
+          const health=await fetch(new URL("/healthz",env.XSUS_BUILD_WORKER_URL),{
+            method:"GET",signal:AbortSignal.timeout(12000),redirect:"error"
+          });
+          console.info("[xsus-worker-readiness]",JSON.stringify({status:health.status,ok:health.ok}));
+          await health.body?.cancel();
+        }catch{console.info("[xsus-worker-readiness]",JSON.stringify({ok:false}));}
+      }
       response=await fetch(new URL("/internal/static-preview",env.XSUS_BUILD_WORKER_URL),{
         method:"POST",headers:{"authorization":"Bearer "+env.XSUS_BUILD_WORKER_SHARED_SECRET,"content-type":"application/json"},
         body:JSON.stringify({name}),signal:AbortSignal.timeout(25000),redirect:"error"
