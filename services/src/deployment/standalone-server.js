@@ -62,7 +62,13 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   const workerConfigured=Boolean(env.XSUS_BUILD_WORKER_URL&&env.XSUS_BUILD_WORKER_SHARED_SECRET&&env.XSUS_BUILD_STATUS_TOKEN);
   const workerConnectivity=workerConfigured?createBuildWorkerConnectivity({workerUrl:env.XSUS_BUILD_WORKER_URL,sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET}):undefined;
   const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined});
-  server.listen(port,'0.0.0.0');
+  server.listen(port,'0.0.0.0',()=>{
+    if(workerConnectivity){
+      void workerConnectivity.check().then(result=>{
+        console.info('[xsus-build-worker-connectivity]',JSON.stringify({connected:result.connected===true,buildEnabled:false}));
+      }).catch(()=>console.info('[xsus-build-worker-connectivity]',JSON.stringify({connected:false,buildEnabled:false})));
+    }
+  });
   return server;
 }
 
