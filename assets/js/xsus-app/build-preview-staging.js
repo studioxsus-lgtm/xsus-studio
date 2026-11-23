@@ -25,7 +25,7 @@ if(ORIGINS.has(location.origin)){
  const open=async()=>{
   activePreview?.abort();activePreview=null;const generation=++previewGeneration;
   panel.showModal();status.textContent='Loading saved projects…';frame.style.display='none';frame.removeAttribute('srcdoc');files.textContent='';
-  select.replaceChildren(new Option('Select a saved project',''));build.disabled=true;
+  select.replaceChildren(new Option('Select a saved project',''));select.disabled=true;build.disabled=true;
   try{
    const client=await getSupabaseClient();const {data,error}=await client.auth.getUser();
    if(error||!data?.user?.id)throw new Error('Sign in to XSUS Studio first.');
@@ -34,16 +34,17 @@ if(ORIGINS.has(location.origin)){
    if(queryError)throw queryError;
    for(const project of projects||[]){if(UUID.test(project.id))select.add(new Option(String(project.name||'Project').slice(0,100),project.id));}
    status.textContent=select.options.length>1?'Choose a project to generate a static preview.':'No saved projects found.';
+   select.disabled=select.options.length<2;
    build.disabled=select.options.length<2;
   }catch(error){if(generation===previewGeneration&&panel.open)status.textContent=error?.message==='Sign in to XSUS Studio first.'?error.message:'Unable to load projects.';}
  };
  launcher.addEventListener('click',()=>void open());
  close.addEventListener('click',()=>panel.close());
- panel.addEventListener('close',()=>{previewGeneration++;activePreview?.abort();activePreview=null;frame.removeAttribute('srcdoc');frame.style.display='none';build.disabled=false;});
+ panel.addEventListener('close',()=>{previewGeneration++;activePreview?.abort();activePreview=null;frame.removeAttribute('srcdoc');frame.style.display='none';select.disabled=false;build.disabled=false;});
  build.addEventListener('click',async()=>{
   const projectId=select.value;if(!UUID.test(projectId))return;
   activePreview?.abort();const controller=new AbortController();activePreview=controller;const generation=++previewGeneration;
-  build.disabled=true;status.textContent='Generating secure staging preview…';frame.style.display='none';frame.removeAttribute('srcdoc');
+  build.disabled=true;select.disabled=true;status.textContent='Generating secure staging preview…';frame.style.display='none';frame.removeAttribute('srcdoc');
   try{
    const token=await getUserAccessToken();
    if(generation!==previewGeneration||!panel.open||controller.signal.aborted)return;
@@ -72,7 +73,7 @@ if(ORIGINS.has(location.origin)){
    files.textContent='Generated: index.html · styles.css · main.js (review required)';
    status.textContent='Static preview ready. Not deployed.';
   }catch(error){if(generation!==previewGeneration||!panel.open)return;status.textContent=typeof error?.message==='string'&&(/^(Session expired|This website origin|Project not found|The saved project|Preview service|Preview request failed)/).test(error.message)?error.message:'Preview unavailable or response invalid.';}
-  finally{if(generation===previewGeneration){activePreview=null;build.disabled=false;}}
+  finally{if(generation===previewGeneration){activePreview=null;select.disabled=false;build.disabled=false;}}
  });
  const sync=()=>{launcher.style.display=document.getElementById('workspace')&&!document.getElementById('workspace').classList.contains('hidden')?'block':'none';};
  document.addEventListener('click',()=>queueMicrotask(sync));sync();
