@@ -89,6 +89,13 @@ export function renderEditor() {
   const target = $('#editorBody');
   if(!target) return;
   target.innerHTML = modeContent();
+  // Bind to the newly rendered button itself; the editor subtree is replaced on each mode change.
+  const applyButton=target.querySelector('[data-editor-action="apply-generated"]');
+  if(applyButton){
+    applyButton.disabled=false;
+    applyButton.style.cssText='display:block;width:calc(100% - 16px);margin:8px;min-height:44px;padding:10px 14px;border:1px solid #47b6ee;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;pointer-events:auto;position:relative;z-index:2;opacity:1';
+    applyButton.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();applyGeneratedChanges();});
+  }
   const preview = target.querySelector('[data-generated-preview]');
   if (preview) {
     if (generatedHtml.includes('<meta http-equiv="Content-Security-Policy"')) {
