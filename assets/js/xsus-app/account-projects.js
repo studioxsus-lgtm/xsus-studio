@@ -247,8 +247,8 @@ export function initAccountProjects() {
       // Keep the draft intact. Network/storage failures are not revision conflicts.
       if(shouldRetryAccountSave({
         result:'retryable-error',
-        ownerMatches:currentWorkspaceOwner()===owner,
-        linked:session.accountProject?.id===link.id,
+        ownerMatches:currentWorkspaceOwner()===owner && activeSession()===session,
+        linked:session.accountProject?.id===link.id && session.accountProject?.token===link.token,
         conflicted:autosaveConflict===link.id
       })) {
         autosaveFailures++;
@@ -266,9 +266,16 @@ export function initAccountProjects() {
   }
   document.addEventListener('xsus:workspace-saved', event => {
     if (event.detail?.section !== 'builder' || !event.detail.owner) return;
-    if (autosaveBusy) { autosavePending = true; return; }
+    if (autosaveBusy || saving) { autosavePending = true; return; }
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(() => { void autosaveLinkedProject(); }, 1600);
+  });
+  // Reconnects should resume pending account saves promptly without losing the draft.
+  window.addEventListener('online',()=>{
+    if(!currentWorkspaceOwner() || !activeSession()?.accountProject?.id)return;
+    if(autosaveBusy || saving){autosavePending=true;return;}
+    clearTimeout(autosaveTimer);
+    autosaveTimer=setTimeout(()=>{void autosaveLinkedProject();},250);
   });
   // Restore the most recently saved account project after refresh, but never
   // replace an existing local draft or a project already restored from this tab.
