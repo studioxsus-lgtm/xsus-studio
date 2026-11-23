@@ -49,7 +49,12 @@ export function startBuildWorkerServer({env=process.env}={}){
  const port=Number(env.PORT??3002);
  if(!Number.isSafeInteger(port)||port<0||port>65535)throw new TypeError("Invalid PORT");
  const server=createBuildWorkerServer({sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET,previewEnabled:env.XSUS_STATIC_PREVIEW_ENABLED==="true"});
- server.listen(port,"0.0.0.0");
+ server.on("error",error=>{
+  console.error("[xsus-worker-listener]",JSON.stringify({event:"error",code:error?.code??"unknown"}));
+ });
+ server.listen(port,"0.0.0.0",()=>{
+  console.info("[xsus-worker-listener]",JSON.stringify({event:"listening",port:server.address()?.port,previewEnabled:env.XSUS_STATIC_PREVIEW_ENABLED==="true"}));
+ });
  return server;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)startBuildWorkerServer();
