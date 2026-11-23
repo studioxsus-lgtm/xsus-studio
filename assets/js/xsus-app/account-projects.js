@@ -1,6 +1,6 @@
 import {inspectAccountProjectSnapshot} from './project-snapshot-integrity.js';
 import {updateLinkedAccountProject} from './account-save-operation.js';
-import {nextAccountRetryDelay,shouldRetryAccountSave} from './account-retry-policy.js';
+import {nextAccountRetryDelay,shouldRetryAccountSave,isCurrentAccountSaveTarget} from './account-retry-policy.js';
 import {hasProjectWork,canCaptureProject} from './project-recovery-policy.js';
 import {classifyAccountSaveResult} from './account-autosave-policy.js';
 import { getSupabaseClient } from './auth-session.js';
@@ -247,8 +247,11 @@ export function initAccountProjects() {
       // Keep the draft intact. Network/storage failures are not revision conflicts.
       if(shouldRetryAccountSave({
         result:'retryable-error',
-        ownerMatches:currentWorkspaceOwner()===owner && activeSession()===session,
-        linked:session.accountProject?.id===link.id && session.accountProject?.token===link.token,
+        ownerMatches:isCurrentAccountSaveTarget({
+          owner,activeOwner:currentWorkspaceOwner(),session,activeSession:activeSession(),
+          projectId:link.id,token:link.token
+        }),
+        linked:true,
         conflicted:autosaveConflict===link.id
       })) {
         autosaveFailures++;
