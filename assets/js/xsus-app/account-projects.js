@@ -1,3 +1,4 @@
+import {nextAccountRetryDelay,shouldRetryAccountSave} from './account-retry-policy.js';
 import {hasProjectWork,canCaptureProject} from './project-recovery-policy.js';
 import {classifyAccountSaveResult} from './account-autosave-policy.js';
 import { getSupabaseClient } from './auth-session.js';
@@ -178,6 +179,7 @@ export function initAccountProjects() {
       if (currentWorkspaceOwner() === owner && readWorkspacePart('builder').sessions.includes(session)) {
         session.accountProject={id,name,token:snapshot.saveToken};
         autosaveConflict = null;
+        autosaveFailures = 0;
         lastAutosaved = '';
         saveRefreshState('builder');
       }
@@ -193,6 +195,7 @@ export function initAccountProjects() {
   let lastAutosaved = '';
   let autosavePending = false;
   let autosaveConflict = null;
+  let autosaveFailures = 0;
   async function autosaveLinkedProject() {
     if (autosaveBusy || saving) { autosavePending = true; return; }
     const owner = currentWorkspaceOwner();
@@ -220,6 +223,7 @@ export function initAccountProjects() {
       if(result==='revision-conflict') {
         // Do not overwrite conflicting remote edits or deleted projects.
         autosaveConflict = link.id;
+        autosaveFailures = 0;
         if (currentWorkspaceOwner() === owner) {
           status.textContent = (saveLabels[document.documentElement.lang] || saveLabels.en)[2];
           document.dispatchEvent(new CustomEvent('xsus:project-autosave-conflict',{detail:{projectId:link.id}}));
@@ -230,16 +234,27 @@ export function initAccountProjects() {
         session.accountProject = { ...link, token: snapshot.saveToken };
         lastAutosaved = fingerprint;
         autosaveConflict = null;
+        autosaveFailures = 0;
         saveRefreshState('builder');
       }
     } catch {
-      // Keep the local session intact. The account copy can still be saved manually.
+      // Keep the draft intact. Network/storage failures are not revision conflicts.
+      if(shouldRetryAccountSave({
+        result:'retryable-error',
+        ownerMatches:currentWorkspaceOwner()===owner,
+        linked:session.accountProject?.id===link.id,
+        conflicted:autosaveConflict===link.id
+      })) {
+        autosaveFailures++;
+        autosavePending = true;
+      }
     } finally {
       autosaveBusy = false;
       if (autosavePending) {
         autosavePending = false;
         clearTimeout(autosaveTimer);
-        autosaveTimer = setTimeout(() => { void autosaveLinkedProject(); }, 1600);
+        autosaveTimer = setTimeout(() => { void autosaveLinkedProject(); },
+          autosaveFailures ? nextAccountRetryDelay(autosaveFailures) : 1600);
       }
     }
   }
