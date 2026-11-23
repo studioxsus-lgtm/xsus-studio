@@ -133,7 +133,11 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   const fallbackPreview=(name,reason)=>{
     if(!localStaticFallback)throw new Error(reason);
     console.warn("[xsus-preview-local-fallback]",JSON.stringify({reason}));
-    return generateWorkerStaticPreview({name});
+    try {return generateWorkerStaticPreview({name});}
+    catch(error){
+      console.warn("[xsus-preview-local-fallback-failure]",JSON.stringify({type:error?.name||"Error",code:typeof error?.code==="string"?error.code:"unknown"}));
+      throw new Error("Local static preview generator failed");
+    }
   };
   const previewProxy=previewProxyEnabled?async({name})=>{
     let response;
