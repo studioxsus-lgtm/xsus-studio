@@ -14,6 +14,12 @@ describe("XSUS App branch-only preview browser safety contract",()=>{
   expect(source).toContain("default-src 'none'");
   expect(source).toContain("frame.srcdoc=");
  });
+ it("strips navigation and active HTML elements from generated documents",()=>{
+  expect(source).toContain("node.localName==='a'");
+  expect(source).toContain("attr.name.toLowerCase()==='href'");
+  expect(source).toContain("iframe,object,embed,base,form");
+  expect(source).toContain("form-action 'none'");
+ });
  it("discards stale results and aborts on dialog close",()=>{
   expect(source).toContain("panel.addEventListener('close'");
   expect(source).toContain("activePreview?.abort()");
