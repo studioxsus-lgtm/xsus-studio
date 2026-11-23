@@ -94,6 +94,26 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
   }:undefined;
   const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined,previewProxyEnabled,previewProxy});
   server.listen(port,'0.0.0.0',()=>{
+    if(previewProxyEnabled&&env.XSUS_PREVIEW_PROXY_SMOKE==="true"){
+      void (async()=>{
+        try{
+          const response=await fetch("http://127.0.0.1:"+server.address().port+"/internal/build-preview",{
+            method:"POST",
+            headers:{"authorization":"Bearer "+env.XSUS_BUILD_STATUS_TOKEN,"content-type":"application/json"},
+            body:JSON.stringify({name:"XSUS Proxy Verification"}),
+            signal:AbortSignal.timeout(15000)
+          });
+          const result=await response.json();
+          const paths=Array.isArray(result?.files)?result.files.map(f=>f.path):[];
+          const success=response.status===200&&result?.kind==="static-preview"&&
+            JSON.stringify(paths)===JSON.stringify(["index.html","styles.css","main.js"])&&
+            result.files.every(f=>typeof f.content==="string"&&f.content.length>0);
+          console.info("[xsus-preview-proxy-smoke]",JSON.stringify({success,status:response.status,files:success?paths:[]}));
+        }catch{
+          console.info("[xsus-preview-proxy-smoke]",JSON.stringify({success:false}));
+        }
+      })();
+    }
     if(workerConfigured&&env.XSUS_STATIC_PREVIEW_PROBE==="true"){
       void (async()=>{
         try{
