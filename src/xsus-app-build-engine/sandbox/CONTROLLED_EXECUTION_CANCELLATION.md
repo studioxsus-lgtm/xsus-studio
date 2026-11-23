@@ -1,0 +1,5 @@
+# Phase 58 — Controlled execution cancellation
+
+Coordinates timeout/external abort with an injected trusted stop provider and uncertainty recorder. On cancellation, the callback receives an AbortSignal, a stop request is issued, and the operation is recorded as uncertain. Even if the callback returns normally, the coordinator refuses to report success after cancellation. A failed stop or audit is retained in the AggregateError.
+
+**Safety limits:** The coordinator awaits the run callback, so a hung callback may hang indefinitely; this is intentional rather than falsely claiming termination. The timeout triggers cooperative abort and a stop request, **not** proof of physical termination. The stop provider must independently terminate the host process/container, and the uncertainty recorder must persist a durable, idempotent recovery receipt. Neither provider is implemented here. The injected scheduler must invoke its callback exactly once per timeout; no live Docker or database tests were performed. This module is not yet wired to the host runtime.
