@@ -597,7 +597,7 @@ export function initChat() {
     }
     apkButton.disabled = true;
     try {
-      const {downloadProjectApk} = await import('./android/download.js?v=1');
+      const {downloadProjectApk} = await import('./android/download.js?v=2');
       await downloadProjectApk(files, session.androidProjectId);
     } catch (error) {
       console.error('[xsus-android-export]', error?.name);

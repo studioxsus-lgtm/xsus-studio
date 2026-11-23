@@ -42,7 +42,7 @@ function renderBuild(goal,files){
   apk.addEventListener('click', async ()=>{
     apk.disabled=true;
     try {
-      const {downloadProjectApk}=await import('./android/download.js?v=1');
+      const {downloadProjectApk}=await import('./android/download.js?v=2');
       await downloadProjectApk(files,recoveryProjectId);
     } catch {message('Android APK export failed. Check browser storage and retry.');}
     finally {apk.disabled=false;}
