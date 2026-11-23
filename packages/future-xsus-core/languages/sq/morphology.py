@@ -35,7 +35,6 @@ _PARADIGMS = {
     "shkollë": {
         "shkollë": ("Number=Sing", "Definite=Ind"),
         "shkolla": ("Number=Sing", "Definite=Def"),
-        "shkolla" : ("Number=Sing", "Definite=Def"),
         "shkollat": ("Number=Plur", "Definite=Def"),
     },
 }
