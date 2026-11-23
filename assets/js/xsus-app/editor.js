@@ -39,6 +39,56 @@ function injectPreviewStorage(doc){
      get length(){return Object.keys(values).length;}
    };
    try{Object.defineProperty(window,'localStorage',{configurable:true,value:storage});}catch{}
+   // Some generated apps keep records in JS memory only. Replay user-created
+   // records after refresh, even when their generated code never uses storage.
+   const replayKey='__xsus_preview_actions_v1__';
+   let actions=[];
+   try{const saved=JSON.parse(values[replayKey]||'[]');if(Array.isArray(saved))actions=saved.slice(-100);}catch{}
+   let replaying=false;
+   const record=action=>{
+     if(replaying||actions.length>=100)return;
+     actions.push(action);
+     values[replayKey]=JSON.stringify(actions);
+     emit();
+   };
+   const fields=()=>[...document.querySelectorAll('input,textarea,select')].filter(el=>el.name||el.id||el.type!=='hidden');
+   const capture=()=>fields().map((el,i)=>({i,value:el.value,checked:el.checked}));
+   document.addEventListener('click',event=>{
+     if(replaying)return;
+     const button=event.target.closest('button,input[type="submit"]');
+     if(!button)return;
+     const label=(button.textContent||button.value||'').trim().toLowerCase();
+     if(/^(add record|add task|add new|create task|save task|shto|shto detyrë)$/.test(label)){
+       record({type:'add',label,fields:capture()});
+     }else if(/^(remove|delete|fshi)$/.test(label)){
+       const candidates=[...document.querySelectorAll('button')].filter(el=>(el.textContent||'').trim().toLowerCase()===label);
+       record({type:'remove',label,index:candidates.indexOf(button)});
+     }
+   },true);
+   window.addEventListener('load',()=>{
+     if(!actions.length)return;
+     setTimeout(()=>{
+       replaying=true;
+       try{
+         for(const action of actions){
+           if(action.type==='add'){
+             const all=fields();
+             for(const field of action.fields||[]){
+               const el=all[field.i];if(!el)continue;
+               el.value=field.value;
+               if(el.type==='checkbox'||el.type==='radio')el.checked=!!field.checked;
+               el.dispatchEvent(new Event('input',{bubbles:true}));
+               el.dispatchEvent(new Event('change',{bubbles:true}));
+             }
+           }
+           const candidates=[...document.querySelectorAll('button,input[type="submit"]')].filter(el=>
+             (el.textContent||el.value||'').trim().toLowerCase()===action.label);
+           const target=candidates[action.type==='remove'?action.index:0];
+           target?.click();
+         }
+       }finally{replaying=false;}
+     },100);
+   },{once:true});
  }.toString()+')('+JSON.stringify(data)+','+JSON.stringify(key)+');';
  doc.head.append(bridge);
 }
