@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: npm install --no-package-lock --ignore-scripts --no-audit --no-fund
       - name: Verify worker and owner-scoped preview
-        run: npx vitest run tests/integration/xsus-app-build-engine-worker-preview-endpoint.test.js tests/integration/xsus-app-build-engine-owner-preview.test.js
+        run: npx vitest run tests/integration/xsus-app-build-engine-worker-preview-endpoint.test.js tests/integration/xsus-app-build-engine-owner-preview.test.js tests/integration/xsus-app-build-engine-preview-browser-contract.test.js
       - name: Validate staging preview browser module syntax
         run: node --check assets/js/xsus-app/build-preview-staging.js
       - name: Verify staging preview is loaded by XSUS App
