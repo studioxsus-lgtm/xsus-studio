@@ -650,6 +650,7 @@ export function initChat() {
       if (event.target.closest('#chatPanel, [data-app-template], #chatHistory, #newConversationBtn')) saveRefreshState('builder');
     });
   }
+  window.__xsusChatReady = true;
   $('#sendBtn').addEventListener('click', send);
   $('#prompt').addEventListener('input', updateCount);
   for (const id of ['prompt', 'planSteps']) $( `#${id}`).addEventListener('keydown', event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); send(); } });
