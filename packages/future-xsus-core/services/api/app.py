@@ -13,6 +13,8 @@ from typing import Protocol
 from urllib.parse import quote, urlsplit
 
 from aiohttp import web
+from dataclasses import asdict
+from core.routing.sq_analysis_contract import analyze_albanian
 
 from core.intelligence.xsus_app_adapter_v1 import XSUSAppIntelligenceAdapter
 from core.intelligence.authorized_gateway_v1 import IntelligencePrincipal
@@ -226,6 +228,7 @@ def create_app(
     intelligence_enabled: bool = False,
     intelligence_v2_adapter: XSUSAppIntelligenceAdapterV2 | None = None,
     intelligence_v2_permissions: Mapping[str, frozenset[str]] | None = None,
+    albanian_analysis_enabled: bool = False,
 ) -> web.Application:
     """Create an app using local owner-scoped session storage and engine routing."""
     if type(max_concurrent_messages) is not int or max_concurrent_messages < 1:
@@ -460,6 +463,38 @@ def create_app(
             "persisted": False,
         })
 
+    async def albanian_analyze(request: web.Request) -> web.Response:
+        if not albanian_analysis_enabled:
+            return _error(404, "not_found", "Resource not found")
+        owner = await authenticated_owner(request)
+        if owner is None:
+            return unauthorized()
+        if request.content_type != "application/json":
+            return _error(415, "unsupported_media_type", "Use application/json")
+        try:
+            payload = json.loads((await request.read()).decode("utf-8"),
+                                 object_pairs_hook=_strict_json_pairs,
+                                 parse_constant=_reject_json_constant)
+            if not isinstance(payload, dict) or set(payload) != {"text", "language"}:
+                raise ValueError("Expected exactly text and language")
+            text = payload["text"]
+            language = payload["language"]
+            if not isinstance(text, str) or not text.strip() or len(text) > _MAX_TEXT_CHARS:
+                raise ValueError("Invalid text")
+            text.encode("utf-8")
+            if not isinstance(language, str):
+                raise ValueError("Invalid language")
+            tag = LanguageTag(language)
+        except (UnicodeError, ValueError, TypeError, RecursionError):
+            return _error(400, "invalid_request", "Invalid analysis request")
+        if tag.value != "sq":
+            return _error(422, "unsupported_language", "Only sq analysis is supported")
+        result = await asyncio.to_thread(analyze_albanian, text, language=tag)
+        return _json({"language": result.language.value,
+                      "analysis": asdict(result.analysis),
+                      "quality": asdict(result.quality),
+                      "persisted": False})
+
     async def intelligence_reason(request: web.Request) -> web.Response:
         nonlocal active_intelligence_requests
         if not intelligence_enabled:
@@ -681,6 +716,7 @@ def create_app(
     app.router.add_delete(resource, delete)
     app.router.add_post(resource + "/messages", send)
     app.router.add_post("/v1/language/proofread", proofread)
+    app.router.add_post("/v1/language/analyze/sq", albanian_analyze)
     app.router.add_post("/v1/intelligence/reason", intelligence_reason)
     app.router.add_post("/v2/intelligence/respond", intelligence_respond_v2)
     if feedback_store is not None:
