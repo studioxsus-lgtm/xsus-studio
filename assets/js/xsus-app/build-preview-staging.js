@@ -20,7 +20,10 @@ if(ORIGINS.has(location.origin)){
  for(const button of [build,close])button.style.cssText='padding:10px 16px;border:1px solid #397c98;border-radius:9px;background:#183b59;color:white;cursor:pointer';
  actions.append(build,close);panel.append(title,note,select,actions,status,files,frame);document.body.append(panel);
  const launcher=document.createElement('button');launcher.type='button';launcher.textContent='Build Preview · Staging';launcher.style.cssText='position:fixed;right:14px;bottom:126px;z-index:2147482990;padding:10px 13px;border:1px solid #397c98;border-radius:999px;background:#122a40;color:#e9faff;font:600 12px system-ui;cursor:pointer;display:none';document.body.append(launcher);
+ let activePreview=null;
+ let previewGeneration=0;
  const open=async()=>{
+  activePreview?.abort();activePreview=null;previewGeneration++;
   panel.showModal();status.textContent='Loading saved projects…';frame.style.display='none';frame.removeAttribute('srcdoc');files.textContent='';
   select.replaceChildren(new Option('Select a saved project',''));build.disabled=true;
   try{
@@ -35,18 +38,20 @@ if(ORIGINS.has(location.origin)){
  };
  launcher.addEventListener('click',()=>void open());
  close.addEventListener('click',()=>panel.close());
- panel.addEventListener('close',()=>{frame.removeAttribute('srcdoc');frame.style.display='none';});
+ panel.addEventListener('close',()=>{previewGeneration++;activePreview?.abort();activePreview=null;frame.removeAttribute('srcdoc');frame.style.display='none';build.disabled=false;});
  build.addEventListener('click',async()=>{
   const projectId=select.value;if(!UUID.test(projectId))return;
+  activePreview?.abort();const controller=new AbortController();activePreview=controller;const generation=++previewGeneration;
   build.disabled=true;status.textContent='Generating secure staging preview…';frame.style.display='none';frame.removeAttribute('srcdoc');
   try{
    const token=await getUserAccessToken();if(!token)throw new Error('Sign in to XSUS Studio first.');
-   const response=await fetch(API,{method:'POST',mode:'cors',cache:'no-store',headers:{'authorization':'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({projectId}),signal:AbortSignal.timeout(120000)});
+   const response=await fetch(API,{method:'POST',mode:'cors',cache:'no-store',headers:{'authorization':'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({projectId}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(120000)])});
    if(!response.ok){
     const messages={401:'Session expired. Sign in again.',403:'This website origin is not allowed.',404:'Project not found or not owned by your account.',422:'The saved project needs a valid goal.',503:'Preview service is temporarily unavailable.'};
     throw new Error(messages[response.status]||'Preview request failed ('+response.status+').');
    }
    const result=await response.json();
+   if(generation!==previewGeneration||!panel.open)return;
    if(result.projectId!==projectId||result.kind!=='static-preview'||result.requiresReview!==true||!Array.isArray(result.files))throw new Error('Invalid preview response.');
    if(result.files.length!==3||result.files.some(f=>!f||typeof f.path!=='string'||typeof f.content!=='string'||f.content.length>250000))throw new Error('Invalid preview files.');
    const map=new Map(result.files.map(f=>[f.path,f.content]));
@@ -62,8 +67,8 @@ if(ORIGINS.has(location.origin)){
    frame.srcdoc='<!doctype html>'+doc.documentElement.outerHTML;frame.style.display='block';
    files.textContent='Generated: index.html · styles.css · main.js (review required)';
    status.textContent='Static preview ready. Not deployed.';
-  }catch(error){status.textContent=typeof error?.message==='string'&&(/^(Session expired|This website origin|Project not found|The saved project|Preview service|Preview request failed)/).test(error.message)?error.message:'Preview unavailable or response invalid.';}
-  finally{build.disabled=false;}
+  }catch(error){if(generation!==previewGeneration||!panel.open)return;status.textContent=typeof error?.message==='string'&&(/^(Session expired|This website origin|Project not found|The saved project|Preview service|Preview request failed)/).test(error.message)?error.message:'Preview unavailable or response invalid.';}
+  finally{if(generation===previewGeneration){activePreview=null;build.disabled=false;}}
  });
  const sync=()=>{launcher.style.display=document.getElementById('workspace')&&!document.getElementById('workspace').classList.contains('hidden')?'block':'none';};
  document.addEventListener('click',()=>queueMicrotask(sync));sync();
