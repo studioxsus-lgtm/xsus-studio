@@ -263,17 +263,16 @@ export function initEditor() {
   });
   // Delegate toolbar actions so translated/re-rendered controls remain clickable.
   // Restrict handling to the editor toolbar, not controls inside generated apps.
-  const toolbar = document.querySelector('.editor-tools');
-  toolbar?.addEventListener('click', event => {
-    const button = event.target instanceof Element ? event.target.closest('button[data-mode], button[data-device]') : null;
-    if (!button || !toolbar.contains(button)) return;
+  // Capture at document level: responsive/i18n rendering can replace the toolbar.
+  // Handle each click once and keep generated iframe interactions isolated.
+  document.addEventListener('click', event => {
+    const button = event.target instanceof Element ? event.target.closest('#editorPanel .editor-tools button[data-mode], #editorPanel .editor-tools button[data-device]') : null;
+    if (!button) return;
     event.preventDefault();
-    if (button.dataset.mode && ['split','code','design','preview'].includes(button.dataset.mode)) {
-      updateMode(button.dataset.mode);
-    } else if (button.dataset.device && ['desktop','tablet','mobile'].includes(button.dataset.device)) {
-      updateDevice(button.dataset.device);
-    }
-  });
+    event.stopPropagation();
+    if (['split','code','design','preview'].includes(button.dataset.mode)) updateMode(button.dataset.mode);
+    else if (['desktop','tablet','mobile'].includes(button.dataset.device)) updateDevice(button.dataset.device);
+  }, true);
   const target=$('#editorBody');
   target?.addEventListener('click',event=>{
     const apply=event.target.closest('[data-editor-action="apply-generated"]');
