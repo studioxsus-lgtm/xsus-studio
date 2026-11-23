@@ -1,10 +1,53 @@
 import {getUserAccessToken} from './auth-session.js';
+import {createDraftPlan} from './hyper-future-bridge-client.js?v=20261122-goalplan1';
+
+// The installed Build Engine accepts a single goal and classifies its first
+// 100 characters. Prioritize the reviewed domain before adding plan detail.
+const buildDomains = [
+  ['booking', /\b(bookings?|appointments?|reservations?)\b/i],
+  ['store', /\b(shops?|stores?|inventory|products?|ecommerce)\b/i],
+  ['budget', /\b(budgets?|expenses?|finance)\b/i],
+  ['tasks', /\b(tasks?|todos?|kanban|project management|detyr[a-zë]*|projekt[a-zë]*)\b/i]
+];
+function plannedBuildGoal(goal, result) {
+  const reviewed = result.language?.text;
+  const tasks = result.plan.steps.map(step => step?.task);
+  if (typeof reviewed !== 'string' || !reviewed.trim() || !tasks.length ||
+      tasks.some(task => typeof task !== 'string' || !task.trim())) {
+    throw new Error('Invalid planning response');
+  }
+  const detail = tasks.join('\n');
+  const domain = [reviewed, goal, detail].map(text =>
+    buildDomains.find(([, pattern]) => pattern.test(text))?.[0]
+  ).find(Boolean);
+  // Put supported capabilities in the short worker name and retain the full
+  // reviewed goal and steps in the public API request.
+  const search = /\b(search|searchable|rechercher|kërkim)\b/i.test(reviewed + '\n' + detail);
+  const header = domain ? '[XSUS ' + domain + (search ? ' search' : '') + ']' : '';
+  let brief = [header, reviewed, detail].filter(Boolean).join('\n').slice(0, 2000);
+  const encoder = new TextEncoder();
+  while (encoder.encode(JSON.stringify({goal:brief})).length > 4096) {
+    brief = brief.slice(0, Math.floor(brief.length * 0.9));
+  }
+  return brief;
+}
 const ENDPOINT='https://xsus-app-build-api-staging.onrender.com/api/build/from-goal';
-export async function buildFromChatGoal(goal,{signal}={}){
+export async function buildFromChatGoal(goal,{steps,signal,onPlan}={}){
   if(typeof goal!=='string'||!goal.trim()||goal.length>2000)throw new TypeError('Invalid application goal');
+  const plan = await createDraftPlan({goal, steps, signal});
+  signal?.throwIfAborted();
+  const buildGoal = plannedBuildGoal(goal, plan);
+  onPlan?.(plan);
+  if (plan.status === 'review_required' || plan.language?.review_required || plan.plan.requiresHumanReview) {
+    const labels = {sq:'Të krijohet parapamja sipas këtij plani?', fr:'Créer l’aperçu à partir de ce plan ?', en:'Build a preview from this plan?'};
+    const question = labels[document.documentElement.lang] || labels.en;
+    if (!window.confirm([question, plan.language?.text, ...plan.plan.steps.map(step => step.task)].join('\n'))) {
+      throw new Error('Plan review cancelled.');
+    }
+  }
   const token=await getUserAccessToken();
   if(!token)throw new Error('Sign in to XSUS Studio to generate an application.');
-  const response=await fetch(ENDPOINT,{method:'POST',mode:'cors',cache:'no-store',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({goal}),signal});
+  const response=await fetch(ENDPOINT,{method:'POST',mode:'cors',cache:'no-store',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({goal:buildGoal}),signal});
   if(!response.ok)throw new Error(response.status===401?'Session expired. Sign in again.':'Build Engine unavailable ('+response.status+').');
   const result=await response.json();
   if(result?.kind!=='static-preview'||result.requiresReview!==true||!Array.isArray(result.files)||result.files.length!==3)throw new Error('Invalid Build Engine response');
