@@ -45,7 +45,8 @@ export function createStandaloneDeploymentServer(dependencies={}) {
       void (async()=>{
         try{
           const chunks=[];let size=0;
-          if(Number(req.headers["content-length"]??0)>2048){reply(413,{error:"payload_too_large"});return;}
+          const declared=req.headers["content-length"];
+          if(declared!==undefined&&(!/^\d+$/.test(String(declared))||!Number.isSafeInteger(Number(declared))||Number(declared)>2048)){reply(413,{error:"payload_too_large"});return;}
           for await(const chunk of req){size+=chunk.length;if(size>2048){reply(413,{error:"payload_too_large"});return;}chunks.push(chunk);}
           let body;try{body=JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{reply(400,{error:"invalid_json"});return;}
           if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).length!==1||!isPersistedBuilderProjectId(body.projectId)){reply(400,{error:"invalid_project_id"});return;}
