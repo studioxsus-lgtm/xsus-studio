@@ -140,6 +140,9 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
     }
   };
   const previewProxy=previewProxyEnabled?async({name})=>{
+    // Staging fallback runs the same deterministic generator without relying
+    // on an intermittently unavailable external Render Free worker gateway.
+    if(localStaticFallback)return fallbackPreview(name,"staging_local_static_generator");
     let response;
     for(let attempt=1;attempt<=4;attempt++){
       // Probe upstream readiness before posting a preview. The worker can be
