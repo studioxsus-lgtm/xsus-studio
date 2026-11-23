@@ -11,7 +11,7 @@ export async function buildFromChatGoal(goal,{signal}={}){
   const files=new Map(result.files.map(file=>[file.path,file.content]));
   if(files.size!==3||!['index.html','styles.css','main.js'].every(p=>typeof files.get(p)==='string'&&files.get(p).length>0&&files.get(p).length<=250000))throw new Error('Invalid generated files');
   const doc=new DOMParser().parseFromString(files.get('index.html'),'text/html');
-  doc.querySelectorAll('script,link,iframe,object,embed,base,form,meta[http-equiv]').forEach(node=>node.remove());
+  doc.querySelectorAll('script,link,iframe,object,embed,base,meta[http-equiv]').forEach(node=>node.remove());
   doc.querySelectorAll('*').forEach(node=>{for(const attr of [...node.attributes]){if(/^on/i.test(attr.name)||['src','srcset','srcdoc','formaction','target'].includes(attr.name.toLowerCase())||(node.localName==='a'&&attr.name.toLowerCase()==='href'))node.removeAttribute(attr.name);}});
   const csp=doc.createElement('meta');csp.httpEquiv='Content-Security-Policy';csp.content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'";doc.head.prepend(csp);
   const style=doc.createElement('style');style.textContent=files.get('styles.css');doc.head.append(style);
