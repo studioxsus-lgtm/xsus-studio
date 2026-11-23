@@ -12,7 +12,10 @@ export function inspectAccountProjectSnapshot(project){
        session.generatedSourceHistory.some(item=>!item||typeof item.id!=='string'||!validProjectSource(item.files)))
       return {ok:false,reason:'invalid-history'};
   }
-  if(project.reviews.some(item=>!Array.isArray(item)||item.length!==2)||
-     project.boards.some(item=>!Array.isArray(item)||item.length!==2))return {ok:false,reason:'invalid-relations'};
+  if(project.reviews.some(item=>!Array.isArray(item)||item.length!==2||
+       typeof item[0]!=='string'||!item[1]||typeof item[1]!=='object')||
+     project.boards.some(item=>!Array.isArray(item)||item.length!==2||
+       typeof item[0]!=='string'||!Array.isArray(item[1])))
+    return {ok:false,reason:'invalid-relations'};
   return {ok:true,reason:null};
 }
