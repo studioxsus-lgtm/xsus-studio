@@ -1,5 +1,12 @@
 name: XSUS App Preview Staging HTTP Smoke
 on:
+  push:
+    branches:
+      - feature/xsus-app-build-engine
+    paths:
+      - 'tests/smoke/xsus-app-preview-staging-http.mjs'
+      - '.github/workflows/xsus-app-preview-staging-http-smoke.yml'
+      - 'services/src/deployment/standalone-server.js'
   workflow_dispatch:
 permissions:
   contents: read
