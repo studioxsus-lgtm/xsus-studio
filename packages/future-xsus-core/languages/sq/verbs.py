@@ -15,6 +15,38 @@ class VerbForm:
 # The inventory is intentionally small and auditable. More tenses require
 # linguistic review, particularly compound forms and regional variants.
 _PARADIGMS = {
+    "lexoj": {
+        ("Pres", "Ind"): ("lexoj", "lexon", "lexon", "lexojmë", "lexoni", "lexojnë"),
+        ("Imp", "Ind"): ("lexoja", "lexoje", "lexonte", "lexonim", "lexonit", "lexonin"),
+    },
+    "mësoj": {
+        ("Pres", "Ind"): ("mësoj", "mëson", "mëson", "mësojmë", "mësoni", "mësojnë"),
+        ("Imp", "Ind"): ("mësoja", "mësoje", "mësonte", "mësonim", "mësonit", "mësonin"),
+    },
+    "krijoj": {
+        ("Pres", "Ind"): ("krijoj", "krijon", "krijon", "krijojmë", "krijoni", "krijojnë"),
+        ("Imp", "Ind"): ("krijoja", "krijoje", "krijonte", "krijonim", "krijonit", "krijonin"),
+    },
+    "ndërtoj": {
+        ("Pres", "Ind"): ("ndërtoj", "ndërton", "ndërton", "ndërtojmë", "ndërtoni", "ndërtojnë"),
+        ("Imp", "Ind"): ("ndërtoja", "ndërtoje", "ndërtonte", "ndërtonim", "ndërtonit", "ndërtonin"),
+    },
+    "zhvilloj": {
+        ("Pres", "Ind"): ("zhvilloj", "zhvillon", "zhvillon", "zhvillojmë", "zhvilloni", "zhvillojnë"),
+        ("Imp", "Ind"): ("zhvilloja", "zhvilloje", "zhvillonte", "zhvillonim", "zhvillonit", "zhvillonin"),
+    },
+    "shkruaj": {
+        ("Pres", "Ind"): ("shkruaj", "shkruan", "shkruan", "shkruajmë", "shkruani", "shkruajnë"),
+        ("Imp", "Ind"): ("shkruaja", "shkruaje", "shkruante", "shkruanim", "shkruanit", "shkruanin"),
+    },
+    "hap": {
+        ("Pres", "Ind"): ("hap", "hap", "hap", "hapim", "hapni", "hapin"),
+        ("Imp", "Ind"): ("hapja", "hapje", "hapte", "hapnim", "hapnit", "hapnin"),
+    },
+    "mbyll": {
+        ("Pres", "Ind"): ("mbyll", "mbyll", "mbyll", "mbyllim", "mbyllni", "mbyllin"),
+        ("Imp", "Ind"): ("mbyllja", "mbyllje", "mbyllte", "mbyllnim", "mbyllnit", "mbyllnin"),
+    },
     "jam": {
         ("Pres", "Ind"): ("jam", "je", "është", "jemi", "jeni", "janë"),
         ("Imp", "Ind"): ("isha", "ishe", "ishte", "ishim", "ishit", "ishin"),
