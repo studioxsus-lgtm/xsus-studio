@@ -4,3 +4,7 @@
 !services/src/build-worker/
 !services/src/build-worker/**
 !services/android-worker.Dockerfile
+
+!src/
+!src/xsus-app-build-engine/
+!src/xsus-app-build-engine/**
