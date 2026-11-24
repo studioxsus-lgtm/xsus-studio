@@ -12,7 +12,7 @@ _SUBJECTS = {
     "ajo": (3, "Sing"), "ne": (1, "Plur"), "ju": (2, "Plur"),
     "ata": (3, "Plur"), "ato": (3, "Plur"),
 }
-_OBJECTS = {"librin", "shkollën", "librat", "shkollat"}
+_TRANSITIVE = frozenset({"lexoj", "mësoj", "krijoj", "ndërtoj", "zhvilloj", "shkruaj", "hap", "mbyll", "kam"})
 _PUNCTUATION = {".", "!", "?"}
 
 @dataclass(frozen=True, slots=True)
@@ -38,7 +38,7 @@ def parse_clause(text: str) -> Clause | None:
         return None
     person, number = _SUBJECTS[subject]
     agreeing = any(r.person == person and r.number == number for r in readings)
-    if len(words) == 3 and words[2] not in _OBJECTS:
+    if len(words) == 3 and not any(r.lemma in _TRANSITIVE for r in readings):
         return None
     if len(words) == 3 and not any(
         r.pos == "NOUN" and r.case == "Acc" for r in analyze_nominal(words[2])
