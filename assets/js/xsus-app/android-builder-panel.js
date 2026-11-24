@@ -102,7 +102,7 @@ if(location.origin===staging || (["https://www.xsusstudio.com","https://xsusstud
    if(ownerId!==expectedOwner)return;activeJob=job;
    if(current!==generation||!panel.open)return;
    await track(job,current,controller.signal);
-  }catch{if(current===generation&&panel.open)status.textContent=tr(12);}
+  }catch(error){if(current===generation&&panel.open){const known=["authentication_required","origin_not_allowed","not_found","invalid_saved_project","build_capacity_unavailable","android_build_unavailable","invalid_request","invalid_response","android_request_failed"];const code=known.includes(error?.message)?error.message:error?.name==="TimeoutError"?"request_timeout":error?.name==="TypeError"?"network_error":"request_failed";status.textContent=tr(12)+" ("+code+")";}}
   finally{busy=false;if(current===generation&&panel.open)submit.disabled=!!activeJob||project.control.options.length<2;}
  });
 }
