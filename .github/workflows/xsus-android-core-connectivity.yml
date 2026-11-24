@@ -1,0 +1,22 @@
+name: XSUS Android Core Connectivity
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  connectivity:
+    if: github.ref == 'refs/heads/feature/xsus-app-build-engine'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify authenticated planning and review
+        env:
+          XSUS_ANDROID_PLANNING_URL: https://future-xsus-core-api.onrender.com/internal/android/plan
+          XSUS_ANDROID_REVIEW_URL: https://xsus-studio.onrender.com/internal/android/review
+          XSUS_ANDROID_PLANNING_TOKEN: ${{ secrets.XSUS_ANDROID_PLANNING_TOKEN }}
+          XSUS_ANDROID_REVIEW_TOKEN: ${{ secrets.XSUS_ANDROID_REVIEW_TOKEN }}
+        run: node scripts/check-android-core-connectivity.mjs
