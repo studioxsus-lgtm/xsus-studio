@@ -15,7 +15,7 @@ export function createRemoteAndroidCompiler({endpoint,token,fetchImpl=globalThis
    try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>128*1024*1024){await reader.cancel();throw Error("Artifact too large");}chunks.push(Buffer.from(value));}}finally{reader.releaseLock();}
    const bytes=Buffer.concat(chunks);
    if(size<4||bytes.subarray(0,4).toString("hex")!=="504b0304"||createHash("sha256").update(bytes).digest("hex")!==digest)throw Error("Artifact integrity failure");
-   return {kind:"apk",variant:"debug",bytes,size,sha256:digest,signatureVerified:false,installationVerified:false};
+   return {kind:"apk",variant:"debug",bytes,size,sha256:digest,signatureVerified:false,installationVerified:false,...(response.headers.get('x-xsus-worker-verification')==='signature-package-launcher'?{workerVerification:{applicationId:input.applicationId,sha256:digest,signatureVerified:true,applicationIdVerified:true,launcherVerified:true}}:{})};
   }finally{clearTimeout(timer);}
  };
 }
