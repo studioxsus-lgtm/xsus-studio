@@ -14,6 +14,8 @@
 
 import http from "node:http";
 import { checkHyperStartupReadiness } from "./src/platform/xsus-app/hyper-startup-readiness.js";
+import {createAndroidReviewRoute, ANDROID_REVIEW_PATH} from "./src/platform/xsus-app/hyper-android-review-route.js";
+const androidReviewRoute = createAndroidReviewRoute(process.env);
 import { createHyperReadinessDiagnostic } from "./src/platform/xsus-app/hyper-readiness-diagnostic.js";
 import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js";
 import { createHyperApplicationHttpHandler } from "./src/platform/xsus-app/xsus-hyper-application-http.js";
@@ -315,6 +317,23 @@ const server = http.createServer(
                     chat: "POST /api/chat"
                 }
             });
+        }
+
+        if (pathname === ANDROID_REVIEW_PATH) {
+            if (!androidReviewRoute) return sendJSON(res,503,{error:"Android review disabled"});
+            if (req.method !== "POST") return sendJSON(res,405,{error:"Method not allowed"});
+            if (!androidReviewRoute.authorized(req.headers.authorization)) return sendJSON(res,401,{error:"Unauthorized"});
+            if (!/^application\/json(?:\s*;|$)/i.test(req.headers["content-type"] ?? "")) return sendJSON(res,415,{error:"Invalid content type"});
+            try {
+                const chunks=[]; let size=0;
+                for await (const chunk of req) {
+                    size+=chunk.length;
+                    if(size>262144) return sendJSON(res,413,{error:"Payload too large"});
+                    chunks.push(chunk);
+                }
+                const body=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(Buffer.concat(chunks)));
+                return sendJSON(res,200,androidReviewRoute.review(body));
+            } catch { return sendJSON(res,400,{error:"Invalid review request"}); }
         }
 
         // Read-only diagnostic; requires verified Supabase user and explicit flag.
