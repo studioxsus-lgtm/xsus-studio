@@ -6,7 +6,7 @@ try {
  const projectId="connectivity-probe";
  let approvals=0;
  const stages=new Map([[process.env.XSUS_ANDROID_PLANNING_URL,'planning'],[process.env.XSUS_ANDROID_REVIEW_URL,'review'],[process.env.XSUS_ANDROID_BUILD_URL,'build']]);
- const fetchImpl=async (url,options)=>{const stage=stages.get(String(url))??'unknown';console.log('Starting '+stage);try{const response=await fetch(url,options);console.log(stage+' HTTP '+response.status);return response;}catch{console.error(stage+' transport failed');throw Error('Transport failed');}};
+ const fetchImpl=async (url,options)=>{const stage=stages.get(String(url))??'unknown';console.log('Starting '+stage);try{const response=await fetch(url,options);console.log(stage+' HTTP '+response.status);if(stage==='build'&&response.status===503){let reason='unknown';try{const reader=response.clone().body.getReader();const {value,done}=await reader.read();if(value&&value.length<=1024){const parsed=JSON.parse(new TextDecoder().decode(value));if(['build_worker_not_configured','android_build_failed'].includes(parsed.error))reason=parsed.error;}void reader.cancel().catch(()=>{});}catch{}console.log('Build failure category: '+reason);}return response;}catch{console.error(stage+' transport failed');throw Error('Transport failed');}};
  const run=createRemoteAndroidOrchestrator({env:{...process.env,XSUS_ANDROID_ORCHESTRATION_ENABLED:"true"},fetchImpl,authorize:async binding=>{
   if(binding.projectId!==projectId||!Number.isSafeInteger(binding.revision)||! /^[a-f0-9]{64}$/.test(binding.snapshotDigest)||! /^[a-f0-9]{64}$/.test(binding.buildDigest)||approvals!==0)return false;
   approvals++;console.log('Build authorization accepted');return true;
