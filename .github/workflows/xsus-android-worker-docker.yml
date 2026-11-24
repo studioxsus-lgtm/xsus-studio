@@ -20,6 +20,14 @@ jobs:
         run: docker build -f services/android-worker.Dockerfile -t xsus-android-worker:ci .
       - name: Verify SDK and Gradle
         run: docker run --rm xsus-android-worker:ci sh -ec 'java -version; gradle --version; test -f "$ANDROID_HOME/platforms/android-35/android.jar"; apksigner version'
+      - name: Compile and verify a debug APK as the image runtime user
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/scripts/build-xsus-android.mjs:/app/scripts/build-xsus-android.mjs:ro" \
+            xsus-android-worker:ci sh -ec '
+              node scripts/build-xsus-android.mjs
+              apksigner verify android-artifacts/xsus-tasks-debug.apk
+            '
       - name: Verify worker startup
         run: |
           docker run -d --name xsus-worker-ci -e PORT=3002 -p 127.0.0.1:3002:3002 xsus-android-worker:ci
