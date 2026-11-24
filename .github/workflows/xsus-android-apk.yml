@@ -22,9 +22,31 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - name: Install Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Prepare preinstalled Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          if [[ -f "$SDK/platforms/android-35/android.jar" && -x "$SDK/build-tools/35.0.0/aapt2" ]]; then
+            echo 'Required Android SDK components already installed'
+          else
+            MANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
+            if [[ ! -x "$MANAGER" ]]; then
+              MANAGER="$(find "$SDK/cmdline-tools" -path '*/bin/sdkmanager' -type f | sort -V | tail -n 1)"
+            fi
+            test -x "$MANAGER"
+            "$MANAGER" --sdk_root="$SDK" --version
+            set +o pipefail
+            yes | "$MANAGER" --sdk_root="$SDK" --licenses
+            license_status=$?
+            set -o pipefail
+            test "$license_status" -eq 0
+            "$MANAGER" --sdk_root="$SDK" --install 'platforms;android-35' 'build-tools;35.0.0'
+          fi
+          test -f "$SDK/platforms/android-35/android.jar"
+          test -x "$SDK/build-tools/35.0.0/aapt2"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
