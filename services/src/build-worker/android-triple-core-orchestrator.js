@@ -24,5 +24,5 @@ export async function orchestrateAndroidBuild(input, dependencies) {
       artifact.bytes.subarray(0,4).toString("hex") !== "504b0304" ||
       artifact.size !== artifact.bytes.length ||
       artifact.sha256 !== createHash("sha256").update(artifact.bytes).digest("hex")) throw new Error("Invalid compiler artifact");
-  return {status:"compiled_pending_verification",binding,artifact:{kind:"apk",variant:"debug",bytes:artifact.bytes,size:artifact.size,sha256:artifact.sha256,signatureVerified:false,installationVerified:false}};
+  return {status:"compiled_pending_verification",binding,artifact:{kind:"apk",variant:"debug",bytes:artifact.bytes,size:artifact.size,sha256:artifact.sha256,signatureVerified:false,installationVerified:false,...(artifact.workerVerification?.applicationId===buildInput.applicationId&&artifact.workerVerification?.sha256===artifact.sha256&&artifact.workerVerification.signatureVerified===true&&artifact.workerVerification.applicationIdVerified===true&&artifact.workerVerification.launcherVerified===true?{workerVerification:structuredClone(artifact.workerVerification)}:{})}};
 }
