@@ -1,4 +1,5 @@
 import http from "node:http";
+import {createAndroidArtifactVerifier} from "./android-artifact-verifier.js";
 import {createAndroidWorkerRoute} from "./android-worker-route.js";
 import {timingSafeEqual} from "node:crypto";
 import {pathToFileURL} from "node:url";
@@ -50,7 +51,8 @@ export function createBuildWorkerServer({sharedSecret,previewEnabled=false,andro
 export function startBuildWorkerServer({env=process.env}={}){
  const port=Number(env.PORT??3002);
  if(!Number.isSafeInteger(port)||port<0||port>65535)throw new TypeError("Invalid PORT");
- const server=createBuildWorkerServer({sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET,previewEnabled:env.XSUS_STATIC_PREVIEW_ENABLED==="true",androidRoute:createAndroidWorkerRoute({enabled:env.XSUS_ANDROID_BUILD_ENABLED==="true",token:env.XSUS_ANDROID_BUILD_TOKEN,gradleExecutable:env.XSUS_GRADLE_EXECUTABLE})});
+ const verifier=env.XSUS_ANDROID_BUILD_ENABLED==="true"?createAndroidArtifactVerifier({apksigner:env.XSUS_ANDROID_APKSIGNER??"/opt/android-sdk/build-tools/35.0.0/apksigner",aapt2:env.XSUS_ANDROID_AAPT2??"/opt/android-sdk/build-tools/35.0.0/aapt2"}):null;
+ const server=createBuildWorkerServer({sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET,previewEnabled:env.XSUS_STATIC_PREVIEW_ENABLED==="true",androidRoute:createAndroidWorkerRoute({enabled:env.XSUS_ANDROID_BUILD_ENABLED==="true",token:env.XSUS_ANDROID_BUILD_TOKEN,gradleExecutable:env.XSUS_GRADLE_EXECUTABLE,verifier})});
  server.on("error",error=>{
   console.error("[xsus-worker-listener]",JSON.stringify({event:"error",code:error?.code??"unknown"}));
  });
