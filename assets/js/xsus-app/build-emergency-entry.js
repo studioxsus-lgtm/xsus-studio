@@ -40,6 +40,7 @@ function renderBuild(goal,files){
   apk.type='button';
   apk.textContent=({sq:'Shkarko APK',fr:'Télécharger APK'})[document.documentElement.lang]||'Download APK';
   apk.addEventListener('click', async ()=>{
+    if(document.documentElement.dataset.androidNativeEnabled==='true'&&document.documentElement.dataset.androidNativeReady==='true'){document.dispatchEvent(new Event('xsus:android-native-open'));return;}
     apk.disabled=true;
     try {
       const {downloadProjectApk}=await import('./android/download.js?v=2');
