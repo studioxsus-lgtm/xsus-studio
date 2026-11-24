@@ -24,7 +24,7 @@ export function createAndroidBuildJobs({env=process.env,orchestratorFactory=crea
    if(typeof run!=="function")throw Error("Build unavailable");
    jobs.set(id,j);active=true;
    void Promise.resolve().then(async()=>{
-    j.status="building";
+    j.status="building";console.info("[android-job] building");
     const result=await run({project_id:projectId,prompts:[goal],application_id:applicationId,display_name:displayName,min_sdk:26,accept_storage_profile:true});
     if(result?.status==="review_required"||result?.status==="authorization_required"){j.status=result.status;return;}
     const a=result?.artifact;
@@ -32,12 +32,12 @@ export function createAndroidBuildJobs({env=process.env,orchestratorFactory=crea
     if(store){
      const v=a.workerVerification;
      if(v?.applicationId!==applicationId||v.sha256!==a.sha256||v.signatureVerified!==true||v.applicationIdVerified!==true||v.launcherVerified!==true)throw Error("Worker verification required");
-     j.status="verifying";
+     j.status="verifying";console.info("[android-job] storing_verified_artifact");
      j.receipt=await store.put(owner,projectId,{...a,status:"verified_debug_apk",signatureVerified:true,applicationIdVerified:true,launcherVerified:true});
      j.status="verified_debug_apk";return;
     }
     j.artifact={bytes:Buffer.from(a.bytes),size:a.size,sha256:a.sha256};j.status="compiled_pending_verification";
-   }).catch(()=>{j.status="failed";}).finally(()=>{j.finishedAt=now();active=false;});
+   }).catch(()=>{console.warn("[android-job] failed",j.status);j.status="failed";}).finally(()=>{j.finishedAt=now();active=false;});
    return status(j);
   },
   get(owner,id){const j=owned(owner,id);return j?status(j):null;}
