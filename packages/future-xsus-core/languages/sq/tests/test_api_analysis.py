@@ -59,6 +59,29 @@ class AlbanianAPIIntegrationTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(response.status, 400)
 
+    async def test_rejects_oversized_text(self):
+        response = await self._post({"text": "a" * 4097, "language": "sq"})
+        self.assertEqual(response.status, 400)
+
+    async def test_rejects_extra_fields(self):
+        response = await self._post({"text": "Unë jam.", "language": "sq", "persist": True})
+        self.assertEqual(response.status, 400)
+
+    async def test_no_credentials(self):
+        response = await self.client.post("/v1/language/analyze/sq",
+                                          json={"text": "Unë jam.", "language": "sq"})
+        self.assertEqual(response.status, 401)
+
+    async def test_no_store_cache(self):
+        response = await self._post({"text": "Unë jam.", "language": "sq"})
+        self.assertEqual(response.headers.get("Cache-Control"), "no-store")
+
+    async def test_invalid_feature_flag(self):
+        with self.assertRaises(ValueError):
+            create_app(store=_DummyStore(), conversation=_DummyConversation(),
+                       owner_tokens={"test-owner": self.token},
+                       albanian_analysis_enabled="false")
+
     async def test_default_disabled(self):
         app = create_app(
             store=_DummyStore(), conversation=_DummyConversation(),
