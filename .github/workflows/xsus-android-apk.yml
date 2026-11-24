@@ -54,6 +54,29 @@ jobs:
         run: |
           export XSUS_GRADLE_EXECUTABLE="$(command -v gradle)"
           node scripts/build-xsus-android.mjs
+      - name: Verify compiled APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=android-artifacts/xsus-tasks-debug.apk
+          TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          "$TOOLS/apksigner" verify --verbose --print-certs "$APK"
+          "$TOOLS/aapt2" dump badging "$APK" > android-artifacts/badging.txt
+          grep -F "package: name='com.xsus.tasks'" android-artifacts/badging.txt
+          grep -F "launchable-activity: name='com.xsus.tasks.MainActivity'" android-artifacts/badging.txt
+          node --input-type=module <<'JS'
+          import { readFileSync, writeFileSync } from "node:fs";
+          import { createHash } from "node:crypto";
+          const apk = readFileSync("android-artifacts/xsus-tasks-debug.apk");
+          const path = "android-artifacts/receipt.json";
+          const receipt = JSON.parse(readFileSync(path, "utf8"));
+          if (receipt.size !== apk.length || receipt.sha256 !== createHash("sha256").update(apk).digest("hex")) throw new Error("Artifact integrity mismatch");
+          receipt.signatureVerified = true;
+          receipt.applicationIdVerified = true;
+          receipt.launcherVerified = true;
+          receipt.installationVerified = false;
+          writeFileSync(path, JSON.stringify(receipt, null, 2));
+          JS
       - name: Upload compiled debug APK
         uses: actions/upload-artifact@v4
         with:
