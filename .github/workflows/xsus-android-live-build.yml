@@ -1,0 +1,55 @@
+name: XSUS Android Live Build
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: xsus-android-live-build
+  cancel-in-progress: false
+jobs:
+  live-build:
+    if: github.ref == 'refs/heads/feature/xsus-app-build-engine'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Authenticated triple-core compilation
+        env:
+          XSUS_ANDROID_LIVE_PROBE_APPROVED: 'true'
+          XSUS_ANDROID_PLANNING_URL: https://future-xsus-core-api.onrender.com/internal/android/plan
+          XSUS_ANDROID_REVIEW_URL: https://xsus-studio.onrender.com/internal/android/review
+          XSUS_ANDROID_BUILD_URL: https://xsus-android-build-worker.onrender.com/internal/android/build
+          XSUS_ANDROID_PLANNING_TOKEN: ${{ secrets.XSUS_ANDROID_PLANNING_TOKEN }}
+          XSUS_ANDROID_REVIEW_TOKEN: ${{ secrets.XSUS_ANDROID_REVIEW_TOKEN }}
+          XSUS_ANDROID_BUILD_TOKEN: ${{ secrets.XSUS_ANDROID_BUILD_TOKEN }}
+        run: node scripts/check-android-triple-core-build.mjs
+      - name: Verify Android artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk="${ANDROID_HOME:?Android SDK missing}"
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" "build-tools;35.0.0"
+          tools="$sdk/build-tools/35.0.0"
+          apk=android-live-artifacts/connectivity-debug.apk
+          "$tools/apksigner" verify "$apk"
+          "$tools/aapt2" dump badging "$apk" > "$RUNNER_TEMP/apk-badging.txt"
+          grep -q "^package: name='com.xsus.connectivity'" "$RUNNER_TEMP/apk-badging.txt"
+          grep -q "^launchable-activity:" "$RUNNER_TEMP/apk-badging.txt"
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const path='android-live-artifacts/receipt.json';
+          const receipt=JSON.parse(readFileSync(path,'utf8'));
+          const bytes=readFileSync('android-live-artifacts/connectivity-debug.apk');
+          if(receipt.size!==bytes.length||receipt.sha256!==createHash('sha256').update(bytes).digest('hex'))throw Error('Integrity mismatch');
+          writeFileSync(path,JSON.stringify({...receipt,status:'verified_debug_apk',signatureVerified:true,applicationIdVerified:true,launcherVerified:true,installationVerified:false},null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xsus-android-live-debug
+          path: android-live-artifacts/
+          if-no-files-found: error
+          retention-days: 7
