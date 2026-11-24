@@ -7,6 +7,7 @@ RUN yes | sdkmanager --licenses >/dev/null && sdkmanager "platforms;android-35" 
 RUN curl -fsSL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip && unzip -q /tmp/gradle.zip -d /opt/gradle && rm /tmp/gradle.zip
 WORKDIR /app
 COPY --chown=node:node services/src/build-worker/ ./services/src/build-worker/
+COPY --chown=node:node src/xsus-app-build-engine/ ./src/xsus-app-build-engine/
 RUN printf '{"type":"module"}\n' > package.json && chown node:node /app
 ENV XSUS_GRADLE_EXECUTABLE=/opt/gradle/gradle-8.9/bin/gradle
 USER node
