@@ -20,7 +20,8 @@ if(location.origin===staging || (["https://www.xsusstudio.com","https://xsusstud
  const close=make("button",panel);close.type="button";
  const status=make("p",panel);status.setAttribute("role","status");status.setAttribute("aria-live","polite");
  const launcher=make("button",document.body);launcher.type="button";launcher.className="xsus-android-launcher";
- let generation=0,controller=null,busy=false,activeJob=null,readyArtifact=null;
+ let generation=0,controller=null,busy=false,activeJob=null,readyArtifact=null,ownerId=null;
+ function resetOwner(id){if(ownerId!==id){controller?.abort();activeJob=null;readyArtifact=null;ownerId=id;syncDownload();}}
  const states={
  queued:["Queued","Në pritje","En attente"],
  building:["Building Android APK…","Duke kompiluar APK-në…","Compilation APK…"],
@@ -39,9 +40,10 @@ if(location.origin===staging || (["https://www.xsusstudio.com","https://xsusstud
  function syncDownload(){download.textContent=downloadText("Download APK","Shkarko APK","Télécharger APK");download.hidden=!readyArtifact;download.disabled=downloading||!readyArtifact||readyArtifact.expiresAt<=Date.now();}
  download.addEventListener("click",async()=>{
   if(download.disabled||!readyArtifact||downloading)return;
-  const artifact=readyArtifact,current=generation;downloading=true;syncDownload();
+  const artifact=readyArtifact,current=generation,expectedOwner=ownerId;downloading=true;syncDownload();
   const abort=new AbortController();controller=abort;
   try{
+   const client=await getSupabaseClient();const {data,error}=await client.auth.getUser();if(error||!expectedOwner||data?.user?.id!==expectedOwner){resetOwner(null);throw Error('authentication_required');}
    const blob=await api.download(artifact,abort.signal);
    if(current!==generation||!panel.open||abort.signal.aborted)return;
    const url=URL.createObjectURL(blob),anchor=document.createElement("a");
@@ -78,7 +80,8 @@ if(location.origin===staging || (["https://www.xsusstudio.com","https://xsusstud
  async function openNativeBuilder(){
   if(panel.open)return;
   const current=++generation;labels();panel.showModal();form.reset();project.control.replaceChildren(new Option(tr(1),""));submit.disabled=true;status.textContent=tr(7);
-  try{const client=await getSupabaseClient();const {data,error}=await client.auth.getUser();if(error||!data?.user?.id)throw Error();
+  try{const client=await getSupabaseClient();const {data,error}=await client.auth.getUser();if(error||!data?.user?.id){resetOwner(null);throw Error();}
+   if(current!==generation||!panel.open)return;resetOwner(data.user.id);
    const result=await client.from("xsus_builder_projects").select("id,name").eq("owner_id",data.user.id).order("created_at",{ascending:false}).limit(50);
    if(current!==generation||!panel.open)return;if(result.error)throw Error();
    for(const p of result.data??[])if(typeof p.id==="string")project.control.add(new Option(String(p.name??"Project").slice(0,100),p.id));
@@ -94,9 +97,9 @@ if(location.origin===staging || (["https://www.xsusstudio.com","https://xsusstud
  panel.addEventListener("close",()=>{generation++;controller?.abort();controller=null;progress.hidden=true;});
  form.addEventListener("submit",async e=>{
   e.preventDefault();if(busy||submit.disabled||activeJob||downloading)return;
-  busy=true;readyArtifact=null;syncDownload();submit.disabled=true;const current=generation;controller=new AbortController();status.textContent=tr(10);
-  try{const job=await api.submit({projectId:project.control.value,applicationId:pkg.control.value.trim(),displayName:name.control.value.trim(),approved:approval.control.checked},controller.signal);
-   activeJob=job;
+  busy=true;const expectedOwner=ownerId;readyArtifact=null;syncDownload();submit.disabled=true;const current=generation;controller=new AbortController();status.textContent=tr(10);
+  try{const client=await getSupabaseClient();const {data,error}=await client.auth.getUser();if(error||!expectedOwner||data?.user?.id!==expectedOwner){resetOwner(null);throw Error('authentication_required');}const job=await api.submit({projectId:project.control.value,applicationId:pkg.control.value.trim(),displayName:name.control.value.trim(),approved:approval.control.checked},controller.signal);
+   if(ownerId!==expectedOwner)return;activeJob=job;
    if(current!==generation||!panel.open)return;
    await track(job,current,controller.signal);
   }catch{if(current===generation&&panel.open)status.textContent=tr(12);}
