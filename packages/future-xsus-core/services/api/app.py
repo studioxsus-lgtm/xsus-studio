@@ -231,6 +231,8 @@ def create_app(
     albanian_analysis_enabled: bool = False,
 ) -> web.Application:
     """Create an app using local owner-scoped session storage and engine routing."""
+    if type(albanian_analysis_enabled) is not bool:
+        raise ValueError("albanian_analysis_enabled must be boolean")
     if type(max_concurrent_messages) is not int or max_concurrent_messages < 1:
         raise ValueError("max_concurrent_messages must be a positive integer")
     if owner_authenticator is None:
@@ -464,6 +466,7 @@ def create_app(
         })
 
     async def albanian_analyze(request: web.Request) -> web.Response:
+        nonlocal active_language_requests
         if not albanian_analysis_enabled:
             return _error(404, "not_found", "Resource not found")
         owner = await authenticated_owner(request)
@@ -489,7 +492,13 @@ def create_app(
             return _error(400, "invalid_request", "Invalid analysis request")
         if tag.value != "sq":
             return _error(422, "unsupported_language", "Only sq analysis is supported")
-        result = await asyncio.to_thread(analyze_albanian, text, language=tag)
+        if active_language_requests >= max_concurrent_messages:
+            return _error(503, "language_capacity", "The language service is busy")
+        active_language_requests += 1
+        try:
+            result = analyze_albanian(text, language=tag)
+        finally:
+            active_language_requests -= 1
         return _json({"language": result.language.value,
                       "analysis": asdict(result.analysis),
                       "quality": asdict(result.quality),
