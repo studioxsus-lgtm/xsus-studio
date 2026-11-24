@@ -1,6 +1,8 @@
 // XSUS App deployment validation service. Separate from XSUS AI Core.
 // No provider deployments, no credentials loaded, and no production integrations by default.
 import http from 'node:http';
+import {createAndroidBuildJobs} from './android-build-jobs.js';
+import {createAndroidJobsRoute} from './android-jobs-route.js';
 import crypto from 'node:crypto';
 import {isPersistedBuilderProjectId} from './project-id-contract.js';
 import { pathToFileURL } from 'node:url';
@@ -15,9 +17,12 @@ import {validReservationSpec} from "../build-worker/reservation-preview.js";
 
 export function createStandaloneDeploymentServer(dependencies={}) {
   const route=createDeploymentNodeHandler(dependencies);
+  const androidRoute=createAndroidJobsRoute({jobs:dependencies.androidJobs,createUserClient:dependencies.createUserPreviewClient,allowedOrigins:dependencies.allowedOrigins});
   const workerConnectivity=dependencies.workerConnectivity;
   const connectivityToken=dependencies.connectivityToken;
   return http.createServer((req,res)=>{
+    const androidPath=req.url?.split('?')[0];
+    if(androidPath==='/api/android/jobs'||androidPath?.startsWith('/api/android/jobs/')){void androidRoute(req,res);return;}
     if (req.url?.split('?')[0]==='/healthz' && req.method==='GET') {
       res.writeHead(200,{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'});
       res.end(JSON.stringify({ok:true,service:'xsus-app-deployment-validation',deploymentEnabled:false}));
@@ -212,7 +217,8 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
        result.files.some(f=>typeof f.content!=="string"||f.content.length>500000)){console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"manifest",kind:result?.kind,files:Array.isArray(result?.files)?result.files.map(f=>f.path):[]}));throw new Error("Invalid preview manifest");}
     return result;
   }:undefined;
-  const server=createStandaloneDeploymentServer({...dependencies,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined,previewProxyEnabled,previewProxy,
+  const androidJobs=restConfigured&&env.XSUS_ANDROID_ORCHESTRATION_ENABLED==='true'?createAndroidBuildJobs({env}):null;
+  const server=createStandaloneDeploymentServer({...dependencies,androidJobs,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined,previewProxyEnabled,previewProxy,
     userPreviewEnabled:previewProxyEnabled&&restConfigured&&env.XSUS_USER_PROJECT_PREVIEW_ENABLED==='true',
     createUserPreviewClient:restConfigured?(token)=>createSupabaseRestReviewClient({url:supabaseUrl,publishableKey,accessToken:token}):undefined,
     allowedOrigins:typeof env.XSUS_APP_ALLOWED_ORIGINS==='string'?env.XSUS_APP_ALLOWED_ORIGINS.split(',').map(x=>x.trim()).filter(x=>/^https:\/\//.test(x)):[]});
