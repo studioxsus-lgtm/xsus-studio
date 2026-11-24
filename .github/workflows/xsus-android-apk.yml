@@ -1,0 +1,41 @@
+name: XSUS Android APK Compilation
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/xsus-app-build-engine]
+    paths:
+      - 'services/src/build-worker/android-*.js'
+      - 'scripts/build-xsus-android.mjs'
+      - '.github/workflows/xsus-android-apk.yml'
+permissions:
+  contents: read
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Generate and compile Android application
+        run: |
+          export XSUS_GRADLE_EXECUTABLE="$(command -v gradle)"
+          node scripts/build-xsus-android.mjs
+      - name: Upload compiled debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: xsus-tasks-debug
+          path: android-artifacts/
+          if-no-files-found: error
+          retention-days: 14
