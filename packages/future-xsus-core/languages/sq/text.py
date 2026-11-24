@@ -1,10 +1,12 @@
 """Deterministic written Albanian primitives; no English-engine dependencies."""
 import re
 import unicodedata
+from .lexicon import LEXICON
 
 ALPHABET = tuple("a b c ç d dh e ë f g gj h i j k l ll m n nj o p q r rr s sh t th u v x xh y z zh".split())
 DIGRAPHS = frozenset({"dh", "gj", "ll", "nj", "rr", "sh", "th", "xh", "zh"})
 WORDS = {
+    **LEXICON,
     "përshëndetje": "INTJ", "mirëdita": "INTJ", "faleminderit": "INTJ",
     "unë": "PRON", "ti": "PRON", "ai": "PRON", "ajo": "PRON", "ne": "PRON",
     "ju": "PRON", "ata": "PRON", "ato": "PRON",
