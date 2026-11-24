@@ -1,0 +1,18 @@
+/* Scoped Android staging UI; no global editor overrides. */
+.xsus-android-panel{box-sizing:border-box;width:min(480px,calc(100vw - 24px));max-height:85dvh;overflow:auto;margin:auto;padding:clamp(16px,4vw,26px);border:1px solid #32658a;border-radius:18px;background:#101e33;color:#e6faff;box-shadow:0 20px 70px #0009;font:inherit}
+.xsus-android-panel::backdrop{background:#020817b8}
+.xsus-android-panel h2{font-size:1.35rem;margin:0 0 18px}
+.xsus-android-panel form{display:grid;gap:14px}
+.xsus-android-panel label{display:grid;gap:6px;font-size:.9rem;color:#c9e1f3}
+.xsus-android-panel input:not([type=checkbox]),.xsus-android-panel select{box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid #345b7a;border-radius:9px;background:#091729;color:#fff;font:inherit}
+.xsus-android-panel label:has(input[type=checkbox]){display:flex;align-items:center;gap:10px}
+.xsus-android-panel input[type=checkbox]{width:20px;height:20px;accent-color:#38bdf8;flex:none}
+.xsus-android-panel button,.xsus-android-launcher{min-height:44px;padding:10px 16px;border:1px solid #397c98;border-radius:10px;background:#183b59;color:#fff;font:600 14px system-ui;cursor:pointer}
+.xsus-android-panel button[type=submit]{background:#1265b5;border-color:#38bdf8}
+.xsus-android-panel button:disabled{opacity:.5;cursor:not-allowed}
+.xsus-android-panel button:focus-visible,.xsus-android-panel input:focus-visible,.xsus-android-panel select:focus-visible,.xsus-android-launcher:focus-visible{outline:2px solid #67e8f9;outline-offset:3px}
+.xsus-android-panel [role=status]{min-height:1.5em;overflow-wrap:anywhere;color:#a6d8ef;margin:14px 0 0}
+.xsus-android-panel>button{margin-top:14px}
+.xsus-android-launcher{position:fixed;right:14px;bottom:180px;z-index:2147482990;border-radius:999px;background:#122a40;font-size:12px;max-width:calc(100vw - 28px)}
+.xsus-android-launcher[hidden]{display:none!important}
+@media(max-width:480px){.xsus-android-panel{max-height:calc(100dvh - 24px)}.xsus-android-panel input:not([type=checkbox]),.xsus-android-panel select{font-size:16px}}
