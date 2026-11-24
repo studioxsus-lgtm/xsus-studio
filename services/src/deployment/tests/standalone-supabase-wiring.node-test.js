@@ -37,8 +37,8 @@ test('trusted Supabase injection routes review through auth and builder without 
  const server=startStandaloneDeploymentServer({env:{PORT:'0'},dependencies:{allowedOrigins:[origin]},
   supabaseClient:client,buildFromSavedProject:async()=>{built++;return null;}});
  try {await listening(server);const response=await request(server);
-  assert.equal(response.status,403);
-  assert.equal((await response.json()).deployed,false);
+  assert.equal(response.status,409);
+  assert.deepEqual(await response.json(),{status:'blocked',reason:'BUILD_NOT_AVAILABLE',deployed:false});
   assert.equal(built,1);
  }finally{await close(server);}
 });
