@@ -8,11 +8,14 @@ concurrency:
   cancel-in-progress: false
 jobs:
   live-build:
-    if: github.ref == 'refs/heads/feature/xsus-app-build-engine'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: 90f3e7a9a24f43705cea4a8414278138371db8f8
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
