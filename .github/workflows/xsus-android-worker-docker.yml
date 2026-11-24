@@ -1,0 +1,34 @@
+name: XSUS Android Worker Docker
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/xsus-app-build-engine]
+    paths:
+      - 'services/android-worker.Dockerfile*'
+      - 'services/src/build-worker/**'
+      - 'src/xsus-app-build-engine/**'
+      - '.github/workflows/xsus-android-worker-docker.yml'
+permissions:
+  contents: read
+jobs:
+  docker-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build worker image
+        run: docker build -f services/android-worker.Dockerfile -t xsus-android-worker:ci .
+      - name: Verify SDK and Gradle
+        run: docker run --rm xsus-android-worker:ci sh -ec 'java -version; gradle --version; test -f "$ANDROID_HOME/platforms/android-35/android.jar"; apksigner version'
+      - name: Verify worker startup
+        run: |
+          docker run -d --name xsus-worker-ci -e PORT=3002 -p 127.0.0.1:3002:3002 xsus-android-worker:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3002/healthz | grep -q '"ok":true'; then exit 0; fi
+            sleep 2
+          done
+          docker logs xsus-worker-ci
+          exit 1
+      - name: Cleanup
+        if: always()
+        run: docker rm -f xsus-worker-ci || true
