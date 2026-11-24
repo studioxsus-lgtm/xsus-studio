@@ -13,6 +13,8 @@
  */
 
 import http from "node:http";
+import {createAndroidReviewRoute, ANDROID_REVIEW_PATH} from "./src/platform/xsus-app/hyper-android-review-route.js";
+const androidReviewRoute = createAndroidReviewRoute(process.env);
 import { checkHyperStartupReadiness } from "./src/platform/xsus-app/hyper-startup-readiness.js";
 import { createHyperReadinessDiagnostic } from "./src/platform/xsus-app/hyper-readiness-diagnostic.js";
 import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js";
@@ -327,6 +329,15 @@ const server = http.createServer(
                     chat: "POST /api/chat"
                 }
             });
+        }
+
+        if (pathname === ANDROID_REVIEW_PATH) {
+            if (!androidReviewRoute) return sendJSON(res,503,{error:"Android review disabled"});
+            if (req.method !== "POST") return sendJSON(res,405,{error:"Method not allowed"});
+            if (!androidReviewRoute.authorized(req.headers.authorization)) return sendJSON(res,401,{error:"Unauthorized"});
+            if (!/^application\/json(?:\s*;|$)/i.test(req.headers["content-type"]??"")) return sendJSON(res,415,{error:"Invalid content type"});
+            try { return sendJSON(res,200,androidReviewRoute.review(await readJSONBody(req))); }
+            catch(error) { return sendJSON(res,error.statusCode===413?413:400,{error:"Invalid Android review request"}); }
         }
 
         // Read-only diagnostic; requires verified Supabase user and explicit flag.
