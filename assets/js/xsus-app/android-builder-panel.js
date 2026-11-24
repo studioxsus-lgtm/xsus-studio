@@ -33,6 +33,24 @@ if(location.origin===staging){
  interrupted:["Tracking interrupted. Reopen to retry.","Ndjekja u ndërpre. Rihape panelin.","Suivi interrompu. Rouvrez le panneau."]
  };
  const stateText=key=>states[key]?.[({en:0,sq:1,fr:2})[document.documentElement.lang?.slice(0,2)]??0]??tr(12);
+ const download=make("button",panel);download.type="button";download.hidden=true;
+ let downloading=false;
+ const downloadText=(en,sq,fr)=>({en,sq,fr})[document.documentElement.lang?.slice(0,2)]??en;
+ function syncDownload(){download.textContent=downloadText("Download APK","Shkarko APK","Télécharger APK");download.hidden=!readyArtifact;download.disabled=downloading||!readyArtifact||readyArtifact.expiresAt<=Date.now();}
+ download.addEventListener("click",async()=>{
+  if(download.disabled||!readyArtifact||downloading)return;
+  const artifact=readyArtifact,current=generation;downloading=true;syncDownload();
+  const abort=new AbortController();controller=abort;
+  try{
+   const blob=await api.download(artifact,abort.signal);
+   if(current!==generation||!panel.open||abort.signal.aborted)return;
+   const url=URL.createObjectURL(blob),anchor=document.createElement("a");
+   anchor.href=url;anchor.download="xsus-app-debug.apk";document.body.append(anchor);
+   try{anchor.click();}finally{anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+   status.textContent=downloadText("APK download requested.","Shkarkimi i APK-së u kërkua.","Téléchargement APK demandé.");
+  }catch{if(current===generation&&panel.open)status.textContent=downloadText("Download failed or expired.","Shkarkimi dështoi ose ka skaduar.","Téléchargement échoué ou expiré.");}
+  finally{downloading=false;syncDownload();}
+ });
  const progress=make("progress",panel);progress.hidden=true;progress.setAttribute("aria-labelledby",title.id);
  async function track(job,current,signal){
   const deadline=Date.now()+16*60*1000;
@@ -43,7 +61,7 @@ if(location.origin===staging){
     if(signal.aborted||current!==generation||!panel.open)return;
     status.textContent=stateText(result.status);
     if(!["queued","building","verifying"].includes(result.status)){
-     activeJob=null;readyArtifact=result.status==="verified_debug_apk"?result:null;return;
+     activeJob=null;readyArtifact=result.status==="verified_debug_apk"?result:null;syncDownload();return;
     }
     await new Promise(resolve=>setTimeout(resolve,3000));
    }
@@ -52,7 +70,7 @@ if(location.origin===staging){
   finally{if(current===generation)progress.hidden=true;}
  }
 
- function labels(){title.textContent=launcher.textContent=tr(0);for(const f of [project,name,pkg,approval])f.caption.textContent=tr(f.index);submit.textContent=tr(5);close.textContent=tr(6);}
+ function labels(){title.textContent=launcher.textContent=tr(0);for(const f of [project,name,pkg,approval])f.caption.textContent=tr(f.index);submit.textContent=tr(5);close.textContent=tr(6);syncDownload();}
  function sync(){launcher.hidden=!document.getElementById("workspace")||document.getElementById("workspace").classList.contains("hidden");labels();}
  new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:["lang"]});
  const workspace=document.getElementById("workspace");if(workspace)new MutationObserver(sync).observe(workspace,{attributes:true,attributeFilter:["class"]});
@@ -71,8 +89,8 @@ if(location.origin===staging){
  close.addEventListener("click",()=>panel.close());
  panel.addEventListener("close",()=>{generation++;controller?.abort();controller=null;progress.hidden=true;});
  form.addEventListener("submit",async e=>{
-  e.preventDefault();if(busy||submit.disabled||activeJob)return;
-  busy=true;readyArtifact=null;submit.disabled=true;const current=generation;controller=new AbortController();status.textContent=tr(10);
+  e.preventDefault();if(busy||submit.disabled||activeJob||downloading)return;
+  busy=true;readyArtifact=null;syncDownload();submit.disabled=true;const current=generation;controller=new AbortController();status.textContent=tr(10);
   try{const job=await api.submit({projectId:project.control.value,applicationId:pkg.control.value.trim(),displayName:name.control.value.trim(),approved:approval.control.checked},controller.signal);
    activeJob=job;
    if(current!==generation||!panel.open)return;
