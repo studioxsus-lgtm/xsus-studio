@@ -2,13 +2,13 @@ import {randomUUID,createHash} from "node:crypto";
 import {createRemoteAndroidOrchestrator} from "../build-worker/android-remote-orchestrator.js";
 
 // Staging-only bounded asynchronous queue. No public route or persistent storage.
-export function createAndroidBuildJobs({env=process.env,orchestratorFactory=createRemoteAndroidOrchestrator,now=Date.now}={}){
+export function createAndroidBuildJobs({env=process.env,orchestratorFactory=createRemoteAndroidOrchestrator,now=Date.now,store=null}={}){
  if(env.XSUS_ANDROID_ORCHESTRATION_ENABLED!=="true")return null;
  const jobs=new Map(),ttl=15*60*1000;
  let active=false;
  function prune(){for(const [id,j] of jobs)if(j.finishedAt!==undefined&&now()-j.finishedAt>=ttl)jobs.delete(id);}
  function owned(owner,id){prune();const j=jobs.get(id);return j?.owner===owner?j:null;}
- function status(j){return {id:j.id,projectId:j.projectId,status:j.status,...(j.artifact?{size:j.artifact.size,sha256:j.artifact.sha256,signatureVerified:false,installationVerified:false}:{})};}
+ function status(j){return {id:j.id,projectId:j.projectId,status:j.status,...(j.receipt?{artifactId:j.receipt.id,size:j.receipt.size,sha256:j.receipt.sha256,expiresAt:j.receipt.expiresAt,signatureVerified:true,installationVerified:false}:{}),...(j.artifact?{size:j.artifact.size,sha256:j.artifact.sha256,signatureVerified:false,installationVerified:false}:{})};}
  return Object.freeze({
   // Only a trusted caller that has checked authentication and project ownership may submit.
   submit({owner,projectId,goal,applicationId,displayName,approved}={}){
@@ -29,6 +29,13 @@ export function createAndroidBuildJobs({env=process.env,orchestratorFactory=crea
     if(result?.status==="review_required"||result?.status==="authorization_required"){j.status=result.status;return;}
     const a=result?.artifact;
     if(!authorized||result?.status!=="compiled_pending_verification"||!Buffer.isBuffer(a?.bytes)||a.bytes.length<4||a.bytes.length>128*1024*1024||a.bytes.subarray(0,4).toString("hex")!=="504b0304"||a.size!==a.bytes.length||a.sha256!==createHash("sha256").update(a.bytes).digest("hex"))throw Error("Invalid artifact");
+    if(store){
+     const v=a.workerVerification;
+     if(v?.applicationId!==applicationId||v.sha256!==a.sha256||v.signatureVerified!==true||v.applicationIdVerified!==true||v.launcherVerified!==true)throw Error("Worker verification required");
+     j.status="verifying";
+     j.receipt=await store.put(owner,projectId,{...a,status:"verified_debug_apk",signatureVerified:true,applicationIdVerified:true,launcherVerified:true});
+     j.status="verified_debug_apk";return;
+    }
     j.artifact={bytes:Buffer.from(a.bytes),size:a.size,sha256:a.sha256};j.status="compiled_pending_verification";
    }).catch(()=>{j.status="failed";}).finally(()=>{j.finishedAt=now();active=false;});
    return status(j);
