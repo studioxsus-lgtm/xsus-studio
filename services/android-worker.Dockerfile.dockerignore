@@ -1,0 +1,6 @@
+**
+!services/
+!services/src/
+!services/src/build-worker/
+!services/src/build-worker/**
+!services/android-worker.Dockerfile
