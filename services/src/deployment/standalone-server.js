@@ -1,6 +1,12 @@
 // XSUS App deployment validation service. Separate from XSUS AI Core.
 // No provider deployments, no credentials loaded, and no production integrations by default.
 import http from 'node:http';
+import {mkdtempSync} from 'node:fs';
+import {rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createAndroidArtifactStore} from './android-artifact-store.js';
+import {createAndroidDownloadRoute} from './android-download-route.js';
 import {createAndroidBuildJobs} from './android-build-jobs.js';
 import {createAndroidJobsRoute} from './android-jobs-route.js';
 import crypto from 'node:crypto';
@@ -18,10 +24,12 @@ import {validReservationSpec} from "../build-worker/reservation-preview.js";
 export function createStandaloneDeploymentServer(dependencies={}) {
   const route=createDeploymentNodeHandler(dependencies);
   const androidRoute=createAndroidJobsRoute({jobs:dependencies.androidJobs,createUserClient:dependencies.createUserPreviewClient,allowedOrigins:dependencies.allowedOrigins});
+  const androidDownload=createAndroidDownloadRoute({store:dependencies.androidStore,createUserClient:dependencies.createUserPreviewClient,allowedOrigins:dependencies.allowedOrigins});
   const workerConnectivity=dependencies.workerConnectivity;
   const connectivityToken=dependencies.connectivityToken;
   return http.createServer((req,res)=>{
     const androidPath=req.url?.split('?')[0];
+    if(androidPath?.startsWith('/api/android/artifacts/')){void androidDownload(req,res);return;}
     if(androidPath==='/api/android/jobs'||androidPath?.startsWith('/api/android/jobs/')){void androidRoute(req,res);return;}
     if (req.url?.split('?')[0]==='/healthz' && req.method==='GET') {
       res.writeHead(200,{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'});
@@ -217,11 +225,19 @@ export function startStandaloneDeploymentServer({env=process.env,dependencies={}
        result.files.some(f=>typeof f.content!=="string"||f.content.length>500000)){console.info("[xsus-preview-proxy-diagnostic]",JSON.stringify({stage:"manifest",kind:result?.kind,files:Array.isArray(result?.files)?result.files.map(f=>f.path):[]}));throw new Error("Invalid preview manifest");}
     return result;
   }:undefined;
-  const androidJobs=restConfigured&&env.XSUS_ANDROID_ORCHESTRATION_ENABLED==='true'?createAndroidBuildJobs({env}):null;
-  const server=createStandaloneDeploymentServer({...dependencies,androidJobs,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined,previewProxyEnabled,previewProxy,
+  const androidEnabled=restConfigured&&env.XSUS_ANDROID_ORCHESTRATION_ENABLED==='true'&&env.XSUS_ANDROID_ARTIFACT_DELIVERY_ENABLED==='true';
+  const androidRoot=androidEnabled?mkdtempSync(join(tmpdir(),'xsus-private-apk-')):null;
+  const androidStore=androidRoot?createAndroidArtifactStore({root:androidRoot}):null;
+  const androidJobs=androidStore?createAndroidBuildJobs({env,store:androidStore}):null;
+  const server=createStandaloneDeploymentServer({...dependencies,androidJobs,androidStore,...integration,...restIntegration,workerConnectivity,connectivityToken:workerConfigured?env.XSUS_BUILD_STATUS_TOKEN:undefined,previewProxyEnabled,previewProxy,
     userPreviewEnabled:previewProxyEnabled&&restConfigured&&env.XSUS_USER_PROJECT_PREVIEW_ENABLED==='true',
     createUserPreviewClient:restConfigured?(token)=>createSupabaseRestReviewClient({url:supabaseUrl,publishableKey,accessToken:token}):undefined,
     allowedOrigins:typeof env.XSUS_APP_ALLOWED_ORIGINS==='string'?env.XSUS_APP_ALLOWED_ORIGINS.split(',').map(x=>x.trim()).filter(x=>/^https:\/\//.test(x)):[]});
+  if(androidStore){
+    const cleanup=setInterval(()=>{void androidStore.prune().catch(()=>console.warn('[xsus-android-storage-cleanup-failed]'));},60000);
+    cleanup.unref();
+    server.once('close',()=>{clearInterval(cleanup);void rm(androidRoot,{recursive:true,force:true}).catch(()=>{});});
+  }
   server.listen(port,'0.0.0.0',()=>{
     if(previewProxyEnabled&&env.XSUS_PREVIEW_PROXY_SMOKE==="true"){
       void (async()=>{
