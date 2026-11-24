@@ -1,4 +1,5 @@
 import http from "node:http";
+import {createAndroidWorkerRoute} from "./android-worker-route.js";
 import {timingSafeEqual} from "node:crypto";
 import {pathToFileURL} from "node:url";
 import {generateWorkerStaticPreview} from "./static-preview-build.js";
@@ -9,12 +10,13 @@ function authenticated(header,secret){
  return a.length===b.length&&timingSafeEqual(a,b);
 }
 /** Server-to-server connectivity check only. Never executes builds. */
-export function createBuildWorkerServer({sharedSecret,previewEnabled=false}={}){
+export function createBuildWorkerServer({sharedSecret,previewEnabled=false,androidRoute=null}={}){
  return http.createServer((req,res)=>{
   res.setHeader("content-type","application/json");
   res.setHeader("cache-control","no-store");
   res.setHeader("x-content-type-options","nosniff");
   const path=req.url?.split("?")[0];
+  if(path==="/internal/android/build"&&androidRoute){void androidRoute(req,res);return;}
   if(req.method==="GET"&&path==="/healthz"){
    res.writeHead(200);res.end(JSON.stringify({ok:true,service:"xsus-app-build-worker",buildEnabled:false}));return;
   }
@@ -48,7 +50,7 @@ export function createBuildWorkerServer({sharedSecret,previewEnabled=false}={}){
 export function startBuildWorkerServer({env=process.env}={}){
  const port=Number(env.PORT??3002);
  if(!Number.isSafeInteger(port)||port<0||port>65535)throw new TypeError("Invalid PORT");
- const server=createBuildWorkerServer({sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET,previewEnabled:env.XSUS_STATIC_PREVIEW_ENABLED==="true"});
+ const server=createBuildWorkerServer({sharedSecret:env.XSUS_BUILD_WORKER_SHARED_SECRET,previewEnabled:env.XSUS_STATIC_PREVIEW_ENABLED==="true",androidRoute:createAndroidWorkerRoute({enabled:env.XSUS_ANDROID_BUILD_ENABLED==="true",token:env.XSUS_ANDROID_BUILD_TOKEN,gradleExecutable:env.XSUS_GRADLE_EXECUTABLE})});
  server.on("error",error=>{
   console.error("[xsus-worker-listener]",JSON.stringify({event:"error",code:error?.code??"unknown"}));
  });
