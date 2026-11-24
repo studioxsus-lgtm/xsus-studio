@@ -132,6 +132,9 @@ def main() -> None:
             learning_output_dir=Path(os.environ["XSUS_LEARNING_OUTPUT_DIR"])
             if os.environ.get("XSUS_LEARNING_OUTPUT_DIR") else None,
         )
+        if os.environ.get("XSUS_ANDROID_PLANNING_ENABLED", "false") == "true":
+            from services.api.android_planning import attach_android_planning
+            attach_android_planning(app, os.environ.get("XSUS_ANDROID_PLANNING_TOKEN"))
         web.run_app(app, host=args.host, port=args.port, access_log=None)
     except (OSError, ValueError, sqlite3.Error) as error:
         parser.exit(1, f"{error}\n")
