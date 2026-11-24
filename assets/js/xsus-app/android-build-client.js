@@ -1,12 +1,18 @@
 // Isolated Android staging client. Never exposes server-to-server credentials.
 import {getUserAccessToken} from "./auth-session.js";
-const BASE="https://xsus-app-build-api-staging.onrender.com/api/android";
+const STAGING_BASE="https://xsus-app-build-api-staging.onrender.com/api/android";
+const PRODUCTION_BASE="https://xsus-app-deployment-api.onrender.com/api/android";
+export function resolveAndroidBuildBase(origin){
+ if(origin==="https://xsus-app-build-preview-staging.onrender.com")return STAGING_BASE;
+ if(["https://www.xsusstudio.com","https://xsusstudio.com"].includes(origin))return PRODUCTION_BASE;
+ throw Error("origin_not_allowed");
+}
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export function createAndroidBuildClient({getToken=getUserAccessToken,fetchImpl=globalThis.fetch}={}){
+export function createAndroidBuildClient({getToken=getUserAccessToken,fetchImpl=globalThis.fetch,origin=globalThis.location?.origin}={}){
  async function request(path,options={}){
   const token=await getToken();
   if(!token)throw Error("authentication_required");
-  const response=await fetchImpl(BASE+path,{method:options.method??"GET",mode:"cors",cache:"no-store",redirect:"error",headers:{authorization:"Bearer "+token,...(options.body?{"content-type":"application/json"}:{})},body:options.body,signal:options.signal?AbortSignal.any([options.signal,AbortSignal.timeout(30000)]):AbortSignal.timeout(30000)});
+  const response=await fetchImpl(resolveAndroidBuildBase(origin)+path,{method:options.method??"GET",mode:"cors",cache:"no-store",redirect:"error",headers:{authorization:"Bearer "+token,...(options.body?{"content-type":"application/json"}:{})},body:options.body,signal:options.signal?AbortSignal.any([options.signal,AbortSignal.timeout(30000)]):AbortSignal.timeout(30000)});
   if(!response.ok)throw Error(({401:"authentication_required",403:"origin_not_allowed",404:"not_found",422:"invalid_saved_project",429:"build_capacity_unavailable",503:"android_build_unavailable"})[response.status]??"android_request_failed");
   return response;
  }
