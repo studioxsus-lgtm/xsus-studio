@@ -11,7 +11,7 @@ try {
   if(binding.projectId!==projectId||!Number.isSafeInteger(binding.revision)||! /^[a-f0-9]{64}$/.test(binding.snapshotDigest)||! /^[a-f0-9]{64}$/.test(binding.buildDigest)||approvals!==0)return false;
   approvals++;console.log('Build authorization accepted');return true;
  }});
- const result=await run({project_id:projectId,prompts:["Krijo aplikacion Android për menaxhimin e detyrave"],application_id:"com.xsus.connectivity",display_name:"XSUS Connectivity",min_sdk:26,accept_storage_profile:true});
+ const result=await run({project_id:projectId,prompts:["Krijo aplikacion Android me menaxhim detyrash"],application_id:"com.xsus.connectivity",display_name:"XSUS Connectivity",min_sdk:26,accept_storage_profile:true});
  console.log('Orchestration status: '+(['compiled_pending_verification','review_required','authorization_required'].includes(result.status)?result.status:'unexpected'));
  if(result.status!=="compiled_pending_verification"||approvals!==1)throw Error("Build not ready");
  const dir=await mkdir("android-live-artifacts",{recursive:false});
