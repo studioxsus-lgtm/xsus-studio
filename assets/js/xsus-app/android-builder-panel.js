@@ -75,7 +75,8 @@ if(location.origin===staging || (["https://www.xsusstudio.com","https://xsusstud
  new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:["lang"]});
  const workspace=document.getElementById("workspace");if(workspace)new MutationObserver(sync).observe(workspace,{attributes:true,attributeFilter:["class"]});
  sync();
- launcher.addEventListener("click",async()=>{
+ async function openNativeBuilder(){
+  if(panel.open)return;
   const current=++generation;labels();panel.showModal();form.reset();project.control.replaceChildren(new Option(tr(1),""));submit.disabled=true;status.textContent=tr(7);
   try{const client=await getSupabaseClient();const {data,error}=await client.auth.getUser();if(error||!data?.user?.id)throw Error();
    const result=await client.from("xsus_builder_projects").select("id,name").eq("owner_id",data.user.id).order("created_at",{ascending:false}).limit(50);
@@ -85,7 +86,10 @@ if(location.origin===staging || (["https://www.xsusstudio.com","https://xsusstud
    if(activeJob){controller=new AbortController();await track(activeJob,current,controller.signal);if(current===generation)submit.disabled=!!activeJob||busy||project.control.options.length<2;}
    else if(readyArtifact)status.textContent=stateText("verified_debug_apk");
   }catch{if(current===generation&&panel.open)status.textContent=tr(9);}
- });
+ }
+ launcher.addEventListener("click",openNativeBuilder);
+ document.addEventListener("xsus:android-native-open",openNativeBuilder);
+ document.documentElement.dataset.androidNativeReady="true";
  close.addEventListener("click",()=>panel.close());
  panel.addEventListener("close",()=>{generation++;controller?.abort();controller=null;progress.hidden=true;});
  form.addEventListener("submit",async e=>{
