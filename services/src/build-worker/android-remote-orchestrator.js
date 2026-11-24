@@ -9,6 +9,7 @@ export function createRemoteAndroidCompiler({endpoint,token,fetchImpl=globalThis
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
   try{
    const response=await fetchImpl(url.href,{method:"POST",redirect:"error",signal:controller.signal,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({...input,minSdk:options.minSdk,theme:options.theme,primarySeed:options.primarySeed})});
+   console.info("[android-remote] worker_http",response.status);
    const digest=response.headers.get("x-xsus-sha256");
    if(!response.ok||response.headers.get("content-type")!=="application/octet-stream"||response.headers.get("x-xsus-artifact-status")!=="compiled_pending_verification"||!/^[a-f0-9]{64}$/.test(digest??"")||!response.body){await response.body?.cancel();throw Error("Invalid worker response");}
    const reader=response.body.getReader(),chunks=[];let size=0;
@@ -26,10 +27,12 @@ export function createRemoteAndroidOrchestrator({env=process.env,authorize,fetch
  const reviewTransport=createCoreTransport({endpoint:env.XSUS_ANDROID_REVIEW_URL,token:env.XSUS_ANDROID_REVIEW_TOKEN,fetchImpl});
  const compiler=createRemoteAndroidCompiler({endpoint:env.XSUS_ANDROID_BUILD_URL,token:env.XSUS_ANDROID_BUILD_TOKEN,fetchImpl});
  return async input=>{
+  console.info("[android-remote] planning_started");
   const draft=await planning(input);
+  console.info("[android-remote] planning_completed");
   if(draft.execution_authorized!==false)throw Error("Invalid planning authorization");
   if(draft.status!=="draft_ready")return {status:"review_required",issues:["planning_not_ready"]};
   if(draft.plan?.functional?.ui?.android?.project_id!==input.project_id)throw Error("Project mismatch");
-  return orchestrateAndroidBuild(input,{planProject:async()=>draft,reviewTransport,authorize,compiler});
+  return orchestrateAndroidBuild(input,{planProject:async()=>draft,reviewTransport:async (...args)=>{console.info("[android-remote] review_started");const result=await reviewTransport(...args);console.info("[android-remote] review_completed");return result;},authorize,compiler:async (...args)=>{console.info("[android-remote] compiler_started");const result=await compiler(...args);console.info("[android-remote] compiler_completed");return result;}});
  };
 }
