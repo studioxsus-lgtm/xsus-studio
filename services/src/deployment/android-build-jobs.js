@@ -14,7 +14,9 @@ export function createAndroidBuildJobs({env=process.env,orchestratorFactory=crea
   submit({owner,projectId,goal,applicationId,displayName,approved}={}){
    prune();
    if(typeof owner!=="string"||!owner||typeof projectId!=="string"||!projectId||typeof goal!=="string"||!goal.trim()||goal.length>2000||typeof applicationId!=="string"||! /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(applicationId)||applicationId.length>150||typeof displayName!=="string"||!displayName.trim()||displayName.length>80||/[\x00-\x1f\x7f]/.test(displayName)||approved!==true)throw Error("Invalid approved build request");
-   if(active||jobs.size>=2)throw Error("Build capacity unavailable");
+   if(active)throw Error("Build capacity unavailable");
+   // Retain bounded status history without blocking on completed requests.
+   if(jobs.size>=32)throw Error("Build capacity unavailable");
    const id=randomUUID(),j={id,owner,projectId,status:"queued"};
    let authorized=false;
    const run=orchestratorFactory({env,authorize:async b=>{
