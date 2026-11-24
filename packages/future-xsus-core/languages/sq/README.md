@@ -1,16 +1,62 @@
-# XSUS Albanian Engine — stages 1–5
+# XSUS Albanian Engine — foundation release candidate
 
-Independent foundation for written Standard Albanian, isolated from `languages/en`.
+Independent written Standard Albanian analysis, isolated from the English engine.
 
-Implemented: NFC Unicode normalization and casefolding; tokenization that preserves Albanian diacritics and punctuation; 36-letter Albanian alphabet (including nine digraphs); a small explicitly tagged starter lexicon; conservative Albanian-language detection.
+## Implemented scope
 
-The detector returns `"sq"` only when a known Albanian marker is present, otherwise `None`. This is **not** a general multilingual classifier. The starter lexicon is not a morphological parser or conversational model. No automatic registration or production routing is enabled.
+| Component | Entry point |
+| --- | --- |
+| Unicode, alphabet, tokenizer, starter lexicon and marker detection | text.py |
+| Explicit morphological paradigms | morphology.py |
+| Verb conjugation | verbs.py |
+| Noun and pronoun declension | nominals.py |
+| Restricted SV/SVO syntax | syntax.py |
+| Negation, punctuation-based questions, two-clause coordination | advanced_syntax.py |
+| Combined analysis | pipeline.analyze_text |
+| Internal coverage diagnostics | quality.evaluate_text |
+| Explicit routing | core.routing.sq_analysis_dispatch |
+| Typed analysis bridge | core.routing.sq_analysis_contract |
+| App-facing Python bridge | core.routing.sq_app_bridge |
 
-Run from `packages/future-xsus-core`:
+The detector is marker-based, not a multilingual classifier. The lexicon and
+paradigms are small; unsupported syntax is reported as unknown. Coverage is not
+accuracy. This engine does not generate conversation responses or applications.
+The App bridge is not connected to the live frontend.
+
+## HTTP integration
+
+POST /v1/language/analyze/sq accepts JSON with exactly text and language
+(sq), using the existing owner authentication. Text is limited to 4096
+characters. The response contains analysis, quality, language and persisted=false.
+The feature is disabled by default. Enable only in an authorized staging
+environment with XSUS_SQ_ANALYSIS_ENABLED=true. No production deployment is implied.
+
+## Verification
+
+From packages/future-xsus-core:
 
 ```sh
-python3 -m unittest discover -s languages/sq/tests -v
-python3 -m unittest discover -s languages/en/tests -v
+python -m pip install -r requirements-remote.txt
+python scripts/test_albanian.py
+python -m unittest discover -s tests/contracts -v
+python -m unittest discover -s languages/en/tests -v
 ```
 
-Next: expand annotated vocabulary, inflection and contextual disambiguation, add held-out evaluation and connect the engine through existing contracts only after acceptance tests.
+CI runs the above checks across Python 3.11, 3.12 and 3.13.
+
+## Release acceptance gates
+
+- All CI matrix jobs pass for the exact release commit.
+- Staging authentication, disabled-state and request validation verified.
+- Independent annotated held-out Albanian corpus and accuracy evaluation.
+- Documented limitations and human linguistic review.
+- Explicit approval before production activation or live App integration.
+
+The foundation is a release candidate, not a production-ready Albanian
+conversation engine. No accuracy or deployment claim is made by this document.
+
+## Next development cycle
+
+Expand annotated vocabulary, complete inflection and agreement coverage,
+improve detection and contextual disambiguation, and measure held-out accuracy
+before expanding the supported production scope.
