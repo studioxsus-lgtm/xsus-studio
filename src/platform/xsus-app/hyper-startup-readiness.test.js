@@ -13,13 +13,22 @@ describe("Hyper startup readiness (read-only)", () => {
       .toMatchObject({ status: "NOT_CONFIGURED", tablesReachable: false, checks: {} });
     expect(fetchImpl).not.toHaveBeenCalled();
   });
-  it("checks exactly two tables with GET and no row contents", async () => {
+  it("checks REST gateway and exactly two tables with GET and no row contents", async () => {
     const fetchImpl = vi.fn(async () => ({ ok: true }));
     expect(await checkHyperStartupReadiness({ env, fetchImpl }))
       .toMatchObject({ status: "TABLES_REACHABLE", tablesReachable: true });
     expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
+      "https://example.supabase.co/rest/v1/",
+      "https://example.supabase.co/rest/v1/hyper_runtime_evidence_bundles?select=observation_id&limit=0",
+      "https://example.supabase.co/rest/v1/hyper_evidence_owners?select=observation_id&limit=0"
+    ]);
+    expect(fetchImpl.mock.calls[0][1].headers.Accept).toBe("application/openapi+json");
     for (const [url, options] of fetchImpl.mock.calls) {
-      expect(url).toContain("select=observation_id&limit=0");
+      if (!url.endsWith("/rest/v1/")) {
+        expect(new URL(url).searchParams.get("limit")).toBe("0");
+        expect(options.headers.Accept).toBe("application/json");
+      }
       expect(options.method).toBe("GET");
       expect(options.redirect).toBe("error");
     }
