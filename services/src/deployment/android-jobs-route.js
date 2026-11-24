@@ -37,7 +37,14 @@ export function createAndroidJobsRoute({jobs,createUserClient,allowedOrigins=[]}
    const {data,error}=await client.from("xsus_builder_projects").select("id,owner_id,snapshot").eq("id",body.projectId).eq("owner_id",owner).maybeSingle();
    if(error)return send(503,{error:"project_unavailable"});
    if(!data||data.id!==body.projectId||data.owner_id!==owner)return send(404,{error:"not_found"});
-   const goal=data.snapshot?.goal;
+   // Older account snapshots may contain an empty composer after submission.
+   // Recover only the original user request from the owner-verified saved session.
+   const snapshot=data.snapshot;
+   let goal=snapshot?.goal;
+   if(snapshot?.version===1&&typeof goal==="string"&&!goal.trim()&&Array.isArray(snapshot.session?.messages)){
+    const first=snapshot.session.messages.find(message=>message?.role==="user");
+    if(typeof first?.text==="string")goal=first.text.split(/\r?\n\r?\n/,1)[0].trim();
+   }
    if(typeof goal!=="string"||!goal.trim()||goal.length>2000)return send(422,{error:"invalid_saved_project"});
    let job;
    try{job=jobs.submit({owner,projectId:body.projectId,goal,applicationId:body.applicationId,displayName:body.displayName,approved:true});}
