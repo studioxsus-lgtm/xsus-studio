@@ -19,7 +19,8 @@ export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=cr
  if(req.method==='GET'&&req.url==='/ready')return send(ready?200:503,{ready});
  if(!ready)return send(503,{error:'Service unavailable'});
  const match=/^\/projects(?:\/([a-f0-9-]{36})(\/download)?)?$/.exec(req.url);
- if(!match)return send(404,{error:'Not found'});
+ const versionMatch=/^\/projects\/([a-f0-9-]{36})\/versions(?:\/([1-9][0-9]{0,14})(\/restore)?)?$/.exec(req.url);
+ if(!match&&!versionMatch)return send(404,{error:'Not found'});
  if(origin&&!origins.has(origin))return send(403,{error:'Origin forbidden'});
  if(req.method==='OPTIONS'){
  if(!origin||!['GET','POST'].includes(req.headers['access-control-request-method']))return send(403,{error:'Preflight forbidden'});
@@ -29,7 +30,19 @@ export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=cr
  }
  const auth=/^Bearer ([^\s]{1,8192})$/.exec(req.headers.authorization||'');if(!auth)return send(401,{error:'Unauthorized'});
  release=admission.acquire(req.socket.remoteAddress||'unknown');
- const token=auth[1],id=match[1];
+ const token=auth[1];
+ if(versionMatch){
+ const [,project,number,restore]=versionMatch;
+ if(typeof runtime.listVersions!=='function')return send(404,{error:'Not found'});
+ if(req.method==='GET'&&!restore)return send(200,number?await runtime.getVersion(token,project,Number(number)):await runtime.listVersions(token,project));
+ if(req.method!=='POST'||(number&&!restore))return send(405,{error:'Method not allowed'});
+ if(!/^application[/]json(?:\s*;|$)/i.test(req.headers['content-type']||''))return send(415,{error:'Unsupported content type'});
+ const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>maxBodyBytes){send(413,{error:'Body too large'});return}chunks.push(chunk)}
+ let input;try{input=JSON.parse(Buffer.concat(chunks).toString('utf8'))}catch{return send(400,{error:'Invalid JSON'})}
+ if(!input||!Number.isSafeInteger(input.expectedRevision)||input.expectedRevision<0)throw TypeError('Invalid revision');
+ return send(201,restore?await runtime.restoreVersion(token,project,Number(number),input.expectedRevision):await runtime.saveVersion(token,project,input.files,input.expectedRevision));
+ }
+ const id=match[1];
  if(req.method==='GET'){
  if(!id)return send(200,await runtime.list(token));
  if(!match[2])return send(200,await runtime.get(token,id));
@@ -44,7 +57,7 @@ export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=cr
  return send(201,await runtime.generate(token,input));
  }
  return send(405,{error:'Method not allowed'});
- }catch(e){const status=e instanceof TypeError?400:({'Unauthorized':401,'Not found':404,'Artifact unavailable':409,'Draft unavailable':422,'Generation capacity exceeded':429,'Registry capacity exceeded':429,'Rate limit exceeded':429,'Rate capacity exceeded':429,'Service capacity exceeded':503,'Quota exceeded':507}[e?.message]||500);return send(status,{error:status===500?'Internal error':status===400?'Invalid input':e.message})}finally{release?.()}
+ }catch(e){const status=e instanceof TypeError?400:({'Unauthorized':401,'Not found':404,'Artifact unavailable':409,'Revision conflict':409,'Version not found':404,'History quota exceeded':507,'Draft unavailable':422,'Generation capacity exceeded':429,'Registry capacity exceeded':429,'Rate limit exceeded':429,'Rate capacity exceeded':429,'Service capacity exceeded':503,'Quota exceeded':507}[e?.message]||500);return send(status,{error:status===500?'Internal error':status===400?'Invalid input':e.message})}finally{release?.()}
  });
  server.requestTimeout=15000;server.headersTimeout=10000;server.maxHeadersCount=50;
  return Object.freeze({server,stopAccepting(){ready=false},isReady:()=>ready,metrics:()=>metrics.snapshot()});
