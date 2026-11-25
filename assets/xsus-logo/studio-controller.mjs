@@ -10,7 +10,7 @@ export function mountStudio(root,supabase){
  const button=(label,fn)=>{const b=dom.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>run(fn));return b};
  const run=async fn=>{try{await fn()}catch(e){status(e.message||'generation_failed')}};
  const discard=()=>{if(workspace.state().dirty){if(!dom.defaultView.confirm(t('unsaved')))return false;workspace.discard()}return true};
- const refresh=async()=>{const rows=await workspace.list();get('project-list').replaceChildren(...rows.map(row=>button(row.name,async()=>{if(discard())await workspace.open(row.id)})))};
+ const refresh=async()=>{const rows=await workspace.list();get('project-list').replaceChildren(...rows.map(row=>button(row.name,async()=>{if(!workspace.state().busy&&discard())await workspace.open(row.id)})))};
  function render(s){
  const e=s.editor,l=e?.document.layers.find(x=>x.id===e.selected),busy=s.busy;
  if(s.project?.id!==lastProject){lastProject=s.project?.id??null;get('name').value=s.project?.name??''}
@@ -27,7 +27,7 @@ export function mountStudio(root,supabase){
  if(l){get('fill').value=l.fill;if(l.type==='text'){get('text').value=l.text;get('font-size').value=l.fontSize}}
  if(e){const svg=mountVector(get('canvas'),e.document);svg.addEventListener('click',event=>{const id=event.target.getAttribute('data-layer-id');if(id&&!busy)run(()=>workspace.edit('select',id))})}else get('canvas').textContent=t('empty');
  get('layers').replaceChildren(...(e?.document.layers??[]).map(layer=>{const b=button(layer.type+' · '+layer.id,()=>workspace.edit('select',layer.id));b.disabled=busy;b.setAttribute('aria-pressed',String(layer.id===e.selected));return b}));
- get('variants').replaceChildren(...s.assistant.variants.map((v,i)=>{const b=button(String(i+1),()=>{if(workspace.state().dirty){if(!dom.defaultView.confirm(t('unsaved')))return;workspace.discard();return status('generation_failed')}workspace.variant(i)});b.disabled=busy;b.append(renderVector(v.document,dom));return b}));
+ get('variants').replaceChildren(...s.assistant.variants.map((v,i)=>{const b=button(String(i+1),()=>{const dirty=workspace.state().dirty;if(dirty&&!dom.defaultView.confirm(t('unsaved')))return;workspace.variant(i,{discardChanges:dirty})});b.disabled=busy;b.append(renderVector(v.document,dom));return b}));
  if(s.assistant.status==='generating')status('generating');else if(s.assistant.status==='error')status(s.assistant.error);else if(s.assistant.status==='review_required')status(s.assistant.reasons.includes('missing_brand_name')?'missing_brand_name':'review_required');else if(notice==='generating'||!notice)status('ready');
  }
  workspace=createWorkspace({supabase,dom,onChange:render});
