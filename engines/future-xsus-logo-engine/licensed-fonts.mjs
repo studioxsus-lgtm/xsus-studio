@@ -1,0 +1,4 @@
+import {createFontCatalog} from './font-catalog.mjs';
+import {createFontLibrary} from './font-library.mjs';
+import {exportTypographyPDF,exportTypographyArchive} from './font-export.mjs';
+export function createLicensedFonts(options){const catalog=createFontCatalog(),library=createFontLibrary(options);return {register(metadata,bytes){catalog.register(metadata);try{library.register(metadata.id,bytes)}catch(e){catalog.remove(metadata.id);throw e}return metadata.id},remove(id){library.remove(id);return catalog.remove(id)},list(options){return catalog.list(options)},async pdf(document,{fontId,commercial=true}={}){catalog.requireOutline(fontId,{commercial});return exportTypographyPDF(document,{library,fontId})},async archive(document,{fontId,commercial=true,...options}={}){catalog.requireOutline(fontId,{commercial});return exportTypographyArchive(document,{...options,library,fontId})}}}
