@@ -1,12 +1,13 @@
 import {mountStudioView} from './studio-view.mjs';
-import {createWorkspace} from './workspace.mjs?v=20261125-5';
+import {createWorkspace} from './workspace.mjs?v=20261125-6';
 import {mountVector,renderVector} from './vector-canvas.mjs';
 import {applyLanguage,translate} from './i18n.mjs';
 export function mountStudio(root,supabase){
  const dom=root.ownerDocument,{get}=mountStudioView(root);
+ root.setAttribute('data-build','20261125-6');const build=dom.createElement('small');build.textContent='Build 20261125-6';root.append(build);
  let lang='en',workspace,notice='',lastProject=null;
  const t=k=>translate(lang,k);
- const status=k=>{notice=k;get('status').textContent=/^(HTTP_[1-5][0-9]{2}|NETWORK_OR_CORS|REQUEST_TIMEOUT|invalid_[a-z_]+|unsupported_layer)$/.test(k)?t(k)+' ['+k+']':t(k)};
+ const status=k=>{notice=k;get('status').textContent=t(k)+' ['+(/^[a-zA-Z0-9_]{1,80}$/.test(k)?k:'UI_ERROR')+']'};
  const button=(label,fn)=>{const b=dom.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>run(fn));return b};
  const run=async fn=>{try{await fn()}catch(e){status(e.message||'generation_failed')}};
  const discard=()=>{if(workspace.state().dirty){if(!dom.defaultView.confirm(t('unsaved')))return false;workspace.discard()}return true};
