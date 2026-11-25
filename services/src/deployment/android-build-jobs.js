@@ -28,7 +28,7 @@ export function createAndroidBuildJobs({env=process.env,orchestratorFactory=crea
    void Promise.resolve().then(async()=>{
     j.status="building";console.info("[android-job] building");
     const result=await run({project_id:projectId,prompts:[goal],application_id:applicationId,display_name:displayName,min_sdk:26,accept_storage_profile:true});
-    if(result?.status==="review_required"||result?.status==="authorization_required"){j.status=result.status;return;}
+    if(result?.status==="review_required"||result?.status==="authorization_required"){j.status=result.status;console.info("[android-job] blocked",result.status,Array.isArray(result.issues)?result.issues.slice(0,10).map(issue=>typeof issue==="string"&&/^[a-z_]{1,80}$/.test(issue)?issue:"unspecified_issue"):[]);return;}
     const a=result?.artifact;
     if(!authorized||result?.status!=="compiled_pending_verification"||!Buffer.isBuffer(a?.bytes)||a.bytes.length<4||a.bytes.length>128*1024*1024||a.bytes.subarray(0,4).toString("hex")!=="504b0304"||a.size!==a.bytes.length||a.sha256!==createHash("sha256").update(a.bytes).digest("hex"))throw Error("Invalid artifact");
     if(store){
