@@ -1,0 +1,18 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {generateInteractiveWebsite as generate} from '../interactive.mjs';
+const input={name:'Demo',type:'business'};
+test('FAQ native interaction',()=>assert.match(generate(input).files['index.html'],/<details>/));
+test('search control',()=>assert.match(generate(input).files['index.html'],/data-xs-search/));
+test('contact validation',()=>assert.match(generate(input,{components:['contact']}).files['index.html'],/type="email" required/));
+test('contact does not send',()=>assert.match(generate(input).files['assets/interactions.js'],/preventDefault/));
+test('stack layout',()=>assert.match(generate(input,{layout:'stack'}).files['index.html'],/layout-stack/));
+test('split layout',()=>assert.match(generate(input,{layout:'split'}).files['index.html'],/layout-split/));
+test('reduced motion',()=>assert.match(generate(input,{motion:true}).files['assets/style.css'],/prefers-reduced-motion/));
+test('motion disabled by default',()=>assert.ok(!generate(input).files['assets/style.css'].includes('transition:transform')));
+test('rejects unknown component',()=>assert.throws(()=>generate(input,{components:['unknown']})));
+test('rejects duplicate component',()=>assert.throws(()=>generate(input,{components:['faq','faq']})));
+test('rejects invalid layout',()=>assert.throws(()=>generate(input,{layout:'bad'})));
+test('nested script',()=>assert.match(generate({...input,pages:['a/b.html']}).files['a/b.html'],/\.\.\/assets\/interactions.js/));
+test('localized form',()=>assert.match(generate({...input,language:'sq'},{components:['contact']}).files['index.html'],/Ruaj draftin/));
+test('no automatic execution',()=>assert.equal(generate(input).plan.executable,false));
