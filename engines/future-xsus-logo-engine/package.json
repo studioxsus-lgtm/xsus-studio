@@ -7,6 +7,8 @@
     "opentype.js": "1.3.4"
   },
   "scripts": {
-    "test": "node --test *.test.mjs"
+    "test": "node --test *.test.mjs",
+    "test:live": "node check-core-integration.mjs",
+    "posttest": "node -e \"if(process.env.XSUS_LOGO_LIVE_CHECK==='true')require('node:child_process').execFileSync(process.execPath,['check-core-integration.mjs'],{stdio:'inherit'})\""
   }
 }
