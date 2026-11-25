@@ -1,0 +1,17 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createDesignSystem,composePage} from '../design.mjs';
+for(const palette of ['ocean','forest','studio','sand'])test('palette '+palette,()=>assert.equal(createDesignSystem({palette}).palette,palette));
+for(const layout of ['grid','split','stack'])test('layout '+layout,()=>assert.match(createDesignSystem({layout}).css,/grid-template-columns/));
+test('responsive breakpoint',()=>assert.match(createDesignSystem().css,/@media\(max-width:640px\)/));
+test('motion opt in',()=>assert.match(createDesignSystem({motion:true}).css,/prefers-reduced-motion:no-preference/));
+test('motion off by default',()=>assert.doesNotMatch(createDesignSystem().css,/transition:/));
+test('rejects unknown palette',()=>assert.throws(()=>createDesignSystem({palette:'constructor'})));
+test('rejects unknown density',()=>assert.throws(()=>createDesignSystem({density:'huge'})));
+const input={title:'Demo',sections:[{kind:'hero',title:'Welcome',body:'Hello'},{kind:'faq',title:'Questions',items:[{title:'Why?',body:'Because'}]}]};
+test('semantic sections',()=>assert.match(composePage(input).html,/aria-labelledby="section-0"/));
+test('FAQ disclosure',()=>assert.match(composePage(input).html,/<details><summary>Why/));
+test('escapes title',()=>assert.match(composePage({...input,title:'<script>'}).html,/&lt;script&gt;/));
+test('language',()=>assert.match(composePage({...input,language:'sq'}).html,/<html lang="sq">/));
+test('rejects invalid section',()=>assert.throws(()=>composePage({...input,sections:[{kind:'script',title:'X'}]})));
+test('review required',()=>assert.equal(composePage(input).reviewRequired,true));
