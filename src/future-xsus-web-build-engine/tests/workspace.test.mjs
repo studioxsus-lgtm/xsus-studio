@@ -1,0 +1,16 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {generateDraft,createWorkspace} from '../workspace.mjs';
+const input={name:'Store',pages:['index.html','shop/index.html','contact.html']};
+test('generates every page and stylesheet',()=>assert.equal(Object.keys(generateDraft(input).files).length,4));
+test('nested navigation resolves from root',()=>assert.match(generateDraft(input).files['shop/index.html'],/href="\.\.\/contact\.html"/));
+test('nested stylesheet resolves',()=>assert.match(generateDraft(input).files['shop/index.html'],/href="\.\.\/assets\/style\.css"/));
+test('escapes project names',()=>assert.ok(!generateDraft({name:'<script>'}).files['index.html'].includes('<script>')));
+test('updates existing files',()=>{const w=createWorkspace(input);assert.equal(w.update('index.html','new',1).files['index.html'],'new')});
+test('rejects stale revisions',()=>{const w=createWorkspace(input);w.update('index.html','new',1);assert.throws(()=>w.update('index.html','old',1))});
+test('rejects unknown files',()=>assert.throws(()=>createWorkspace(input).update('../x','x',1)));
+test('restores previous revision',()=>{const w=createWorkspace(input);const original=w.snapshot();w.update('index.html','new',1);assert.deepEqual(w.restore(1,2).files,original.files)});
+test('isolates snapshots',()=>{const w=createWorkspace(input);w.snapshot().files['index.html']='changed';assert.notEqual(w.snapshot().files['index.html'],'changed')});
+test('bounds revision history',()=>{const w=createWorkspace(input,{maxRevisions:2});w.update('index.html','a',1);w.update('index.html','b',2);assert.deepEqual(w.revisions(),[2,3])});
+test('isolates projects',()=>{const a=createWorkspace(input),b=createWorkspace(input);a.update('index.html','a',1);assert.notEqual(b.snapshot().files['index.html'],'a')});
+test('rejects oversized content',()=>assert.throws(()=>createWorkspace(input).update('index.html','x'.repeat(250001),1)));
