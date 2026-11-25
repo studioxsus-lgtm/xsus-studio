@@ -22,7 +22,7 @@ export function mountWorkspaceView({document,container,workspace}={}){
  source.addEventListener('input',()=>{localDirty=true;render(workspace.snapshot())});
  files.addEventListener('change',()=>{if(localDirty){files.value=selected;status.textContent='Apply code before switching';return}selected=files.value;render(workspace.snapshot())});
  apply.addEventListener('click',()=>action(()=>{const s=workspace.snapshot();workspace.edit('update',selected,source.value,s.source.revision);localDirty=false;render(workspace.snapshot())}));
- save.addEventListener('click',async()=>{try{await workspace.save()}catch(e){if(!disposed)status.textContent='Save failed: '+({401:'Sign in again',403:'Access denied',404:'Project not found',409:'Revision conflict',413:'Project too large',429:'Too many requests; retry shortly',507:'Storage quota exceeded'}[e?.status]??(e?.status?'HTTP '+e.status:'Connection or revision error'))}});
+ save.addEventListener('click',async()=>{try{status.textContent='Saving…';const result=await workspace.save();if(!disposed)status.textContent='Saved successfully · Version '+result.revision}catch(e){if(!disposed)status.textContent='Save failed: '+({401:'Sign in again',403:'Access denied',404:'Project not found',409:'Revision conflict',413:'Project too large',429:'Too many requests; retry shortly',507:'Storage quota exceeded'}[e?.status]??(e?.status?'HTTP '+e.status:'Connection or revision error'))}});
  refresh.addEventListener('click',()=>action(()=>{showPreview(workspace.snapshot())}));
  devices.addEventListener('change',()=>action(()=>view?.resize(devices.value)));
  const off=workspace.subscribe(render);render(workspace.snapshot());
