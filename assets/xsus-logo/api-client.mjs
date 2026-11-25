@@ -8,11 +8,11 @@ export function createLogoClient({getSession,fetchImpl=fetch}={}){
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),120000);const abort=()=>controller.abort();if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});
  try{
  const response=await fetchImpl(endpoint,{method:'POST',redirect:'error',credentials:'omit',headers:{authorization:'Bearer '+session.access_token,'content-type':'application/json',accept:'application/json'},body:JSON.stringify({prompt,language}),signal:controller.signal});
- if(!response.ok)throw new Error(({401:'authentication_required',429:'rate_limit',503:'generation_unavailable'})[response.status]??'generation_failed');
+ if(!response.ok)throw new Error(({401:'authentication_required',429:'rate_limit',503:'generation_unavailable'})[response.status]??('HTTP_'+response.status));
  const result=await response.json();
  if(result?.version!=='1.0.0'||typeof result.requestId!=='string'||!['generated','review_required'].includes(result.status))throw new Error('invalid_response');
  if(result.status==='generated'&&(!Array.isArray(result.kit?.variants)||!result.kit.variants.length||result.kit.variants.length>16||result.kit.variants.some(v=>!v.document||typeof v.svg!=='string')))throw new Error('invalid_response');
  return result;
- }finally{clearTimeout(timer);signal?.removeEventListener('abort',abort)}
+ }catch(e){if(e.name==='AbortError')throw Error('REQUEST_TIMEOUT');if(e instanceof TypeError)throw Error('NETWORK_OR_CORS');throw e}finally{clearTimeout(timer);signal?.removeEventListener('abort',abort)}
  }});
 }
