@@ -15,3 +15,7 @@ test('escapes title',()=>assert.match(composePage({...input,title:'<script>'}).h
 test('language',()=>assert.match(composePage({...input,language:'sq'}).html,/<html lang="sq">/));
 test('rejects invalid section',()=>assert.throws(()=>composePage({...input,sections:[{kind:'script',title:'X'}]})));
 test('review required',()=>assert.equal(composePage(input).reviewRequired,true));
+
+test('legacy section contract renders text',()=>{const r=composePage({title:'Home',sections:[{type:'hero',title:'Welcome',text:'Legacy body'}]});assert.ok(r.html.includes('Legacy body'))});
+test('conflicting section kind rejected',()=>assert.throws(()=>composePage({title:'Home',sections:[{kind:'hero',type:'faq',title:'Welcome'}]})));
+test('conflicting section body rejected',()=>assert.throws(()=>composePage({title:'Home',sections:[{kind:'hero',title:'Welcome',body:'A',text:'B'}]})));
