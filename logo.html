@@ -69,15 +69,16 @@
 
             <!-- Desktop Menu -->
             <div class="logo-module-links items-center font-medium text-xs text-slate-300">
+                <a href="index.html" data-logo-home class="hover:text-cyber-blue transition">Home</a>
                 <a href="ai.html" class="hover:text-cyber-blue transition">Xsus AI</a>
                 <a href="app.html" class="hover:text-cyber-blue transition">Xsus App</a>
                 <a href="web.html" class="hover:text-cyber-blue transition">Xsus Web</a>
                 <a href="game.html" class="hover:text-cyber-blue transition">Xsus Game</a>
-                <a href="logo.html" class="text-cyber-blue font-semibold border-b-2 border-cyber-blue pb-1">Xsus Logo</a>
+
                 <a href="domain.html" class="hover:text-cyber-blue transition">Xsus Domain</a>
             </div>
 
-            <details class="logo-module-menu text-sm"><summary aria-label="Modules">☰</summary><div class="absolute left-1/2 -translate-x-1/2 bg-[#171421] p-4 grid gap-3"><a href="ai.html">Xsus AI</a><a href="app.html">Xsus App</a><a href="web.html">Xsus Web</a><a href="game.html">Xsus Game</a><a href="logo.html">Xsus Logo</a><a href="domain.html">Xsus Domain</a></div></details>
+            <details class="logo-module-menu text-sm"><summary aria-label="Modules">☰</summary><div class="absolute left-1/2 -translate-x-1/2 bg-[#171421] p-4 grid gap-3"><a href="index.html" data-logo-home>Home</a><a href="ai.html">Xsus AI</a><a href="app.html">Xsus App</a><a href="web.html">Xsus Web</a><a href="game.html">Xsus Game</a><a href="domain.html">Xsus Domain</a></div></details>
 <!-- Language Selector & CTA -->
             <div class="flex items-center gap-3">
                 <div class="glass-panel px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-300">
@@ -100,6 +101,16 @@
 
 <main id="studio-section" class="w-full flex-1 p-3 md:p-6"><p role="status">Loading XSUS Logo Studio…</p></main>
 <footer class="mt-auto py-8 border-t border-white/10 glass-panel text-center text-xs text-slate-400"><p>XSUS STUDIO — THE X IDENTITY</p><p>© 2026 XSUS Studio</p></footer>
+<script>
+    const languageSelect = document.getElementById('language-select');
+    const homeLabels = { en: 'Home', sq: 'Kreu', fr: 'Accueil' };
+    function updateHomeLinks() {
+        const label = homeLabels[languageSelect.value] || homeLabels.en;
+        for (const link of document.querySelectorAll('[data-logo-home]')) link.textContent = label;
+    }
+    languageSelect.addEventListener('change', updateHomeLinks);
+    updateHomeLinks();
+</script>
 <script>lucide.createIcons();</script>
 <script type="module" src="assets/xsus-logo/entry.mjs?v=20261125-6"></script>
 <script type="module" src="assets/js/xsus-auth-ui.js"></script>
