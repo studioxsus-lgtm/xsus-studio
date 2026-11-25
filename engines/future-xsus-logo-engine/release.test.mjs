@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {brandKit,mockup} from './brand.mjs';import {createEditor} from './editor.mjs';import {exportDocument,importDocument} from './export.mjs';import {createOrchestrator} from './orchestrator.mjs';
+const doc=()=>brandKit({name:'XSUS'}).variants[0].document;
+test('SVG export',()=>assert.equal(exportDocument(doc()).mime,'image/svg+xml'));
+test('JSON roundtrip',()=>assert.deepEqual(importDocument(exportDocument(doc(),{format:'json'}).content),doc()));
+test('unsupported format',()=>assert.throws(()=>exportDocument(doc(),{format:'png'})));
+test('export budget',()=>assert.throws(()=>exportDocument(doc(),{maxBytes:10})));
+test('import budget',()=>assert.throws(()=>importDocument('{}',{maxBytes:1})));
+test('invalid JSON',()=>assert.throws(()=>importDocument('{')));
+test('unknown metadata removed',()=>assert.equal(importDocument(JSON.stringify({...doc(),secret:'x'})).secret,undefined));
+test('reject unsafe fill',()=>{const d=doc();d.layers[0].fill='url(https://example.com)';assert.throws(()=>exportDocument(d))});
+test('end to end edit export mockup',()=>{const e=createEditor(doc());const l=e.snapshot().layers.at(-1);e.apply({type:'replace',id:l.id,layer:{...l,text:'New brand'}});assert.match(exportDocument(e.snapshot()).content,/New brand/);assert.match(mockup(e.snapshot()),/New brand/);e.undo();assert.match(e.svg(),/XSUS/)});
+test('core adapter end to end',async()=>{const o=createOrchestrator({interpret:async r=>({version:r.version,requestId:r.requestId,brief:{name:'Test'}}),plan:async r=>({version:r.version,requestId:r.requestId,approved:true,review_required:false})});const r=await o.generate({prompt:'Test',requestId:'test'});assert.equal(r.status,'generated');assert.match(exportDocument(r.kit.variants[0].document).content,/Test/)});
