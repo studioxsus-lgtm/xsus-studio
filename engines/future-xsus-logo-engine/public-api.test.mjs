@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createLogoServer} from './api.mjs';
+import {once} from 'node:events';
+test('public gateway HTTP security',async t=>{
+ const server=createLogoServer({token:'x'.repeat(40),userGateway:async({authorization,input})=>({status:authorization==='Bearer valid'?200:401,body:{received:input.language}})});
+ server.listen(0,'127.0.0.1');await once(server,'listening');
+ t.after(()=>{server.closeAllConnections();server.close()});
+ const url='http://127.0.0.1:'+server.address().port+'/v1/public/generate';
+ const origin='https://www.xsusstudio.com';
+ const post=(headers={},body=JSON.stringify({prompt:'Logo',language:'en'}))=>fetch(url,{method:'POST',headers:{'content-type':'application/json',origin,...headers},body});
+ await t.test('allowed preflight',async()=>{const r=await fetch(url,{method:'OPTIONS',headers:{origin}});assert.equal(r.status,204);assert.equal(r.headers.get('access-control-allow-origin'),origin)});
+ await t.test('hostile origin rejected',async()=>{const r=await post({origin:'https://evil.example'});assert.equal(r.status,403);assert.equal(r.headers.get('access-control-allow-origin'),null)});
+ await t.test('missing authorization',async()=>assert.equal((await post()).status,401));
+ await t.test('valid gateway forwarding',async()=>{const r=await post({authorization:'Bearer valid'});assert.equal(r.status,200);assert.equal((await r.json()).received,'en')});
+ await t.test('unsupported method',async()=>assert.equal((await fetch(url)).status,405));
+ await t.test('unsupported media',async()=>assert.equal((await post({'content-type':'text/plain'})).status,415));
+ await t.test('malformed JSON',async()=>assert.equal((await post({},'{')).status,400));
+ await t.test('oversized body',async()=>assert.equal((await post({},'x'.repeat(33000))).status,413));
+});
