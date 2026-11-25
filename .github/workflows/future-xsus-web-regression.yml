@@ -1,0 +1,25 @@
+name: Future XSUS Web Engine Regression
+on:
+  push:
+    branches: [future-xsus-web-build-engine]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    if: github.ref == 'refs/heads/future-xsus-web-build-engine'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Syntax validation
+        run: find src/future-xsus-web-build-engine -name '*.mjs' -print0 | xargs -0 -n1 node --check
+      - name: Full engine regression
+        run: node --test --test-concurrency=2 src/future-xsus-web-build-engine/tests/*.test.mjs
