@@ -6,7 +6,7 @@ export function mountStudio(root,supabase){
  const dom=root.ownerDocument,{get}=mountStudioView(root);
  let lang='en',workspace,notice='',lastProject=null;
  const t=k=>translate(lang,k);
- const status=k=>{notice=k;get('status').textContent=t(k)};
+ const status=k=>{notice=k;get('status').textContent=/^(HTTP_[1-5][0-9]{2}|NETWORK_OR_CORS|REQUEST_TIMEOUT|invalid_[a-z_]+|unsupported_layer)$/.test(k)?t(k)+' ['+k+']':t(k)};
  const button=(label,fn)=>{const b=dom.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>run(fn));return b};
  const run=async fn=>{try{await fn()}catch(e){status(e.message||'generation_failed')}};
  const discard=()=>{if(workspace.state().dirty){if(!dom.defaultView.confirm(t('unsaved')))return false;workspace.discard()}return true};
