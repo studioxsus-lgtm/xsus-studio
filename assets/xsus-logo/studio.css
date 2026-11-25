@@ -1,0 +1,25 @@
+.logo-studio{--accent:#f472b6;--surface:#171421;--line:#393044;--muted:#b6afc3;color:#f7f4fa;max-width:1800px;margin:auto;padding:16px;font-family:system-ui,sans-serif}
+.logo-studio *{box-sizing:border-box}
+.logo-studio .studio-layout{display:grid;grid-template-columns:minmax(200px,240px) minmax(0,1fr) minmax(220px,280px);gap:12px;align-items:start}
+.logo-studio .studio-panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.logo-studio .studio-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.logo-studio h1,.logo-studio h2{margin:0 0 12px;line-height:1.3}
+.logo-studio h2{font-size:1rem}
+.logo-studio label{display:block;font-size:.875rem;margin:12px 0 6px}
+.logo-studio :is(input,select,textarea){width:100%;min-width:0;background:#100e18;color:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit}
+.logo-studio textarea{resize:vertical;min-height:110px}
+.logo-studio button{font:inherit;color:inherit;background:#292334;border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-height:44px;cursor:pointer}
+.logo-studio button.primary{background:#be185d;border-color:#f472b6;color:white}
+.logo-studio button:disabled{opacity:.45;cursor:not-allowed}
+.logo-studio :is(button,input,select,textarea,a):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.logo-studio .studio-canvas{display:grid;place-items:center;min-height:320px;aspect-ratio:1.2;background:#f4f2f6;color:#21182b;border-radius:10px;overflow:hidden;padding:16px}
+.logo-studio .studio-canvas :is(svg,img){display:block;max-width:100%;max-height:100%;object-fit:contain}
+.logo-studio .studio-variants{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:12px}
+.logo-studio .studio-variants button{overflow:hidden}
+.logo-studio .studio-variants img{display:block;width:100%;height:auto;background:white;border-radius:4px}
+.logo-studio .studio-variants button[aria-pressed=true]{border-color:var(--accent)}
+.logo-studio .studio-status{min-height:1.5em;color:var(--muted);overflow-wrap:anywhere}
+.logo-studio [hidden]{display:none!important}
+@media(max-width:1100px){.logo-studio .studio-layout{grid-template-columns:minmax(190px,240px) minmax(0,1fr)}.logo-studio .studio-inspector{grid-column:1/-1}}
+@media(max-width:700px){.logo-studio{padding:8px}.logo-studio .studio-layout{grid-template-columns:minmax(0,1fr)}.logo-studio .studio-inspector{grid-column:auto}.logo-studio .studio-panel{padding:12px}.logo-studio .studio-canvas{min-height:220px;aspect-ratio:1}.logo-studio .studio-toolbar button{flex:1 1 auto}}
+@media(prefers-reduced-motion:reduce){.logo-studio *{animation:none!important;transition:none!important}}
