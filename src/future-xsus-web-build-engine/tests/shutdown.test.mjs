@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createShutdown} from '../shutdown.mjs';
+const make=o=>createShutdown({stopAccepting(){},closeServer:async()=>{},stopMaintenance:async()=>{},diagnostics:()=>({active:0,pending:0}),forceClose(){},timeoutMs:100,pollMs:1,...o});
+test('idle shutdown',async()=>assert.deepEqual(await make()(),{graceful:true}));
+test('idempotent shutdown',async()=>{let n=0;const s=make({stopAccepting(){n++}});const a=s();assert.equal(a,s());await a;assert.equal(n,1)});
+test('waits for active generation',async()=>{let n=1;const s=make({diagnostics:()=>({active:n,pending:0})});setTimeout(()=>n=0,5);assert.equal((await s()).graceful,true)});
+test('pending work forces deadline',async()=>{let forced=0;const s=make({timeoutMs:10,diagnostics:()=>({active:0,pending:1}),forceClose(){forced++}});assert.equal((await s()).graceful,false);assert.equal(forced,1)});
+test('maintenance failure forces close',async()=>{let forced=0;const s=make({stopMaintenance:async()=>{throw Error('failure')},forceClose(){forced++}});assert.equal((await s()).graceful,false);assert.equal(forced,1)});
+test('invalid configuration',()=>assert.throws(()=>make({timeoutMs:0})));
