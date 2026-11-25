@@ -1,0 +1,15 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {generateUnifiedProject} from '../pipeline.mjs';
+import {buildArchive} from '../build.mjs';
+const draft=()=>generateUnifiedProject({name:'Demo',pages:[{path:'index.html',title:'Home',sections:[{kind:'hero',title:'Welcome'}]}]});
+test('ZIP signature',()=>assert.equal(buildArchive(draft()).archive.readUInt32LE(0),0x04034b50));
+test('ZIP end record',()=>{const b=buildArchive(draft()).archive;assert.equal(b.readUInt32LE(b.length-22),0x06054b50)});
+test('deterministic archive',()=>assert.deepEqual(buildArchive(draft()).archive,buildArchive(draft()).archive));
+test('file count',()=>assert.equal(buildArchive(draft()).fileCount,2));
+test('tampered file rejected',()=>{const p=draft();p.files['design.css']+='x';assert.throws(()=>buildArchive(p),/Integrity mismatch/)});
+test('missing manifest rejected',()=>{const p=draft();p.manifest.pop();assert.throws(()=>buildArchive(p))});
+test('duplicate manifest rejected',()=>{const p=draft();p.manifest[1]=p.manifest[0];assert.throws(()=>buildArchive(p))});
+test('unsafe path rejected',()=>{const p=draft();p.files['../bad.html']='bad';p.manifest.push({path:'../bad.html'});assert.throws(()=>buildArchive(p))});
+test('publication remains blocked',()=>assert.equal(buildArchive(draft()).publicationAuthorized,false));
+test('rejects non-draft',()=>assert.throws(()=>buildArchive({...draft(),status:'published'})));
