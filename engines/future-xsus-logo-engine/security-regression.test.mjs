@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {brandKit} from './brand.mjs';
+import {renderEditor,createEditor} from './editor.mjs';
+import {importDocument,exportDocument} from './export.mjs';
+const doc=()=>brandKit({name:'XSUS'}).variants[0].document;
+for(const fill of ['url(https://example.com/a)','red','" onload="alert(1)'])test('reject unsafe fill '+fill,()=>{const d=doc();d.layers[0].fill=fill;assert.throws(()=>renderEditor(d))});
+test('reject duplicate IDs',()=>{const d=doc();d.layers.push({...d.layers[0]});assert.throws(()=>renderEditor(d))});
+test('reject nonfinite coordinates',()=>{const d=doc();d.layers.at(-1).x=Infinity;assert.throws(()=>renderEditor(d))});
+test('escape hostile text',()=>{const d=doc();d.layers.at(-1).text='<script>alert(1)</script>';const svg=renderEditor(d);assert.ok(!svg.includes('<script>'));assert.ok(svg.includes('&lt;script&gt;'))});
+test('reject raw SVG layer',()=>{const d=doc();d.layers.push({id:'raw',type:'svg',fill:'#ffffff',content:'<script/>'});assert.throws(()=>renderEditor(d))});
+test('failed edit preserves history',()=>{const e=createEditor(doc());const before=e.snapshot();assert.throws(()=>e.apply({type:'remove',id:'missing'}));assert.deepEqual(e.snapshot(),before);assert.equal(e.status().revision,0)});
+test('import removes unknown layer metadata',()=>{const d=doc();d.layers[0].private='secret';const result=importDocument(JSON.stringify(d));assert.equal(result.layers[0].private,undefined)});
+test('reject oversized export',()=>assert.throws(()=>exportDocument(doc(),{maxBytes:1})));
