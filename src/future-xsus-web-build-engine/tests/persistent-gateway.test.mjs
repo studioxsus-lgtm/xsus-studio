@@ -1,0 +1,20 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {createPersistentGateway} from '../persistent-gateway.mjs';
+const id=randomUUID(),archive=Buffer.from('504b0304','hex');
+async function fixture(t){const check=token=>{if(token!=='a')throw Error('Unauthorized')};const runtime={async generate(token,input){check(token);if(!input.name)throw TypeError('Invalid input');return {job:{id,status:'completed'},publicationAuthorized:false}},async list(token){check(token);return [{id}]},async get(token,key){check(token);if(key!==id)throw Error('Not found');return {id}},async download(token,key){await this.get(token,key);return {archive}}};const g=createPersistentGateway({runtime});await new Promise(r=>g.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>{g.server.close(r);g.server.closeAllConnections()}));const base='http://127.0.0.1:'+g.server.address().port;return {g,call:(path,method='GET',token='a',body)=>fetch(base+path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body!==undefined?{'Content-Type':'application/json'}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})})}}
+test('health',async t=>{const {call}=await fixture(t);assert.equal((await call('/health','GET',null)).status,200)});
+test('readiness',async t=>{const {g,call}=await fixture(t);g.stopAccepting();assert.equal((await call('/ready')).status,503)});
+test('history',async t=>{const {call}=await fixture(t);assert.deepEqual(await (await call('/projects')).json(),[{id}])});
+test('project detail',async t=>{const {call}=await fixture(t);assert.equal((await call('/projects/'+id)).status,200)});
+test('ZIP download',async t=>{const {call}=await fixture(t);const r=await call('/projects/'+id+'/download');assert.equal(r.headers.get('content-type'),'application/zip');assert.deepEqual(Buffer.from(await r.arrayBuffer()),archive)});
+test('attachment header',async t=>{const {call}=await fixture(t);assert.match((await call('/projects/'+id+'/download')).headers.get('content-disposition'),/attachment/)});
+test('missing token',async t=>{const {call}=await fixture(t);assert.equal((await call('/projects','GET',null)).status,401)});
+test('invalid token',async t=>{const {call}=await fixture(t);assert.equal((await call('/projects/'+id+'/download','GET','b')).status,401)});
+test('unknown project',async t=>{const {call}=await fixture(t);assert.equal((await call('/projects/'+randomUUID())).status,404)});
+test('generation',async t=>{const {call}=await fixture(t);assert.equal((await call('/projects','POST','a',{name:'Demo'})).status,201)});
+test('invalid input',async t=>{const {call}=await fixture(t);assert.equal((await call('/projects','POST','a',{})).status,400)});
+test('unsupported content type',async t=>{const {call}=await fixture(t);assert.equal((await call('/projects','POST')).status,415)});
+test('method rejected',async t=>{const {call}=await fixture(t);assert.equal((await call('/projects','DELETE')).status,405)});
+test('no cache',async t=>{const {call}=await fixture(t);assert.equal((await call('/projects/'+id+'/download')).headers.get('cache-control'),'no-store')});
