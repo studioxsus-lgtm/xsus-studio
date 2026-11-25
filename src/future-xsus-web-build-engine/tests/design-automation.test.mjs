@@ -1,0 +1,16 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {recommendDesign,inspectComposition,automateDesign} from '../design-automation.mjs';
+const hero={type:'hero',title:'Welcome',text:'Hello'};
+for(const type of ['business','commerce','portfolio','education','dashboard','blog','booking','custom'])test(type+' recommendation',()=>assert.equal(recommendDesign({type}).source,'deterministic_rules'));
+test('formal typography',()=>assert.equal(recommendDesign({tone:'formal'}).typography,'serif'));
+test('technical density',()=>assert.equal(recommendDesign({tone:'technical'}).theme.density,'compact'));
+test('creative palette',()=>assert.equal(recommendDesign({tone:'creative'}).theme.palette,'midnight'));
+test('unknown type rejected',()=>assert.throws(()=>recommendDesign({type:'constructor'})));
+test('clean composition',()=>assert.equal(inspectComposition([hero]).score,100));
+test('duplicate title',()=>assert.ok(inspectComposition([hero,hero]).findings.some(f=>f.code==='duplicate_title')));
+test('misplaced hero',()=>assert.ok(inspectComposition([hero,hero]).findings.some(f=>f.code==='hero_position')));
+test('missing action',()=>assert.ok(inspectComposition([hero,{type:'cta',title:'Join'}]).findings.some(f=>f.code==='missing_action')));
+test('missing hero',()=>assert.ok(inspectComposition([{type:'faq',title:'Questions'}]).findings.some(f=>f.code==='missing_leading_hero')));
+test('visual verification not claimed',()=>assert.equal(inspectComposition([hero]).visualVerified,false));
+test('automated composition',()=>{const r=automateDesign({title:'Home',sections:[hero],preferences:{tone:'formal'}});assert.match(r.page.css,/Georgia/);assert.equal(r.publicationAuthorized,false)});
