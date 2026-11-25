@@ -32,3 +32,19 @@ test('simple briefs and unrelated reviews retain their existing outcomes',async(
   assert.equal((await run('Modern blue logo','Nova')).kit.variants[0].symbol,'star');
   assert.equal((await run('letter A and circuits','Axion','invalid_brand_text')).status,'review_required');
 });
+
+test('quoted wordmark reaches the interpreter only for unambiguous explicit names',async()=>{
+  for(const [prompt,expected] of [
+    ['Use the word AXION in bold','Use the word "AXION" in bold'],
+    ['Écrire le mot ORION en bleu','Écrire le mot "ORION" en bleu'],
+    ['Përdor fjalën ARTA me blu','Përdor fjalën "ARTA" me blu'],
+    ['Use the word AXION in bold or the word ORION in blue',null],
+    ['Create a modern logo',null],['Use the word AXION Labs in blue',null]
+  ]){
+    const engine=createOrchestrator({interpret:async req=>{
+      assert.equal(req.prompt,expected??prompt);
+      return {...req,brief:{name:''},clarification_required:true};
+    },plan:()=>assert.fail('missing brand should request clarification')});
+    assert.equal((await engine.generate({prompt,requestId:'demo'})).status,'review_required');
+  }
+});

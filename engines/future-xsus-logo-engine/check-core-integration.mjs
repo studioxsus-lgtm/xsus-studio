@@ -27,3 +27,8 @@ assert.ok(axion.kit.variants.some(v=>v.document.layers.some(l=>l.type==='path'))
 assert.ok(axion.kit.variants.some(v=>v.document.layers.some(l=>l.type==='circle')));
 assert.ok(axion.kit.variants.every(v=>v.document.layers.some(l=>l.type==='text' && l.text.toUpperCase()==='AXION')));
 console.log('PASS: AXION editable neural and circuit monograms through both core services');
+
+const wordmark=await engine.generate({language:'en',requestId:randomUUID(),prompt:"Pair each symbol with the word AXION in bold, modern sans-serif lettering. Keep the background transparent. The symbol should remain recognizable as a mobile app icon, and the full logo should work on websites and business cards. Keep the symbol and wordmark on separate editable vector layers."});
+assert.equal(wordmark.status,'generated');
+assert.equal(wordmark.kit.name,'AXION');
+console.log('PASS: unquoted AXION wordmark from public studio brief');
