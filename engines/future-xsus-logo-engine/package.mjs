@@ -1,0 +1,5 @@
+import {exportDocument} from './export.mjs';
+import {exportRaster} from './raster.mjs';
+import {exportPDF} from './pdf.mjs';
+import {zipBrand} from './zip.mjs';
+export async function exportBrandArchive(document,{formats=['svg','json'],...options}={}){const allowed=['svg','json','pdf','png','jpg','webp'];if(!Array.isArray(formats)||!formats.length||formats.length>allowed.length||new Set(formats).size!==formats.length||formats.some(f=>!allowed.includes(f)))throw new TypeError('Invalid archive formats');const files=[];let total=0;for(const format of formats){let bytes;if(format==='pdf')bytes=exportPDF(document);else if(format==='svg'||format==='json')bytes=new TextEncoder().encode(exportDocument(document,{format}).content);else bytes=new Uint8Array(await (await exportRaster(document,{...options,format})).arrayBuffer());total+=bytes.length;if(total>32000000)throw new RangeError('Archive budget exceeded');files.push({name:'logo.'+format,bytes})}return {name:'brand-kit.zip',mime:'application/zip',bytes:zipBrand(files),formats:[...formats]}}
