@@ -1,0 +1,14 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createAdmission} from '../admission.mjs';
+const make=o=>createAdmission({memory:()=>0,...o});
+test('active count',()=>{const a=make();const release=a.acquire('a');assert.equal(a.diagnostics().active,1);release();assert.equal(a.diagnostics().active,0)});
+test('idempotent release',()=>{const a=make();const release=a.acquire('a');release();release();assert.equal(a.diagnostics().active,0)});
+test('concurrency bound',()=>{const a=make({maxActive:1});const release=a.acquire('a');assert.throws(()=>a.acquire('b'),/Service capacity/);release();a.acquire('b')()});
+test('memory pressure',()=>assert.throws(()=>make({memory:()=>100,maxRssBytes:100}).acquire('a'),/Service capacity/));
+test('rate bound',()=>{const a=make({limit:1});a.acquire('a')();assert.throws(()=>a.acquire('a'),/Rate limit/);a.acquire('b')()});
+test('window resets',()=>{let now=0;const a=make({limit:1,windowMs:10,clock:()=>now});a.acquire('a')();now=10;a.acquire('a')()});
+test('subject capacity',()=>{const a=make({maxSubjects:1});a.acquire('a')();assert.throws(()=>a.acquire('b'),/Rate capacity/)});
+test('expired subjects removed',()=>{let now=0;const a=make({maxSubjects:1,windowMs:10,clock:()=>now});a.acquire('a')();now=10;a.acquire('b')();assert.equal(a.diagnostics().subjects,1)});
+test('invalid subject',()=>assert.throws(()=>make().acquire('')));
+test('invalid configuration',()=>assert.throws(()=>make({limit:0})));
