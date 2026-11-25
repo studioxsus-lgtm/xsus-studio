@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {harmony,creativeConcepts} from './creative.mjs';
+test('complement',()=>assert.deepEqual(harmony('#ff0000'),['#ff0000','#00ffff']));
+test('triadic',()=>assert.deepEqual(harmony('#ff0000','triadic'),['#ff0000','#00ff00','#0000ff']));
+test('gray',()=>assert.deepEqual(harmony('#808080'),['#808080','#808080']));
+test('invalid harmony',()=>assert.throws(()=>harmony('#ffffff','bad')));
+for(const industry of ['technology','health','luxury','creative','general'])test(industry,()=>assert.ok(creativeConcepts({name:'XSUS',industry}).length>=2));
+for(const layout of ['stacked','horizontal','icon'])test(layout,()=>{const v=creativeConcepts({name:'XSUS',layout})[0];assert.match(v.svg,/<svg/);assert.equal(v.document.layers.some(l=>l.type==='text'),layout!=='icon')});
+test('contrast fallback',()=>assert.ok(creativeConcepts({name:'XSUS',color:'#ffffff'})[0].contrast>=4.5));
+test('invalid industry',()=>assert.throws(()=>creativeConcepts({name:'XSUS',industry:'bad'})));
+test('deterministic',()=>assert.deepEqual(creativeConcepts({name:'XSUS'}),creativeConcepts({name:'XSUS'})));
