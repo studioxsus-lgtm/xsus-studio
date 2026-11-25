@@ -19,6 +19,7 @@ export function createUnifiedWorkspace({baseUrl,getToken,fetchImpl}={}){
  const initial=history.revision?undefined:(await importArchiveBlob(await client.download(id))).files;check();
  await workspace.open(id,initial);check();
  metadata={name:details.name,language:details.language??'en'};
+ if(workspace.snapshot().dirty){await workspace.save();check();}
  return workspace.snapshot();
  }
  return Object.freeze({
