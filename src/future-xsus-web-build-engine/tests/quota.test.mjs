@@ -1,0 +1,15 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createQuotaManager} from '../quota.mjs';
+const make=()=>createQuotaManager({maxBytes:100,maxOwnerBytes:60,maxReservations:3});
+test('reserve bytes',()=>{const q=make();q.reserve('a','1',20);assert.equal(q.usage('a').bytes,20)});
+test('owner boundary',()=>{const q=make();q.reserve('a','1',60);assert.throws(()=>q.reserve('a','2',1),/Quota/)});
+test('global boundary',()=>{const q=make();q.reserve('a','1',60);q.reserve('b','2',40);assert.throws(()=>q.reserve('c','3',1),/Quota/)});
+test('duplicate rejected',()=>{const q=make();q.reserve('a','1',1);assert.throws(()=>q.reserve('b','1',1),/Duplicate/)});
+test('release restores capacity',()=>{const q=make();q.reserve('a','1',60);assert.equal(q.release('a','1'),true);q.reserve('a','2',60)});
+test('foreign release denied',()=>{const q=make();q.reserve('a','1',20);assert.equal(q.release('b','1'),false);assert.equal(q.usage('a').bytes,20)});
+test('reservation count',()=>{const q=make();for(let i=0;i<3;i++)q.reserve('a',String(i),1);assert.throws(()=>q.reserve('a','4',1))});
+test('invalid bytes',()=>{const q=make();for(const n of [0,-1,NaN,1.5])assert.throws(()=>q.reserve('a','1',n))});
+test('invalid configuration',()=>assert.throws(()=>createQuotaManager({maxBytes:10,maxOwnerBytes:20})));
+test('unknown release',()=>assert.equal(make().release('a','missing'),false));
+test('diagnostics aggregate',()=>{const q=make();q.reserve('a','1',20);q.reserve('b','2',30);assert.deepEqual(q.diagnostics(),{bytes:50,limit:100,reservations:2})});
