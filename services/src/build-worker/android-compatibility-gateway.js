@@ -14,8 +14,10 @@ export function assessAndroidCompatibility(plan, review) {
     issues.push("review_mismatch");
   if (plan.execution_authorized !== false) issues.push("invalid_authorization");
   if (plan.unresolved.length) issues.push("unresolved_requirements");
-  if (!android.features.includes("task_management") ||
-      android.features.some(f => !["task_management","search","filter"].includes(f))) issues.push("unsupported_features");
+  const tasks = android.features.includes("task_management") &&
+    android.features.every(f => ["task_management","search","filter"].includes(f));
+  const restaurant = android.features.length === 1 && android.features[0] === "restaurant_orders" && ui.navigation === "bottom_bar";
+  if (!tasks && !restaurant) issues.push("unsupported_features");
   if (plan.storage.length !== 1 || plan.storage[0] !== "atomic_json") issues.push("unsupported_storage");
   if (plan.database.length || plan.requested_controls.length || plan.suggested_controls.length || plan.permissions.length)
     issues.push("unsupported_security_or_database");
@@ -26,4 +28,5 @@ export function assessAndroidCompatibility(plan, review) {
     issues.push("unsupported_design");
   return {status:issues.length ? "review_required":"compatible",issues,execution_authorized:false};
 }
+
 

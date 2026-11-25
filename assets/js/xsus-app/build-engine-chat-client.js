@@ -25,7 +25,13 @@ function plannedBuildGoal(goal, result) {
   // reviewed goal and steps in the public API request.
   const search = /\b(search|searchable|rechercher|kërkim)\b/i.test(reviewed + '\n' + detail);
   const taskPages = domain === 'tasks' && /(?:me|në) (?:shumë|disa) faqe(?: dhe (?:dizajn modern|moderne))?\s*[.!]?\s*$/i.test(goal);
-  const header = domain ? '[XSUS ' + domain + (search ? ' search' : '') + (taskPages ? ' pages' : '') + ']' : '';
+  const normalizedGoal = goal.normalize("NFC").trim().toLowerCase().replace(/\s+/g," ")
+    .replace(/,? (?:me|në) (?:shumë|disa) faqe(?: dhe (?:dizajn modern|moderne))?[.!]?$/,"").replace(/\.$/,"");
+  const restaurant = /^(?:(?:më )?(?:krijo|ndërto|zhvillo)|dua) (?:një )?(?:aplikacion|app) android për (?:(?:një )?restorant|restorantin tim)(?:,? me (.+))?$/.exec(normalizedGoal);
+  const terms = new Set((restaurant?.[1] || "menu dhe porosi").split(/\s*,\s*(?:dhe\s+)?|\s+dhe\s+/));
+  const restaurantOrders = restaurant && terms.has("menu") && terms.has("porosi") &&
+    [...terms].every(term => ["menu","porosi","historik","historik të porosive"].includes(term));
+  const header = restaurantOrders ? '[XSUS restaurant orders]' : domain ? '[XSUS ' + domain + (search ? ' search' : '') + (taskPages ? ' pages' : '') + ']' : '';
   let brief = [header, reviewed, detail].filter(Boolean).join('\n').slice(0, 2000);
   const encoder = new TextEncoder();
   while (encoder.encode(JSON.stringify({goal:brief})).length > 4096) {
@@ -47,7 +53,7 @@ export async function buildFromChatGoal(goal,{steps,signal,onPlan}={}){
       throw new Error('Plan review cancelled.');
     }
   }
-  const appSpec = reservationAppSpec(goal, plan);
+  const appSpec = buildGoal.startsWith("[XSUS restaurant orders]") ? null : reservationAppSpec(goal, plan);
   const payload = appSpec ? {goal:plan.language.text.trim().slice(0,100), appSpec} : {goal:buildGoal};
   const token=await getUserAccessToken();
   if(!token)throw new Error('Sign in to XSUS Studio to generate an application.');
@@ -79,4 +85,5 @@ export async function buildFromChatGoal(goal,{steps,signal,onPlan}={}){
   const script=doc.createElement('script');script.textContent=files.get('main.js');doc.body.append(script);
   return {html:'<!doctype html>'+doc.documentElement.outerHTML,files:Object.fromEntries(files),requiresReview:true};
 }
+
 

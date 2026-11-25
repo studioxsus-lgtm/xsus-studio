@@ -8,7 +8,7 @@ export function createRemoteAndroidCompiler({endpoint,token,fetchImpl=globalThis
   if(!["single_screen","bottom_bar"].includes(options.navigation))throw Error("Unsupported navigation");
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
   try{
-   const response=await fetchImpl(url.href,{method:"POST",redirect:"error",signal:controller.signal,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({...input,minSdk:options.minSdk,theme:options.theme,primarySeed:options.primarySeed,...(options.navigation==="bottom_bar"?{navigation:"bottom_bar"}:{})})});
+   const response=await fetchImpl(url.href,{method:"POST",redirect:"error",signal:controller.signal,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({...input,...(options.profile==="restaurant_orders"?{profile:options.profile}:{}),minSdk:options.minSdk,theme:options.theme,primarySeed:options.primarySeed,...(options.navigation==="bottom_bar"?{navigation:"bottom_bar"}:{})})});
    console.info("[android-remote] worker_http",response.status);
    const digest=response.headers.get("x-xsus-sha256");
    if(!response.ok||response.headers.get("content-type")!=="application/octet-stream"||response.headers.get("x-xsus-artifact-status")!=="compiled_pending_verification"||!/^[a-f0-9]{64}$/.test(digest??"")||!response.body){await response.body?.cancel();throw Error("Invalid worker response");}
@@ -36,4 +36,5 @@ export function createRemoteAndroidOrchestrator({env=process.env,authorize,fetch
   return orchestrateAndroidBuild(input,{planProject:async()=>draft,reviewTransport:async (...args)=>{console.info("[android-remote] review_started");const result=await reviewTransport(...args);console.info("[android-remote] review_completed");return result;},authorize,compiler:async (...args)=>{console.info("[android-remote] compiler_started");const result=await compiler(...args);console.info("[android-remote] compiler_completed");return result;}});
  };
 }
+
 

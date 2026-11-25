@@ -15,6 +15,7 @@ export async function orchestrateAndroidBuild(input, dependencies) {
   const android = ui.android;
   const buildInput = {applicationId:android.application_id,displayName:android.display_name};
   const options = {minSdk:android.min_sdk,theme:ui.theme,primarySeed:ui.primary_seed,navigation:ui.navigation};
+  if (android.features.includes("restaurant_orders")) options.profile = "restaurant_orders";
   const binding = {projectId:android.project_id,revision:android.revision,snapshotDigest:android.snapshot_digest,
     buildDigest:createHash("sha256").update(JSON.stringify({buildInput,options})).digest("hex")};
   if (await authorize(structuredClone(binding)) !== true) return {status:"authorization_required"};
@@ -26,3 +27,4 @@ export async function orchestrateAndroidBuild(input, dependencies) {
       artifact.sha256 !== createHash("sha256").update(artifact.bytes).digest("hex")) throw new Error("Invalid compiler artifact");
   return {status:"compiled_pending_verification",binding,artifact:{kind:"apk",variant:"debug",bytes:artifact.bytes,size:artifact.size,sha256:artifact.sha256,signatureVerified:false,installationVerified:false,...(artifact.workerVerification?.applicationId===buildInput.applicationId&&artifact.workerVerification?.sha256===artifact.sha256&&artifact.workerVerification.signatureVerified===true&&artifact.workerVerification.applicationIdVerified===true&&artifact.workerVerification.launcherVerified===true?{workerVerification:structuredClone(artifact.workerVerification)}:{})}};
 }
+
