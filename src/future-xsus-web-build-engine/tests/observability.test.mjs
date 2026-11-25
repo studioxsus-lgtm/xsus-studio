@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createObservability} from '../observability.mjs';
+test('empty metrics',()=>assert.equal(createObservability().snapshot().total,0));
+test('active tracking',()=>{const m=createObservability();const end=m.begin();assert.equal(m.snapshot().active,1);end(200);assert.equal(m.snapshot().active,0)});
+test('status classes',()=>{const m=createObservability();for(const s of [200,302,404,503,101])m.begin()(s);assert.deepEqual(m.snapshot().statuses,{success:1,redirect:1,clientError:1,serverError:1,other:1})});
+test('aborted request',()=>{const m=createObservability();m.begin()(null);assert.equal(m.snapshot().aborted,1)});
+test('idempotent completion',()=>{const m=createObservability();const end=m.begin();end(200);end(null);assert.equal(m.snapshot().total,1)});
+test('duration metrics',()=>{let n=0;const m=createObservability({clock:()=>n});let end=m.begin();n=10;end(200);end=m.begin();n=30;end(200);assert.equal(m.snapshot().averageMs,15);assert.equal(m.snapshot().maxDurationMs,20)});
+test('snapshot isolation',()=>{const m=createObservability();m.snapshot().statuses.success=99;assert.equal(m.snapshot().statuses.success,0)});
+test('invalid clock',()=>assert.throws(()=>createObservability({clock:null})));
