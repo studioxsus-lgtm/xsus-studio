@@ -1,5 +1,5 @@
 import {supabase} from '../../../services/supabase-client.js';
-import {mountPublicWorkspace} from './workspace/public-bootstrap.mjs';
+import {mountPublicWorkspace} from './workspace/public-bootstrap.mjs?v=2';
 const button=document.getElementById('xsus-ai-workspace-open');
 const host=document.getElementById('xsus-ai-workspace');
 let mounted=null;
