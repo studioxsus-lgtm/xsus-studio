@@ -1,3 +1,4 @@
+import {createMaintenance} from './maintenance.mjs';
 import {readRuntimeConfig} from './bootstrap.mjs';
 import {createCoreTransport} from './core-transport.mjs';
 import {createResilientTransport} from './resilience.mjs';
@@ -24,5 +25,6 @@ export async function createPersistentProduction({env,fetchImpl=globalThis.fetch
  const transport=createResilientTransport(createCoreTransport({...config,getToken:async core=>core==='future'?env.XSUS_FUTURE_TOKEN:env.XSUS_HYPER_TOKEN,fetchImpl}));
  const runtime=await createPersistentRuntime({directory:env.XSUS_DATA_DIRECTORY,verifyIdentity,generate:input=>generateFromPrompt(input,transport),maxJobs:config.maxJobs,maxConcurrent:config.maxConcurrent});
  const gateway=createPersistentGateway({runtime});
- return {server:gateway.server,port:config.port,stopAccepting:gateway.stopAccepting,diagnostics:()=>({ready:gateway.isReady(),...runtime.diagnostics(),cores:transport.diagnostics()})};
+ const maintenance=createMaintenance({work:()=>runtime.cleanupTemporary()});
+ return {server:gateway.server,port:config.port,stopAccepting:gateway.stopAccepting,startMaintenance:()=>maintenance.start(),stopMaintenance:()=>maintenance.stop(),diagnostics:()=>({ready:gateway.isReady(),...runtime.diagnostics(),cores:transport.diagnostics(),maintenance:maintenance.diagnostics()})};
 }
