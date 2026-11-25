@@ -1,0 +1,12 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {planBlueprint,generateBlueprint} from '../blueprints.mjs';
+for(const type of ['commerce','booking','business','dashboard','portfolio','education','blog'])test(type+' plan',()=>{const p=planBlueprint({name:'Example',type});assert.equal(p.pages[0].path,'index.html');assert.ok(p.pages.length>=4);assert.equal(new Set(p.pages.map(x=>x.path)).size,p.pages.length);assert.equal(p.executable,false)});
+test('commerce engine selected',()=>assert.ok(planBlueprint({name:'Shop',type:'commerce'}).integrations.some(x=>x.engine==='commerce')));
+test('booking engine selected',()=>assert.ok(planBlueprint({name:'Clinic',type:'booking'}).integrations.some(x=>x.engine==='booking')));
+test('dashboard reports selected',()=>assert.ok(planBlueprint({name:'Reports',type:'dashboard'}).integrations.some(x=>x.engine==='analytics')));
+test('unknown type rejected',()=>assert.throws(()=>planBlueprint({name:'X',type:'unknown'})));
+test('prototype rejected',()=>assert.throws(()=>planBlueprint({name:'X',type:'constructor'})));
+test('invalid language rejected',()=>assert.throws(()=>planBlueprint({name:'X',type:'blog',language:'xx'})));
+test('no false integration claims',()=>assert.ok(planBlueprint({name:'X',type:'commerce'}).integrations.every(x=>!x.wired)));
+test('multipage generation',()=>{const r=generateBlueprint({name:'Example',type:'business'});assert.equal(r.project.status,'draft');assert.ok(r.project.files['services.html']);assert.equal(r.runtimeConnected,false);assert.equal(r.publicationAuthorized,false)});
