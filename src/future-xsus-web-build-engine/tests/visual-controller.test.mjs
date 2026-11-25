@@ -1,0 +1,15 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createVisualController} from '../visual-controller.mjs';
+const section={kind:'hero',title:'Home',body:'Welcome'};
+const setup=()=>createVisualController({name:'Site',pages:[{path:'index.html',title:'Home',sections:[section]},{path:'about.html',title:'About',sections:[section]}]});
+test('select page',()=>assert.equal(setup().select('about.html').selected,'about.html'));
+test('unknown page',()=>assert.throws(()=>setup().select('missing.html')));
+test('design patch',()=>assert.equal(setup().design({palette:'forest'},0).design.palette,'forest'));
+test('invalid patch',()=>assert.throws(()=>setup().design({unknown:true},0)));
+test('add section',()=>assert.equal(setup().add(section,0).pages[0].sections.length,2));
+test('edit selected page',()=>{const c=setup();c.select('about.html');c.edit(0,{...section,title:'Changed'},0);assert.equal(c.snapshot().pages[1].sections[0].title,'Changed')});
+test('revision conflict',()=>assert.throws(()=>setup().add(section,1),/Revision conflict/));
+test('undo redo',()=>{const c=setup();c.add(section,0);assert.equal(c.undo(1).pages[0].sections.length,1);assert.equal(c.redo(2).pages[0].sections.length,2)});
+test('preview and export',()=>{const c=setup();assert.equal(c.preview().executable,false);assert.equal(c.export().publicationAuthorized,false);assert.ok(c.export().files['about.html'])});
+test('subscriber lifecycle',()=>{const c=setup();let n=0;const off=c.subscribe(()=>n++);c.select('about.html');off();c.select('index.html');assert.equal(n,1)});
