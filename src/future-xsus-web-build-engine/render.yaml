@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: future-xsus-web-build-engine
+    runtime: node
+    branch: future-xsus-web-build-engine
+    plan: starter
+    buildCommand: node --test --test-concurrency=2 src/future-xsus-web-build-engine/tests/*.test.mjs
+    startCommand: node src/future-xsus-web-build-engine/start.mjs
+    healthCheckPath: /ready
+    autoDeployTrigger: "off"
+    disk:
+      name: xsus-web-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: XSUS_DATA_DIRECTORY
+        value: /var/data/xsus-web
+      - key: XSUS_MAX_JOBS
+        value: "100"
+      - key: XSUS_MAX_CONCURRENT
+        value: "2"
+      - key: XSUS_CORE_TIMEOUT_MS
+        value: "10000"
+      - key: XSUS_FUTURE_URL
+        sync: false
+      - key: XSUS_HYPER_URL
+        sync: false
+      - key: XSUS_FUTURE_TOKEN
+        sync: false
+      - key: XSUS_HYPER_TOKEN
+        sync: false
+      - key: XSUS_AUTH_URL
+        sync: false
+      - key: XSUS_AUTH_PUBLIC_KEY
+        sync: false
