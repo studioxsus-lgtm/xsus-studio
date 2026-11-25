@@ -1,0 +1,16 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {generateUnifiedProject as generate} from '../pipeline.mjs';
+const input={name:'Studio',pages:[{path:'index.html',title:'Home',sections:[{kind:'hero',title:'Welcome'}]},{path:'nested/about.html',title:'About',sections:[{kind:'features',title:'Features'}]}]};
+test('generates valid draft',()=>assert.equal(generate(input).status,'draft'));
+test('exports all pages',()=>assert.equal(Object.keys(generate(input).files).length,3));
+test('nested navigation',()=>assert.match(generate(input).files['nested/about.html'],/href="\.\.\/index.html"/));
+test('active navigation',()=>assert.match(generate(input).files['index.html'],/href="index.html" aria-current="page"/));
+test('global footer',()=>assert.match(generate(input).files['index.html'],/<footer><p>Studio/));
+test('component CSS',()=>assert.match(generate(input).files['design.css'],/\.xs-grid/));
+test('renders metrics',()=>{const x=structuredClone(input);x.pages[0].components=[{kind:'metrics',props:{metrics:[{label:'Users',value:'42'}]}}];assert.match(generate(x).files['index.html'],/<dd>42<\/dd>/)});
+test('blocks broken product link',()=>{const x=structuredClone(input);x.pages[0].components=[{kind:'products',props:{products:[{name:'X',description:'Y',price:'1',href:'missing.html'}]}}];assert.equal(generate(x).status,'validation_failed')});
+test('rejects unsupported component',()=>{const x=structuredClone(input);x.pages[0].components=[{kind:'script'}];assert.throws(()=>generate(x))});
+test('manifest includes all files',()=>assert.equal(generate(input).manifest.length,3));
+test('publication blocked',()=>assert.equal(generate(input).publicationAuthorized,false));
+test('nonexecutable draft',()=>assert.equal(generate(input).executable,false));
