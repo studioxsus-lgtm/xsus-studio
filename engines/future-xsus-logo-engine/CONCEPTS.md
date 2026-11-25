@@ -1,0 +1,2 @@
+# Phases 11–15
+Structured brand input produces three deterministic procedural concepts with escaped SVG text, initials metadata, geometric transformations and heuristic quality warnings. Text is not yet part of the editable document layer schema; monogram is metadata, not a custom glyph design. Quality score evaluates shapes only, not typography, trademark similarity or artistic merit. No learned AI or natural-language parsing. Run node --test engines/future-xsus-logo-engine/*.test.mjs.
