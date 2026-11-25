@@ -1,5 +1,5 @@
-import {createLogoClient} from './api-client.mjs?v=20261125-5';
-import {createBrandAssistant} from './assistant.mjs?v=20261125-5';
+import {createLogoClient} from './api-client.mjs?v=20261125-6';
+import {createBrandAssistant} from './assistant.mjs?v=20261125-6';
 import {createProjects} from './projects.mjs';
 import {createLayerEditor} from './layers.mjs';
 import {downloadLogo} from './export.mjs';
