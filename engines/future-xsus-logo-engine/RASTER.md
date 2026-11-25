@@ -1,0 +1,2 @@
+# Phases 41–45
+Browser-native PNG/JPEG/WebP export using OffscreenCanvas and createImageBitmap, with pixel budget, encoder MIME verification and JPEG background. Browser support for SVG decoding and encoders must be tested; unsupported capabilities fail explicitly. Multi-format package returns individual named blobs, not ZIP. Vector PDF is pending; no fake PDF output. Node tests cover validation and SVG/JSON package only, not real raster encoding.
