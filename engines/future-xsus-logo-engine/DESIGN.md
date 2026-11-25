@@ -1,0 +1,2 @@
+# Design foundation — phases 6–10
+design.mjs adds star geometry, three procedural symbol families, sRGB luminance and contrast, foreground selection, typography metadata and layered composition. Typography is metadata only, not rendered into SVG yet. No natural language interpretation or learned generation. Run both suites with node --test engines/future-xsus-logo-engine/*.test.mjs.
