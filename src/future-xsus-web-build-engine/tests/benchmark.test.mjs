@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {benchmarkWebsite} from '../benchmark.mjs';
+test('single page benchmark',()=>{const r=benchmarkWebsite({pageCount:1,iterations:1});assert.equal(r.fileCount,2);assert.ok(r.archiveBytes>0)});
+test('multipage benchmark',()=>assert.equal(benchmarkWebsite({pageCount:10,iterations:1}).fileCount,11));
+test('large workload',()=>assert.equal(benchmarkWebsite({pageCount:100,iterations:1}).fileCount,101));
+test('deterministic timing contract',()=>{let n=0;const r=benchmarkWebsite({iterations:3,clock:()=>n+=2});assert.equal(r.generation.meanMs,2);assert.equal(r.packaging.p95Ms,2)});
+test('sampled memory',()=>{let n=100;const r=benchmarkWebsite({iterations:2,memory:()=>n+=10});assert.equal(r.initialRss,110);assert.equal(r.peakSampledRss,130)});
+test('invalid pages',()=>assert.throws(()=>benchmarkWebsite({pageCount:101})));
+test('invalid iterations',()=>assert.throws(()=>benchmarkWebsite({iterations:31})));
+test('publication blocked',()=>assert.equal(benchmarkWebsite({iterations:1}).publicationAuthorized,false));
