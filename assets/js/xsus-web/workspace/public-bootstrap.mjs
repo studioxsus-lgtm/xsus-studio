@@ -1,6 +1,6 @@
 import {createSessionAdapter} from './auth-session.mjs';
 import {createUnifiedWorkspace} from './unified-workspace.mjs';
-import {mountUnifiedView} from './unified-view.mjs';
+import {mountUnifiedView} from './unified-view.mjs?v=2';
 export function mountPublicWorkspace({document,container,auth,baseUrl='https://future-xsus-web-build-engine.onrender.com',fetchImpl}={}){
  if(!document||!container)throw TypeError('Invalid host');
  let app=null,view=null,session=null,disposed=false,identity=null;
