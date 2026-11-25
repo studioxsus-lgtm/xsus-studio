@@ -1,0 +1,15 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createCoreRegeneration} from '../core-regeneration.mjs';
+import {createWebClient} from '../browser-client.mjs';
+const input={prompt:'New website',files:{'index.html':'original','old.html':'old'},revision:0,executionAllowed:false};
+const transport={interpret:async()=>({contractVersion:'1.0.0',status:'ready'}),plan:async()=>({contractVersion:'1.0.0',reviewRequired:true,executable:false,specification:{pages:[{path:'index.html',title:'Home',sections:[{kind:'hero',title:'Home',body:'Welcome'}]}],resources:[],capabilities:[],design:{}}})};
+const make=()=>createCoreRegeneration({transport,name:'Site'});
+test('replacement proposal is review only',async()=>{const r=await make()(input);assert.equal(r.reviewRequired,true);assert.equal(r.executable,false);assert.equal(r.publicationAuthorized,false);assert.equal(r.contextualEditing,false)});
+test('original remains unchanged',async()=>{const before=structuredClone(input);await make()(input);assert.deepEqual(input,before)});
+test('removed paths disclosed',async()=>{assert.deepEqual((await make()(input)).removedPaths,['old.html'])});
+test('execution request rejected',async()=>{await assert.rejects(make()({...input,executionAllowed:true}))});
+test('invalid revision rejected',async()=>{await assert.rejects(make()({...input,revision:-1}))});
+test('invalid source rejected',async()=>{await assert.rejects(make()({...input,files:{'../index.html':'bad'}}))});
+test('clarification does not create replacement',async()=>{const propose=createCoreRegeneration({name:'Site',transport:{...transport,interpret:async()=>({contractVersion:'1.0.0',status:'clarification_required',questions:['Which site?']})}});await assert.rejects(propose(input))});
+test('browser sends authenticated review-only request',async()=>{let call;const client=createWebClient({baseUrl:'https://example.com',getToken:async()=> 'token',fetchImpl:async(url,options)=>{call={url,options};return new Response('{}',{headers:{'Content-Type':'application/json'}})}});await client.proposeVersion('11111111-1111-4111-8111-111111111111',{name:'Site',prompt:input.prompt,files:input.files,expectedRevision:0});assert.equal(call.url.pathname,'/projects/11111111-1111-4111-8111-111111111111/regenerate');assert.equal(call.options.headers.Authorization,'Bearer token');assert.equal(JSON.parse(call.options.body).executionAllowed,false)});
