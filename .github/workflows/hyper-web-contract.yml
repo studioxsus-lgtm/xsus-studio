@@ -1,0 +1,20 @@
+name: Hyper Web Contract
+on:
+  push:
+    branches:
+      - integration/hyper-future-bridge-hyper
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: node --check server.js
+      - run: node --check src/platform/xsus-web/hyper-web-plan.js
+      - run: npx --no-install vitest run tests/unit/hyper-web-plan.test.js
