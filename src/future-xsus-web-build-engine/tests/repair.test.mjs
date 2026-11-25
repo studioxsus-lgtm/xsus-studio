@@ -1,0 +1,16 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {inspectDraft,repairDraft} from '../repair.mjs';
+const html='<!doctype html><html lang="en"><head><title>Demo</title><meta name="viewport" content="width=device-width"></head><body><h1>Demo</h1></body></html>';
+const draft=(files={'index.html':html})=>({status:'draft',publicationAuthorized:false,files});
+test('detects missing charset',()=>assert.equal(inspectDraft(draft().files).findings[0].code,'MISSING_CHARSET'));
+test('repairs charset',()=>assert.match(repairDraft(draft()).files['index.html'],/<meta charset="utf-8">/));
+test('does not mutate input',()=>{const p=draft();repairDraft(p);assert.equal(p.files['index.html'],html)});
+test('repair idempotent',()=>assert.equal(repairDraft(repairDraft(draft())).changes.length,0));
+test('active content flagged',()=>assert.ok(inspectDraft({'index.html':html.replace('<body>','<body onclick="x()">')}).findings.some(f=>f.code==='ACTIVE_CONTENT_REVIEW')));
+test('invalid script flagged',()=>assert.ok(inspectDraft({'index.html':html,'bad.js':'const ='}).findings.some(f=>f.code==='SCRIPT_SYNTAX_OR_MODULE')));
+test('script never executed',()=>assert.equal(inspectDraft({'index.html':html,'script.js':'throw new Error("not executed")'}).executed,false));
+test('unresolved findings require review',()=>assert.equal(repairDraft(draft({'index.html':html,'bad.js':'const ='})).status,'review_required'));
+test('manifest regenerated',()=>assert.match(repairDraft(draft()).manifest[0].sha256,/^[a-f0-9]{64}$/));
+test('publication blocked',()=>assert.equal(repairDraft(draft()).publicationAuthorized,false));
+test('rejects published project',()=>assert.throws(()=>repairDraft({...draft(),status:'published'})));
