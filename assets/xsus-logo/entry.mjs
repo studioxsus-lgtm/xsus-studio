@@ -1,5 +1,5 @@
 import {supabase} from '../../services/supabase-client.js';
-import {mountStudio} from './studio-controller.mjs?v=20261125-8';
+import {mountStudio} from './studio-controller.mjs?v=20261125-9';
 const root=document.getElementById('studio-section');
 try {
  mountStudio(root,supabase);

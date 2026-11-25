@@ -4,7 +4,7 @@ import {mountVector,renderVector} from './vector-canvas.mjs';
 import {applyLanguage,translate} from './i18n.mjs?v=20261125-8';
 export function mountStudio(root,supabase){
  const dom=root.ownerDocument,{get}=mountStudioView(root);
- root.setAttribute('data-build','20261125-7');const build=dom.createElement('small');build.textContent='Build 20261125-7';root.append(build);
+ root.setAttribute('data-build','20261125-9');const build=dom.createElement('small');build.textContent='Build 20261125-9';root.append(build);
  const language=dom.getElementById('language-select');
  const compact=dom.defaultView.matchMedia('(max-width:700px)');
  const fitProjects=()=>{get('projects').open=!compact.matches};
@@ -16,7 +16,7 @@ export function mountStudio(root,supabase){
  const button=(label,fn)=>{const b=dom.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>run(fn));return b};
  const run=async fn=>{try{await fn()}catch(e){status(e.message||'generation_failed')}};
  const discard=()=>{if(workspace.state().dirty){if(!dom.defaultView.confirm(t('unsaved')))return false;workspace.discard()}return true};
- const refresh=async()=>{const rows=await workspace.list();get('project-list').replaceChildren(...rows.map(row=>button(row.name,async()=>{if(!workspace.state().busy&&discard())await workspace.open(row.id)})))};
+ const refresh=async({restore=false}={})=>{const rows=await workspace.list();get('project-list').replaceChildren(...rows.map(row=>button(row.name,async()=>{if(!workspace.state().busy&&discard())await workspace.open(row.id)})));const state=workspace.state();if(restore&&rows.length&&!state.busy&&!state.editor&&!get('prompt').value)await workspace.open(rows[0].id)};
  function render(s){
  const e=s.editor,l=e?.document.layers.find(x=>x.id===e.selected),busy=s.busy;
  if((s.project?.id??null)!==lastProject){lastProject=s.project?.id??null;get('name').value=s.project?.name??''}
@@ -40,9 +40,19 @@ export function mountStudio(root,supabase){
  const bind=(id,fn)=>get(id).addEventListener('click',()=>run(fn));
  const selected=()=>workspace.state().editor.selected;
  bind('new',()=>{if(discard())workspace.newProject()});
- bind('generate',()=>{if(discard())return workspace.generate({prompt:get('prompt').value,language:lang})});
+ bind('generate',async()=>{
+  if(!discard())return;
+  const previous=workspace.state().project;
+  const requestedName=previous?'':get('name').value.trim();
+  const state=await workspace.generate({prompt:get('prompt').value,language:lang});
+  if(state.assistant.status!=='generated')return;
+  const brand=state.editor.document.layers.find(layer=>layer.id==='brand-name')?.text;
+  get('name').value=requestedName||brand||'XSUS Logo';
+  await saveProject();
+ });
  bind('cancel',()=>workspace.cancel());
- bind('save',async()=>{await workspace.save(get('name').value);status('saved');await refresh()});
+ async function saveProject(){await workspace.save(get('name').value);status('saved');await refresh()}
+ bind('save',saveProject);
  bind('delete',async()=>{if(dom.defaultView.confirm(t('confirmDelete'))){await workspace.remove();await refresh()}});
  for(const op of ['undo','redo'])bind(op,()=>workspace.edit(op));
  bind('add',()=>workspace.edit('add',{id:crypto.randomUUID(),type:'circle',cx:256,cy:256,r:64,fill:'#db2777'}));
@@ -56,6 +66,6 @@ export function mountStudio(root,supabase){
   for(const option of ['white','dark','transparent'])get(option).setAttribute('aria-pressed',String(option===key));
  });
  language?.addEventListener('change',()=>{lang=applyLanguage(root,language.value);dom.documentElement.lang=lang;render(workspace.state())});
- applyLanguage(root,lang);render(workspace.state());run(refresh);
+ applyLanguage(root,lang);render(workspace.state());run(()=>refresh({restore:true}));
  return workspace;
 }
