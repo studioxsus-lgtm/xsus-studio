@@ -1,0 +1,14 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {generate,renderSVG,polygon,bounds,VERSION} from './index.mjs';
+const req={version:VERSION};
+test('deterministic generation',()=>assert.deepEqual(generate(req),generate(req)));
+test('editable vector layers',()=>assert.equal(generate(req).document.layers[0].points.length,6));
+test('valid SVG root',()=>assert.match(generate(req).svg,/^<svg xmlns="http:\/\/www.w3.org\/2000\/svg"/));
+test('reject version',()=>assert.throws(()=>generate({version:'0'})));
+test('reject dimensions',()=>assert.throws(()=>generate({...req,width:0})));
+test('reject injection',()=>assert.throws(()=>generate({...req,fill:'"><script>'})));
+test('reject nonfinite',()=>assert.throws(()=>polygon(NaN,0,1,3)));
+test('reject invalid sides',()=>assert.throws(()=>polygon(0,0,1,2)));
+test('bounds',()=>assert.deepEqual(bounds([[0,2],[3,-1]]),{minX:0,minY:-1,maxX:3,maxY:2}));
+test('reject unsupported layers',()=>assert.throws(()=>renderSVG({...generate(req).document,layers:[{type:'script',fill:'#ffffff'}]})));
+test('circle serialization',()=>assert.match(renderSVG({...generate(req).document,layers:[{type:'circle',cx:10,cy:10,r:5,fill:'#ffffff'}]}),/<circle/));
+test('reject excessive layers',()=>assert.throws(()=>renderSVG({...generate(req).document,layers:Array(257).fill({})})));
