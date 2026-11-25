@@ -1,0 +1,7 @@
+import {finite,polygon,bounds} from './geometry.mjs';
+export {polygon,bounds};
+export const VERSION='1.0.0';
+const color=v=>{if(typeof v!=='string'||!/^#[0-9a-f]{6}$/i.test(v))throw new TypeError('Invalid color');return v};
+const dimension=v=>{if(!Number.isInteger(v)||v<1||v>8192)throw new RangeError('Invalid dimension');return v};
+export function renderSVG(doc){if(!doc||doc.version!==VERSION||!Array.isArray(doc.layers)||doc.layers.length>256)throw new TypeError('Invalid document');const w=dimension(doc.width),h=dimension(doc.height);const body=doc.layers.map(l=>{const fill=color(l.fill);switch(l.type){case 'circle':{const r=finite(l.r);if(r<=0)throw new RangeError('Invalid radius');return `<circle cx="${finite(l.cx)}" cy="${finite(l.cy)}" r="${r}" fill="${fill}"/>`;}case 'polygon':bounds(l.points);if(l.points.length<3)throw new RangeError('Invalid polygon');return `<polygon points="${l.points.map(p=>p.join(',')).join(' ')}" fill="${fill}"/>`;default:throw new TypeError('Unsupported layer')}}).join('');return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`;}
+export function generate(request){if(!request||request.version!==VERSION)throw new TypeError('Unsupported contract');const {width=512,height=512,sides=6,fill='#d946b5'}=request;dimension(width);dimension(height);const document={version:VERSION,width,height,layers:[{type:'polygon',fill:color(fill),points:polygon(width/2,height/2,Math.min(width,height)*0.35,sides,-Math.PI/2)}]};return {version:VERSION,document,svg:renderSVG(document)};}
