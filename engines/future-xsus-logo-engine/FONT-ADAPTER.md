@@ -1,0 +1,2 @@
+# Professional font adapter contract
+Injected trusted shaping provider returns absolute SVG path command arrays in document coordinates, with center alignment and baseline supplied by caller. Output is validated by renderEditor. No font parser, actual font provider, font embedding, kerning or shaping implementation is included. Test provider is a fixture only. Production requires licensed fonts and verified shaping provider, resource limits and visual regression.
