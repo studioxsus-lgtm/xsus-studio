@@ -17,7 +17,7 @@ export function createArtifactStorage({directory,verifyIdentity,maxBytes=2000000
  if(!Number.isSafeInteger(olderThanMs)||olderThanMs<3600000||!Number.isSafeInteger(now)||now<0)throw TypeError('Invalid cleanup configuration');
  return serialized(async()=>{let removed=0,bytes=0;let dirs;try{dirs=await readdir(root,{withFileTypes:true})}catch(e){if(e.code==='ENOENT')return {removed,bytes};throw e}
  for(const dir of dirs){if(!dir.isDirectory()||!/^[a-f0-9]{64}$/.test(dir.name))continue;
- for(const file of await readdir(join(root,dir.name),{withFileTypes:true})){if(!file.isFile()||!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\\.json\\.tmp$/.test(file.name))continue;
+ for(const file of await readdir(join(root,dir.name),{withFileTypes:true})){if(!file.isFile()||!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}[.]json[.]tmp$/.test(file.name))continue;
  const p=join(root,dir.name,file.name),s=await lstat(p);if(!s.isFile()||now-s.mtimeMs<olderThanMs)continue;await rm(p);removed++;bytes+=s.size}}
  return {removed,bytes}})},
 
