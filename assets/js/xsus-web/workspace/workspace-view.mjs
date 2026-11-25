@@ -1,30 +1,75 @@
+import {studioText,localizeStudio} from './studio-language.mjs';
 import {createBrowserPreview} from './browser-preview.mjs';
-export function mountWorkspaceView({document,container,workspace}={}){
+export function mountWorkspaceView({document,container,workspace,onDraftChange=()=>{}}={}){
  if(!document||!container||!workspace)throw TypeError('Invalid workspace view');
+ const t=key=>studioText(document,key);
  const make=(tag,label)=>{const e=document.createElement(tag);if(label)e.textContent=label;return e};
  const root=make('section');root.className='xsus-web-workspace';
- const toolbar=make('div'),files=make('select'),devices=make('select'),source=make('textarea'),status=make('p'),preview=make('div'),save=make('button','Save'),apply=make('button','Apply code'),refresh=make('button','Preview');
- files.setAttribute('aria-label','Source file');devices.setAttribute('aria-label','Preview device');source.setAttribute('aria-label','Source code');status.setAttribute('role','status');
- for(const d of ['desktop','tablet','mobile']){const o=make('option',d);o.value=d;devices.append(o)}
- for(const b of [save,apply,refresh])b.type='button';
- toolbar.append(files,devices,apply,save,refresh);root.append(toolbar,source,status,preview);container.append(root);
+ const toolbar=make('div'),files=make('select'),devices=make('select'),source=make('textarea'),status=make('p'),preview=make('div'),save=make('button','Save'),refresh=make('button','Preview');
+ files.dataset.labelKey='Source file';devices.dataset.labelKey='Preview device';source.dataset.labelKey='Source code';status.setAttribute('role','status');
+ for(const d of ['desktop','tablet','mobile']){const o=make('option',d);o.dataset.copy=d;o.value=d;devices.append(o)}
+ for(const b of [save,refresh])b.type='button';
+ save.dataset.copy='Save';refresh.dataset.copy='Preview';
+ toolbar.append(files,devices,save,refresh);root.append(toolbar,source,status,preview);container.append(root);
  let selected=null,view=null,disposed=false,localDirty=false,lastId=null,lastPreviewKey=null;
+ const win=document.defaultView;
+ let timer=null,locked=false,saving=false,failure='';
+ function cancelTimer(){clearTimeout(timer);timer=null}
+ function schedule(){
+   cancelTimer();
+   if(!disposed&&!locked&&!saving&&!failure&&win.navigator.onLine)
+     timer=setTimeout(persist,1500);
+ }
+ function guardUnload(event){
+   if(localDirty||workspace.snapshot().dirty){event.preventDefault();event.returnValue=''}
+ }
+ function offline(){cancelTimer();render(workspace.snapshot())}
+ function online(){render(workspace.snapshot());if(localDirty||workspace.snapshot().dirty)schedule()}
+ win.addEventListener('beforeunload',guardUnload);
+ win.addEventListener('online',online);
+ win.addEventListener('offline',offline);
  function showPreview(s){if(!s.source||!selected)return;view?.dispose();view=createBrowserPreview({document,container:preview,files:s.source.files});view.resize(devices.value);if(selected.endsWith('.html'))view.select(selected);lastPreviewKey=JSON.stringify([s.id,s.source.revision,selected,devices.value]);}
- function render(s){if(disposed)return;const paths=Object.keys(s.source?.files??{});if(s.id!==lastId){localDirty=false;selected=null;lastId=s.id;view?.dispose();view=null}
+ function render(s){if(disposed)return;const paths=Object.keys(s.source?.files??{});if(s.id!==lastId){failure='';lastPreviewKey=null;localDirty=false;selected=null;lastId=s.id;view?.dispose();view=null}
  if(!paths.includes(selected))selected=paths.includes('index.html')?'index.html':paths[0]??null;
  files.replaceChildren(...paths.map(p=>{const o=make('option',p);o.value=p;return o}));files.value=selected??'';
  if(!localDirty)source.value=selected?s.source.files[selected]:'';
- source.disabled=files.disabled=!selected||s.busy;apply.disabled=!selected||s.busy||!localDirty;save.disabled=!s.dirty||s.busy||localDirty;refresh.disabled=!selected||s.busy||localDirty;
- status.textContent=s.busy?'Working…':localDirty?'Unapplied code':s.dirty?'Unsaved changes':'Ready';
- if(selected&&!s.busy&&!localDirty&&JSON.stringify([s.id,s.source.revision,selected,devices.value])!==lastPreviewKey){try{showPreview(s)}catch{status.textContent='Preview failed; try Preview again'}}
+ const blocked=locked||s.busy||saving;
+ source.disabled=files.disabled=!selected||blocked;
+ save.disabled=blocked||(!localDirty&&!s.dirty)||!win.navigator.onLine;
+ refresh.disabled=!selected||blocked||localDirty;
+ status.textContent=!win.navigator.onLine?t('Offline'):saving?t('Saving…'):failure||(
+   s.busy?t('Working…'):localDirty||s.dirty?t('Unsaved changes'):s.revision?t('Saved · Version')+' '+s.revision:'');
+ if(selected&&!s.busy&&!localDirty&&JSON.stringify([s.id,s.source.revision,selected,devices.value])!==lastPreviewKey){try{showPreview(s)}catch{status.textContent=t('Preview unavailable')}}
  }
  function action(fn){try{fn()}catch{status.textContent='Operation failed'}}
- source.addEventListener('input',()=>{localDirty=true;render(workspace.snapshot())});
- files.addEventListener('change',()=>{if(localDirty){files.value=selected;status.textContent='Apply code before switching';return}selected=files.value;render(workspace.snapshot())});
- apply.addEventListener('click',()=>action(()=>{const s=workspace.snapshot();workspace.edit('update',selected,source.value,s.source.revision);localDirty=false;render(workspace.snapshot())}));
- save.addEventListener('click',async()=>{try{status.textContent='Saving…';const result=await workspace.save();if(!disposed)status.textContent='Saved successfully · Version '+result.revision}catch(e){if(!disposed)status.textContent='Save failed: '+({401:'Sign in again',403:'Access denied',404:'Project not found',409:'Revision conflict',413:'Project too large',429:'Too many requests; retry shortly',507:'Storage quota exceeded'}[e?.status]??(e?.status?'HTTP '+e.status:'Connection or revision error'))}});
+ source.addEventListener('input',()=>{localDirty=true;failure='';onDraftChange(true);render(workspace.snapshot());schedule()});
+ files.addEventListener('change',()=>{if(localDirty){files.value=selected;status.textContent=t('Save changes before switching files');return}selected=files.value;render(workspace.snapshot())});
+ async function persist(){
+   cancelTimer();
+   if(disposed||locked||saving||workspace.snapshot().busy||!win.navigator.onLine)return;
+   saving=true;failure='';
+   try{
+     const current=workspace.snapshot();
+     if(localDirty){
+       workspace.edit('update',selected,source.value,current.source.revision);
+       localDirty=false;onDraftChange(false);
+     }
+     if(workspace.snapshot().dirty)await workspace.save();
+   }catch(error){
+     failure=error?.status===409?t('Revision conflict · Your changes are still open'):
+       t('Save failed')+' · '+t({401:'Sign in again',413:'Project too large',507:'Storage quota exceeded'}[error?.status]??'Check the connection and retry');
+   }finally{saving=false;if(!disposed)render(workspace.snapshot())}
+ }
+ save.addEventListener('click',persist);
  refresh.addEventListener('click',()=>action(()=>{showPreview(workspace.snapshot())}));
  devices.addEventListener('change',()=>action(()=>view?.resize(devices.value)));
- const off=workspace.subscribe(render);render(workspace.snapshot());
- return Object.freeze({dispose(){disposed=true;off();view?.dispose();root.remove()}});
+ let previousDirty=false;
+ const off=workspace.subscribe(s=>{
+   const becameDirty=s.dirty&&!previousDirty;
+   previousDirty=s.dirty;
+   render(s);
+   if(becameDirty&&!s.busy)schedule();
+ });render(workspace.snapshot());
+ return Object.freeze({translate(){localizeStudio(document,root);render(workspace.snapshot())},setLocked(value){locked=value;if(value)cancelTimer();else if(localDirty||workspace.snapshot().dirty)schedule();render(workspace.snapshot())},dispose(){disposed=true;cancelTimer();win.removeEventListener('beforeunload',guardUnload);win.removeEventListener('online',online);win.removeEventListener('offline',offline);off();view?.dispose();root.remove()}});
 }
+

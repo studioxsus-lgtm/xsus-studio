@@ -1,7 +1,7 @@
 export default {
   "headline": "Faqja jote.",
   "intro": "Projekto, ndërto dhe shiko faqen tënde në një vend.",
-  "start": "Hap Web Builder →",
+  "start": "Hap editorin lokal",
   "view": "Pamja e editorit",
   "design": "Dizajn",
   "code": "Kod",
@@ -61,7 +61,7 @@ export default {
   "blankBody": "Ndrysho këtë tekst për të nisur.",
   "contactBody": "Na trego për projektin tënd të ardhshëm.",
   "textBody": "Shkruaj këtu përmbajtjen e seksionit.",
-  "resume": "Vazhdo projektin →",
+  "resume": "Vazhdo projektin lokal",
   "newProject": "Projekt i ri",
   "savedLocal": "Ruajtur në këtë shfletues",
   "saveUnavailable": "Ruajtja nuk është e mundur. Mbaje skedën hapur.",
@@ -69,3 +69,4 @@ export default {
   "saveConflict": "Projekti ndryshoi në një skedë tjetër. Kjo skedë nuk e ka ruajtur punën.",
   "replaceProject": "Projekti i ri do ta zëvendësojë projektin aktual. Të vazhdojmë?"
 };
+

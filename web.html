@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="assets/css/xsus-web/templates.css">
   <link rel="stylesheet" href="assets/css/xsus-web/responsive.css">
   <link rel="stylesheet" href="assets/css/xsus-web/page.css">
-  <link rel="stylesheet" href="assets/js/xsus-web/workspace/unified-view.css">
+  <link rel="stylesheet" href="assets/js/xsus-web/workspace/unified-view.css?v=3">
 </head>
 <body>
   <header class="top header">
@@ -62,15 +62,11 @@
         <h1 data-i18n="headline">Your website.</h1>
         <p data-i18n="intro">Design, build and preview your website in one place.</p>
         <div class="landing-actions">
-          <button class="primary" type="button" id="start" data-i18n="start">Open Web Builder →</button>
-          <button type="button" id="xsus-ai-workspace-open" aria-controls="xsus-ai-workspace" aria-expanded="false">AI Web Builder</button>
+          <button class="primary" type="button" id="xsus-ai-workspace-open" aria-controls="xsus-ai-workspace" aria-expanded="false">XSUS Web Studio V2</button>
+          <button type="button" id="start" data-i18n="start">Open local editor</button>
           <button type="button" id="new-project" data-i18n="newProject" hidden>Projekt i ri</button>
         </div>
         <p id="restore-status" role="status" hidden></p>
-      </div>
-      <div class="showcase">
-        <div class="chrome"><span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span><span>XSUS WEB / index.html</span><span class="chrome-right" data-i18n="preview">Preview</span></div>
-        <div id="sample"></div>
       </div>
     </section>
     <section class="builder" id="builder" hidden>
@@ -129,8 +125,9 @@
       <button type="button" data-template="blank"><span class="template-art blank-art"></span><strong data-i18n="blank">Blank page</strong><small data-i18n="blankDesc">Start with one section and make it yours</small></button>
     </div>
   </dialog>
-  <script type="module" src="assets/js/xsus-web/app.js?v=4"></script>
+  <script type="module" src="assets/js/xsus-web/app.js?v=5"></script>
   <script type="module" src="assets/js/xsus-auth-ui.js"></script>
-  <script type="module" src="assets/js/xsus-web/workspace-entry.js?v=2"></script>
+  <script type="module" src="assets/js/xsus-web/workspace-entry.js?v=3"></script>
 </body>
 </html>
+

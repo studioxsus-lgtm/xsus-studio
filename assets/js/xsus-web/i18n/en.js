@@ -1,7 +1,7 @@
 export default {
   "headline": "Your website.",
   "intro": "Design, build and preview your website in one place.",
-  "start": "Open Web Builder →",
+  "start": "Open local editor",
   "view": "Editor view",
   "design": "Design",
   "code": "Code",
@@ -61,7 +61,7 @@ export default {
   "blankBody": "Edit this text to get started.",
   "contactBody": "Tell us about your next project.",
   "textBody": "Write your section content here.",
-  "resume": "Resume project →",
+  "resume": "Continue local project",
   "newProject": "New project",
   "savedLocal": "Saved in this browser",
   "saveUnavailable": "Saving is unavailable. Keep this tab open.",
@@ -69,3 +69,4 @@ export default {
   "saveConflict": "The project changed in another tab. This tab has not saved its changes.",
   "replaceProject": "The new project will replace the current one. Continue?"
 };
+

@@ -1,7 +1,7 @@
 export default {
   "headline": "Votre site.",
   "intro": "Concevez, créez et prévisualisez votre site au même endroit.",
-  "start": "Ouvrir Web Builder →",
+  "start": "Ouvrir l’éditeur local",
   "view": "Vue de l’éditeur",
   "design": "Design",
   "code": "Code",
@@ -61,7 +61,7 @@ export default {
   "blankBody": "Modifiez ce texte pour commencer.",
   "contactBody": "Parlez-nous de votre prochain projet.",
   "textBody": "Rédigez ici le contenu de la section.",
-  "resume": "Reprendre le projet →",
+  "resume": "Reprendre le projet local",
   "newProject": "Nouveau projet",
   "savedLocal": "Enregistré dans ce navigateur",
   "saveUnavailable": "Enregistrement indisponible. Gardez cet onglet ouvert.",
@@ -69,3 +69,4 @@ export default {
   "saveConflict": "Le projet a changé dans un autre onglet. Les modifications de cet onglet ne sont pas enregistrées.",
   "replaceProject": "Le nouveau projet remplacera le projet actuel. Continuer ?"
 };
+

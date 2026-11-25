@@ -4,9 +4,7 @@ import { bindPages, renderPages } from './pages.js';
 import { bindPreview, renderCanvas } from './preview.js';
 import { bindProperties, renderProperties } from './properties.js';
 import { bindSections, renderSections, types } from './sections.js';
-import { renderSite } from './site-renderer.js';
 import { restoreProject, state, t } from './state.js';
-import { template } from './templates.js';
 import { createProjectStorage } from './project-storage.js';
 
 const storage = createProjectStorage();
@@ -57,7 +55,6 @@ function updateLanguage() {
   $('#preview').title = t('preview');
   const sections = Object.entries(types).map(([value, key]) => new Option(t(key), value));
   $('#add-section').replaceChildren(new Option(t('addSection'), ''), ...sections);
-  $('#sample').innerHTML = renderSite(template('studio'));
   if (state.project) renderEditor();
   updateSaveStatus();
 }
@@ -74,3 +71,4 @@ bindSections(renderEditor, setPanel, saveProject);
 bindProperties(renderLists, renderCanvas, saveProject);
 bindPreview(setPanel, saveProject);
 updateLanguage();
+

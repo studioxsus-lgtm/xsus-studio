@@ -12,3 +12,24 @@
 .xsus-web-unified>p{margin:0}
 @media(max-width:800px){.xsus-web-unified>div:first-child{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:400px){.xsus-web-unified{padding:8px}.xsus-web-unified>div:first-child{grid-template-columns:minmax(0,1fr)}}
+
+.studio-v2{display:grid;grid-template-columns:minmax(155px,.7fr) minmax(215px,1fr) minmax(0,2.3fr);background:#101122;align-items:start}
+.studio-v2>.studio-tabs{display:none}
+.studio-v2>p{grid-column:1/-1}
+.studio-panel{display:grid;gap:.65rem;min-width:0;background:#18192d;border:1px solid #393950;border-radius:12px;padding:12px}
+.studio-panel>h2{margin:0;font-size:1.1rem}
+.studio-v2 :is(button,input,select,textarea){font:inherit;color:inherit;background:#202138;border:1px solid #535473;border-radius:8px;padding:.55rem;min-height:44px;min-width:0}
+.studio-v2 textarea{resize:vertical}
+.studio-panel>pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.studio-panel>pre:empty,.studio-v2 [hidden]{display:none}
+.studio-panel .xsus-web-workspace{display:flex;flex-direction:column;padding:0;background:transparent}
+.studio-panel .xsus-web-workspace textarea{min-height:180px}
+@media(max-width:850px){
+ .studio-v2{grid-template-columns:minmax(0,1fr)}
+ .studio-v2>.studio-tabs{display:flex;gap:4px}
+ .studio-tabs button{flex:1}
+ .studio-tabs [aria-pressed=true]{background:#41418a;color:white}
+ .studio-panel[data-active=false]{display:none}
+}
+body:has(.studio-v2) #landing{min-height:0;padding-bottom:0}
+#xsus-ai-workspace{scroll-margin-top:84px;max-width:1680px;margin:auto;padding:clamp(8px,2vw,28px)}
