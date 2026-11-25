@@ -15,3 +15,6 @@ test('form disabled until wired',()=>assert.match(render('form',{fields:[]}),/ty
 test('duplicate fields rejected',()=>{const f={name:'email',label:'Email',type:'email'};assert.throws(()=>render('form',{fields:[f,f]}))});
 test('unknown component rejected',()=>assert.throws(()=>render('script',{})));
 test('responsive grid CSS',()=>assert.match(componentCss,/auto-fit/));
+
+test('header supports 100 project pages',()=>{const links=Array.from({length:100},(_,i)=>({href:'page-'+i+'.html',label:'Page '+i}));assert.equal((renderComponent('header',{brand:'Demo',links}).match(/<a href=/g)||[]).length,100)});
+test('header rejects more than 100 links',()=>assert.throws(()=>renderComponent('header',{brand:'Demo',links:Array.from({length:101},()=>({href:'index.html',label:'Home'}))}),/Invalid items/));
