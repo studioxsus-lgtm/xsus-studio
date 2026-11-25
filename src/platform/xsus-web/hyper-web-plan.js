@@ -16,6 +16,15 @@ export function planWebDraft(body){
  const titles=[...labels.slice(0,3),labels[commerce?4:3]];
  const langIndex={en:1,sq:2,fr:3}[body.language];
  for(const row of extra)if(row[4].test(prompt)){paths.push(row[0]+'.html');titles.push(row[langIndex])}
+ const profiles=[
+ [/restaurant|restorant|bistro/,[['menu','Menu','Menuja','Menu'],['reservations','Reservations','Rezervime','Réservations']]],
+ [/hotel|hôtel|resort/,[['rooms','Rooms','Dhomat','Chambres'],['booking','Booking','Rezervime','Réservation']]],
+ [/clinic|klinik|clinique|dentist/,[['team','Team','Ekipi','Équipe'],['appointments','Appointments','Takime','Rendez-vous']]],
+ [/school|shkoll|education|éducation|academy|akademi/,[['courses','Courses','Kurset','Cours'],['admissions','Admissions','Regjistrime','Admissions']]],
+ [/real estate|imobiliar|immobilier/,[['properties','Properties','Pronat','Biens'],['agents','Agents','Agjentët','Agents']]]
+ ];
+ const profile=profiles.find(([pattern])=>pattern.test(prompt));
+ if(profile){const index=paths.indexOf('services.html');if(index>=0){paths.splice(index,1);titles.splice(index,1)}for(const row of profile[1]){paths.push(row[0]+'.html');titles.push(row[langIndex])}}
  const countMatch=prompt.match(/\b([1-9][0-9]?)\s*(?:pages?|faqe)\b/);
  const words=prompt.match(/\b(five|pesë|pese|cinq|six|gjashtë|gjasht[eë]|seven|shtatë|sept)\s+(?:pages?|faqe)\b/u);
  const count=countMatch?Number(countMatch[1]):words?({five:5,'pesë':5,pese:5,cinq:5,six:6,'gjashtë':6,gjashte:6,seven:7,'shtatë':7,sept:7}[words[1]]):null;
