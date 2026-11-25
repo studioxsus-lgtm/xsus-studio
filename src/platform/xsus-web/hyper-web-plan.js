@@ -63,8 +63,22 @@ export function planWebDraft(body){
  if(key!=='appointments')fields.push({name:'message',label:labels[2],type:'textarea',required:false});
  return [{kind:'form',props:{fields,button:labels[4]}}];
  }
+ const models={
+ catalog:{name:'products',fields:{name:'string',description:'string',price:'number',available:'boolean'}},
+ menu:{name:'menu_items',fields:{name:'string',description:'string',price:'number',category:'string'}},
+ rooms:{name:'rooms',fields:{name:'string',description:'string',capacity:'number',available:'boolean'}},
+ courses:{name:'courses',fields:{title:'string',description:'string',active:'boolean'}},
+ properties:{name:'properties',fields:{title:'string',description:'string',price:'number',available:'boolean'}},
+ reservations:{name:'reservation_requests',fields:{name:'string',email:'string',preferred_date:'string',message:'string'}},
+ booking:{name:'booking_requests',fields:{name:'string',email:'string',preferred_date:'string',message:'string'}},
+ appointments:{name:'appointment_requests',fields:{name:'string',email:'string',preferred_date:'string'}},
+ admissions:{name:'admission_requests',fields:{name:'string',email:'string',message:'string'}},
+ contact:{name:'contact_requests',fields:{name:'string',email:'string',message:'string'}}
+ };
+ const dynamic=/database|databaz|base de données|backend|full.stack|crud/.test(prompt);
+ const resources=dynamic?paths.map(path=>models[path.replace('.html','')]).filter(Boolean):[];
  const premium=/premium|modern|neon|dark|errët|sombre/.test(prompt);
- return {contractVersion:'1.0.0',reviewRequired:true,executable:false,specification:{pages:paths.map((path,index)=>({path,title:titles[index],sections:sections(path,titles[index]),components:components(path)})),resources:[],capabilities:[],design:premium?{palette:'studio',layout:'grid',density:'spacious',motion:/anim|motion/.test(prompt)}:{}}};
+ return {contractVersion:'1.0.0',reviewRequired:true,executable:false,specification:{pages:paths.map((path,index)=>({path,title:titles[index],sections:sections(path,titles[index]),components:components(path)})),resources,capabilities:resources.length?['security','query']:[],design:premium?{palette:'studio',layout:'grid',density:'spacious',motion:/anim|motion/.test(prompt)}:{}}};
 }
 export function createWebPlanRoute(env){
  if(env.XSUS_WEB_PLAN_ENABLED!=='true')return null;
