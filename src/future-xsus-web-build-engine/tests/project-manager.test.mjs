@@ -1,0 +1,15 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createProjectManager} from '../project-manager.mjs';
+const job={id:'one',status:'completed'};
+const setup=(overrides={})=>createProjectManager({client:{list:async()=>[job],get:async()=>job,generate:async()=>({job}),download:async()=>new Blob(['zip']),...overrides}});
+test('refresh history',async()=>{const m=setup();await m.refresh();assert.deepEqual(m.snapshot().projects,[job]);assert.equal(m.snapshot().busy,false)});
+test('generation selects project',async()=>{const m=setup();await m.generate({});assert.deepEqual(m.snapshot().selected,job)});
+test('select existing project',async()=>{const m=setup();await m.select('one');assert.equal(m.snapshot().selected.id,'one')});
+test('download',async()=>assert.equal(await (await setup().download('one')).text(),'zip'));
+test('snapshot isolated',async()=>{const m=setup();await m.refresh();m.snapshot().projects[0].id='changed';assert.equal(m.snapshot().projects[0].id,'one')});
+test('reset discards stale response',async()=>{let resolve;const m=setup({list:()=>new Promise(r=>resolve=r)});const pending=m.refresh();m.reset();resolve([job]);await assert.rejects(pending,/Session changed/);assert.deepEqual(m.snapshot().projects,[])});
+test('reject overlapping operation',async()=>{let resolve;const m=setup({list:()=>new Promise(r=>resolve=r)});const pending=m.refresh();await assert.rejects(m.refresh(),/Operation in progress/);resolve([]);await pending});
+test('errors sanitized',async()=>{const m=setup({list:async()=>{throw Error('private')}});await assert.rejects(m.refresh());assert.equal(m.snapshot().error,'Project operation failed');assert.equal(m.snapshot().busy,false)});
+test('subscriptions and unsubscribe',async()=>{const m=setup();let count=0;const off=m.subscribe(()=>count++);await m.refresh();assert.equal(count,2);off();m.reset();assert.equal(count,2)});
+test('invalid generation rejected',async()=>{const m=setup({generate:async()=>({job:{id:'one',status:'failed'}})});await assert.rejects(m.generate({}));assert.equal(m.snapshot().selected,null)});
