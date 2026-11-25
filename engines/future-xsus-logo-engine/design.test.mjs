@@ -1,0 +1,15 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {star,luminance,contrast,textColor,typographyPlan,compose} from './design.mjs';
+test('star vertices',()=>assert.equal(star(0,0,10,5,5).length,10));
+test('invalid star',()=>assert.throws(()=>star(0,0,5,10)));
+test('black luminance',()=>assert.equal(luminance('#000000'),0));
+test('white luminance',()=>assert.equal(luminance('#ffffff'),1));
+test('maximum contrast',()=>assert.equal(contrast('#ffffff','#000000'),21));
+test('equal contrast',()=>assert.equal(contrast('#ffffff','#ffffff'),1));
+test('dark background',()=>assert.equal(textColor('#000000'),'#ffffff'));
+test('light background',()=>assert.equal(textColor('#ffffff'),'#000000'));
+test('invalid color',()=>assert.throws(()=>luminance('red')));
+test('typography unicode',()=>assert.equal(typographyPlan(' Shqipëri ').text,'Shqipëri'));
+test('empty name',()=>assert.throws(()=>typographyPlan(' ')));
+for(const symbol of ['star','diamond','orbit'])test('compose '+symbol,()=>{const a=compose({symbol,name:'XSUS'});assert.match(a.svg,/<svg/);assert.deepEqual(a,compose({symbol,name:'XSUS'}));assert.equal(a.typography.text,'XSUS')});
+test('unknown symbol',()=>assert.throws(()=>compose({symbol:'unknown'})));
+test('invalid size',()=>assert.throws(()=>compose({size:0})));
