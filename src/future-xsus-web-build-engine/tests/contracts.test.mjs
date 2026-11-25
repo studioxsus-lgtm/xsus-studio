@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createProject, CONTRACT_VERSION} from '../index.mjs';
+test('creates non-executable draft',()=>assert.deepEqual(createProject({name:'Demo'}),{contractVersion:CONTRACT_VERSION,name:'Demo',pages:[{path:'index.html'}],status:'draft',executable:false}));
+test('supports multiple pages',()=>assert.equal(createProject({name:'Store',pages:['index.html','shop/index.html','contact.html']}).pages.length,3));
+for(const path of ['../index.html','/index.html','https://example.com/index.html','index.js','a\\b.html']) test('rejects '+path,()=>assert.throws(()=>createProject({name:'Demo',pages:[path]})));
+test('rejects duplicate paths',()=>assert.throws(()=>createProject({name:'Demo',pages:['index.html','INDEX.html']})));
+test('rejects empty name',()=>assert.throws(()=>createProject({name:' '})));
+test('rejects empty pages',()=>assert.throws(()=>createProject({name:'Demo',pages:[]})));
+test('rejects oversized projects',()=>assert.throws(()=>createProject({name:'Demo',pages:Array.from({length:101},(_,i)=>i+'.html')})));
