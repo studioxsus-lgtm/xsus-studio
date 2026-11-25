@@ -1,0 +1,17 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {renderComponent as render,componentCss} from '../components.mjs';
+test('navigation active page',()=>assert.match(render('header',{brand:'Demo',links:[{href:'index.html',label:'Home',current:true}]}),/aria-current="page"/));
+test('rejects javascript links',()=>assert.throws(()=>render('header',{brand:'Demo',links:[{href:'javascript:alert(1)',label:'X'}]})));
+test('footer escapes text',()=>assert.match(render('footer',{text:'<script>'}),/&lt;script&gt;/));
+test('gallery alt and lazy loading',()=>assert.match(render('gallery',{images:[{src:'assets/photo.webp',alt:'Photo'}]}),/loading="lazy"[^>]+alt="Photo"/));
+test('rejects remote media',()=>assert.throws(()=>render('gallery',{images:[{src:'https://example.com/a.jpg',alt:'X'}]})));
+test('product card',()=>assert.match(render('products',{products:[{name:'Laptop',description:'Fast',price:'€100',href:'product.html'}]}),/€100/));
+test('metrics',()=>assert.match(render('metrics',{metrics:[{label:'Users',value:'100'}]}),/<dt>Users<\/dt><dd>100/));
+test('chart scale',()=>assert.match(render('chart',{title:'Sales',values:[{label:'Jan',value:20}]}),/max="20" value="20"/));
+test('rejects nonfinite chart',()=>assert.throws(()=>render('chart',{title:'X',values:[{label:'X',value:Infinity}]})));
+test('form labels and required',()=>assert.match(render('form',{fields:[{name:'email',label:'Email',type:'email',required:true}]}),/type="email" required/));
+test('form disabled until wired',()=>assert.match(render('form',{fields:[]}),/type="button" disabled/));
+test('duplicate fields rejected',()=>{const f={name:'email',label:'Email',type:'email'};assert.throws(()=>render('form',{fields:[f,f]}))});
+test('unknown component rejected',()=>assert.throws(()=>render('script',{})));
+test('responsive grid CSS',()=>assert.match(componentCss,/auto-fit/));
