@@ -12,7 +12,9 @@ export function composePage({title,language='en',sections,design={}}){
  if(!['en','sq','fr'].includes(language)||!Array.isArray(sections)||!sections.length||sections.length>40)throw new TypeError('Invalid page');
  const heading=text(title),system=createDesignSystem(design);
  const html=sections.map((s,i)=>{
- if(!s||!kinds.includes(s.kind))throw new TypeError('Invalid section');
+ if(!s||typeof s!=='object'||(s.kind!==undefined&&s.type!==undefined&&s.kind!==s.type)||(s.body!==undefined&&s.text!==undefined&&s.body!==s.text))throw new TypeError('Invalid section');
+ s={...s,kind:s.kind??s.type,body:s.body??s.text};
+ if(!kinds.includes(s.kind))throw new TypeError('Invalid section');
  const label=text(s.title),body=s.body===undefined?'':'<p>'+text(s.body)+'</p>';
  const items=s.items??[];if(!Array.isArray(items)||items.length>30)throw new TypeError('Invalid items');
  const content=items.map(item=>s.kind==='faq'?'<details><summary>'+text(item.title)+'</summary><p>'+text(item.body)+'</p></details>':'<article class="item"><h3>'+text(item.title)+'</h3><p>'+text(item.body)+'</p></article>').join('');
