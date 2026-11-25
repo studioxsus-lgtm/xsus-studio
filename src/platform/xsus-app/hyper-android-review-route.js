@@ -15,7 +15,10 @@ export function reviewAndroidSnapshot(body){
  createHash("sha256").update(canonical(s)).digest("hex")!==body.snapshot_digest)throw Error("Invalid snapshot");
  const findings=[];
  if(s.application.platform!=="android")findings.push("unsupported_platform");
- if(!s.application.features.includes("task_management")||s.application.features.some(f=>!["task_management","search","filter"].includes(f)))findings.push("unsupported_features");
+ const features=s.application.features;
+ const tasks=features.includes("task_management")&&features.every(f=>["task_management","search","filter"].includes(f));
+ const restaurant=features.length===1&&features[0]==="restaurant_orders";
+ if(!tasks&&!restaurant)findings.push("unsupported_features");
  if(!Array.isArray(s.database)||s.database.length||s.security!==null)findings.push("unsupported_security_or_database");
  return {schema_version:"1.0",project_id:body.project_id,revision:body.revision,snapshot_digest:body.snapshot_digest,status:findings.length?"needs_changes":"accepted",findings};
 }
@@ -26,3 +29,4 @@ export function createAndroidReviewRoute(env){
  const expected=Buffer.from("Bearer "+token);
  return {authorized(header){const actual=Buffer.from(typeof header==="string"?header:"");return actual.length===expected.length&&timingSafeEqual(actual,expected);},review:reviewAndroidSnapshot};
 }
+
