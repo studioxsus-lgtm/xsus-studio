@@ -38,6 +38,18 @@ export function planWebDraft(body){
  function sections(path,title){
  const hero={kind:'hero',title:path==='index.html'?body.name:title,body:path==='contact.html'?copy.contact:path==='portfolio.html'?copy.portfolio:path==='about.html'?copy.about:agency?copy.agency:copy.intro};
  const result=[hero];
+ const sectorItems={
+ menu:[['Starters','Main courses','Desserts'],['Antipasta','Pjata kryesore','Ëmbëlsira'],['Entrées','Plats','Desserts']],
+ rooms:[['Room types','Amenities','Guest information'],['Llojet e dhomave','Komoditetet','Informacion për vizitorët'],['Types de chambres','Équipements','Informations voyageurs']],
+ courses:[['Programs','Learning resources','Enrollment'],['Programet','Materialet mësimore','Regjistrimi'],['Programmes','Ressources pédagogiques','Inscription']],
+ properties:[['Residential','Commercial','Property inquiries'],['Banesa','Prona komerciale','Kërkesa për prona'],['Résidentiel','Commercial','Demandes immobilières']],
+ catalog:[['Categories','Product details','Availability'],['Kategoritë','Detajet e produkteve','Disponueshmëria'],['Catégories','Détails des produits','Disponibilité']],
+ team:[['Specialties','Team profiles','Contact'],['Specializimet','Profilet e ekipit','Kontakti'],['Spécialités','Profils de l’équipe','Contact']]
+ };
+ const key=path.replace('.html','');
+ if(Object.hasOwn(sectorItems,key)){const names=sectorItems[key][langIndex-1];const placeholder={en:'Details to be supplied by the website owner.',sq:'Detajet plotësohen nga pronari i website-it.',fr:'Informations à compléter par le propriétaire du site.'}[body.language];result.push({kind:'features',title,items:names.map(title=>({title,body:placeholder}))})}
+ if(['reservations','booking','appointments','admissions','agents'].includes(key))result.push({kind:'cta',title:copy.next,body:copy.contact});
+
  if(agency&&['index.html','services.html'].includes(path))result.push({kind:'features',title:copy.features,items:copy.items.map(([title,body])=>({title,body}))});
  if(['index.html','services.html','portfolio.html','about.html'].includes(path))result.push({kind:'cta',title:copy.next,body:copy.contact});
  return result;
