@@ -1,0 +1,16 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {planWebsite,generateWebsite} from '../architecture.mjs';
+for(const type of ['business','commerce','portfolio','education','dashboard','blog']) test('profile '+type,()=>{const {plan,files}=generateWebsite({name:'Demo',type});assert.equal(plan.type,type);assert.equal(Object.keys(files).length,plan.pages.length+1);assert.equal(plan.executable,false)});
+test('different profiles produce different files',()=>assert.notDeepEqual(planWebsite({name:'X',type:'commerce'}).pages,planWebsite({name:'X',type:'blog'}).pages));
+test('custom pages',()=>assert.equal(planWebsite({name:'X',type:'business',pages:['index.html','custom.html']}).pages.length,2));
+test('dark theme',()=>assert.match(generateWebsite({name:'X',type:'business',theme:'dark'}).files['assets/style.css'],/#111827/));
+test('Albanian language',()=>assert.match(generateWebsite({name:'X',type:'business',language:'sq'}).files['index.html'],/lang="sq"/));
+test('French language',()=>assert.match(generateWebsite({name:'X',type:'business',language:'fr'}).files['index.html'],/Accueil/));
+test('rejects unknown profile',()=>assert.throws(()=>planWebsite({name:'X',type:'unknown'})));
+test('rejects prototype profile',()=>assert.throws(()=>planWebsite({name:'X',type:'constructor'})));
+test('rejects unknown theme',()=>assert.throws(()=>planWebsite({name:'X',type:'business',theme:'unknown'})));
+test('rejects unknown language',()=>assert.throws(()=>planWebsite({name:'X',type:'business',language:'xx'})));
+test('escapes name',()=>assert.ok(!generateWebsite({name:'<script>',type:'business'}).files['index.html'].includes('<script>')));
+test('requires review and does not claim backend',()=>{const p=planWebsite({name:'X',type:'commerce'});assert.equal(p.reviewRequired,true);assert.equal(p.features.payments,false);assert.equal(p.features.backend,false)});
+test('nested assets',()=>assert.match(generateWebsite({name:'X',type:'business',pages:['index.html','a/b.html']}).files['a/b.html'],/\.\.\/assets\/style\.css/));
