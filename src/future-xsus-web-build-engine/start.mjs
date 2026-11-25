@@ -1,6 +1,7 @@
 import {createPersistentProduction} from './production.mjs';
+import {createShutdown} from './shutdown.mjs';
 const runtime=await createPersistentProduction({env:process.env});
 runtime.server.listen(runtime.port,'0.0.0.0',()=>{runtime.startMaintenance();console.log('XSUS Web Build Engine listening')});
-let stopping=false;
-function stop(){if(stopping)return;stopping=true;runtime.stopAccepting();void runtime.stopMaintenance();runtime.server.close(async()=>{await runtime.stopMaintenance();process.exitCode=0});runtime.server.closeIdleConnections();const timer=setTimeout(()=>{runtime.server.closeAllConnections();process.exit(1)},30000);timer.unref()}
+const shutdown=createShutdown({stopAccepting:runtime.stopAccepting,closeServer:()=>new Promise((resolve,reject)=>{runtime.server.close(e=>e?reject(e):resolve());runtime.server.closeIdleConnections()}),stopMaintenance:runtime.stopMaintenance,diagnostics:runtime.diagnostics,forceClose:()=>runtime.server.closeAllConnections()});
+async function stop(){const {graceful}=await shutdown();if(!graceful)process.exit(1);process.exitCode=0}
 process.once('SIGTERM',stop);process.once('SIGINT',stop);
