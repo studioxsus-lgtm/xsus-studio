@@ -1,0 +1,18 @@
+name: Future XSUS Logo Engine
+on:
+  push:
+    branches: [future-xsus-logo-engine]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Full logo engine regression
+        run: node --test engines/future-xsus-logo-engine/*.test.mjs
