@@ -1,0 +1,14 @@
+@import './workspace-view.css';
+.xsus-web-unified{color:#e2e8f0;background:#101827;padding:16px;border-radius:12px;display:grid;gap:12px;min-width:0}
+.xsus-web-unified>div:first-child{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:center}
+.xsus-web-unified>div:first-child :is(input,select,textarea,button){box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:10px;border:1px solid #475569;border-radius:8px;background:#172235;color:#e2e8f0;font:inherit}
+.xsus-web-unified>div:first-child textarea{grid-column:1/-1;min-height:120px;resize:vertical}
+.xsus-web-unified>div:first-child button{cursor:pointer}
+.xsus-web-unified>div:first-child button:first-of-type{background:#075985;border-color:#38bdf8}
+.xsus-web-unified button:disabled{opacity:.5;cursor:not-allowed}
+.xsus-web-unified :is(button,input,select,textarea):focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
+.xsus-web-unified>pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;max-height:240px;overflow:auto}
+.xsus-web-unified>pre:empty{display:none}
+.xsus-web-unified>p{margin:0}
+@media(max-width:800px){.xsus-web-unified>div:first-child{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:400px){.xsus-web-unified{padding:8px}.xsus-web-unified>div:first-child{grid-template-columns:minmax(0,1fr)}}
