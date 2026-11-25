@@ -1,5 +1,5 @@
 import {mountStudioView} from './studio-view.mjs';
-import {createWorkspace} from './workspace.mjs';
+import {createWorkspace} from './workspace.mjs?v=20261125-4';
 import {mountVector,renderVector} from './vector-canvas.mjs';
 import {applyLanguage,translate} from './i18n.mjs';
 export function mountStudio(root,supabase){
