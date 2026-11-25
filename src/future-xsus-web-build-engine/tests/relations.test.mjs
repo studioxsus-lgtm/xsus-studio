@@ -1,0 +1,20 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {planRelations,withTransaction} from '../relations.mjs';
+const resources=[{name:'orders',fields:{total:'number'}},{name:'customers',fields:{name:'string'}}],relation={from:'orders',to:'customers',field:'customer_id'};
+const plan=(r=[relation])=>planRelations(resources,r);
+test('composite ownership foreign key',()=>assert.match(plan().sql,/FOREIGN KEY \("owner_id", "customer_id"\) REFERENCES "customers" \("owner_id", "id"\)/));
+test('unique target',()=>assert.match(plan().sql,/ADD UNIQUE \("owner_id", "id"\)/));
+test('index',()=>assert.match(plan().sql,/CREATE INDEX ON "orders"/));
+test('restrict default',()=>assert.match(plan().sql,/ON DELETE RESTRICT/));
+test('cascade explicit',()=>assert.match(plan([{...relation,onDelete:'cascade'}]).sql,/ON DELETE CASCADE/));
+test('unknown target rejected',()=>assert.throws(()=>plan([{...relation,to:'missing'}])));
+test('duplicate relation rejected',()=>assert.throws(()=>plan([relation,relation])));
+test('existing field rejected',()=>assert.throws(()=>plan([{...relation,field:'total'}])));
+test('unsafe identifier rejected',()=>assert.throws(()=>plan([{...relation,field:'x;drop'}])));
+test('draft only',()=>{assert.equal(plan().executable,false);assert.equal(plan().reviewRequired,true)});
+function fixture(fail){const calls=[];return {calls,pool:{connect:async()=>({query:async sql=>{calls.push(sql);if(sql===fail)throw Error('failure');return {rows:[]}},release:discard=>calls.push(discard)})}}}
+test('commit and release',async()=>{const f=fixture();assert.equal(await withTransaction(f.pool,async q=>{await q('SELECT 1');return 7}),7);assert.deepEqual(f.calls,['BEGIN','SELECT 1','COMMIT',false])});
+test('rollback on work failure',async()=>{const f=fixture('SELECT 1');await assert.rejects(withTransaction(f.pool,q=>q('SELECT 1')));assert.deepEqual(f.calls,['BEGIN','SELECT 1','ROLLBACK',false])});
+test('discard on begin failure',async()=>{const f=fixture('BEGIN');await assert.rejects(withTransaction(f.pool,()=>{}));assert.deepEqual(f.calls,['BEGIN',true])});
+test('discard on rollback failure',async()=>{const f=fixture('ROLLBACK');await assert.rejects(withTransaction(f.pool,()=>{throw Error('work')}));assert.deepEqual(f.calls,['BEGIN','ROLLBACK',true])});
