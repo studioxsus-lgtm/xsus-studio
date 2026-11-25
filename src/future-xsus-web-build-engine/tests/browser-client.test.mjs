@@ -1,0 +1,14 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createWebClient} from '../browser-client.mjs';
+const id='12345678-1234-1234-1234-123456789abc';
+const setup=(fetchImpl,getToken=async()=> 'session')=>createWebClient({baseUrl:'https://example.com',getToken,fetchImpl});
+test('reject insecure endpoint',()=>assert.throws(()=>createWebClient({baseUrl:'http://example.com',getToken(){}})));
+test('generate authenticated request',async()=>{const c=setup(async(url,o)=>{assert.equal(url.pathname,'/projects');assert.equal(o.method,'POST');assert.equal(o.headers.Authorization,'Bearer session');assert.equal(o.credentials,'omit');assert.equal(o.redirect,'error');assert.equal(JSON.parse(o.body).language,'sq');return Response.json({job:{id}})});assert.equal((await c.generate({name:'Site',prompt:'Create site',language:'sq'})).job.id,id)});
+test('list and get routes',async()=>{const paths=[];const c=setup(async u=>{paths.push(u.pathname);return Response.json([])});await c.list();await c.get(id);assert.deepEqual(paths,['/projects','/projects/'+id])});
+test('download archive',async()=>{const c=setup(async(u,o)=>{assert.equal(u.pathname,'/projects/'+id+'/download');assert.equal(o.headers.Accept,'application/zip');return new Response('zip',{headers:{'Content-Type':'application/zip'}})});assert.equal(await (await c.download(id)).text(),'zip')});
+test('reject missing session',async()=>{const c=setup(()=>assert.fail('unexpected fetch'),async()=>null);await assert.rejects(c.list(),/Authentication required/)});
+test('reject invalid project id',()=>assert.throws(()=>setup(()=>{}).get('../admin')));
+test('reject invalid prompt',()=>assert.throws(()=>setup(()=>{}).generate({name:'Site',prompt:''})));
+test('preserve HTTP status without server error body',async()=>{const c=setup(async()=>new Response('private',{status:403}));await assert.rejects(c.list(),e=>e.status===403&&e.message==='Website request failed')});
+test('reject unexpected download format',async()=>{const c=setup(async()=>Response.json({}));await assert.rejects(c.download(id),/Invalid archive/)});
