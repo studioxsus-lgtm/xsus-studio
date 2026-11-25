@@ -15,6 +15,8 @@
 import http from "node:http";
 import {createAndroidReviewRoute, ANDROID_REVIEW_PATH} from "./src/platform/xsus-app/hyper-android-review-route.js";
 const androidReviewRoute = createAndroidReviewRoute(process.env);
+import {createWebPlanRoute} from "./src/platform/xsus-web/hyper-web-plan.js";
+const webPlanRoute = createWebPlanRoute(process.env);
 import { checkHyperStartupReadiness } from "./src/platform/xsus-app/hyper-startup-readiness.js";
 import { createHyperReadinessDiagnostic } from "./src/platform/xsus-app/hyper-readiness-diagnostic.js";
 import { createHyperV81Route } from "./src/platform/xsus-app/hyper-v81-route.js";
@@ -329,6 +331,15 @@ const server = http.createServer(
                     chat: "POST /api/chat"
                 }
             });
+        }
+
+        if (pathname === "/internal/web/plan") {
+            if (!webPlanRoute) return sendJSON(res,503,{error:"Web planning disabled"});
+            if (req.method !== "POST") return sendJSON(res,405,{error:"Method not allowed"});
+            if (!webPlanRoute.authorized(req.headers.authorization)) return sendJSON(res,401,{error:"Unauthorized"});
+            if (!/^application\/json(?:\s*;|$)/i.test(req.headers["content-type"]??"")) return sendJSON(res,415,{error:"Invalid content type"});
+            try { return sendJSON(res,200,webPlanRoute.plan(await readJSONBody(req))); }
+            catch(error) { return sendJSON(res,error.statusCode===413?413:400,{error:"Invalid Web planning request"}); }
         }
 
         if (pathname === ANDROID_REVIEW_PATH) {
