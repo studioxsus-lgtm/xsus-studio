@@ -1,0 +1,28 @@
+import {describe,it,expect} from 'vitest';
+import {createLogoPlanRoute} from './hyper-logo-route.js';
+const token='t'.repeat(64);
+const env={XSUS_LOGO_PLAN_ENABLED:'true',XSUS_LOGO_PLAN_TOKEN:token};
+const route=createLogoPlanRoute(env);
+const req=(brief={})=>({version:'1.0.0',operation:'logo.plan',requestId:'test-1',brief:{name:'Nova',...brief}});
+describe('Hyper logo route',()=>{
+ it('disabled by default',()=>expect(createLogoPlanRoute({})).toBeNull());
+ it('disabled with token alone',()=>expect(createLogoPlanRoute({XSUS_LOGO_PLAN_TOKEN:token})).toBeNull());
+ it('rejects missing token configuration',()=>expect(()=>createLogoPlanRoute({XSUS_LOGO_PLAN_ENABLED:'true'})).toThrow());
+ it('rejects short token',()=>expect(()=>createLogoPlanRoute({...env,XSUS_LOGO_PLAN_TOKEN:'short'})).toThrow());
+ it('accepts exact bearer',()=>expect(route.authorized('Bearer '+token)).toBe(true));
+ it('rejects missing bearer',()=>expect(route.authorized(undefined)).toBe(false));
+ it('rejects same-length wrong bearer',()=>expect(route.authorized('Bearer '+'x'.repeat(64))).toBe(false));
+ it('rejects malformed bearer',()=>expect(route.authorized(token)).toBe(false));
+ it('approves valid brief and preserves correlation',()=>expect(route.plan(req())).toMatchObject({requestId:'test-1',approved:true,review_required:false}));
+ it('rejects unknown top-level fields',()=>expect(()=>route.plan({...req(),execute:true})).toThrow());
+ it('rejects unknown brief fields',()=>expect(()=>route.plan(req({execute:true}))).toThrow());
+ it('rejects invalid version',()=>expect(()=>route.plan({...req(),version:'2'})).toThrow());
+ it('rejects invalid operation',()=>expect(()=>route.plan({...req(),operation:'app.build'})).toThrow());
+ it('rejects invalid correlation',()=>expect(()=>route.plan({...req(),requestId:'../x'})).toThrow());
+ it('rejects non-string industry',()=>expect(()=>route.plan(req({industry:[]}))).toThrow());
+ it('rejects oversized style',()=>expect(()=>route.plan(req({style:'x'.repeat(65)}))).toThrow());
+ it('requires review for blank name',()=>expect(route.plan(req({name:' '}))).toMatchObject({approved:false,review_required:true}));
+ it('requires review for identical colors',()=>expect(route.plan(req({primary:'#ffffff',secondary:'#ffffff'}))).toMatchObject({approved:false,review_required:true}));
+ it('rejects unsafe color',()=>expect(()=>route.plan(req({primary:'url(x)'}))).toThrow());
+ it('selects industry palette for null colors',()=>expect(route.plan(req({industry:'technology',primary:null,secondary:null}))).toMatchObject({primary:'#2563eb',secondary:'#ffffff'}));
+});
