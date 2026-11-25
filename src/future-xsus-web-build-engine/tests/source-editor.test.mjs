@@ -1,0 +1,18 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createSourceEditor} from '../source-editor.mjs';
+const setup=()=>createSourceEditor({'index.html':'home','assets/style.css':'css'});
+test('initial files',()=>assert.equal(setup().read('index.html'),'home'));
+test('update revision',()=>{const e=setup();assert.equal(e.update('index.html','new',0).revision,1);assert.equal(e.read('index.html'),'new')});
+test('add nested page',()=>assert.equal(setup().add('pages/about.html','about',0).files['pages/about.html'],'about'));
+test('remove css',()=>assert.equal(setup().remove('assets/style.css',0).files['assets/style.css'],undefined));
+test('protect entry',()=>assert.throws(()=>setup().remove('index.html',0)));
+test('reject traversal',()=>assert.throws(()=>setup().add('../bad.js','',0)));
+test('reject case collision',()=>assert.throws(()=>setup().add('INDEX.html','',0)));
+test('reject stale revision',()=>assert.throws(()=>setup().update('index.html','new',2),/Revision conflict/));
+test('undo redo',()=>{const e=setup();e.update('index.html','new',0);assert.equal(e.undo(1).files['index.html'],'home');assert.equal(e.redo(2).files['index.html'],'new')});
+test('new edit clears redo',()=>{const e=setup();e.update('index.html','new',0);e.undo(1);assert.equal(e.update('index.html','other',2).canRedo,false)});
+test('snapshot isolation',()=>{const e=setup();e.snapshot().files['index.html']='bad';assert.equal(e.read('index.html'),'home')});
+test('history bounded',()=>{const e=createSourceEditor({'index.html':'a'},{historyLimit:1});e.update('index.html','b',0);e.update('index.html','c',1);assert.equal(e.undo(2).canUndo,false)});
+test('reject oversized source',()=>assert.throws(()=>setup().update('index.html','x'.repeat(250001),0)));
+test('never authorizes publication',()=>assert.equal(setup().snapshot().publicationAuthorized,false));
