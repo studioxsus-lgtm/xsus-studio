@@ -1,9 +1,9 @@
 const esc=v=>{if(typeof v!=='string'||v.length>2000)throw new TypeError('Invalid text');return v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))};
 const path=v=>{if(typeof v!=='string'||! /^(?:\.\.\/)*[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*\.(?:html|png|jpg|jpeg|webp|avif)$/.test(v))throw new TypeError('Invalid local path');return esc(v)};
-const items=v=>{if(!Array.isArray(v)||v.length>50)throw new TypeError('Invalid items');return v};
+const items=(v,max=50)=>{if(!Array.isArray(v)||v.length>max)throw new TypeError('Invalid items');return v};
 export function renderComponent(kind,props={}){
  switch(kind){
- case 'header':return '<header><strong>'+esc(props.brand)+'</strong><nav aria-label="Main">'+items(props.links).map(l=>'<a href="'+path(l.href)+'"'+(l.current===true?' aria-current="page"':'')+'>'+esc(l.label)+'</a>').join('')+'</nav></header>';
+ case 'header':return '<header><strong>'+esc(props.brand)+'</strong><nav aria-label="Main">'+items(props.links,100).map(l=>'<a href="'+path(l.href)+'"'+(l.current===true?' aria-current="page"':'')+'>'+esc(l.label)+'</a>').join('')+'</nav></header>';
  case 'footer':return '<footer><p>'+esc(props.text)+'</p></footer>';
  case 'gallery':return '<div class="xs-grid">'+items(props.images).map(i=>'<figure><img loading="lazy" src="'+path(i.src)+'" alt="'+esc(i.alt)+'"><figcaption>'+esc(i.caption??'')+'</figcaption></figure>').join('')+'</div>';
  case 'products':return '<div class="xs-grid">'+items(props.products).map(p=>'<article><h3>'+esc(p.name)+'</h3><p>'+esc(p.description)+'</p><strong>'+esc(p.price)+'</strong><p><a href="'+path(p.href)+'">View product</a></p></article>').join('')+'</div>';
