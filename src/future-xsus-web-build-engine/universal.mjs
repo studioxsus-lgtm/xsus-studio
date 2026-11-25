@@ -1,6 +1,6 @@
 import {generateUnifiedProject} from './pipeline.mjs';
 import {planMigration} from './fullstack.mjs';
-import {defineResource} from './backend.mjs';
+import {defineResource,planResource} from './backend.mjs';
 import {createProject} from './index.mjs';
 const engines=new Set(['commerce','booking','notifications','media','security','query','analytics','workflow','runtime','relations']);
 export function compileCustomWebsite({name,pages,resources=[],capabilities=[],language='en',design={}}={}){
@@ -17,5 +17,6 @@ export function generateCustomWebsite(input){
  const plan=compileCustomWebsite(input);
  const project=generateUnifiedProject({name:plan.name,pages:plan.pages,language:plan.language,design:plan.design});
  const migration=plan.resources.length?planMigration(plan.resources):null;
- return {plan,project,migration,runtimeConnected:false,publicationAuthorized:false};
+ const api=plan.resources.length?{resources:plan.resources.map(resource=>({name:resource.name,routes:planResource(resource.name,resource.fields).routes,authentication:'required',scope:'owner'})),reviewRequired:true,executable:false,runtimeConnected:false}:null;
+ return {plan,project,migration,api,runtimeConnected:false,publicationAuthorized:false};
 }
