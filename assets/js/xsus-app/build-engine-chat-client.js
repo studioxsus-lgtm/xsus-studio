@@ -24,7 +24,8 @@ function plannedBuildGoal(goal, result) {
   // Put supported capabilities in the short worker name and retain the full
   // reviewed goal and steps in the public API request.
   const search = /\b(search|searchable|rechercher|kërkim)\b/i.test(reviewed + '\n' + detail);
-  const header = domain ? '[XSUS ' + domain + (search ? ' search' : '') + ']' : '';
+  const taskPages = domain === 'tasks' && /(?:me|në) (?:shumë|disa) faqe(?: dhe (?:dizajn modern|moderne))?\s*[.!]?\s*$/i.test(goal);
+  const header = domain ? '[XSUS ' + domain + (search ? ' search' : '') + (taskPages ? ' pages' : '') + ']' : '';
   let brief = [header, reviewed, detail].filter(Boolean).join('\n').slice(0, 2000);
   const encoder = new TextEncoder();
   while (encoder.encode(JSON.stringify({goal:brief})).length > 4096) {
@@ -78,3 +79,4 @@ export async function buildFromChatGoal(goal,{steps,signal,onPlan}={}){
   const script=doc.createElement('script');script.textContent=files.get('main.js');doc.body.append(script);
   return {html:'<!doctype html>'+doc.documentElement.outerHTML,files:Object.fromEntries(files),requiresReview:true};
 }
+
