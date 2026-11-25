@@ -54,8 +54,17 @@ export function planWebDraft(body){
  if(['index.html','services.html','portfolio.html','about.html'].includes(path))result.push({kind:'cta',title:copy.next,body:copy.contact});
  return result;
  }
+ function components(path){
+ const key=path.replace('.html','');
+ if(!['contact','reservations','booking','appointments','admissions'].includes(key))return [];
+ const labels={en:['Name','Email','Message','Preferred date','Submit'],sq:['Emri','Email','Mesazhi','Data e preferuar','Dërgo'],fr:['Nom','E-mail','Message','Date souhaitée','Envoyer']}[body.language];
+ const fields=[{name:'name',label:labels[0],type:'text',required:true},{name:'email',label:labels[1],type:'email',required:true}];
+ if(['reservations','booking','appointments'].includes(key))fields.push({name:'preferred_date',label:labels[3],type:'date',required:true});
+ if(key!=='appointments')fields.push({name:'message',label:labels[2],type:'textarea',required:false});
+ return [{kind:'form',props:{fields,button:labels[4]}}];
+ }
  const premium=/premium|modern|neon|dark|errët|sombre/.test(prompt);
- return {contractVersion:'1.0.0',reviewRequired:true,executable:false,specification:{pages:paths.map((path,index)=>({path,title:titles[index],sections:sections(path,titles[index])})),resources:[],capabilities:[],design:premium?{palette:'studio',layout:'grid',density:'spacious',motion:/anim|motion/.test(prompt)}:{}}};
+ return {contractVersion:'1.0.0',reviewRequired:true,executable:false,specification:{pages:paths.map((path,index)=>({path,title:titles[index],sections:sections(path,titles[index]),components:components(path)})),resources:[],capabilities:[],design:premium?{palette:'studio',layout:'grid',density:'spacious',motion:/anim|motion/.test(prompt)}:{}}};
 }
 export function createWebPlanRoute(env){
  if(env.XSUS_WEB_PLAN_ENABLED!=='true')return null;
