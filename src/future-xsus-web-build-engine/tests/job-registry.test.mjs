@@ -1,0 +1,21 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {randomUUID} from 'node:crypto';
+import {openJobRegistry} from '../job-registry.mjs';
+async function fixture(t,opts={}){const directory=await mkdtemp(join(tmpdir(),'xsus-registry-'));t.after(()=>rm(directory,{recursive:true,force:true}));const config={directory,...opts};return {config,r:await openJobRegistry(config)}}
+test('create queued job',async t=>{const {r}=await fixture(t);assert.equal((await r.create('a')).status,'queued')});
+test('persist queued state',async t=>{const {r,config}=await fixture(t);const j=await r.create('a');assert.equal((await (await openJobRegistry(config)).get('a',j.id)).status,'queued')});
+test('running recovery',async t=>{const {r,config}=await fixture(t);const j=await r.create('a');await r.transition('a',j.id,0,'running');const x=await (await openJobRegistry(config)).get('a',j.id);assert.equal(x.status,'interrupted');assert.equal(x.revision,2)});
+test('completed artifact persists',async t=>{const {r,config}=await fixture(t);const j=await r.create('a'),id=randomUUID();await r.transition('a',j.id,0,'running');await r.transition('a',j.id,1,'completed',id);assert.equal((await (await openJobRegistry(config)).get('a',j.id)).artifactId,id)});
+test('owner isolation',async t=>{const {r}=await fixture(t);const j=await r.create('a');await assert.rejects(r.get('b',j.id));assert.deepEqual(await r.list('b'),[])});
+test('revision conflict',async t=>{const {r}=await fixture(t);const j=await r.create('a');await assert.rejects(r.transition('a',j.id,1,'running'),/conflict/)});
+test('invalid transition',async t=>{const {r}=await fixture(t);const j=await r.create('a');await assert.rejects(r.transition('a',j.id,0,'completed',randomUUID()))});
+test('artifact required',async t=>{const {r}=await fixture(t);const j=await r.create('a');await r.transition('a',j.id,0,'running');await assert.rejects(r.transition('a',j.id,1,'completed'))});
+test('capacity',async t=>{const {r}=await fixture(t,{maxJobs:1});await r.create('a');await assert.rejects(r.create('a'),/capacity/)});
+test('concurrent writes serialized',async t=>{const {r}=await fixture(t);await Promise.all([r.create('a'),r.create('a'),r.create('a')]);assert.equal((await r.list('a')).length,3)});
+test('cancel queued',async t=>{const {r}=await fixture(t);const j=await r.create('a');assert.equal((await r.transition('a',j.id,0,'cancelled')).status,'cancelled')});
+test('terminal state immutable',async t=>{const {r}=await fixture(t);const j=await r.create('a');await r.transition('a',j.id,0,'cancelled');await assert.rejects(r.transition('a',j.id,1,'running'))});
+test('snapshot isolated',async t=>{const {r}=await fixture(t);const j=await r.create('a');j.status='completed';assert.equal((await r.get('a',j.id)).status,'queued')});
