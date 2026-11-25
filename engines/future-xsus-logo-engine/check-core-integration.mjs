@@ -20,3 +20,10 @@ assert.equal(review.status,'review_required');
 const contrast=await engine.generate({language:'en',prompt:'Modern logo for "Nova" white black',requestId:randomUUID()});
 assert.equal(contrast.status,'generated');
 console.log('PASS: clarification gate and palette generation');
+const axion=await engine.generate({language:'en',requestId:randomUUID(),
+ prompt:'Create a logo for "AXION". Combine the letter A with a neural network and circuit branches. Electric blue and violet.'});
+assert.equal(axion.status,'generated');
+assert.ok(axion.kit.variants.some(v=>v.document.layers.some(l=>l.type==='path')));
+assert.ok(axion.kit.variants.some(v=>v.document.layers.some(l=>l.type==='circle')));
+assert.ok(axion.kit.variants.every(v=>v.document.layers.some(l=>l.type==='text' && l.text.toUpperCase()==='AXION')));
+console.log('PASS: AXION editable neural and circuit monograms through both core services');
