@@ -1,14 +1,18 @@
 import {createServer} from 'node:http';
 import {createObservability} from './observability.mjs';
 import {createAdmission} from './admission.mjs';
-export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=createAdmission()}={}){
+export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=createAdmission(),allowedOrigins=[]}={}){
  if(!runtime||['generate','get','list','download'].some(k=>typeof runtime[k]!=='function')||!Number.isInteger(maxBodyBytes)||maxBodyBytes<1024||maxBodyBytes>1048576)throw TypeError('Invalid gateway configuration');
+ if(!Array.isArray(allowedOrigins)||allowedOrigins.length>10||allowedOrigins.some(origin=>{try{const u=new URL(origin);return u.protocol!=='https:'||u.origin!==origin}catch{return true}}))throw TypeError('Invalid allowed origins');
+ const origins=new Set(allowedOrigins);
  const metrics=createObservability();
  let ready=true;
  const server=createServer(async(req,res)=>{
  const end=metrics.begin();res.once('finish',()=>end(res.statusCode));res.once('close',()=>end(null));
  const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
  const send=(status,data)=>{if(res.destroyed||res.writableEnded)return;res.writeHead(status,{...headers,'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(data))};
+ const origin=req.headers.origin;
+ if(origin&&origins.has(origin)){headers['Access-Control-Allow-Origin']=origin;headers['Vary']='Origin';headers['Access-Control-Expose-Headers']='Content-Disposition'}
  let release;
  try{
  if(req.method==='GET'&&req.url==='/health')return send(200,{status:'alive'});
@@ -16,6 +20,13 @@ export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=cr
  if(!ready)return send(503,{error:'Service unavailable'});
  const match=/^\/projects(?:\/([a-f0-9-]{36})(\/download)?)?$/.exec(req.url);
  if(!match)return send(404,{error:'Not found'});
+ if(origin&&!origins.has(origin))return send(403,{error:'Origin forbidden'});
+ if(req.method==='OPTIONS'){
+ if(!origin||!['GET','POST'].includes(req.headers['access-control-request-method']))return send(403,{error:'Preflight forbidden'});
+ const requested=(req.headers['access-control-request-headers']||'').toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);
+ if(requested.some(x=>!['authorization','content-type'].includes(x)))return send(403,{error:'Preflight forbidden'});
+ res.writeHead(204,{...headers,'Access-Control-Allow-Methods':'GET, POST','Access-Control-Allow-Headers':'Authorization, Content-Type','Access-Control-Max-Age':'600'});return res.end();
+ }
  const auth=/^Bearer ([^\s]{1,8192})$/.exec(req.headers.authorization||'');if(!auth)return send(401,{error:'Unauthorized'});
  release=admission.acquire(req.socket.remoteAddress||'unknown');
  const token=auth[1],id=match[1];
