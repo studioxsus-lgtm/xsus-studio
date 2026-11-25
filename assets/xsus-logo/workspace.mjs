@@ -19,7 +19,7 @@ export function createWorkspace({supabase,dom=globalThis.document,onChange=()=>{
  state,list:()=>projects.list(),
  generate:input=>task(async()=>{protect();const result=await assistant.generate(input);if(result.status==='generated')replace(assistant.document());return state()}),
  cancel:()=>assistant.cancel(),
- variant:index=>{guard();protect();assistant.select(index);return replace(assistant.document())},
+ variant:(index,{discardChanges=false}={})=>{guard();if(!discardChanges)protect();assistant.select(index);return replace(assistant.document(),project)},
  open:id=>task(async()=>{protect();const row=await projects.open(id);assistant.reset();return replace(row.document,row,false)}),
  newProject:()=>{guard();protect();assistant.reset();return replace({version:'1.0.0',width:512,height:512,layers:[]})},
  discard:()=>{guard();assistant.reset();editor=null;project=null;dirty=false;return emit()},
