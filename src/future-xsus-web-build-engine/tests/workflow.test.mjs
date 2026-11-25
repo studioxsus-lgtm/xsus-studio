@@ -1,0 +1,17 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {defineWorkflow,createWorkflowRuntime} from '../workflow.mjs';
+const definition={states:['draft','submitted','cancelled'],initial:'draft',transitions:[{from:'draft',to:'submitted',action:'submit',roles:['customer']},{from:'submitted',to:'cancelled',action:'cancel',roles:['customer']}]};
+const runtime=()=>createWorkflowRuntime(definition,{verifyIdentity:async t=>t==='bad'?null:{id:t==='other'?'other':'owner',roles:[t==='viewer'?'viewer':'customer']}});
+test('initial state',async()=>assert.equal((await runtime().create('customer','order')).state,'draft'));
+test('submit and cancel',async()=>{const r=runtime();await r.create('customer','order');assert.equal((await r.transition('customer','order','submit',0)).state,'submitted');assert.equal((await r.transition('customer','order','cancel',1)).state,'cancelled')});
+test('invalid transition',async()=>{const r=runtime();await r.create('customer','order');await assert.rejects(r.transition('customer','order','cancel',0),/Invalid transition/)});
+test('role gate',async()=>{const r=runtime();await r.create('customer','order');await assert.rejects(r.transition('viewer','order','submit',0),/Forbidden/)});
+test('owner isolation',async()=>{const r=runtime();await r.create('customer','order');await assert.rejects(r.get('other','order'),/Not found/)});
+test('unauthorized',async()=>assert.rejects(runtime().create('bad','order'),/Unauthorized/));
+test('revision conflict',async()=>{const r=runtime();await r.create('customer','order');await r.transition('customer','order','submit',0);await assert.rejects(r.transition('customer','order','cancel',0),/Revision conflict/)});
+test('concurrent transitions',async()=>{const r=runtime();await r.create('customer','order');const results=await Promise.allSettled([r.transition('customer','order','submit',0),r.transition('customer','order','submit',0)]);assert.equal(results.filter(x=>x.status==='fulfilled').length,1)});
+test('ambiguous rules rejected',()=>assert.throws(()=>defineWorkflow({...definition,transitions:[definition.transitions[0],definition.transitions[0]]})));
+test('unknown target rejected',()=>assert.throws(()=>defineWorkflow({...definition,transitions:[{...definition.transitions[0],to:'unknown'}]})));
+test('snapshot isolation',async()=>{const r=runtime();const x=await r.create('customer','order');x.state='cancelled';assert.equal((await r.get('customer','order')).state,'draft')});
+test('duplicate record rejected',async()=>{const r=runtime();await r.create('customer','order');await assert.rejects(r.create('customer','order'))});
