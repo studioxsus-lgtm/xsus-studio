@@ -1,0 +1,20 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createSecurityRuntime} from '../security.mjs';
+const request={tenant:'a',action:'project.read'};
+function fixture(options={}){let now=0;const r=createSecurityRuntime({clock:()=>now,verifyIdentity:async t=>t==='bad'?null:{id:t,tenant:t==='other'?'b':'a',roles:t==='admin'?['admin']:t==='guest'?[]:['reader'],expiresAt:t==='expired'?0:100000},policies:[{role:'reader',action:'project.read'},{role:'admin',action:'audit.read'}],...options});return {r,advance:n=>now+=n}}
+test('allow explicit permission',async()=>assert.equal((await fixture().r.authorize('user',request)).allowed,true));
+test('deny by default',async()=>assert.equal((await fixture().r.authorize('guest',request)).allowed,false));
+test('unknown action denied',async()=>assert.equal((await fixture().r.authorize('user',{...request,action:'project.delete'})).allowed,false));
+test('tenant isolation',async()=>assert.equal((await fixture().r.authorize('other',request)).reason,'forbidden'));
+test('invalid identity',async()=>assert.equal((await fixture().r.authorize('bad',request)).reason,'unauthorized'));
+test('expired session',async()=>assert.equal((await fixture().r.authorize('expired',request)).reason,'unauthorized'));
+test('rate limit',async()=>{const {r}=fixture({limit:1});await r.authorize('user',request);assert.equal((await r.authorize('user',request)).reason,'rate_limited')});
+test('window reset',async()=>{const {r,advance}=fixture({limit:1,windowMs:100});await r.authorize('user',request);advance(100);assert.equal((await r.authorize('user',request)).allowed,true)});
+test('separate subjects',async()=>{const {r}=fixture({limit:1});await r.authorize('user',request);assert.equal((await r.authorize('second',request)).allowed,true)});
+test('audit permission',async()=>assert.rejects(fixture().r.readAudit('user'),/Forbidden/));
+test('audit bounded',async()=>{const {r}=fixture({auditLimit:1});await r.authorize('user',request);await r.authorize('guest',request);assert.equal((await r.readAudit('admin')).length,1)});
+test('audit tenant isolation',async()=>{const {r}=fixture();await r.authorize('other',{...request,tenant:'b'});assert.deepEqual(await r.readAudit('admin'),[])});
+test('audit omits token field',async()=>{const {r}=fixture();await r.authorize('user',request);assert.ok(!('token' in (await r.readAudit('admin'))[0]))});
+test('invalid action rejected',async()=>assert.rejects(fixture().r.authorize('user',{...request,action:'bad action'})));
+test('bounded subjects',async()=>{const {r}=fixture({maxSubjects:1});await r.authorize('user',request);assert.equal((await r.authorize('second',request)).reason,'rate_limited')});
