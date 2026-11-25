@@ -1,0 +1,18 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {brandKit,mockup} from './brand.mjs';import {createOrchestrator} from './orchestrator.mjs';import {createEditor} from './editor.mjs';
+const kit=()=>brandKit({name:'XSUS'});
+test('three editable variants',()=>{const k=kit();assert.equal(k.variants.length,3);for(const v of k.variants)assert.equal(createEditor(v.document).svg(),v.svg)});
+test('brand text editable',()=>assert.equal(kit().variants[0].document.layers.at(-1).text,'XSUS'));
+test('palette',()=>assert.equal(kit().palette.primary,'#d946b5'));
+for(const surface of ['card','screen','avatar'])test('mockup '+surface,()=>assert.match(mockup(kit().variants[0].document,{surface}),/<g transform=/));
+test('invalid surface',()=>assert.throws(()=>mockup(kit().variants[0].document,{surface:'unknown'})));
+test('invalid background',()=>assert.throws(()=>mockup(kit().variants[0].document,{background:'red'})));
+const request={prompt:'Create XSUS logo',requestId:'r1'};
+const interpret=async r=>({version:r.version,requestId:r.requestId,brief:{name:'XSUS'}});
+const plan=async r=>({version:r.version,requestId:r.requestId,approved:true,review_required:false});
+test('adapter generation',async()=>assert.equal((await createOrchestrator({interpret,plan}).generate(request)).status,'generated'));
+test('review gate',async()=>assert.equal((await createOrchestrator({interpret,plan:async r=>({...await plan(r),review_required:true})}).generate(request)).status,'review_required'));
+test('missing review flag fails closed',async()=>assert.equal((await createOrchestrator({interpret,plan:async r=>({...await plan(r),review_required:undefined})}).generate(request)).status,'review_required'));
+test('unapproved plan',async()=>assert.rejects(createOrchestrator({interpret,plan:async r=>({...await plan(r),approved:false})}).generate(request)));
+test('correlation mismatch',async()=>assert.rejects(createOrchestrator({interpret,plan:async r=>({...await plan(r),requestId:'other'})}).generate(request)));
+test('missing adapter',()=>assert.throws(()=>createOrchestrator({interpret})));
+test('invalid language',async()=>assert.rejects(createOrchestrator({interpret,plan}).generate({...request,language:'xx'})));
