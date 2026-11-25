@@ -1,0 +1,15 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createSourceEditor} from '../source-editor.mjs';
+import {createRegeneration} from '../regeneration.mjs';
+const setup=(propose=async()=>({reviewRequired:true,executable:false,files:{'index.html':'new','about.html':'about'}}))=>{const editor=createSourceEditor({'index.html':'old','style.css':'css'});return {editor,r:createRegeneration({editor,propose})}};
+test('prepare diff without mutation',async()=>{const {editor,r}=setup();const p=await r.prepare('change');assert.equal(editor.read('index.html'),'old');assert.deepEqual(p.changes.map(x=>x.operation),['update','remove','add'])});
+test('accept creates separate editor',async()=>{const {editor,r}=setup();await r.prepare('change');assert.equal(r.accept(0).read('index.html'),'new');assert.equal(editor.read('index.html'),'old')});
+test('reject clears proposal',async()=>{const {r}=setup();await r.prepare('change');r.reject();assert.equal(r.snapshot(),null);assert.throws(()=>r.accept(0))});
+test('reject stale revision',async()=>{const {editor,r}=setup();await r.prepare('change');editor.update('index.html','other',0);assert.throws(()=>r.accept(0))});
+test('require review',async()=>{const {r}=setup(async()=>({reviewRequired:false,executable:false}));await assert.rejects(r.prepare('change'))});
+test('reject executable proposal',async()=>{const {r}=setup(async()=>({reviewRequired:true,executable:true}));await assert.rejects(r.prepare('change'))});
+test('reject unsafe paths',async()=>{const {r}=setup(async()=>({reviewRequired:true,executable:false,files:{'index.html':'new','../bad.js':''}}));await assert.rejects(r.prepare('change'))});
+test('reject empty prompt',async()=>await assert.rejects(setup().r.prepare('')));
+test('proposal snapshot isolated',async()=>{const {r}=setup();const p=await r.prepare('change');p.files['index.html']='bad';assert.equal(r.accept(0).read('index.html'),'new')});
+test('no publication authorization',async()=>assert.equal((await setup().r.prepare('change')).publicationAuthorized,false));
