@@ -1,0 +1,17 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {monogram,transform,evaluate,conceptVariants} from './concepts.mjs';import {generate,VERSION} from './index.mjs';
+const doc=()=>generate({version:VERSION}).document;
+test('initials',()=>assert.equal(monogram('XSUS Logo Studio'),'XLS'));
+test('unicode initials',()=>assert.equal(monogram('Ëndrra Çel'),'ËÇ'));
+test('invalid initials',()=>assert.throws(()=>monogram('!!!')));
+test('three variants',()=>assert.equal(conceptVariants({name:'XSUS'}).length,3));
+test('deterministic',()=>assert.deepEqual(conceptVariants({name:'XSUS'}),conceptVariants({name:'XSUS'})));
+test('escaped brand',()=>assert.match(conceptVariants({name:'A < B & C'})[0].svg,/A &lt; B &amp; C/));
+test('text rendering',()=>assert.match(conceptVariants({name:'XSUS'})[0].svg,/<text[^>]*>XSUS<\/text>/));
+test('translation',()=>{const d=doc();assert.equal(transform(d,{dx:10}).layers[0].points[0][0],d.layers[0].points[0][0]+10)});
+test('no mutation',()=>{const d=doc(),copy=structuredClone(d);transform(d,{scale:2});assert.deepEqual(d,copy)});
+test('invalid scale',()=>assert.throws(()=>transform(doc(),{scale:0})));
+test('invalid rotation',()=>assert.throws(()=>transform(doc(),{rotation:Infinity})));
+test('outside canvas',()=>assert.ok(evaluate(transform(doc(),{dx:1000})).warnings.includes('outside-canvas')));
+test('low contrast',()=>assert.ok(evaluate(generate({version:VERSION,fill:'#ffffff'}).document).warnings.includes('low-background-contrast')));
+test('empty document',()=>assert.ok(evaluate({...doc(),layers:[]}).warnings.includes('empty')));
+test('invalid background',()=>assert.throws(()=>evaluate(doc(),'red')));
