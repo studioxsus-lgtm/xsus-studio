@@ -20,7 +20,8 @@ export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=cr
  if(!ready)return send(503,{error:'Service unavailable'});
  const match=/^\/projects(?:\/([a-f0-9-]{36})(\/download)?)?$/.exec(req.url);
  const versionMatch=/^\/projects\/([a-f0-9-]{36})\/versions(?:\/([1-9][0-9]{0,14})(\/restore)?)?$/.exec(req.url);
- if(!match&&!versionMatch)return send(404,{error:'Not found'});
+ const proposalMatch=/^\/projects\/([a-f0-9-]{36})\/regenerate$/.exec(req.url);
+ if(!match&&!versionMatch&&!proposalMatch)return send(404,{error:'Not found'});
  if(origin&&!origins.has(origin))return send(403,{error:'Origin forbidden'});
  if(req.method==='OPTIONS'){
  if(!origin||!['GET','POST'].includes(req.headers['access-control-request-method']))return send(403,{error:'Preflight forbidden'});
@@ -31,6 +32,14 @@ export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=cr
  const auth=/^Bearer ([^\s]{1,8192})$/.exec(req.headers.authorization||'');if(!auth)return send(401,{error:'Unauthorized'});
  release=admission.acquire(req.socket.remoteAddress||'unknown');
  const token=auth[1];
+ if(proposalMatch){
+ if(req.method!=='POST')return send(405,{error:'Method not allowed'});
+ if(typeof runtime.proposeVersion!=='function')return send(503,{error:'Regeneration unavailable'});
+ if(!/^application[/]json(?:\s*;|$)/i.test(req.headers['content-type']||''))return send(415,{error:'Unsupported content type'});
+ const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>maxBodyBytes){send(413,{error:'Body too large'});return}chunks.push(chunk)}
+ let input;try{input=JSON.parse(Buffer.concat(chunks).toString('utf8'))}catch{return send(400,{error:'Invalid JSON'})}
+ return send(200,await runtime.proposeVersion(token,proposalMatch[1],input));
+ }
  if(versionMatch){
  const [,project,number,restore]=versionMatch;
  if(typeof runtime.listVersions!=='function')return send(404,{error:'Not found'});
@@ -57,7 +66,7 @@ export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=cr
  return send(201,await runtime.generate(token,input));
  }
  return send(405,{error:'Method not allowed'});
- }catch(e){const status=e instanceof TypeError?400:({'Unauthorized':401,'Not found':404,'Artifact unavailable':409,'Revision conflict':409,'Version not found':404,'History quota exceeded':507,'Draft unavailable':422,'Generation capacity exceeded':429,'Registry capacity exceeded':429,'Rate limit exceeded':429,'Rate capacity exceeded':429,'Service capacity exceeded':503,'Quota exceeded':507}[e?.message]||500);return send(status,{error:status===500?'Internal error':status===400?'Invalid input':e.message})}finally{release?.()}
+ }catch(e){const status=e instanceof TypeError?400:({'Unauthorized':401,'Not found':404,'Artifact unavailable':409,'Regeneration unavailable':503,'Revision conflict':409,'Version not found':404,'History quota exceeded':507,'Draft unavailable':422,'Generation capacity exceeded':429,'Registry capacity exceeded':429,'Rate limit exceeded':429,'Rate capacity exceeded':429,'Service capacity exceeded':503,'Quota exceeded':507}[e?.message]||500);return send(status,{error:status===500?'Internal error':status===400?'Invalid input':e.message})}finally{release?.()}
  });
  server.requestTimeout=15000;server.headersTimeout=10000;server.maxHeadersCount=50;
  return Object.freeze({server,stopAccepting(){ready=false},isReady:()=>ready,metrics:()=>metrics.snapshot()});
