@@ -1,0 +1,17 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {orchestrateWebRequest as run} from '../orchestrator.mjs';
+const input={prompt:'Build a portfolio',name:'Demo'};
+const proposal={contractVersion:'1.0.0',reviewRequired:true,executable:false,pages:[{path:'index.html',title:'Home',sections:[{kind:'hero',title:'Welcome'}]}]};
+const adapters={interpret:async()=>({type:'portfolio'}),plan:async()=>structuredClone(proposal)};
+test('packages draft',async()=>{const r=await run(input,adapters);assert.equal(r.status,'draft');assert.equal(r.archive.archive.readUInt32LE(0),0x04034b50)});
+test('requires adapters',async()=>assert.rejects(run(input,{})));
+test('invalid request',async()=>assert.rejects(run({...input,prompt:''},adapters)));
+test('clarification stops planning',async()=>{const r=await run(input,{interpret:async()=>({clarificationRequired:true}),plan:async()=>{throw Error('must not run')}});assert.equal(r.status,'clarification_required')});
+test('rejects executable plan',async()=>assert.rejects(run(input,{...adapters,plan:async()=>({...proposal,executable:true})})));
+test('rejects wrong contract',async()=>assert.rejects(run(input,{...adapters,plan:async()=>({...proposal,contractVersion:'2'})})));
+test('planning cannot authorize execution',async()=>{await run(input,{...adapters,plan:async p=>{assert.equal(p.executionAllowed,false);return proposal}})});
+test('publication blocked',async()=>assert.equal((await run(input,adapters)).publicationAuthorized,false));
+test('runtime not connected',async()=>assert.equal((await run(input,adapters)).integrations.runtimeConnected,false));
+test('no migration for static project',async()=>assert.equal((await run(input,adapters)).migration,null));
+test('rejects invalid page path',async()=>assert.rejects(run(input,{...adapters,plan:async()=>({...proposal,pages:[{...proposal.pages[0],path:'../index.html'}]})})));
