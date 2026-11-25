@@ -1,9 +1,16 @@
 import { generatePersistentAndroidTasks } from "./android-persistent-task-generator.js";
 
+import { taskPages } from "./task-pages.js";
+
 export function generateAndroidGradleProject(input, options = {}) {
   const { minSdk = 26, ...ui } = options;
   if (!Number.isInteger(minSdk) || minSdk < 23 || minSdk > 35) throw new Error("Unsupported minimum SDK");
-  const files = generatePersistentAndroidTasks(input, ui);
+  const multiPage = ui.navigation === "bottom_bar";
+  const files = generatePersistentAndroidTasks(input, multiPage ? {...ui, navigation:"single_screen"} : ui);
+  if (multiPage) {
+    const screen = files.find(file => file.path.endsWith("/ui/AppScreen.kt"));
+    screen.content = taskPages(input.applicationId);
+  }
   const id = input.applicationId;
   const xml = input.displayName.trim().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
   // Android resource strings require additional escaping beyond XML.
@@ -69,3 +76,4 @@ dependencies {
     {path:"app/src/main/res/values/strings.xml",content:`<resources><string name="app_name">"${label}"</string></resources>\n`}
   ];
 }
+
