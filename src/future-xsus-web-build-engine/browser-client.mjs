@@ -21,6 +21,10 @@ export function createWebClient({baseUrl,getToken,fetchImpl=globalThis.fetch}={}
  list:()=>request('/projects'),
  get:id=>request('/projects/'+projectId(id)),
  download:id=>request('/projects/'+projectId(id)+'/download',{binary:true}),
+ proposeVersion(id,{name,prompt,files,expectedRevision,language='en'}={}){
+ if(typeof name!=='string'||!name.trim()||name.length>120||typeof prompt!=='string'||!prompt.trim()||prompt.length>12000||!['en','sq','fr'].includes(language)||!files||typeof files!=='object'||Array.isArray(files))throw TypeError('Invalid proposal');
+ return request('/projects/'+projectId(id)+'/regenerate',{method:'POST',body:{name,prompt,files,expectedRevision:revisionId(expectedRevision,0),language,executionAllowed:false}});
+ },
  listVersions:id=>request(versionPath(id)),
  getVersion:(id,revision)=>request(versionPath(id)+'/'+revisionId(revision)),
  saveVersion(id,files,expectedRevision){if(!files||typeof files!=='object'||Array.isArray(files))throw TypeError('Invalid files');return request(versionPath(id),{method:'POST',body:{files,expectedRevision:revisionId(expectedRevision,0)}})},
