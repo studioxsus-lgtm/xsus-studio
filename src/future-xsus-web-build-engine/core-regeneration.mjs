@@ -5,7 +5,7 @@ export function createCoreRegeneration({transport,name,language='en'}={}){
  return async function propose(input){
  if(!input||input.executionAllowed!==false||!Number.isSafeInteger(input.revision)||input.revision<0||typeof input.prompt!=='string'||!input.prompt.trim()||input.prompt.length>12000)throw TypeError('Invalid regeneration request');
  const original=createSourceEditor(input.files).snapshot().files;
- const target=/^(?:edit|modify|ndrysho|modifiko|modifier)\s+([a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*\.html)\s*:\s*(.+)$/su.exec(input.prompt.trim());
+ const target=/^(?:edit|modify|ndrysho|modifiko|modifier)\s+([a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*\.html)\s*:\s*(.+)$/isu.exec(input.prompt.trim());
  if(target){
  const [,path,instruction]=target;
  if(!Object.hasOwn(original,path)||!instruction.trim())throw TypeError('Invalid contextual target');
