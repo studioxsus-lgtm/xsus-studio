@@ -1,0 +1,17 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {prepareExport,validateProject} from '../quality.mjs';
+const input={name:'Demo',type:'business',pages:['index.html','nested/about.html']};
+test('valid nested project',()=>assert.equal(prepareExport(input).validation.valid,true));
+test('description metadata',()=>assert.match(prepareExport(input,{}, {description:'Modern site'}).files['index.html'],/content="Modern site"/));
+test('escapes metadata',()=>assert.match(prepareExport(input,{}, {description:'"><script>'}).files['index.html'],/&quot;&gt;&lt;script&gt;/));
+test('rejects blank description',()=>assert.throws(()=>prepareExport(input,{}, {description:' '})));
+test('manifest covers all files',()=>{const p=prepareExport(input);assert.equal(p.manifest.length,Object.keys(p.files).length)});
+test('manifest hashes match',()=>{const p=prepareExport(input);for(const f of p.manifest)assert.equal(f.sha256,createHash('sha256').update(p.files[f.path]).digest('hex'))});
+test('manifest byte lengths',()=>{const p=prepareExport({...input,name:'Shqipëri'});for(const f of p.manifest)assert.equal(f.bytes,Buffer.byteLength(p.files[f.path]))});
+test('broken links',()=>{const p=prepareExport(input);delete p.files['nested/about.html'];assert.ok(validateProject(p.files).errors.some(e=>e.code==='MISSING_TARGET'))});
+test('unsafe paths',()=>assert.equal(validateProject({'../x.html':'x'}).valid,false));
+test('missing title',()=>{const p=prepareExport(input);p.files['index.html']=p.files['index.html'].replace(/<title>.*?<\/title>/,'');assert.ok(validateProject(p.files).errors.some(e=>e.code==='MISSING_TITLE'))});
+test('no pages',()=>assert.equal(validateProject({}).valid,false));
+test('publication disabled',()=>assert.equal(prepareExport(input).publicationAuthorized,false));
