@@ -2,7 +2,7 @@ import {openJobRegistry} from './job-registry.mjs';
 import {createArtifactStorage} from './artifacts.mjs';
 import {createVersionStore} from './version-store.mjs';
 import {join} from 'node:path';
-export async function createPersistentRuntime({directory,verifyIdentity,generate,maxJobs=1000,maxConcurrent=2,generationTimeoutMs=60000}={}){
+export async function createPersistentRuntime({directory,verifyIdentity,generate,regenerate,maxJobs=1000,maxConcurrent=2,generationTimeoutMs=60000}={}){
  if(typeof directory!=='string'||!directory||typeof verifyIdentity!=='function'||typeof generate!=='function'||!Number.isInteger(maxConcurrent)||maxConcurrent<1||maxConcurrent>100)throw TypeError('Invalid runtime configuration');
  if(!Number.isSafeInteger(generationTimeoutMs)||generationTimeoutMs<1||generationTimeoutMs>600000)throw TypeError('Invalid generation timeout');
  const registry=await openJobRegistry({directory:join(directory,'registry'),maxJobs});
@@ -36,6 +36,20 @@ export async function createPersistentRuntime({directory,verifyIdentity,generate
  async getVersion(token,id,revision){await owned(token,id);return versions.get(token,id,revision)},
  async saveVersion(token,id,files,expected){await owned(token,id);return versions.save(token,id,files,expected)},
  async restoreVersion(token,id,revision,expected){await owned(token,id);return versions.restore(token,id,revision,expected)},
+ async proposeVersion(token,id,input){
+ await owned(token,id);
+ if(typeof regenerate!=='function')throw Error('Regeneration unavailable');
+ if(!input||input.executionAllowed!==false||!Number.isSafeInteger(input.expectedRevision)||input.expectedRevision<0)throw TypeError('Invalid proposal');
+ const history=await versions.list(token,id);
+ if(history.revision!==input.expectedRevision)throw Error('Revision conflict');
+ if(active>=maxConcurrent||pending>=maxConcurrent)throw Error('Generation capacity exceeded');
+ active++;pending++;
+ try{
+ const result=await regenerate(input);
+ if((await versions.list(token,id)).revision!==input.expectedRevision)throw Error('Revision conflict');
+ return result;
+ }finally{active--;pending--}
+ },
  cleanupTemporary:()=>storage.cleanupTemporary(),
  diagnostics:()=>({active,maxConcurrent,pending})
  });
