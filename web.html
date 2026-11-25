@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="assets/css/xsus-web/templates.css">
   <link rel="stylesheet" href="assets/css/xsus-web/responsive.css">
   <link rel="stylesheet" href="assets/css/xsus-web/page.css">
+  <link rel="stylesheet" href="assets/js/xsus-web/workspace/unified-view.css">
 </head>
 <body>
   <header class="top header">
@@ -62,6 +63,7 @@
         <p data-i18n="intro">Design, build and preview your website in one place.</p>
         <div class="landing-actions">
           <button class="primary" type="button" id="start" data-i18n="start">Open Web Builder →</button>
+          <button type="button" id="xsus-ai-workspace-open" aria-controls="xsus-ai-workspace" aria-expanded="false">AI Web Builder</button>
           <button type="button" id="new-project" data-i18n="newProject" hidden>Projekt i ri</button>
         </div>
         <p id="restore-status" role="status" hidden></p>
@@ -117,6 +119,7 @@
         </aside>
       </div>
     </section>
+    <section id="xsus-ai-workspace" aria-label="AI Web Builder" hidden></section>
   </main>
   <dialog id="templates" aria-labelledby="template-title">
     <div class="dialog-head"><h2 id="template-title" data-i18n="choose">Choose a template</h2><form method="dialog"><button class="small-button" type="submit" aria-label="Close" data-label="close">×</button></form></div>
@@ -128,5 +131,6 @@
   </dialog>
   <script type="module" src="assets/js/xsus-web/app.js?v=4"></script>
   <script type="module" src="assets/js/xsus-auth-ui.js"></script>
+  <script type="module" src="assets/js/xsus-web/workspace-entry.js"></script>
 </body>
 </html>
