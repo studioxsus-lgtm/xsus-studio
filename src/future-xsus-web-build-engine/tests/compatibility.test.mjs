@@ -1,0 +1,12 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {verifyCoreCompatibility} from '../compatibility.mjs';
+const interpret=async()=>({contractVersion:'1.0.0',status:'ready'});
+const plan=async()=>({contractVersion:'1.0.0',reviewRequired:true,executable:false,specification:{pages:[{path:'index.html',title:'Home',sections:[{kind:'hero',title:'Welcome'}]},{path:'about.html',title:'About',sections:[{kind:'hero',title:'About'}]}]}});
+test('compatible adapters',async()=>assert.equal((await verifyCoreCompatibility({interpret,plan})).compatible,true));
+test('future mismatch',async()=>{const r=await verifyCoreCompatibility({interpret:async()=>({contractVersion:'2'}),plan});assert.equal(r.stages.future,'incompatible');assert.equal(r.stages.hyper,'not_checked')});
+test('hyper execution rejected',async()=>{const r=await verifyCoreCompatibility({interpret,plan:async()=>({...await plan(),executable:true})});assert.equal(r.stages.hyper,'incompatible')});
+test('transport failure',async()=>assert.equal((await verifyCoreCompatibility({interpret:async()=>{throw Error('secret')},plan})).stages.future,'failed'));
+test('invalid build rejected',async()=>assert.equal((await verifyCoreCompatibility({interpret,plan:async()=>({...await plan(),specification:{pages:[]}})})).compatible,false));
+test('no publication',async()=>assert.equal((await verifyCoreCompatibility({interpret,plan})).publicationAuthorized,false));
+test('missing adapters',async()=>assert.rejects(verifyCoreCompatibility({})));
