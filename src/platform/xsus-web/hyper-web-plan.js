@@ -20,8 +20,21 @@ export function planWebDraft(body){
  const words=prompt.match(/\b(five|pesë|pese|cinq|six|gjashtë|gjasht[eë]|seven|shtatë|sept)\s+(?:pages?|faqe)\b/u);
  const count=countMatch?Number(countMatch[1]):words?({five:5,'pesë':5,pese:5,cinq:5,six:6,'gjashtë':6,gjashte:6,seven:7,'shtatë':7,sept:7}[words[1]]):null;
  if(count){for(const row of extra){if(paths.length>=count)break;if(!paths.includes(row[0]+'.html')){paths.push(row[0]+'.html');titles.push(row[langIndex])}}while(paths.length<count){paths.push('page-'+(paths.length+1)+'.html');titles.push(({en:'Page',sq:'Faqja',fr:'Page'}[body.language])+' '+(paths.length))}paths.length=count;titles.length=count}
+ const copy={
+ en:{intro:'Explore our approach and discover what we can create together.',agency:'Digital strategy, visual identity and responsive web experiences.',features:'Explore our expertise',items:[['Strategy','Define clear goals and a focused digital direction.'],['Design','Create accessible, distinctive visual experiences.'],['Development','Build responsive experiences for modern devices.']],contact:'Tell us about your project and the outcomes you want to achieve.',portfolio:'Explore the types of projects we can develop. Actual work samples can be added here.',about:'Discover our approach, values and working process.',next:'Start a conversation'},
+ sq:{intro:'Zbuloni qasjen tonë dhe mundësitë e bashkëpunimit.',agency:'Strategji digjitale, identitet vizual dhe eksperienca web responsive.',features:'Zbuloni ekspertizën tonë',items:[['Strategji','Përcaktoni objektiva të qarta dhe drejtimin digjital.'],['Dizajn','Krijoni eksperienca vizuale të dallueshme dhe të aksesueshme.'],['Zhvillim','Ndërtoni eksperienca responsive për pajisjet moderne.']],contact:'Na tregoni për projektin dhe rezultatet që dëshironi të arrini.',portfolio:'Zbuloni llojet e projekteve që mund të zhvillojmë. Shembujt realë mund të shtohen këtu.',about:'Zbuloni qasjen, vlerat dhe procesin tonë të punës.',next:'Filloni një bashkëbisedim'},
+ fr:{intro:'Découvrez notre approche et les possibilités de collaboration.',agency:'Stratégie digitale, identité visuelle et expériences web responsives.',features:'Découvrez notre expertise',items:[['Stratégie','Définissez des objectifs clairs.'],['Design','Créez des expériences visuelles accessibles.'],['Développement','Concevez des expériences adaptées aux appareils modernes.']],contact:'Présentez votre projet et vos objectifs.',portfolio:'Découvrez les types de projets possibles. Des réalisations réelles peuvent être ajoutées ici.',about:'Découvrez notre approche, nos valeurs et notre processus.',next:'Parlons de votre projet'}
+ }[body.language];
+ const agency=/agenc|agjenc|digital studio|studio digjital/.test(prompt);
+ function sections(path,title){
+ const hero={kind:'hero',title:path==='index.html'?body.name:title,body:path==='contact.html'?copy.contact:path==='portfolio.html'?copy.portfolio:path==='about.html'?copy.about:agency?copy.agency:copy.intro};
+ const result=[hero];
+ if(agency&&['index.html','services.html'].includes(path))result.push({kind:'features',title:copy.features,items:copy.items.map(([title,body])=>({title,body}))});
+ if(['index.html','services.html','portfolio.html','about.html'].includes(path))result.push({kind:'cta',title:copy.next,body:copy.contact});
+ return result;
+ }
  const premium=/premium|modern|neon|dark|errët|sombre/.test(prompt);
- return {contractVersion:'1.0.0',reviewRequired:true,executable:false,specification:{pages:paths.map((path,index)=>({path,title:titles[index],sections:[{kind:'hero',title:index===0?body.name:titles[index],body:titles[index]}]})),resources:[],capabilities:[],design:premium?{palette:'studio',layout:'grid',density:'spacious',motion:/anim|motion/.test(prompt)}:{}}};
+ return {contractVersion:'1.0.0',reviewRequired:true,executable:false,specification:{pages:paths.map((path,index)=>({path,title:titles[index],sections:sections(path,titles[index])})),resources:[],capabilities:[],design:premium?{palette:'studio',layout:'grid',density:'spacious',motion:/anim|motion/.test(prompt)}:{}}};
 }
 export function createWebPlanRoute(env){
  if(env.XSUS_WEB_PLAN_ENABLED!=='true')return null;
