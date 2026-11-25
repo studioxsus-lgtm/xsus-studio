@@ -5,6 +5,7 @@ import re
 from dataclasses import asdict
 from aiohttp import web
 from languages.sq.project_context import ProjectContext
+from languages.sq.complex_requests import analyze_requirements
 from core.routing.sq_android_integration import plan_android_application
 from core.routing.sq_android_target_profile import prepare_atomic_json_profile
 from core.routing.sq_hyper_bridge import prepare_review
@@ -24,6 +25,10 @@ def plan_payload(data):
         match = re.fullmatch(r"(.+?)(?:,?\s+(?:me|në) (?:shumë|disa) faqe(?: dhe (?:dizajn modern|moderne))?)\s*[.!]?\s*", prompts[0], re.IGNORECASE)
         if match:
             prompts = [match[1].strip(), "Krijo një dizajn modern me navigim të poshtëm"]
+        else:
+            application = analyze_requirements(prompts[0])
+            if application and application.features == ("restaurant_orders",):
+                prompts = [prompts[0], "Krijo një dizajn modern me navigim të poshtëm"]
     outcome=plan_android_application(ProjectContext(data["project_id"]),tuple(prompts),data["application_id"],data["display_name"],data["min_sdk"])
     if outcome.status != "draft_ready":
         return {"status":outcome.status,"execution_authorized":False}
@@ -53,4 +58,5 @@ def attach_android_planning(app, token):
             return web.json_response({"error":"invalid_request"},status=400)
         return web.json_response(result)
     app.router.add_post("/internal/android/plan",handler)
+
 

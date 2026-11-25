@@ -4,6 +4,7 @@ from core.routing.sq_android_ui import AndroidUIPlan, prepare_android_ui
 from languages.sq.project_context import ProjectContext
 
 _CAPABILITIES = {
+    "restaurant_orders": ("menu_screen", "cart_screen", "order_history", "quantity_controls", "order_total", "local_storage"),
     "task_management": ("task_list","task_form","create_task","update_task","delete_task","local_storage"),
     "search": ("search_input","search_state","search_results"),
     "filtering": ("filter_controls","filter_state"),
@@ -37,3 +38,4 @@ def prepare_functional_plan(context: ProjectContext, application_id: str, displa
         "/state/AppState.kt", "/state/AppEvent.kt", "/state/AppViewModel.kt",
         "/data/AppRepository.kt", "/validation/InputValidator.kt"))
     return FunctionalPlan(ui, capabilities, unresolved, files)
+

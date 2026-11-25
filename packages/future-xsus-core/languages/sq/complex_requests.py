@@ -17,6 +17,14 @@ def analyze_requirements(text: str) -> ApplicationRequirements | None:
     if len(text) > 4096:
         return None
     value = " ".join(normalize(text).split()).removesuffix(".")
+    restaurant = re.fullmatch(
+        r"(?:(?:më )?(?:krijo|ndërto|zhvillo)|dua) (?:një )?(?:aplikacion|app) android për "
+        r"(?:(?:një )?restorant|restorantin tim)(?:,? me (.+))?", value)
+    if restaurant:
+        terms = set(re.split(r"\s*,\s*(?:dhe\s+)?|\s+dhe\s+", restaurant[1] or "menu dhe porosi"))
+        if {"menu", "porosi"} <= terms <= {"menu", "porosi", "historik", "historik të porosive"}:
+            return ApplicationRequirements("create", "android", ("restaurant_orders",))
+        return None
     if value.endswith(" me"):
         return None
     head, separator, tail = value.partition(" me ")
@@ -35,3 +43,4 @@ def analyze_requirements(text: str) -> ApplicationRequirements | None:
             if term.concept not in features:
                 features.append(term.concept)
     return ApplicationRequirements(base.action, base.platform, tuple(features))
+
