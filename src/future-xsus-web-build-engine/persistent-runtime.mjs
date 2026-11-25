@@ -24,6 +24,7 @@ export async function createPersistentRuntime({directory,verifyIdentity,generate
  async get(token,id){return registry.get(await identity(token),id)},
  async list(token){return registry.list(await identity(token))},
  async download(token,id){const job=await registry.get(await identity(token),id);if(job.status!=='completed')throw Error('Artifact unavailable');return storage.read(token,job.artifactId)},
+ cleanupTemporary:()=>storage.cleanupTemporary(),
  diagnostics:()=>({active,maxConcurrent})
  });
 }
