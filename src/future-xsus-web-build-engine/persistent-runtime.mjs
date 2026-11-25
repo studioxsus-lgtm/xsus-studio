@@ -1,11 +1,14 @@
 import {openJobRegistry} from './job-registry.mjs';
 import {createArtifactStorage} from './artifacts.mjs';
+import {createVersionStore} from './version-store.mjs';
 import {join} from 'node:path';
 export async function createPersistentRuntime({directory,verifyIdentity,generate,maxJobs=1000,maxConcurrent=2,generationTimeoutMs=60000}={}){
  if(typeof directory!=='string'||!directory||typeof verifyIdentity!=='function'||typeof generate!=='function'||!Number.isInteger(maxConcurrent)||maxConcurrent<1||maxConcurrent>100)throw TypeError('Invalid runtime configuration');
  if(!Number.isSafeInteger(generationTimeoutMs)||generationTimeoutMs<1||generationTimeoutMs>600000)throw TypeError('Invalid generation timeout');
  const registry=await openJobRegistry({directory:join(directory,'registry'),maxJobs});
  const storage=createArtifactStorage({directory:join(directory,'artifacts'),verifyIdentity});
+ const versions=createVersionStore({directory:join(directory,'versions'),verifyIdentity});
+ async function owned(token,id){const job=await registry.get(await identity(token),id);if(job.status!=='completed')throw Error('Artifact unavailable');}
  let active=0,pending=0;
  async function identity(token){const i=await verifyIdentity(token);if(!i||typeof i.id!=='string'||!i.id||i.id.length>200)throw Error('Unauthorized');return i.id}
  return Object.freeze({
@@ -29,6 +32,10 @@ export async function createPersistentRuntime({directory,verifyIdentity,generate
  async get(token,id){return registry.get(await identity(token),id)},
  async list(token){return registry.list(await identity(token))},
  async download(token,id){const job=await registry.get(await identity(token),id);if(job.status!=='completed')throw Error('Artifact unavailable');return storage.read(token,job.artifactId)},
+ async listVersions(token,id){await owned(token,id);return versions.list(token,id)},
+ async getVersion(token,id,revision){await owned(token,id);return versions.get(token,id,revision)},
+ async saveVersion(token,id,files,expected){await owned(token,id);return versions.save(token,id,files,expected)},
+ async restoreVersion(token,id,revision,expected){await owned(token,id);return versions.restore(token,id,revision,expected)},
  cleanupTemporary:()=>storage.cleanupTemporary(),
  diagnostics:()=>({active,maxConcurrent,pending})
  });
