@@ -1,0 +1,18 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createResilientTransport} from '../resilience.mjs';
+const ok=async()=>({ok:true}),fail=async()=>{throw Error('Unavailable')};
+test('successful request',async()=>assert.deepEqual(await createResilientTransport({interpret:ok,plan:ok}).interpret({}),{ok:true}));
+test('initial state',()=>assert.equal(createResilientTransport({interpret:ok,plan:ok}).diagnostics().plan.state,'closed'));
+test('opens after threshold',async()=>{const t=createResilientTransport({interpret:fail,plan:ok},{threshold:2});await assert.rejects(t.interpret({}));await assert.rejects(t.interpret({}));assert.equal(t.diagnostics().interpret.state,'open');await assert.rejects(t.interpret({}),/circuit open/)});
+test('core isolation',async()=>{const t=createResilientTransport({interpret:fail,plan:ok},{threshold:1});await assert.rejects(t.interpret({}));await t.plan({});assert.equal(t.diagnostics().plan.state,'closed')});
+test('successful recovery',async()=>{let now=0,broken=true;const t=createResilientTransport({interpret:()=>broken?fail():ok(),plan:ok},{threshold:1,cooldownMs:10,clock:()=>now});await assert.rejects(t.interpret({}));now=10;assert.equal(t.diagnostics().interpret.state,'half_open');broken=false;await t.interpret({});assert.equal(t.diagnostics().interpret.state,'closed')});
+test('failed probe reopens',async()=>{let now=0;const t=createResilientTransport({interpret:fail,plan:ok},{threshold:1,cooldownMs:10,clock:()=>now});await assert.rejects(t.interpret({}));now=10;await assert.rejects(t.interpret({}));assert.equal(t.diagnostics().interpret.state,'open')});
+test('capacity bounded',async()=>{let release;const t=createResilientTransport({interpret:()=>new Promise(r=>release=r),plan:ok},{maxConcurrent:1});const p=t.interpret({});await assert.rejects(t.interpret({}),/capacity/);release({});await p;assert.equal(t.diagnostics().interpret.active,0)});
+test('failure releases capacity',async()=>{const t=createResilientTransport({interpret:fail,plan:ok});await assert.rejects(t.interpret({}));assert.equal(t.diagnostics().interpret.active,0)});
+test('diagnostics count success',async()=>{const t=createResilientTransport({interpret:ok,plan:ok});await t.plan({});assert.equal(t.diagnostics().plan.successes,1)});
+test('diagnostics omit payload',async()=>{const t=createResilientTransport({interpret:ok,plan:ok});await t.plan({secret:'private-value'});assert.doesNotMatch(JSON.stringify(t.diagnostics()),/private-value/)});
+test('request tracking',async()=>{const t=createResilientTransport({interpret:ok,plan:ok});await t.plan({});assert.match(t.diagnostics().plan.lastRequestId,/^[a-f0-9-]{36}$/)});
+test('invalid configuration',()=>assert.throws(()=>createResilientTransport({interpret:ok,plan:ok},{threshold:0})));
+test('no automatic replay',async()=>{let calls=0;const t=createResilientTransport({interpret:async()=>{calls++;throw Error('Unavailable')},plan:ok});await assert.rejects(t.interpret({}));assert.equal(calls,1)});
+test('stale success cannot close circuit',async()=>{let release;let calls=0;const t=createResilientTransport({interpret:()=>++calls===1?new Promise(r=>release=r):fail(),plan:ok},{threshold:1});const p=t.interpret({});await assert.rejects(t.interpret({}));release({});await p;assert.equal(t.diagnostics().interpret.state,'open')});
