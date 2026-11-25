@@ -1,0 +1,18 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {composeRuntime} from '../integration.mjs';
+const plan=(...names)=>({reviewRequired:true,executable:false,integrations:names.map(engine=>({engine}))});
+test('default denies initialization',()=>assert.equal(composeRuntime(plan('commerce')).status[0].status,'approval_required'));
+test('approved commerce initialized',()=>assert.equal(typeof composeRuntime(plan('commerce'),{approvedCapabilities:['commerce']}).instances.commerce.quoteCart,'function'));
+test('missing configuration',()=>assert.equal(composeRuntime(plan('booking'),{approvedCapabilities:['booking']}).status[0].status,'configuration_required'));
+test('unknown engine rejected',()=>assert.throws(()=>composeRuntime(plan('unknown'))));
+test('prototype engine rejected',()=>assert.throws(()=>composeRuntime(plan('constructor'))));
+test('duplicate engine rejected',()=>assert.throws(()=>composeRuntime(plan('commerce','commerce'))));
+test('unplanned approval rejected',()=>assert.throws(()=>composeRuntime(plan('commerce'),{approvedCapabilities:['booking']})));
+test('duplicate approval rejected',()=>assert.throws(()=>composeRuntime(plan('commerce'),{approvedCapabilities:['commerce','commerce']})));
+test('invalid plan rejected',()=>assert.throws(()=>composeRuntime({...plan('commerce'),executable:true})));
+test('booking adapter works',async()=>{const r=composeRuntime(plan('booking'),{approvedCapabilities:['booking'],configuration:{booking:{resources:[{id:'room',capacity:2}],verifyIdentity:async()=>({id:'user'}),clock:()=>0}}});assert.equal((await r.instances.booking.reserve('token',{resource:'room',start:10,end:20})).status,'confirmed')});
+test('separate booking instances',async()=>{const p=plan('booking'),o={approvedCapabilities:['booking'],configuration:{booking:{resources:[{id:'room',capacity:1}],verifyIdentity:async()=>({id:'user'}),clock:()=>0}}};const a=composeRuntime(p,o),b=composeRuntime(p,o);await a.instances.booking.reserve('t',{resource:'room',start:10,end:20});assert.equal((await b.instances.booking.availability('t',{resource:'room',start:10,end:20})).remaining,1)});
+test('publication remains blocked',()=>assert.equal(composeRuntime(plan('commerce'),{approvedCapabilities:['commerce']}).publicationAuthorized,false));
+test('relations initialized',()=>assert.equal(typeof composeRuntime(plan('relations'),{approvedCapabilities:['relations']}).instances.relations.planRelations,'function'));
+test('partial approval',()=>{const r=composeRuntime(plan('commerce','booking'),{approvedCapabilities:['commerce']});assert.deepEqual(r.status.map(s=>s.status),['initialized','approval_required'])});
