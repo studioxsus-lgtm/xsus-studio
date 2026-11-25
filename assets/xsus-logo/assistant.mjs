@@ -15,7 +15,7 @@ export function createBrandAssistant({client,onChange=()=>{}}={}){
  if(result.status==='review_required')return publish({status:'review_required',reasons:Array.isArray(result.reasons)?result.reasons.filter(x=>typeof x==='string').slice(0,16):[]});
  const variants=result.kit?.variants;
  if(result.status!=='generated'||!Array.isArray(variants)||!variants.length||variants.length>16||variants.some(v=>!v.document||v.document.version!=='1.0.0'||!Array.isArray(v.document.layers)))throw Error('invalid_response');
- return publish({status:'generated',variants:variants.map(v=>({symbol:String(v.symbol??''),document:structuredClone(v.document)})),selected:0});
+ return publish({status:'generated',variants:variants.map(v=>({symbol:String(v.symbol??''),document:{...structuredClone(v.document),layers:v.document.layers.map(l=>l.type==='polygon'?{...structuredClone(l),points:l.points.map(p=>Array.isArray(p)?{x:p[0],y:p[1]}:p)}:structuredClone(l))}})),selected:0});
  }catch(error){if(current!==sequence)return snapshot();const known=['authentication_required','rate_limit','generation_unavailable','generation_failed','invalid_response'];return publish({status:'error',error:known.includes(error?.message)||/^(HTTP_[1-5][0-9]{2}|NETWORK_OR_CORS|REQUEST_TIMEOUT|invalid_[a-z_]+|unsupported_layer)$/.test(error?.message??'')?error.message:'generation_failed'})}
  },
  select(index){if(!Number.isInteger(index)||index<0||index>=state.variants.length)throw RangeError('Invalid variant');return publish({selected:index})},
