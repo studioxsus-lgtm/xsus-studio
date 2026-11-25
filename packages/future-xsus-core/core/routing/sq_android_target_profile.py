@@ -13,10 +13,11 @@ def prepare_atomic_json_profile(plan: PersistenceSecurityPlan, *, accept_storage
         or plan.unresolved or plan.database or plan.requested_controls or plan.suggested_controls or plan.permissions
         or plan.execution_authorized is not False):
         raise ValueError("Unsupported requirements")
-    if (ui.navigation != "single_screen" or ui.style != "modern" or ui.motion != "system"
+    if (ui.navigation not in ("single_screen", "bottom_bar") or ui.style != "modern" or ui.motion != "system"
         or ui.adaptive_layout or ui.typography != "material_default"):
         raise ValueError("Unsupported design")
     source = "app/src/main/java/" + ui.android.application_id.replace(".", "/")
     files = tuple(dict.fromkeys(ui.android.required_files + (
         source + "/ui/AppScreen.kt", source + "/data/Task.kt", source + "/data/TaskStore.kt")))
     return replace(plan, storage=("atomic_json",), required_files=files)
+

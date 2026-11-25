@@ -19,6 +19,11 @@ def plan_payload(data):
         raise ValueError("Invalid prompts")
     if data["accept_storage_profile"] is not True or not isinstance(data["application_id"],str) or not isinstance(data["display_name"],str) or type(data["min_sdk"]) is not int:
         raise ValueError("Invalid target profile")
+    # A multi-page task request supplies the existing structured navigation preference.
+    if len(prompts) == 1:
+        match = re.fullmatch(r"(.+?)(?:,?\s+(?:me|në) (?:shumë|disa) faqe(?: dhe (?:dizajn modern|moderne))?)\s*[.!]?\s*", prompts[0], re.IGNORECASE)
+        if match:
+            prompts = [match[1].strip(), "Krijo një dizajn modern me navigim të poshtëm"]
     outcome=plan_android_application(ProjectContext(data["project_id"]),tuple(prompts),data["application_id"],data["display_name"],data["min_sdk"])
     if outcome.status != "draft_ready":
         return {"status":outcome.status,"execution_authorized":False}
@@ -48,3 +53,4 @@ def attach_android_planning(app, token):
             return web.json_response({"error":"invalid_request"},status=400)
         return web.json_response(result)
     app.router.add_post("/internal/android/plan",handler)
+
