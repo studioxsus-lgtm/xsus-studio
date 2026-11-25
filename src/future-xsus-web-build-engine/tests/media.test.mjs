@@ -1,0 +1,20 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createMediaRuntime} from '../media.mjs';
+const png=Buffer.from([137,80,78,71,13,10,26,10]),payload={name:'photo.png',mime:'image/png',bytes:png};
+function fixture(options={}){const data=new Map();const storage={put:async(k,v)=>data.set(k,v),get:async k=>data.get(k),remove:async k=>data.delete(k)};return {data,r:createMediaRuntime({verifyIdentity:async t=>t==='bad'?null:{id:t},storage,...options})}}
+test('upload metadata',async()=>{const a=await fixture().r.upload('a',payload);assert.equal(a.size,8);assert.equal(a.sha256.length,64);assert.ok(!('owner'in a))});
+test('read bytes',async()=>{const {r}=fixture(),a=await r.upload('a',payload);assert.deepEqual((await r.read('a',a.id)).bytes,png)});
+test('private list',async()=>{const {r}=fixture();await r.upload('a',payload);assert.deepEqual(await r.list('b'),[])});
+test('private read',async()=>{const {r}=fixture(),a=await r.upload('a',payload);await assert.rejects(r.read('b',a.id),/Not found/)});
+test('private deletion',async()=>{const {r}=fixture(),a=await r.upload('a',payload);await assert.rejects(r.remove('b',a.id),/Not found/)});
+test('delete',async()=>{const {r,data}=fixture(),a=await r.upload('a',payload);await r.remove('a',a.id);assert.equal(data.size,0);assert.deepEqual(await r.list('a'),[])});
+test('signature mismatch',async()=>assert.rejects(fixture().r.upload('a',{...payload,bytes:Buffer.from('fake')})));
+test('unsupported SVG',async()=>assert.rejects(fixture().r.upload('a',{...payload,mime:'image/svg+xml'})));
+test('path rejected',async()=>assert.rejects(fixture().r.upload('a',{...payload,name:'../x.png'})));
+test('size bound',async()=>assert.rejects(fixture({maxBytes:7}).r.upload('a',payload)));
+test('capacity bound',async()=>{const {r}=fixture({maxAssets:1});await r.upload('a',payload);await assert.rejects(r.upload('a',payload),/Capacity/)});
+test('integrity failure',async()=>{const {r,data}=fixture(),a=await r.upload('a',payload);data.set(a.id,Buffer.alloc(8));await assert.rejects(r.read('a',a.id),/Integrity/)});
+test('unauthorized',async()=>assert.rejects(fixture().r.upload('bad',payload),/Unauthorized/));
+test('concurrent capacity',async()=>{const {r}=fixture({maxAssets:1});const a=await Promise.allSettled([r.upload('a',payload),r.upload('b',payload)]);assert.equal(a.filter(x=>x.status==='fulfilled').length,1)});
+test('failed upload does not consume capacity',async()=>{let fail=true;const {r}=fixture({maxAssets:1,storage:{put:async()=>{if(fail)throw Error('failure')},get:async()=>png,remove:async()=>{}}});await assert.rejects(r.upload('a',payload));fail=false;assert.equal((await r.upload('a',payload)).size,8)});
