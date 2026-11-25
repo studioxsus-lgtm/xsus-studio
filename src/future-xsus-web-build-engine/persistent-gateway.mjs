@@ -1,9 +1,12 @@
 import {createServer} from 'node:http';
+import {createObservability} from './observability.mjs';
 import {createAdmission} from './admission.mjs';
 export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=createAdmission()}={}){
  if(!runtime||['generate','get','list','download'].some(k=>typeof runtime[k]!=='function')||!Number.isInteger(maxBodyBytes)||maxBodyBytes<1024||maxBodyBytes>1048576)throw TypeError('Invalid gateway configuration');
+ const metrics=createObservability();
  let ready=true;
  const server=createServer(async(req,res)=>{
+ const end=metrics.begin();res.once('finish',()=>end(res.statusCode));res.once('close',()=>end(null));
  const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
  const send=(status,data)=>{if(res.destroyed||res.writableEnded)return;res.writeHead(status,{...headers,'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(data))};
  let release;
@@ -33,5 +36,5 @@ export function createPersistentGateway({runtime,maxBodyBytes=65536,admission=cr
  }catch(e){const status=e instanceof TypeError?400:({'Unauthorized':401,'Not found':404,'Artifact unavailable':409,'Draft unavailable':422,'Generation capacity exceeded':429,'Registry capacity exceeded':429,'Rate limit exceeded':429,'Rate capacity exceeded':429,'Service capacity exceeded':503,'Quota exceeded':507}[e?.message]||500);return send(status,{error:status===500?'Internal error':status===400?'Invalid input':e.message})}finally{release?.()}
  });
  server.requestTimeout=15000;server.headersTimeout=10000;server.maxHeadersCount=50;
- return Object.freeze({server,stopAccepting(){ready=false},isReady:()=>ready});
+ return Object.freeze({server,stopAccepting(){ready=false},isReady:()=>ready,metrics:()=>metrics.snapshot()});
 }
