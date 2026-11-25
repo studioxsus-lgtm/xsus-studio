@@ -1,0 +1,18 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {compileReport,createAnalyticsRuntime,exportReportCsv} from '../analytics.mjs';
+const resource={name:'orders',fields:{total:'number',category:'string',paid:'boolean'}},owner='11111111-1111-4111-8111-111111111111';
+const report=o=>compileReport(resource,owner,o);
+test('count',()=>assert.match(report().sql,/COUNT\(\*\)/));
+for(const operation of ['sum','avg','min','max'])test(operation,()=>assert.ok(report({operation,field:'total'}).sql.includes(operation.toUpperCase()+'("total")')));
+test('grouping',()=>assert.match(report({groupBy:'category'}).sql,/GROUP BY "category"/));
+test('owner scope',()=>assert.deepEqual(report().args,[owner,100]));
+test('rejects unsafe operation',()=>assert.throws(()=>report({operation:'drop'})));
+test('rejects nonnumeric aggregate',()=>assert.throws(()=>report({operation:'sum',field:'category'})));
+test('rejects unknown grouping',()=>assert.throws(()=>report({groupBy:'owner_id'})));
+test('bounded results',()=>assert.throws(()=>report({limit:501})));
+test('runtime identity',async()=>{const r=createAnalyticsRuntime(resource,{verifyIdentity:async()=>({id:owner}),query:async(sql,args)=>{assert.equal(args[0],owner);return {rows:[{value:'2'}]}}});assert.deepEqual(await r.report('token'),[{value:'2'}])});
+test('unauthorized',async()=>{const r=createAnalyticsRuntime(resource,{verifyIdentity:async()=>null,query:async()=>{throw Error('unexpected')}});await assert.rejects(r.report('bad'),/Unauthorized/)});
+test('CSV quoting',()=>assert.equal(exportReportCsv([{group:'a,"b',value:2}],{grouped:true}),'group,value\r\n"a,""b","2"\r\n'));
+test('CSV formula mitigation',()=>assert.equal(exportReportCsv([{value:'=1+1'}]),'value\r\n"\'=1+1"\r\n'));
+test('CSV negative number preserved',()=>assert.equal(exportReportCsv([{value:-2}]),'value\r\n"-2"\r\n'));
