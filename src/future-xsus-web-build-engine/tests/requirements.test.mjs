@@ -1,0 +1,13 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {analyzeRequirements as analyze,generateFromRequirements as generate} from '../requirements.mjs';
+const input={name:'Demo'};
+for(const [prompt,type,language] of [['Create a shop','commerce','en'],['Krijo një dyqan','commerce','sq'],['Créer une boutique','commerce','fr'],['Create a dashboard','dashboard','en'],['Krijo një portofol','portfolio','sq'],['Create a blog','blog','en'],['Create a course','education','en'],['Create a business website','business','en']])test(prompt,()=>assert.equal(analyze({...input,prompt,language}).type,type));
+test('ambiguous request',()=>assert.equal(generate({...input,prompt:'shop and blog'}).status,'clarification_required'));
+test('unknown request',()=>assert.equal(generate({...input,prompt:'something modern'}).status,'clarification_required'));
+test('explicit type',()=>assert.equal(analyze({...input,prompt:'modern',type:'business'}).type,'business'));
+for(const capability of ['login','database','payments','api'])test('gates '+capability,()=>assert.equal(generate({...input,prompt:'shop with '+capability}).status,'capability_required'));
+test('generates static draft',()=>assert.equal(generate({...input,prompt:'shop'}).status,'draft'));
+test('rejects blank prompt',()=>assert.throws(()=>analyze({...input,prompt:' '})));
+test('rejects invalid type',()=>assert.throws(()=>analyze({...input,prompt:'shop',type:'constructor'})));
+test('never authorizes execution',()=>assert.equal(analyze({...input,prompt:'shop'}).executable,false));
