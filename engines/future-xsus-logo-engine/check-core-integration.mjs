@@ -32,3 +32,8 @@ const wordmark=await engine.generate({language:'en',requestId:randomUUID(),promp
 assert.equal(wordmark.status,'generated');
 assert.equal(wordmark.kit.name,'AXION');
 console.log('PASS: unquoted AXION wordmark from public studio brief');
+const roaster=await engine.generate({language:'en',requestId:randomUUID(),
+ prompt:'Modern coffee logo for "VELORA" black white with an espresso cup.'});
+assert.equal(roaster.status,'generated');
+assert.ok(roaster.kit.variants.some(v=>v.symbol==='espresso-cup' && v.svg.includes('<path')));
+console.log('PASS: editable coffee concepts through both core services');

@@ -35,7 +35,7 @@ export function motifVariants({initial, network, circuit}, primary, secondary) {
     ['M',256,184],['L',283,244],['L',229,244],['Z']
   ]};
   const nodeMark = letter();
-  if(network) nodeMark.push(...connections([[256,100],[186,250],[326,250]],[[0,1],[1,2],[2,0]]));
+  if(network) nodeMark.push(...connections([[256,110],[183,250],[326,250],[260,202],[312,168]],[[0,3],[1,3],[2,3],[3,4],[4,2]]));
   if(circuit && !network) nodeMark.push(...connections([[165,282],[123,282],[95,253]],[[0,1],[1,2]]));
   const crestMark = initial==='A' ? [aperture] : [polygon(crest),glyph(150,305,secondary)];
   if(network || circuit) crestMark.push(...connections(crest,[[0,1],[1,2],[2,0]]));
