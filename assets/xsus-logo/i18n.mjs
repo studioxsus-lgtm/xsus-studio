@@ -1,5 +1,12 @@
 const messages={
   "en": {
+    "myProjects": "My projects",
+    "example": "A blue and white technology logo for “NOVA”.",
+    "white": "White",
+    "dark": "Dark",
+    "transparent": "Transparent",
+    "symbol": "Symbol",
+    "projectName": "Project name",
     "projects": "Projects",
     "newProject": "New project",
     "open": "Open",
@@ -57,6 +64,13 @@ const messages={
     "ready": "Ready"
   },
   "fr": {
+    "myProjects": "Mes projets",
+    "example": "Un logo technologique bleu et blanc pour « NOVA ».",
+    "white": "Blanc",
+    "dark": "Sombre",
+    "transparent": "Transparent",
+    "symbol": "Symbole",
+    "projectName": "Nom du projet",
     "projects": "Projets",
     "newProject": "Nouveau projet",
     "open": "Ouvrir",
@@ -114,6 +128,13 @@ const messages={
     "ready": "Prêt"
   },
   "sq": {
+    "myProjects": "Projektet e mia",
+    "example": "Një logo teknologjie blu dhe e bardhë për “NOVA”.",
+    "white": "I bardhë",
+    "dark": "I errët",
+    "transparent": "Transparent",
+    "symbol": "Simboli",
+    "projectName": "Emri i projektit",
     "projects": "Projektet",
     "newProject": "Projekt i ri",
     "open": "Hap",
