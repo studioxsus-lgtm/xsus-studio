@@ -1,7 +1,7 @@
 import {mountStudioView} from './studio-view.mjs?v=20261125-7';
 import {createWorkspace} from './workspace.mjs?v=20261125-6';
 import {mountVector,renderVector} from './vector-canvas.mjs';
-import {applyLanguage,translate} from './i18n.mjs?v=20261125-7';
+import {applyLanguage,translate} from './i18n.mjs?v=20261125-8';
 export function mountStudio(root,supabase){
  const dom=root.ownerDocument,{get}=mountStudioView(root);
  root.setAttribute('data-build','20261125-7');const build=dom.createElement('small');build.textContent='Build 20261125-7';root.append(build);

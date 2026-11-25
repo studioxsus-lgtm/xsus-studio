@@ -1,7 +1,7 @@
 const messages={
   "en": {
     "myProjects": "My projects",
-    "example": "A blue and white technology logo for “NOVA”.",
+    "example": "A blue and white technology logo for “XSUS”.",
     "white": "White",
     "dark": "Dark",
     "transparent": "Transparent",
@@ -65,7 +65,7 @@ const messages={
   },
   "fr": {
     "myProjects": "Mes projets",
-    "example": "Un logo technologique bleu et blanc pour « NOVA ».",
+    "example": "Un logo technologique bleu et blanc pour « XSUS ».",
     "white": "Blanc",
     "dark": "Sombre",
     "transparent": "Transparent",
@@ -129,7 +129,7 @@ const messages={
   },
   "sq": {
     "myProjects": "Projektet e mia",
-    "example": "Një logo teknologjie blu dhe e bardhë për “NOVA”.",
+    "example": "Një logo teknologjie blu dhe e bardhë për “XSUS”.",
     "white": "I bardhë",
     "dark": "I errët",
     "transparent": "Transparent",
