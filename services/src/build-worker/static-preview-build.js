@@ -1,3 +1,4 @@
+import {restaurantPreview} from "./restaurant-app.js";
 import {taskPagesPreview} from './task-pages-preview.js';
 import {reservationFiles} from './reservation-preview.js';
 import {createProjectArchitecture} from "../../../src/xsus-app-build-engine/architecture/project-architect.js";
@@ -13,6 +14,7 @@ const categories=[
  {match:/expense|budget|finance|shpenz|buxhet/i,type:"budget",heading:"Budget Tracker",description:"Track expenses and budgets.",fields:["Description","Category","Amount"]}
 ];
 function makeGoalFiles(name){
+ if (/^\[XSUS restaurant orders\](?:\s|$)/.test(name)) return restaurantPreview();
  if (/^\[XSUS tasks(?: search)? pages\](?:\s|$)/.test(name)) return taskPagesPreview();
  const brief=/^\[XSUS (booking|store|budget|tasks)( search)?\](?:\s|$)/.exec(name);
  const planned=brief && categories.find(category=>category.type===brief[1]);
@@ -35,4 +37,5 @@ export function generateWorkerStaticPreview({name,appSpec}={}){
  const manifest=validateBuildManifest({...baseline,files});
  return Object.freeze({project:manifest.project,files:manifest.files.map(({path,content})=>({path,content})),kind:"static-preview",requiresReview:true});
 }
+
 

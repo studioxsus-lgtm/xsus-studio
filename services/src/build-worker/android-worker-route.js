@@ -20,11 +20,12 @@ export function createAndroidWorkerRoute({enabled=false,token,gradleExecutable,c
    let body;
    try{body=JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{return send(400,{error:"invalid_json"});}
    if(!body||!(Object.keys(body).sort().join(",")==="applicationId,displayName,minSdk,primarySeed,theme" ||
-      (Object.keys(body).sort().join(",")==="applicationId,displayName,minSdk,navigation,primarySeed,theme" && body.navigation==="bottom_bar"))||
+      (Object.keys(body).sort().join(",")==="applicationId,displayName,minSdk,navigation,primarySeed,theme" && body.navigation==="bottom_bar") ||
+      (Object.keys(body).sort().join(",")==="applicationId,displayName,minSdk,navigation,primarySeed,profile,theme" && body.navigation==="bottom_bar" && body.profile==="restaurant_orders"))||
       typeof body.applicationId!=="string"||typeof body.displayName!=="string"||!Number.isInteger(body.minSdk)||body.minSdk<23||body.minSdk>35||
       !["system","light","dark"].includes(body.theme)||!/^#[a-fA-F0-9]{6}$/.test(body.primarySeed??""))return send(400,{error:"invalid_request"});
    stage="gradle";console.info("[android-worker] gradle_started");
-   const artifact=await compiler({applicationId:body.applicationId,displayName:body.displayName},{minSdk:body.minSdk,theme:body.theme,primarySeed:body.primarySeed,navigation:body.navigation??"single_screen"},{gradleExecutable});
+   const artifact=await compiler({applicationId:body.applicationId,displayName:body.displayName},{...(body.profile?{profile:body.profile}:{}),minSdk:body.minSdk,theme:body.theme,primarySeed:body.primarySeed,navigation:body.navigation??"single_screen"},{gradleExecutable});
    stage="artifact_integrity";
    if(artifact?.kind!=="apk"||artifact.variant!=="debug"||!Buffer.isBuffer(artifact.bytes)||artifact.bytes.length<4||artifact.bytes.length>128*1024*1024||artifact.bytes.subarray(0,4).toString("hex")!=="504b0304"||artifact.size!==artifact.bytes.length||artifact.sha256!==createHash("sha256").update(artifact.bytes).digest("hex"))throw Error("Invalid artifact");
    if(verifier!==null){
@@ -39,4 +40,5 @@ export function createAndroidWorkerRoute({enabled=false,token,gradleExecutable,c
   finally{busy=false;}
  };
 }
+
 
