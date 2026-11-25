@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createMaintenance} from '../maintenance.mjs';
+test('manual run',async()=>{let n=0;const m=createMaintenance({work:()=>n++});assert.equal(await m.run(),true);assert.equal(n,1)});
+test('failure isolated',async()=>{const m=createMaintenance({work:()=>{throw Error('failure')}});assert.equal(await m.run(),false);assert.equal(m.diagnostics().failures,1)});
+test('no overlapping work',async()=>{let release;const m=createMaintenance({work:()=>new Promise(r=>release=r)});const a=m.run(),b=m.run();assert.equal(a,b);await Promise.resolve();release();await a;assert.equal(m.diagnostics().runs,1)});
+test('start idempotent',async()=>{const m=createMaintenance({work:()=>{}});m.start();m.start();assert.equal(m.diagnostics().scheduled,true);await m.stop();assert.equal(m.diagnostics().scheduled,false)});
+test('stop waits for work',async()=>{let release;const m=createMaintenance({work:()=>new Promise(r=>release=r)});m.run();await Promise.resolve();const stop=m.stop();release();await stop;assert.equal(m.diagnostics().running,false)});
+test('stopped scheduler rejects restart',async()=>{const m=createMaintenance({work:()=>{}});await m.stop();assert.throws(()=>m.start());assert.equal(await m.run(),false)});
+test('clock diagnostics',async()=>{const m=createMaintenance({work:()=>{},clock:()=>123});await m.run();assert.equal(m.diagnostics().lastFinished,123)});
+test('invalid interval',()=>assert.throws(()=>createMaintenance({work:()=>{},intervalMs:0})));
