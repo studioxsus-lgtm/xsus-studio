@@ -1,0 +1,16 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {contrastRatio,createBrandTokens,exportBrandSystem} from '../brand.mjs';
+test('black white contrast',()=>assert.equal(contrastRatio('#000000','#ffffff'),21));
+test('identical contrast',()=>assert.equal(contrastRatio('#ffffff','#ffffff'),1));
+test('symmetry',()=>assert.equal(contrastRatio('#123456','#abcdef'),contrastRatio('#abcdef','#123456')));
+for(const primary of ['#ffffff','#000000','#ff0000','#abcdef','#777777','#00ff00'])test('readable '+primary,()=>{const r=createBrandTokens({primary});assert.ok(Object.values(r.contrast).every(v=>v>=4.5));assert.equal(r.tokens.primary,primary)});
+test('foreground corrected',()=>assert.ok(createBrandTokens({primary:'#123456',foreground:'#ffffff'}).corrections.includes('foreground')));
+test('dark background',()=>assert.ok(createBrandTokens({primary:'#111111',background:'#000000'}).contrast.text>=4.5));
+test('CSS injection rejected',()=>assert.throws(()=>createBrandTokens({primary:'red;display:none'})));
+test('invalid radius',()=>assert.throws(()=>createBrandTokens({primary:'#123456',radius:99})));
+test('invalid spacing',()=>assert.throws(()=>createBrandTokens({primary:'#123456',spacing:0})));
+test('invalid font',()=>assert.throws(()=>createBrandTokens({primary:'#123456',font:'custom'})));
+test('export tokens',()=>{const r=exportBrandSystem({primary:'#123456'});assert.equal(JSON.parse(r.files['brand.json']).primary,'#123456');assert.match(r.files['brand.css'],/--brand-primary:#123456/)});
+test('publication blocked',()=>assert.equal(exportBrandSystem({primary:'#123456'}).publicationAuthorized,false));
+test('visual verification not claimed',()=>assert.equal(createBrandTokens({primary:'#123456'}).visualVerified,false));
