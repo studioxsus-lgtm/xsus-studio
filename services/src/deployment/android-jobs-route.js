@@ -42,8 +42,18 @@ export function createAndroidJobsRoute({jobs,createUserClient,allowedOrigins=[]}
    const snapshot=data.snapshot;
    let goal=snapshot?.goal;
    if(snapshot?.version===1&&typeof goal==="string"&&!goal.trim()&&Array.isArray(snapshot.session?.messages)){
-    const first=snapshot.session.messages.find(message=>message?.role==="user");
-    if(typeof first?.text==="string")goal=first.text.split(/\r?\n\r?\n/,1)[0].trim();
+    // Match the preview to its latest successful generation, including older saved chats.
+    let firstRequest, currentRequest, generatedRequest;
+    for(const message of snapshot.session.messages){
+     if(message?.role==="user"){
+      currentRequest=message;
+      firstRequest??=message;
+     }else if(message?.role==="assistant" && message.text==="Application generated. Open Code or Preview to inspect index.html, styles.css and main.js."){
+      generatedRequest=currentRequest;
+     }
+    }
+    const request=generatedRequest??firstRequest;
+    if(typeof request?.text==="string")goal=request.text.split(/\r?\n\r?\n/,1)[0].trim();
    }
    if(typeof goal!=="string"||!goal.trim()||goal.length>2000)return send(422,{error:"invalid_saved_project"});
    let job;
