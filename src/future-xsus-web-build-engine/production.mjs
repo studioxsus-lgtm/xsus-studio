@@ -25,7 +25,7 @@ export async function createPersistentProduction({env,fetchImpl=globalThis.fetch
  const verifyIdentity=createIdentityVerifier({authUrl:env.XSUS_AUTH_URL,publicKey:env.XSUS_AUTH_PUBLIC_KEY,fetchImpl});
  const transport=createResilientTransport(createCoreTransport({...config,getToken:async core=>core==='future'?env.XSUS_FUTURE_TOKEN:env.XSUS_HYPER_TOKEN,fetchImpl}));
  const runtime=await createPersistentRuntime({directory:env.XSUS_DATA_DIRECTORY,verifyIdentity,generate:input=>generateFromPrompt(input,transport),regenerate:input=>createCoreRegeneration({transport,name:input.name,language:input.language})({...input,revision:input.expectedRevision}),maxJobs:config.maxJobs,maxConcurrent:config.maxConcurrent});
- const gateway=createPersistentGateway({runtime,allowedOrigins:(env.XSUS_ALLOWED_ORIGINS||'').split(',').map(x=>x.trim()).filter(Boolean)});
+ const gateway=createPersistentGateway({runtime,maxBodyBytes:1048576,allowedOrigins:(env.XSUS_ALLOWED_ORIGINS||'').split(',').map(x=>x.trim()).filter(Boolean)});
  const maintenance=createMaintenance({work:()=>runtime.cleanupTemporary()});
  return {server:gateway.server,port:config.port,stopAccepting:gateway.stopAccepting,startMaintenance:()=>maintenance.start(),stopMaintenance:()=>maintenance.stop(),diagnostics:()=>({ready:gateway.isReady(),...runtime.diagnostics(),http:gateway.metrics(),cores:transport.diagnostics(),maintenance:maintenance.diagnostics()})};
 }
