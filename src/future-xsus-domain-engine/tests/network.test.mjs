@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {isPublicIPv4,resolvePublicTarget} from '../network.mjs';
+import {inspectCertificate} from '../tls.mjs';
+for(const ip of ['127.0.0.1','10.1.2.3','172.16.0.1','192.168.1.1','169.254.169.254','100.64.0.1','0.0.0.0','224.0.0.1','192.0.2.1','198.51.100.1','203.0.113.1','::1'])test('blocks '+ip,()=>assert.equal(isPublicIPv4(ip),false));
+test('public IPv4 accepted',()=>assert.equal(isPublicIPv4('8.8.8.8'),true));
+test('mixed private and public targets rejected',async()=>assert.rejects(resolvePublicTarget('example.com',{resolve:async()=>[{address:'8.8.8.8',family:4},{address:'127.0.0.1',family:4}]})));
+test('IPv6-only target rejected',async()=>assert.rejects(resolvePublicTarget('example.com',{resolve:async()=>[{address:'::1',family:6}]})));
+test('target pinned to resolved address',async()=>assert.deepEqual(await resolvePublicTarget('example.com',{resolve:async()=>[{address:'8.8.8.8',family:4}]}),{domain:'example.com',address:'8.8.8.8',family:4}));
+test('TLS refuses unsafe target before connection',async()=>assert.equal((await inspectCertificate('example.com',{resolve:async()=>[{address:'127.0.0.1',family:4}]})).reason,'target_rejected_or_unresolved'));
