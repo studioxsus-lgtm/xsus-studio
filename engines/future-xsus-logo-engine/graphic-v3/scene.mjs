@@ -34,7 +34,20 @@ export function renderGraphic(d,prefix='art'){
   if(l.hollow)a.fill='none';
   if(l.fillRule!==undefined){if(!['evenodd','nonzero'].includes(l.fillRule))throw TypeError('invalid_fill_rule');a['fill-rule']=l.fillRule}
   if(l.matrix){if(!Array.isArray(l.matrix)||l.matrix.length!==6)throw RangeError('invalid_matrix');a.transform='matrix('+l.matrix.map(x=>num(x)).join(' ')+')'}
-  if(l.type==='path'){count+=l.commands.length;return tag('path',{...a,d:pathData(l.commands)})}
+  if(l.type==='path'){
+   count+=l.commands.length;const shape=pathData(l.commands);
+   if(l.strokeAlignment&&l.strokeAlignment!=='center'){
+    if(!['inner','outer'].includes(l.strokeAlignment)||!l.stroke||!l.commands.some(c=>c[0]==='Z'))throw TypeError('closed_stroke_required');
+    const inner=l.strokeAlignment==='inner',key=prefix+'-stroke-'+name;
+    const mask=tag('rect',{x:-1000000,y:-1000000,width:2000000,height:2000000,fill:inner?'black':'white'})+
+      tag('path',{d:shape,fill:inner?'white':'black','fill-rule':a['fill-rule']??'nonzero'});
+    defs.push(tag('mask',{id:key,maskUnits:'userSpaceOnUse',x:-1000000,y:-1000000,width:2000000,height:2000000},mask));
+    return tag('g',{'data-layer-id':name,opacity:a.opacity,...(a.transform?{transform:a.transform}:{})},
+      tag('path',{d:shape,fill:a.fill,'fill-rule':a['fill-rule']??'nonzero'})+
+      tag('path',{d:shape,fill:'none',stroke:a.stroke,'stroke-width':2*a['stroke-width'],'stroke-linejoin':'round',mask:'url(#'+key+')'}));
+   }
+   return tag('path',{...a,d:shape});
+  }
   if(l.type==='circle')return tag('circle',{...a,cx:num(l.cx),cy:num(l.cy),r:num(l.r,.001)});
   if(l.type==='polygon'){if(!Array.isArray(l.points)||l.points.length<3||l.points.length>4096)throw RangeError('invalid_polygon');count+=l.points.length;return tag('polygon',{...a,points:l.points.map(p=>[num(p.x??p[0]),num(p.y??p[1])].join(',')).join(' ')})}
   if(l.type!=='text'||typeof l.text!=='string'||l.text.length>160)throw TypeError('invalid_text');

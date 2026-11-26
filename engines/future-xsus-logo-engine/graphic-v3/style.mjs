@@ -49,3 +49,35 @@ export function direction(names,treatment='balanced'){
  return {...first,ratio:blend('ratio')*factor,slant:blend('slant'),stroke:blend('stroke')*factor,tracking:blend('tracking')*factor,
   monochrome:names.includes('monochrome'),hollow:names.includes('outline')||names.includes('line-art'),factor};
 }
+const aliases=`minimaliste minimalist minimaliste|minimalist
+modern moderne moderne|modern
+futurist futuriste futuristik|futuristic
+teknologjik technologique tech|technological
+luksoz luksoze luxe luxueux|luxury
+elegant élégante|elegant
+klasik classique|classic
+organik organique|organic
+gjeometrik géométrique|geometric
+abstrakt abstrait|abstract
+industrial industriel|industrial
+artistik artistique|artistic
+tipografik typographique|typographic
+monogramme monogramë|monogram
+emblemë emblème|emblem
+maskotë mascotte|mascot
+monokrom monochromatique|monochrome
+sportiv sportif sportive|sport
+korporativ entreprise|corporate
+editorial éditorial|editorial
+dinamik dynamique|dynamic
+miqësor amical|friendly
+ekologjik écologique|ecological
+eksperimental expérimental|experimental`;
+const normalize=s=>s.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase().replace(/[-_]/g,' ');
+export function detectStyles(text){
+ const positive=normalize(text).replace(/\b(?:without|avoid|no|sans|pa|shmang)\s+[^.,;]+/g,'');
+ const tokens=Object.entries(styles).map(([id])=>[normalize(id),id]);
+ for(const row of aliases.split('\n')){const [words,id]=row.split('|');for(const word of words.split(' '))tokens.push([normalize(word),id])}
+ const hits=tokens.map(([word,id])=>({id,index:(' '+positive+' ').search(new RegExp('\\b'+word+'\\b'))})).filter(v=>v.index>=0).sort((a,b)=>a.index-b.index);
+ return [...new Set(hits.map(v=>v.id))].slice(0,3);
+}

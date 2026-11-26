@@ -57,7 +57,14 @@ export function createOrchestrator({interpret,plan}={}){
  if(strategy.review_required!==false)return {version:VERSION,requestId,status:'review_required',reasons:strategy.reasons};
  if(strategy.approved!==true)throw new Error('Plan not approved');
  if(creative){const result=await composeCreative({prompt,language,brief:b,strategy,creative});
- if(graphic&&result.status==='generated')result.kit=enhance(result.kit,graphic,prompt);
+ if(graphic&&result.status==='generated'){
+   try {
+    result.kit=enhance(result.kit,graphic,prompt);
+    const docs=result.kit.variants.map(v=>({symbol:v.symbol,document:v.document}));
+    if(Buffer.byteLength(JSON.stringify([docs,docs[0]]))>1750000)throw RangeError('graphic_budget');
+   }catch(e){if(!['graphic_budget','type_budget','missing_glyph','graphic_outside_artboard'].includes(e.message))throw e;
+    return {version:VERSION,requestId,status:'review_required',reasons:[e.message]}}
+  }
  return {version:VERSION,requestId,...result};}
  const kit=brandKit({name:b.name,primary:strategy.primary??b.primary??undefined,
    secondary:accent??strategy.secondary??b.secondary??undefined,motif,prompt:briefText,theme,catalogId});

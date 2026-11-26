@@ -55,3 +55,21 @@ test('Bezier split continuity, smooth handles and elliptical arc endpoint',()=>{
  const path=[['M',0,0],['L',5,3],['L',9,5]];assert.equal(editNode(path,1,'smooth')[1][0],'C');assert.equal(editNode(path,1,'split').length,4);
 });
 test('color spaces and harmony',()=>{assert.equal(convert('hsv',[0,1,1]),'#ff0000');assert.equal(convert('cmyk',[0,1,1,0]),'#ff0000');assert.ok(Math.abs(analysis('#ffffff').oklab[0]-1)<.001);assert.equal(palette(280,'triadic').length,3)});
+test('path typography follows a supplied baseline with width adjustment',()=>{
+ const l={fontSize:20,x:60,y:80,text:'Élan'},fonts=faces('alegreya');
+ const a=typeset(l,fonts,{along:[[0,5],[30,10],[90,40]],stretch:.76}),b=typeset(l,fonts,{stretch:.76});
+ assert.notDeepEqual(a.outline,b.outline);assert.equal(a.along.length,3);
+});
+test('inner stroke is a local mask and malformed sources cannot introduce SVG content',()=>{
+ const d=enhance(one,{styles:['outline']}).variants[0].document;d.layers[0].strokeAlignment='inner';
+ assert.match(renderGraphic(d),/<mask/);d.layers[0].gradient={kind:'linear',stops:[{at:0,color:'red"/><script>'},{at:1,color:'#ffffff'}]};
+ assert.throws(()=>renderGraphic(d));
+});
+test('style inference, negative instructions and explicit overrides',()=>{
+ assert.deepEqual(enhance(one,{},'Une marque élégante et luxe').variants[0].document.graphic.styles,['elegant','luxury']);
+ assert.deepEqual(enhance(one,{},'logo luksoz pa gradient').variants[0].document.graphic.styles,['luxury']);
+ assert.deepEqual(enhance(one,{styles:['bauhaus']},'luxury').variants[0].document.graphic.styles,['bauhaus']);
+});
+test('V3 composition quality reports actual final artboard and contrast',()=>{
+ const v=enhance(one,{width:720,height:480}).variants[0];assert.ok(v.quality.bounds.every(b=>b.xmin>=0&&b.xmax<=720));assert.ok(v.quality.contrast[0].onWhite>=1);
+});

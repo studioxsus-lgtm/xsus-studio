@@ -1,4 +1,5 @@
-import {direction,styles,treatments} from './style.mjs';
+import {verifyGraphic} from './verification.mjs';
+import {direction,detectStyles} from './style.mjs';
 import {composition,layouts} from './composition.mjs';
 import {gradient,finishes} from './color.mjs';
 import {renderGraphic} from './scene.mjs';
@@ -17,7 +18,7 @@ export function graphicOptions(p){
 }
 export function enhance(kit,p,prompt=''){
  graphicOptions(p);
- const words=prompt.toLowerCase().replaceAll('-',' '),matched=Object.keys(styles).filter(name=>words.includes(name.replaceAll('-',' '))).slice(0,3);
+ const matched=detectStyles(prompt);
  const choices=p.styles??(matched.length?matched:['modern']),style=direction(choices,p.treatment);
  return {...kit,version:'3.0.0',variants:kit.variants.map(v=>{
   const old=v.document,layout=p.layout??(old.creative?.usage?.includes('app')&&/favicon|icon only/i.test(prompt)?'symbol':style.layout);
@@ -45,6 +46,6 @@ export function enhance(kit,p,prompt=''){
   const document={...old,width,height,layers,graphic:{version:'3.0.0',styles:choices,layout,options:p}};
   const svg=renderGraphic(document);
   if(Buffer.byteLength(svg)>240000)throw RangeError('graphic_budget');
-  return {...v,document,svg,quality:{...v.quality,artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
+  return {...v,document,svg,quality:{...verifyGraphic(document),artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
  })};
 }
