@@ -52,3 +52,9 @@ assert.equal(musicBrand.status,'generated');
 assert.equal(musicBrand.kit.variants.length,3);
 assert.ok(musicBrand.kit.variants.every(v=>['beam-notes','sound-bars','record','tuning-fork'].includes(v.symbol)));
 console.log('PASS: Albanian music studio through both core services');
+
+const cameraBrief=await engine.generate({language:'sq',requestId:randomUUID(),
+ prompt:'Krijo tri variante logoje për studion e fotografisë "LUMA". Përdor një aparat fotografik, të zezë dhe të bardhë.'});
+assert.equal(cameraBrief.status,'generated');
+assert.equal(cameraBrief.kit.variants[0].symbol,'camera');
+console.log('PASS: LUMA photography brief prioritizes requested camera');

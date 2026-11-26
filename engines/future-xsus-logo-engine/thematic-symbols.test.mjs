@@ -33,3 +33,19 @@ for(const [theme,words] of Object.entries({music:['music','muzikës','musique'],
   assert.notDeepEqual(new Set(variants('ECHO')),new Set(variants('ORBIT')));
  });
 }
+
+for(const [theme,symbol,terms] of [
+ ['photography','camera',['aparat fotografik','camera','appareil photo']],
+ ['books','open-book',['libër të hapur','open book','livre ouvert']],
+ ['cycling','bicycle',['biçikletë','bicycle','vélo']]
+]){
+ test(theme+' recognizes and selects a requested symbol',()=>{
+  for(const term of terms){
+   const prompt='Logo "LUMA" '+term;
+   assert.equal(requestedTheme(prompt,'LUMA'),theme);
+   const variants=brandKit({name:'LUMA',theme,prompt}).variants;
+   assert.equal(variants[0].symbol,symbol);
+   assert.equal(new Set(variants.map(v=>v.symbol)).size,3);
+  }
+ });
+}

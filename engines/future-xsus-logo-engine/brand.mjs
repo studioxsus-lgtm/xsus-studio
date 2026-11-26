@@ -8,7 +8,7 @@ export function brandKit(input){
  const typography=typographyPlan(input.name);
  let variants;
  if(input.motif) variants=motifVariants(input.motif,primary,secondary);
- else if(input.theme) variants=themedVariants(input.theme,primary,contrast(secondary,'#ffffff')>=3?secondary:primary,input.name);
+ else if(input.theme) variants=themedVariants(input.theme,primary,contrast(secondary,'#ffffff')>=3?secondary:primary,input.name,input.prompt);
  else variants=conceptVariants(input);
  return {
   version:'1.0.0',name:typography.text,

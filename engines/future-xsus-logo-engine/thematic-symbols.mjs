@@ -1,6 +1,9 @@
 // Marks share a square artboard with the wordmark below y=365.
 // Each contour is a separate editable path in the existing editor format.
 const families = [
+  ['photography', /(?<![\p{L}\p{N}])(?:photograph(?:y|ie|er)|fotografi(?:a|së|se|ke|k)?|fotograf|camera|appareil photo|aparat fotografik|shutter|pellicule)(?![\p{L}\p{N}])/iu],
+  ['books', /(?<![\p{L}\p{N}])(?:books?|bookstore|library|livres?|librairie|bibliothèque|libër|libri[nt]?|librit|libra(?:ve)?|librari(?:a|së)?|bibliotek[ëe](?:s|n)?)(?![\p{L}\p{N}])/iu],
+  ['cycling', /(?<![\p{L}\p{N}])(?:bicycles?|cycling|vélo(?:s)?|cyclisme|bike(?:s)?|biçiklet[ëe](?:s|n)?|biçikleta(?:ve)?|çikliz(?:ëm|mit|mi))(?![\p{L}\p{N}])/iu],
   ['music', /(?<![\p{L}\p{N}])(?:music(?:al)?|musique|muzik[ëe](?:s|n)?|muzikor[ei]?|audio|melody|mélodie|melodi)(?![\p{L}\p{N}])/iu],
   ['marine', /(?<![\p{L}\p{N}])(?:ocean(?:ic)?|océan|det(?:i|it|ar[ei]?)?|maritime|marine|nautical|nautique|val[ëe](?:t|ve)?|waves?)(?![\p{L}\p{N}])/iu],
   ['architecture', /(?<![\p{L}\p{N}])(?:architecture|architectural|architects?|architectes?|arkitektur[ëe](?:s|n)?|arkitekt(?:i|it|ët)?|nd[ëe]rtim(?:i|it|eve)?)(?![\p{L}\p{N}])/iu],
@@ -22,7 +25,37 @@ const leafLeft=()=>path(M(247,322),Q(111,310,116,151),Q(244,162,247,322),Z);
 const leafRight=()=>path(M(261,276),Q(259,135,395,106),Q(383,250,261,276),Z);
 const bar=(x,top,width,bottom)=>path(M(x,top),L(x+width,top),L(x+width,bottom),L(x,bottom),Z);
 const wave=(x,y)=>path(M(x,y),Q(x+62,y-59,x+136,y-9),Q(x+198,y+33,x+266,y-17),Q(x+211,y+72,x+126,y+25),Q(x+65,y-14,x,y+28),Z);
+// Opposite windings keep the counter transparent on every preview background.
+function ring(x,y,r,t){
+  function contour(radius,sign){
+    const a=radius*sign;
+    return [M(x,y-radius),Q(x+a,y-radius,x+a,y),Q(x+a,y+radius,x,y+radius),
+      Q(x-a,y+radius,x-a,y),Q(x-a,y-radius,x,y-radius),Z];
+  }
+  return path(...contour(r,1),...contour(r-t,-1));
+}
+const leftPage=()=>path(M(91,133),Q(176,108,247,166),L(247,323),Q(175,272,91,290),Z);
+const rightPage=()=>path(M(265,166),Q(337,110,421,133),L(421,290),Q(337,272,265,323),Z);
+const wheel=(x,y)=>ring(x,y,54,14);
 const familiesOfMarks = {
+  photography: [
+    ['camera',path(M(102,156),L(177,156),L(200,123),L(310,123),L(334,156),L(410,156),L(410,323),L(102,323),Z,M(256,177),Q(193,177,193,239),Q(193,301,256,301),Q(318,301,318,239),Q(318,177,256,177),Z),circle(256,239,42)],
+    ['viewfinder',path(M(100,208),L(100,121),L(194,121),L(194,145),L(124,145),L(124,208),Z),path(M(412,232),L(412,319),L(318,319),L(318,295),L(388,295),L(388,232),Z),ring(256,221,70,18)],
+    ['film-strip',path(M(105,131),L(407,131),L(407,307),L(105,307),Z,M(133,161),L(133,277),L(247,277),L(247,161),Z,M(265,161),L(265,277),L(379,277),L(379,161),Z),path(M(146,261),L(187,203),L(231,261),Z),circle(323,219,27)],
+    ['lens',ring(256,220,120,21),ring(256,220,81,12),circle(256,220,41)]
+  ],
+  books: [
+    ['open-book',leftPage(),rightPage()],
+    ['bookmark',path(M(164,96),L(350,96),L(350,343),L(256,281),L(164,343),Z,M(197,132),L(197,147),L(316,147),L(316,132),Z)],
+    ['bookshelf',bar(111,145,39,315),bar(160,119,52,315),path(M(218,146),L(257,133),L(312,302),L(273,315),Z),bar(321,164,47,315),bar(95,326,322,345)],
+    ['turning-page',leftPage(),path(M(262,320),L(262,163),Q(288,122,347,91),L(347,246),Q(299,263,262,320),Z),path(M(284,315),Q(345,261,414,246),L(414,282),Q(341,283,284,315),Z)]
+  ],
+  cycling: [
+    ['bicycle',wheel(142,272),wheel(367,272),path(M(141,272),L(196,184),L(294,184),L(306,151),L(337,151),L(337,164),L(317,164),L(375,273),L(361,279),L(308,189),L(244,281),L(141,281),Z,M(168,264),L(225,264),L(196,214),Z,M(212,201),L(242,254),L(280,201),Z),bar(175,167,46,179)],
+    ['spoked-wheel',ring(256,220,123,18),bar(249,109,14,330),bar(146,213,220,227),path(M(171,143),L(182,132),L(342,293),L(331,304),Z),path(M(169,297),L(331,135),L(342,146),L(180,308),Z),circle(256,220,23)],
+    ['chain-link',ring(196,220,61,24),ring(316,220,61,24),bar(199,208,114,232)],
+    ['speed-wheel',ring(292,229,91,22),circle(292,229,18),bar(91,169,105,183),bar(64,215,121,229),bar(110,261,86,275)]
+  ],
   music: [
     ['beam-notes',circle(175,294,34),circle(301,263,34),bar(193,137,16,294),bar(319,103,16,263),path(M(193,137),L(335,99),L(335,139),L(193,177),Z)],
     ['sound-bars',bar(139,191,28,255),bar(190,143,28,303),bar(242,94,28,351),bar(294,159,28,287),bar(346,198,28,248)],
@@ -58,14 +91,26 @@ const familiesOfMarks = {
   ]
 };
 
-export function themedVariants(theme,primary,accent=primary,name='') {
+const symbolCues={
+  camera:/\b(?:camera|appareil photo|aparat(?:in)? fotografik)\b/iu,
+  lens:/\b(?:lens|objectif|objektiv(?:in)?)\b/iu,
+  'open-book':/(?:open book|livre ouvert|lib[ëe]r (?:të |i )?hapur)/iu,
+  bookmark:/bookmark|marque-page|faqeshënues/iu,
+  bicycle:/\b(?:bicycle|bike|vélo)\b|biçiklet[ëe]/iu,
+  'spoked-wheel':/spoked wheel|roue à rayons|rrot[ëe] me fije/iu
+};
+
+export function themedVariants(theme,primary,accent=primary,name='',prompt='') {
   const marks=familiesOfMarks[theme];
   let start=0;
   if(marks.length>3){
     for(const char of name.normalize('NFC').toLowerCase()) start=(Math.imul(start,31)+char.codePointAt(0))>>>0;
     start%=marks.length;
   }
-  const selected=Array.from({length:3},(_,i)=>marks[(start+i)%marks.length]);
+  const ordered=Array.from({length:marks.length},(_,i)=>marks[(start+i)%marks.length]);
+  const description=prompt.split(name||'\u0000').join(' ').normalize('NFC');
+  const preferred=ordered.filter(([symbol])=>symbolCues[symbol]?.test(description));
+  const selected=[...preferred,...ordered.filter(mark=>!preferred.includes(mark))].slice(0,3);
   return selected.map(([symbol,...shapes])=>({
     symbol,document:{version:'1.0.0',width:512,height:512,layers:shapes.map((shape,i)=>({...shape,fill:shapes.length>1 && i===shapes.length-1?accent:primary}))}
   }));

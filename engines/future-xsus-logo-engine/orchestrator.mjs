@@ -40,7 +40,7 @@ export function createOrchestrator({interpret,plan}={}){
  if(strategy.review_required!==false)return {version:VERSION,requestId,status:'review_required',reasons:strategy.reasons};
  if(strategy.approved!==true)throw new Error('Plan not approved');
  const kit=brandKit({name:b.name,primary:strategy.primary??b.primary??undefined,
-   secondary:accent??strategy.secondary??b.secondary??undefined,motif,theme:requestedTheme(prompt,b.name)});
+   secondary:accent??strategy.secondary??b.secondary??undefined,motif,prompt,theme:requestedTheme(prompt,b.name)});
  return {version:VERSION,requestId,status:'generated',kit};
  }});
 }
