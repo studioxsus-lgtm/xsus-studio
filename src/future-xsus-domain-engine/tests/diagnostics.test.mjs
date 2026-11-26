@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {analyzeDNS,domainHealth} from '../diagnostics.mjs';
+import {inspectDNSSEC} from '../dnssec.mjs';
+test('duplicate nameservers do not count as redundancy',()=>assert.ok(analyzeDNS({NS:{status:'resolved',values:['NS.EXAMPLE.COM.','ns.example.com']}}).some(x=>x.code==='NS_LOW_REDUNDANCY')));
+test('unknown address is not missing address',()=>assert.ok(!analyzeDNS({A:{status:'unknown'},AAAA:{status:'no_data'}}).some(x=>x.code==='NO_ADDRESS_RECORD')));
+test('partial provider failure remains visible',async()=>{const r=await domainHealth('example.com',{dns:async()=>{throw Error('offline')},mail:async()=>({spf:{status:'present'},dmarc:{status:'unknown'}}),rdap:async()=>({registrationStatus:'unknown'})});assert.equal(r.coverage,'2/3');assert.ok(r.findings.some(x=>x.code==='DNS_UNVERIFIED'));});
+const mock=data=>async()=>({ok:true,json:async()=>data});
+test('authenticated DS reported with limited scope',async()=>assert.equal((await inspectDNSSEC('example.com',{fetcher:mock({Status:0,AD:true,Answer:[{name:'example.com.',type:43,data:'123 13 2 ABC'}]})})).status,'authenticated_ds'));
+test('DS without AD is unverified',async()=>assert.equal((await inspectDNSSEC('example.com',{fetcher:mock({Status:0,AD:false,Answer:[{name:'example.com.',type:43,data:'123 13 2 ABC'}]})})).status,'unverified_ds'));
+test('SERVFAIL is unknown',async()=>assert.equal((await inspectDNSSEC('example.com',{fetcher:mock({Status:2})})).status,'unknown'));
+test('unrelated DS ignored',async()=>assert.equal((await inspectDNSSEC('example.com',{fetcher:mock({Status:0,AD:true,Answer:[{name:'other.com.',type:43,data:'123'}]})})).status,'no_ds_observed'));
+test('network failure unknown',async()=>assert.equal((await inspectDNSSEC('example.com',{fetcher:async()=>{throw Error('offline')}})).status,'unknown'));
