@@ -1,10 +1,11 @@
-import {mountStudioView} from './studio-view.mjs?v=creative2';
-import {createWorkspace} from './workspace.mjs?v=creative2';
-import {mountVector,renderVector} from './vector-canvas.mjs?v=creative2';
-import {applyLanguage,translate} from './i18n.mjs?v=creative2';
+import {professionalPanel} from './graphic-v3/panel.mjs';
+import {mountStudioView} from './studio-view.mjs?v=graphic3';
+import {createWorkspace} from './workspace.mjs?v=graphic3';
+import {mountVector,renderVector} from './vector-canvas.mjs?v=graphic3';
+import {applyLanguage,translate} from './i18n.mjs?v=graphic3';
 export function mountStudio(root,supabase){
  const dom=root.ownerDocument,{get}=mountStudioView(root);
- root.setAttribute('data-build','creative2');const build=dom.createElement('small');build.textContent='Build creative2';root.append(build);
+ root.setAttribute('data-build','graphic3');const build=dom.createElement('small');build.textContent='Build graphic3';root.append(build);
  const language=dom.getElementById('language-select');
  const compact=dom.defaultView.matchMedia('(max-width:700px)');
  const fitProjects=()=>{get('projects').open=!compact.matches};
@@ -15,6 +16,7 @@ export function mountStudio(root,supabase){
  const status=k=>{notice=k;get('status').textContent=t(k)+(['ready','saved','exported','generating'].includes(k)?'':' ['+(/^[a-zA-Z0-9_]{1,80}$/.test(k)?k:'UI_ERROR')+']')};
  const button=(label,fn)=>{const b=dom.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>run(fn));return b};
  const run=async fn=>{try{await fn()}catch(e){status(e.message||'generation_failed')}};
+ const pro=professionalPanel(root,get,()=>workspace,run);
  const discard=()=>{if(workspace.state().dirty){if(!dom.defaultView.confirm(t('unsaved')))return false;workspace.discard()}return true};
  const refresh=async({restore=false}={})=>{const rows=await workspace.list();get('project-list').replaceChildren(...rows.map(row=>button(row.name,async()=>{if(!workspace.state().busy&&discard())await workspace.open(row.id)})));const state=workspace.state();if(restore&&rows.length&&!state.busy&&!state.editor&&!get('prompt').value)await workspace.open(rows[0].id)};
  function render(s){
@@ -35,10 +37,11 @@ export function mountStudio(root,supabase){
  get('up').disabled=busy||index<0||index===e.document.layers.length-1;
  get('down').disabled=busy||index<=0;
  if(l){get('fill').value=l.fill;if(l.type==='text'){get('text').value=l.text;get('font-size').value=l.fontSize}}
- if(e){const svg=mountVector(get('canvas'),e.document);svg.addEventListener('click',event=>{const id=event.target.getAttribute('data-layer-id');if(id&&!busy)run(()=>{workspace.edit('select',id);get(event.target.localName==='text'?'text':'fill').focus()})})}else get('canvas').textContent=t('empty');
+ if(e){const svg=mountVector(get('canvas'),e.document);svg.addEventListener('click',event=>{const id=event.target.closest('[data-layer-id]')?.getAttribute('data-layer-id');if(id&&!busy)run(()=>{workspace.edit('select',id);get(event.target.localName==='text'?'text':'fill').focus()})})}else get('canvas').textContent=t('empty');
  get('layers').replaceChildren(...(e?.document.layers??[]).map((layer,i)=>{const name=layer.type==='text'?(layer.id==='brand-name'?t('brandName'):t('text'))+' · '+layer.text:t('symbol')+' '+(i+1);const b=button(name,()=>workspace.edit('select',layer.id));b.disabled=busy;b.setAttribute('aria-pressed',String(layer.id===e.selected));return b}));
  get('variants').replaceChildren(...s.assistant.variants.map((v,i)=>{const b=button(String(i+1),()=>{if(i===s.assistant.selected)return;const dirty=workspace.state().dirty;if(dirty&&!dom.defaultView.confirm(t('unsaved')))return;workspace.variant(i,{discardChanges:dirty})});b.disabled=busy;b.setAttribute('aria-pressed',String(i===s.assistant.selected));b.append(renderVector(v.document,dom));return b}));
- if(s.assistant.status==='generating')status('generating');else if(s.assistant.status==='error')status(s.assistant.error);else if(s.assistant.status==='review_required')status(s.assistant.reasons.find(k=>['missing_brand_name','unsupported_exclusion','creative_constraints','symbol_budget','low_palette_contrast'].includes(k))??'review_required');else if(notice==='generating'||!notice)status('ready');
+ pro.render(s,lang);
+ if(s.assistant.status==='generating')status('generating');else if(s.assistant.status==='error')status(s.assistant.error);else if(s.assistant.status==='review_required')status(s.assistant.reasons.find(k=>['graphic_budget','missing_brand_name','unsupported_exclusion','creative_constraints','symbol_budget','low_palette_contrast'].includes(k))??'review_required');else if(notice==='generating'||!notice)status('ready');
  }
  workspace=createWorkspace({supabase,dom,onChange:render});
  const bind=(id,fn)=>get(id).addEventListener('click',()=>run(fn));
@@ -53,14 +56,14 @@ export function mountStudio(root,supabase){
   }
   const brief=symbol?prompt+'\n[XSUS symbol: '+symbol+']':prompt;
   if(brief.length>4000){status('catalogLength');return}
-  const useCreative=get('mode').value==='creative';
+  const useCreative=get('mode').value!=='classic';
   const seed=get('seed'),count=get('count').value;
   if(useCreative&&!seed.reportValidity())return;
   const creative=useCreative?{version:'2.0.0',...(count?{count:Number(count)}:{}),...(seed.value!==''?{seed:Number(seed.value)}:{})}:undefined;
   if(!discard())return;
   const previous=workspace.state().project;
   const requestedName=previous?'':get('name').value.trim();
-  const state=await workspace.generate({prompt:brief,language:lang,creative});
+  const state=await workspace.generate({prompt:brief,language:lang,creative,graphic:get('mode').value==='professional'?pro.options():undefined});
   if(state.assistant.status!=='generated')return;
   const brand=state.editor.document.layers.find(layer=>layer.id==='brand-name')?.text??state.editor.document.creative?.name;
   get('name').value=requestedName||brand||'XSUS Logo';
@@ -81,7 +84,7 @@ export function mountStudio(root,supabase){
  bind('duplicate',()=>workspace.edit('duplicate',selected(),crypto.randomUUID()));
  bind('remove-layer',()=>workspace.edit('remove',selected()));
  for(const [id,delta] of [['up',1],['down',-1]])bind(id,()=>{const e=workspace.state().editor;workspace.edit('reorder',e.selected,e.document.layers.findIndex(l=>l.id===e.selected)+delta)});
- bind('apply',()=>{const e=workspace.state().editor,l=e.document.layers.find(x=>x.id===e.selected);workspace.edit('edit',l.id,{fill:get('fill').value,...(l.type==='text'?{text:get('text').value,fontSize:Number(get('font-size').value)}:{})})});
+ bind('apply',async()=>{const e=workspace.state().editor,l=e.document.layers.find(x=>x.id===e.selected);if(l.outline&&l.type==='text'){const changed=await pro.retype(l,get('text').value,Number(get('font-size').value));Object.assign(l,changed,{fill:get('fill').value});workspace.edit('replaceDocument',e.document,l.id);return}workspace.edit('edit',l.id,{fill:get('fill').value,...(l.type==='text'?{text:get('text').value,fontSize:Number(get('font-size').value)}:{})})});
  bind('export',async()=>{await workspace.export({name:get('name').value,format:get('format').value});status('exported')});
  for(const key of ['white','dark','transparent'])bind(key,()=>{
   get('canvas').dataset.background=key;

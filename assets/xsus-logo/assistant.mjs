@@ -5,12 +5,12 @@ export function createBrandAssistant({client,onChange=()=>{}}={}){
  const publish=patch=>{state={...state,...patch};onChange(snapshot());return snapshot()};
  return Object.freeze({
  state:snapshot,
- async generate({prompt,language='en',creative}={}){
+ async generate({prompt,language='en',creative,graphic}={}){
  if(typeof prompt!=='string'||!prompt.trim()||prompt.length>4000||!['en','fr','sq'].includes(language))throw new TypeError('Invalid brief');
  controller?.abort();const current=++sequence;controller=new AbortController();
  publish({status:'generating',error:null,reasons:[]});
  try{
- const result=await client.generate({prompt:prompt.trim(),language,creative,signal:controller.signal});
+ const result=await client.generate({prompt:prompt.trim(),language,creative,graphic,signal:controller.signal});
  if(current!==sequence)return snapshot();
  if(result.status==='review_required')return publish({status:'review_required',reasons:Array.isArray(result.reasons)?result.reasons.filter(x=>typeof x==='string').slice(0,16):[]});
  const variants=result.kit?.variants;

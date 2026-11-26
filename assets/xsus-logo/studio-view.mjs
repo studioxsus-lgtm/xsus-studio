@@ -20,7 +20,7 @@ export function mountStudioView(root){
  const editor=panel('studio-editor',[
   label('brief','logo-prompt'),node('textarea',{id:'logo-prompt',maxlength:'4000','data-logo-placeholder':'example',disabled:''}),
   node('div',{class:'creative-controls'},[
-   node('div',{},[label('creativeMode','logo-mode'),node('select',{id:'logo-mode'},[node('option',{value:'creative'},['Creative V2']),node('option',{value:'classic','data-logo-i18n':'classic'})])]),
+   node('div',{},[label('creativeMode','logo-mode'),node('select',{id:'logo-mode'},[node('option',{value:'professional'},['Professional V3']),node('option',{value:'creative'},['Creative V2']),node('option',{value:'classic','data-logo-i18n':'classic'})])]),
    node('div',{},[label('conceptCount','logo-count'),node('select',{id:'logo-count'},[node('option',{value:'','data-logo-i18n':'fromBrief'}),...['3','6','9','12'].map(value=>node('option',{value},[value]))])]),
    node('div',{},[label('variationSeed','logo-seed'),node('input',{id:'logo-seed',type:'number',min:'0',max:'2147483647',step:'1'})])
   ]),
@@ -33,7 +33,7 @@ export function mountStudioView(root){
   heading('variants'),node('div',{id:'logo-variants',class:'studio-variants'}),button('regenConcept','logo-regen'),
   node('div',{class:'document-actions'},[
    node('div',{},[label('projectName','logo-name'),input('logo-name'),button('save','logo-save')]),
-   node('div',{},[label('format','logo-format'),select('logo-format',['svg','png','jpeg','webp','json']),button('export','logo-export')])
+   node('div',{},[label('format','logo-format'),select('logo-format',['svg','svg-text','png','jpeg','webp','json','pdf','zip']),button('export','logo-export')])
   ])
  ]);
  const inspector=panel('studio-inspector',[heading('layers'),node('div',{id:'logo-layers'}),node('div',{class:'studio-toolbar'},[button('add','logo-add'),button('duplicate','logo-duplicate'),button('remove','logo-remove-layer'),button('up','logo-up'),button('down','logo-down')]),heading('properties'),label('fill','logo-fill'),input('logo-fill','color'),label('text','logo-text'),input('logo-text'),label('fontSize','logo-font-size'),input('logo-font-size','number'),button('apply','logo-apply')]);

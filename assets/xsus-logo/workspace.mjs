@@ -1,9 +1,9 @@
-import {createLogoClient} from './api-client.mjs?v=creative2';
-import {createBrandAssistant} from './assistant.mjs?v=creative2';
+import {createLogoClient} from './api-client.mjs?v=graphic3';
+import {createBrandAssistant} from './assistant.mjs?v=graphic3';
 import {createProjects} from './projects.mjs';
-import {createLayerEditor} from './layers.mjs?v=creative2';
-import {renderVector} from './vector-canvas.mjs?v=creative2';
-import {downloadLogo} from './export.mjs?v=creative2';
+import {createLayerEditor} from './layers.mjs?v=graphic3';
+import {renderVector} from './vector-canvas.mjs?v=graphic3';
+import {downloadLogo} from './export.mjs?v=graphic3';
 export function createWorkspace({supabase,dom=globalThis.document,onChange=()=>{}}){
  const projects=createProjects(supabase);
  const client=createLogoClient({getSession:async()=>{const {data,error}=await supabase.auth.getSession();if(error)throw Error('authentication_required');return data.session}});
@@ -22,7 +22,7 @@ export function createWorkspace({supabase,dom=globalThis.document,onChange=()=>{
  regenerate:()=>task(async()=>{
   const prior=requireEditor().state().document.creative;
   if(prior?.version!=='2.0.0'||typeof prior.brief!=='string')throw Error('invalid_document');
-  const result=await assistant.generate({prompt:prior.brief,language:prior.language,creative:{version:'2.0.0',seed:prior.seed,count:prior.count,slot:prior.slot,revision:prior.revision+1}});
+  const result=await assistant.generate({prompt:prior.brief,language:prior.language,graphic:requireEditor().state().document.graphic?.options,creative:{version:'2.0.0',seed:prior.seed,count:prior.count,slot:prior.slot,revision:prior.revision+1}});
   if(result.status==='generated')replace(assistant.document(),project,true);
   return state();
  }),
@@ -37,7 +37,7 @@ export function createWorkspace({supabase,dom=globalThis.document,onChange=()=>{
   return replace(document,row,false)}),
  newProject:()=>{guard();protect();assistant.reset();return replace({version:'1.0.0',width:512,height:512,layers:[]})},
  discard:()=>{guard();assistant.reset();editor=null;project=null;dirty=false;return emit()},
- edit:(operation,...args)=>{guard();if(!['select','add','remove','duplicate','reorder','edit','transform','undo','redo'].includes(operation))throw Error('invalid_operation');const e=requireEditor(),before=e.state().revision;const result=e[operation](...args);if(result.revision!==before)dirty=true;return emit()},
+ edit:(operation,...args)=>{guard();if(!['replaceDocument','select','add','remove','duplicate','reorder','edit','transform','undo','redo'].includes(operation))throw Error('invalid_operation');const e=requireEditor(),before=e.state().revision;const result=e[operation](...args);if(result.revision!==before)dirty=true;return emit()},
  save:name=>task(async()=>{const doc=requireEditor().state().document;const a=assistant.state();
   if(doc.creative?.version==='2.0.0'&&a.variants[a.selected]){
    const variants=a.variants.map((v,i)=>i===a.selected?{...v,document:structuredClone(doc)}:v);

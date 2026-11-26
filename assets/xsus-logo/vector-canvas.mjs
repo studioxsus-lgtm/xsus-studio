@@ -1,8 +1,11 @@
+import {renderGraphic} from './graphic-v3/scene.mjs';
+let sequence=0;
 const NS='http://www.w3.org/2000/svg';
 const number=v=>{if(typeof v!=='number'||!Number.isFinite(v)||Math.abs(v)>1e6)throw Error('invalid_coordinate');return v};
 const positive=v=>{number(v);if(v<=0)throw Error('invalid_dimension');return v};
 const color=v=>{if(typeof v!=='string'||!/^#[0-9a-f]{6}$/i.test(v))throw Error('invalid_color');return v};
 export function renderVector(document,dom=globalThis.document){
+ if(document?.graphic){const Parser=dom.defaultView?.DOMParser??globalThis.DOMParser;const node=new Parser().parseFromString(renderGraphic(document,'art'+(++sequence)),'image/svg+xml').documentElement;if(node.localName!=='svg')throw Error('invalid_graphic');return dom.importNode(node,true)}
  if(document?.version!=='1.0.0'||!Array.isArray(document.layers)||document.layers.length>256)throw Error('invalid_document');
  const {width,height}=document;
  if(![width,height].every(v=>Number.isInteger(v)&&v>=1&&v<=8192))throw Error('invalid_dimension');

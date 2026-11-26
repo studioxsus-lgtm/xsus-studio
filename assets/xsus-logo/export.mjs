@@ -1,9 +1,18 @@
-import {renderVector} from './vector-canvas.mjs?v=creative2';
+import {renderVector} from './vector-canvas.mjs?v=graphic3';
 export async function exportLogo(document,{format='svg',scale=1,quality=.92,background='#ffffff',dom=globalThis.document}={}){
  const svg=renderVector(document,dom);
+ if(format==='svg-text'){const {editableType}=await import('./graphic-v3/font-assets.mjs');await editableType(svg,document)}
  const source=new XMLSerializer().serializeToString(svg);
  const vector=new Blob([source],{type:'image/svg+xml'});
- if(format==='svg')return vector;
+ if(format==='svg'||format==='svg-text')return vector;
+ if(format==='zip'){const {zipBrand}=await import('./graphic-v3/zip.mjs');const enc=new TextEncoder();return new Blob([zipBrand([{name:'artwork.svg',bytes:enc.encode(source)},{name:'editable.json',bytes:enc.encode(JSON.stringify(document))}])],{type:'application/zip'})}
+ if(format==='pdf'){
+  if(document.layers.some(l=>l.strokeAlignment&&l.strokeAlignment!=='center'))throw Error('pdf_stroke_alignment_requires_svg');
+  if(document.layers.some(l=>l.gradient?.stops.some(s=>(s.opacity??1)!==1)))throw Error('pdf_gradient_opacity_requires_svg');
+  const {pdf}=await import('./graphic-v3/pdf-tools.mjs');
+  const host=dom.createElement('div');host.style.cssText='position:fixed;left:-20000px;top:0';host.append(svg);dom.body.append(host);
+  try{return await pdf(svg,document.width,document.height)}finally{host.remove()}
+ }
  if(format==='json')return new Blob([JSON.stringify(document,null,2)],{type:'application/json'});
  const mime={png:'image/png',jpeg:'image/jpeg',webp:'image/webp'}[format];
  if(!mime||!['png','jpeg','webp'].includes(format))throw Error('unsupported_format');
@@ -27,6 +36,6 @@ export async function downloadLogo(document,{name='logo',format='svg',...options
  const blob=await exportLogo(document,{format,...options});
  const safe=String(name).normalize('NFKC').replace(/[^\p{L}\p{N}_-]+/gu,'-').slice(0,80)||'logo';
  const url=URL.createObjectURL(blob),a=globalThis.document.createElement('a');
- try{a.href=url;a.download=safe+'.'+(format==='jpeg'?'jpg':format);globalThis.document.body.append(a);a.click()}
+ try{a.href=url;a.download=safe+'.'+(format==='jpeg'?'jpg':format==='svg-text'?'svg':format);globalThis.document.body.append(a);a.click()}
  finally{a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
 }

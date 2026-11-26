@@ -1,5 +1,5 @@
-import {renderVector} from './vector-canvas.mjs?v=creative2';
-import {editProperties,transformLayer} from './properties.mjs?v=creative2';
+import {renderVector} from './vector-canvas.mjs?v=graphic3';
+import {editProperties,transformLayer} from './properties.mjs?v=graphic3';
 export function createLayerEditor(initial,{dom=globalThis.document,historyLimit=50}={}){
  if(!Number.isInteger(historyLimit)||historyLimit<1||historyLimit>100)throw Error('invalid_history_limit');
  const clone=structuredClone;
@@ -10,6 +10,7 @@ export function createLayerEditor(initial,{dom=globalThis.document,historyLimit=
  const index=id=>{const i=current.layers.findIndex(l=>l.id===id);if(i<0)throw Error('layer_not_found');return i};
  return Object.freeze({
  state:snapshot,
+ replaceDocument:(document,selection)=>commit(document,selection),
  select(id){if(id!==null)index(id);selected=id;return snapshot()},
  add(layer){const next=clone(current);next.layers.push(clone(layer));return commit(next,layer.id)},
  remove(id){const next=clone(current);next.layers.splice(index(id),1);return commit(next)},

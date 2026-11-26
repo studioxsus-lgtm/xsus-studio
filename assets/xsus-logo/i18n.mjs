@@ -1,5 +1,11 @@
 const messages={
   "en": {
+    "pdf_stroke_alignment_requires_svg": "Use SVG to preserve inside or outside strokes.",
+    "pdf_gradient_opacity_requires_svg": "Use SVG to preserve transparent gradient stops.",
+    "font_unavailable": "The selected font could not be loaded.",
+    "closed_stroke_required": "Select a closed contour.",
+    "graphic_budget": "This gallery exceeds the project size limit. Choose fewer concepts.",
+
     "creativeMode": "Generator",
     "classic": "Classic",
     "conceptCount": "Concepts",
@@ -79,6 +85,12 @@ const messages={
     "ready": "Ready"
   },
   "fr": {
+    "pdf_stroke_alignment_requires_svg": "Utilisez SVG pour conserver la position du contour.",
+    "pdf_gradient_opacity_requires_svg": "Utilisez SVG pour conserver les dégradés transparents.",
+    "font_unavailable": "La police choisie est indisponible.",
+    "closed_stroke_required": "Sélectionnez un contour fermé.",
+    "graphic_budget": "Cette galerie dépasse la limite du projet. Réduisez le nombre de concepts.",
+
     "creativeMode": "Générateur",
     "classic": "Classique",
     "conceptCount": "Concepts",
@@ -158,6 +170,12 @@ const messages={
     "ready": "Prêt"
   },
   "sq": {
+    "pdf_stroke_alignment_requires_svg": "Zgjidh SVG për të ruajtur vijat brenda ose jashtë konturit.",
+    "pdf_gradient_opacity_requires_svg": "Zgjidh SVG për të ruajtur transparencën e gradientit.",
+    "font_unavailable": "Fonti i zgjedhur nuk u ngarkua.",
+    "closed_stroke_required": "Zgjidh një kontur të mbyllur.",
+    "graphic_budget": "Galeria tejkalon kufirin e projektit. Zgjidh më pak koncepte.",
+
     "creativeMode": "Motori",
     "classic": "Klasik",
     "conceptCount": "Konceptet",

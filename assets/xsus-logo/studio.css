@@ -48,3 +48,6 @@
 
 .logo-studio .creative-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr));gap:10px}
 .logo-studio #logo-regen{margin-top:10px}
+.graphic-options{border:1px solid #44374c;border-radius:.6rem;margin:.7rem 0;padding:.65rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr));gap:.5rem;align-items:end;min-width:0}
+.graphic-options[hidden]{display:none}.graphic-options label{display:grid;gap:.15rem;min-width:0}.graphic-options select,.graphic-options input{width:100%;min-width:0}.studio-canvas{overflow:auto}.studio-canvas.graphic-grid{background-image:linear-gradient(#8884 1px,transparent 1px),linear-gradient(90deg,#8884 1px,transparent 1px);background-size:16px 16px}
+.graphic-section>summary{cursor:pointer;font-weight:600;padding:.55rem .15rem}.graphic-section[hidden]{display:none}
