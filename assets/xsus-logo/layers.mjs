@@ -1,5 +1,5 @@
-import {renderVector} from './vector-canvas.mjs';
-import {editProperties,transformLayer} from './properties.mjs';
+import {renderVector} from './vector-canvas.mjs?v=creative2';
+import {editProperties,transformLayer} from './properties.mjs?v=creative2';
 export function createLayerEditor(initial,{dom=globalThis.document,historyLimit=50}={}){
  if(!Number.isInteger(historyLimit)||historyLimit<1||historyLimit>100)throw Error('invalid_history_limit');
  const clone=structuredClone;

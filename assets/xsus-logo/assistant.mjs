@@ -5,18 +5,29 @@ export function createBrandAssistant({client,onChange=()=>{}}={}){
  const publish=patch=>{state={...state,...patch};onChange(snapshot());return snapshot()};
  return Object.freeze({
  state:snapshot,
- async generate({prompt,language='en'}={}){
+ async generate({prompt,language='en',creative}={}){
  if(typeof prompt!=='string'||!prompt.trim()||prompt.length>4000||!['en','fr','sq'].includes(language))throw new TypeError('Invalid brief');
  controller?.abort();const current=++sequence;controller=new AbortController();
  publish({status:'generating',error:null,reasons:[]});
  try{
- const result=await client.generate({prompt:prompt.trim(),language,signal:controller.signal});
+ const result=await client.generate({prompt:prompt.trim(),language,creative,signal:controller.signal});
  if(current!==sequence)return snapshot();
  if(result.status==='review_required')return publish({status:'review_required',reasons:Array.isArray(result.reasons)?result.reasons.filter(x=>typeof x==='string').slice(0,16):[]});
  const variants=result.kit?.variants;
  if(result.status!=='generated'||!Array.isArray(variants)||!variants.length||variants.length>16||variants.some(v=>!v.document||v.document.version!=='1.0.0'||!Array.isArray(v.document.layers)))throw Error('invalid_response');
- return publish({status:'generated',variants:variants.map(v=>({symbol:String(v.symbol??''),document:{...structuredClone(v.document),layers:v.document.layers.map(l=>l.type==='polygon'?{...structuredClone(l),points:l.points.map(p=>Array.isArray(p)?{x:p[0],y:p[1]}:p)}:structuredClone(l))}})),selected:0});
+ const incoming=variants.map(v=>({symbol:String(v.symbol??''),document:{...structuredClone(v.document),layers:v.document.layers.map(l=>l.type==='polygon'?{...structuredClone(l),points:l.points.map(p=>Array.isArray(p)?{x:p[0],y:p[1]}:p)}:structuredClone(l))}}));
+ if(creative?.slot!==undefined){
+  if(incoming.length!==1||incoming[0].document.creative?.slot!==creative.slot)throw Error('invalid_response');
+  const updated=[...state.variants],pos=updated.findIndex(v=>v.document.creative?.slot===creative.slot);
+  const at=pos<0?updated.length:pos;
+  updated[at]=incoming[0];return publish({status:'generated',variants:updated,selected:at});
+ }
+ return publish({status:'generated',variants:incoming,selected:0});
  }catch(error){if(current!==sequence)return snapshot();const known=['authentication_required','rate_limit','generation_unavailable','generation_failed','invalid_response'];return publish({status:'error',error:known.includes(error?.message)||/^(HTTP_[1-5][0-9]{2}|NETWORK_OR_CORS|REQUEST_TIMEOUT|invalid_[a-z_]+|unsupported_layer)$/.test(error?.message??'')?error.message:'ASSISTANT_ERROR'})}
+ },
+ restore(variants,selected){
+  if(!Array.isArray(variants)||variants.length>12||!Number.isInteger(selected)||!variants[selected])throw Error('invalid_document');
+  return publish({status:'generated',variants:structuredClone(variants),selected,error:null,reasons:[]});
  },
  select(index){if(!Number.isInteger(index)||index<0||index>=state.variants.length)throw RangeError('Invalid variant');return publish({selected:index})},
  document(){return state.selected===null?null:structuredClone(state.variants[state.selected].document)},

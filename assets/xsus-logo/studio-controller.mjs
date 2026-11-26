@@ -1,10 +1,10 @@
-import {mountStudioView} from './studio-view.mjs?v=1000';
-import {createWorkspace} from './workspace.mjs?v=20261125-6';
-import {mountVector,renderVector} from './vector-canvas.mjs';
-import {applyLanguage,translate} from './i18n.mjs?v=1000';
+import {mountStudioView} from './studio-view.mjs?v=creative2';
+import {createWorkspace} from './workspace.mjs?v=creative2';
+import {mountVector,renderVector} from './vector-canvas.mjs?v=creative2';
+import {applyLanguage,translate} from './i18n.mjs?v=creative2';
 export function mountStudio(root,supabase){
  const dom=root.ownerDocument,{get}=mountStudioView(root);
- root.setAttribute('data-build','20261125-9');const build=dom.createElement('small');build.textContent='Build 20261125-9';root.append(build);
+ root.setAttribute('data-build','creative2');const build=dom.createElement('small');build.textContent='Build creative2';root.append(build);
  const language=dom.getElementById('language-select');
  const compact=dom.defaultView.matchMedia('(max-width:700px)');
  const fitProjects=()=>{get('projects').open=!compact.matches};
@@ -20,6 +20,10 @@ export function mountStudio(root,supabase){
  function render(s){
  const e=s.editor,l=e?.document.layers.find(x=>x.id===e.selected),busy=s.busy;
  if((s.project?.id??null)!==lastProject){lastProject=s.project?.id??null;get('name').value=s.project?.name??''}
+ get('mode').disabled=busy;
+ for(const id of ['count','seed'])get(id).disabled=busy||get('mode').value==='classic';
+ get('regen').hidden=e?.document.creative?.version!=='2.0.0';
+ get('regen').disabled=busy||get('regen').hidden;
  for(const id of ['new','generate','prompt','symbol','name'])get(id).disabled=busy;
  get('cancel').disabled=s.assistant.status!=='generating';
  for(const id of ['save','add','format','export'])get(id).disabled=busy||!e;
@@ -34,7 +38,7 @@ export function mountStudio(root,supabase){
  if(e){const svg=mountVector(get('canvas'),e.document);svg.addEventListener('click',event=>{const id=event.target.getAttribute('data-layer-id');if(id&&!busy)run(()=>{workspace.edit('select',id);get(event.target.localName==='text'?'text':'fill').focus()})})}else get('canvas').textContent=t('empty');
  get('layers').replaceChildren(...(e?.document.layers??[]).map((layer,i)=>{const name=layer.type==='text'?(layer.id==='brand-name'?t('brandName'):t('text'))+' · '+layer.text:t('symbol')+' '+(i+1);const b=button(name,()=>workspace.edit('select',layer.id));b.disabled=busy;b.setAttribute('aria-pressed',String(layer.id===e.selected));return b}));
  get('variants').replaceChildren(...s.assistant.variants.map((v,i)=>{const b=button(String(i+1),()=>{if(i===s.assistant.selected)return;const dirty=workspace.state().dirty;if(dirty&&!dom.defaultView.confirm(t('unsaved')))return;workspace.variant(i,{discardChanges:dirty})});b.disabled=busy;b.setAttribute('aria-pressed',String(i===s.assistant.selected));b.append(renderVector(v.document,dom));return b}));
- if(s.assistant.status==='generating')status('generating');else if(s.assistant.status==='error')status(s.assistant.error);else if(s.assistant.status==='review_required')status(s.assistant.reasons.includes('missing_brand_name')?'missing_brand_name':'review_required');else if(notice==='generating'||!notice)status('ready');
+ if(s.assistant.status==='generating')status('generating');else if(s.assistant.status==='error')status(s.assistant.error);else if(s.assistant.status==='review_required')status(s.assistant.reasons.find(k=>['missing_brand_name','unsupported_exclusion','creative_constraints','symbol_budget','low_palette_contrast'].includes(k))??'review_required');else if(notice==='generating'||!notice)status('ready');
  }
  workspace=createWorkspace({supabase,dom,onChange:render});
  const bind=(id,fn)=>get(id).addEventListener('click',()=>run(fn));
@@ -49,14 +53,24 @@ export function mountStudio(root,supabase){
   }
   const brief=symbol?prompt+'\n[XSUS symbol: '+symbol+']':prompt;
   if(brief.length>4000){status('catalogLength');return}
+  const useCreative=get('mode').value==='creative';
+  const seed=get('seed'),count=get('count').value;
+  if(useCreative&&!seed.reportValidity())return;
+  const creative=useCreative?{version:'2.0.0',...(count?{count:Number(count)}:{}),...(seed.value!==''?{seed:Number(seed.value)}:{})}:undefined;
   if(!discard())return;
   const previous=workspace.state().project;
   const requestedName=previous?'':get('name').value.trim();
-  const state=await workspace.generate({prompt:brief,language:lang});
+  const state=await workspace.generate({prompt:brief,language:lang,creative});
   if(state.assistant.status!=='generated')return;
-  const brand=state.editor.document.layers.find(layer=>layer.id==='brand-name')?.text;
+  const brand=state.editor.document.layers.find(layer=>layer.id==='brand-name')?.text??state.editor.document.creative?.name;
   get('name').value=requestedName||brand||'XSUS Logo';
   await saveProject();
+ });
+ get('mode').addEventListener('change',()=>render(workspace.state()));
+ bind('regen',async()=>{
+  if(workspace.state().dirty&&!dom.defaultView.confirm(t('unsaved')))return;
+  const state=await workspace.regenerate();
+  if(state.assistant.status==='generated')await saveProject();
  });
  bind('cancel',()=>workspace.cancel());
  async function saveProject(){await workspace.save(get('name').value);status('saved');await refresh()}

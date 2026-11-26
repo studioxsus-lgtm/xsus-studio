@@ -19,7 +19,8 @@ export function renderVector(document,dom=globalThis.document){
  el=node('polygon',{points:layer.points.map(p=>number(p.x)+','+number(p.y)).join(' '),fill});break;
  case 'text':
  if(typeof layer.text!=='string'||layer.text.length>160||positive(layer.fontSize)>1024)throw Error('invalid_text');
- el=node('text',{x:number(layer.x),y:number(layer.y),'font-size':layer.fontSize,'font-family':'sans-serif','text-anchor':'middle',fill});el.textContent=layer.text;break;
+ if(layer.fontFamily!==undefined&&!['serif','sans-serif','monospace'].includes(layer.fontFamily)||layer.fontWeight!==undefined&&![400,500,600,700].includes(layer.fontWeight))throw Error('invalid_text');
+ el=node('text',{x:number(layer.x),y:number(layer.y),'font-size':layer.fontSize,'font-family':layer.fontFamily??'sans-serif',...(layer.fontWeight?{'font-weight':layer.fontWeight}:{}),'text-anchor':'middle',fill});el.textContent=layer.text;break;
  case 'path':{
  const lengths={M:3,L:3,Q:5,C:7,Z:1};
  if(!Array.isArray(layer.commands)||!layer.commands.length||layer.commands.length>512)throw Error('invalid_path');

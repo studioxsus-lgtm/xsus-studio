@@ -1,4 +1,4 @@
-import {renderVector} from './vector-canvas.mjs';
+import {renderVector} from './vector-canvas.mjs?v=creative2';
 export async function exportLogo(document,{format='svg',scale=1,quality=.92,background='#ffffff',dom=globalThis.document}={}){
  const svg=renderVector(document,dom);
  const source=new XMLSerializer().serializeToString(svg);

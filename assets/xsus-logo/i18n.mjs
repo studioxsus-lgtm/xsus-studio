@@ -1,5 +1,16 @@
 const messages={
   "en": {
+    "creativeMode": "Generator",
+    "classic": "Classic",
+    "conceptCount": "Concepts",
+    "fromBrief": "From description",
+    "variationSeed": "Seed (optional)",
+    "regenConcept": "Regenerate selected concept",
+    "unsupported_exclusion": "Clarify the symbol to exclude.",
+    "creative_constraints": "Try fewer concepts or simplify the design.",
+    "symbol_budget": "Use up to five subjects per mark.",
+    "low_palette_contrast": "Choose colors with more contrast.",
+
     "catalogSymbol": "Catalog symbol (optional)",
     "catalogHint": "Search 1,000 symbols, e.g. rocket",
     "catalogInvalid": "Choose a symbol from the list.",
@@ -68,6 +79,17 @@ const messages={
     "ready": "Ready"
   },
   "fr": {
+    "creativeMode": "Générateur",
+    "classic": "Classique",
+    "conceptCount": "Concepts",
+    "fromBrief": "Selon la description",
+    "variationSeed": "Graine (facultatif)",
+    "regenConcept": "Régénérer le concept sélectionné",
+    "unsupported_exclusion": "Précisez le motif à exclure.",
+    "creative_constraints": "Réduisez le nombre de concepts ou simplifiez le dessin.",
+    "symbol_budget": "Utilisez au plus cinq motifs par symbole.",
+    "low_palette_contrast": "Choisissez des couleurs plus contrastées.",
+
     "catalogSymbol": "Symbole du catalogue (facultatif)",
     "catalogHint": "Rechercher parmi 1 000 symboles, par ex. rocket",
     "catalogInvalid": "Choisissez un symbole dans la liste.",
@@ -136,6 +158,17 @@ const messages={
     "ready": "Prêt"
   },
   "sq": {
+    "creativeMode": "Motori",
+    "classic": "Klasik",
+    "conceptCount": "Konceptet",
+    "fromBrief": "Nga përshkrimi",
+    "variationSeed": "Seed (opsional)",
+    "regenConcept": "Rigjenero konceptin e zgjedhur",
+    "unsupported_exclusion": "Qartëso simbolin që dëshiron të përjashtosh.",
+    "creative_constraints": "Provo më pak koncepte ose thjeshto kompozimin.",
+    "symbol_budget": "Përdor deri në pesë motive për simbol.",
+    "low_palette_contrast": "Zgjidh ngjyra me kontrast më të lartë.",
+
     "catalogSymbol": "Simboli nga katalogu (opsional)",
     "catalogHint": "Kërko ndër 1 000 simbole, p.sh. rocket",
     "catalogInvalid": "Zgjidh një simbol nga lista.",

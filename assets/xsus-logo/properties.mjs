@@ -1,4 +1,4 @@
-import {renderVector} from './vector-canvas.mjs';
+import {renderVector} from './vector-canvas.mjs?v=creative2';
 export function editProperties(document,id,patch,dom=globalThis.document){
  renderVector(document,dom);
  const next=structuredClone(document),layer=next.layers.find(l=>l.id===id);

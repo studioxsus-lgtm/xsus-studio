@@ -19,13 +19,18 @@ export function mountStudioView(root){
  ]);
  const editor=panel('studio-editor',[
   label('brief','logo-prompt'),node('textarea',{id:'logo-prompt',maxlength:'4000','data-logo-placeholder':'example',disabled:''}),
+  node('div',{class:'creative-controls'},[
+   node('div',{},[label('creativeMode','logo-mode'),node('select',{id:'logo-mode'},[node('option',{value:'creative'},['Creative V2']),node('option',{value:'classic','data-logo-i18n':'classic'})])]),
+   node('div',{},[label('conceptCount','logo-count'),node('select',{id:'logo-count'},[node('option',{value:'','data-logo-i18n':'fromBrief'}),...['3','6','9','12'].map(value=>node('option',{value},[value]))])]),
+   node('div',{},[label('variationSeed','logo-seed'),node('input',{id:'logo-seed',type:'number',min:'0',max:'2147483647',step:'1'})])
+  ]),
   label('catalogSymbol','logo-symbol'),node('input',{id:'logo-symbol',list:'logo-symbol-list',autocomplete:'off',maxlength:'80','data-logo-placeholder':'catalogHint'}),
   node('datalist',{id:'logo-symbol-list'},symbolNames.map(value=>node('option',{value}))),
   node('div',{class:'studio-toolbar'},[button('generate','logo-generate'),button('cancel','logo-cancel')]),
   node('p',{id:'logo-status',class:'studio-status',role:'status','aria-live':'polite'}),
   heading('canvas'),node('div',{class:'studio-toolbar'},[button('undo','logo-undo'),button('redo','logo-redo')]),
   backgrounds,node('div',{id:'logo-canvas',class:'studio-canvas','data-background':'white'}),
-  heading('variants'),node('div',{id:'logo-variants',class:'studio-variants'}),
+  heading('variants'),node('div',{id:'logo-variants',class:'studio-variants'}),button('regenConcept','logo-regen'),
   node('div',{class:'document-actions'},[
    node('div',{},[label('projectName','logo-name'),input('logo-name'),button('save','logo-save')]),
    node('div',{},[label('format','logo-format'),select('logo-format',['svg','png','jpeg','webp','json']),button('export','logo-export')])

@@ -45,3 +45,6 @@
 .logo-studio #logo-layers,.logo-studio #logo-project-list{display:grid;gap:6px;margin:8px 0}
 .logo-studio #logo-layers button,.logo-studio #logo-project-list button{overflow-wrap:anywhere;text-align:left}
 .logo-studio #logo-canvas [data-layer-id]{cursor:pointer}
+
+.logo-studio .creative-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr));gap:10px}
+.logo-studio #logo-regen{margin-top:10px}
