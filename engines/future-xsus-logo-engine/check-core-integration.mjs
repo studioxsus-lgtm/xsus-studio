@@ -75,3 +75,13 @@ for(const [language,prompt] of [
  if(language==='en')assert.deepEqual(res.kit.variants[0].document.creative.subjects,['lion']);
  console.log('PASS: V2 integrated Future interpretation, Hyper approval and vector generation '+language);
 }
+for(const [language,prompt] of [
+ ['en','Create a geometric logo for "ORION" with a lion but without a crown.'],
+ ['sq','Krijo një logo për "DRITA" me një libër dhe llambë.'],
+ ['fr','Logo pour « ALPES » avec montagne, soleil et rivière.']
+]){
+ const result=await engine.generate({language,prompt,requestId:randomUUID(),creative:{version:'2.0.0',count:3,seed:271},graphic:{styles:['luxury','minimalist'],width:800,height:450,finish:'metallic',font:'alegreya'}});
+ assert.equal(result.status,'generated');assert.equal(result.kit.version,'3.0.0');
+ for(const v of result.kit.variants){assert.ok(v.svg.includes('<linearGradient'));assert.ok(v.document.layers.find(l=>l.id==='brand-name').outline.length)}
+ console.log('PASS: V3 through both independent core services '+language);
+}

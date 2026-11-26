@@ -1,3 +1,4 @@
+import {enhance,graphicOptions} from './graphic-v3/professional.mjs';
 import {options,interpret as designIntent,inks} from './creative-v2/intent.mjs';
 import {composeCreative} from './creative-v2/compose.mjs';
 import {requestedTheme} from './thematic-symbols.mjs';
@@ -21,9 +22,10 @@ function quoteExplicitWordmark(prompt) {
 }
 export function createOrchestrator({interpret,plan}={}){
  if(typeof interpret!=='function'||typeof plan!=='function')throw new TypeError('Both core adapters required');
- return Object.freeze({async generate({prompt,language='en',requestId,creative}={}){
+ return Object.freeze({async generate({prompt,language='en',requestId,creative,graphic}={}){
  if(typeof prompt!=='string'||!prompt.trim()||prompt.length>4000||!['en','fr','sq'].includes(language)||typeof requestId!=='string'||! /^[a-zA-Z0-9_-]{1,80}$/.test(requestId))throw new TypeError('Invalid request');
  if(creative!==undefined)options(creative);
+ if(graphic!==undefined){graphicOptions(graphic);if(!creative)throw TypeError('creative_required')}
  const check=r=>{if(!r||r.version!==VERSION||r.requestId!==requestId)throw new Error('Invalid core response');return r};
  const briefText=prompt.replace(/\n\[XSUS symbol: [a-z0-9-]+\]$/,'');
  const result=check(await interpret({version:VERSION,requestId,operation:'logo.interpret',prompt:quoteExplicitWordmark(briefText),language}));
@@ -54,7 +56,9 @@ export function createOrchestrator({interpret,plan}={}){
  }
  if(strategy.review_required!==false)return {version:VERSION,requestId,status:'review_required',reasons:strategy.reasons};
  if(strategy.approved!==true)throw new Error('Plan not approved');
- if(creative)return {version:VERSION,requestId,...await composeCreative({prompt,language,brief:b,strategy,creative})};
+ if(creative){const result=await composeCreative({prompt,language,brief:b,strategy,creative});
+ if(graphic&&result.status==='generated')result.kit=enhance(result.kit,graphic,prompt);
+ return {version:VERSION,requestId,...result};}
  const kit=brandKit({name:b.name,primary:strategy.primary??b.primary??undefined,
    secondary:accent??strategy.secondary??b.secondary??undefined,motif,prompt:briefText,theme,catalogId});
  return {version:VERSION,requestId,status:'generated',kit};

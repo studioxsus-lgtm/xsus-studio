@@ -8,16 +8,16 @@ export function fit(paths,w,h,cx=0,cy=0){
  const b=box(paths),s=Math.min(w/Math.max(.01,b.maxX-b.minX),h/Math.max(.01,b.maxY-b.minY));
  return transform(paths,(x,y)=>[cx+(x-(b.minX+b.maxX)/2)*s,cy+(y-(b.minY+b.maxY)/2)*s]);
 }
-function integerPaths(paths){
+export function integerPaths(paths){
  if(paths.length>256||paths.reduce((n,r)=>n+r.length,0)>4096)throw RangeError('contour_budget');
  return paths.map(r=>r.map(([x,y])=>{
   if(!Number.isFinite(x)||!Number.isFinite(y)||Math.max(Math.abs(x),Math.abs(y))>4096)throw RangeError('invalid_coordinate');
   return {X:Math.round(x*scale),Y:Math.round(y*scale)};
  }));
 }
-const points=paths=>paths.map(r=>C.Clipper.CleanPolygon(r,.28*scale)).filter(r=>r.length>=3).map(r=>r.map(p=>[p.X/scale,p.Y/scale]));
+export const points=paths=>paths.map(r=>C.Clipper.CleanPolygon(r,.28*scale)).filter(r=>r.length>=3).map(r=>r.map(p=>[p.X/scale,p.Y/scale]));
 export function combine(a,b=[],operation='union'){
- const op={union:C.ClipType.ctUnion,cut:C.ClipType.ctDifference,intersect:C.ClipType.ctIntersection}[operation];
+ const op={union:C.ClipType.ctUnion,cut:C.ClipType.ctDifference,intersect:C.ClipType.ctIntersection,xor:C.ClipType.ctXor}[operation];
  if(op===undefined)throw TypeError('invalid_operation');
  const c=new C.Clipper(),out=[];
  c.AddPaths(integerPaths(a),C.PolyType.ptSubject,true);
