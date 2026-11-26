@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createRegistrarGateway,createOperationDraft,operationKey} from '../commerce.mjs';
+const quote={domain:'example.com',operation:'register',years:1,amountMinor:1200,currency:'EUR',id:'q1',expiresAt:Date.now()+600000};
+const gateway=(overrides={})=>createRegistrarGateway({id:'test',quote:async()=>({...quote,...overrides})});
+test('provider quote preserves price in minor units',async()=>assert.equal((await gateway().quote('EXAMPLE.COM','register')).amountMinor,1200));
+test('rejects mismatched domain',async()=>assert.rejects(gateway({domain:'other.com'}).quote('example.com','register')));
+test('rejects mismatched operation',async()=>assert.rejects(gateway({operation:'renew'}).quote('example.com','register')));
+test('rejects expired quote',async()=>assert.rejects(gateway({expiresAt:0}).quote('example.com','register')));
+test('rejects fractional amount',async()=>assert.rejects(gateway({amountMinor:1.5}).quote('example.com','register')));
+test('rejects unsupported operation',async()=>assert.rejects(gateway().quote('example.com','delete')));
+test('rejects invalid years',async()=>assert.rejects(gateway().quote('example.com','register',0)));
+test('draft never executes',async()=>{const d=createOperationDraft(await gateway().quote('example.com','register'),'account');assert.equal(d.executed,false);assert.equal(d.requiresApproval,true);assert.ok(Object.isFrozen(d));});
+test('draft digest binds account and price',async()=>{const q=await gateway().quote('example.com','register');assert.notEqual(createOperationDraft(q,'a').digest,createOperationDraft(q,'b').digest);assert.notEqual(createOperationDraft(q,'a').digest,createOperationDraft({...q,amountMinor:2},'a').digest);});
+test('draft rejects expired quote',async()=>assert.throws(()=>createOperationDraft({...quote,providerId:'test',quoteId:'q1',expiresAt:0},'a')));
+test('idempotency key deterministic and tenant scoped',()=>{assert.equal(operationKey('a','r'),operationKey('a','r'));assert.notEqual(operationKey('a','r'),operationKey('b','r'));});
+test('key tuple has no delimiter collision',()=>assert.notEqual(operationKey('a:b','c'),operationKey('a','b:c')));
