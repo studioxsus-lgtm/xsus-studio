@@ -1,0 +1,16 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createOwnershipChallenge,verifyOwnership} from '../ownership.mjs';
+import {planWebsiteDNS} from '../dns-plan.mjs';
+test('challenge tokens unique',()=>assert.notEqual(createOwnershipChallenge('example.com','a').token,createOwnershipChallenge('example.com','a').token));
+test('ownership checks correct DNS name and token',async()=>{const c=createOwnershipChallenge('example.com','a',0);const r=await verifyOwnership(c,{accountId:'a',domain:'example.com',now:1,resolver:{resolveTxt:async n=>{assert.equal(n,c.recordName);return [[c.token.slice(0,20),c.token.slice(20)]];}}});assert.equal(r.status,'verified');});
+test('wrong account rejected before DNS',async()=>{const c=createOwnershipChallenge('example.com','a');assert.equal((await verifyOwnership(c,{accountId:'b',domain:'example.com'})).status,'rejected');});
+test('wrong domain rejected',async()=>{const c=createOwnershipChallenge('example.com','a');assert.equal((await verifyOwnership(c,{accountId:'a',domain:'other.com'})).status,'rejected');});
+test('expired challenge rejected',async()=>{const c=createOwnershipChallenge('example.com','a',0);assert.equal((await verifyOwnership(c,{accountId:'a',domain:'example.com',now:900000})).status,'rejected');});
+test('wrong token not verified',async()=>{const c=createOwnershipChallenge('example.com','a');assert.equal((await verifyOwnership(c,{accountId:'a',domain:'example.com',resolver:{resolveTxt:async()=>[['wrong']]}})).status,'not_verified');});
+test('DNS outage unknown',async()=>{const c=createOwnershipChallenge('example.com','a');assert.equal((await verifyOwnership(c,{accountId:'a',domain:'example.com',resolver:{resolveTxt:async()=>{throw Error('offline')}}})).status,'unknown');});
+test('A record draft only',()=>{const p=planWebsiteDNS('example.com',{type:'A',value:'192.0.2.1'});assert.equal(p.executed,false);assert.equal(p.requiresApproval,true);});
+test('CNAME uses www not apex',()=>assert.equal(planWebsiteDNS('example.com',{type:'CNAME',value:'hosting.example.net'}).operations[0].record.name,'www.example.com'));
+test('rejects CNAME self loop',()=>assert.throws(()=>planWebsiteDNS('example.com',{type:'CNAME',value:'www.example.com'})));
+test('rejects wrong IP family',()=>assert.throws(()=>planWebsiteDNS('example.com',{type:'AAAA',value:'192.0.2.1'})));
+test('rejects invalid TTL',()=>assert.throws(()=>planWebsiteDNS('example.com',{type:'A',value:'192.0.2.1'},{ttl:0})));
