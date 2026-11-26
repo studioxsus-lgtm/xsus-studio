@@ -37,3 +37,11 @@ const roaster=await engine.generate({language:'en',requestId:randomUUID(),
 assert.equal(roaster.status,'generated');
 assert.ok(roaster.kit.variants.some(v=>v.symbol==='espresso-cup' && v.svg.includes('<path')));
 console.log('PASS: editable coffee concepts through both core services');
+
+for(const language of ['sq','en']){
+ const velora=await engine.generate({language,requestId:randomUUID(),prompt:"Krijo tri variante logoje për markën e kafesë \"VELORA\". Përdor të zezë dhe të bardhë. Vendose emrin poshtë simbolit dhe ruaji simbolin dhe tekstin në shtresa të veçanta."});
+ assert.equal(velora.status,'generated');
+ assert.equal(velora.kit.name,'VELORA');
+ assert.deepEqual(velora.kit.variants.map(v=>v.symbol),['split-bean','espresso-cup','pour-over']);
+ console.log('PASS: Albanian VELORA coffee brief with UI language '+language);
+}

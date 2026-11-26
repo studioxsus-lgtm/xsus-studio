@@ -3,12 +3,12 @@
 const families = [
   ['botanical', /(?<![\p{L}\p{N}])(?:leaf|leaves|botanical|botanique|feuille|gjethe|gjethja|botanik\w*)(?![\p{L}\p{N}])/iu],
   ['mountain', /(?<![\p{L}\p{N}])(?:mountains?|alpine?|summit|montagnes?|sommet|mal|mali|male|malet|malor\w*)(?![\p{L}\p{N}])/iu],
-  ['coffee', /(?<![\p{L}\p{N}])(?:coffee|espresso|café|cafe|kafe|kafeje|kafene|kafeneje)(?![\p{L}\p{N}])/iu]
+  ['coffee', /(?<![\p{L}\p{N}])(?:coffee|espresso|caf[ée]s?|kafe(?:ja|je|n[ëe]|s[ëe])?|kafene(?:ja|je|n[ëe]|s[ëe])?)(?![\p{L}\p{N}])/iu]
 ];
 
 export function requestedTheme(prompt, name) {
   // The brand may itself be "Mountain" even if the requested mark is a leaf.
-  const description = prompt.split(name).join(' ');
+  const description = prompt.split(name).join(' ').normalize('NFC');
   return families.find(([,pattern]) => pattern.test(description))?.[0];
 }
 

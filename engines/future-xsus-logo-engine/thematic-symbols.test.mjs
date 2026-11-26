@@ -17,3 +17,9 @@ test('long names fit and the brand name alone does not pick an industry',()=>{
  assert.equal(requestedTheme('Design a leaf for "Mountain"','Mountain'),'botanical');
  assert.equal(requestedTheme('Brand "Coffee"','Coffee'),undefined);
 });
+
+test('Albanian coffee inflections match whole words',()=>{
+ for(const word of ['kafesë','kafese','kafenë','kafeja','kafenesë','kafesë'.normalize('NFD')])
+   assert.equal(requestedTheme('Logo e '+word+' "VELORA"','VELORA'),'coffee');
+ assert.equal(requestedTheme('Logo për kafshët "VELORA"','VELORA'),undefined);
+});
