@@ -63,3 +63,15 @@ const catalogLogo=await engine.generate({language:'sq',requestId:randomUUID(),pr
 assert.equal(catalogLogo.status,'generated');
 assert.equal(catalogLogo.kit.variants[0].symbol,'catalog-rocket-1');
 console.log('PASS: Albanian rocket brief through both cores');
+for(const [language,prompt] of [
+ ['en','Create a luxury logo for "ORION" with a lion but without a crown, using black and gold.'],
+ ['sq','Krijo një logo për "DRITA" me një libër dhe llambë. Përdor blu dhe të bardhë.'],
+ ['fr','Logo pour « ALPES » avec montagne, soleil et rivière en bleu et blanc.']
+]){
+ const res=await engine.generate({language,prompt,requestId:randomUUID(),creative:{version:'2.0.0',count:6,seed:724}});
+ assert.equal(res.status,'generated');assert.equal(res.kit.version,'2.0.0');
+ assert.equal(res.kit.variants.length,6);
+ for(const v of res.kit.variants){assert.equal(v.document.creative.seed,724);assert.match(v.svg,/<path /)}
+ if(language==='en')assert.deepEqual(res.kit.variants[0].document.creative.subjects,['lion']);
+ console.log('PASS: V2 integrated Future interpretation, Hyper approval and vector generation '+language);
+}

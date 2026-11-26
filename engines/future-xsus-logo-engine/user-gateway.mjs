@@ -1,3 +1,4 @@
+import {options} from './creative-v2/intent.mjs';
 import {randomUUID} from 'node:crypto';
 export function createUserGateway({supabaseUrl,publishableKey,orchestrator,fetchImpl=fetch,clock=Date.now}={}){
  const url=new URL(supabaseUrl);
@@ -6,7 +7,8 @@ export function createUserGateway({supabaseUrl,publishableKey,orchestrator,fetch
  const quotas=new Map();let active=0;
  return async function generate({authorization,input}){
  if(typeof authorization!=='string'||!/^Bearer [A-Za-z0-9._-]{20,8192}$/.test(authorization))return {status:401,body:{error:'unauthorized'}};
- if(!input||typeof input.prompt!=='string'||!input.prompt.trim()||input.prompt.length>4000||!['en','fr','sq'].includes(input.language)||Object.keys(input).some(k=>!['prompt','language'].includes(k)))return {status:400,body:{error:'invalid_request'}};
+ if(!input||typeof input.prompt!=='string'||!input.prompt.trim()||input.prompt.length>4000||!['en','fr','sq'].includes(input.language)||Object.keys(input).some(k=>!['prompt','language','creative'].includes(k)))return {status:400,body:{error:'invalid_request'}};
+ if(input.creative!==undefined){try{options(input.creative)}catch{return {status:400,body:{error:'invalid_creative_options'}}}}
  if(active>=8)return {status:429,body:{error:'busy'}};
  active++;
  try{
@@ -19,7 +21,7 @@ export function createUserGateway({supabaseUrl,publishableKey,orchestrator,fetch
  if(!q){if(quotas.size>=10000)return {status:429,body:{error:'busy'}};q={count:0,until:now+60000};quotas.set(user.id,q)}
  if(q.count>=5)return {status:429,body:{error:'rate_limit'}};
  q.count++;
- const result=await orchestrator.generate({prompt:input.prompt,language:input.language,requestId:randomUUID()});
+ const result=await orchestrator.generate({prompt:input.prompt,language:input.language,requestId:randomUUID(),...(input.creative?{creative:input.creative}:{})});
  return {status:200,body:result};
  }catch{return {status:503,body:{error:'generation_unavailable'}}}finally{active--}
  };
