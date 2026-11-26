@@ -1,0 +1,16 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {analyzePortfolio} from '../portfolio.mjs';
+import {createPostgresOperationStore} from '../postgres.mjs';
+const now=Date.parse('2027-01-01');
+const entry={accountId:'a',domain:'example.com',events:[{action:'expiration',date:'2027-01-10'}]};
+test('renewal review alert',()=>assert.equal(analyzePortfolio('a',[entry],{now}).alerts[0].code,'RENEWAL_REVIEW'));
+test('missing expiry remains unknown',()=>assert.equal(analyzePortfolio('a',[{...entry,events:[]}],{now}).alerts[0].code,'EXPIRATION_UNKNOWN'));
+test('cross account rejected',()=>assert.throws(()=>analyzePortfolio('b',[entry],{now})));
+test('normalized duplicates rejected',()=>assert.throws(()=>analyzePortfolio('a',[entry,{...entry,domain:'EXAMPLE.COM.'}],{now})));
+test('portfolio never auto renews',()=>assert.equal(analyzePortfolio('a',[entry],{now}).automaticRenewal,false));
+test('previous verification is not current proof',()=>assert.equal(analyzePortfolio('a',[{...entry,controlStatus:'verified'}],{now}).domains[0].controlStatus,'previously_verified'));
+test('postgres reads use scoped parameters',async()=>{const store=createPostgresOperationStore({query:async(sql,args)=>{assert.match(sql,/account_id=\$1 AND operation_key=\$2/);assert.deepEqual(args,['a','k']);return {rows:[]};}});assert.equal(await store.get('a','k'),null);});
+test('postgres CAS reports conflict',async()=>{const store=createPostgresOperationStore({query:async(sql,args)=>{assert.match(sql,/revision=\$3/);assert.equal(args[2],0);return {rowCount:0};}});assert.equal(await store.compareAndSet('a','k',0,{accountId:'a',key:'k',revision:1}),false);});
+test('postgres CAS rejects scope mismatch before query',async()=>{const store=createPostgresOperationStore({query:async()=>assert.fail('unexpected query')});await assert.rejects(store.compareAndSet('a','k',0,{accountId:'b',key:'k',revision:1}));});
+test('insert uses conflict protection and reads persisted row',async()=>{let calls=0;const store=createPostgresOperationStore({query:async(sql,args)=>{calls++;assert.equal(args[0],'a');assert.equal(args[1],'k');if(calls===1){assert.match(sql,/ON CONFLICT/);return {rowCount:0};}return {rows:[{payload:{id:'original'}}]};}});assert.equal((await store.insertOnce('a','k',{id:'new'})).id,'original');});
