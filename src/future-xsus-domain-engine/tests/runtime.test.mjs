@@ -1,0 +1,16 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createDomainRuntime} from '../runtime.mjs';
+const req={version:'1.0.0',operation:'domain.dns',payload:{domain:'EXAMPLE.COM'}},ctx={accountId:'a'};
+const make=opts=>createDomainRuntime({handlers:{'domain.dns':async p=>p},...opts});
+test('routes normalized domain',async()=>assert.equal((await make().execute(req,ctx)).data.domain,'example.com'));
+test('missing context rejected',async()=>assert.equal((await make().execute(req)).error.code,'UNAUTHORIZED'));
+test('unsupported contract rejected',async()=>assert.equal((await make().execute({...req,version:'2'},ctx)).error.code,'INVALID_REQUEST'));
+test('unknown operation rejected',async()=>assert.equal((await make().execute({...req,operation:'register'},ctx)).error.code,'INVALID_REQUEST'));
+test('prototype operation rejected',async()=>assert.equal((await make().execute({...req,operation:'constructor'},ctx)).error.code,'INVALID_REQUEST'));
+test('invalid domain rejected',async()=>assert.equal((await make().execute({...req,payload:{domain:'http://example.com'}},ctx)).error.code,'INVALID_PAYLOAD'));
+test('rate limit scoped to account and resets',async()=>{let now=0;const r=make({maxPerMinute:1,clock:()=>now});assert.equal((await r.execute(req,ctx)).ok,true);assert.equal((await r.execute(req,ctx)).error.code,'RATE_LIMITED');assert.equal((await r.execute(req,{accountId:'b'})).ok,true);now=60000;assert.equal((await r.execute(req,ctx)).ok,true);});
+test('account tracking bounded',async()=>{const r=make({maxAccounts:1});await r.execute(req,ctx);assert.equal((await r.execute(req,{accountId:'b'})).error.code,'CAPACITY');});
+test('concurrency bounded and released',async()=>{let release;const r=make({maxConcurrent:1,handlers:{'domain.dns':()=>new Promise(resolve=>{release=resolve;})}});const p=r.execute(req,ctx);assert.equal((await r.execute(req,ctx)).error.code,'BUSY');release({});await p;assert.equal(r.metrics().active,0);});
+test('provider errors sanitized and capacity released',async()=>{const r=make({handlers:{'domain.dns':async()=>{throw Error('secret');}}});assert.equal((await r.execute(req,ctx)).error.code,'OPERATION_FAILED');assert.equal(r.metrics().active,0);assert.equal(r.metrics().failed,1);});
+test('metrics count successful and rejected requests',async()=>{const r=make();await r.execute(req,ctx);await r.execute(req);assert.equal(r.metrics().completed,1);assert.equal(r.metrics().rejected,1);});
