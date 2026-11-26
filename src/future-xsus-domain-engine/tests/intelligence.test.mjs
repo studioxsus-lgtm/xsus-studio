@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {scoreName,suggestNames,expirationInfo} from '../intelligence.mjs';
+import {inspectMailPolicies} from '../mail.mjs';
+test('score is bounded and explainable',()=>{const r=scoreName('brand.com');assert.equal(r.score,100);assert.equal(r.marketValue,null);});
+test('complex names score lower',()=>assert.ok(scoreName('long-brand123.com').score<scoreName('brand.com').score));
+test('suggestions are unique and unverified',()=>{const r=suggestNames(['Café','Studio','Studio']);assert.equal(new Set(r.map(x=>x.domain)).size,r.length);assert.ok(r.every(x=>x.availability==='unknown'));});
+test('invalid limit rejected',()=>assert.throws(()=>suggestNames(['a'],{limit:101})));
+test('expiration upcoming',()=>assert.equal(expirationInfo([{action:'expiration',date:'2027-01-10T00:00:00Z'}],Date.parse('2027-01-01')).days,9));
+test('missing expiration unknown',()=>assert.equal(expirationInfo([]).status,'unknown'));
+test('conflicting expiration unknown',()=>assert.equal(expirationInfo([{action:'expiration',date:'2027-01-01'},{action:'expiration',date:'2028-01-01'}]).status,'unknown'));
+test('mail policy uses correct DNS owner names',async()=>{const resolver={resolveTxt:async n=>n.startsWith('_dmarc.')?[['v=DMARC1; p=reject']]:n.includes('._domainkey.')?[['v=DKIM1; p=abc']]:[['v=spf1 ','-all']]};const r=await inspectMailPolicies('example.com',{resolver,selectors:['mail']});assert.equal(r.dmarc.policy,'reject');assert.equal(r.spf.status,'present');assert.equal(r.dkim[0].status,'present');});
+test('mail timeout unknown',async()=>{const resolver={resolveTxt:async()=>{throw Object.assign(new Error(),{code:'ETIMEOUT'});}};assert.equal((await inspectMailPolicies('example.com',{resolver})).dmarc.status,'unknown');});
+test('reject invalid selector',async()=>assert.rejects(inspectMailPolicies('example.com',{selectors:['a.b']})));
