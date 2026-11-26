@@ -23,3 +23,13 @@ test('Albanian coffee inflections match whole words',()=>{
    assert.equal(requestedTheme('Logo e '+word+' "VELORA"','VELORA'),'coffee');
  assert.equal(requestedTheme('Logo për kafshët "VELORA"','VELORA'),undefined);
 });
+
+for(const [theme,words] of Object.entries({music:['music','muzikës','musique'],marine:['ocean','detit','nautique'],architecture:['architecture','arkitekturës','architectes']})){
+ test(theme+' marks respond to category and brand',()=>{
+  for(const word of words) assert.equal(requestedTheme('Logo "ECHO" '+word,'ECHO'),theme);
+  const variants=name=>brandKit({name,theme}).variants.map(v=>v.symbol);
+  assert.equal(new Set(variants('ECHO')).size,3);
+  assert.deepEqual(variants('ECHO'),variants('ECHO'));
+  assert.notDeepEqual(new Set(variants('ECHO')),new Set(variants('ORBIT')));
+ });
+}

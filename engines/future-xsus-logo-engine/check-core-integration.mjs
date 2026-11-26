@@ -45,3 +45,10 @@ for(const language of ['sq','en']){
  assert.deepEqual(velora.kit.variants.map(v=>v.symbol),['split-bean','espresso-cup','pour-over']);
  console.log('PASS: Albanian VELORA coffee brief with UI language '+language);
 }
+
+const musicBrand=await engine.generate({language:'sq',requestId:randomUUID(),
+ prompt:'Krijo tri variante logoje për studion e muzikës "ARIA". Përdor të zezë dhe të bardhë.'});
+assert.equal(musicBrand.status,'generated');
+assert.equal(musicBrand.kit.variants.length,3);
+assert.ok(musicBrand.kit.variants.every(v=>['beam-notes','sound-bars','record','tuning-fork'].includes(v.symbol)));
+console.log('PASS: Albanian music studio through both core services');
