@@ -1,3 +1,4 @@
+import {symbolNames} from './symbol-names.mjs';
 export function mountStudioView(root){
  const dom=root.ownerDocument;
  const node=(tag,attrs={},children=[])=>{const e=dom.createElement(tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);for(const child of children)e.append(child);return e};
@@ -18,6 +19,8 @@ export function mountStudioView(root){
  ]);
  const editor=panel('studio-editor',[
   label('brief','logo-prompt'),node('textarea',{id:'logo-prompt',maxlength:'4000','data-logo-placeholder':'example',disabled:''}),
+  label('catalogSymbol','logo-symbol'),node('input',{id:'logo-symbol',list:'logo-symbol-list',autocomplete:'off',maxlength:'80','data-logo-placeholder':'catalogHint'}),
+  node('datalist',{id:'logo-symbol-list'},symbolNames.map(value=>node('option',{value}))),
   node('div',{class:'studio-toolbar'},[button('generate','logo-generate'),button('cancel','logo-cancel')]),
   node('p',{id:'logo-status',class:'studio-status',role:'status','aria-live':'polite'}),
   heading('canvas'),node('div',{class:'studio-toolbar'},[button('undo','logo-undo'),button('redo','logo-redo')]),

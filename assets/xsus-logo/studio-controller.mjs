@@ -1,7 +1,7 @@
-import {mountStudioView} from './studio-view.mjs?v=20261125-7';
+import {mountStudioView} from './studio-view.mjs?v=1000';
 import {createWorkspace} from './workspace.mjs?v=20261125-6';
 import {mountVector,renderVector} from './vector-canvas.mjs';
-import {applyLanguage,translate} from './i18n.mjs?v=20261125-8';
+import {applyLanguage,translate} from './i18n.mjs?v=1000';
 export function mountStudio(root,supabase){
  const dom=root.ownerDocument,{get}=mountStudioView(root);
  root.setAttribute('data-build','20261125-9');const build=dom.createElement('small');build.textContent='Build 20261125-9';root.append(build);
@@ -20,7 +20,7 @@ export function mountStudio(root,supabase){
  function render(s){
  const e=s.editor,l=e?.document.layers.find(x=>x.id===e.selected),busy=s.busy;
  if((s.project?.id??null)!==lastProject){lastProject=s.project?.id??null;get('name').value=s.project?.name??''}
- for(const id of ['new','generate','prompt','name'])get(id).disabled=busy;
+ for(const id of ['new','generate','prompt','symbol','name'])get(id).disabled=busy;
  get('cancel').disabled=s.assistant.status!=='generating';
  for(const id of ['save','add','format','export'])get(id).disabled=busy||!e;
  get('delete').disabled=busy||!s.project;
@@ -41,10 +41,18 @@ export function mountStudio(root,supabase){
  const selected=()=>workspace.state().editor.selected;
  bind('new',()=>{if(discard())workspace.newProject()});
  bind('generate',async()=>{
+  const symbol=get('symbol').value.trim().toLowerCase();
+  const prompt=get('prompt').value.trim();
+  if(!prompt){get('prompt').focus();return}
+  if(symbol && !Array.from(get('symbol-list').options).some(option=>option.value===symbol)){
+    status('catalogInvalid');get('symbol').focus();return;
+  }
+  const brief=symbol?prompt+'\n[XSUS symbol: '+symbol+']':prompt;
+  if(brief.length>4000){status('catalogLength');return}
   if(!discard())return;
   const previous=workspace.state().project;
   const requestedName=previous?'':get('name').value.trim();
-  const state=await workspace.generate({prompt:get('prompt').value,language:lang});
+  const state=await workspace.generate({prompt:brief,language:lang});
   if(state.assistant.status!=='generated')return;
   const brand=state.editor.document.layers.find(layer=>layer.id==='brand-name')?.text;
   get('name').value=requestedName||brand||'XSUS Logo';

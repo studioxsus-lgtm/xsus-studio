@@ -1,5 +1,9 @@
 const messages={
   "en": {
+    "catalogSymbol": "Catalog symbol (optional)",
+    "catalogHint": "Search 1,000 symbols, e.g. rocket",
+    "catalogInvalid": "Choose a symbol from the list.",
+    "catalogLength": "Shorten your description to include the symbol.",
     "myProjects": "My projects",
     "example": "A blue and white technology logo for “XSUS”.",
     "white": "White",
@@ -64,6 +68,10 @@ const messages={
     "ready": "Ready"
   },
   "fr": {
+    "catalogSymbol": "Symbole du catalogue (facultatif)",
+    "catalogHint": "Rechercher parmi 1 000 symboles, par ex. rocket",
+    "catalogInvalid": "Choisissez un symbole dans la liste.",
+    "catalogLength": "Raccourcissez la description pour inclure le symbole.",
     "myProjects": "Mes projets",
     "example": "Un logo technologique bleu et blanc pour « XSUS ».",
     "white": "Blanc",
@@ -128,6 +136,10 @@ const messages={
     "ready": "Prêt"
   },
   "sq": {
+    "catalogSymbol": "Simboli nga katalogu (opsional)",
+    "catalogHint": "Kërko ndër 1 000 simbole, p.sh. rocket",
+    "catalogInvalid": "Zgjidh një simbol nga lista.",
+    "catalogLength": "Shkurto përshkrimin për të përfshirë simbolin.",
     "myProjects": "Projektet e mia",
     "example": "Një logo teknologjie blu dhe e bardhë për “XSUS”.",
     "white": "I bardhë",
