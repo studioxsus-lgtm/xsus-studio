@@ -58,3 +58,8 @@ const cameraBrief=await engine.generate({language:'sq',requestId:randomUUID(),
 assert.equal(cameraBrief.status,'generated');
 assert.equal(cameraBrief.kit.variants[0].symbol,'camera');
 console.log('PASS: LUMA photography brief prioritizes requested camera');
+
+const catalogLogo=await engine.generate({language:'sq',requestId:randomUUID(),prompt:'Krijo një logo për "ORBITA" me një raketë. Përdor blu dhe të bardhë.'});
+assert.equal(catalogLogo.status,'generated');
+assert.equal(catalogLogo.kit.variants[0].symbol,'catalog-rocket-1');
+console.log('PASS: Albanian rocket brief through both cores');

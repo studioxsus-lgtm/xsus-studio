@@ -1,3 +1,4 @@
+import {catalogVariants} from './symbol-catalog.mjs';
 import {themedVariants} from './thematic-symbols.mjs';
 import {motifVariants} from './motif.mjs';
 import {conceptVariants} from './concepts.mjs';
@@ -7,7 +8,8 @@ export function brandKit(input){
  const primary=input.primary??'#d946b5', secondary=input.secondary??'#ffffff';
  const typography=typographyPlan(input.name);
  let variants;
- if(input.motif) variants=motifVariants(input.motif,primary,secondary);
+ if(input.catalogId) variants=catalogVariants(input.catalogId,primary,secondary);
+ else if(input.motif) variants=motifVariants(input.motif,primary,secondary);
  else if(input.theme) variants=themedVariants(input.theme,primary,contrast(secondary,'#ffffff')>=3?secondary:primary,input.name,input.prompt);
  else variants=conceptVariants(input);
  return {
