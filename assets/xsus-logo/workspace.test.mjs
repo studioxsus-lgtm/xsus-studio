@@ -1,4 +1,5 @@
-import test from 'node:test';
+// Register with the active runner: root Vitest or standalone Node test.
+const {test}=process.env.VITEST ? await import('vitest') : await import('node:test');
 import assert from 'node:assert/strict';
 import {createWorkspace} from './workspace.mjs';
 import {createLayerEditor} from './layers.mjs';
