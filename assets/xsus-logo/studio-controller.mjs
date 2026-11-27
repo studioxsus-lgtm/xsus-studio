@@ -1,3 +1,4 @@
+import {brandPanel} from './brand-v5/panel.mjs';
 import {intelligencePanel} from './intelligence-v4/panel.mjs?v=4.0.1';
 import {professionalPanel} from './graphic-v3/panel.mjs';
 import {mountStudioView} from './studio-view.mjs?v=graphic3';
@@ -18,6 +19,7 @@ export function mountStudio(root,supabase){
  const button=(label,fn)=>{const b=dom.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>run(fn));return b};
  const run=async fn=>{try{await fn()}catch(e){status(e.message||'generation_failed')}};
  const intelligence=intelligencePanel(root,()=>workspace,run);
+ const brand=brandPanel(root,supabase,()=>workspace.state());
  const pro=professionalPanel(root,get,()=>workspace,run);
  const discard=()=>{if(workspace.state().dirty){if(!dom.defaultView.confirm(t('unsaved')))return false;workspace.discard()}return true};
  const refresh=async({restore=false}={})=>{const rows=await workspace.list();get('project-list').replaceChildren(...rows.map(row=>button(row.name,async()=>{if(!workspace.state().busy&&discard())await workspace.open(row.id)})));const state=workspace.state();if(restore&&rows.length&&!state.busy&&!state.editor&&!get('prompt').value)await workspace.open(rows[0].id)};
@@ -42,7 +44,7 @@ export function mountStudio(root,supabase){
  if(e){const svg=mountVector(get('canvas'),e.document);svg.addEventListener('click',event=>{const id=event.target.closest('[data-layer-id]')?.getAttribute('data-layer-id');if(id&&!busy)run(()=>{workspace.edit('select',id);get(event.target.localName==='text'?'text':'fill').focus()})})}else get('canvas').textContent=t('empty');
  get('layers').replaceChildren(...(e?.document.layers??[]).map((layer,i)=>{const name=layer.type==='text'?(layer.id==='brand-name'?t('brandName'):t('text'))+' · '+layer.text:t('symbol')+' '+(i+1);const b=button(name,()=>workspace.edit('select',layer.id));b.disabled=busy;b.setAttribute('aria-pressed',String(layer.id===e.selected));return b}));
  get('variants').replaceChildren(...s.assistant.variants.map((v,i)=>{const b=button(String(i+1),()=>{if(i===s.assistant.selected)return;const dirty=workspace.state().dirty;if(dirty&&!dom.defaultView.confirm(t('unsaved')))return;workspace.variant(i,{discardChanges:dirty})});b.disabled=busy;b.setAttribute('aria-pressed',String(i===s.assistant.selected));b.append(renderVector(v.document,dom));return b}));
- pro.render(s,lang);intelligence.render(s,lang);
+ pro.render(s,lang);intelligence.render(s,lang);brand.render(s,lang);
  if(s.assistant.status==='generating')status('generating');else if(s.assistant.status==='error')status(s.assistant.error);else if(s.assistant.status==='review_required')status(s.assistant.reasons.find(k=>['graphic_budget','missing_brand_name','unsupported_exclusion','creative_constraints','symbol_budget','low_palette_contrast'].includes(k))??'review_required');else if(notice==='generating'||!notice)status('ready');
  }
  workspace=createWorkspace({supabase,dom,onChange:render});
