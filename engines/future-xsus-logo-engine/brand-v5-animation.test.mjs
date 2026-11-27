@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createTimeline,animationProfiles,animationFrame,frameSVG,frameSequence,validateTimeline} from './brand-v5/animation.mjs';
+const doc={version:'1.0.0',width:256,height:256,layers:[{id:'mark',type:'circle',cx:128,cy:100,r:54,fill:'#112233'},{id:'word',type:'text',text:'AXION',x:128,y:200,fontSize:20,fill:'#112233'}]};
+for(const profile of animationProfiles)test('V5 animation '+profile,()=>{const before=structuredClone(doc),t=createTimeline(doc,{profile});assert.ok(validateTimeline(doc,t));assert.notEqual(frameSVG(doc,t,0),frameSVG(doc,t,3));assert.deepEqual(doc,before);});
+test('V5 interpolation and original opacity',()=>{const d=structuredClone(doc);d.graphic={version:'3.0.0'};d.layers[0].opacity=.5;const t={version:'5.0.0',duration:2,tracks:[{layerId:'mark',property:'opacity',keys:[{time:0,value:0},{time:2,value:1}]}]};assert.equal(animationFrame(d,t,1).layers[0].opacity,.25);});
+test('V5 frame sequence includes endpoint',()=>{const t=createTimeline(doc,{duration:1});const frames=[...frameSequence(doc,t,4)];assert.equal(frames.length,5);assert.equal(frames.at(-1).time,1);assert.match(frames[0].svg,/<svg/);});
+test('V5 rejects invalid timeline and budgets',()=>{const t=createTimeline(doc);assert.throws(()=>animationFrame(doc,t,4));assert.throws(()=>createTimeline(doc,{profile:'bad'}));assert.throws(()=>[...frameSequence(doc,t,100)]);const bad=structuredClone(t);bad.tracks[0].keys[0].value=Infinity;assert.throws(()=>validateTimeline(doc,bad));});
+test('V5 rejects duplicate and unknown tracks',()=>{const t=createTimeline(doc);assert.throws(()=>validateTimeline(doc,{...t,tracks:[...t.tracks,t.tracks[0]]}));assert.throws(()=>validateTimeline(doc,{...t,tracks:[{...t.tracks[0],layerId:'missing'}]}));});
