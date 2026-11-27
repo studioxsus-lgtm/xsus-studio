@@ -1,4 +1,4 @@
-import {intelligencePanel} from './intelligence-v4/panel.mjs';
+import {intelligencePanel} from './intelligence-v4/panel.mjs?v=4.0.1';
 import {professionalPanel} from './graphic-v3/panel.mjs';
 import {mountStudioView} from './studio-view.mjs?v=graphic3';
 import {createWorkspace} from './workspace.mjs?v=intelligent4';

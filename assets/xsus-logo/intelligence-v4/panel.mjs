@@ -1,15 +1,19 @@
 import {renderVector} from '../vector-canvas.mjs?v=graphic3';
-import {signature,compare} from './signature.mjs';
+import {signature,compare} from './signature.mjs?v=4.0.1';
 const words={
  en:['Design assistant','Instruction','Preview','Improve design','Apply','Reject','Before','After','Analyze variants','Size proof','Undo edit','Redo edit','Lock','Unlock','Layer','Color','Typography','History','Restore','Prefer variant','Reject variant','Compare reference (PNG)','Variant','Score','Similar pair','Secondary layer','Surface','Select a saved project','Save current changes','No measured improvement','Scale','Ink coverage','Issues'],
  sq:['Asistenti i dizajnit','Udhëzimi','Parapamje','Përmirëso dizajnin','Prano','Refuzo','Para','Pas','Analizo variantet','Verifiko përmasat','Zhbëj ndryshimin','Ribëj ndryshimin','Kyç','Shkyç','Shtresa','Ngjyra','Tipografia','Historiku','Rikthe','Pëlqe variantin','Refuzo variantin','Krahaso referencën (PNG)','Varianti','Pikë','Çift i ngjashëm','Shtresa e dytë','Sfondi','Zgjidh një projekt të ruajtur','Ruaj ndryshimet aktuale','Pa përmirësim të matur','Përmasa','Mbulimi','Probleme'],
  fr:['Assistant de conception','Instruction','Aperçu','Améliorer le design','Appliquer','Rejeter','Avant','Après','Analyser les variantes','Vérifier les tailles','Annuler la modification','Rétablir la modification','Verrouiller','Déverrouiller','Calque','Couleur','Typographie','Historique','Restaurer','Préférer la variante','Rejeter la variante','Comparer une référence (PNG)','Variante','Score','Paire similaire','Deuxième calque','Fond','Sélectionnez un projet enregistré','Enregistrez les modifications','Aucune amélioration mesurée','Taille','Couverture','Problèmes']};
 const extras={en:['Keep alternative','Save analysis','Clear edit history','Delete saved undo history for this project?','Preview surface','Choose a layer to clarify the instruction.','This layer or property is locked.'],sq:['Ruaj alternativën','Ruaj analizën','Pastro historikun','Ta fshij historikun e ndryshimeve të këtij projekti?','Sipërfaqja','Zgjidh shtresën që dëshiron të ndryshosh.','Kjo shtresë ose veti është e kyçur.'],fr:['Conserver une alternative','Enregistrer l’analyse','Effacer l’historique','Effacer les modifications enregistrées de ce projet ?','Support','Sélectionnez le calque à modifier.','Ce calque ou cette propriété est verrouillé.']};
 for(const lang of Object.keys(words))words[lang].push(...extras[lang]);
+const criteria={
+ en:'Brief match|Brand identity|Industry fit|Style fit|Legibility|Typography|Contrast|Color harmony|Balance|Hierarchy|Geometry|Contours|Negative space|Complexity|Simplicity|Scalability|Diversity|Digital use|Print estimate|Editability',
+ sq:'Përputhja me kërkesën|Identiteti i markës|Industria|Stili|Lexueshmëria|Tipografia|Kontrasti|Harmonia e ngjyrave|Ekuilibri|Hierarkia|Gjeometria|Konturet|Hapësira negative|Kompleksiteti|Thjeshtësia|Shkallëzimi|Diversiteti|Përdorimi digjital|Vlerësimi për shtyp|Editueshmëria',
+ fr:'Adéquation à la demande|Identité de marque|Secteur|Style|Lisibilité|Typographie|Contraste|Harmonie des couleurs|Équilibre|Hiérarchie|Géométrie|Contours|Espace négatif|Complexité|Simplicité|Mise à l’échelle|Diversité|Usage numérique|Estimation imprimée|Éditabilité'};
 export function intelligencePanel(root,getWorkspace,run){
  const dom=root.ownerDocument,el=n=>dom.createElement(n),panel=el('details'),summary=el('summary'),body=el('div');
  panel.className='graphic-section intelligent-panel';panel.append(summary,body);root.append(panel);
- let lang='en',pending,key='',analysis,report=null;
+ let lang='en',pending,key='',projectId=null,analysis,report=null;
  const labels=[],t=i=>(words[lang]??words.en)[i];
  const field=(i,tag)=>{const l=el('label'),s=el('span'),input=el(tag);labels.push([s,i]);l.append(s,input);body.append(l);return input};
  const instruction=field(1,'textarea');instruction.maxLength=800;
@@ -37,7 +41,7 @@ export function intelligencePanel(root,getWorkspace,run){
   for(const v of report.ranking){line(t(22)+' '+(v.index+1)+' · '+t(23)+' '+v.score+'/100');if(v.issues.length)line(t(32)+' · '+v.issues.map(i=>i.code).join(', '));
    const explanation=v.explanation;line([explanation.layout,...explanation.subjects,...explanation.fonts,...explanation.inks].filter(Boolean).join(' · '));
    const details=el('details'),s=el('summary');s.textContent=t(23);details.append(s);
-   for(const d of v.dimensions){const p=el('p');p.textContent=d.key+' · '+(d.score??'—')+' / 100 · '+d.kind+' · ×'+d.weight+' · '+JSON.stringify(d.evidence);details.append(p)}output.append(details);
+   for(const [i,d] of v.dimensions.entries()){const p=el('p');p.textContent=criteria[lang].split('|')[i]+' · '+(d.score??'—')+' / 100 · '+d.kind+' · ×'+d.weight+' · '+JSON.stringify(d.evidence);details.append(p)}output.append(details);
   }for(const pair of report.pairs.filter(p=>p.near))line(t(24)+' '+(pair.first+1)+' / '+(pair.second+1)+' · '+Math.round(pair.structure*100)+'%');
  }
  analysis=btn(8,analyze);btn(9,async()=>{const r=await request('scales');output.replaceChildren();for(const s of r.scales){line(t(30)+' '+s.size+' × '+s.size+' · '+t(31)+' '+(100*s.coverage).toFixed(1)+'%');if(s.size<=256){const v=renderVector(getWorkspace().state().editor.document,dom);v.style.width=s.size+'px';v.style.height=s.size+'px';v.style.background=surface.value;output.append(v)}}});
@@ -61,12 +65,17 @@ export function intelligencePanel(root,getWorkspace,run){
   await analyze();const img=await createImageBitmap(file);
   try{const canvas=el('canvas');canvas.width=canvas.height=64;const ctx=canvas.getContext('2d'),scale=64/Math.max(img.width,img.height),w=img.width*scale,h=img.height*scale;
    ctx.drawImage(img,(64-w)/2,(64-h)/2,w,h);const fp=signature(ctx.getImageData(0,0,64,64).data,64,64);
-   for(const [i,f] of report.fingerprints.entries())line(t(22)+' '+(i+1)+' · '+Math.round(compare(fp,f.visual).structure*100)+'%');
+   line(fp.palette.join(' · '));
+   for(const [i,f] of report.fingerprints.entries()){
+    const score=compare(fp,f.visual);line(t(22)+' '+(i+1)+' · '+Math.round(score.structure*100)+'%');
+    line(criteria[lang].split('|')[7]+' '+Math.round(score.palette*100)+'% · '+criteria[lang].split('|')[8]+' '+Math.round(score.composition*100)+'%');
+   }
   }finally{img.close();upload.value=''}
  }));
  body.append(note,comparison,output);labels.push([summary,0]);
  for(const x of [instruction,secondary,surface])x.addEventListener('input',cancel);
  return {render(s,l){lang=l;for(const [e,i] of labels)e.textContent=t(i);
+  if(projectId!==(s.project?.id??null)){instruction.value='';upload.value='';projectId=s.project?.id??null}
   const next=[s.project?.id,s.project?.revision,s.assistant.selected,s.editor?.revision,s.editor?.selected,s.dirty].join('|');
   if(media.dataset.lang!==lang){const value=media.value;media.replaceChildren(...mediaLabels[lang].map((name,i)=>new Option(name,String(i))));media.value=value||'0';media.dataset.lang=lang}
   if(next!==key){showSurface();key=next;cancel();output.replaceChildren();report=null;secondary.replaceChildren(new Option('—',''),...(s.editor?.document.layers??[]).map(x=>new Option(x.id,x.id)));
