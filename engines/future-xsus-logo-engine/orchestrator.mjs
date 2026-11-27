@@ -22,7 +22,17 @@ function quoteExplicitWordmark(prompt) {
 }
 export function createOrchestrator({interpret,plan}={}){
  if(typeof interpret!=='function'||typeof plan!=='function')throw new TypeError('Both core adapters required');
- return Object.freeze({async generate({prompt,language='en',requestId,creative,graphic}={}){
+ return Object.freeze({async editPlan({name,instruction,language,requestId}){
+ const prompt='Logo for "'+name.replace(/["“”«»]/gu,' ')+'". '+instruction;
+ const check=value=>{if(value?.version!==VERSION||value.requestId!==requestId)throw Error('core_unavailable');return value};
+ try{
+  const semantic=check(await interpret({version:VERSION,operation:'logo.interpret',requestId,language,prompt}));
+  if(!semantic.brief||semantic.clarification_required||semantic.brief.name!==name)return {approved:false};
+  const {primary,secondary,industry,style}=semantic.brief;
+  const strategy=check(await plan({version:VERSION,operation:'logo.plan',requestId,brief:{name,primary,secondary,industry,style}}));
+  return {approved:strategy.approved===true&&strategy.review_required===false};
+ }catch{throw Error('core_unavailable')}
+ },async generate({prompt,language='en',requestId,creative,graphic}={}){
  if(typeof prompt!=='string'||!prompt.trim()||prompt.length>4000||!['en','fr','sq'].includes(language)||typeof requestId!=='string'||! /^[a-zA-Z0-9_-]{1,80}$/.test(requestId))throw new TypeError('Invalid request');
  if(creative!==undefined)options(creative);
  if(graphic!==undefined){graphicOptions(graphic);if(!creative)throw TypeError('creative_required')}

@@ -1,0 +1,76 @@
+import {catalogIds} from '../symbol-catalog.mjs';
+import {subjects} from '../creative-v2/fusion.mjs';
+import {detectStyles} from '../graphic-v3/style.mjs';
+export const normalize=s=>s.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase().replace(/[’']/g,' ').trim();
+const vocabulary={
+ red:['red','rouge','kuqe','kuq'],blue:['blue','bleu','blu'],gold:['gold','or','arte'],black:['black','noir','zeze'],white:['white','blanc','bardhe'],green:['green','vert','gjelber'],violet:['violet','vjollce'],orange:['orange','portokalli']};
+const hex={red:'#c73543',blue:'#2463eb',gold:'#b58a38',black:'#111111',white:'#ffffff',green:'#26875a',violet:'#7955ce',orange:'#db741f'};
+const has=(s,w)=>(' '+s.replace(/[^\p{L}\p{N}#-]+/gu,' ')+' ').includes(' '+normalize(w)+' ');
+const ordinal={first:0,pare:0,premier:0,premiere:0,second:1,dyte:1,deuxieme:1,third:2,trete:2,troisieme:2};
+export function parseInstruction(raw){
+ if(typeof raw!=='string'||!raw.trim()||raw.length>800||/[<>\u0000-\u001f]/.test(raw))throw Error('invalid_instruction');
+ const quote=raw.match(/["“«]([^"”»]{1,100})["”»]/u)?.[1],s=normalize(raw.replace(/["“«][^"”»]*["”»]/gu,' ').replace(/#[0-9a-f]{6}\b/gi,' '));
+ const tokens=normalize(raw.replace(/["“«][^"”»]*["”»]/gu,' ')).match(/#[a-f0-9]{6}\b|[\p{L}]+/gu)??[];
+ const colors=tokens.map(token=>token.startsWith('#')?token:hex[Object.keys(vocabulary).find(k=>vocabulary[k].includes(token))]).filter(Boolean);
+
+ const nums=s.match(/-?\d+(?:\.\d+)?/g)?.map(Number)??[];
+ const nth=s.split(/[^\p{L}]+/u).filter(k=>Object.hasOwn(ordinal,k)).map(k=>ordinal[k]);
+ const image=Object.entries(subjects).find(([,words])=>words.some(w=>has(s,w)))?.[0]??catalogIds.find(id=>has(s,id.replaceAll('-',' ')));
+ const p={quote,colors,nums,image,variants:nth};
+ const word=(...terms)=>terms.some(w=>has(s,w));
+ // Exclude protection clauses before resolving positive targets.
+ const protectedText=/\b(?:keep|preserve|garde|ruaj)\s+(?:the |le |les |te )?(?:text|texte|tekstin)\b/.test(s);p.protectedText=protectedText;
+ const body=s.replace(/(?:keep|preserve|garde|ruaj)\s+(?:the |le |les |te )?(?:text|texte|tekstin)[^,;]*(?:,|;| and | dhe | et )/u,'').replace(/(?:do not change anything else|don t change anything else|mos ndrysho asgje tjeter|ne change rien d autre)[.!]?$/u,'');
+ p.target=/\b(?:slogan|sloganin|devise)\b/.test(body)?'slogan':/\b(?:brand name|wordmark|nom de marque|emrin|emri|text|texte|tekstin|typography|typographie|tipografine)\b/.test(body)?'text':/\b(?:symbol|symboles?|symbole|simbol[a-z]*|mark|icon)\b/.test(body)?'symbol':null;
+ p.left=word('left','majtë','gauche');p.last=word('just added','sapo shtove','viens d ajouter','dernier ajouté');
+ p.letter=body.match(/(?:letter|lettre|shkronj[ean]*)\s+([a-z])\b/)?.[1];
+ p.all=word('palette','paletën','monochrome','monokromatike','monokrom','monochromatique');
+ const styles=detectStyles(body);p.styles=styles;
+ const add=word('add','shto','ajoute','ajouter'),del=word('delete','remove','hiq','hiqe','fshi','supprime','retire','supprimer');
+ if(word('ignore previous','ignore instructions','injoro udhëzimet','ignore les instructions')||/\b(?:javascript|sql|script|execute|ekzekuto)\b/.test(s))throw Error('unsupported_instruction');
+ const affirmative=body.trim();
+ if(!affirmative||/\b(?:never|except|without|without changing|sauf|sans|pervec|pa ndryshuar|mos|do not|don t|ne pas)\b/u.test(affirmative))throw Error('clarify_constraint');
+ const actions=[];
+ function match(yes,op){if(yes)actions.push(op)}
+ match(p.last&&del,'removeLast');
+ match(!p.last&&del,'delete');
+ match(add&&p.target==='slogan','slogan');
+ match(add&&p.target!=='slogan'&&image,'add');
+ match(word('replace','remplace','zëvendëso'),'replace');
+ match(word('combine','kombino','combiner','combinez')&&nth.length>=2,'mix');
+ match(word('merge','unite','union','bashko','fusionne'),'union');
+ match(word('cutout','negative space','hapësirë negative','espace négatif'),'cut');
+ match(word('split','divide','ndaj','divise','sépare'),'divide');
+ match(word('ungroup','çgrupo','dégroupe'),'ungroup');match(word('group','grupo','groupe'),'group');
+ match(word('front','back','përpara','prapa','premier plan','arrière plan'),'order');
+ match(word('rotate','rrotullo','rrotulloje','tourne','pivote'),'rotate');
+ match(word('mirror','flip','pasqyro','pasqyroje','miroir'),'mirror');
+ match(word('node','node','nyjën','nyje','nœud','noeud'),'node');
+ match(!actions.includes('node')&&word('move','déplace','zhvendos','lëvize'),'move');
+ match(word('align','center','centre','qendërzo','ekuilibrin','balance','équilibre'),'align');
+ match(word('bigger','larger','smaller','agrandis','réduis','plus petit','plus grand','më të madhe','më të vogël','zmadho','zvogëlo','resize'),'scale');
+ match(word('opacity','transparency','opacité','transparence','tejdukshmërinë','transparencën'),'opacity');
+ match(word('stroke','trait','vijës','konturit','contour width'),'stroke');
+ match(word('outline text','convert text to outlines','vectorise le texte','kthe tekstin në konture'),'outline');
+ match(word('previous font','fontin e mëparshëm','police précédente'),'previousFont');
+ match(!actions.includes('previousFont')&&word('font','fontin','police')&&!word('weight','épaisseur','trashësinë'),'font');
+ match(word('bold','gras','trashë','font weight'),'weight');
+ match(word('tracking','letter spacing','espacement','hapësirën e shkronjave'),'tracking');
+ match(word('rename','riemërto','renomme','brand name','emrin e markës','nom de marque')&&quote&&!add,'rename');
+ match(word('wordmark','logotype')&&add,'wordmark');match(word('monogram','monogramme','monogramë'),'monogram');
+ match(word('gradient','dégradé','gradientin'),'gradient');
+ match(word('brightness','luminosité','ndriçimin'),'brightness');match(word('saturation','saturimin'),'saturation');
+ match(word('contrast','kontrastin','contraste','legibility','lisibilité','lexueshmërinë'),'contrast');
+ match(word('dark background','sfond të errët','fond sombre'),'dark');match(word('light background','sfond të hapur','fond clair'),'light');
+ match(!actions.includes('mix')&&nth.length===1&&word('color','colour','ngjyrën','couleur'),'variantColor');
+ match(!actions.length&&p.all,'palette');match(!actions.length&&colors.length,'color');
+ match(word('simplify','thjeshto','simplifie'),'simplify');
+ match(!actions.length&&(styles.length||word('professional','professionnel','profesionale')),'style');
+ match(!actions.length&&word('app icon','app','aplikacion','application'),'app');
+ match(!actions.length&&word('print','printim','impression'),'print');
+ if(actions.length!==1)throw Error(actions.length?'ambiguous_instruction':'unsupported_instruction');
+ p.direction=word('down','poshtë','bas','back','prapa','arrière plan','smaller','më të vogël','zvogëlo','plus petit','réduis','decrease','ul','diminue')?-1:1;
+ p.axis=word('vertical','verticale','vertikal','up','down','poshtë','lart','haut','bas')?'y':'x';
+ if(actions[0]==='move')p.direction=word('left','gauche','majtas','up','lart','haut')?-1:1;
+ return {op:actions[0],...p};
+}

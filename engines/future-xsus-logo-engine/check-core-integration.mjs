@@ -85,3 +85,13 @@ for(const [language,prompt] of [
  for(const v of result.kit.variants){assert.ok(v.svg.includes('<linearGradient'));assert.ok(v.document.layers.find(l=>l.id==='brand-name').outline.length)}
  console.log('PASS: V3 through both independent core services '+language);
 }
+const {projectAction}=await import('./intelligence-v4/project.mjs');
+for(const [language,instruction] of [['en','Make the symbol red'],['fr','Rends le symbole rouge'],['sq','Bëje simbolin të kuq']]){
+ const row={id:randomUUID(),revision:1,name:'AXION',document:axion.kit.variants[0].document};
+ const input={version:'4.0.0',action:'preview',revision:1,projectId:row.id,requestId:randomUUID(),language,instruction,selected:row.document.layers.find(l=>l.type!=='text').id};
+ const preview=await projectAction(row,input,engine.editPlan);
+ assert.equal(preview.result.after.layers.find(l=>l.id===input.selected).fill,'#c73543');
+ const applied=await projectAction(row,{...input,action:'apply',approval:preview.result.approval},engine.editPlan);
+ assert.equal(applied.document.intelligence.cursor,1);
+ console.log('PASS: V4 actual core approval, selective vector execution and reversible change '+language);
+}
