@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {vehicleTemplates,packagingTemplates,vehicleMockup,packagingMockup} from './brand-v5/products.mjs';import {Resvg} from '@resvg/resvg-js';
+const doc={version:'1.0.0',width:256,height:256,layers:[{id:'mark',type:'circle',cx:128,cy:100,r:54,fill:'#112233'}]};
+for(const [names,render] of [[vehicleTemplates,vehicleMockup],[packagingTemplates,packagingMockup]])for(const template of names)test('V5 product '+template,()=>{const m=render(doc,{template});assert.deepEqual(m.source,doc);assert.match(m.svg,/product-clip/);const p=Buffer.from(new Resvg(m.svg).render().asPng());assert.equal(p.readUInt32BE(16),800);});
+test('V5 product rejects unsafe parameters',()=>{assert.throws(()=>vehicleMockup(doc,{template:'constructor'}));assert.throws(()=>packagingMockup(doc,{color:'url(x)'}));assert.throws(()=>vehicleMockup(doc,{scale:Infinity}));});
