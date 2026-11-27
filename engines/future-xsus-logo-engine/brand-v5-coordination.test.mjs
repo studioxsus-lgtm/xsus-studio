@@ -1,0 +1,9 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {planBrandAction,executeBrandAction,validateBrandIntent} from './brand-v5/coordination.mjs';
+const doc={version:'1.0.0',width:256,height:256,layers:[{id:'mark',type:'circle',cx:128,cy:100,r:54,fill:'#112233'}]};
+const interpret=async r=>({version:r.version,requestId:r.requestId,intent:{action:'mockup',name:'AXION',language:r.language}}),plan=async r=>({version:r.version,requestId:r.requestId,digest:r.digest,approved:true,review_required:false});
+const draft=()=>planBrandAction(doc,{prompt:'mockup',revision:1,interpret,plan});
+test('V5 coordination requires explicit approval',async()=>{const d=await draft();await assert.rejects(executeBrandAction(doc,d,{revision:1}));const r=await executeBrandAction(doc,d,{revision:1,approvalDigest:d.digest});assert.equal(r.mime,'image/svg+xml');assert.ok(r.bytes.toString().startsWith('<svg'));});
+test('V5 coordination rejects stale revision and source',async()=>{const d=await draft();await assert.rejects(executeBrandAction(doc,d,{revision:2,approvalDigest:d.digest}));await assert.rejects(executeBrandAction({...doc,width:300},d,{revision:1,approvalDigest:d.digest}));});
+test('V5 coordination fails closed on review',async()=>{const d=await planBrandAction(doc,{prompt:'mockup',revision:1,interpret,plan:async r=>({...await plan(r),review_required:true})});assert.equal(d.status,'review_required');await assert.rejects(executeBrandAction(doc,d,{revision:1,approvalDigest:d.digest}));});
+test('V5 coordination rejects uncorrelated response',async()=>assert.rejects(planBrandAction(doc,{prompt:'mockup',revision:1,interpret,plan:async r=>({...await plan(r),digest:'wrong'})})));
+test('V5 coordination rejects unsupported action',()=>assert.throws(()=>validateBrandIntent({action:'shell',name:'AXION'})));
