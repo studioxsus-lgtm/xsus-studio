@@ -1,5 +1,5 @@
 import {catalogIds,catalogVariants} from '../symbol-catalog.mjs';
-import {fit,combine,regular,line,flatten,transform,area} from './contours.mjs';
+import {fit,combine,regular,line,flatten,transform,area,box} from './contours.mjs';
 import {procedure} from './procedural.mjs';
 export const subjects={
  lion:['lion','luan','luani','luanin'],crown:['crown','crowns','couronne','kurorë','kurorën'],
@@ -45,4 +45,22 @@ export function fuse(base,parts,index,seed,detail){
   }else mark=combine(mark,tool);
  }
  return mark;
+}
+
+export const fusionLayouts=['paired','stacked','diagonal','inset','crowned','linked'];
+export function composeFusion(base,parts,index,seed,detail){
+ if(!parts.length)return fit(base,218,205);
+ if(parts.length>4)throw RangeError('symbol_budget');
+ const mode=fusionLayouts[index%fusionLayouts.length];
+ let mark=fit(base,mode==='paired'?112:mode==='stacked'?154:174,mode==='stacked'?108:174,mode==='paired'?-58:0,mode==='stacked'?48:0);
+ for(const [i,id] of parts.entries()){
+ const raw=shape(id,seed+i,detail),offset=(i-(parts.length-1)/2)*54;
+ const [w,h,x,y]=mode==='paired'?[96,145,60,offset]:mode==='stacked'?[100,78,offset,-65]:mode==='diagonal'?[88,88,65+offset*.3,-65+offset*.3]:mode==='inset'?[82,82,offset,0]:mode==='crowned'?[84,66,offset,-99]:[100,100,65,offset];
+ const tool=fit(raw,w,h,x,y);
+ const seam=transform(tool,(a,b)=>[x+(a-x)*1.13,y+(b-y)*1.13]);
+ const cut=combine(mark,seam,'cut');
+ const candidate=combine(area(cut)>=area(mark)*.45?cut:mark,tool);
+ if(area(candidate)>100)mark=candidate;
+ }
+ return fit(mark,218,205);
 }
