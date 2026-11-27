@@ -1,3 +1,4 @@
+import {brandGuidelinesPDF} from './manual-pdf.mjs';
 import {animatedGIF} from './gif.mjs';
 import {animatedPNG} from './apng.mjs';
 import {createHash} from 'node:crypto';
@@ -13,13 +14,13 @@ export function completeBrandPackage(doc,{name,language='en',mockups=['flat:busi
  const files=[];let total=0;
  const add=(name,value)=>{const bytes=typeof value==='string'?Buffer.from(value):Buffer.from(value);total+=bytes.length;if(total>30000000)throw RangeError('Brand package budget');files.push({name,bytes});};
  const svg=renderEditor(doc);add('primary.svg',svg);add('source.json',JSON.stringify(doc));add('primary.png',new Resvg(svg,{fitTo:{mode:'width',value:1024}}).render().asPng());
- add('guidelines.html',manualHTML(doc,{name,language}));add('guidelines.json',JSON.stringify(manual));
+ add('guidelines.html',manualHTML(doc,{name,language}));add('guidelines.json',JSON.stringify(manual));add('guidelines.pdf',brandGuidelinesPDF(doc,{name,language}));
  for(const v of manual.identity.variants)add('variant-'+v.kind+'.svg',renderEditor(v.document));
  for(const kind of Object.keys(materialFormats))add('material-'+kind+'.svg',renderEditor(brandMaterial(doc,{kind,name})));
  for(const id of mockups){const m=catalogMockup(doc,id);add('mockup-'+id.replace(':','-')+'.svg',m.svg);}
  const timeline=catalogAnimation(doc,animation,{duration:2});add('timeline.json',JSON.stringify(timeline));add('animation.svg',animatedSVG(doc,timeline,{fps:8}));
  if(typeof includeAPNG!=='boolean')throw TypeError('Invalid APNG selection');if(includeAPNG)add('animation.png',animatedPNG(doc,timeline,{width:256,fps:8}));
  if(typeof includeGIF!=='boolean')throw TypeError('Invalid GIF selection');if(includeGIF)add('animation.gif',animatedGIF(doc,timeline,{width:256,fps:8}));
- const manifest={version:'5.0.0',name:manual.name,language,limitations:['Flat archive layout','HTML guidelines, not PDF','Illustrative mockups','Font redistribution licenses not included'],files:files.map(f=>({name:f.name,size:f.bytes.length,sha256:createHash('sha256').update(f.bytes).digest('hex')}))};
+ const manifest={version:'5.0.0',name:manual.name,language,limitations:['Flat archive layout','PDF uses raster logo previews and ASCII transliteration','Illustrative mockups','Font redistribution licenses not included'],files:files.map(f=>({name:f.name,size:f.bytes.length,sha256:createHash('sha256').update(f.bytes).digest('hex')}))};
  add('manifest.json',JSON.stringify(manifest,null,2));return {manifest,bytes:zipBrand(files)};
 }
