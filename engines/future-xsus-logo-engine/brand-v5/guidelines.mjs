@@ -12,12 +12,28 @@ function walk(layers,fn){for(const l of layers){fn(l);if(Array.isArray(l.layers)
 export function brandGuidelines(document){
  renderEditor(document);
  const source=clone(document),colors=new Set(),fonts=new Set();
- walk(source.layers,l=>{for(const c of [l.fill,l.stroke])if(typeof c==='string'&&hex.test(c))colors.add(c.toLowerCase());if(l.type==='text'&&l.fontFamily)fonts.add(l.fontFamily);});
- return {version:'5.0.0',source,colors:[...colors].map(colorSpec),fonts:[...fonts],usage:{clearSpaceRecommendation:Math.min(source.width,source.height)/10,minimumSize:null,minimumSizeStatus:'requires visual proof',preserveAspectRatio:true},limitations:['Palette includes solid layer colors only','CMYK values are unprofiled approximations','Clear space is a recommendation, not a measured standard']};
+ walk(source.layers,l=>{for(const c of [l.fill,l.stroke])if(typeof c==='string'&&hex.test(c))colors.add(c.toLowerCase());for(const s of l.gradient?.stops??[])if(hex.test(s.color))colors.add(s.color.toLowerCase());if(l.type==='text')fonts.add(l.fontFamily??'sans-serif');});
+ return {version:'5.0.0',source,colors:[...colors].map(colorSpec),fonts:[...fonts],usage:{clearSpaceRecommendation:Math.min(source.width,source.height)/10,minimumSize:null,minimumSizeStatus:'requires visual proof',preserveAspectRatio:true},limitations:['Palette includes solid colors and gradient stops; opacity is not composited','CMYK values are unprofiled approximations','Clear space is a recommendation, not a measured standard']};
 }
 export function brandVariant(document,kind){
  renderEditor(document);const out=clone(document);
  if(!['original','black','white'].includes(kind))throw new TypeError('Unsupported variant');
- if(kind!=='original'){const color=kind==='black'?'#000000':'#ffffff';walk(out.layers,l=>{if(typeof l.fill==='string'&&hex.test(l.fill))l.fill=color;if(typeof l.stroke==='string'&&hex.test(l.stroke))l.stroke=color;if(l.gradient)throw new Error('Gradient monochrome requires explicit conversion');});}
+ if(kind!=='original'){const color=kind==='black'?'#000000':'#ffffff';walk(out.layers,l=>{if(typeof l.fill==='string'&&hex.test(l.fill))l.fill=color;if(typeof l.stroke==='string'&&hex.test(l.stroke))l.stroke=color;if(l.gradient){for(const stop of l.gradient.stops)stop.color=color;}});}
  renderEditor(out);return out;
+}
+
+export function contrastRatio(a,b){
+ const lum=c=>colorSpec(c).rgb.map(x=>x/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4).reduce((s,x,i)=>s+x*[.2126,.7152,.0722][i],0);
+ const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
+}
+export function brandIdentity(document){
+ const guidelines=brandGuidelines(document);
+ const variants=['original','black','white'].map(kind=>({kind,document:brandVariant(document,kind)}));
+ const surfaces=['#ffffff','#000000'].map(background=>({background,colors:guidelines.colors.map(({hex})=>({hex,ratio:contrastRatio(hex,background)}))}));
+ return {version:'5.0.0',guidelines,variants,surfaces,contrastScope:'Opaque palette swatches only; not a rendered logo accessibility proof'};
+}
+export function selectedVariant(document,ids){
+ renderEditor(document);
+ if(!Array.isArray(ids)||!ids.length||new Set(ids).size!==ids.length||ids.some(id=>!document.layers.some(l=>l.id===id)))throw TypeError('Invalid layer selection');
+ const out=clone(document);out.layers=out.layers.filter(l=>ids.includes(l.id));renderEditor(out);return out;
 }
