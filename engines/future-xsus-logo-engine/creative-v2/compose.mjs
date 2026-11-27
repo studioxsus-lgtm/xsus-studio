@@ -1,3 +1,4 @@
+import {semanticDirections} from './semantic-direction.mjs';
 import {architecturalMark,structuralQuality,architectures} from './architecture.mjs';
 import {createHash} from 'node:crypto';
 import {contrast,textColor} from '../design.mjs';
@@ -31,7 +32,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
  const secondary=banned.has(second)?primary:second;
  const first=intent.required[0]??(intent.explicit?intent.selected:intent.family?null:profile?.symbol??intent.selected);
  const baseId=intent.forbidden.includes(first)?null:first;
- const variants=[],signatures=[];
+ const variants=[],signatures=[],directions=semanticDirections(intent);
  const slots=creative.slot===undefined?Array.from({length:intent.count},(_,i)=>i):[creative.slot];
  for(const slot of slots){
   let chosen;
@@ -43,7 +44,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    if(intent.glyphs){
     const mode=intent.open?'open':intent.mirror?'mirror':['woven','ligature','open','woven'][index%4];
     mark=await monogram(intent.glyphs,style,mode);parts=intent.required;
-   }else if(architectural)mark=architecturalMark(index,stamp);
+   }else if(architectural)mark=architecturalMark(architectures.indexOf(directions[index%directions.length]),stamp);
    else mark=baseId?shape(baseId,stamp,intent.complexity):procedure(family,stamp,intent.complexity);
    mark=parts.length?(intent.negative?fuse(mark,parts,index,stamp,intent.complexity):composeFusion(mark,parts,index,stamp,intent.complexity)):fit(mark,218,205);
    const mode=(index+(profile?.composition==='linked'?2:0))%6;
@@ -71,7 +72,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
       fontWeight:intent.traits.typography.includes('bold')?700:[500,600,700][index%3]});
     }
     const document={version:'1.0.0',width:512,height:512,layers,creative:{version:'2.0.0',seed,slot,count:intent.count,revision,attempt,
-     brief:prompt,language,name:brief.name,family,style,mode,...(architectural?{architecture:architectures[index%architectures.length]}:{}),complexity:intent.complexity,subjects:intent.required,...(intent.glyphs?{glyphs:intent.glyphs}:{}),category:profile?.id??null,
+     brief:prompt,language,name:brief.name,family,style,mode,...(architectural?{architecture:directions[index%directions.length]}:{}),complexity:intent.complexity,subjects:intent.required,...(intent.glyphs?{glyphs:intent.glyphs}:{}),category:profile?.id??null,
      audience:intent.traits.audience,mood:intent.traits.mood,culture:intent.culture,usage:intent.traits.usage}};
     const checked=verify(final,document,primary,textColor(primary));
     chosen={symbol:'creative-'+slot,document,...checked};signatures.push(signature);
