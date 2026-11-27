@@ -1,3 +1,4 @@
+import {pixelQuality} from './pixel-quality.mjs';
 import {chooseComposition} from './composition-direction.mjs';
 import {wordmarkDirection} from './wordmark-direction.mjs';
 import {verifyGraphic} from './verification.mjs';
@@ -50,6 +51,6 @@ export function enhance(kit,p,prompt=''){
   const document={...old,width,height,layers,graphic:{version:'3.0.0',styles:choices,layout,options:p}};
   const svg=renderGraphic(document);
   if(Buffer.byteLength(svg)>240000)throw RangeError('graphic_budget');
-  return {...v,document,svg,quality:{...verifyGraphic(document),artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
+  return {...v,document,svg,quality:{...verifyGraphic(document),pixel:pixelQuality(svg),artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
  })};
 }
