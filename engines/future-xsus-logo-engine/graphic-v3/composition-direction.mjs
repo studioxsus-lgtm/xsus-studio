@@ -5,7 +5,8 @@ export function chooseComposition({explicit,preferred='vertical',slot=0,width=51
  if(preferred==='text'||/wordmark only|vetëm tekst|texte seul/i.test(prompt))return 'text';
  if(!Number.isSafeInteger(slot)||slot<0)throw RangeError('invalid_slot');
  const wide=width/height>=1.5,tall=height/width>=1.5;
+ if(slot===0&&layouts.includes(preferred))return preferred;
  const order=wide?['horizontal','modular','asymmetric']:tall?['vertical','central','typographic']:[preferred,'vertical','horizontal','central','modular','typographic'];
- const unique=[...new Set(order.filter(x=>layouts.includes(x)&&!['symbol','text'].includes(x)))];
+ const unique=[...new Set([preferred,...order].filter(x=>layouts.includes(x)&&!['symbol','text'].includes(x)))];
  return unique[slot%unique.length];
 }
