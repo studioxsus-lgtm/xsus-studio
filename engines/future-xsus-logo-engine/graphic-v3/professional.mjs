@@ -1,3 +1,4 @@
+import {wordmarkDirection} from './wordmark-direction.mjs';
 import {verifyGraphic} from './verification.mjs';
 import {direction,detectStyles} from './style.mjs';
 import {composition,layouts} from './composition.mjs';
@@ -36,11 +37,12 @@ export function enhance(kit,p,prompt=''){
     layers.push({...l,commands,fill,...(g?{gradient:g}:{}),...(style.stroke?{stroke:fill,strokeWidth:style.stroke*Math.min(width,height)/512}:{}),hollow:style.hollow});
    }
   }
-  const font=p.font??defaults[style.font],addText=(id,text,x,y,size,fontId,tracking,curve=0)=>{
-   layers.push(typeset({id,type:'text',text,x,y,fontSize:size,fontId,fill:primary,fontFamily:style.font},faces(fontId),{tracking,width:place.room,curve}));
+  const directionType=wordmarkDirection({family:style.font,slot:old.creative?.slot??0,tracking:style.tracking,font:p.font,architecture:old.creative?.architecture});
+  const font=directionType.font,addText=(id,text,x,y,size,fontId,tracking,curve=0)=>{
+   layers.push(typeset({id,type:'text',text,x,y,fontSize:size,fontId,fill:primary,fontFamily:style.font},faces(fontId),{tracking,width:place.room,curve,stretch:id==='brand-name'?directionType.stretch:1}));
   };
   if(layout!=='symbol'){
-   addText('brand-name',kit.name,place.x,place.y,place.size,font,style.tracking,layout==='circular'?-.45:0);
+   addText('brand-name',kit.name,place.x,place.y,place.size,font,directionType.tracking,layout==='circular'?-.45:0);
    if(p.slogan)addText('brand-slogan',p.slogan,place.x,place.sloganY,place.size*.50,font===defaults.serif?defaults['sans-serif']:defaults.serif,.06);
   }
   const document={...old,width,height,layers,graphic:{version:'3.0.0',styles:choices,layout,options:p}};
