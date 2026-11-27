@@ -67,7 +67,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
       fontWeight:intent.traits.typography.includes('bold')?700:[500,600,700][index%3]});
     }
     const document={version:'1.0.0',width:512,height:512,layers,creative:{version:'2.0.0',seed,slot,count:intent.count,revision,attempt,
-     brief:prompt,language,name:brief.name,family,style,mode,complexity:intent.complexity,subjects:intent.required,category:profile?.id??null,
+     brief:prompt,language,name:brief.name,family,style,mode,complexity:intent.complexity,subjects:intent.required,...(intent.glyphs?{glyphs:intent.glyphs}:{}),category:profile?.id??null,
      audience:intent.traits.audience,mood:intent.traits.mood,culture:intent.culture,usage:intent.traits.usage}};
     const checked=verify(final,document,primary,textColor(primary));
     chosen={symbol:'creative-'+slot,document,...checked};signatures.push(signature);

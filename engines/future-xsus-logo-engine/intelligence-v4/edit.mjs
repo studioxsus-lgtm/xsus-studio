@@ -34,7 +34,7 @@ const type=(l,patch)=>{const v={...l,...patch},id=v.fontId??'dm-sans';
 function target(doc,p,selected,memory){
  let items=doc.layers;
  if(p.last)items=items.filter(l=>l.id===memory.lastAdded);
- else if(p.letter)items=items.filter(l=>l.text?.toLowerCase()===p.letter||l.glyph?.toLowerCase()===p.letter);
+ else if(p.letter)items=items.filter(l=>l.text?.toLowerCase()===p.letter||l.glyph?.toLowerCase()===p.letter||l.id==='creative-mark'&&doc.creative?.glyphs?.toLowerCase()===p.letter);
  else if(p.target==='slogan')items=items.filter(l=>l.id==='brand-slogan');
  else if(p.target==='text')items=items.filter(l=>l.type==='text'&&l.id!=='brand-slogan');
  else if(p.target==='symbol')items=items.filter(l=>l.type!=='text');
@@ -69,7 +69,7 @@ export async function candidate({document,variants,selected,secondary,memory={},
  case 'dark':case 'light':case 'contrast':paint(l,p.op==='dark'?'#f5f5f5':'#172439');break;
  case 'brightness':case 'saturation':{const rgb=l.fill.slice(1).match(/../g).map(v=>parseInt(v,16)),gray=.2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2],delta=clamp(num??18,1,100)/100*p.direction;
   paint(l,'#'+rgb.map(v=>Math.round(clamp(p.op==='brightness'?v+255*delta:gray+(v-gray)*(1+delta),0,255)).toString(16).padStart(2,'0')).join(''));break}
- case 'opacity':if(num===undefined||num<0||num>100)throw Error('percentage_required');l.opacity=num>1?num/100:num;break;
+ case 'opacity':if(num===undefined||num<0||num>100)throw Error('percentage_required');l.opacity=num>1||instruction.includes('%')?num/100:num;break;
  case 'stroke':if(num===undefined||num<0||num>128)throw Error('width_required');set(l,{stroke:p.colors[0]??l.fill,strokeWidth:num});break;
  case 'rotate':{const angle=(num??15)*Math.PI/180;affine(l,Math.cos(angle),Math.sin(angle),-Math.sin(angle),Math.cos(angle));break}
  case 'mirror':affine(l,p.axis==='x'?-1:1,0,0,p.axis==='y'?-1:1);break;
@@ -108,6 +108,10 @@ export async function candidate({document,variants,selected,secondary,memory={},
  case 'app':{const f=frame(l),s=Math.min(doc.width*.76/Math.max(1,f.w),doc.height*.76/Math.max(1,f.h));affine(l,s,0,0,s,doc.width/2-f.x,doc.height/2-f.y);break}
  case 'print':if(l.type==='text')set(l,type(l,{fontSize:Math.max(l.fontSize,doc.height*.065)}));else set(l,{stroke:l.fill,strokeWidth:Math.max(1.25,l.strokeWidth??0)});break;
  default:throw Error('unsupported_instruction');
+ }
+ for(const l of doc.layers){
+  const original=document.layers.find(o=>o.id===l.id);
+  if(l.fill!==original?.fill&&memory.forbidden?.some(k=>({blue:'#2463eb',red:'#c73543',gold:'#b58a38',white:'#ffffff',black:'#111111',violet:'#7955ce',green:'#26875a'})[k]===l.fill))throw Error('forbidden_color');
  }
  if(p.protectedText&&!same(document.layers.filter(x=>x.type==='text'),doc.layers.filter(x=>x.type==='text')))throw Error('protected_text');
  assertLocks(document,doc,memory);renderGraphic(doc);

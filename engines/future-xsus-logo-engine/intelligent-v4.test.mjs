@@ -45,3 +45,39 @@ test('twenty dimensions, stable tie and ten real rendering sizes',()=>{
  const g=reviewGallery([doc,doc]);assert.deepEqual(g.ranking.map(v=>v.index),[0,1]);assert.equal(g.ranking[0].dimensions.length,20);
  const scales=scaleProof(doc);assert.equal(scales.length,10);assert.equal(scales[9].size,2048);assert.ok(scales.every(s=>s.solidPixels>0&&s.coverage>0&&s.coverage<1));
 });
+test('duplicate replacement requests just the repeat; bounded failure',async()=>{
+ const {diversify}=await import('./intelligence-v4/diversity.mjs');
+ const a={document:doc},b={document:{...doc,layers:[{id:'tri',type:'polygon',points:[[0,5],[25,200],[180,30]],fill:'#ffffff'}]}};
+ const slots=[];const result=await diversify([a,a],async slot=>{slots.push(slot);return b});assert.deepEqual(result,[a,b]);assert.deepEqual(slots,[1]);
+ let attempts=0;assert.equal(await diversify([a,a],async()=>{attempts++;return a}),null);assert.equal(attempts,6);
+});
+test('archives and reports survive serialization; clearing history requires confirmation',async()=>{
+ const {document}=await run({action:'archive'});assert.deepEqual(document.intelligence.archives[0].document,doc);
+ const report=await run({action:'report'},{...row,document});assert.equal(report.document.intelligence.analysis.ranking.length,1);assert.match(report.document.intelligence.analysis.fingerprints[0],/^[a-f0-9]{64}$/);
+ await assert.rejects(run({action:'clearHistory'}),/confirmation_required/);
+});
+test('approval cannot edit another project or apply unverified improvements',async()=>{
+ await assert.rejects(run({projectId:randomUUID()}),/project_conflict/);
+ const bright=structuredClone(doc);bright.layers[0].fill='#fafafa';
+ const {result}=await run({improve:true},{...row,document:bright});
+ assert.notDeepEqual(result.before.layers,result.after.layers);assert.ok(result.verification.locksChecked);
+});
+test('reports clipping using actual transformed layer bounds',()=>{
+ const shifted=structuredClone(doc);shifted.layers[0].matrix=[1,0,0,1,300,0];
+ const report=reviewGallery([shifted]).ranking[0];assert.ok(report.issues.some(i=>i.code==='outside'&&i.dx<0));
+});
+test('revision retry is idempotent and low-alpha black loses contrast on white',async()=>{
+ const first=(await run()).result,request={action:'apply',approval:first.approval};
+ const applied=await run(request);const retry=await run(request,{...row,document:applied.document,revision:2});
+ assert.equal(retry.result.revision,2);assert.equal(retry.document,undefined);
+ const transparent=structuredClone(doc);transparent.layers[0].opacity=.01;
+ assert.ok(reviewGallery([transparent]).ranking[0].issues.some(i=>i.code==='low_contrast'&&i.layer==='mark'));
+});
+test('checked owner and revision are forwarded on PostgREST writes, concurrent miss returns conflict',async()=>{
+ const {editProject}=await import('./intelligence-v4/gateway.mjs');const calls=[];
+ const result=await editProject({url:'https://example.com',headers:{Authorization:'Bearer fixture'},owner:'test-owner',input:{...r,action:'prefer'},fetchImpl:async(url,opts)=>{
+ calls.push([url.toString(),opts]);return Response.json(opts.method==='PATCH'?[]:[row]);
+ }});
+ assert.equal(result.status,409);assert.equal(calls.length,2);for(const [url] of calls)assert.equal(new URL(url).searchParams.get('owner_id'),'eq.test-owner');
+ assert.equal(new URL(calls[1][0]).searchParams.get('revision'),'eq.1');
+});

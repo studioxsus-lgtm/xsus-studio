@@ -1,3 +1,4 @@
+import {layoutReview} from './layout-review.mjs';
 import {fileURLToPath} from 'node:url';
 import {Resvg} from '@resvg/resvg-js';
 import {analysis} from '../graphic-v3/color.mjs';
@@ -19,9 +20,13 @@ function minText(d,size){const t=d.layers.filter(l=>l.type==='text');return t.le
 export function quality(doc,fp,{diversity=null,preferred=false,surface='#ffffff'}={}){
  const texts=doc.layers.filter(l=>l.type==='text'),name=texts.find(l=>l.id==='brand-name'),c=doc.creative??{},g=doc.graphic??{};
  const inks=doc.layers.flatMap(l=>l.gradient?.stops.map(s=>s.color)??[l.fill]);
- const contrast=inks.length?Math.min(...inks.map(i=>ratio(i,surface))):1;
+ const measuredLayout=layoutReview(doc);
+ const composite=(ink,opacity)=>'#'+[1,3,5].map(i=>Math.round(parseInt(ink.slice(i,i+2),16)*opacity+parseInt(surface.slice(i,i+2),16)*(1-opacity)).toString(16).padStart(2,'0')).join('');
+ const contrasts=doc.layers.flatMap(l=>(l.gradient?.stops??[{color:l.fill}]).map(stop=>({layer:l.id,value:ratio(composite(stop.color,(stop.opacity??1)*(l.opacity??1)),surface)})));
+ const weakest=contrasts.reduce((a,b)=>a.value<b.value?a:b,{layer:null,value:Infinity});
+ const contrast=Number.isFinite(weakest.value)?weakest.value:1;
  const commands=doc.layers.reduce((s,l)=>s+(l.commands??l.outline??l.points??[]).length,0),size=minText(doc,128);
- const usage=c.usage??[],dimensions=[],issues=[];
+ const usage=c.usage??[],dimensions=[],issues=[...measuredLayout.issues];
  const add=(key,value,weight,evidence,kind='heuristic')=>dimensions.push({key,score:value===null?null:clamp(value),weight,evidence,kind,confidence:value===null?'unavailable':kind==='measurement'?'high':'limited'});
  const intended=c.name??null,brandMatch=name&&intended?name.text===intended:null;
  add('brief',brandMatch===null?null:brandMatch?100:30,2,{requestedBrand:intended,renderedBrand:name?.text??null});
@@ -35,8 +40,8 @@ export function quality(doc,fp,{diversity=null,preferred=false,surface='#ffffff'
  add('harmony',palette.length?100-9*Math.max(0,palette.length-3):null,1,{sampledPalette:palette});
  add('balance',100-100*Math.hypot(fp.visual.center[0]-.5,fp.visual.center[1]-.5),1.5,{center:fp.visual.center});
  const subtitle=texts.find(t=>t.id==='brand-slogan');
- add('hierarchy',name&&subtitle?Math.min(100,60*name.fontSize/subtitle.fontSize):null,1,{nameSize:name?.fontSize,sloganSize:subtitle?.fontSize});
- add('precision',doc.layers.length?100:0,1,{validated:true,layers:doc.layers.length},'measurement');
+ add('hierarchy',issues.some(i=>i.code==='overlap_bounds')?25:name&&subtitle?Math.min(100,60*name.fontSize/subtitle.fontSize):null,1,{nameSize:name?.fontSize,sloganSize:subtitle?.fontSize});
+ add('precision',doc.layers.length?100*measuredLayout.boxes.filter(b=>!issues.some(i=>i.code==='outside'&&i.layer===b.id)).length/doc.layers.length:0,1,{validated:true,layers:doc.layers.length,outside:issues.filter(i=>i.code==='outside').length},'measurement');
  add('contours',doc.layers.length?100*Math.min(1,512/Math.max(1,commands/doc.layers.length)):0,1,{commandCount:commands});
  add('negativeSpace',fp.mark.area?100-100*Math.max(0,fp.mark.area-.75):0,1,{occupied:fp.mark.area,holes:fp.mark.holes});
  add('complexity',100/(1+commands/4500),g.styles?.includes('minimalist')?2:1,{commands});
@@ -46,7 +51,7 @@ export function quality(doc,fp,{diversity=null,preferred=false,surface='#ffffff'
  add('digital',size===null?100:100*size/7,usage.includes('web')||usage.includes('app')?2:1,{minTextAt128:size});
  add('print',doc.layers.length?100*Math.min(1,contrast/3):null,usage.includes('print')?2:1,{vector:true,physicalProof:false});
  add('editability',doc.layers.length?100*doc.layers.filter(l=>!!l.id).length/doc.layers.length:0,1,{layerIds:doc.layers.map(l=>l.id)},'measurement');
- if(contrast<3)issues.push({code:'low_contrast',layer:doc.layers.find(l=>ratio(l.fill,surface)<3)?.id??null});
+ if(contrast<3)issues.push({code:'low_contrast',layer:weakest.layer});
  if(size!==null&&size<6)issues.push({code:'small_type',layer:texts.reduce((a,b)=>a.fontSize<b.fontSize?a:b).id});
  if(commands>2400)issues.push({code:'dense_paths',layer:doc.layers.find(l=>l.type==='path')?.id});
  if(Math.abs(fp.visual.center[0]-.5)>.20)issues.push({code:'off_center'});

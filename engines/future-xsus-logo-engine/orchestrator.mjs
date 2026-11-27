@@ -6,6 +6,7 @@ import {catalogRequest} from './symbol-catalog.mjs';
 import {textColor} from './design.mjs';
 import {readMotif} from './motif.mjs';
 import {brandKit} from './brand.mjs';
+import {diversify} from './intelligence-v4/diversity.mjs';
 const VERSION='1.0.0';
 function quoteExplicitWordmark(prompt) {
  if (/["“”«»]/u.test(prompt) || prompt.length > 3998) return prompt;
@@ -70,7 +71,16 @@ export function createOrchestrator({interpret,plan}={}){
  if(graphic&&result.status==='generated'){
    try {
     result.kit=enhance(result.kit,graphic,prompt);
-    const docs=result.kit.variants.map(v=>({symbol:v.symbol,document:v.document}));
+    if(creative.slot===undefined){
+    const variants=await diversify(result.kit.variants,async(slot,attempt)=>{
+     const revised=await composeCreative({prompt,language,brief:b,strategy,creative:{...creative,slot,revision:(creative.revision??0)+attempt}});
+     if(revised.status!=='generated')return null;
+     return enhance(revised.kit,graphic,prompt).variants[0];
+    });
+    if(!variants)return {version:VERSION,requestId,status:'review_required',reasons:['creative_constraints']};
+    result.kit.variants=variants;
+   }
+   const docs=result.kit.variants.map(v=>({symbol:v.symbol,document:v.document}));
     if(Buffer.byteLength(JSON.stringify([docs,docs[0]]))>1750000)throw RangeError('graphic_budget');
    }catch(e){if(!['graphic_budget','type_budget','missing_glyph','graphic_outside_artboard'].includes(e.message))throw e;
     return {version:VERSION,requestId,status:'review_required',reasons:[e.message]}}

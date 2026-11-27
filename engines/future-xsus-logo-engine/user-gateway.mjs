@@ -23,9 +23,9 @@ export function createUserGateway({supabaseUrl,publishableKey,orchestrator,fetch
  if(typeof user.id!=='string'||! /^[0-9a-f-]{36}$/i.test(user.id))return {status:401,body:{error:'unauthorized'}};
  const now=clock();for(const [id,q] of quotas)if(q.until<=now)quotas.delete(id);
  let q=quotas.get(user.id);
- if(!q){if(quotas.size>=10000)return {status:429,body:{error:'busy'}};q={count:0,until:now+60000};quotas.set(user.id,q)}
- if(q.count>=5)return {status:429,body:{error:'rate_limit'}};
- q.count++;
+ if(!q){if(quotas.size>=10000)return {status:429,body:{error:'busy'}};q={count:0,edits:0,until:now+60000};quotas.set(user.id,q)}
+ if(route==='edit'?q.edits>=30:q.count>=5)return {status:429,body:{error:'rate_limit'}};
+ if(route==='edit')q.edits++;else q.count++;
  if(route==='edit')return await editProject({url,headers:{authorization,apikey:publishableKey},owner:user.id,input,fetchImpl,plan:orchestrator.editPlan});
  const result=await orchestrator.generate({prompt:input.prompt,language:input.language,requestId:randomUUID(),...(input.creative?{creative:input.creative}:{}),...(input.graphic?{graphic:input.graphic}:{})});
  return {status:200,body:result};
