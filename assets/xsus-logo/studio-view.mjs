@@ -20,7 +20,7 @@ export function mountStudioView(root){
  const editor=panel('studio-editor',[
   label('brief','logo-prompt'),node('textarea',{id:'logo-prompt',maxlength:'4000','data-logo-placeholder':'example',disabled:''}),
   node('div',{class:'creative-controls'},[
-   node('div',{},[label('creativeMode','logo-mode'),node('select',{id:'logo-mode'},[node('option',{value:'professional'},['Professional V3']),node('option',{value:'creative'},['Creative V2']),node('option',{value:'classic','data-logo-i18n':'classic'})])]),
+   node('div',{},[label('creativeMode','logo-mode'),node('select',{id:'logo-mode'},[node('option',{value:'professional'},['Professional V5'])])]),
    node('div',{},[label('conceptCount','logo-count'),node('select',{id:'logo-count'},[node('option',{value:'','data-logo-i18n':'fromBrief'}),...['3','6','9','12'].map(value=>node('option',{value},[value]))])]),
    node('div',{},[label('variationSeed','logo-seed'),node('input',{id:'logo-seed',type:'number',min:'0',max:'2147483647',step:'1'})])
   ]),

@@ -1,13 +1,13 @@
 import {brandPanel} from './brand-v5/panel.mjs';
 import {intelligencePanel} from './intelligence-v4/panel.mjs?v=4.0.1';
 import {professionalPanel} from './graphic-v3/panel.mjs';
-import {mountStudioView} from './studio-view.mjs?v=graphic3';
+import {mountStudioView} from './studio-view.mjs?v=brand5.2';
 import {createWorkspace} from './workspace.mjs?v=intelligent4';
 import {mountVector,renderVector} from './vector-canvas.mjs?v=graphic3';
 import {applyLanguage,translate} from './i18n.mjs?v=graphic3';
 export function mountStudio(root,supabase){
  const dom=root.ownerDocument,{get}=mountStudioView(root);
- root.setAttribute('data-build','intelligent4');const build=dom.createElement('small');build.textContent='Build intelligent4';root.append(build);
+ root.setAttribute('data-build','professional5');const build=dom.createElement('small');build.textContent='Build Professional V5';root.append(build);
  const language=dom.getElementById('language-select');
  const compact=dom.defaultView.matchMedia('(max-width:700px)');
  const fitProjects=()=>{get('projects').open=!compact.matches};
