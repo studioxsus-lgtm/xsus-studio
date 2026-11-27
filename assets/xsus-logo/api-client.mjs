@@ -1,7 +1,13 @@
 const endpoint='https://future-xsus-logo-engine.onrender.com/v1/public/generate';
 export function createLogoClient({getSession,fetchImpl=fetch}={}){
  if(typeof getSession!=='function')throw new TypeError('Session provider required');
- return Object.freeze({async generate({prompt,language='en',signal,creative,graphic}={}){
+ return Object.freeze({async edit(input){
+ const session=await getSession();if(!session?.access_token)throw Error('authentication_required');
+ const response=await fetchImpl(new URL('/v4/public/edit',endpoint),{method:'POST',redirect:'error',credentials:'omit',headers:{authorization:'Bearer '+session.access_token,'content-type':'application/json'},body:JSON.stringify(input),signal:AbortSignal.timeout(60000)});
+ const result=await response.json();if(!response.ok)throw Error(result.error??'edit_failed');
+ if(result.version!=='4.0.0'||result.projectId!==input.projectId||result.requestId!==input.requestId)throw Error('invalid_response');
+ return result;
+ },async generate({prompt,language='en',signal,creative,graphic}={}){
  if(typeof prompt!=='string'||!prompt.trim()||prompt.length>4000||!['en','fr','sq'].includes(language))throw new TypeError('Invalid brand brief');
  const session=await getSession();
  if(!session?.access_token)throw new Error('authentication_required');
