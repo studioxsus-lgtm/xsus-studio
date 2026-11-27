@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {completeBrandPackage} from './brand-v5/complete-package.mjs';
+const doc={version:'1.0.0',width:256,height:256,layers:[{id:'mark',type:'circle',cx:128,cy:100,r:54,fill:'#112233'}]};
+test('V5 complete package contains real ZIP and manifest',()=>{const p=completeBrandPackage(doc,{name:'AXION'});assert.equal(Buffer.from(p.bytes).readUInt32LE(0),0x04034b50);for(const n of ['primary.svg','primary.png','source.json','guidelines.html','animation.svg','timeline.json','mockup-digital-website.svg'])assert.ok(p.manifest.files.some(f=>f.name===n&&f.size>0&&/^[a-f0-9]{64}$/.test(f.sha256)));});
+test('V5 complete package preserves source and deterministic bytes',()=>{const before=structuredClone(doc),a=completeBrandPackage(doc,{name:'AXION',mockups:[]}),b=completeBrandPackage(doc,{name:'AXION',mockups:[]});assert.deepEqual(a.bytes,b.bytes);assert.deepEqual(doc,before);});
+test('V5 complete package rejects invalid selections',()=>{assert.throws(()=>completeBrandPackage(doc,{name:'AXION',mockups:['bad']}));assert.throws(()=>completeBrandPackage(doc,{name:'AXION',mockups:['x','x']}));});
