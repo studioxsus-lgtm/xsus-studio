@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {architecturalMark,architectures,structuralQuality} from './creative-v2/architecture.mjs';
+test('eight architectural constructions are distinct and deterministic',()=>{const marks=architectures.map((_,i)=>architecturalMark(i,42));assert.equal(new Set(marks.map(x=>JSON.stringify(x))).size,8);for(let i=0;i<8;i++){assert.deepEqual(marks[i],architecturalMark(i,42));assert.ok(marks[i].length);}});
+test('structural quality rejects solid square',()=>{assert.equal(structuralQuality([[[0,0],[100,0],[100,100],[0,100]]]).acceptable,false);});
