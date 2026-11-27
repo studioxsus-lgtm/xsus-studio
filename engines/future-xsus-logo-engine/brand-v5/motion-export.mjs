@@ -25,8 +25,8 @@ export function animatedSVG(doc,timeline,{fps=12,loop=true,reducedMotion=false}=
  for(let i=0;i<count;i++){
  const start=i/count,end=(i+1)/count;
  const svg=frameSVG(doc,timeline, timeline.duration*(count===1?1:i/(count-1))).replace(/\bid="art-/g,'id="f'+i+'-').replace(/url\(#art-/g,'url(#f'+i+'-');
- const values= i===0?'visible;hidden;hidden':i===count-1?'hidden;visible;visible':'hidden;visible;hidden';
- const times=i===0?'0;'+end+';1':i===count-1?'0;'+start+';1':'0;'+start+';'+end;
+ const values= i===0?'visible;hidden;hidden':i===count-1?'hidden;visible;visible':'hidden;visible;hidden;hidden';
+ const times=i===0?'0;'+end+';1':i===count-1?'0;'+start+';1':'0;'+start+';'+end+';1';
  const animation=count===1?'':'<animate attributeName="visibility" calcMode="discrete" values="'+values+'" keyTimes="'+times+'" dur="'+timeline.duration+'s" repeatCount="'+(loop?'indefinite':'1')+'" fill="freeze"/>';
  body+='<g visibility="'+(i===0?'visible':'hidden')+'">'+svg+animation+'</g>';bytes+=svg.length;if(bytes>3000000)throw RangeError('Animated SVG size budget');
  }
