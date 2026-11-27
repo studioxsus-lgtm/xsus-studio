@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {homography,projectPoint,projectedMockup,projectedPNG} from './brand-v5/projection.mjs';
+const quad=[[100,100],[800,150],[700,650],[150,700]];
+const doc={version:'1.0.0',width:256,height:256,layers:[{id:'mark',type:'circle',cx:128,cy:100,r:54,fill:'#112233'}]};
+test('V5 homography maps all four corners',()=>{const h=homography(quad);[[0,0],[1,0],[1,1],[0,1]].forEach((p,i)=>projectPoint(h,...p).forEach((v,j)=>assert.ok(Math.abs(v-quad[i][j])<1e-8)));});
+test('V5 projective mapping rejects crossed and degenerate quadrilaterals',()=>{assert.throws(()=>homography([[0,0],[1,1],[0,1],[1,0]]));assert.throws(()=>homography([[0,0],[1,0],[2,0],[3,0]]));});
+test('V5 projective mesh contains actual raster source and clipped triangles',()=>{const m=projectedMockup(doc,{quad,grid:4});assert.match(m.svg,/data:image\/png;base64,/);assert.equal((m.svg.match(/<use /g)||[]).length,32);assert.deepEqual(m.source,doc);});
+test('V5 projection PNG has correct dimensions',()=>{const p=Buffer.from(projectedPNG(doc,{quad,grid:4}));assert.equal(p.readUInt32BE(16),1000);assert.equal(p.readUInt32BE(20),800);});
+test('V5 projection budgets',()=>{assert.throws(()=>projectedMockup(doc,{quad,grid:100}));assert.throws(()=>projectedMockup(doc,{quad,width:100,height:100}));assert.throws(()=>projectedMockup(doc,{quad,width:5000}));});
