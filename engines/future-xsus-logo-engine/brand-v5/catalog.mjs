@@ -1,3 +1,4 @@
+import {vehicleTemplates,vehicleMockup,packagingTemplates,packagingMockup} from './products.mjs';
 import {digitalTemplates,digitalMockup} from './digital.mjs';
 import {mockupTemplates,mockupScene} from './mockup.mjs';
 import {cylinderTemplates,cylinderMockup} from './cylinder.mjs';
@@ -22,7 +23,7 @@ export function architectureMockup(doc,{template='facade',color='#d4d7db',backgr
  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800"><rect width="800" height="800" fill="'+background+'"/><path d="'+path+'" fill="#000000" opacity=".12" transform="translate(9 12)"/><path d="'+path+'" fill="'+color+'" stroke="#000000" stroke-opacity=".2"/><g transform="translate('+(x+(w-doc.width*s)/2)+' '+(y+(h-doc.height*s)/2)+') scale('+s+')">'+renderEditor(doc)+'</g></svg>';
  if(Buffer.byteLength(svg)>2000000)throw RangeError('Architecture budget');return {version:'5.0.0',svg,width:800,height:800,source:structuredClone(doc),parameters:{template,color,background,scale},rendering:'architectural schematic'};
 }
-const groups={flat:[mockupTemplates,mockupScene],cylinder:[cylinderTemplates,cylinderMockup],textile:[textileTemplates,textileMockup],architecture:[architectureTemplates,architectureMockup],digital:[digitalTemplates,digitalMockup]};
+const groups={flat:[mockupTemplates,mockupScene],cylinder:[cylinderTemplates,cylinderMockup],textile:[textileTemplates,textileMockup],architecture:[architectureTemplates,architectureMockup],digital:[digitalTemplates,digitalMockup],vehicle:[vehicleTemplates,vehicleMockup],packaging:[packagingTemplates,packagingMockup]};
 export function brandCatalog(){return {version:'5.0.0',animation:[...extendedProfiles],mockups:Object.entries(groups).flatMap(([category,[names]])=>names.map(name=>({id:category+':'+name,category,name})))};}
 export function catalogMockup(doc,id,options={}){
  if(typeof id!=='string')throw TypeError('Invalid catalog ID');const [category,name,...rest]=id.split(':');if(rest.length||!Object.hasOwn(groups,category)||!groups[category][0].includes(name))throw TypeError('Unknown catalog ID');
