@@ -1,4 +1,4 @@
-import {pixelQuality} from './pixel-quality.mjs';
+import {refineComposition} from './refinement.mjs';
 import {chooseComposition} from './composition-direction.mjs';
 import {wordmarkDirection} from './wordmark-direction.mjs';
 import {verifyGraphic} from './verification.mjs';
@@ -48,9 +48,9 @@ export function enhance(kit,p,prompt=''){
    addText('brand-name',kit.name,place.x,place.y,place.size,font,directionType.tracking,layout==='circular'?-.45:0);
    if(p.slogan)addText('brand-slogan',p.slogan,place.x,place.sloganY,place.size*.50,font===defaults.serif?defaults['sans-serif']:defaults.serif,.06);
   }
-  const document={...old,width,height,layers,graphic:{version:'3.0.0',styles:choices,layout,options:p}};
-  const svg=renderGraphic(document);
+  const draft={...old,width,height,layers,graphic:{version:'3.0.0',styles:choices,layout,options:p}};
+  const {document,svg,geometry,pixel,refinement}=refineComposition(draft,{locked:p.layout!==undefined});
   if(Buffer.byteLength(svg)>240000)throw RangeError('graphic_budget');
-  return {...v,document,svg,quality:{...verifyGraphic(document),pixel:pixelQuality(svg),artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
+  return {...v,document,svg,quality:{...geometry,pixel,refinement,artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
  })};
 }
