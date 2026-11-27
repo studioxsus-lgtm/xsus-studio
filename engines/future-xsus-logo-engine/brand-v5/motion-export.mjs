@@ -1,7 +1,8 @@
 import {validateTimeline,frameSVG,createTimeline,animationProfiles} from './animation.mjs';
 import {renderEditor} from '../editor.mjs';
 const profiles=Object.freeze({
- pulse:{scale:[1,1.12,1]},bounce:{y:[0,-.12,.025,0]},swing:{rotation:[-12,12,-6,0]},spin:{rotation:[-360,0]},breath:{scale:[.94,1.06,.94]},reveal:{opacity:[0,0,1],scale:[.85,.85,1]},drop:{y:[-.3,.04,0]},shake:{x:[0,-.03,.03,-.02,0]},orbit:{x:[0,.12,0,-.12,0],y:[-.12,0,.12,0,-.12]},settle:{scale:[.6,1.1,.97,1]},flash:{opacity:[1,.25,1,.25,1]},glide:{x:[-.2,0],y:[.1,0]},unfold:{rotation:[-45,0],scale:[.2,1]},drift:{x:[-.08,.08,-.08]},emerge:{opacity:[0,1],y:[.15,0],scale:[.8,1]}
+ pulse:{scale:[1,1.12,1]},bounce:{y:[0,-.12,.025,0]},swing:{rotation:[-12,12,-6,0]},spin:{rotation:[-360,0]},breath:{scale:[.94,1.06,.94]},reveal:{opacity:[0,0,1],scale:[.85,.85,1]},drop:{y:[-.3,.04,0]},shake:{x:[0,-.03,.03,-.02,0]},orbit:{x:[0,.12,0,-.12,0],y:[-.12,0,.12,0,-.12]},settle:{scale:[.6,1.1,.97,1]},flash:{opacity:[1,.25,1,.25,1]},glide:{x:[-.2,0],y:[.1,0]},unfold:{rotation:[-45,0],scale:[.2,1]},drift:{x:[-.08,.08,-.08]},emerge:{opacity:[0,1],y:[.15,0],scale:[.8,1]},
+ recoil:{x:[0,.09,-.025,0]},spiral:{rotation:[-180,0],scale:[.25,1]},float:{y:[0,-.06,0,.06,0]},vanish:{opacity:[1,0],scale:[1,.7]},pendulum:{rotation:[0,18,0,-18,0]},diagonal:{x:[-.2,0],y:[-.2,0]},overshoot:{x:[-.25,.04,0]},shrink:{scale:[1.6,1]},tilt:{rotation:[20,-8,0],opacity:[.4,1]},heartbeat:{scale:[1,1.15,1,1.08,1]},softLanding:{y:[-.18,.02,0],opacity:[.2,1]},sweep:{x:[.3,-.03,0],rotation:[15,0]}
 });
 export const extendedProfiles=Object.freeze([...animationProfiles,...Object.keys(profiles)]);
 export function extendedTimeline(doc,{profile='fade',duration=3}={}){
