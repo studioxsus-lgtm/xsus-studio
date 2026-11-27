@@ -1,3 +1,4 @@
+import {attachCreativeRanking} from './creative-ranking.mjs';
 import {refineComposition} from './refinement.mjs';
 import {chooseComposition} from './composition-direction.mjs';
 import {wordmarkDirection} from './wordmark-direction.mjs';
@@ -23,7 +24,7 @@ export function enhance(kit,p,prompt=''){
  graphicOptions(p);
  const matched=detectStyles(prompt);
  const choices=p.styles??(matched.length?matched:['modern']),style=direction(choices,p.treatment);
- return {...kit,version:'3.0.0',variants:kit.variants.map(v=>{
+ return attachCreativeRanking({...kit,version:'3.0.0',variants:kit.variants.map(v=>{
   const old=v.document,width=p.width??512,height=p.height??512;
   const layout=chooseComposition({explicit:p.layout,preferred:style.layout,slot:old.creative?.slot??0,width,height,usage:old.creative?.usage,prompt});
   const place=composition(layout,width,height,kit.name),layers=[];
@@ -52,5 +53,5 @@ export function enhance(kit,p,prompt=''){
   const {document,svg,geometry,pixel,refinement}=refineComposition(draft,{locked:p.layout!==undefined});
   if(Buffer.byteLength(svg)>240000)throw RangeError('graphic_budget');
   return {...v,document,svg,quality:{...geometry,pixel,refinement,artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
- })};
+ })});
 }
