@@ -5,7 +5,7 @@ import {renderGraphic} from '../graphic-v3/scene.mjs';
 import {signature,compare} from './signature.mjs';
 export const digest=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
 export function view(doc){return {...doc,graphic:doc.graphic??{version:'3.0.0'}}}
-export function raster(doc,size=64){
+export function raster(doc,size=128){
  // A square outer viewBox bounds both dimensions even for extreme artboards.
  const svg=renderGraphic(view(doc)).replace(/width="[^"]+"\s+height="[^"]+"/,'width="'+size+'" height="'+size+'"');
  const image=new Resvg(svg,{font:{loadSystemFonts:false,fontFiles:[fileURLToPath(new URL('../creative-v2/sans.ttf',import.meta.url))],defaultFontFamily:'XSUSGeometrySans',sansSerifFamily:'XSUSGeometrySans'}}).render();return signature(image.pixels,image.width,image.height);

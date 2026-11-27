@@ -81,3 +81,21 @@ test('checked owner and revision are forwarded on PostgREST writes, concurrent m
  assert.equal(result.status,409);assert.equal(calls.length,2);for(const [url] of calls)assert.equal(new URL(url).searchParams.get('owner_id'),'eq.test-owner');
  assert.equal(new URL(calls[1][0]).searchParams.get('revision'),'eq.1');
 });
+for(const [instruction,expected] of [
+ ['Change font to DM Sans','font'],['Convert text to outlines','outline'],['Add wordmark "AXION STUDIO"','wordmark'],
+ ['Rrotullo simbolin 45','rotate'],['Ajoute une couronne','add'],['Make a monogram "XS"','monogram'],
+ ['Bëje më luksoze','style'],['Bëje simbolin më të vogël','scale'],['Add slogan "Create"','slogan'],
+ ['Move the symbol left 10','move'],['Pasqyro simbolin','mirror'],['Thjeshto simbolin','simplify'],
+ ['Change opacity to 1%','opacity'],['Add gradient blue and violet','gradient'],['Change stroke width to 2','stroke']
+]){
+ test('selective instruction: '+instruction,async()=>{
+ const {result}=await run({instruction,selected:expected==='font'||expected==='outline'?'brand-name':'mark'});
+ assert.equal(result.operation,expected);assert.deepEqual(result.before.layers,doc.layers);
+ if(expected==='opacity')assert.equal(result.after.layers[0].opacity,.01);
+ });
+}
+test('fingerprint compares mirrored and rotated silhouettes after scaling',()=>{
+ const shape={id:'mark',type:'polygon',points:[[70,55],[155,72],[130,105],[128,180],[92,160]],fill:'#2463eb'};
+ const a={...doc,layers:[shape]},b={...doc,layers:[{...shape,matrix:[0,-.8,-.8,0,210,216]}]};
+ const pair=compareGallery([a,b]).pairs[0];assert.ok(pair.structure>.85);assert.notEqual(pair.orientation,0);
+});

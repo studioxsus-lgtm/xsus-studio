@@ -1,3 +1,4 @@
+import {fingerprintVersion} from './signature.mjs';
 import {interpret as designIntent} from '../creative-v2/intent.mjs';
 import {candidate,assertLocks} from './edit.mjs';
 import {fingerprint,digest,view} from './fingerprint.mjs';
@@ -49,13 +50,13 @@ export async function projectAction(row,r,plan){
   m.archives.push({name:row.name,slot,revision:row.revision,document:structuredClone(doc)});return write()}
  if(r.action==='report'){
   const review=reviewGallery(docs,m,r.surface);
-  m.analysis={key:hash([docs,r.surface??'#ffffff',m.preferred,m.rejected]),report:review,revision:row.revision,slot,surface:r.surface??'#ffffff',fingerprints:review.fingerprints.map(f=>f.id),ranking:review.ranking,diversity:review.diversity};
+  m.analysis={key:hash([fingerprintVersion,docs,r.surface??'#ffffff',m.preferred,m.rejected]),report:review,revision:row.revision,slot,surface:r.surface??'#ffffff',fingerprints:review.fingerprints.map(f=>f.id),ranking:review.ranking,diversity:review.diversity};
   return write();
  }
  if(r.action==='history')return {result:{...result,history:summary(m)}};
  if(r.action==='analyze'){
   const cached=m.analysis;
-  const key=hash([docs,r.surface??'#ffffff',m.preferred,m.rejected]);
+  const key=hash([fingerprintVersion,docs,r.surface??'#ffffff',m.preferred,m.rejected]);
   if(cached?.key===key&&cached.report)return {result:{...result,...cached.report}};
   return {result:{...result,...reviewGallery(docs,m,r.surface)}};
  }

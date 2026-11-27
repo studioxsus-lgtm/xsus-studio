@@ -93,6 +93,8 @@ export async function candidate({document,variants,selected,secondary,memory={},
   const mark={...layer(l?.id??newId,fit(symbol,f.w,f.h,f.x,f.y),p.colors[0]??l?.fill??'#254275'),subject:p.image??p.quote};
   if(l)ls.splice(ls.indexOf(l),1,mark);else l=create(mark);break}
  case 'slogan':case 'wordmark':{if(!p.quote)throw Error('quoted_text_required');const id=p.op==='slogan'?'brand-slogan':'brand-name';
+  const existing=ls.find(v=>v.id===id);
+  if(existing&&p.op==='wordmark'){if(existing.type!=='text')throw Error('text_target_required');l=existing;set(l,type(l,{text:p.quote,fontId:l.fontId??'dm-sans'}));break}
   l=create(type({id,type:'text',text:p.quote,x:doc.width/2,y:doc.height*(p.op==='slogan'?.9:.76),fontSize:Math.min(doc.width/p.quote.length,doc.height*.06),fill:'#172439'},{}));break}
  case 'font':case 'previousFont':case 'weight':case 'tracking':case 'rename':{
   if(l.type!=='text')throw Error('text_target_required');let patch;
@@ -101,7 +103,9 @@ export async function candidate({document,variants,selected,secondary,memory={},
   else if(p.op==='weight'){patch={stroke:l.fill,strokeWidth:clamp((num??700)/700*l.fontSize*.032,.1,4),fontWeight:clamp(num??700,100,900)}}
   else {const old=memory.previousFonts?.[l.id],match=catalog.find(f=>normalize(instruction).includes(normalize(f.family))||normalize(instruction).includes(f.id));const font=p.op==='previousFont'?old:match?.id;if(!font)throw Error('font_required');patch={fontId:font}}
   set(l,type(l,patch));break}
- case 'outline':if(!l.outline)throw Error('outline_required');set(l,{type:'path',commands:l.outline,sourceText:structuredClone(l)});delete l.outline;break;
+ case 'outline':{if(l.type!=='text')throw Error('text_target_required');
+  const source=structuredClone(l),commands=l.outline??type(l,{fontId:l.fontId??({'serif':'libre-baskerville','monospace':'ibm-plex-mono'})[l.fontFamily]??'dm-sans'}).outline;
+  set(l,{type:'path',commands,sourceText:source});delete l.outline;break}
  case 'mix':{const symbol=selectVariant(p.variants[0]).layers.filter(x=>x.type!=='text'),text=selectVariant(p.variants[1]).layers.filter(x=>x.type==='text');
   if(!symbol.length||!text.length)throw Error('missing_component');doc.layers=structuredClone([...symbol,...text]);doc.layers.forEach(v=>seen.add(v.id));break}
  case 'style':{const st=direction(p.styles.length?p.styles:['modern']);affine(l,st.ratio,0,st.slant,1);if(l.type==='text')set(l,type(l,{trackingEm:st.tracking}));else if(st.stroke)set(l,{stroke:l.fill,strokeWidth:st.stroke});break}

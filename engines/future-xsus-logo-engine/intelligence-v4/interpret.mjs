@@ -25,10 +25,12 @@ export function parseInstruction(raw){
  p.left=word('left','majtë','gauche');p.last=word('just added','sapo shtove','viens d ajouter','dernier ajouté');
  p.letter=body.match(/(?:letter|lettre|shkronj[ean]*)\s+([a-z])\b/)?.[1];
  p.all=word('palette','paletën','monochrome','monokromatike','monokrom','monochromatique');
- const styles=detectStyles(body);p.styles=styles;
+ const styles=detectStyles(body);
+ if(!styles.length)for(const [re,id] of [[/\bluksoz/,'luxury'],[/\bminimalis/,'minimalist'],[/\bfuturist/,'futuristic'],[/\bmodern/,'modern'],[/\belegan/,'elegant']])if(re.test(body))styles.push(id);
+ p.styles=styles;
  const add=word('add','shto','ajoute','ajouter'),del=word('delete','remove','hiq','hiqe','fshi','supprime','retire','supprimer');
  if(word('ignore previous','ignore instructions','injoro udhëzimet','ignore les instructions')||/\b(?:javascript|sql|script|execute|ekzekuto)\b/.test(s))throw Error('unsupported_instruction');
- const affirmative=body.trim();
+ const affirmative=body.replace(/\b(?:dm|noto|open|source|ibm plex|work|instrument|pt|alegreya|libre franklin) sans\b|\bsans[- ]serif\b/gu,'font').trim();
  if(!affirmative||/\b(?:never|except|without|without changing|sauf|sans|pervec|pa ndryshuar|mos|do not|don t|ne pas)\b/u.test(affirmative))throw Error('clarify_constraint');
  const actions=[];
  function match(yes,op){if(yes)actions.push(op)}

@@ -1,6 +1,6 @@
 // The input is already decoded RGBA. All following work uses bounded grids.
 const N=32;
-export const fingerprintVersion='xsus-visual-1';
+export const fingerprintVersion='xsus-visual-2';
 const round=x=>Math.round(x*1000)/1000;
 function components(mask,value){
  const seen=new Uint8Array(mask.length);let count=0,inner=0;
@@ -46,12 +46,23 @@ function rotate(bits,angle,mirror){
  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const u=(x-m)*(mirror?-1:1),v=y-m,xx=Math.round(u*c-v*s+m),yy=Math.round(u*s+v*c+m);
  out+=xx<0||xx>=N||yy<0||yy>=N?'0':bits[yy*N+xx]}return out;
 }
+// Anti-aliasing changes a sampled contour by up to one normalized pixel.
+function edgeCoverage(a,b){
+ let total=0,matched=0;
+ for(let i=0;i<a.length;i++)if(a[i]==='1'){
+  total++;const x=i%N,y=Math.floor(i/N);let hit=false;
+  for(let dy=-1;dy<=1&&!hit;dy++)for(let dx=-1;dx<=1;dx++)if(x+dx>=0&&x+dx<N&&y+dy>=0&&y+dy<N&&b[(y+dy)*N+x+dx]==='1'){hit=true;break}
+  if(hit)matched++;
+ }
+ return total?matched/total:1;
+}
 const agreement=(a,b)=>Array.from(a).filter((c,i)=>c===b[i]).length/a.length;
 export function compare(a,b){
  let silhouette=iou(a.mask,b.mask),boundary=iou(a.edges,b.edges);let orientation=0,mirrored=false;
  if(silhouette<.999){for(let i=0;i<24;i++)for(const m of [false,true]){
   const angle=i*Math.PI/12,v=iou(a.mask,rotate(b.mask,angle,m));if(v>silhouette){silhouette=v;boundary=iou(a.edges,rotate(b.edges,angle,m));orientation=i*15;mirrored=m}
  }}
+ const alignedEdges=rotate(b.edges,orientation*Math.PI/180,mirrored);boundary=(edgeCoverage(a.edges,alignedEdges)+edgeCoverage(alignedEdges,a.edges))/2;
  const topology=1/(1+Math.abs(a.holes-b.holes)+Math.abs(a.components-b.components)),ph=agreement(a.pHash,b.pHash),dh=agreement(a.dHash,b.dHash);
  const palette=a.palette.filter(c=>b.palette.includes(c)).length/Math.max(1,new Set([...a.palette,...b.palette]).size);
  const composition=Math.max(0,1-Math.hypot(a.center[0]-b.center[0],a.center[1]-b.center[1]));
