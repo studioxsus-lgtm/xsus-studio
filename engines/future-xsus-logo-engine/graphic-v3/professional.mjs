@@ -1,3 +1,4 @@
+import {chooseComposition} from './composition-direction.mjs';
 import {wordmarkDirection} from './wordmark-direction.mjs';
 import {verifyGraphic} from './verification.mjs';
 import {direction,detectStyles} from './style.mjs';
@@ -22,8 +23,9 @@ export function enhance(kit,p,prompt=''){
  const matched=detectStyles(prompt);
  const choices=p.styles??(matched.length?matched:['modern']),style=direction(choices,p.treatment);
  return {...kit,version:'3.0.0',variants:kit.variants.map(v=>{
-  const old=v.document,layout=p.layout??(old.creative?.usage?.includes('app')&&/favicon|icon only/i.test(prompt)?'symbol':style.layout);
-  const width=p.width??512,height=p.height??512,place=composition(layout,width,height,kit.name),layers=[];
+  const old=v.document,width=p.width??512,height=p.height??512;
+  const layout=chooseComposition({explicit:p.layout,preferred:style.layout,slot:old.creative?.slot??0,width,height,usage:old.creative?.usage,prompt});
+  const place=composition(layout,width,height,kit.name),layers=[];
   const mark=old.layers.filter(l=>l.type==='path'),primary=kit.palette.primary,secondary=style.monochrome?primary:kit.palette.secondary;
   if(layout!=='text'&&mark.length){
    const bbox=box(mark.flatMap(l=>flatten(l.commands))),mx=(bbox.minX+bbox.maxX)/2,my=(bbox.minY+bbox.maxY)/2;
