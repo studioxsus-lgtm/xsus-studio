@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {artisticFamily} from './graphic-v3/artistic-family.mjs';import {geometricWordmark} from './graphic-v3/geometric-letter.mjs';
+test('sector typography selects distinct families',()=>{assert.equal(artisticFamily('fashion',0),'elegant');assert.equal(artisticFamily('technology',0),'forward');assert.equal(artisticFamily('environment',0),'original');});
+test('artistic wordmarks preserve text and width budget',()=>{const l={text:'AXION',x:200,y:100,fontSize:80};for(const family of ['elegant','forward']){const r=geometricWordmark(l,{family,width:180});assert.equal(r.text,l.text);assert.ok(r.advance<=180.00001);assert.ok(r.outline.flatMap(c=>c.slice(1)).every(Number.isFinite));assert.notDeepEqual(r.outline,geometricWordmark(l,{width:180}).outline);}});
+test('unsupported characters retain font fallback',()=>assert.equal(geometricWordmark({text:'Ë',x:0,y:0,fontSize:30},{family:'elegant'}),null));

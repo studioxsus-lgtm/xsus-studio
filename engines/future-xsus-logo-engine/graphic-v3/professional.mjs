@@ -1,3 +1,4 @@
+import {artisticFamily} from './artistic-family.mjs';
 import {cubicContour} from './cubic-contour.mjs';
 import {designReview} from './design-review.mjs';
 import {lockupHarmony} from './lockup-harmony.mjs';
@@ -59,7 +60,7 @@ export function enhance(kit,p,prompt=''){
   const directionType=wordmarkDirection({family:!p.font&&/futuristic|futuriste|futurist/i.test(prompt)?'sans-serif':style.font,slot:old.creative?.slot??0,tracking:style.tracking,font:p.font,architecture:old.creative?.architecture});
   const font=directionType.font,addText=(id,text,x,y,size,fontId,tracking,curve=0)=>{
    const base={id,type:'text',text,x,y,fontSize:size,fontId,fill:primary,fontFamily:style.font};
-   const custom=id==='brand-name'&&!p.font&&!curve&&old.creative?.conceptDomain&&((old.creative.slot??0)%3!==2)&&/custom typography|typographie personnalisée|tipografi të personalizuar/i.test(prompt)?geometricWordmark(base,{width:place.room,family:['original','wide','condensed'][Math.floor((old.creative.slot??0)/2)%3]}):null;
+   const custom=id==='brand-name'&&!p.font&&!curve&&old.creative?.conceptDomain&&((old.creative.slot??0)%3!==2)&&/custom typography|typographie personnalisée|tipografi të personalizuar/i.test(prompt)?geometricWordmark(base,{width:place.room,family:artisticFamily(old.creative.conceptDomain,Math.floor((old.creative.slot??0)/2))}):null;
    layers.push(custom??typeset(base,faces(fontId),{tracking,width:place.room,curve,optical:id==='brand-name'&&!p.font,stretch:id==='brand-name'?directionType.stretch:1,letterArchitecture:id==='brand-name'?letterDirection(prompt,old.creative?.slot??0,p.font):'original'}));
   };
   if(layout!=='symbol'){

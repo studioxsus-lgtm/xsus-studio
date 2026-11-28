@@ -10,19 +10,20 @@ export function geometricLetter(letter){
 }
 
 export function geometricWordmark(layer,{width=Infinity,tracking=.12,family='original'}={}){
- if(!['original','wide','condensed'].includes(family))throw RangeError('invalid_geometric_family');
- const ratio=family==='wide'?1.18:family==='condensed'?.78:1;
+ if(!['original','wide','condensed','elegant','forward'].includes(family))throw RangeError('invalid_geometric_family');
+ const ratio=family==='wide'?1.18:family==='condensed'?.78:family==='elegant'?.88:1;
  const chars=Array.from(layer.text),glyphs=chars.map(geometricLetter);
  if(!chars.length||chars.length>32||glyphs.some(g=>!g))return null;
+ const slant=family==='forward'?.14:0;
  const advances=chars.map(c=>(c==='I'?.48:1)*ratio),units=advances.reduce((a,b)=>a+b,0)+tracking*(chars.length-1);
- const size=Math.min(layer.fontSize,width/units);
+ const size=Math.min(layer.fontSize,width/(units+slant));
  if(!Number.isFinite(size)||size<=0)return null;
- let cursor=layer.x-units*size/2;
+ let cursor=layer.x-(units+slant)*size/2;
  const outline=[];
  for(let i=0;i<chars.length;i++){
  const offset=chars[i]==='I'?.26:0;
- for(const [op,...v] of glyphs[i])outline.push(op==='Z'?[op]:[op,Math.round((cursor+(v[0]-offset)*size*ratio)*100)/100,Math.round((layer.y+v[1]*size)*100)/100]);
+ for(const [op,...v] of glyphs[i])outline.push(op==='Z'?[op]:[op,Math.round((cursor+((v[0]-offset)*ratio-v[1]*slant)*size)*100)/100,Math.round((layer.y+v[1]*size)*100)/100]);
  cursor+=(advances[i]+tracking)*size;
  }
- return {...layer,fontSize:size,outline,advance:units*size,trackingEm:tracking,curve:0,stretch:1,letterArchitecture:'geometric-'+family};
+ return {...layer,fontSize:size,outline,advance:(units+slant)*size,trackingEm:tracking,curve:0,stretch:1,letterArchitecture:'geometric-'+family};
 }
