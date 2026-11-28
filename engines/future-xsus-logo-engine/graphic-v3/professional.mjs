@@ -1,3 +1,4 @@
+import {designReview} from './design-review.mjs';
 import {lockupHarmony} from './lockup-harmony.mjs';
 import {geometricWordmark} from './geometric-letter.mjs';
 import {softenCorners} from './soften-corners.mjs';
@@ -69,6 +70,7 @@ export function enhance(kit,p,prompt=''){
   const expected=old.creative&&v.quality?.fidelity?.acceptable&&!style.monochrome&&layout!=='text'&&!p.finish&&!choices.includes('gradient')?[...new Set(mark.map(l=>l.fill))].slice(0,2):[];
   const visual=visualEvidence(svg,expected);
   const artistic=artisticEvidence(svg,v.quality?.harmony);
-  return {...v,document,svg,quality:{...geometry,pixel,visual,artistic,refinement,artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
+  const design=old.creative?.conceptDomain?designReview(document,geometry,artistic):null;
+  return {...v,document,svg,quality:{...geometry,pixel,visual,artistic,design,refinement,artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
  })});
 }

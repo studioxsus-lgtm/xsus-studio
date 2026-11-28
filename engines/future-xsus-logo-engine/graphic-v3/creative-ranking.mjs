@@ -4,7 +4,7 @@ export function rankCreative(variants){
  return variants.map((v,index)=>{
  const q=v.quality??{},p=q.pixel;
  if(!p||![p.coverage,p.centerOffset,p.edgeInk,p.width,p.height].every(Number.isFinite))return {index,score:null,eligible:false,reasons:['missing_measurements']};
- const reasons=[...new Set([...(p.warnings??[]),...(q.heuristics?.review??[])])];
+ const reasons=[...new Set([...(p.warnings??[]),...(q.heuristics?.review??[]),...(q.design?.warnings??[])])];
  const balance=clamp(1-p.centerOffset/.5),coverage=clamp(Math.min(p.coverage/.12,(1-p.coverage)/.35)),edges=clamp(1-p.edgeInk/Math.max(1,p.width+p.height));
  const contrast=q.contrast?.length?Math.max(...['onWhite','onBlack'].map(k=>Math.min(...q.contrast.map(c=>c[k])))):null;
  const components={balance,coverage,edges,contrast:contrast===null?null:clamp(contrast/4.5),layout:reasons.includes('overlapping_text_bounds')?.35:1};
@@ -12,7 +12,7 @@ export function rankCreative(variants){
  const weights={balance:2,coverage:2,edges:2,contrast:2,layout:2,harmony:2,smallScale:2};
  const available=Object.keys(components).filter(k=>Number.isFinite(components[k]));
  const score=Math.round(100*available.reduce((s,k)=>s+components[k]*weights[k],0)/available.reduce((s,k)=>s+weights[k],0));
- return {index,score,eligible:p.acceptable===true&&q.visual?.acceptable!==false&&q.artistic?.smallScale!==false,reasons:[...reasons,...(q.visual?.acceptable===false?['visual_evidence_failed']:[])],components};
+ return {index,score,eligible:p.acceptable===true&&q.visual?.acceptable!==false&&q.artistic?.smallScale!==false&&q.design?.recommended!==false,reasons:[...reasons,...(q.visual?.acceptable===false?['visual_evidence_failed']:[])],components};
  }).sort((a,b)=>Number(b.eligible)-Number(a.eligible)||(b.score??-1)-(a.score??-1)||a.index-b.index);
 }
 export function attachCreativeRanking(kit){
