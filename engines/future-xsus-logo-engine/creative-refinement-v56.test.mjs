@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {lockupHarmony} from './graphic-v3/lockup-harmony.mjs';import {optimizeConcept} from './creative-v2/optimize-concept.mjs';
+const rect=(x,y,w,h)=>[['M',x,y],['L',x+w,y],['L',x+w,y+h],['L',x,y+h],['Z']];
+test('horizontal lockup improves clearance without moving symbol',()=>{const layers=[{type:'path',commands:rect(50,150,100,100)},{type:'text',id:'brand-name',x:200,y:210,outline:rect(145,180,110,30)}];const r=lockupHarmony(layers,512,512);assert.ok(r[1].x>200);assert.deepEqual(r[0],layers[0]);assert.deepEqual(lockupHarmony(layers,512,512,{locked:true}),layers);});
+test('horizontal lockup refuses artboard overflow',()=>{const layers=[{type:'path',commands:rect(300,150,100,100)},{type:'text',id:'brand-name',x:440,y:210,outline:rect(395,180,110,30)}];assert.deepEqual(lockupHarmony(layers,512,512),layers);});
+test('expanded optimization is deterministic and bounded',()=>{for(const d of ['quantum','atelier','leaf-pair']){const r=optimizeConcept(d,42);assert.ok(r.paths.length);assert.ok(r.candidate>=0&&r.candidate<6);assert.deepEqual(r,optimizeConcept(d,42));}});
