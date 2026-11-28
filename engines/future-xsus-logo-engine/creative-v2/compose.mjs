@@ -1,3 +1,4 @@
+import {geometricHarmony,preferHarmoniousFusion} from './geometric-harmony.mjs';
 import {reviewCandidate,retryableGeometry} from './candidate-review.mjs';
 import {diversityCheck} from './concept-diversity.mjs';
 import {colorPartition} from './color-partition.mjs';
@@ -54,13 +55,15 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    mark=parts.length?(intent.negative?fuse(mark,parts,index,stamp,intent.complexity):composeFusion(mark,parts,index,stamp,intent.complexity)):fit(mark,218,205);
    const initial=Array.from(brief.name.trim())[0]?.toUpperCase();
    if(architectural&&/monogram|initial|letter fusion|fusion de lettres|shkronj|custom typography/i.test(prompt)&&/^[A-ZËÇ0-9]$/.test(initial??'')){
-    const fused=await letterFusion(mark,initial,style,index);if(fused){mark=fused.paths;letterMode=fused.mode;}
+    const fused=await letterFusion(mark,initial,style,index);if(fused&&preferHarmoniousFusion(mark,fused.paths)){mark=fused.paths;letterMode=fused.mode;}
    }
    const mode=(index+(profile?.composition==='linked'?2:0))%6;
    if(intent.negative&&!architectural)mark=combine([regular(6+index%5,145)],fit(mark,158,151),'cut');
    if(!architectural&&!parts.length)mark=vary(mark,mode,rng);if(!mark.length)continue;
    if(architectural&&!structuralQuality(mark).acceptable)continue;
-   const rngSkew=(rng()-.5)*.22;
+   const harmony=geometricHarmony(mark);
+   if(architectural&&!harmony.acceptable)continue;
+   const rngSkew=architectural?0:(rng()-.5)*.22;
    const signature=fit(transform(mark,(x,y)=>[x+y*rngSkew,y]),180,180);
    const architecture=architectural?directions[index%directions.length]:null;
    if(!diversityCheck(signature,signatures,{architecture,attempt}))continue;
@@ -87,6 +90,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
     if(!fidelity.acceptable)continue;
     const checked=verify(final,document,primary,textColor(primary));
     checked.quality.fidelity=fidelity;
+    checked.quality.harmony=harmony;
     chosen={symbol:'creative-'+slot,document,...checked};signatures.push({signature,architecture});
    }catch(error){if(!retryableGeometry(error))throw error}
   }
