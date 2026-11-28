@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {visualEvidence} from './graphic-v3/visual-evidence.mjs';import {rankCreative} from './graphic-v3/creative-ranking.mjs';
+const svg='<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect x="10" y="10" width="50" height="100" fill="#743cd3"/><rect x="60" y="10" width="50" height="100" fill="#142857"/></svg>';
+test('real rendered colors measured',()=>{const v=visualEvidence(svg,['#743cd3','#142857']);assert.equal(v.acceptable,true);assert.ok(v.palette.every(c=>c.pixels>100));});
+test('absent color and empty raster fail',()=>{assert.equal(visualEvidence(svg,['#ff0000']).acceptable,false);assert.equal(visualEvidence('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"/>').acceptable,false);});
+test('failed raster evidence prevents recommendation eligibility',()=>{const r=rankCreative([{quality:{pixel:{coverage:.2,centerOffset:0,edgeInk:0,width:128,height:128,acceptable:true},visual:{acceptable:false}}}]);assert.equal(r[0].eligible,false);});

@@ -1,3 +1,4 @@
+import {visualEvidence} from './visual-evidence.mjs';
 import {letterDirection} from './letter-architecture.mjs';
 import {attachCreativeRanking} from './creative-ranking.mjs';
 import {refineComposition} from './refinement.mjs';
@@ -53,6 +54,8 @@ export function enhance(kit,p,prompt=''){
   const draft={...old,width,height,layers,graphic:{version:'3.0.0',styles:choices,layout,options:p}};
   const {document,svg,geometry,pixel,refinement}=refineComposition(draft,{locked:p.layout!==undefined});
   if(Buffer.byteLength(svg)>240000)throw RangeError('graphic_budget');
-  return {...v,document,svg,quality:{...geometry,pixel,refinement,artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
+  const expected=old.creative&&v.quality?.fidelity?.acceptable&&!style.monochrome&&layout!=='text'&&!p.finish&&!choices.includes('gradient')?[...new Set(mark.map(l=>l.fill))].slice(0,2):[];
+  const visual=visualEvidence(svg,expected);
+  return {...v,document,svg,quality:{...geometry,pixel,visual,refinement,artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
  })});
 }

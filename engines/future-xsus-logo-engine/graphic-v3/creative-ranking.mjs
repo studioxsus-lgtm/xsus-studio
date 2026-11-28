@@ -11,7 +11,7 @@ export function rankCreative(variants){
  const weights={balance:2,coverage:2,edges:2,contrast:2,layout:2};
  const available=Object.keys(components).filter(k=>Number.isFinite(components[k]));
  const score=Math.round(100*available.reduce((s,k)=>s+components[k]*weights[k],0)/available.reduce((s,k)=>s+weights[k],0));
- return {index,score,eligible:p.acceptable===true,reasons,components};
+ return {index,score,eligible:p.acceptable===true&&q.visual?.acceptable!==false,reasons:[...reasons,...(q.visual?.acceptable===false?['visual_evidence_failed']:[])],components};
  }).sort((a,b)=>Number(b.eligible)-Number(a.eligible)||(b.score??-1)-(a.score??-1)||a.index-b.index);
 }
 export function attachCreativeRanking(kit){
