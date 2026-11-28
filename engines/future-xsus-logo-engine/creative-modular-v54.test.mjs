@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {gridRefinement} from './creative-v2/grid-refinement.mjs';import {modularSymbol} from './creative-v2/modular-symbol.mjs';import {similarity,area} from './creative-v2/contours.mjs';
+test('grid snapping preserves silhouette',()=>{const p=[[[.2,.2],[100.2,.2],[100.2,100.2],[.2,100.2]]],r=gridRefinement(p);assert.ok(similarity(p,r)>=.97);assert.ok(r.flat().every(([x,y])=>x%2===0&&y%2===0));});
+test('grid rejects destructive snapping',()=>{const p=[[[0,0],[1,0],[1,1],[0,1]]];assert.deepEqual(gridRefinement(p,8),p);});
+test('modular construction is deterministic and produces usable candidates',()=>{let accepted=0;for(let seed=0;seed<24;seed++){const p=modularSymbol('network',seed);assert.deepEqual(p,modularSymbol('network',seed));if(p){assert.ok(area(p)>100);accepted++;}}assert.ok(accepted>0);});

@@ -1,3 +1,5 @@
+import {gridRefinement} from './grid-refinement.mjs';
+import {modularSymbol} from './modular-symbol.mjs';
 import {combine,regular,line,transform,fit,area} from './contours.mjs';
 export function generativeMark(direction,seed=0,negative=false){
  const n=3+seed%3,r=82+seed%13,w=19+seed%9,phase=(seed%9-4)*.025;
@@ -12,6 +14,8 @@ export function generativeMark(direction,seed=0,negative=false){
  case 'connection':p=combine([...line([[-r,-r*.55],[0,r*.55],[r,-r*.55]],w),...line([[-r,r*.55],[0,-r*.55],[r,r*.55]],w)]);break;
  default:throw RangeError('unknown_concept');
  }
+ if(seed%4===0){const modular=modularSymbol(direction,seed);if(modular)p=modular;}
+ p=gridRefinement(p,2);
  if(negative){const cut=combine(p,[regular(4,17+seed%8,0,0,phase)],'cut');if(area(cut)>=area(p)*.8&&area(cut)<area(p))p=cut;}
  return fit(rotate(p,phase),218,205);
 }
