@@ -1,3 +1,4 @@
+import {minimalistRefinement} from './minimalist-refinement.mjs';
 import {premiumMonogram} from './premium-monogram.mjs';
 import {cleanVector} from './clean-vector.mjs';
 import {geometricHarmony,preferHarmoniousFusion} from './geometric-harmony.mjs';
@@ -65,6 +66,8 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    if(!architectural&&!parts.length)mark=vary(mark,mode,rng);if(!mark.length)continue;
    const cleanup=architectural?cleanVector(mark):null;
    if(cleanup?.accepted)mark=cleanup.paths;
+   const minimal=architectural?minimalistRefinement(mark):null;
+   if(minimal?.accepted)mark=minimal.paths;
    if(architectural&&!structuralQuality(mark).acceptable)continue;
    const harmony=geometricHarmony(mark);
    if(architectural&&!harmony.acceptable)continue;
@@ -97,6 +100,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
     checked.quality.fidelity=fidelity;
     checked.quality.harmony=harmony;
     if(cleanup)checked.quality.cleanup={removed:cleanup.removed,accepted:cleanup.accepted};
+    if(minimal)checked.quality.minimalism={before:minimal.before,after:minimal.after,accepted:minimal.accepted};
     chosen={symbol:'creative-'+slot,document,...checked};signatures.push({signature,architecture});
    }catch(error){if(!retryableGeometry(error))throw error}
   }

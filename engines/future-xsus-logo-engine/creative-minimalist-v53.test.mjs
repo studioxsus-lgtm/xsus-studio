@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {minimalistRefinement} from './creative-v2/minimalist-refinement.mjs';import {regular,combine,similarity} from './creative-v2/contours.mjs';
+test('redundant collinear points removed without mutation',()=>{const p=[[[0,0],[25,0],[50,0],[100,0],[100,100],[0,100]]],copy=structuredClone(p),r=minimalistRefinement(p);assert.ok(r.accepted);assert.ok(r.after<r.before);assert.ok(similarity(p,r.paths)>.985);assert.deepEqual(p,copy);});
+test('hole topology and silhouette preserved',()=>{const p=combine([regular(48,100)],[regular(32,45)],'cut'),r=minimalistRefinement(p);assert.equal(r.paths.length,p.length);assert.ok(similarity(p,r.paths)>=.985);});
+test('simple triangle is not degraded',()=>{const p=[regular(3,100)],r=minimalistRefinement(p);assert.equal(r.accepted,false);assert.deepEqual(r.paths,p);});
