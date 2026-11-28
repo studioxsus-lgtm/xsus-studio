@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {opticalBalance} from './graphic-v3/optical-balance.mjs';import {composition} from './graphic-v3/composition.mjs';
+test('sparse central mark receives bounded enlargement',()=>{const p=composition('central',512,512,'AXION'),r=opticalBalance(p,{layout:'central',width:512,height:512,occupancy:.15});assert.ok(r.w>p.w);assert.ok(r.w<=p.w*1.18);assert.ok(r.h>=p.h);assert.equal(r.x,p.x);});
+test('explicit layout and dense marks retain dimensions',()=>{const p=composition('central',512,512,'AXION');for(const opts of [{occupancy:.1,locked:true},{occupancy:.8}])assert.deepEqual(opticalBalance(p,{layout:'central',width:512,height:512,...opts}),p);});
+test('horizontal lockup is unchanged',()=>{const p=composition('horizontal',800,400,'AXION');assert.deepEqual(opticalBalance(p,{layout:'horizontal',width:800,height:400,occupancy:.1}),p);});

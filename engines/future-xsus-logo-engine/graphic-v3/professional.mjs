@@ -1,3 +1,4 @@
+import {opticalBalance} from './optical-balance.mjs';
 import {visualEvidence} from './visual-evidence.mjs';
 import {letterDirection} from './letter-architecture.mjs';
 import {attachCreativeRanking} from './creative-ranking.mjs';
@@ -11,7 +12,7 @@ import {gradient,finishes} from './color.mjs';
 import {renderGraphic} from './scene.mjs';
 import {faces,catalog} from './font-files.mjs';
 import {typeset} from './typography.mjs';
-import {flatten,box} from '../creative-v2/contours.mjs';
+import {flatten,box,area} from '../creative-v2/contours.mjs';
 const defaults={'serif':'libre-baskerville','sans-serif':'dm-sans','monospace':'ibm-plex-mono'};
 export function graphicOptions(p){
  if(!p||typeof p!=='object'||Array.isArray(p)||Object.keys(p).some(k=>!['styles','treatment','layout','font','width','height','finish','slogan','angle'].includes(k)))throw TypeError('invalid_graphic_options');
@@ -29,11 +30,13 @@ export function enhance(kit,p,prompt=''){
  return attachCreativeRanking({...kit,version:'3.0.0',variants:kit.variants.map(v=>{
   const old=v.document,width=p.width??512,height=p.height??512;
   const layout=chooseComposition({explicit:p.layout,preferred:style.layout,slot:old.creative?.slot??0,width,height,usage:old.creative?.usage,prompt});
-  const place=composition(layout,width,height,kit.name),layers=[];
+  let place=composition(layout,width,height,kit.name);const layers=[];
   const mark=old.layers.filter(l=>l.type==='path'),primary=kit.palette.primary,secondary=style.monochrome?primary:kit.palette.secondary;
   if(layout!=='text'&&mark.length){
    const bbox=box(mark.flatMap(l=>flatten(l.commands))),mx=(bbox.minX+bbox.maxX)/2,my=(bbox.minY+bbox.maxY)/2;
    const bw=bbox.maxX-bbox.minX,bh=bbox.maxY-bbox.minY;
+   const occupancy=area(mark.flatMap(l=>flatten(l.commands)))/Math.max(1,bw*bh);
+   if(old.creative)place=opticalBalance(place,{layout,width,height,occupancy,locked:p.layout!==undefined});
    const scale=Math.min(place.w/(bw*style.ratio+bh*Math.abs(style.slant)),place.h/bh);
    const adjust=(x,y)=>[place.cx+((x-mx)*style.ratio+(y-my)*style.slant)*scale,place.cy+(y-my)*scale].map(v=>Math.round(v*100)/100);
    for(const [i,l] of mark.entries()){
