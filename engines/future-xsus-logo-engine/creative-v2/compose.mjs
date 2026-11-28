@@ -57,7 +57,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    else mark=baseId?shape(baseId,stamp,intent.complexity):procedure(family,stamp,intent.complexity);
    mark=parts.length?(intent.negative?fuse(mark,parts,index,stamp,intent.complexity):composeFusion(mark,parts,index,stamp,intent.complexity)):fit(mark,218,205);
    const initial=Array.from(brief.name.trim())[0]?.toUpperCase();
-   if(architectural&&/monogram|initial|letter fusion|fusion de lettres|shkronj|custom typography/i.test(prompt)&&/^[A-ZËÇ0-9]$/.test(initial??'')){
+   if(architectural&&/monogram|initial|letter fusion|fusion de lettres|shkronj/i.test(prompt)&&/^[A-ZËÇ0-9]$/.test(initial??'')){
     const fused=await premiumMonogram(initial,style,index);
     if(fused.mode!=='standalone'&&preferHarmoniousFusion(mark,fused.paths)){mark=fused.paths;letterMode=fused.mode;}
    }

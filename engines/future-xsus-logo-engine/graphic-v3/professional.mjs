@@ -1,3 +1,4 @@
+import {artisticEvidence} from './artistic-evidence.mjs';
 import {opticalBalance} from './optical-balance.mjs';
 import {visualEvidence} from './visual-evidence.mjs';
 import {letterDirection} from './letter-architecture.mjs';
@@ -59,6 +60,7 @@ export function enhance(kit,p,prompt=''){
   if(Buffer.byteLength(svg)>240000)throw RangeError('graphic_budget');
   const expected=old.creative&&v.quality?.fidelity?.acceptable&&!style.monochrome&&layout!=='text'&&!p.finish&&!choices.includes('gradient')?[...new Set(mark.map(l=>l.fill))].slice(0,2):[];
   const visual=visualEvidence(svg,expected);
-  return {...v,document,svg,quality:{...geometry,pixel,visual,refinement,artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
+  const artistic=artisticEvidence(svg,v.quality?.harmony);
+  return {...v,document,svg,quality:{...geometry,pixel,visual,artistic,refinement,artboard:[width,height],layerCount:layers.length,svgBytes:Buffer.byteLength(svg)}};
  })});
 }
