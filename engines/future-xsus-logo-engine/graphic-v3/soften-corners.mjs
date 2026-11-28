@@ -1,4 +1,4 @@
-import {flatten,similarity,area} from '../creative-v2/contours.mjs';
+import {flatten,similarity,area,combine} from '../creative-v2/contours.mjs';
 export function softenCorners(commands){
  const rings=flatten(commands),out=[];
  for(const ring of rings){
@@ -6,5 +6,9 @@ export function softenCorners(commands){
  out.push(['M',...corners[0].a]);for(const [i,v] of corners.entries()){if(i)out.push(['L',...v.a]);out.push(['Q',...v.p,...v.b]);}out.push(['Z']);
  }
  if(out.length>512||!rings.length)return commands;
- const sampled=flatten(out);return sampled.flat().length<=4096&&area(rings)>0&&similarity(rings,sampled)>=.995?out:commands;
+ const sampled=flatten(out);
+ if(sampled.flat().length>4096||!area(rings))return commands;
+ // Compare both operands at the same Boolean cleanup precision.
+ const original=combine(rings),rounded=combine(sampled);
+ return similarity(original,rounded)>=.995&&Math.abs(area(sampled)/area(rings)-1)<=.005?out:commands;
 }
