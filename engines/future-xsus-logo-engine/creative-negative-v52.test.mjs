@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {negativeArchitecture} from './creative-v2/negative-architecture.mjs';import {area,box} from './creative-v2/contours.mjs';
+test('negative architectures remain bounded and nonempty',()=>{for(let i=0;i<8;i++){const p=negativeArchitecture(i,42),b=box(p);assert.ok(area(p)>0);assert.ok(b.maxX-b.minX<=218.1&&b.maxY-b.minY<=205.1);}});
+test('negative architectures deterministic and distinct',()=>{const p=Array.from({length:8},(_,i)=>negativeArchitecture(i,42));assert.deepEqual(p[0],negativeArchitecture(0,42));assert.equal(new Set(p.map(x=>JSON.stringify(x))).size,8);});

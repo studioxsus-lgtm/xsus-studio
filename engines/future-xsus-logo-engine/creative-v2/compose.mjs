@@ -1,3 +1,4 @@
+import {negativeArchitecture} from './negative-architecture.mjs';
 import {semanticDirections} from './semantic-direction.mjs';
 import {architecturalMark,structuralQuality,architectures} from './architecture.mjs';
 import {createHash} from 'node:crypto';
@@ -40,15 +41,15 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    const index=slot+13*attempt+revision,stamp=hash([seed,index,revision].join('|')),rng=random(stamp);
    const family=intent.family??profile?.family??(intent.traits.mood.includes('calm')?'organic':families[index%families.length]);
    let mark,parts=intent.required.slice(1);
-   const architectural=!intent.glyphs&&!intent.required.length&&!intent.explicit&&!intent.family&&!intent.negative&&!intent.forbidden.length;
+   const architectural=!intent.glyphs&&!intent.required.length&&!intent.explicit&&!intent.family&&!intent.forbidden.length;
    if(intent.glyphs){
     const mode=intent.open?'open':intent.mirror?'mirror':['woven','ligature','open','woven'][index%4];
     mark=await monogram(intent.glyphs,style,mode);parts=intent.required;
-   }else if(architectural)mark=architecturalMark(architectures.indexOf(directions[index%directions.length]),stamp);
+   }else if(architectural){const direction=architectures.indexOf(directions[index%directions.length]);mark=intent.negative?negativeArchitecture(direction,stamp):architecturalMark(direction,stamp);}
    else mark=baseId?shape(baseId,stamp,intent.complexity):procedure(family,stamp,intent.complexity);
    mark=parts.length?(intent.negative?fuse(mark,parts,index,stamp,intent.complexity):composeFusion(mark,parts,index,stamp,intent.complexity)):fit(mark,218,205);
    const mode=(index+(profile?.composition==='linked'?2:0))%6;
-   if(intent.negative)mark=combine([regular(6+index%5,145)],fit(mark,158,151),'cut');
+   if(intent.negative&&!architectural)mark=combine([regular(6+index%5,145)],fit(mark,158,151),'cut');
    if(!architectural&&!parts.length)mark=vary(mark,mode,rng);if(!mark.length)continue;
    if(architectural&&!structuralQuality(mark).acceptable)continue;
    const rngSkew=(rng()-.5)*.22;
