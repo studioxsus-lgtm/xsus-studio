@@ -45,7 +45,7 @@ export function enhance(kit,p,prompt=''){
   }
   const directionType=wordmarkDirection({family:!p.font&&/futuristic|futuriste|futurist/i.test(prompt)?'sans-serif':style.font,slot:old.creative?.slot??0,tracking:style.tracking,font:p.font,architecture:old.creative?.architecture});
   const font=directionType.font,addText=(id,text,x,y,size,fontId,tracking,curve=0)=>{
-   layers.push(typeset({id,type:'text',text,x,y,fontSize:size,fontId,fill:primary,fontFamily:style.font},faces(fontId),{tracking,width:place.room,curve,stretch:id==='brand-name'?directionType.stretch:1,letterArchitecture:id==='brand-name'?letterDirection(prompt,old.creative?.slot??0,p.font):'original'}));
+   layers.push(typeset({id,type:'text',text,x,y,fontSize:size,fontId,fill:primary,fontFamily:style.font},faces(fontId),{tracking,width:place.room,curve,optical:id==='brand-name'&&!p.font,stretch:id==='brand-name'?directionType.stretch:1,letterArchitecture:id==='brand-name'?letterDirection(prompt,old.creative?.slot??0,p.font):'original'}));
   };
   if(layout!=='symbol'){
    addText('brand-name',kit.name,place.x,place.y,place.size,font,directionType.tracking,layout==='circular'?-.45:0);
