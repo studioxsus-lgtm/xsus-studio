@@ -1,3 +1,4 @@
+import {originalMonogram} from './original-monogram.mjs';
 import {finishContours} from './finish-contours.mjs';
 import {structuralColor} from './structural-color.mjs';
 import {optimizeConcept} from './optimize-concept.mjs';
@@ -64,7 +65,8 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    mark=parts.length?(intent.negative?fuse(mark,parts,index,stamp,intent.complexity):composeFusion(mark,parts,index,stamp,intent.complexity)):fit(mark,218,205);
    const initial=Array.from(brief.name.trim())[0]?.toUpperCase();
    if(architectural&&/monogram|initial|letter fusion|fusion de lettres|shkronj/i.test(prompt)&&/^[A-ZËÇ0-9]$/.test(initial??'')){
-    const fused=await premiumMonogram(initial,style,index);
+    const original=originalMonogram(initial,index);
+    const fused=original??await premiumMonogram(initial,style,index);
     if(fused.mode!=='standalone'&&preferHarmoniousFusion(mark,fused.paths)){mark=fused.paths;letterMode=fused.mode;}
    }
    const mode=(index+(profile?.composition==='linked'?2:0))%6;

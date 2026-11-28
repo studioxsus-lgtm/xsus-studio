@@ -8,6 +8,6 @@ const domains=[
  ['hospitality',/hotel|restaurant|hospitality|hôtel|restorant|mikprit/i,['aperture','flow','axis','connection','signal','network']]
 ];
 export function conceptDirection(intent,prompt=''){
- const match=domains.find(([,pattern])=>pattern.test(prompt))??(intent.traits?.style?.includes('futuristic')?domains[0]:null);
+ const match=domains.find(([,pattern])=>pattern.test(prompt))??(intent.traits?.style?.includes('futuristic')?domains.find(([name])=>name==='technology'):null);
  return match?{domain:match[0],directions:[...match[2]]}:{domain:'general',directions:[]};
 }

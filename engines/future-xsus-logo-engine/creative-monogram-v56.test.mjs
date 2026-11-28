@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {originalMonogram} from './creative-v2/original-monogram.mjs';import {conceptDirection} from './creative-v2/concept-direction.mjs';import {area,similarity} from './creative-v2/contours.mjs';
+test('original monograms distinguish brand initials',()=>{const a=originalMonogram('A'),v=originalMonogram('V'),n=originalMonogram('N');for(const r of [a,v,n])assert.ok(area(r.paths)>100);assert.ok(similarity(a.paths,v.paths)<.9);assert.ok(similarity(a.paths,n.paths)<.9);});
+test('original monogram safely falls back for unsupported initials',()=>assert.equal(originalMonogram('Ë'),null));
+test('framed original monograms preserve substantial body when available',()=>{for(const l of ['A','V','N','O'])for(const i of [1,2]){const r=originalMonogram(l,i);if(r){assert.ok(area(r.paths)>100);assert.deepEqual(r,originalMonogram(l,i));}}});
+test('generic futuristic intent defaults to technology not fashion',()=>assert.equal(conceptDirection({traits:{style:['futuristic']}},'futuristic logo').domain,'technology'));
