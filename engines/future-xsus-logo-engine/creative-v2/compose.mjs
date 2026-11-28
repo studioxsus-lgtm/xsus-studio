@@ -1,3 +1,4 @@
+import {cleanVector} from './clean-vector.mjs';
 import {geometricHarmony,preferHarmoniousFusion} from './geometric-harmony.mjs';
 import {reviewCandidate,retryableGeometry} from './candidate-review.mjs';
 import {diversityCheck} from './concept-diversity.mjs';
@@ -60,6 +61,8 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    const mode=(index+(profile?.composition==='linked'?2:0))%6;
    if(intent.negative&&!architectural)mark=combine([regular(6+index%5,145)],fit(mark,158,151),'cut');
    if(!architectural&&!parts.length)mark=vary(mark,mode,rng);if(!mark.length)continue;
+   const cleanup=architectural?cleanVector(mark):null;
+   if(cleanup?.accepted)mark=cleanup.paths;
    if(architectural&&!structuralQuality(mark).acceptable)continue;
    const harmony=geometricHarmony(mark);
    if(architectural&&!harmony.acceptable)continue;
@@ -91,6 +94,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
     const checked=verify(final,document,primary,textColor(primary));
     checked.quality.fidelity=fidelity;
     checked.quality.harmony=harmony;
+    if(cleanup)checked.quality.cleanup={removed:cleanup.removed,accepted:cleanup.accepted};
     chosen={symbol:'creative-'+slot,document,...checked};signatures.push({signature,architecture});
    }catch(error){if(!retryableGeometry(error))throw error}
   }

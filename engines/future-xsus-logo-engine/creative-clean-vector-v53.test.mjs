@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {cleanVector} from './creative-v2/clean-vector.mjs';import {regular,combine,area,similarity} from './creative-v2/contours.mjs';
+test('tiny detached island removed without mutating input',()=>{const p=combine([regular(6,90),regular(4,3,120,0)]),copy=structuredClone(p);const r=cleanVector(p);assert.equal(r.accepted,true);assert.equal(r.removed,1);assert.equal(r.paths.length,1);assert.deepEqual(p,copy);});
+test('negative space preserved even when small',()=>{const p=combine([regular(6,90)],[regular(4,5)],'cut');const r=cleanVector(p);assert.equal(r.paths.length,2);assert.ok(similarity(p,r.paths)>.99);});
+test('substantial disconnected elements retained',()=>{const p=combine([regular(4,40,-60,0),regular(4,40,60,0)]);const r=cleanVector(p);assert.equal(r.removed,0);assert.equal(r.paths.length,2);assert.ok(Math.abs(area(p)-area(r.paths))<1);});
