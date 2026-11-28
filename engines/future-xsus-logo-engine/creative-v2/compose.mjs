@@ -1,3 +1,4 @@
+import {reviewCandidate,retryableGeometry} from './candidate-review.mjs';
 import {diversityCheck} from './concept-diversity.mjs';
 import {colorPartition} from './color-partition.mjs';
 import {letterFusion} from './letter-fusion.mjs';
@@ -82,9 +83,12 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
     const document={version:'1.0.0',width:512,height:512,layers,creative:{version:'2.0.0',seed,slot,count:intent.count,revision,attempt,
      brief:prompt,language,name:brief.name,family,style,mode,...(architectural?{architecture:directions[index%directions.length]}:{}),...(letterMode?{letterFusion:letterMode,initial}:{}),complexity:intent.complexity,subjects:intent.required,...(intent.glyphs?{glyphs:intent.glyphs}:{}),category:profile?.id??null,
      audience:intent.traits.audience,mood:intent.traits.mood,culture:intent.culture,usage:intent.traits.usage}};
+    const fidelity=reviewCandidate(document,intent,brief.name);
+    if(!fidelity.acceptable)continue;
     const checked=verify(final,document,primary,textColor(primary));
+    checked.quality.fidelity=fidelity;
     chosen={symbol:'creative-'+slot,document,...checked};signatures.push({signature,architecture});
-   }catch(error){if(error.message!=='path_budget')throw error}
+   }catch(error){if(!retryableGeometry(error))throw error}
   }
   if(!chosen)return review('creative_constraints');variants.push(chosen);
  }
