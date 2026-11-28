@@ -1,3 +1,4 @@
+import {letterFusion} from './letter-fusion.mjs';
 import {negativeArchitecture} from './negative-architecture.mjs';
 import {semanticDirections} from './semantic-direction.mjs';
 import {architecturalMark,structuralQuality,architectures} from './architecture.mjs';
@@ -40,7 +41,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
   for(let attempt=0;attempt<10&&!chosen;attempt++){
    const index=slot+13*attempt+revision,stamp=hash([seed,index,revision].join('|')),rng=random(stamp);
    const family=intent.family??profile?.family??(intent.traits.mood.includes('calm')?'organic':families[index%families.length]);
-   let mark,parts=intent.required.slice(1);
+   let mark,parts=intent.required.slice(1),letterMode=null;
    const architectural=!intent.glyphs&&!intent.required.length&&!intent.explicit&&!intent.family&&!intent.forbidden.length;
    if(intent.glyphs){
     const mode=intent.open?'open':intent.mirror?'mirror':['woven','ligature','open','woven'][index%4];
@@ -48,6 +49,10 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    }else if(architectural){const direction=architectures.indexOf(directions[index%directions.length]);mark=intent.negative?negativeArchitecture(direction,stamp):architecturalMark(direction,stamp);}
    else mark=baseId?shape(baseId,stamp,intent.complexity):procedure(family,stamp,intent.complexity);
    mark=parts.length?(intent.negative?fuse(mark,parts,index,stamp,intent.complexity):composeFusion(mark,parts,index,stamp,intent.complexity)):fit(mark,218,205);
+   const initial=Array.from(brief.name.trim())[0]?.toUpperCase();
+   if(architectural&&/monogram|initial|letter fusion|fusion de lettres|shkronj|custom typography/i.test(prompt)&&/^[A-ZËÇ0-9]$/.test(initial??'')){
+    const fused=await letterFusion(mark,initial,style,index);if(fused){mark=fused.paths;letterMode=fused.mode;}
+   }
    const mode=(index+(profile?.composition==='linked'?2:0))%6;
    if(intent.negative&&!architectural)mark=combine([regular(6+index%5,145)],fit(mark,158,151),'cut');
    if(!architectural&&!parts.length)mark=vary(mark,mode,rng);if(!mark.length)continue;
@@ -73,7 +78,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
       fontWeight:intent.traits.typography.includes('bold')?700:[500,600,700][index%3]});
     }
     const document={version:'1.0.0',width:512,height:512,layers,creative:{version:'2.0.0',seed,slot,count:intent.count,revision,attempt,
-     brief:prompt,language,name:brief.name,family,style,mode,...(architectural?{architecture:directions[index%directions.length]}:{}),complexity:intent.complexity,subjects:intent.required,...(intent.glyphs?{glyphs:intent.glyphs}:{}),category:profile?.id??null,
+     brief:prompt,language,name:brief.name,family,style,mode,...(architectural?{architecture:directions[index%directions.length]}:{}),...(letterMode?{letterFusion:letterMode,initial}:{}),complexity:intent.complexity,subjects:intent.required,...(intent.glyphs?{glyphs:intent.glyphs}:{}),category:profile?.id??null,
      audience:intent.traits.audience,mood:intent.traits.mood,culture:intent.culture,usage:intent.traits.usage}};
     const checked=verify(final,document,primary,textColor(primary));
     chosen={symbol:'creative-'+slot,document,...checked};signatures.push(signature);

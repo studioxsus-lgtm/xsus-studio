@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {letterFusion} from './creative-v2/letter-fusion.mjs';import {regular,area,box} from './creative-v2/contours.mjs';
+test('letter fusion uses real glyph and preserves bounded geometry',async()=>{const base=[regular(6,100)],copy=structuredClone(base);for(let i=0;i<3;i++){const r=await letterFusion(base,'A','futuristic',i);assert.ok(r);assert.ok(area(r.paths)>0);const b=box(r.paths);assert.ok(b.maxX-b.minX<=218.1&&b.maxY-b.minY<=205.1);}assert.deepEqual(base,copy);});
+test('letter knockout differs by initial',async()=>{const base=[regular(6,100)];const a=await letterFusion(base,'A','minimal',1),b=await letterFusion(base,'X','minimal',1);assert.ok(a&&b);assert.notDeepEqual(a.paths,b.paths);});
