@@ -1,3 +1,5 @@
+import {precisionVector} from './precision-vector.mjs';
+import {symmetryRefinement} from './symmetry-refinement.mjs';
 import {meaningfulNegative} from './meaningful-negative.mjs';
 import {gridRefinement} from './grid-refinement.mjs';
 import {modularSymbol} from './modular-symbol.mjs';
@@ -18,5 +20,7 @@ export function generativeMark(direction,seed=0,negative=false){
  if(seed%4===0){const modular=modularSymbol(direction,seed);if(modular)p=modular;}
  p=gridRefinement(p,2);
  if(negative)p=meaningfulNegative(p,direction,seed);
+ p=precisionVector(p);
+ if(['axis','signal','connection'].includes(direction)){p=symmetryRefinement(p);return fit(p,218,205);}
  return fit(rotate(p,phase),218,205);
 }
