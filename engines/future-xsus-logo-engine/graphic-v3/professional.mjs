@@ -1,3 +1,4 @@
+import {brandComposition} from './brand-composition.mjs';
 import {artisticEvidence} from './artistic-evidence.mjs';
 import {opticalBalance} from './optical-balance.mjs';
 import {visualEvidence} from './visual-evidence.mjs';
@@ -31,7 +32,8 @@ export function enhance(kit,p,prompt=''){
  return attachCreativeRanking({...kit,version:'3.0.0',variants:kit.variants.map(v=>{
   const old=v.document,width=p.width??512,height=p.height??512;
   const layout=chooseComposition({explicit:p.layout,preferred:style.layout,slot:old.creative?.slot??0,width,height,usage:old.creative?.usage,prompt});
-  let place=composition(layout,width,height,kit.name);const layers=[];
+  let place=composition(layout,width,height,kit.name);
+  if(old.creative?.conceptDomain)place=brandComposition(place,{layout,width,height,locked:p.layout!==undefined});const layers=[];
   const mark=old.layers.filter(l=>l.type==='path'),primary=kit.palette.primary,secondary=style.monochrome?primary:kit.palette.secondary;
   if(layout!=='text'&&mark.length){
    const bbox=box(mark.flatMap(l=>flatten(l.commands))),mx=(bbox.minX+bbox.maxX)/2,my=(bbox.minY+bbox.maxY)/2;
