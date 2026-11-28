@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {cubicContour} from './graphic-v3/cubic-contour.mjs';import {flatten,area,similarity} from './creative-v2/contours.mjs';
+test('cubic conversion preserves silhouette within tolerance',()=>{const ring=Array.from({length:32},(_,i)=>[100+70*Math.cos(i*Math.PI/16),100+70*Math.sin(i*Math.PI/16)]);const p=[...ring.map((v,i)=>[i?'L':'M',...v]),['Z']];const r=cubicContour(p);assert.ok(r.some(c=>c[0]==='C'));assert.ok(similarity(flatten(p),flatten(r))>=.99);assert.ok(Math.abs(area(flatten(r))/area(flatten(p))-1)<=.005);});
+test('existing curves remain unchanged',()=>{const p=[['M',0,0],['Q',10,10,20,0],['L',20,20],['Z']];assert.deepEqual(cubicContour(p),p);});
