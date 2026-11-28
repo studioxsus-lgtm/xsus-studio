@@ -1,3 +1,5 @@
+import {conceptDirection} from './concept-direction.mjs';
+import {generativeMark} from './generative-mark.mjs';
 import {minimalistRefinement} from './minimalist-refinement.mjs';
 import {premiumMonogram} from './premium-monogram.mjs';
 import {cleanVector} from './clean-vector.mjs';
@@ -41,19 +43,20 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
  const secondary=banned.has(second)?primary:second;
  const first=intent.required[0]??(intent.explicit?intent.selected:intent.family?null:profile?.symbol??intent.selected);
  const baseId=intent.forbidden.includes(first)?null:first;
- const variants=[],signatures=[],directions=semanticDirections(intent);
+ const variants=[],signatures=[],directions=semanticDirections(intent),concept=conceptDirection(intent,prompt);
  const slots=creative.slot===undefined?Array.from({length:intent.count},(_,i)=>i):[creative.slot];
  for(const slot of slots){
   let chosen;
   for(let attempt=0;attempt<10&&!chosen;attempt++){
    const index=slot+13*attempt+revision,stamp=hash([seed,index,revision].join('|')),rng=random(stamp);
    const family=intent.family??profile?.family??(intent.traits.mood.includes('calm')?'organic':families[index%families.length]);
-   let mark,parts=intent.required.slice(1),letterMode=null;
+   let mark,parts=intent.required.slice(1),letterMode=null,generatedDirection=null;
    const architectural=!intent.glyphs&&!intent.required.length&&!intent.explicit&&!intent.family&&!intent.forbidden.length;
    if(intent.glyphs){
     const mode=intent.open?'open':intent.mirror?'mirror':['woven','ligature','open','woven'][index%4];
     mark=await monogram(intent.glyphs,style,mode);parts=intent.required;
-   }else if(architectural){const direction=architectures.indexOf(directions[index%directions.length]);mark=intent.negative?negativeArchitecture(direction,stamp):architecturalMark(direction,stamp);}
+   }else if(architectural&&concept.directions.length){generatedDirection=concept.directions[index%concept.directions.length];mark=generativeMark(generatedDirection,stamp,intent.negative);}
+   else if(architectural){const direction=architectures.indexOf(directions[index%directions.length]);mark=intent.negative?negativeArchitecture(direction,stamp):architecturalMark(direction,stamp);}
    else mark=baseId?shape(baseId,stamp,intent.complexity):procedure(family,stamp,intent.complexity);
    mark=parts.length?(intent.negative?fuse(mark,parts,index,stamp,intent.complexity):composeFusion(mark,parts,index,stamp,intent.complexity)):fit(mark,218,205);
    const initial=Array.from(brief.name.trim())[0]?.toUpperCase();
@@ -68,12 +71,12 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    if(cleanup?.accepted)mark=cleanup.paths;
    const minimal=architectural?minimalistRefinement(mark):null;
    if(minimal?.accepted)mark=minimal.paths;
-   if(architectural&&!structuralQuality(mark).acceptable)continue;
+   if(architectural&&!generatedDirection&&!structuralQuality(mark).acceptable)continue;
    const harmony=geometricHarmony(mark);
    if(architectural&&!harmony.acceptable)continue;
    const rngSkew=architectural?0:(rng()-.5)*.22;
    const signature=fit(transform(mark,(x,y)=>[x+y*rngSkew,y]),180,180);
-   const architecture=architectural?directions[index%directions.length]:null;
+   const architecture=generatedDirection??(architectural?directions[index%directions.length]:null);
    if(!diversityCheck(signature,signatures,{architecture,attempt}))continue;
    const horizontal=intent.traits.layout.includes('horizontal')||(!intent.traits.layout.length&&strategy.design?.layout==='horizontal'&&index%3===1);
    const icon=intent.traits.layout.includes('icon');
@@ -92,7 +95,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
       fontWeight:intent.traits.typography.includes('bold')?700:[500,600,700][index%3]});
     }
     const document={version:'1.0.0',width:512,height:512,layers,creative:{version:'2.0.0',seed,slot,count:intent.count,revision,attempt,
-     brief:prompt,language,name:brief.name,family,style,mode,...(architectural?{architecture:directions[index%directions.length]}:{}),...(letterMode?{letterFusion:letterMode,initial}:{}),complexity:intent.complexity,subjects:intent.required,...(intent.glyphs?{glyphs:intent.glyphs}:{}),category:profile?.id??null,
+     brief:prompt,language,name:brief.name,family,style,mode,...(architectural?{architecture,...(generatedDirection?{conceptDomain:concept.domain}: {})}:{}),...(letterMode?{letterFusion:letterMode,initial}:{}),complexity:intent.complexity,subjects:intent.required,...(intent.glyphs?{glyphs:intent.glyphs}:{}),category:profile?.id??null,
      audience:intent.traits.audience,mood:intent.traits.mood,culture:intent.culture,usage:intent.traits.usage}};
     const fidelity=reviewCandidate(document,intent,brief.name);
     if(!fidelity.acceptable)continue;

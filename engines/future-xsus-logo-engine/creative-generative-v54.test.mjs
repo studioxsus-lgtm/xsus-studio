@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {conceptDirection} from './creative-v2/concept-direction.mjs';import {generativeMark} from './creative-v2/generative-mark.mjs';import {area,similarity} from './creative-v2/contours.mjs';
+test('premium AI request selects technology not crown',()=>{const c=conceptDirection({traits:{audience:['premium']}},'artificial intelligence technology');assert.equal(c.domain,'technology');assert.equal(c.directions.length,6);assert.ok(!c.directions.includes('crown'));});
+test('all six procedural directions produce deterministic nonempty vectors',()=>{for(const d of conceptDirection({},'technology').directions){const p=generativeMark(d,123,true);assert.ok(area(p)>100);assert.deepEqual(p,generativeMark(d,123,true));}});
+test('seed changes procedural geometry',()=>{assert.ok(similarity(generativeMark('axis',1),generativeMark('axis',12))<.99);});
