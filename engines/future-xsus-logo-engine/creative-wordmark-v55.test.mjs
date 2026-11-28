@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {geometricWordmark} from './graphic-v3/geometric-letter.mjs';import {flatten,box,area} from './creative-v2/contours.mjs';
+test('AXION original wordmark fits available width and retains text',()=>{const r=geometricWordmark({text:'AXION',x:256,y:300,fontSize:80},{width:200});assert.equal(r.text,'AXION');assert.ok(r.advance<=200.00001);const b=box(flatten(r.outline));assert.ok(b.minX>=156-.01&&b.maxX<=356+.01);assert.ok(area(flatten(r.outline))>0);});
+test('unsupported characters fall back to font shaping',()=>{assert.equal(geometricWordmark({text:'AXIONË',x:0,y:0,fontSize:30}),null);});
