@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {finishContours} from './creative-v2/finish-contours.mjs';import {generativeMark} from './creative-v2/generative-mark.mjs';import {conceptDirection} from './creative-v2/concept-direction.mjs';import {structuralColor} from './creative-v2/structural-color.mjs';import {area,combine,similarity} from './creative-v2/contours.mjs';
+const rect=(x,y,w)=>[[x,y],[x+w,y],[x+w,y+w],[x,y+w]];
+test('final cleanup removes pinhole and isolated speck within silhouette budget',()=>{const p=[rect(0,0,100),rect(30,30,1).reverse(),rect(110,110,1)];const r=finishContours(p);assert.equal(r.length,1);assert.ok(similarity(p,r)>.99);});
+test('meaningful counters remain intact',()=>{assert.equal(finishContours([rect(0,0,100),rect(25,25,50).reverse()]).length,2);});
+test('fashion has its own concept direction',()=>{assert.equal(conceptDirection({},'luxury fashion brand').domain,'fashion');});
+test('four additional families generate stable geometry',()=>{for(const d of ['atelier','ribbon-loop','facet','leaf-pair'])for(const seed of [1,17,42]){const p=generativeMark(d,seed);assert.ok(area(p)>100);assert.deepEqual(p,generativeMark(d,seed));}});
+test('color respects disconnected components',()=>{const p=[rect(0,0,100),rect(120,0,80)];const r=structuralColor(p);assert.equal(r.main.length,1);assert.equal(r.accent.length,1);assert.ok(similarity(p,combine(r.main,r.accent))>.995);});

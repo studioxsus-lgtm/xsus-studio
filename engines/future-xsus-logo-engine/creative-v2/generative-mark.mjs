@@ -18,6 +18,10 @@ export function generativeMark(direction,seed=0,negative=false){
  case 'prism':p=combine(Array.from({length:3},(_,i)=>rotate([[[0,-r],[r*.64,-r*.25],[r*.42,0],[0,-r*.48]]],i*2*Math.PI/3)).flat());break;
  case 'bridge':p=combine([...line([[-r,50],[-r,-20],[0,-r],[r,-20],[r,50]],w),...line([[-r*.45,50],[-r*.45,5],[0,-r*.35],[r*.45,5],[r*.45,50]],w*.85)]);break;
  case 'pulse':p=combine(line([[-r,0],[-r*.55,0],[-r*.25,-r*.65],[r*.15,r*.65],[r*.45,0],[r,0]],w));break;
+ case 'atelier':p=combine([[[ -r,-r],[-r+w,-r],[0,r-w],[r-w,-r],[r,-r],[0,r]]]);break;
+ case 'ribbon-loop':p=combine([regular(8,r,0,0,Math.PI/8)],[regular(8,r-w,0,0,Math.PI/8)],'cut');p=combine(p,line([[-r*.72,r*.72],[r*.72,-r*.72]],w*.8),'cut');break;
+ case 'facet':p=combine([[[-r,0],[0,-r],[r,0],[0,r]]],[[[-r*.48,0],[0,-r*.48],[r*.48,0],[0,r*.48]]],'cut');break;
+ case 'leaf-pair':p=combine([[[0,r],[-r*.85,0],[-r*.7,-r],[0,-r*.4]],[[0,r],[r*.85,0],[r*.7,-r],[0,-r*.4]]]);p=combine(p,line([[0,-r*.4],[0,r]],w*.55),'cut');break;
  default:throw RangeError('unknown_concept');
  }
  if(seed%4===0&&['signal','axis','network','flow','aperture','connection'].includes(direction)){const modular=modularSymbol(direction,seed);if(modular)p=modular;}

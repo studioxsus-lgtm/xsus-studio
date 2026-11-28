@@ -1,3 +1,4 @@
+import {finishContours} from './finish-contours.mjs';
 import {structuralColor} from './structural-color.mjs';
 import {optimizeConcept} from './optimize-concept.mjs';
 import {conceptDirection} from './concept-direction.mjs';
@@ -74,6 +75,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    const minimal=architectural?minimalistRefinement(mark):null;
    if(minimal?.accepted)mark=minimal.paths;
    if(architectural&&!generatedDirection&&!structuralQuality(mark).acceptable)continue;
+   if(architectural)mark=finishContours(mark);
    const harmony=geometricHarmony(mark);
    if(architectural&&!harmony.acceptable)continue;
    const rngSkew=architectural?0:(rng()-.5)*.22;
