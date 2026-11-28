@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {negativeArchitecture} from './creative-v2/negative-architecture.mjs';import {architecturalMark} from './creative-v2/architecture.mjs';import {geometricHarmony} from './creative-v2/geometric-harmony.mjs';import {area} from './creative-v2/contours.mjs';
+test('negative space preserves substantial geometry and harmony',()=>{for(let i=0;i<8;i++){const base=architecturalMark(i,42),p=negativeArchitecture(i,42);assert.ok(area(p)>area(base)*.70);assert.ok(geometricHarmony(p).score>=geometricHarmony(base).score-.16);}});
+test('negative space is deterministic across seeds',()=>{for(const seed of [0,42,99])assert.deepEqual(negativeArchitecture(3,seed),negativeArchitecture(3,seed));});
