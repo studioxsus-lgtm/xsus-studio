@@ -1,8 +1,9 @@
 import {flatten,similarity,area,combine} from '../creative-v2/contours.mjs';
 export function softenCorners(commands){
+ if(commands.some(c=>!['M','L','Z'].includes(c[0])))return commands;
  const rings=flatten(commands);
  if(!rings.length||!area(rings))return commands;
- for(const radius of [1.2,.6,.3,.15]){
+ for(const radius of [2.4,1.2,.6,.3,.15]){
  const out=[];
  for(const ring of rings){
  const corners=ring.map((p,i)=>{const a=ring[(i+ring.length-1)%ring.length],b=ring[(i+1)%ring.length];const d=Math.min(radius,Math.hypot(a[0]-p[0],a[1]-p[1])*.12,Math.hypot(b[0]-p[0],b[1]-p[1])*.12);const toward=q=>{const n=Math.hypot(q[0]-p[0],q[1]-p[1]);return n?p.map((v,k)=>v+(q[k]-v)*d/n):p;};return {p,a:toward(a),b:toward(b)};});

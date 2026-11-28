@@ -1,6 +1,6 @@
 const domains=[
  ['fashion',/fashion|couture|mode de luxe|mod[ëa] luksoze|luxury brand/i,['atelier','ribbon-loop','facet','aperture','bridge','prism']],
- ['technology',/artificial intelligence|intelligence artificielle|inteligjenc[ëa] artificiale|technology|technologie|teknologji/i,['signal','axis','network','flow','aperture','connection']],
+ ['technology',/artificial intelligence|intelligence artificielle|inteligjenc[ëa] artificiale|technology|technologie|teknologji/i,['vector-core','quantum','circuit','axis','network','connection']],
  ['health',/healthcare|medical|clinic|santé|clinique|shëndet|klinik/i,['pulse','connection','flow','axis','network','signal']],
  ['finance',/finance|banking|investment|banque|financ|investim/i,['bridge','axis','connection','network','aperture','flow']],
  ['education',/education|school|university|éducation|école|arsim|shkoll/i,['signal','connection','axis','aperture','flow','network']],
