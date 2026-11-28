@@ -1,3 +1,4 @@
+import {meaningfulNegative} from './meaningful-negative.mjs';
 import {gridRefinement} from './grid-refinement.mjs';
 import {modularSymbol} from './modular-symbol.mjs';
 import {combine,regular,line,transform,fit,area} from './contours.mjs';
@@ -16,6 +17,6 @@ export function generativeMark(direction,seed=0,negative=false){
  }
  if(seed%4===0){const modular=modularSymbol(direction,seed);if(modular)p=modular;}
  p=gridRefinement(p,2);
- if(negative){const cut=combine(p,[regular(4,17+seed%8,0,0,phase)],'cut');if(area(cut)>=area(p)*.8&&area(cut)<area(p))p=cut;}
+ if(negative)p=meaningfulNegative(p,direction,seed);
  return fit(rotate(p,phase),218,205);
 }
