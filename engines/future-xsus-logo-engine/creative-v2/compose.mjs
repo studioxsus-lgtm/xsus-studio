@@ -1,3 +1,4 @@
+import {colorPartition} from './color-partition.mjs';
 import {letterFusion} from './letter-fusion.mjs';
 import {negativeArchitecture} from './negative-architecture.mjs';
 import {semanticDirections} from './semantic-direction.mjs';
@@ -67,9 +68,8 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    try{
     let layers=[layer('creative-mark',final,primary)];
     if(secondary!==primary && (intent.colors.length>1||index%2===1) && (intent.colors.length>1||contrast(primary,secondary)>=1.4)){
-     const mask=[[[cx-146,cy+62],[cx+146,cy-31],[cx+146,cy+155],[cx-146,cy+155]]];
-     const cut=combine(final,mask,'cut'),accent=combine(final,mask,'intersect');
-     if(cut.length && accent.length)layers=[layer('creative-mark',cut,primary),layer('creative-accent',accent,secondary)];
+     const split=colorPartition(final,index);
+     if(split)layers=[layer('creative-mark',split.main,primary),layer('creative-accent',split.accent,secondary)];
     }
     if(!icon){
      const fontSize=Math.min(32+index%4*3,(horizontal?268:426)/Math.max(1,brief.name.length));
