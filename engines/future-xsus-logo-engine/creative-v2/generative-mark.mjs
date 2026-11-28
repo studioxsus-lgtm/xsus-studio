@@ -15,9 +15,12 @@ export function generativeMark(direction,seed=0,negative=false){
  case 'flow':p=combine(Array.from({length:2},(_,i)=>rotate(line([[-r,35],[-25,-35],[25,35],[r,-35]],w),i*Math.PI)).flat());break;
  case 'aperture':p=combine(Array.from({length:n+1},(_,i)=>rotate([[[25,-18],[r,-35],[r*.8,25],[30,40]]],i*2*Math.PI/(n+1))).flat());break;
  case 'connection':p=combine([...line([[-r,-r*.55],[0,r*.55],[r,-r*.55]],w),...line([[-r,r*.55],[0,-r*.55],[r,r*.55]],w)]);break;
+ case 'prism':p=combine(Array.from({length:3},(_,i)=>rotate([[[0,-r],[r*.64,-r*.25],[r*.42,0],[0,-r*.48]]],i*2*Math.PI/3)).flat());break;
+ case 'bridge':p=combine([...line([[-r,50],[-r,-20],[0,-r],[r,-20],[r,50]],w),...line([[-r*.45,50],[-r*.45,5],[0,-r*.35],[r*.45,5],[r*.45,50]],w*.85)]);break;
+ case 'pulse':p=combine(line([[-r,0],[-r*.55,0],[-r*.25,-r*.65],[r*.15,r*.65],[r*.45,0],[r,0]],w));break;
  default:throw RangeError('unknown_concept');
  }
- if(seed%4===0){const modular=modularSymbol(direction,seed);if(modular)p=modular;}
+ if(seed%4===0&&['signal','axis','network','flow','aperture','connection'].includes(direction)){const modular=modularSymbol(direction,seed);if(modular)p=modular;}
  p=gridRefinement(p,2);
  if(negative)p=meaningfulNegative(p,direction,seed);
  p=precisionVector(p);

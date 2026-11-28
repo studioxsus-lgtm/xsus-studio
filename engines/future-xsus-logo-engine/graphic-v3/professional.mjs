@@ -1,3 +1,4 @@
+import {lockupHarmony} from './lockup-harmony.mjs';
 import {geometricWordmark} from './geometric-letter.mjs';
 import {softenCorners} from './soften-corners.mjs';
 import {brandComposition} from './brand-composition.mjs';
@@ -62,7 +63,7 @@ export function enhance(kit,p,prompt=''){
    addText('brand-name',kit.name,place.x,place.y,place.size,font,directionType.tracking,layout==='circular'?-.45:0);
    if(p.slogan)addText('brand-slogan',p.slogan,place.x,place.sloganY,place.size*.50,font===defaults.serif?defaults['sans-serif']:defaults.serif,.06);
   }
-  const draft={...old,width,height,layers,graphic:{version:'3.0.0',styles:choices,layout,options:p}};
+  const draft={...old,width,height,layers:old.creative?.conceptDomain?lockupHarmony(layers,width,height,{locked:p.layout!==undefined}):layers,graphic:{version:'3.0.0',styles:choices,layout,options:p}};
   const {document,svg,geometry,pixel,refinement}=refineComposition(draft,{locked:p.layout!==undefined});
   if(Buffer.byteLength(svg)>240000)throw RangeError('graphic_budget');
   const expected=old.creative&&v.quality?.fidelity?.acceptable&&!style.monochrome&&layout!=='text'&&!p.finish&&!choices.includes('gradient')?[...new Set(mark.map(l=>l.fill))].slice(0,2):[];
