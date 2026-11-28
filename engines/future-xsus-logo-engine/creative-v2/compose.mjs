@@ -1,3 +1,4 @@
+import {optimizeConcept} from './optimize-concept.mjs';
 import {conceptDirection} from './concept-direction.mjs';
 import {generativeMark} from './generative-mark.mjs';
 import {minimalistRefinement} from './minimalist-refinement.mjs';
@@ -55,7 +56,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    if(intent.glyphs){
     const mode=intent.open?'open':intent.mirror?'mirror':['woven','ligature','open','woven'][index%4];
     mark=await monogram(intent.glyphs,style,mode);parts=intent.required;
-   }else if(architectural&&concept.directions.length){generatedDirection=concept.directions[index%concept.directions.length];mark=generativeMark(generatedDirection,stamp,intent.negative);}
+   }else if(architectural&&concept.directions.length){generatedDirection=concept.directions[index%concept.directions.length];mark=optimizeConcept(generatedDirection,stamp,intent.negative).paths;}
    else if(architectural){const direction=architectures.indexOf(directions[index%directions.length]);mark=intent.negative?negativeArchitecture(direction,stamp):architecturalMark(direction,stamp);}
    else mark=baseId?shape(baseId,stamp,intent.complexity):procedure(family,stamp,intent.complexity);
    mark=parts.length?(intent.negative?fuse(mark,parts,index,stamp,intent.complexity):composeFusion(mark,parts,index,stamp,intent.complexity)):fit(mark,218,205);
