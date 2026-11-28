@@ -60,7 +60,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    const final=fit(signature,horizontal?169:246,horizontal?180:234,cx,cy);
    try{
     let layers=[layer('creative-mark',final,primary)];
-    if(secondary!==primary && (intent.colors.length>1||index%2===1) && contrast(primary,secondary)>=1.4){
+    if(secondary!==primary && (intent.colors.length>1||index%2===1) && (intent.colors.length>1||contrast(primary,secondary)>=1.4)){
      const mask=[[[cx-146,cy+62],[cx+146,cy-31],[cx+146,cy+155],[cx-146,cy+155]]];
      const cut=combine(final,mask,'cut'),accent=combine(final,mask,'intersect');
      if(cut.length && accent.length)layers=[layer('creative-mark',cut,primary),layer('creative-accent',accent,secondary)];

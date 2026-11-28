@@ -1,8 +1,8 @@
 import {classify,fold} from './industries.mjs';
 import {subjects} from './fusion.mjs';
 import {catalogRequest,catalogIds} from '../symbol-catalog.mjs';
-export const inks={black:'#14151b',gold:'#b28a3e',blue:'#2563eb',white:'#ffffff',violet:'#743cd3',green:'#23704e',red:'#bb3441'};
-const colors={black:['black','noir','noire','zezë'],gold:['gold','golden','doré','or','artë','ari'],blue:['blue','bleu','blu'],white:['white','blanc','blanche','bardhë'],violet:['violet','violette','vjollcë'],green:['green','vert','gjelbër'],red:['red','rouge','kuqe']};
+export const inks={black:'#14151b',gold:'#b28a3e',blue:'#2563eb',deepBlue:'#142857',white:'#ffffff',violet:'#743cd3',green:'#23704e',red:'#bb3441'};
+const colors={black:['black','noir','noire','zezë'],gold:['gold','golden','doré','or','artë','ari'],deepBlue:['deep blue','navy blue','dark blue','bleu profond','bleu marine','blu e thellë','blu e errët'],blue:['blue','bleu','blu'],white:['white','blanc','blanche','bardhë'],violet:['violet','violette','vjollcë'],green:['green','vert','gjelbër'],red:['red','rouge','kuqe']};
 function matches(text,vocab){
  const hay=' '+fold(text)+' ';
  return Object.entries(vocab).map(([id,names])=>({id,i:Math.min(...names.map(n=>{const at=hay.indexOf(' '+fold(n)+' ');return at<0?Infinity:at}))})).filter(x=>Number.isFinite(x.i)).sort((a,b)=>a.i-b.i).map(x=>x.id);
@@ -43,17 +43,17 @@ export function interpret(prompt,brief,opts){
  const vocab={
   style:{luxury:['luxury','luxe','luxueux','luksoz'],minimal:['minimal','minimalist','minimaliste'],abstract:['abstract','abstrait','abstrakt'],angular:['angular','angulaire','këndor'],rounded:['rounded','arrondi','rrumbullakosur'],futuristic:['futuristic','futuriste','futurist']},
   usage:{app:['mobile','app icon','aplikacion'],print:['print','business cards','impression','shtyp'],web:['website','web','faqe']},
-  audience:{children:['children','enfants','fëmijë'],enterprise:['enterprise','entreprises','biznese'],premium:['premium','luxury','luxe']},
+  audience:{children:['children','enfants','fëmijë'],enterprise:['enterprise','entreprises','biznese'],premium:['premium','luxury','luxe','luksoz']},
   mood:{calm:['calm','calme','qetë'],energetic:['energetic','énergie','energji'],trust:['trust','confiance','besim']},
   layout:{horizontal:['horizontal','horizontale'],stacked:['stacked','vertikal','empilé'],icon:['icon only','symbol only','vetëm simbol','symbole seul']},
   typography:{sans:['sans-serif','sans serif'],serif:['serif','empattements'],bold:['bold','gras','trashë']}
  };
  const traits=Object.fromEntries(Object.entries(vocab).map(([k,v])=>[k,matches(wanted,v)]));
  const numbers={three:3,tri:3,trois:3,six:6,gjashtë:6,nine:9,neuf:9,nëntë:9,twelve:12,douze:12,dymbëdhjetë:12};
- const counted=wanted.replace(/(three|tri|trois|six|gjashtë|nine|neuf|nëntë|twelve|douze|dymbëdhjetë)(?=\s+(?:variant|concept|logo|koncep))/giu,w=>numbers[w.toLowerCase()]);
- return {required,forbidden:[...forbidden],unknown,glyphs,profile,traits,colors:matches(wanted,colors).filter(k=>!forbidden.has(k)),
+ const counted=wanted.replace(/(three|tri|trois|six|gjashtë|nine|neuf|nëntë|twelve|douze|dymbëdhjetë)(?=\s+(?:[\p{L}-]+\s+){0,5}(?:variant|concept|logo|koncep))/giu,w=>numbers[w.toLowerCase()]);
+ return {required,forbidden:[...forbidden],unknown,glyphs,profile,traits,colors:matches(wanted,colors).filter(k=>!forbidden.has(k)&&!(k==='blue'&&matches(wanted,colors).includes('deepBlue'))),
   selected:picked&&catalogIds.includes(picked)&&!forbidden.has(picked)?picked:null,explicit:!!selector,
-  count:opts.count??Number(counted.match(/\b(12|9|6|3)\s+(?:variant|concept|logo|koncep)/iu)?.[1]??3),
+  count:opts.count??Number(counted.match(/\b(12|9|6|3)\s+(?:[\p{L}-]+\s+){0,5}(?:variant|concept|logo|koncep)/iu)?.[1]??3),
   complexity:/detail|complex|détail|hollësi/i.test(wanted)?3:/minimal|simple|thjesht/i.test(wanted)?1:2,
   family:matches(wanted,{radial:['radial','radiale'],organic:['organic','organique','organik'],fractal:['fractal','fraktal'],spiral:['spiral','spirale'],modular:['modular','modulaire'],network:['network','réseau','rrjet'],polygon:['polygon','polygone','poligon']})[0],
   negative:/negative space|espace n.gatif|hap.sir. negative/iu.test(wanted),open:/open contour|contour ouvert|kontur t. hapur/iu.test(wanted),
