@@ -1,3 +1,4 @@
+import {diversityCheck} from './concept-diversity.mjs';
 import {colorPartition} from './color-partition.mjs';
 import {letterFusion} from './letter-fusion.mjs';
 import {negativeArchitecture} from './negative-architecture.mjs';
@@ -9,7 +10,7 @@ import {interpret,inks} from './intent.mjs';
 import {monogram} from './alphabet.mjs';
 import {shape,fuse,composeFusion} from './fusion.mjs';
 import {random,procedure,families} from './procedural.mjs';
-import {fit,combine,line,regular,transform,layer,similarity} from './contours.mjs';
+import {fit,combine,line,regular,transform,layer} from './contours.mjs';
 import {verify} from './quality.mjs';
 const hash=s=>createHash('sha256').update(s).digest().readUInt32BE()>>>1;
 const review=reason=>({status:'review_required',reasons:[reason]});
@@ -60,7 +61,8 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    if(architectural&&!structuralQuality(mark).acceptable)continue;
    const rngSkew=(rng()-.5)*.22;
    const signature=fit(transform(mark,(x,y)=>[x+y*rngSkew,y]),180,180);
-   if(signatures.some(other=>similarity(signature,other)>.94))continue;
+   const architecture=architectural?directions[index%directions.length]:null;
+   if(!diversityCheck(signature,signatures,{architecture,attempt}))continue;
    const horizontal=intent.traits.layout.includes('horizontal')||(!intent.traits.layout.length&&strategy.design?.layout==='horizontal'&&index%3===1);
    const icon=intent.traits.layout.includes('icon');
    const cx=horizontal?108:256,cy=icon||horizontal?256:209;
@@ -81,7 +83,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
      brief:prompt,language,name:brief.name,family,style,mode,...(architectural?{architecture:directions[index%directions.length]}:{}),...(letterMode?{letterFusion:letterMode,initial}:{}),complexity:intent.complexity,subjects:intent.required,...(intent.glyphs?{glyphs:intent.glyphs}:{}),category:profile?.id??null,
      audience:intent.traits.audience,mood:intent.traits.mood,culture:intent.culture,usage:intent.traits.usage}};
     const checked=verify(final,document,primary,textColor(primary));
-    chosen={symbol:'creative-'+slot,document,...checked};signatures.push(signature);
+    chosen={symbol:'creative-'+slot,document,...checked};signatures.push({signature,architecture});
    }catch(error){if(error.message!=='path_budget')throw error}
   }
   if(!chosen)return review('creative_constraints');variants.push(chosen);

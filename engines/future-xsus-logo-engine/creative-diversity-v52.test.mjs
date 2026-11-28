@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {diversityCheck} from './creative-v2/concept-diversity.mjs';import {regular} from './creative-v2/contours.mjs';
+test('identical geometry rejected even on final retry',()=>{const p=[regular(6,80)];assert.equal(diversityCheck(p,[{signature:p,architecture:'orbit'}],{architecture:'orbit',attempt:9}),false);});
+test('unused architecture preferred before retry relaxation',()=>{const a=[regular(4,80)],b=[regular(3,80)];const prior=[{signature:a,architecture:'orbit'}];assert.equal(diversityCheck(b,prior,{architecture:'orbit'}),false);assert.equal(diversityCheck(b,prior,{architecture:'compass'}),true);assert.equal(diversityCheck(b,prior,{architecture:'orbit',attempt:9}),true);});
+test('explicit symbol retains existing similarity threshold',()=>{const a=[regular(4,80)],b=[regular(3,80)];assert.equal(diversityCheck(b,[{signature:a,architecture:null}]),true);});
