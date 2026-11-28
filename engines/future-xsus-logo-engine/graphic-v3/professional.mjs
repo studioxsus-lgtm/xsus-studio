@@ -1,3 +1,4 @@
+import {softenCorners} from './soften-corners.mjs';
 import {brandComposition} from './brand-composition.mjs';
 import {artisticEvidence} from './artistic-evidence.mjs';
 import {opticalBalance} from './optical-balance.mjs';
@@ -43,7 +44,8 @@ export function enhance(kit,p,prompt=''){
    const scale=Math.min(place.w/(bw*style.ratio+bh*Math.abs(style.slant)),place.h/bh);
    const adjust=(x,y)=>[place.cx+((x-mx)*style.ratio+(y-my)*style.slant)*scale,place.cy+(y-my)*scale].map(v=>Math.round(v*100)/100);
    for(const [i,l] of mark.entries()){
-    const commands=l.commands.map(([op,...coords])=>[op,...Array.from({length:coords.length/2},(_,n)=>adjust(coords[2*n],coords[2*n+1])).flat()]);
+    const source=old.creative?.conceptDomain&&mark.length===1&&choices.includes('rounded')?softenCorners(l.commands):l.commands;
+    const commands=source.map(([op,...coords])=>[op,...Array.from({length:coords.length/2},(_,n)=>adjust(coords[2*n],coords[2*n+1])).flat()]);
     const fill=style.monochrome?primary:l.fill;
     const g=i===0&&!style.monochrome?gradient(p.finish??(choices.includes('gradient')?'linear':'solid'),fill,secondary,p.angle):null;
     layers.push({...l,commands,fill,...(g?{gradient:g}:{}),...(style.stroke?{stroke:fill,strokeWidth:style.stroke*Math.min(width,height)/512}:{}),hollow:style.hollow});

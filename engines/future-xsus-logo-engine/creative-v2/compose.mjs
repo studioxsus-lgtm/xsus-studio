@@ -1,3 +1,4 @@
+import {structuralColor} from './structural-color.mjs';
 import {optimizeConcept} from './optimize-concept.mjs';
 import {conceptDirection} from './concept-direction.mjs';
 import {generativeMark} from './generative-mark.mjs';
@@ -86,7 +87,7 @@ export async function composeCreative({prompt,language,brief,strategy,creative})
    try{
     let layers=[layer('creative-mark',final,primary)];
     if(secondary!==primary && (intent.colors.length>1||index%2===1) && (intent.colors.length>1||contrast(primary,secondary)>=1.4)){
-     const split=colorPartition(final,index);
+     const split=generatedDirection?structuralColor(final,index):colorPartition(final,index);
      if(split)layers=[layer('creative-mark',split.main,primary),layer('creative-accent',split.accent,secondary)];
     }
     if(!icon){
