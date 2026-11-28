@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {premiumMonogram} from './creative-v2/premium-monogram.mjs';import {area,box} from './creative-v2/contours.mjs';
+test('premium monograms use bounded real glyph geometry',async()=>{for(let i=0;i<4;i++){const r=await premiumMonogram('A','minimal',i),b=box(r.paths);assert.ok(area(r.paths)>100);assert.ok(b.maxX-b.minX<=218.1&&b.maxY-b.minY<=205.1);}});
+test('initial changes actual monogram geometry',async()=>{const a=await premiumMonogram('A','minimal',2),x=await premiumMonogram('X','minimal',2);assert.notDeepEqual(a.paths,x.paths);assert.deepEqual(a,await premiumMonogram('A','minimal',2));});
+test('enclosed monogram retains negative contour',async()=>{const r=await premiumMonogram('A','minimal',3);assert.equal(r.mode,'round');assert.ok(r.paths.length>=2);});
